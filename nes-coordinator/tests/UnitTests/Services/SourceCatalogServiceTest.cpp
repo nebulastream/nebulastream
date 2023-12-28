@@ -96,8 +96,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyPtr topology = Topology::create();
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
-    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
+    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 
     std::string physicalSourceName = "testStream";
 
@@ -121,33 +120,32 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     EXPECT_TRUE(successRegisterLogicalSource);
 
     // common case
-    TopologyNodePtr physicalNode = topology->getCopyOfTopologyNodeWithId(nodeId);
-    bool successRegisterPhysicalSource = sourceCatalogService->registerPhysicalSource(physicalNode,
-                                                                                      physicalSource->getPhysicalSourceName(),
-                                                                                      physicalSource->getLogicalSourceName());
+    bool successRegisterPhysicalSource = sourceCatalogService->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
+                                                                                      physicalSource->getLogicalSourceName(),
+                                                                                      nodeId);
     EXPECT_TRUE(successRegisterPhysicalSource);
 
     //test register existing source
     bool successRegisterExistingPhysicalSource =
-        sourceCatalogService->registerPhysicalSource(physicalNode,
-                                                     physicalSource->getPhysicalSourceName(),
-                                                     physicalSource->getLogicalSourceName());
+        sourceCatalogService->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
+                                                     physicalSource->getLogicalSourceName(),
+                                                     nodeId);
     EXPECT_TRUE(!successRegisterExistingPhysicalSource);
 
     //test unregister not existing physical source
     bool successUnregisterNotExistingPhysicalSource =
-        sourceCatalogService->unregisterPhysicalSource(physicalNode, "asd", physicalSource->getLogicalSourceName());
+        sourceCatalogService->unregisterPhysicalSource("asd", physicalSource->getLogicalSourceName(), nodeId);
     EXPECT_TRUE(!successUnregisterNotExistingPhysicalSource);
 
     //test unregister not existing local source
     bool successUnregisterNotExistingLogicalSource =
-        sourceCatalogService->unregisterPhysicalSource(physicalNode, physicalSource->getPhysicalSourceName(), "asd");
+        sourceCatalogService->unregisterPhysicalSource(physicalSource->getPhysicalSourceName(), "asd", nodeId);
     EXPECT_TRUE(!successUnregisterNotExistingLogicalSource);
 
     //test unregister existing node
     bool successUnregisterExistingPhysicalSource =
-        sourceCatalogService->unregisterPhysicalSource(physicalNode,
-                                                       physicalSource->getPhysicalSourceName(),
-                                                       physicalSource->getLogicalSourceName());
+        sourceCatalogService->unregisterPhysicalSource(physicalSource->getPhysicalSourceName(),
+                                                       physicalSource->getLogicalSourceName(),
+                                                       nodeId);
     EXPECT_TRUE(successUnregisterExistingPhysicalSource);
 }

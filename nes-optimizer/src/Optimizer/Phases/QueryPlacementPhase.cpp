@@ -21,9 +21,7 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
-#include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
@@ -166,8 +164,6 @@ BasePlacementStrategyPtr QueryPlacementPhase::getStrategy(PlacementStrategy plac
             return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
         case PlacementStrategy::TopDown:
             return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
-        case PlacementStrategy::Manual:
-            return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
         case PlacementStrategy::ELEGANT_PERFORMANCE:
         case PlacementStrategy::ELEGANT_ENERGY:
         case PlacementStrategy::ELEGANT_BALANCED:
@@ -182,13 +178,6 @@ BasePlacementStrategyPtr QueryPlacementPhase::getStrategy(PlacementStrategy plac
             //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::MlHeuristic:
             return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
-
-        // FIXME: enable them with issue #755
-        //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
-        //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
-        //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
-        //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
-        //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
         default:
             throw Exceptions::RuntimeException("Unknown placement strategy type "
                                                + std::string(magic_enum::enum_name(placementStrategy)));

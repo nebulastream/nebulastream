@@ -47,27 +47,6 @@ BasePlacementStrategy::BasePlacementStrategy(const GlobalExecutionPlanPtr& globa
 
 bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
-void BasePlacementStrategy::pinOperators(QueryPlanPtr, const TopologyPtr&, NES::Optimizer::PlacementMatrix&) {
-    /*std::vector<TopologyNodePtr> topologyNodes;
-    auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
-    for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
-        topologyNodes.emplace_back((*itr)->as<TopologyNode>());
-    }
-
-    auto operators = QueryPlanIterator(std::move(queryPlan)).snapshot();
-
-    for (uint64_t i = 0; i < topologyNodes.size(); i++) {
-        // Set the Pinned operator property
-        auto currentRow = matrix[i];
-        for (uint64_t j = 0; j < operators.size(); j++) {
-            if (currentRow[j]) {
-                // if the the value of the matrix at (i,j) is 1, then add a PINNED_NODE_ID of the topologyNodes[i] to operators[j]
-                operators[j]->as<LogicalOperatorNode>()->addProperty(PINNED_WORKER_ID, topologyNodes[i]->getId());
-            }
-        }
-    }*/
-}
-
 void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
                                                  const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators) {
 
@@ -83,7 +62,6 @@ void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorN
         //NOTE: Add the physical node to the set (we used set here to prevent inserting duplicate physical node in-case of self join or
         // two physical sources located on same physical node)
         pinnedUpStreamTopologyNodeIds.emplace(workerId);
-        auto topologyNode = topology->getCopyOfTopologyNodeWithId(workerId);
     }
 
     //2. Find the topology nodes that will host downstream operators
@@ -98,59 +76,87 @@ void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorN
         pinnedDownStreamTopologyNodeIds.emplace(workerId);
     }
 
-    //3. Find the path for placement based on the selected placement mode
+    bool success = false;
+    // 3. Find the path for placement based on the selected placement mode
     switch (placementAmenderMode) {
         case PlacementAmenderMode::PESSIMISTIC: {
-            pessimisticPathSelection(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
+            success = pessimisticPathSelection(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
             break;
         }
         case PlacementAmenderMode::OPTIMISTIC: {
-            optimisticPathSelection(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
+            success = optimisticPathSelection(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
             break;
         }
     }
-}
 
-void BasePlacementStrategy::optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
-                                                    const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
-
-    //1 Performs path selection
-    std::vector<TopologyNodePtr> sourceTopologyNodesInSelectedPath =
-        findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
-
-    //2 Add the selected topology nodes to the topology map
-    workerIdToTopologyNodeMap.clear();
-
-    // Temp container for iteration
-    std::queue<TopologyNodePtr> topologyNodesInBFSOrder;
-    // Iterate topology nodes in a true breadth first order
-    // Initialize with the upstream nodes
-    std::for_each(sourceTopologyNodesInSelectedPath.begin(),
-                  sourceTopologyNodesInSelectedPath.end(),
-                  [&](const TopologyNodePtr& topologyNode) {
-                      topologyNodesInBFSOrder.push(topologyNode);
-                  });
-
-    while (!topologyNodesInBFSOrder.empty()) {
-        auto topologyNodeToLock = topologyNodesInBFSOrder.front();
-        topologyNodesInBFSOrder.pop();
-        // Skip if the topology node was visited previously
-        WorkerId idOfTopologyNodeToLock = topologyNodeToLock->getId();
-        if (workerIdToTopologyNodeMap.contains(idOfTopologyNodeToLock)) {
-            continue;
-        }
-
-        // Add to the list of topology nodes for which locks are acquired
-        workerNodeIdsInBFS.emplace_back(idOfTopologyNodeToLock);
-        workerIdToTopologyNodeMap[idOfTopologyNodeToLock] = topologyNodeToLock;
-        const auto& downstreamTopologyNodes = topologyNodeToLock->getParents();
-        std::for_each(downstreamTopologyNodes.begin(), downstreamTopologyNodes.end(), [&](const NodePtr& topologyNode) {
-            topologyNodesInBFSOrder.push(topologyNode->as<TopologyNode>());
-        });
+    // 4. Raise exception if unable to select and lock all topology nodes in the path
+    if (!success) {
+        throw Exceptions::RuntimeException("Unable to perform path selection.");
     }
 }
 
-void BasePlacementStrategy::pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+bool BasePlacementStrategy::optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                                    const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
+
+    bool success = false;
+    uint8_t retryCount = 0;
+    std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
+    // 1. Perform path selection and if failure than use the exponential back-off and retry strategy
+    while (!success && retryCount < MAX_PATH_SELECTION_RETRIES) {
+
+        // 1.1. Performs path selection
+        std::vector<TopologyNodePtr> sourceTopologyNodesInSelectedPath =
+            findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
+
+        //1.2 Process the selected path else retry
+        if (!sourceTopologyNodesInSelectedPath.empty()) {
+
+            // 1.3. Add the selected topology nodes to the topology map
+            // Temp container for iteration
+            std::queue<TopologyNodePtr> topologyNodesInBFSOrder;
+            // Iterate topology nodes in a true breadth first order
+            // Initialize with the upstream nodes
+            std::for_each(sourceTopologyNodesInSelectedPath.begin(),
+                          sourceTopologyNodesInSelectedPath.end(),
+                          [&](const TopologyNodePtr& topologyNode) {
+                              topologyNodesInBFSOrder.push(topologyNode);
+                          });
+
+            // 1.4. Record all selected topology nodes in BFS order
+            while (!topologyNodesInBFSOrder.empty()) {
+                auto topologyNodeToLock = topologyNodesInBFSOrder.front();
+                topologyNodesInBFSOrder.pop();
+                // 1.4.1. Skip if the topology node was visited previously
+                WorkerId idOfTopologyNodeToLock = topologyNodeToLock->getId();
+                if (workerIdToTopologyNodeMap.contains(idOfTopologyNodeToLock)) {
+                    continue;
+                }
+
+                // 1.4.2. Add to the list of topology nodes for which locks are acquired
+                workerNodeIdsInBFS.emplace_back(idOfTopologyNodeToLock);
+                workerIdToTopologyNodeMap[idOfTopologyNodeToLock] = topologyNodeToLock;
+                const auto& downstreamTopologyNodes = topologyNodeToLock->getParents();
+                std::for_each(downstreamTopologyNodes.begin(), downstreamTopologyNodes.end(), [&](const NodePtr& topologyNode) {
+                    topologyNodesInBFSOrder.push(topologyNode->as<TopologyNode>());
+                });
+            }
+            success = true;
+        }
+
+        // 1.5. If unable to lock the topology nodes then wait for other processes to release locks on the topology node
+        if (!success) {
+            NES_WARNING("Unable to lock topology nodes in the path. Waiting for the process to release locks and retry "
+                        "path selection.");
+            std::this_thread::sleep_for(backOffTime);
+            retryCount++;
+            backOffTime *= 2;
+            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
+        }
+    }
+    return success;
+}
+
+bool BasePlacementStrategy::pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
                                                      const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
     bool success = false;
     uint8_t retryCount = 0;
@@ -162,8 +168,10 @@ void BasePlacementStrategy::pessimisticPathSelection(const std::set<WorkerId>& t
         std::vector<TopologyNodePtr> sourceTopologyNodesInSelectedPath =
             findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
 
-        //1.2 Lock the selected topology nodes exclusively and create a topology map
-        success = lockTopologyNodesInSelectedPath(sourceTopologyNodesInSelectedPath);
+        if (!sourceTopologyNodesInSelectedPath.empty()) {
+            //1.2 Lock the selected topology nodes exclusively and create a topology map
+            success = lockTopologyNodesInSelectedPath(sourceTopologyNodesInSelectedPath);
+        }
 
         //1.3 If unable to lock the topology nodes then wait for other processes to release locks on the topology node
         if (!success) {
@@ -175,11 +183,7 @@ void BasePlacementStrategy::pessimisticPathSelection(const std::set<WorkerId>& t
             backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
         }
     }
-
-    // 2. Raise exception if unable to select and lock all topology nodes in the path
-    if (!success) {
-        throw Exceptions::RuntimeException("Unable to perform path selection.");
-    }
+    return success;
 }
 
 bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes) {
@@ -205,8 +209,8 @@ bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<To
         TopologyNodeWLock lock = topology->lockTopologyNode(idOfTopologyNodeToLock);
         if (!lock) {
             NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", idOfTopologyNodeToLock);
-            /*            //Release all the acquired locks as part of back-off and retry strategy.
-            unlockTopologyNodes();*/
+            //Release all the acquired locks as part of back-off and retry strategy.
+            unlockTopologyNodesInSelectedPath();
             return false;
         }
         lockedTopologyNodeMap[idOfTopologyNodeToLock] = std::move(lock);
@@ -222,6 +226,24 @@ bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<To
     return true;
 }
 
+bool BasePlacementStrategy::unlockTopologyNodesInSelectedPath() {
+    NES_INFO("Releasing locks for all locked topology nodes.");
+    //1 Check if there are nodes on which locks are acquired
+    if (workerNodeIdsInBFS.empty()) {
+        NES_WARNING("No topology node found for which the locks are to be release.")
+        return false;
+    }
+
+    //2 Release the locks in the inverse order of their acquisition
+    std::for_each(workerNodeIdsInBFS.rbegin(), workerNodeIdsInBFS.rend(), [&](const WorkerId& lockedTopologyNodeId) {
+        //2.1 Release the lock on the locked topology node
+        lockedTopologyNodeMap[lockedTopologyNodeId]->unlock();
+        lockedTopologyNodeMap.erase(lockedTopologyNodeId);
+    });
+    workerNodeIdsInBFS.clear();
+    return true;
+}
+
 std::vector<TopologyNodePtr>
 BasePlacementStrategy::findPath(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
                                 const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
@@ -234,34 +256,8 @@ BasePlacementStrategy::findPath(const std::set<WorkerId>& topologyNodesWithUpStr
 
     //2 Do the path selection
     // NOTE: this call can be replaced with any arbitrary path selection algorithm
-    std::vector<TopologyNodePtr> sourceTopologyNodesInSelectedPath =
-        topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
-    if (sourceTopologyNodesInSelectedPath.empty()) {
-        throw Exceptions::RuntimeException("Could not find the path for placement.");
-    }
-    return sourceTopologyNodesInSelectedPath;
+    return topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
 }
-
-/*bool BasePlacementStrategy::unlockTopologyNodes() {
-    NES_INFO("Releasing locks for all locked topology nodes.");
-    //1 Check if there are nodes on which locks are acquired
-    if (workerNodeIdsInBFS.empty()) {
-        NES_WARNING("No topology node found for which the locks are to be release.")
-        return false;
-    }
-
-    //2 Release the locks in the inverse order of their acquisition
-    std::for_each(workerNodeIdsInBFS.rbegin(), workerNodeIdsInBFS.rend(), [&](const WorkerId& lockedTopologyNodeId) {
-        //2.1 Release the lock on the locked topology node
-        if (!topology->releaseLockOnTopologyNode(lockedTopologyNodeId)) {
-            //2.1.1 Raise an exception if the lock was not released
-            NES_ERROR("Unable to release lock on the topology node {}.", lockedTopologyNodeId);
-            throw Exceptions::RuntimeException("Unable to release lock on the topology node "
-                                               + std::to_string(lockedTopologyNodeId));
-        }
-    });
-    return true;
-}*/
 
 ComputedSubQueryPlans
 BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
@@ -676,7 +672,7 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                 std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
             };
         } else {
-            lockedTopologyNode = std::move(lockedTopologyNodeMap[workerNodeId]);
+            lockedTopologyNode = lockedTopologyNodeMap[workerNodeId];
         }
 
         try {
@@ -857,10 +853,13 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                     pinnedOperator->setOperatorState(OperatorState::PLACED);
                 }
             }
-        } catch (std::exception& ex) {// If exception occurred then safely
+
+            // 1.8. Release lock on the topology node
+            if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
+                lockedTopologyNode->unlock();
+            }
+        } catch (std::exception& ex) {
             NES_ERROR("Exception occurred during pinned operator placement {}.", ex.what());
-            // NOTE: For pessimistic the locking will take place in the
-            // catch block of the child class
             throw ex;
         }
     }
@@ -956,5 +955,13 @@ BasePlacementStrategy::getTopologyNodesForChildrenOperators(const LogicalOperato
     }
     NES_DEBUG("returning list of topology nodes where children operators are placed");
     return childTopologyNodes;
+}
+
+BasePlacementStrategy::~BasePlacementStrategy() {
+    NES_INFO("~BasePlacementStrategy()");
+    //Release the lock for pessimistic placement mode
+    if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
+        unlockTopologyNodesInSelectedPath();
+    }
 }
 }// namespace NES::Optimizer

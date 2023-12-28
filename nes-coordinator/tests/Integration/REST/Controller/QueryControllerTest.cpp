@@ -179,7 +179,6 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
-    auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
     ASSERT_TRUE(success);
@@ -211,7 +210,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     EXPECT_EQ(response2.size(), 1);
     for (auto executionNode : response2["executionNodes"]) {
-        EXPECT_EQ(coordinator->getTopology()->getRoot()->getId(), executionNode["topologyNodeId"].get<uint64_t>());
+        EXPECT_EQ(coordinator->getTopology()->getRootTopologyNodeId(), executionNode["topologyNodeId"].get<uint64_t>());
         EXPECT_EQ(coordinatorConfig->coordinatorIp.getValue(), executionNode["topologyNodeIpAddress"].get<std::string>());
         EXPECT_TRUE(executionNode["ScheduledQueries"].size() != 0);
     }
@@ -245,7 +244,6 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
-    auto topologyNode = coordinator->getTopology()->getRoot();
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
 
     ASSERT_TRUE(success);
@@ -297,7 +295,6 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     NES_INFO("QueryControllerTest: Coordinator started successfully");
 
     auto sourceCatalog = coordinator->getSourceCatalog();
-    auto topologyNode = coordinator->getTopology()->getRoot();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     nlohmann::json request;
@@ -353,7 +350,6 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
-    auto topologyNode = coordinator->getTopology()->getRoot();
     EXPECT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     nlohmann::json request;

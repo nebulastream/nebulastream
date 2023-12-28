@@ -23,17 +23,10 @@ enum class PlacementStrategy : uint8_t {
     BottomUp = 1,
     IFCOP = 2,
     ILP = 3,
-    Manual = 4,
-    MlHeuristic = 5,
-    ELEGANT_PERFORMANCE = 6,
-    ELEGANT_ENERGY = 7,
-    ELEGANT_BALANCED = 8
-    // FIXME: enable them with issue #755
-    // LowLatency,
-    //  HighThroughput,
-    //  MinimumResourceConsumption,
-    //  MinimumEnergyConsumption,
-    // HighAvailability
+    MlHeuristic = 4,
+    ELEGANT_PERFORMANCE = 5,
+    ELEGANT_ENERGY = 6,
+    ELEGANT_BALANCED = 7
 };
 }// namespace NES::Optimizer
 #endif// NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

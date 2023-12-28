@@ -95,7 +95,7 @@ class BasePlacementStrategy {
                                    const TypeInferencePhasePtr& typeInferencePhase,
                                    PlacementAmenderMode placementMode);
 
-    virtual ~BasePlacementStrategy() = default;
+    virtual ~BasePlacementStrategy();
 
     /**
      * Update Global Execution plan by placing the input query plan
@@ -116,14 +116,6 @@ class BasePlacementStrategy {
     virtual bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) = 0;
-
-    /**
-     * @brief Sets pinned node to the operator's property
-     * @param queryPlan query plan containing operator to pin
-     * @param topology topology containing node to pin
-     * @param matrix 2D matrix containing the pinning information
-     */
-    static void pinOperators(QueryPlanPtr queryPlan, const TopologyPtr& topology, NES::Optimizer::PlacementMatrix& matrix);
 
   protected:
     /**
@@ -189,12 +181,12 @@ class BasePlacementStrategy {
      */
     bool lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes);
 
-/*    *//**
+    /**
      * @brief Perform unlocking of all topology nodes on which the lock was acquired.
      * We following an order inverse of the lock acquisition. This allows us to prevent starvation situation.
      * @return true if successful else false
-     *//*
-    bool unlockTopologyNodes();*/
+     */
+    bool unlockTopologyNodesInSelectedPath();
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
@@ -228,20 +220,23 @@ class BasePlacementStrategy {
                                                               const TopologyNodePtr& sinkTopologyNode);
 
     /**
-     * @brief Select path for placement using pessimistic 2PL strategy
+     * @brief Select path for placement using pessimistic 2PL strategy. If attempt fails then an exponential retries are performed.
+     * NOTE: These paths are local copies of the topology nodes. Any changes done on these nodes are not reflected in the topology catalog.
      * @param topologyNodesWithUpStreamPinnedOperators : topology nodes hosting the pinned upstream operators
      * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators
+     * @return true if successful else false
      */
-    void pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+    bool pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
                                   const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
 
     /**
      * @brief Select path for placement using optimistic approach where no locks are acquired on chosen topology nodes
-     * after the path selection
+     * after the path selection. If attempt fails then an exponential retries are performed.
+     * NOTE: These paths are local copies of the topology nodes. Any changes done on these nodes are not reflected in the topology catalog.
      * @param topologyNodesWithUpStreamPinnedOperators : topology nodes hosting the pinned upstream operators
      * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators
      */
-    void optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+    bool optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
                                  const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
 
     /**

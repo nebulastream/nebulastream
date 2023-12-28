@@ -16,13 +16,7 @@ add_source_files(nes-optimizer
         BottomUpStrategy.cpp
         TopDownStrategy.cpp
         MlHeuristicStrategy.cpp
-        ManualPlacementStrategy.cpp
         IFCOPStrategy.cpp
 		ILPStrategy.cpp
         ElegantPlacementStrategy.cpp
-#        LowLatencyStrategy.cpp
-#        HighAvailabilityStrategy.cpp
-#        HighThroughputStrategy.cpp
-#        MinimumResourceConsumptionStrategy.cpp
-#        MinimumEnergyConsumptionStrategy.cpp
 )

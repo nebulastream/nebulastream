@@ -438,9 +438,6 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
-    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1U);
-    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2U);
 
     // Expected output
     const auto expectedOutput = "40, 1600, 40\n"

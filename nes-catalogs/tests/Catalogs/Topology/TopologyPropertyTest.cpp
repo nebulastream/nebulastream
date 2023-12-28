@@ -90,25 +90,28 @@ TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     // create src and dst nodes
-    auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
+    int sourceWorkerId = 1;
+    topology->registerTopologyNode(sourceWorkerId, "localhost", grpcPort, dataPort, 8, properties);
 
     grpcPort++;
     dataPort++;
-    auto destinationNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8, properties);
+    int destinationWorkerId = 2;
+    topology->registerTopologyNode(destinationWorkerId, "localhost", grpcPort, dataPort, 8, properties);
 
-    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+    topology->addTopologyNodeAsChild(destinationWorkerId, sourceWorkerId);
 
-    sourceNode->addLinkProperty(destinationNode, linkProperty);
-    destinationNode->addLinkProperty(sourceNode, linkProperty);
+    topology->addLinkProperty(destinationWorkerId, sourceWorkerId, 512, 100);
 
     // we should be able to retrieve the assigned link property
-    EXPECT_NO_THROW(sourceNode->getLinkProperty(destinationNode));
-    EXPECT_EQ(sourceNode->getLinkProperty(destinationNode)->bandwidth, 512u);
-    EXPECT_EQ(sourceNode->getLinkProperty(destinationNode)->latency, 100u);
+    auto sourceNode = topology->getCopyOfTopologyNodeWithId(sourceWorkerId);
+    EXPECT_NO_THROW(sourceNode->getLinkProperty(destinationWorkerId));
+    EXPECT_EQ(sourceNode->getLinkProperty(destinationWorkerId)->bandwidth, 512u);
+    EXPECT_EQ(sourceNode->getLinkProperty(destinationWorkerId)->latency, 100u);
 
-    EXPECT_NO_THROW(destinationNode->getLinkProperty(sourceNode));
-    EXPECT_EQ(destinationNode->getLinkProperty(sourceNode)->bandwidth, 512u);
-    EXPECT_EQ(destinationNode->getLinkProperty(sourceNode)->latency, 100u);
+    auto destinationNode = topology->getCopyOfTopologyNodeWithId(destinationWorkerId);
+    EXPECT_NO_THROW(destinationNode->getLinkProperty(sourceWorkerId));
+    EXPECT_EQ(destinationNode->getLinkProperty(sourceWorkerId)->bandwidth, 512u);
+    EXPECT_EQ(destinationNode->getLinkProperty(sourceWorkerId)->latency, 100u);
 }
 
 // test removing link properties
@@ -122,31 +125,35 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     // create src and dst nodes
-    auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
+    int sourceWorkerId = 1;
+    topology->registerTopologyNode(sourceWorkerId, "localhost", grpcPort, dataPort, 8, properties);
 
     grpcPort++;
     dataPort++;
-    auto destinationNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8, properties);
+    int destinationWorkerId = 2;
+    topology->registerTopologyNode(destinationWorkerId, "localhost", grpcPort, dataPort, 8, properties);
+    topology->addTopologyNodeAsChild(destinationWorkerId, sourceWorkerId);
+    topology->addLinkProperty(destinationWorkerId, sourceWorkerId, 512, 100);
 
-    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-
-    sourceNode->addLinkProperty(destinationNode, linkProperty);
-    destinationNode->addLinkProperty(sourceNode, linkProperty);
+    auto sourceNode = topology->getCopyOfTopologyNodeWithId(sourceWorkerId);
 
     // we should be able to retrieve the assigned link property
-    ASSERT_NO_THROW(sourceNode->getLinkProperty(destinationNode));
-    ASSERT_EQ(sourceNode->getLinkProperty(destinationNode)->bandwidth, 512ULL);
-    ASSERT_EQ(sourceNode->getLinkProperty(destinationNode)->latency, 100ULL);
+    ASSERT_NO_THROW(sourceNode->getLinkProperty(destinationWorkerId));
+    ASSERT_EQ(sourceNode->getLinkProperty(destinationWorkerId)->bandwidth, 512ULL);
+    ASSERT_EQ(sourceNode->getLinkProperty(destinationWorkerId)->latency, 100ULL);
 
-    ASSERT_NO_THROW(destinationNode->getLinkProperty(sourceNode));
-    ASSERT_EQ(destinationNode->getLinkProperty(sourceNode)->bandwidth, 512ULL);
-    ASSERT_EQ(destinationNode->getLinkProperty(sourceNode)->latency, 100ULL);
+    auto destinationNode = topology->getCopyOfTopologyNodeWithId(destinationWorkerId);
+    ASSERT_NO_THROW(destinationNode->getLinkProperty(sourceWorkerId));
+    ASSERT_EQ(destinationNode->getLinkProperty(sourceWorkerId)->bandwidth, 512ULL);
+    ASSERT_EQ(destinationNode->getLinkProperty(sourceWorkerId)->latency, 100ULL);
 
-    sourceNode->removeLinkProperty(destinationNode);
-    destinationNode->removeLinkProperty(sourceNode);
+    //Remove the link and associated properties
+    topology->removeTopologyNodeAsChild(destinationWorkerId, sourceWorkerId);
 
-    EXPECT_FALSE(sourceNode->getLinkProperty(destinationNode));
-    EXPECT_FALSE(destinationNode->getLinkProperty(sourceNode));
+    sourceNode = topology->getCopyOfTopologyNodeWithId(sourceWorkerId);
+    destinationNode = topology->getCopyOfTopologyNodeWithId(destinationWorkerId);
+    EXPECT_FALSE(sourceNode->getLinkProperty(destinationWorkerId));
+    EXPECT_FALSE(destinationNode->getLinkProperty(sourceWorkerId));
 }
 
 }// namespace NES

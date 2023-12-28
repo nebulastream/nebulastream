@@ -121,10 +121,10 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
             }
 
             //2.2 Find path between pinned upstream and downstream topology node
-            auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
+            auto upstreamPinnedNodeId = std::any_cast<WorkerId>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
 
             auto downstreamPinnedNodeId =
-                std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID));
+                std::any_cast<WorkerId>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID));
 
             std::vector<TopologyNodePtr> topologyPath =
                 topology->findPathBetween({upstreamPinnedNodeId}, {downstreamPinnedNodeId});

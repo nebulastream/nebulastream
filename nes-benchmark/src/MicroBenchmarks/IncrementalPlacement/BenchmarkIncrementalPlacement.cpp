@@ -143,10 +143,9 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
         // Add Physical topology node and stream catalog entry
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             //Fetch the leaf node of the topology and add all sources to it
-            auto topologyNode = topologyManagerService->findNodeWithId(5);
             auto logicalSourceName = "example" + std::to_string(j + 1);
             auto physicalSourceName = "example" + std::to_string(j + 1) + std::to_string(i);
-            sourceCatalogService->registerPhysicalSource(topologyNode, physicalSourceName, logicalSourceName);
+            sourceCatalogService->registerPhysicalSource(physicalSourceName, logicalSourceName, 5);
         }
     }
 }
@@ -162,8 +161,7 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     topology = Topology::create();
-    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
+    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     //Register root worker
     topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties);
     //register child workers
@@ -171,7 +169,6 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
         topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, std::to_string(i), 0, 0, UINT16_MAX, properties);
     }
 
-    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
 
     auto node1 = topologyManagerService->findNodeWithId(1);
     auto node2 = topologyManagerService->findNodeWithId(2);
@@ -179,21 +176,10 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     auto node4 = topologyManagerService->findNodeWithId(4);
     auto node5 = topologyManagerService->findNodeWithId(5);
 
-    node2->addLinkProperty(node1, linkProperty);
-    node1->addLinkProperty(node2, linkProperty);
-
-    node3->addLinkProperty(node2, linkProperty);
-    node2->addLinkProperty(node3, linkProperty);
-
-    node3->addLinkProperty(node2, linkProperty);
-    node2->addLinkProperty(node3, linkProperty);
-
-    node4->addLinkProperty(node3, linkProperty);
-    node3->addLinkProperty(node4, linkProperty);
-
-    node5->addLinkProperty(node4, linkProperty);
-    node4->addLinkProperty(node5, linkProperty);
-
+    topologyManagerService->addLinkProperty(1, 2, 512, 100);
+    topologyManagerService->addLinkProperty(2, 3, 512, 100);
+    topologyManagerService->addLinkProperty(3, 4, 512, 100);
+    topologyManagerService->addLinkProperty(4, 5, 512, 100);
     topologyManagerService->addParent(3, 2);
     topologyManagerService->removeAsParent(3, 1);
 
