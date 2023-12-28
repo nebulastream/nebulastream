@@ -78,9 +78,19 @@ bool TopologyNode::occupySlots(uint16_t usedSlots) {
 }
 
 TopologyNodePtr TopologyNode::copy() {
-    TopologyNodePtr copy = std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, totalSlots, nodeProperties);
-    copy->occupySlots(occupiedSlots);
-    copy->linkProperties = this->linkProperties;
+
+    //Copy the properties
+    std::map<std::string, std::any> properties;
+    for (const auto& [key, value] : nodeProperties) {
+        properties[key] = value;
+    }
+    //Create the topologyNode
+    TopologyNodePtr copy = std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, resources, properties);
+    copy->occupiedSlots(occupiedSlots);
+    //Copy the link properties
+    for (const auto& [nodeId, linkProperty] : this->linkProperties) {
+        copy->linkProperties[nodeId] = std::make_shared<LinkProperty>(linkProperty->bandwidth, linkProperty->latency);
+    }
     return copy;
 }
 
@@ -139,7 +149,7 @@ bool TopologyNode::removeNodeProperty(const std::string& key) {
 }
 
 void TopologyNode::addLinkProperty(WorkerId linkedNodeId, const LinkPropertyPtr& topologyLink) {
-    linkProperties.insert(std::make_pair(linkedNodeId, topologyLink));
+    linkProperties[linkedNodeId] = topologyLink;
 }
 
 LinkPropertyPtr TopologyNode::getLinkProperty(WorkerId linkedNodeId) {
@@ -151,12 +161,12 @@ LinkPropertyPtr TopologyNode::getLinkProperty(WorkerId linkedNodeId) {
     }
 }
 
-bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
-    if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
-        NES_ERROR("Link property to node with id='{}' does not exist", linkedNode->getId());
+bool TopologyNode::removeLinkProperty(WorkerId linkedNodeId) {
+    if (!linkProperties.contains(linkedNodeId)) {
+        NES_ERROR("Link property to node with id='{}' does not exist", linkedNodeId);
         return false;
     }
-    linkProperties.erase(linkedNode->getId());
+    linkProperties.erase(linkedNodeId);
     return true;
 }
 

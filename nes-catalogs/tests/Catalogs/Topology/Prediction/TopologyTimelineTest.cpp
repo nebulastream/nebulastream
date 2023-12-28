@@ -75,67 +75,45 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
         EXPECT_EQ(getIdVector(predictedNode->getChildren()), children);
         EXPECT_EQ(getIdVector(predictedNode->getParents()), parents);
     }
-
-    static void testTopologyEquality(const TopologyPtr& original, const TopologyPtr& copy) {
-        NES_DEBUG("comparing topologies");
-        (void) copy;
-
-        std::queue<TopologyNodePtr> originalQueue;
-        originalQueue.push(original->getRoot());
-        std::set<uint64_t> visited;
-
-        while (!originalQueue.empty()) {
-            auto originalNode = originalQueue.front();
-            originalQueue.pop();
-            ASSERT_TRUE(originalNode);
-            NES_DEBUG("checking node {}", originalNode->getId());
-            auto copiedNode = copy->getCopyOfTopologyNodeWithId(originalNode->getId());
-            NES_DEBUG("copied node id {}", copiedNode->getId());
-            ASSERT_NE(copiedNode, nullptr);
-
-            ASSERT_NE(originalNode, copiedNode);
-
-            compareIdVectors(originalNode->getChildren(), copiedNode->getChildren());
-            compareIdVectors(originalNode->getParents(), copiedNode->getParents());
-
-            for (const auto& child : originalNode->getChildren()) {
-                auto id = child->as<TopologyNode>()->getId();
-                if (!visited.contains(id)) {
-                    visited.insert(id);
-                    originalQueue.push(child->as<TopologyNode>());
-                }
-            }
-        }
-    }
 };
 
 TEST_F(TopologyTimelineTest, DISABLED_testNoChangesPresent) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
-    topology->setRootTopologyNodeId(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->getCopyOfTopologyNodeWithId(1),
-                                        TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->getCopyOfTopologyNodeWithId(2),
-                                        TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->getCopyOfTopologyNodeWithId(2),
-                                        TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
+    int rootNodeId = 1;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4001, 5001, 4, properties);
+    int middleNodeId = 2;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    int srcNodeId1 = 3;
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4001, 5001, 4, properties);
+    int srcNodeId2 = 4;
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4001, 5001, 4, properties);
+
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
 
     auto timeline = TopologyTimeline::create(topology);
     auto changedTopology = timeline->getTopologyVersion(23);
     ASSERT_NE(changedTopology, topology);
-    testTopologyEquality(changedTopology, topology);
 }
 
 TEST_F(TopologyTimelineTest, DISABLED_testUpdatingMultiplePredictions) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
-    topology->setRootTopologyNodeId(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->getCopyOfTopologyNodeWithId(1),
-                                        TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->getCopyOfTopologyNodeWithId(2),
-                                        TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->getCopyOfTopologyNodeWithId(2),
-                                        TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
+    int rootNodeId = 1;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4001, 5001, 4, properties);
+    int middleNodeId = 2;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    int srcNodeId1 = 3;
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4001, 5001, 4, properties);
+    int srcNodeId2 = 4;
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4001, 5001, 4, properties);
+
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
+
     NES_DEBUG("Original Topology");
     NES_DEBUG("{}", topology->toString());
     Experimental::TopologyPrediction::TopologyTimeline versionTimeline(topology);

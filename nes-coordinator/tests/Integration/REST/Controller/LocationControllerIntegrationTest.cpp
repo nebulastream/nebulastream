@@ -15,9 +15,7 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Services/LocationService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>

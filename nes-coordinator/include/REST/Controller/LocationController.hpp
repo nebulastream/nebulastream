@@ -71,6 +71,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/reconnectSchedule", getReconnectionScheduleOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
+        NES_INFO("Received request to fetch reconnect schedule for node with id {}", nodeId);
         return errorHandler->handleError(Status::CODE_404, "Endpoint Not Implemented");
     }
 

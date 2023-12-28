@@ -73,21 +73,21 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        int rootNodeId = 1;
+        topology = Topology::create();
+        topology->registerTopologyNode(rootNodeId, "localhost", 4000, 4002, 4, properties);
+        topology->setRootTopologyNodeId(rootNodeId);
         auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
         auto physicalSource = PhysicalSource::create(defaultSourceType);
         auto logicalSource = LogicalSource::create("test2", Schema::create());
         // add source to source catalog
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
-        auto sce =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode);
+        auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, rootNodeId);
         sourceCatalog->addPhysicalSource("default_logical", sce);
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-        topology = Topology::create();
-        topology->setRootTopologyNodeId(physicalNode);
         globalQueryPlan = GlobalQueryPlan::create();
         globalExecutionPlan = GlobalExecutionPlan::create();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();

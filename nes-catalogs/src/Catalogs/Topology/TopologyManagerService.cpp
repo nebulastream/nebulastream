@@ -41,14 +41,13 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
     NES_DEBUG("TopologyManagerService::registerWorker: topology before insert");
     NES_DEBUG("", topology->toString());
 
-    WorkerId id;
     // if worker is started with a workerId
-    // then check if an active worker with workerId already exists
-    if (workerId != INVALID_WORKER_NODE_ID && topology->nodeWithWorkerIdExists(workerId)) {
+    // then check if invalid worker id or an active worker with given workerId already exists
+    if (workerId == INVALID_WORKER_NODE_ID || topology->nodeWithWorkerIdExists(workerId)) {
         NES_WARNING("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new "
                     "worker id will be assigned.",
                     workerId);
-        id = getNextWorkerId();
+        workerId = getNextWorkerId();
     }
 
     NES_DEBUG("TopologyManagerService::registerWorker: register node");
@@ -70,7 +69,7 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
 
     NES_DEBUG("TopologyManagerService::registerWorker: topology after insert = ");
     topology->print();
-    return id;
+    return workerId;
 }
 
 bool TopologyManagerService::unregisterNode(WorkerId workerId) {
@@ -117,6 +116,13 @@ bool TopologyManagerService::removeAsParent(WorkerId childId, WorkerId parentId)
     }
     NES_DEBUG("TopologyManagerService::removeAsParent: successful");
     return true;
+}
+
+bool TopologyManagerService::addLinkProperty(NES::WorkerId parentWorkerId,
+                                             NES::WorkerId childWorkerId,
+                                             uint64_t bandwidthInMBPS,
+                                             uint64_t latencyInMS) {
+    return topology->addLinkProperty(parentWorkerId, childWorkerId, bandwidthInMBPS, latencyInMS);
 }
 
 TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return topology->getCopyOfTopologyNodeWithId(nodeId); }

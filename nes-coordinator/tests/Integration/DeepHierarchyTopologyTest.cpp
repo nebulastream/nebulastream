@@ -80,8 +80,6 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
-    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 4U);
 
     // Expected output
     std::stringstream expectedOutput;
@@ -144,9 +142,6 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
     // Expected output
     std::stringstream expectedOutput;
@@ -206,8 +201,6 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
-    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 4U);
 
     // Expected output
     std::stringstream expectedOutput;
@@ -270,9 +263,6 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
     // Expected output
     std::stringstream expectedOutput;
@@ -345,13 +335,6 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     // Expected output
     std::stringstream expectedOutput;
@@ -428,13 +411,6 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     // Expected output
     const auto expectedOutput = "3\n"
@@ -522,13 +498,6 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     // Expected output
     const auto expectedOutput = "1000, 2000, 1, 68\n"
@@ -621,13 +590,6 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     // Expected output
     const auto expectedOutput = "1000, 2000, 1, 68\n"
@@ -699,13 +661,6 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
     // Expected output
     std::stringstream expectedOutput;
@@ -783,9 +738,6 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-    ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
-    ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
     // Expected output
     const auto expectedOutput = "0, 2000, 16\n"

@@ -70,8 +70,7 @@ class TopologyManagerServiceTest : public Testing::BaseIntegrationTest {
 TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyPtr topology = Topology::create();
-    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
+    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;

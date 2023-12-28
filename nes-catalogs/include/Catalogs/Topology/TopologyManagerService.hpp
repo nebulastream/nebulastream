@@ -51,11 +51,11 @@ class TopologyManagerService {
      * @return unique identifier of the worker
      */
     WorkerId registerWorker(WorkerId workerId,
-                                  const std::string& address,
-                                  int64_t grpcPort,
-                                  int64_t dataPort,
-                                  uint16_t numberOfSlots,
-                                  std::map<std::string, std::any> workerProperties);
+                            const std::string& address,
+                            int64_t grpcPort,
+                            int64_t dataPort,
+                            uint16_t numberOfSlots,
+                            std::map<std::string, std::any> workerProperties);
 
     /**
      * Add GeoLocation of a worker node
@@ -102,6 +102,17 @@ class TopologyManagerService {
      * @return bool indicating success
      */
     bool removeAsParent(uint64_t childId, uint64_t parentId);
+
+    /**
+     * @brief Add properties to the link between parent and child topology node
+     * @param parentWorkerId : the parent topology node id
+     * @param childWorkerId : the child topology node id
+     * @param bandwidthInMBPS : the link bandwidth in Mega bytes per second
+     * @param latencyInMS : the link latency in milliseconds
+     * @return true if successful else false
+     */
+    bool
+    addLinkProperty(NES::WorkerId parentWorkerId, NES::WorkerId childWorkerId, uint64_t bandwidthInMBPS, uint64_t latencyInMS);
 
     /**
      * @brief returns a pointer to the node with the specified id
@@ -204,4 +215,4 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 }//namespace NES
 
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYMANAGERSERVICE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYMANAGERSERVICE_HPP_

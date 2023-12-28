@@ -46,7 +46,6 @@
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -816,194 +815,6 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     }
 }
 
-// Test manual placement
-TEST_F(QueryPlacementTest, testManualPlacement) {
-    setupTopologyAndSourceCatalog({4, 4, 4});
-    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::Manual);
-
-    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
-    queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
-    topologySpecificQueryRewrite->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getId();
-
-    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
-                                                     {false, true, true, false, false},
-                                                     {false, false, false, true, true}};
-
-    NES::Optimizer::BasePlacementStrategy::pinOperators(sharedQueryPlan->getQueryPlan(), topology, binaryMapping);
-    auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    queryPlacementPhase->execute(sharedQueryPlan);
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-
-    //Assertion
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
-            }
-        } else {
-            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
-            }
-        }
-    }
-}
-
-// Test manual placement with limited resources. The manual placement should place the operator depending on the mapping
-// without considering the availability of the topology nodes
-// NOTE: IMO we should not allow such placements from happening. This removes the major constraint that prevents over
-// provisioning of operators on a node.
-TEST_F(QueryPlacementTest, DISABLED_testManualPlacementLimitedResources) {
-    setupTopologyAndSourceCatalog({1, 1, 1});// each node only has a capacity of 1
-    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::Manual);
-
-    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
-    queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
-    topologySpecificQueryRewrite->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getId();
-
-    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
-                                                     {false, true, true, false, false},
-                                                     {false, false, false, true, true}};
-
-    NES::Optimizer::ManualPlacementStrategy::pinOperators(sharedQueryPlan->getQueryPlan(), topology, binaryMapping);
-
-    auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    queryPlacementPhase->execute(sharedQueryPlan);
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-
-    //Assertion
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
-            }
-        } else {
-            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
-            }
-        }
-    }
-}
-
-// Test manual placement to place expanded operators in the same topology node
-TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
-    setupTopologyAndSourceCatalog({3, 3, 3});
-    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::Manual);
-
-    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
-    queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
-    topologySpecificQueryRewrite->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getId();
-
-    NES::Optimizer::PlacementMatrix binaryMapping = {{true, true, false, true, false},
-                                                     {false, false, true, false, false},
-                                                     {false, false, false, false, true}};
-
-    NES::Optimizer::ManualPlacementStrategy::pinOperators(sharedQueryPlan->getQueryPlan(), topology, binaryMapping);
-
-    auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    queryPlacementPhase->execute(sharedQueryPlan);
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-
-    //Assertion
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
-            }
-        } else {
-            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
-            }
-        }
-    }
-}
-
 /**
  * Test on a linear topology with one logical source
  * Topology: sinkNode--midNode---srcNode
@@ -1513,12 +1324,11 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 }
 
 /**
+ *
  * Test if TopDownPlacement respects resources constrains
  * Topology: sinkNode(1)--mid1(1)--srcNode1(A)(2)
  *
  * Query: SinkOp--filter()--source(A)
- *
- *
  *
  */
 TEST_F(QueryPlacementTest, testTopDownPlacementWthTightResourcesConstrains) {
@@ -1530,13 +1340,13 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthTightResourcesConstrains) {
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 1, properties);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 4, properties);
+    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 2, properties);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -1641,13 +1451,13 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrains) {
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 1, properties);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 4, properties);
+    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 1, properties);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -1756,16 +1566,16 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrainsInAJo
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 5, properties);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId1 = 2;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4003, 5003, 4, properties);
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4003, 5003, 1, properties);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
     WorkerId srcNodeId2 = 3;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4003, 5003, 4, properties);
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4003, 5003, 1, properties);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
 
     NES_INFO("Topology:\n{}", topology->toString());

@@ -187,10 +187,10 @@ class TopologyNode : public Node {
 
     /**
      * @brief remove a a link property from the stored map
-     * @param linked topology node associated with the link property to remove
+     * @param linkedNodeId topology node associated with the link property to remove
      * @return true if the removal is successful
      */
-    bool removeLinkProperty(const TopologyNodePtr& linkedNode);
+    bool removeLinkProperty(WorkerId linkedNodeId);
 
     /**
      * Experimental

@@ -102,10 +102,18 @@ bool Topology::removeTopologyNode(WorkerId topologyNodeId) {
         NES_WARNING("Removing the root node.");
     }
 
-    auto lockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[topologyNodeId].wlock();
+    if (rootWorkerId == topologyNodeId) {
+        rootWorkerId = INVALID_WORKER_NODE_ID;
+    }
 
+    // Fetch topology node and clear parent child nodes
+    auto lockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[topologyNodeId].wlock();
     (*lockedTopologyNode)->removeAllParent();
     (*lockedTopologyNode)->removeChildren();
+    // ULTRA IMPORTANT COMMON SENSE: Release the lock on the object before its deletion.
+    lockedTopologyNode.unlock();
+
+    // Delete the object
     lockedWorkerIdToTopologyNodeMap->erase(topologyNodeId);
     NES_DEBUG("Successfully removed the node.");
     return true;
@@ -127,6 +135,18 @@ bool Topology::nodeWithWorkerIdExists(WorkerId workerId) {
     return lockedWorkerIdToTopologyNodeMap->contains(workerId);
 }
 
+bool Topology::setForMaintenance(WorkerId workerId, bool state) {
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    if (!lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
+        NES_WARNING("Node with id {} does not exists.", workerId);
+        return false;
+    }
+
+    auto lockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[workerId].wlock();
+    (*lockedTopologyNode)->setForMaintenance(state);
+    return true;
+}
+
 bool Topology::removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWorkerId) {
     NES_INFO("Removing node {} as child to the node {}", childWorkerId, parentWorkerId);
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
@@ -142,6 +162,11 @@ bool Topology::removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId child
 
     auto lockedParentTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[parentWorkerId].wlock();
     auto lockedChildTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[childWorkerId].wlock();
+
+    //Remove associated link property if exists
+    (*lockedParentTopologyNode)->removeLinkProperty(childWorkerId);
+    (*lockedChildTopologyNode)->removeLinkProperty(parentWorkerId);
+
     return (*lockedParentTopologyNode)->remove((*lockedChildTopologyNode));
 }
 
@@ -201,8 +226,13 @@ bool Topology::releaseSlots(WorkerId workerId, uint16_t amountToRelease) {
 TopologyNodeWLock Topology::lockTopologyNode(WorkerId workerId) {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     if (lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
-        return std::make_shared<folly::Synchronized<TopologyNodePtr>::WLockedPtr>(
-            (*lockedWorkerIdToTopologyNodeMap)[workerId].wlock());
+        //Try to acquire a write lock on the topology node
+        auto wLock = (*lockedWorkerIdToTopologyNodeMap)[workerId].tryWLock();
+        if (wLock) {
+            return std::make_shared<folly::Synchronized<TopologyNodePtr>::WLockedPtr>(std::move(wLock));
+        }
+        NES_WARNING("Unable to acquire lock on topology node with id {}", workerId);
+        return nullptr;
     }
     NES_WARNING("Unable to locate topology node with id {}", workerId);
     return nullptr;
@@ -221,19 +251,35 @@ std::vector<WorkerId> Topology::getAllRegisteredNodeIds() {
 std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<WorkerId>& sourceTopologyNodeIds,
                                                        const std::vector<WorkerId>& destinationTopologyNodeIds) {
 
-    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.tryWLock();
+    if (!lockedWorkerIdToTopologyNodeMap) {
+        NES_WARNING("Unable to acquire write lock on the topology to process the find path between request");
+        return {};
+    }
 
     //Fetch the source topology nodes
     std::vector<TopologyNodePtr> sourceTopologyNodes;
-    std::for_each(sourceTopologyNodeIds.begin(), sourceTopologyNodeIds.end(), [&](WorkerId sourceTopologyNodeId) {
-        sourceTopologyNodes.emplace_back((*(*lockedWorkerIdToTopologyNodeMap)[sourceTopologyNodeId].rlock()));
-    });
+    for (auto sourceTopologyNodeId : sourceTopologyNodeIds) {
+        auto readLockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[sourceTopologyNodeId].tryRLock();
+        if (!readLockedTopologyNode) {
+            NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
+                        sourceTopologyNodeId);
+            return {};
+        }
+        sourceTopologyNodes.emplace_back((*readLockedTopologyNode));
+    }
 
     //Fetch the destination topology nodes
     std::vector<TopologyNodePtr> destinationTopologyNodes;
-    std::for_each(destinationTopologyNodeIds.begin(), destinationTopologyNodeIds.end(), [&](WorkerId destinationTopologyNodeId) {
-        destinationTopologyNodes.emplace_back((*(*lockedWorkerIdToTopologyNodeMap)[destinationTopologyNodeId].rlock()));
-    });
+    for (auto destinationTopologyNodeId : destinationTopologyNodeIds) {
+        auto readLockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[destinationTopologyNodeId].tryRLock();
+        if (!readLockedTopologyNode) {
+            NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
+                        destinationTopologyNodeId);
+            return {};
+        }
+        destinationTopologyNodes.emplace_back((*readLockedTopologyNode));
+    }
 
     NES_INFO("Topology: Finding path between set of start and destination nodes");
     std::vector<TopologyNodePtr> startNodesOfGraph;
@@ -262,9 +308,30 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<WorkerI
 std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopologyNodeId, WorkerId destinationTopologyNodeId) {
 
     NES_DEBUG("Topology: Finding path between {} and {}", sourceTopologyNodeId, destinationTopologyNodeId);
-    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
-    auto sourceTopologyNode = (*(*lockedWorkerIdToTopologyNodeMap)[sourceTopologyNodeId].rlock());
-    auto destinationTopologyNode = (*(*lockedWorkerIdToTopologyNodeMap)[sourceTopologyNodeId].rlock());
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.tryWLock();
+    if (!lockedWorkerIdToTopologyNodeMap) {
+        NES_WARNING("Unable to acquire write lock on the topology to process the find path between request");
+        return {};
+    }
+
+    //Fetch the source topology node
+    auto readLockedSourceTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[sourceTopologyNodeId].tryRLock();
+    if (!readLockedSourceTopologyNode) {
+        NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
+                    sourceTopologyNodeId);
+        return {};
+    }
+    auto sourceTopologyNode = (*(readLockedSourceTopologyNode));
+
+    //Fetch the destination topology node
+    std::vector<TopologyNodePtr> destinationTopologyNodes;
+    auto readLockedDestinationTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[destinationTopologyNodeId].tryRLock();
+    if (!readLockedDestinationTopologyNode) {
+        NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
+                    destinationTopologyNodeId);
+        return {};
+    }
+    auto destinationTopologyNode = (*(readLockedDestinationTopologyNode));
 
     std::optional<TopologyNodePtr> result;
     std::vector<TopologyNodePtr> searchedNodes{destinationTopologyNode};
@@ -650,10 +717,10 @@ void Topology::getElegantPayload(nlohmann::json& payload) {
         for (const auto& child : children) {
             // Add edge information for current topology node
             nlohmann::json currentEdgeJsonValue{};
-            currentEdgeJsonValue[LINK_ID_KEY] =
-                std::to_string(child->as<TopologyNode>()->getId()) + "-" + std::to_string(currentNode->getId());
-            //FIXME: -----------------------------------------
-            currentEdgeJsonValue[TRANSFER_RATE_KEY] = "transferRate";
+            WorkerId childNodeId = child->as<TopologyNode>()->getId();
+            currentEdgeJsonValue[LINK_ID_KEY] = std::to_string(childNodeId) + "-" + std::to_string(currentNode->getId());
+            auto linkProperty = currentNode->getLinkProperty(childNodeId);
+            currentEdgeJsonValue[TRANSFER_RATE_KEY] = std::to_string(linkProperty->bandwidth);
             edges.push_back(currentEdgeJsonValue);
             childToAdd.push_back(child->as<TopologyNode>());
         }

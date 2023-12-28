@@ -87,8 +87,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(2u));// first worker should get id 2
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(3u));// second worker should get id 3
 
-    TopologyNodePtr rootNode = topology->getRoot();
-    //    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
+    auto rootTopologyNodeId = topology->getRootTopologyNodeId();
+    const TopologyNodeWLock& lockTopologyNode = topology->lockTopologyNode(rootTopologyNodeId);
+    auto rootNode = lockTopologyNode->operator*();
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     EXPECT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
@@ -97,6 +98,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
     EXPECT_TRUE(node2->getGrpcPort() == *node2RpcPort);
     EXPECT_TRUE(node2->getAvailableResources() == workerNumberOfSlots);
+    lockTopologyNode->unlock();
 
     NES_INFO("ADD NEW PARENT");
     bool successAddPar = wrk->addParent(node2->getId());
@@ -164,17 +166,19 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
 
     TopologyPtr topology = crd->getTopology();
 
-    TopologyNodePtr rootNode = topology->getRoot();
-    //    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
+    auto rootTopologyNodeId = topology->getRootTopologyNodeId();
+    const TopologyNodeWLock& lockTopologyNode = topology->lockTopologyNode(rootTopologyNodeId);
+    auto rootNode = lockTopologyNode->operator*();
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
     EXPECT_TRUE(node1->getGrpcPort() == *node1RpcPort);
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
     EXPECT_TRUE(node2->getGrpcPort() == *node2RpcPort);
+    lockTopologyNode->unlock();
 
     NES_INFO("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node1->getId());
-    EXPECT_TRUE(!successRemoveParent);
+    EXPECT_FALSE(successRemoveParent);
 
     NES_INFO("stopping worker");
     bool retStopWrk = wrk->stop(false);

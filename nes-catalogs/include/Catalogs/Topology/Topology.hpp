@@ -149,6 +149,14 @@ class Topology {
     bool nodeWithWorkerIdExists(WorkerId workerId);
 
     /**
+     * @brief Mark the node with the id for maintenance
+     * @param workerId : worker node id
+     * @param state: true or false
+     * @return true if successful else false
+     */
+    bool setForMaintenance(WorkerId workerId, bool state);
+
+    /**
      * @brief acquire the lock on the topology node
      * @param workerId : the id of the topology node
      * @return true if successfully acquired the lock else false

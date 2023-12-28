@@ -61,31 +61,38 @@ class TopologyIteratorTest : public Testing::BaseUnitTest {
 TEST_F(TopologyIteratorTest, testLinearTopology) {
     TopologyPtr topology = Topology::create();
 
-    topology->setRootTopologyNodeId(rootNode);
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
+    int rootWorkerId = 0;
+    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    int middleNodeId = 1;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    int srcNodeId = 3;
+    topology->registerTopologyNode(srcNodeId, "localhost", 4004, 5004, 4, properties);
 
-    success = topology->addNewTopologyNodeAsChild(mid1, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src1));
+    topology->setRootTopologyNodeId(rootWorkerId);
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId, srcNodeId));
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
+    auto rootLockedTopologyNode = topology->lockTopologyNode(rootWorkerId);
 
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
+    auto bfIterator = BreadthFirstNodeIterator(rootLockedTopologyNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, bfIterator.operator*()->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(middleNodeId, bfIterator.operator*()->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(srcNodeId, bfIterator.operator*()->as<TopologyNode>()->getId());
+
+    auto dfIterator = DepthFirstNodeIterator(rootLockedTopologyNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, dfIterator.operator*()->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
+    EXPECT_EQ(middleNodeId, dfIterator.operator*()->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    EXPECT_EQ(srcNodeId, dfIterator.operator*()->as<TopologyNode>()->getId());
 }
 
 /**
@@ -96,40 +103,44 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
  */
 TEST_F(TopologyIteratorTest, testMultipleSources) {
     TopologyPtr topology = Topology::create();
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    topology->setRootTopologyNodeId(rootNode);
+    WorkerId rootWorkerId = 1;
+    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    WorkerId middleNodeId1 = 2;
+    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    WorkerId srcNodeId1 = 3;
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    WorkerId srcNodeId2 = 4;
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
 
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
+    topology->setRootTopologyNodeId(rootWorkerId);
 
-    success = topology->addNewTopologyNodeAsChild(mid1, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src2));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
+    auto rootNode = topology->lockTopologyNode(rootWorkerId);
+    auto bfIterator = BreadthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*bfIterator)->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(middleNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(srcNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(srcNodeId2, (*bfIterator)->as<TopologyNode>()->getId());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src2, *bfIterator);
-
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
+    auto dfIterator = DepthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
+    EXPECT_EQ(middleNodeId1, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src2, *dfIterator);
+    EXPECT_EQ(srcNodeId2, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    EXPECT_EQ(srcNodeId1, (*dfIterator)->as<TopologyNode>()->getId());
 }
 
 /**
@@ -141,47 +152,51 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
 TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
     TopologyPtr topology = Topology::create();
 
-    topology->setRootTopologyNodeId(rootNode);
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
+    WorkerId rootWorkerId = 1;
+    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    WorkerId middleNodeId1 = 2;
+    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    WorkerId middleNodeId2 = 3;
+    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    WorkerId srcNodeId1 = 5;
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    WorkerId srcNodeId2 = 6;
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
 
-    success = topology->addNewTopologyNodeAsChild(mid1, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src1));
+    topology->setRootTopologyNodeId(rootWorkerId);
 
-    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(mid2));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src2));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId2));
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
+    auto rootNode = topology->lockTopologyNode(rootWorkerId);
+    auto bfIterator = BreadthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*bfIterator)->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(middleNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(srcNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(middleNodeId2, (*bfIterator)->as<TopologyNode>()->getId());
+    ++bfIterator;
+    EXPECT_EQ(srcNodeId2, (*bfIterator)->as<TopologyNode>()->getId());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(mid2, *bfIterator);
-    ++bfIterator;
-    EXPECT_EQ(src2, *bfIterator);
-
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
+    auto dfIterator = DepthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
+    EXPECT_EQ(middleNodeId1, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid2, *dfIterator);
+    EXPECT_EQ(middleNodeId2, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src2, *dfIterator);
+    EXPECT_EQ(srcNodeId2, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    EXPECT_EQ(srcNodeId1, (*dfIterator)->as<TopologyNode>()->getId());
 }
 
 /**
@@ -193,47 +208,52 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
 TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
     TopologyPtr topology = Topology::create();
 
-    topology->setRootTopologyNodeId(rootNode);
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
+    WorkerId rootWorkerId = 1;
+    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    WorkerId middleNodeId1 = 2;
+    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    WorkerId middleNodeId2 = 3;
+    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    WorkerId srcNodeId1 = 5;
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    WorkerId srcNodeId2 = 6;
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
 
-    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(mid2));
+    topology->setRootTopologyNodeId(rootWorkerId);
 
-    success = topology->addNewTopologyNodeAsChild(mid2, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src2));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
+    auto rootNode = topology->lockTopologyNode(rootWorkerId);
+    auto bfIterator = BreadthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
+    EXPECT_EQ(middleNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(mid2, *bfIterator);
+    EXPECT_EQ(middleNodeId2, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(src2, *bfIterator);
+    EXPECT_EQ(srcNodeId2, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
+    EXPECT_EQ(srcNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
 
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
+    auto dfIterator = DepthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
+    EXPECT_EQ(middleNodeId1, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src2, *dfIterator);
+    EXPECT_EQ(srcNodeId2, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid2, *dfIterator);
+    EXPECT_EQ(middleNodeId2, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    EXPECT_EQ(srcNodeId1, (*dfIterator)->as<TopologyNode>()->getId());
 }
 
 /**
@@ -246,52 +266,58 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
  */
 TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
     TopologyPtr topology = Topology::create();
+    
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    topology->setRootTopologyNodeId(rootNode);
+    WorkerId rootWorkerId = 1;
+    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    WorkerId middleNodeId1 = 2;
+    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    WorkerId middleNodeId2 = 3;
+    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    WorkerId middleNodeId3 = 4;
+    topology->registerTopologyNode(middleNodeId3, "localhost", 4001, 5001, 4, properties);
+    WorkerId srcNodeId1 = 5;
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    WorkerId srcNodeId2 = 6;
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
 
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
+    topology->setRootTopologyNodeId(rootWorkerId);
 
-    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(mid2));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, mid3);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(mid3));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid3, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid3->containAsChild(src1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId3));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId3, srcNodeId2));
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
+    auto rootNode = topology->lockTopologyNode(rootWorkerId);
+    
+    // BF iteration
+    auto bfIterator = BreadthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
+    EXPECT_EQ(middleNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(mid2, *bfIterator);
+    EXPECT_EQ(middleNodeId2, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(mid3, *bfIterator);
+    EXPECT_EQ(middleNodeId3, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
+    EXPECT_EQ(srcNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
 
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
+    auto dfIterator = DepthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
+    EXPECT_EQ(middleNodeId1, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid3, *dfIterator);
+    EXPECT_EQ(middleNodeId3, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    EXPECT_EQ(srcNodeId2, (*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid2, *dfIterator);
+    EXPECT_EQ(middleNodeId2, (*dfIterator)->as<TopologyNode>()->getId());
 }
 
 /**
@@ -312,65 +338,69 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
 TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
     TopologyPtr topology = Topology::create();
 
-    topology->setRootTopologyNodeId(rootNode);
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid1));
+    WorkerId rootWorkerId = 1;
+    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    WorkerId middleNodeId1 = 2;
+    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    WorkerId middleNodeId2 = 3;
+    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    WorkerId srcNodeId1 = 4;
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    WorkerId srcNodeId2 = 5;
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
+    WorkerId srcNodeId3 = 6;
+    topology->registerTopologyNode(srcNodeId3, "localhost", 4004, 5004, 4, properties);
+    WorkerId srcNodeId4 = 7;
+    topology->registerTopologyNode(srcNodeId4, "localhost", 4004, 5004, 4, properties);
 
-    success = topology->addNewTopologyNodeAsChild(rootNode, mid2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(rootNode->containAsChild(mid2));
+    topology->setRootTopologyNodeId(rootWorkerId);
 
-    success = topology->addNewTopologyNodeAsChild(mid1, src1);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src1));
-
-    success = topology->addNewTopologyNodeAsChild(mid1, src2);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid1->containAsChild(src2));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src3);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src3));
-
-    success = topology->addNewTopologyNodeAsChild(mid2, src4);
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(mid2->containAsChild(src4));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId3));
+    ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId4));
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
 
+    auto rootNode = topology->lockTopologyNode(rootWorkerId);
+
     // BF iteration
-    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *bfIterator);
+    auto bfIterator = BreadthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(mid1, *bfIterator);
+    EXPECT_EQ(middleNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(mid2, *bfIterator);
+    EXPECT_EQ(middleNodeId2, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(src1, *bfIterator);
+    EXPECT_EQ(srcNodeId1, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(src2, *bfIterator);
+    EXPECT_EQ(srcNodeId2, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(src3, *bfIterator);
+    EXPECT_EQ(srcNodeId3, (*bfIterator)->as<TopologyNode>()->getId());
     ++bfIterator;
-    EXPECT_EQ(src4, *bfIterator);
+    EXPECT_EQ(srcNodeId4, (*bfIterator)->as<TopologyNode>()->getId());
 
     // DF iteration
-    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
-    EXPECT_EQ(rootNode, *dfIterator);
+    auto dfIterator = DepthFirstNodeIterator(rootNode->operator*()).begin();
+    EXPECT_EQ(rootWorkerId,(*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid2, *dfIterator);
+    EXPECT_EQ(middleNodeId2,(*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src4, *dfIterator);
+    EXPECT_EQ(srcNodeId4,(*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src3, *dfIterator);
+    EXPECT_EQ(srcNodeId3,(*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(mid1, *dfIterator);
+    EXPECT_EQ(middleNodeId1,(*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src2, *dfIterator);
+    EXPECT_EQ(srcNodeId2,(*dfIterator)->as<TopologyNode>()->getId());
     ++dfIterator;
-    EXPECT_EQ(src1, *dfIterator);
+    EXPECT_EQ(srcNodeId1,(*dfIterator)->as<TopologyNode>()->getId());
 }
 
 }// namespace NES

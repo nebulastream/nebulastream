@@ -93,26 +93,25 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
     }
 
     void populateTopology() {
-        WorkerId id = 1;
         std::string address = "localhost";
         uint32_t grpcPort = 4000;
         uint32_t dataPort = 5000;
         uint64_t resources = 4;
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
-        rootNode = TopologyNode::create(id, address, grpcPort, dataPort, resources, properties);
-        topology->setRootTopologyNodeId(rootNode);
-        ++id;
+
+        topology->registerTopologyNode(rootId, address, grpcPort, dataPort, resources, properties);
+        topology->setRootTopologyNodeId(rootId);
         ++grpcPort;
         ++dataPort;
-        worker2 = TopologyNode::create(id, address, grpcPort, dataPort, resources, properties);
-        topology->addNewTopologyNodeAsChild(rootNode, worker2);
+        topology->registerTopologyNode(workerId, address, grpcPort, dataPort, resources, properties);
+        topology->addTopologyNodeAsChild(rootId, workerId);
     }
 
     void deployQuery() {
         //register source
         sourceCatalog->addLogicalSource("test", Schema::create()->addField(createField("value", BasicType::UINT64)));
-        sourceCatalogService->registerPhysicalSource(worker2, "physical_test", "test");
+        sourceCatalogService->registerPhysicalSource("physical_test", "test", workerId);
 
         std::string outputFilePath = getTestResourceFolder() / "failQueryRequestTest.out";
         string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
@@ -189,6 +188,9 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
         ASSERT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::DEPLOYED);
     }
+
+    WorkerId rootId = 1;
+    WorkerId workerId = 2;
     std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
     QueryCatalogServicePtr queryCatalogService;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
@@ -203,9 +205,6 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     QueryId queryId{};
     SharedQueryId sharedQueryId{};
-
-    TopologyNodePtr rootNode;
-    TopologyNodePtr worker2;
 };
 
 //test successful execution of fail query request for a single query until the undeployment step, which cannot be done in a unit test
@@ -235,9 +234,9 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
             EXPECT_EQ(e.getMode(), RpcClientModes::Stop);
             const auto failedCallNodeIds = e.getFailedExecutionNodeIds();
             EXPECT_EQ(failedCallNodeIds.size(), 2);
-            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), rootNode->getId()),
+            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), rootId),
                       failedCallNodeIds.cend());
-            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), worker2->getId()),
+            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), workerId),
                       failedCallNodeIds.cend());
 
             //expect the query to be marked for failure and not failed, because the deployment did not succeed
