@@ -55,25 +55,17 @@ bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodePropert
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
 bool TopologyNode::releaseSlots(uint16_t freedSlots) {
-    NES_ASSERT(freedSlots <= totalSlots, "PhysicalNode: amount of resources to free can't be more than actual resources");
-    NES_ASSERT(freedSlots <= occupiedSlots,
-               "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
+    NES_ASSERT(freedSlots <= totalSlots, "Amount of slots to free can't be more than actual resources");
+    NES_ASSERT(freedSlots <= occupiedSlots, "Amount of slots to free can't be more than actual consumed resources");
     occupiedSlots = occupiedSlots - freedSlots;
     return true;
 }
 
-bool TopologyNode::occupySlots(uint16_t usedSlots) {
-    NES_DEBUG("Reducing resources {} Currently occupied {} of {}", usedSlots, occupiedSlots, totalSlots);
-    if (usedSlots > totalSlots) {
-        NES_ERROR("Amount of resources to be used should not be more than actual resources");
-        return false;
-    }
-
-    if (usedSlots > (totalSlots - occupiedSlots)) {
-        NES_ERROR("Amount of resources to be used should not be more than available resources");
-        return false;
-    }
-    occupiedSlots = occupiedSlots + usedSlots;
+bool TopologyNode::occupySlots(uint16_t occupySlots) {
+    NES_DEBUG("Reducing resources {} Currently occupied {} of {}", occupySlots, occupiedSlots, totalSlots);
+    NES_ASSERT(occupySlots <= (totalSlots - occupiedSlots),
+               "Amount of resources to be used should not be more than available resources.");
+    occupiedSlots = occupiedSlots + occupySlots;
     return true;
 }
 
@@ -85,8 +77,8 @@ TopologyNodePtr TopologyNode::copy() {
         properties[key] = value;
     }
     //Create the topologyNode
-    TopologyNodePtr copy = std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, resources, properties);
-    copy->occupiedSlots(occupiedSlots);
+    TopologyNodePtr copy = std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, totalSlots, properties);
+    copy->occupySlots(occupiedSlots);
     //Copy the link properties
     for (const auto& [nodeId, linkProperty] : this->linkProperties) {
         copy->linkProperties[nodeId] = std::make_shared<LinkProperty>(linkProperty->bandwidth, linkProperty->latency);
