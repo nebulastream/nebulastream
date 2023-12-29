@@ -27,9 +27,9 @@ TopologyNode::TopologyNode(WorkerId workerId,
                            const std::string& ipAddress,
                            uint32_t grpcPort,
                            uint32_t dataPort,
-                           uint16_t resources,
+                           uint16_t totalSlots,
                            const std::map<std::string, std::any>& properties)
-    : workerId(workerId), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
+    : workerId(workerId), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), totalSlots(totalSlots), occupiedSlots(0),
       locked(false), nodeProperties(properties) {}
 
 TopologyNodePtr TopologyNode::create(WorkerId workerId,
@@ -48,46 +48,38 @@ uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
-uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
+uint16_t TopologyNode::getAvailableResources() const { return totalSlots - occupiedSlots; }
 
 bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodeProperties[NES::Worker::Properties::MAINTENANCE]); };
 
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
-bool TopologyNode::releaseResources(uint16_t freedCapacity) {
-    if (freedCapacity > resources) {
-        NES_ERROR("Amount of resources to free {} can not be more than total available resources {}.", freedCapacity, resources);
-        return false;
-    }
-
-    if (freedCapacity > usedResources) {
-        NES_ERROR("Amount of resources to free {} can not be more than actual consumed resources {}.",
-                  freedCapacity,
-                  usedResources);
-        return false;
-    }
-    usedResources = usedResources - freedCapacity;
+bool TopologyNode::releaseSlots(uint16_t freedSlots) {
+    NES_ASSERT(freedSlots <= totalSlots, "PhysicalNode: amount of resources to free can't be more than actual resources");
+    NES_ASSERT(freedSlots <= occupiedSlots,
+               "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
+    occupiedSlots = occupiedSlots - freedSlots;
     return true;
 }
 
-bool TopologyNode::occupyResources(uint16_t usedCapacity) {
-    NES_DEBUG("Reducing resources {} Currently occupied {} of {}", usedCapacity, usedResources, resources);
-    if (usedCapacity > resources) {
+bool TopologyNode::occupySlots(uint16_t usedSlots) {
+    NES_DEBUG("Reducing resources {} Currently occupied {} of {}", usedSlots, occupiedSlots, totalSlots);
+    if (usedSlots > totalSlots) {
         NES_ERROR("Amount of resources to be used should not be more than actual resources");
         return false;
     }
 
-    if (usedCapacity > (resources - usedResources)) {
+    if (usedSlots > (totalSlots - occupiedSlots)) {
         NES_ERROR("Amount of resources to be used should not be more than available resources");
         return false;
     }
-    usedResources = usedResources + usedCapacity;
+    occupiedSlots = occupiedSlots + usedSlots;
     return true;
 }
 
 TopologyNodePtr TopologyNode::copy() {
-    TopologyNodePtr copy = std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, resources, nodeProperties);
-    copy->occupyResources(usedResources);
+    TopologyNodePtr copy = std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, totalSlots, nodeProperties);
+    copy->occupySlots(occupiedSlots);
     copy->linkProperties = this->linkProperties;
     return copy;
 }
@@ -96,8 +88,8 @@ std::string TopologyNode::getIpAddress() const { return ipAddress; }
 
 std::string TopologyNode::toString() const {
     std::stringstream ss;
-    ss << "PhysicalNode[id=" + std::to_string(workerId) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
-            + ", usedResource=" + std::to_string(usedResources) + "]";
+    ss << "PhysicalNode[id=" + std::to_string(workerId) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(totalSlots)
+            + ", usedResource=" + std::to_string(occupiedSlots) + "]";
     return ss.str();
 }
 
@@ -131,7 +123,6 @@ bool TopologyNode::hasNodeProperty(const std::string& key) {
 std::any TopologyNode::getNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
         NES_ERROR("Property '{}' does not exist", key);
-        NES_THROW_RUNTIME_ERROR("Property '" << key << "'does not exist");
     } else {
         return nodeProperties.at(key);
     }
@@ -153,7 +144,6 @@ void TopologyNode::addLinkProperty(const TopologyNodePtr& linkedNode, const Link
 LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
         NES_ERROR("Link property with node '{}' does not exist", linkedNode->getId());
-        NES_THROW_RUNTIME_ERROR("Link property to node with id='" << linkedNode->getId() << "' does not exist");
     } else {
         return linkProperties.at(linkedNode->getId());
     }

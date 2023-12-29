@@ -349,21 +349,21 @@ bool Topology::removeNodeAsChild(const TopologyNodePtr& parentNode, const Topolo
     return parentNode->remove(childNode);
 }
 
-bool Topology::occupyResources(WorkerId workerId, uint16_t amountToReduce) {
+bool Topology::occupySlots(WorkerId workerId, uint16_t amountToOccupy) {
     std::unique_lock lock(topologyLock);
-    NES_INFO("Topology: Reduce {} resources from node with id {}", amountToReduce, workerId);
+    NES_INFO("Topology: Reduce {} resources from node with id {}", amountToOccupy, workerId);
     if (workerIdToTopologyNode.contains(workerId)) {
-        return workerIdToTopologyNode[workerId]->occupyResources(amountToReduce);
+        return workerIdToTopologyNode[workerId]->occupySlots(amountToOccupy);
     }
     NES_WARNING("Topology: Unable to find node with id {}", workerId);
     return false;
 }
 
-bool Topology::releaseResources(WorkerId workerId, uint16_t amountToIncrease) {
+bool Topology::releaseSlots(WorkerId workerId, uint16_t amountToRelease) {
     std::unique_lock lock(topologyLock);
-    NES_INFO("Topology: Increase {} resources from node with id {}", amountToIncrease, workerId);
+    NES_INFO("Topology: Increase {} resources from node with id {}", amountToRelease, workerId);
     if (workerIdToTopologyNode.contains(workerId)) {
-        return workerIdToTopologyNode[workerId]->releaseResources(amountToIncrease);
+        return workerIdToTopologyNode[workerId]->releaseSlots(amountToRelease);
     }
     NES_WARNING("Topology: Unable to find node with id {}", workerId);
     return false;

@@ -139,18 +139,18 @@ class Topology {
     /**
      * @brief Increase the amount of resources on the node with the id
      * @param workerId : the node id
-     * @param amountToIncrease : resources to free
+     * @param amountToRelease : resources to free
      * @return true if successful
      */
-    bool releaseResources(WorkerId workerId, uint16_t amountToIncrease);
+    bool releaseSlots(WorkerId workerId, uint16_t amountToRelease);
 
     /**
      * @brief Reduce the amount of resources on the node with given id
      * @param workerId : the worker id
-     * @param amountToReduce : amount of resources to reduce
+     * @param amountToOccupy : amount of resources to reduce
      * @return true if successful
      */
-    bool occupyResources(WorkerId workerId, uint16_t amountToReduce);
+    bool occupySlots(WorkerId workerId, uint16_t amountToOccupy);
 
     /**
      * @brief Merge the sub graphs starting from the nodes into a single sub-graph

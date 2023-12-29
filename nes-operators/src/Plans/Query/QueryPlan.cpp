@@ -165,17 +165,10 @@ OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
             return rootOperator;
         }
 
-        for (const auto& child : rootOperator->getChildren()) {
-            NES_TRACE("QueryPlan: Searching for {} in the children", operatorId);
-            const auto& childOperator = child->as<OperatorNode>();
-            if (childOperator->getId() == operatorId) {
-                return childOperator;
-            }
-
-            auto matchedOperator = childOperator->getChildWithOperatorId(operatorId);
-            if (matchedOperator) {
-                return matchedOperator->as<OperatorNode>();
-            }
+        //Look up in the child operators
+        auto matchedOperator = rootOperator->getChildWithOperatorId(operatorId);
+        if (matchedOperator) {
+            return matchedOperator->as<OperatorNode>();
         }
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");

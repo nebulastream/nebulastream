@@ -135,7 +135,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             if (subPlanStatus == QueryState::MIGRATING) {
                 globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlan->getQuerySubPlanId());
                 auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(querySubPlan);
-                node->getTopologyNode()->releaseResources(resourceAmount);
+                node->getTopologyNode()->releaseSlots(resourceAmount);
             }
         }
     }

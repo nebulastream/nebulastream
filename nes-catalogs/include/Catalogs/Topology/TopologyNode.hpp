@@ -57,7 +57,7 @@ class TopologyNode : public Node {
                           const std::string& ipAddress,
                           uint32_t grpcPort,
                           uint32_t dataPort,
-                          uint16_t resources,
+                          uint16_t totalSlots,
                           const std::map<std::string, std::any>& properties);
 
     ~TopologyNode() override = default;
@@ -93,13 +93,13 @@ class TopologyNode : public Node {
      * @param uint64_t of the value that has to be subtracted
      * @return 
      */
-    bool occupyResources(uint16_t usedCapacity);
+    bool occupySlots(uint16_t usedSlots);
 
     /**
      * @brief method to increase CPU capacity
      * @param uint64_t of the vlaue that has to be added
      */
-    bool releaseResources(uint16_t freedCapacity);
+    bool releaseSlots(uint16_t freedSlots);
 
     /**
      * @brief Get ip address of the node
@@ -212,8 +212,8 @@ class TopologyNode : public Node {
     std::string ipAddress;
     uint32_t grpcPort;
     uint32_t dataPort;
-    uint16_t resources;
-    uint16_t usedResources;
+    uint16_t totalSlots;
+    uint16_t occupiedSlots;
     std::atomic<bool> locked;
 
     /**
