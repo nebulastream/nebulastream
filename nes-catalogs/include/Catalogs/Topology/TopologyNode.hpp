@@ -93,7 +93,7 @@ class TopologyNode : public Node {
      * @param uint64_t of the value that has to be subtracted
      * @return 
      */
-    bool occupySlots(uint16_t usedSlots);
+    bool occupySlots(uint16_t occupySlots);
 
     /**
      * @brief method to increase CPU capacity
