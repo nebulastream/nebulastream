@@ -124,8 +124,7 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName,
             if (sourceConfigMap.find(Configurations::TUPLE_SEPARATOR_CONFIG) != sourceConfigMap.end()) {
                 tupleSeparator->setValue(sourceConfigMap.find(Configurations::TUPLE_SEPARATOR_CONFIG)->second[0]);
             } else {
-                NES_THROW_RUNTIME_ERROR("TCPSourceType: You want to use a tuple separator to obtain the size of a message, "
-                                        "however, you have not defined a tuple separator. Please define tupleSeparator");
+               tupleSeparator->setValue(tupleSeparator->getDefaultValue());
             }
             break;
         case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:
@@ -196,8 +195,7 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
                 && yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>() != "\n") {
                 tupleSeparator->setValue(yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>()[0]);
             } else {
-                NES_THROW_RUNTIME_ERROR("TCPSourceType: You want to use a tuple separator to obtain the size of a message, "
-                                        "however, you have not defined a tuple separator. Please define tupleSeparator");
+                tupleSeparator->setValue(tupleSeparator->getDefaultValue());
             }
             break;
         case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:
