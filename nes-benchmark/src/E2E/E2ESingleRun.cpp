@@ -406,7 +406,6 @@ PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::string logical
         kafkaSourceType->setGroupId(std::to_string(groupId));
         kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
         kafkaSourceType->setBatchSize(configOverAllRuns.batchSize->getValue());
-
         return kafkaSourceType;
 #else
         NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
