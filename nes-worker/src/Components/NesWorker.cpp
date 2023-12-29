@@ -264,13 +264,6 @@ bool NesWorker::stop(bool) {
         NES_INFO("Sending disconnect request to coordinator");
         disconnect();
 
-        NES_INFO("NesWorker::stopping health check");
-        if (healthCheckService) {
-            healthCheckService->stopHealthCheck();
-        } else {
-            NES_WARNING("No health check service was created");
-        }
-
         if (workerMobilityHandler) {
             workerMobilityHandler->stop();
             NES_INFO("triggered stopping of location update push thread");
@@ -337,6 +330,8 @@ bool NesWorker::connect() {
     registrationRequest.set_grpcport(localWorkerRpcPort.load());
     registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
     registrationRequest.set_numberofslots(workerConfig->numberOfSlots.getValue());
+    registrationRequest.set_bandwidthinmbps(workerConfig->bandwidth.getValue());
+    registrationRequest.set_latencyinms(workerConfig->latency.getValue());
     registrationRequest.mutable_registrationmetrics()->Swap(monitoringAgent->getRegistrationMetrics().serialize().get());
     //todo: what about this?
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
@@ -393,7 +388,7 @@ bool NesWorker::connect() {
         NES_DEBUG("NesWorker::registerWorker rpc register success with id {}", workerId);
         connected = true;
         nodeEngine->setNodeId(workerId);
-        healthCheckService = std::make_unique<WorkerHealthCheckService>(coordinatorRpcClient,
+        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
                                                                         HEALTH_SERVICE_NAME,
                                                                         this->inherited0::shared_from_this());
         NES_DEBUG("NesWorker start health check");
@@ -432,6 +427,14 @@ bool NesWorker::disconnect() {
             NES_INFO("unregistered = {}", success);
             NES_ASSERT(success, "cannot register");
         }
+
+        NES_INFO("NesWorker::stopping health check");
+        if (healthCheckService) {
+            healthCheckService->stopHealthCheck();
+        } else {
+            NES_WARNING("No health check service was created");
+        }
+
         NES_DEBUG("NesWorker::registerWorker rpc unregister success");
         connected = false;
         return true;

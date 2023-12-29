@@ -99,6 +99,14 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             if (optional.has_value()) {
                 return optional.value();
             }
+
+            if (!reqJson.contains("bandwidth")) {
+                return errorHandler->handleError(Status::CODE_400, " Request body missing 'bandwidth'");
+            }
+            if (!reqJson.contains("latency")) {
+                return errorHandler->handleError(Status::CODE_400, " Request body missing 'latency'");
+            }
+
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
             bool added = topologyManagerService->addParent(childId, parentId);
@@ -106,8 +114,26 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
             } else {
                 NES_ERROR("TopologyController::handlePost:addParent: Failed");
-                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
+                return errorHandler->handleError(
+                    Status::CODE_500,
+                    "TopologyController::handlePost:addParent: Failed to add link between parent and child nodes.");
             }
+
+            uint64_t bandwidth = reqJson["bandwidth"].get<uint64_t>();
+            uint64_t latency = reqJson["latency"].get<uint64_t>();
+
+            bool success = topologyManagerService->addLinkProperty(parentId, childId, bandwidth, latency);
+            if (success) {
+                NES_DEBUG("TopologyController::handlePost:addParent: added link property for the link between the parent {} and "
+                          "child {} nodes.",
+                          parentId,
+                          childId);
+            } else {
+                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+                return errorHandler->handleError(Status::CODE_500,
+                                                 "TopologyController::handlePost:addParent: Failed to add link property.");
+            }
+
             //Prepare the response
             nlohmann::json response;
             response["success"] = added;

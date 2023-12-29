@@ -284,7 +284,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr workerMobilityHandler;
     std::atomic<bool> isRunning{false};
     WorkerId workerId;
-    std::unique_ptr<WorkerHealthCheckService> healthCheckService;
+    std::shared_ptr<WorkerHealthCheckService> healthCheckService;
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
