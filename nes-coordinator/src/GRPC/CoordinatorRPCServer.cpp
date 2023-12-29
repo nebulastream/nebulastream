@@ -87,8 +87,8 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     auto slots = registrationRequest->numberofslots();
     //construct worker property from the request
     std::map<std::string, std::any> workerProperties;
-    workerProperties[NES::Worker::Properties::MAINTENANCE] =
-        false;//During registration, we assume the node is not under maintenance
+    workerProperties[NES::Worker::Properties::MAINTENANCE] = false;// During registration,
+                                                                   // we assume that the node is not under maintenance
     workerProperties[NES::Worker::Configuration::TENSORFLOW_SUPPORT] = registrationRequest->tfsupported();
     workerProperties[NES::Worker::Configuration::JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
     workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
@@ -96,11 +96,16 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     deserializeOpenCLDeviceInfo(workerProperties[NES::Worker::Configuration::OPENCL_DEVICES],
                                 registrationRequest->opencldevices());
 
-    // check if an inactive worker with workerId already exists
+    // check if an inactive worker with configWorkerId already exists
+    // else assign an invalid worker id
     if (coordinatorHealthCheckService && coordinatorHealthCheckService->isWorkerInactive(configWorkerId)) {
         // node is re-registering (was inactive and became active again)
         NES_TRACE("TopologyManagerService::registerWorker: node with worker id {} is re-registering", configWorkerId);
         coordinatorHealthCheckService->removeNodeFromHealthCheck(configWorkerId);
+        // Remove the old topology node
+        topologyManagerService->removeTopologyNode(configWorkerId);
+    } else {
+        configWorkerId = INVALID_WORKER_NODE_ID;
     }
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
@@ -123,8 +128,8 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     monitoringManager->addMonitoringData(workerId, registrationMetrics);
 
     if (coordinatorHealthCheckService) {
-        std::string grpcAddress = address + ":" + std::to_string(grpcPort);
         //add node to health check
+        std::string grpcAddress = address + ":" + std::to_string(grpcPort);
         coordinatorHealthCheckService->addNodeToHealthCheck(workerId, grpcAddress);
     }
 
@@ -143,11 +148,7 @@ CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerReq
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request ={}", request->DebugString());
 
     google::protobuf::uint64 workerId = request->workerid();
-    auto spatialType = topologyManagerService->findNodeWithId(workerId)->getSpatialNodeType();
-    bool success = topologyManagerService->removeGeoLocation(workerId)
-        || spatialType == NES::Spatial::Experimental::SpatialType::NO_LOCATION
-        || spatialType == NES::Spatial::Experimental::SpatialType::INVALID;
-    if (success) {
+    if (topologyManagerService->topologyNodeWithIdExists(workerId)) {
         if (!topologyManagerService->unregisterNode(workerId)) {
             NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
             reply->set_success(false);
@@ -163,10 +164,11 @@ CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerReq
         NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
         reply->set_success(true);
         return Status::OK;
+    } else {
+        NES_ERROR("CoordinatorRPCServer::UnregisterNode: Node with id {} does not exists.", workerId);
+        reply->set_success(false);
+        return Status::CANCELLED;
     }
-    NES_ERROR("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
-    reply->set_success(false);
-    return Status::CANCELLED;
 }
 
 Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
@@ -452,14 +454,13 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
 
 Status CoordinatorRPCServer::GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) {
     auto nodeId = request->nodeid();
-    auto node = topologyManagerService->findNodeWithId(nodeId);
-    auto replyParents = reply->mutable_parentids();
-    if (node) {
-        auto parents = topologyManagerService->findNodeWithId(nodeId)->getParents();
-        replyParents->Reserve(parents.size());
-        for (const auto& parent : parents) {
+    if (topologyManagerService->topologyNodeWithIdExists(nodeId)) {
+        auto replyParents = reply->mutable_parentids();
+        auto parentIds = topologyManagerService->getParentTopologyNodeIds(nodeId);
+        replyParents->Reserve(parentIds.size());
+        for (const auto& parentId : parentIds) {
             auto newId = replyParents->Add();
-            *newId = parent->as<TopologyNode>()->getId();
+            *newId = parentId;
         }
         return Status::OK;
     }

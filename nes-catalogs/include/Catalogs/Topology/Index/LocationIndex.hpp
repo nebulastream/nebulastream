@@ -134,7 +134,6 @@ class LocationIndex {
      */
     bool setFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
-    mutable std::recursive_mutex locationIndexMutex;
     // Map containing locations of all registered worker nodes
     std::unordered_map<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation> workerGeoLocationMap;
 #ifdef S2DEF

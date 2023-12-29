@@ -170,15 +170,13 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 "Could not add parent for node in topology: childId and parentId must be different.");
         }
 
-        TopologyNodePtr childPhysicalNode = topologyManagerService->findNodeWithId(childId);
-        if (!childPhysicalNode) {
+        if (!topologyManagerService->topologyNodeWithIdExists(childId)) {
             return errorHandler->handleError(
                 Status::CODE_400,
                 "Could not add parent for node in topology: Node with childId=" + std::to_string(childId) + " not found.");
         }
 
-        TopologyNodePtr parentPhysicalNode = topologyManagerService->findNodeWithId(parentId);
-        if (!parentPhysicalNode) {
+        if (!topologyManagerService->topologyNodeWithIdExists(parentId)) {
             return errorHandler->handleError(
                 Status::CODE_400,
                 "Could not add parent for node in topology: Node with parentId=" + std::to_string(parentId) + " not found.");

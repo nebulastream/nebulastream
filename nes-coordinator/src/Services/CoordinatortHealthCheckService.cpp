@@ -31,7 +31,7 @@ CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServ
 }
 
 void CoordinatorHealthCheckService::startHealthCheck() {
-    NES_DEBUG("CoordinatorHealthCheckService::startHealthCheck");
+    NES_INFO("CoordinatorHealthCheckService::startHealthCheck");
     isRunning = true;
     NES_DEBUG("start health checking on coordinator");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
@@ -40,9 +40,8 @@ void CoordinatorHealthCheckService::startHealthCheck() {
         while (isRunning) {
             for (auto node : topologyIdToRPCAddressMap.lock_table()) {
                 std::string destAddress = node.second;
-
                 //check health
-                NES_TRACE("NesCoordinator::healthCheck: checking node= {}", destAddress);
+                NES_INFO("NesCoordinator::healthCheck: checking node= {}", destAddress);
                 auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
                 if (res) {
                     NES_TRACE("NesCoordinator::healthCheck: node={} is alive", destAddress);

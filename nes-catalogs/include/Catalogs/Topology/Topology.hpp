@@ -16,6 +16,7 @@
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
 
 #include <Identifiers.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <any>
 #include <folly/Synchronized.h>
 #include <map>
@@ -79,12 +80,6 @@ class Topology {
     void setRootTopologyNodeId(WorkerId workerId);
 
     /**
-     * @brief Register a new node in the topology map without creating parent child relationship
-     * @param newTopologyNode : the shared pointer of the new node
-     * @return true if registered else false
-     */
-
-    /**
      * @brief Register a new topology node in the topology
      * @param workerId : the id of the topology node
      * @param address : the host name
@@ -100,6 +95,13 @@ class Topology {
                               const int64_t dataPort,
                               const uint16_t numberOfSlots,
                               std::map<std::string, std::any> workerProperties);
+
+    /**
+     * @brief returns a vector of parent topology node ids connected to the specified topology node
+     * @param nodeId: id of the specified topology node
+     * @return vector of parent node ids
+     */
+    std::vector<WorkerId> getParentTopologyNodeIds(WorkerId nodeId);
 
     /**
      * @brief This method will add the a topology node as child to the parent with provided Id
@@ -237,6 +239,13 @@ class Topology {
     bool updateGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
+     * @brief Get spatial type of the topology node with given id
+     * @param workerId : the topology node id
+     * @return Spatial type if defined else Invalid
+     */
+    NES::Spatial::Experimental::SpatialType getSpatialType(WorkerId workerId);
+
+    /**
      * Remove geolocation of worker node
      * @param workerId : worker id whose location is to be removed
      * @return true if successful
@@ -357,7 +366,7 @@ class Topology {
     //TODO: At present we assume that we have only one root node
     WorkerId rootWorkerId;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
-    NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
+    folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
 };
 }// namespace NES

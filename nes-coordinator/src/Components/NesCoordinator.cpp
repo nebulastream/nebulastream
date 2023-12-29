@@ -86,6 +86,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    coordinatorHealthCheckService =
+        std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, HEALTH_SERVICE_NAME, this->coordinatorConfiguration);
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
@@ -226,11 +228,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
             NES_THROW_RUNTIME_ERROR("Error while staring rest server!");
         }
     }));
-
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-    coordinatorHealthCheckService =
-        std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, HEALTH_SERVICE_NAME, coordinatorConfiguration);
     NES_DEBUG("NesCoordinator start health check");
     coordinatorHealthCheckService->startHealthCheck();
 

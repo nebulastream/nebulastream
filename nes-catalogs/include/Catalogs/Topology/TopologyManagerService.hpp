@@ -115,11 +115,18 @@ class TopologyManagerService {
     addLinkProperty(NES::WorkerId parentWorkerId, NES::WorkerId childWorkerId, uint64_t bandwidthInMBPS, uint64_t latencyInMS);
 
     /**
-     * @brief returns a pointer to the node with the specified id
-     * @param nodeId
-     * @return TopologyNodePtr (or a nullptr if there is no node with this id)
+     * @brief Check if the node with the specified id exists
+     * @param nodeId: the topology node id to check
+     * @return true if exists else false
      */
-    TopologyNodePtr findNodeWithId(WorkerId nodeId);
+    bool topologyNodeWithIdExists(WorkerId nodeId);
+
+    /**
+     * @brief returns a vector of parent topology node ids connected to the specified topology node
+     * @param nodeId: id of the specified topology node
+     * @return vector of parent node ids
+     */
+    std::vector<WorkerId> getParentTopologyNodeIds(WorkerId nodeId);
 
     /**
      * Experimental

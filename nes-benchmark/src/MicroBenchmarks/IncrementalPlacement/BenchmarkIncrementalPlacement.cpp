@@ -169,13 +169,6 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
         topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, std::to_string(i), 0, 0, UINT16_MAX, properties);
     }
 
-
-    auto node1 = topologyManagerService->findNodeWithId(1);
-    auto node2 = topologyManagerService->findNodeWithId(2);
-    auto node3 = topologyManagerService->findNodeWithId(3);
-    auto node4 = topologyManagerService->findNodeWithId(4);
-    auto node5 = topologyManagerService->findNodeWithId(5);
-
     topologyManagerService->addLinkProperty(1, 2, 512, 100);
     topologyManagerService->addLinkProperty(2, 3, 512, 100);
     topologyManagerService->addLinkProperty(3, 4, 512, 100);

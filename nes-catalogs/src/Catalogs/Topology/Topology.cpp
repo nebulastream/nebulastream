@@ -59,10 +59,27 @@ bool Topology::registerTopologyNode(WorkerId workerId,
     return false;
 }
 
+std::vector<WorkerId> Topology::getParentTopologyNodeIds(NES::WorkerId nodeId) {
+
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    if (!lockedWorkerIdToTopologyNodeMap->contains(nodeId)) {
+        NES_WARNING("No parent topology node with id {} registered.", nodeId);
+        return {};
+    }
+
+    std::vector<WorkerId> parentIds;
+    auto lockedParent = (*lockedWorkerIdToTopologyNodeMap)[nodeId].rlock();
+    auto parents = (*lockedParent)->getParents();
+    for (const auto& parent : parents) {
+        parentIds.emplace_back(parent->as<TopologyNode>()->getId());
+    }
+    return parentIds;
+}
+
 bool Topology::addTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWorkerId) {
 
     if (parentWorkerId == childWorkerId) {
-        NES_ERROR("Can not add link to itself");
+        NES_ERROR("Can not add link to itself.");
         return false;
     }
 
@@ -99,10 +116,7 @@ bool Topology::removeTopologyNode(WorkerId topologyNodeId) {
     }
 
     if (rootWorkerId == topologyNodeId) {
-        NES_WARNING("Removing the root node.");
-    }
-
-    if (rootWorkerId == topologyNodeId) {
+        NES_WARNING("Removing the root node {}.", topologyNodeId);
         rootWorkerId = INVALID_WORKER_NODE_ID;
     }
 
@@ -149,6 +163,12 @@ bool Topology::setForMaintenance(WorkerId workerId, bool state) {
 
 bool Topology::removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWorkerId) {
     NES_INFO("Removing node {} as child to the node {}", childWorkerId, parentWorkerId);
+
+    if (parentWorkerId == childWorkerId) {
+        NES_WARNING("Can not remove self as child");
+        return false;
+    }
+
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     if (!lockedWorkerIdToTopologyNodeMap->contains(parentWorkerId)) {
         NES_WARNING("The physical node {} doesn't exists in the system.", parentWorkerId);
@@ -175,6 +195,12 @@ bool Topology::addLinkProperty(NES::WorkerId parentWorkerId,
                                uint64_t bandwidthInMBPS,
                                uint64_t latencyInMS) {
     NES_INFO("Removing node {} as child to the node {}", childWorkerId, parentWorkerId);
+
+    if (parentWorkerId == childWorkerId) {
+        NES_WARNING("Can not add link property to self.");
+        return false;
+    }
+
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
 
     //Check if the two nodes exists
@@ -518,6 +544,7 @@ nlohmann::json Topology::toJson() {
     }
 
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    auto lockedLocationIndex = locationIndex.wlock();
     auto root = (*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock();
     std::deque<TopologyNodePtr> parentToAdd{(*root)};
     std::deque<TopologyNodePtr> childToAdd;
@@ -536,7 +563,7 @@ nlohmann::json Topology::toJson() {
         currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
         currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
         if (currentNode->getSpatialNodeType() != NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            auto geoLocation = locationIndex->getGeoLocationForNode(currentNode->getId());
+            auto geoLocation = (*lockedLocationIndex)->getGeoLocationForNode(currentNode->getId());
             auto locationInfo = nlohmann::json{};
             if (geoLocation.has_value() && geoLocation.value().isValid()) {
                 locationInfo["latitude"] = geoLocation.value().getLatitude();
@@ -619,7 +646,8 @@ void Topology::print() { NES_DEBUG("Topology print:{}", toString()); }
 
 std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
 Topology::getTopologyNodeIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation center, double radius) {
-    return locationIndex->getNodeIdsInRange(center, radius);
+    auto lockedLocationIndex = locationIndex.wlock();
+    return (*lockedLocationIndex)->getNodeIdsInRange(center, radius);
 }
 
 bool Topology::addGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
@@ -636,11 +664,13 @@ bool Topology::addGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experi
     if (geoLocation.isValid()
         && (*lockedTopologyNode)->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: {}, {}", geoLocation.getLatitude(), geoLocation.getLongitude());
-        locationIndex->initializeFieldNodeCoordinates(workerId, std::move(geoLocation));
+        auto lockedLocationIndex = locationIndex.wlock();
+        (*lockedLocationIndex)->initializeFieldNodeCoordinates(workerId, std::move(geoLocation));
     } else {
         NES_DEBUG("added node is a non field node");
         if ((*lockedTopologyNode)->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            locationIndex->addMobileNode(workerId, std::move(geoLocation));
+            auto lockedLocationIndex = locationIndex.wlock();
+            (*lockedLocationIndex)->addMobileNode(workerId, std::move(geoLocation));
             NES_DEBUG("added node is a mobile node");
         } else {
             NES_DEBUG("added node is a non mobile node");
@@ -663,17 +693,29 @@ bool Topology::updateGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Exp
     if (geoLocation.isValid()
         && (*lockedTopologyNode)->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: {}, {}", geoLocation.getLatitude(), geoLocation.getLongitude());
-        locationIndex->updateFieldNodeCoordinates(workerId, std::move(geoLocation));
+        auto lockedLocationIndex = locationIndex.wlock();
+        (*lockedLocationIndex)->updateFieldNodeCoordinates(workerId, std::move(geoLocation));
     } else {
         NES_DEBUG("added node is a non field node");
         if ((*lockedTopologyNode)->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            locationIndex->addMobileNode(workerId, std::move(geoLocation));
+            auto lockedLocationIndex = locationIndex.wlock();
+            (*lockedLocationIndex)->addMobileNode(workerId, std::move(geoLocation));
             NES_DEBUG("added node is a mobile node");
         } else {
             NES_DEBUG("added node is a non mobile node");
         }
     }
     return true;
+}
+
+Spatial::Experimental::SpatialType Topology::getSpatialType(WorkerId workerId) {
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    if (!lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
+        NES_ERROR("Unable to find node with id {}", workerId);
+        return Spatial::Experimental::SpatialType::INVALID;
+    }
+    auto lockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[workerId].wlock();
+    return (*lockedTopologyNode)->getSpatialNodeType();
 }
 
 bool Topology::removeGeoLocation(WorkerId workerId) {
@@ -683,11 +725,13 @@ bool Topology::removeGeoLocation(WorkerId workerId) {
         return false;
     }
     lockedWorkerIdToTopologyNodeMap.unlock();
-    return locationIndex->removeNodeFromSpatialIndex(workerId);
+    auto lockedLocationIndex = locationIndex.wlock();
+    return (*lockedLocationIndex)->removeNodeFromSpatialIndex(workerId);
 }
 
 std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> Topology::getGeoLocationForNode(WorkerId nodeId) {
-    return locationIndex->getGeoLocationForNode(nodeId);
+    auto lockedLocationIndex = locationIndex.wlock();
+    return (*lockedLocationIndex)->getGeoLocationForNode(nodeId);
 }
 
 void Topology::getElegantPayload(nlohmann::json& payload) {
@@ -743,8 +787,8 @@ nlohmann::json Topology::requestNodeLocationDataAsJson(WorkerId workerId) {
     if (!nodeWithWorkerIdExists(workerId)) {
         return nullptr;
     }
-
-    auto geoLocation = locationIndex->getGeoLocationForNode(workerId);
+    auto lockedLocationIndex = locationIndex.wlock();
+    auto geoLocation = (*lockedLocationIndex)->getGeoLocationForNode(workerId);
     if (geoLocation.has_value()) {
         return convertNodeLocationInfoToJson(workerId, geoLocation.value());
     } else {
@@ -755,13 +799,16 @@ nlohmann::json Topology::requestNodeLocationDataAsJson(WorkerId workerId) {
 }
 
 nlohmann::json Topology::requestLocationAndParentDataFromAllMobileNodes() {
-    auto nodeVector = locationIndex->getAllNodeLocations();
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    auto lockedLocationIndex = locationIndex.wlock();
+    auto nodeVector = (*lockedLocationIndex)->getAllNodeLocations();
     auto locationMapJson = nlohmann::json::array();
     auto mobileEdgesJson = nlohmann::json::array();
     uint32_t count = 0;
     uint32_t edgeCount = 0;
+
     for (const auto& [nodeId, location] : nodeVector) {
-        auto topologyNode = getCopyOfTopologyNodeWithId(nodeId);
+        auto topologyNode = (*(*lockedWorkerIdToTopologyNodeMap)[nodeId].rlock());
         if (topologyNode && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
             nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
             locationMapJson[count] = nodeInfo;

@@ -214,22 +214,35 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
         });
 }
 
-bool CoordinatorRPCClient::unregisterPhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalSource physical source {} from logical source", physicalSourceName);
+bool CoordinatorRPCClient::unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes) {
 
-    UnregisterPhysicalSourceRequest request;
-    request.set_workerid(workerId);
-    request.set_physicalsourcename(physicalSourceName);
-    request.set_logicalsourcename(logicalSourceName);
-    NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalSourceRequest request={}", request.DebugString());
+    for (const auto& physicalSourceType : physicalSourceTypes) {
 
-    return detail::processGenericRpc<bool, UnregisterPhysicalSourceRequest, UnregisterPhysicalSourceReply>(
-        request,
-        rpcRetryAttemps,
-        rpcBackoff,
-        [this](ClientContext* context, const UnregisterPhysicalSourceRequest& request, UnregisterPhysicalSourceReply* reply) {
-            return coordinatorStub->UnregisterPhysicalSource(context, request, reply);
-        });
+        NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalSource physical source {} from logical source",
+                  physicalSourceType->toString());
+
+        UnregisterPhysicalSourceRequest request;
+        request.set_workerid(workerId);
+        const std::string& physicalSourceName = physicalSourceType->getPhysicalSourceName();
+        request.set_physicalsourcename(physicalSourceName);
+        const std::string& logicalSourceName = physicalSourceType->getLogicalSourceName();
+        request.set_logicalsourcename(logicalSourceName);
+        NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalSourceRequest request={}", request.DebugString());
+
+        bool success = detail::processGenericRpc<bool, UnregisterPhysicalSourceRequest, UnregisterPhysicalSourceReply>(
+            request,
+            rpcRetryAttemps,
+            rpcBackoff,
+            [this](ClientContext* context, const UnregisterPhysicalSourceRequest& request, UnregisterPhysicalSourceReply* reply) {
+                return coordinatorStub->UnregisterPhysicalSource(context, request, reply);
+            });
+
+        if (!success) {
+            NES_ERROR("Unable to unregister physical source {} for the logical source {}.", physicalSourceName, logicalSourceName)
+            return success;
+        }
+    }
+    return true;
 }
 
 bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSourceName) {
