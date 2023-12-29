@@ -16,13 +16,11 @@
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/TestUtils.hpp>
@@ -68,16 +66,20 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    auto node1Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties);
+    auto bandwidthInMbps = 50;
+    auto latencyInMs = 1;
+    auto node1Id =
+        topologyManagerService
+            ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create fixed location node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
-    auto node2Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties);
+    auto node2Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties, bandwidthInMbps, latencyInMs);
     topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node3Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties);
+    auto node3Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties, bandwidthInMbps, latencyInMs);
     topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     // test querying for node which does not exist in the system
@@ -127,20 +129,22 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    auto node1Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties);
+    auto bandwidthInMbps = 50;
+    auto latencyInMs = 1;
+    auto node1Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create fixed location node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
-    auto node2Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties);
+    auto node2Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties, bandwidthInMbps, latencyInMs);
     topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node3Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties);
+    auto node3Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node4Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk4, 0, 0, properties);
+    auto node4Id = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk4, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //get mobile node info
     response = topologyManagerService->requestLocationAndParentDataFromAllMobileNodes().get<allMobileResponse>();

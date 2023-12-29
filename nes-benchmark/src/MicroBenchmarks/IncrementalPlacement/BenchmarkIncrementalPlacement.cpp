@@ -162,11 +162,21 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
 
     topology = Topology::create();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    auto bandwidthInMbps = 50;
+    auto latencyInMs = 1;
     //Register root worker
-    topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties);
+    topologyManagerService
+        ->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties, bandwidthInMbps, latencyInMs);
     //register child workers
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, std::to_string(i), 0, 0, UINT16_MAX, properties);
+        topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID,
+                                               std::to_string(i),
+                                               0,
+                                               0,
+                                               UINT16_MAX,
+                                               properties,
+                                               bandwidthInMbps,
+                                               latencyInMs);
     }
 
     topologyManagerService->addLinkProperty(1, 2, 512, 100);

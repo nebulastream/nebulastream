@@ -90,13 +90,15 @@ message RegisterWorkerRequest {
   uint32 grpcPort = 2;
   uint32 dataPort = 3;
   uint32 numberOfSlots = 4;
-  SerializableRegistrationMetrics registrationMetrics = 5;
-  NES.Spatial.Protobuf.Waypoint waypoint = 6;
-  NES.Spatial.Protobuf.SpatialType spatialType = 7;
-  bool tfSupported = 8;
-  bool javaUDFSupported = 9;
-  uint64 workerId = 10;
-  repeated SerializedOpenCLDeviceInfo openCLDevices = 11;
+  uint32 bandwidthInMbps = 5;
+  uint32 latencyInMs = 6;
+  SerializableRegistrationMetrics registrationMetrics = 7;
+  NES.Spatial.Protobuf.Waypoint waypoint = 8;
+  NES.Spatial.Protobuf.SpatialType spatialType = 9;
+  bool tfSupported = 10;
+  bool javaUDFSupported = 11;
+  uint64 workerId = 12;
+  repeated SerializedOpenCLDeviceInfo openCLDevices = 13;
 }
 
 message RegisterWorkerReply {

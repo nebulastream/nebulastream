@@ -48,6 +48,8 @@ class TopologyManagerService {
      * @param dataPort: port used by the worker for receiving or transmitting data
      * @param numberOfSlots: the slots available at the worker
      * @param workerProperties: Additional properties of worker
+     * @param bandwidthInMbps: bandwidth in Mbps
+     * @param latencyInMs: latency in ms
      * @return unique identifier of the worker
      */
     WorkerId registerWorker(WorkerId workerId,
@@ -55,7 +57,9 @@ class TopologyManagerService {
                             int64_t grpcPort,
                             int64_t dataPort,
                             uint16_t numberOfSlots,
-                            std::map<std::string, std::any> workerProperties);
+                            std::map<std::string, std::any> workerProperties,
+                            uint32_t bandwidthInMbps,
+                            uint32_t latencyInMs);
 
     /**
      * Add GeoLocation of a worker node

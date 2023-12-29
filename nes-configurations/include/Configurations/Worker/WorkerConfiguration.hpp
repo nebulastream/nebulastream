@@ -110,6 +110,16 @@ class WorkerConfiguration : public BaseConfiguration {
     UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for the NES Worker."};
 
     /**
+     * @brief The link bandwidth of the link in Mbps.
+     */
+    UIntOption bandwidth = {BANDWIDTH_IN_MBPS, 50, "The link bandwidth in Mbps."};
+
+    /**
+     * @brief The link latency in milliseconds.
+     */
+    UIntOption latency = {LATENCY_IN_MS, 1, "The link latency in milliseconds."};
+
+    /**
      * @brief Configures the number of worker threads.
      */
     UIntOption numWorkerThreads = {"numWorkerThreads", 1, "Number of worker threads."};
@@ -285,6 +295,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &dataPort,
                 &coordinatorPort,
                 &numberOfSlots,
+                &bandwidth,
+                &latency,
                 &numWorkerThreads,
                 &numberOfBuffersInGlobalBufferManager,
                 &numberOfBuffersPerWorker,

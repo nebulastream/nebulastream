@@ -36,7 +36,9 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
                                                 const int64_t grpcPort,
                                                 const int64_t dataPort,
                                                 const uint16_t numberOfSlots,
-                                                std::map<std::string, std::any> workerProperties) {
+                                                std::map<std::string, std::any> workerProperties,
+                                                uint32_t bandwidthInMbps,
+                                                uint32_t latencyInMs) {
     NES_TRACE("TopologyManagerService: Register Node address={} numberOfSlots={}", address, numberOfSlots);
     NES_DEBUG("TopologyManagerService::registerWorker: topology before insert");
     NES_DEBUG("", topology->toString());
@@ -65,6 +67,7 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
     } else {
         NES_DEBUG("TopologyManagerService::registerWorker: add link to the root node {}", rootTopologyNodeId);
         topology->addTopologyNodeAsChild(rootTopologyNodeId, workerId);
+        topology->addLinkProperty(rootTopologyNodeId, workerId, bandwidthInMbps, latencyInMs);
     }
 
     NES_DEBUG("TopologyManagerService::registerWorker: topology after insert = ");

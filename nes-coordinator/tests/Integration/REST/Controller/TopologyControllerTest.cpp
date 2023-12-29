@@ -217,6 +217,61 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
     EXPECT_TRUE(stopCrd);
 }
 
+TEST_F(TopologyControllerTest, testAddParent) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort = *rpcCoordinatorPort;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(TestUtils::waitForWorkers(coordinatorConfig->restPort.getValue(), 5, 1));
+
+    nlohmann::json request{};
+    request["parentId"] = 1;
+    request["childId"] = 2;
+    auto asyncResp = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/removeAsParent"},
+                                      cpr::Header{{"Content-Type", "application/json"}},
+                                      cpr::Body{request.dump()},
+                                      cpr::ConnectTimeout{3000},
+                                      cpr::Timeout{30000});
+    asyncResp.wait();
+    cpr::Response response = asyncResp.get();
+    EXPECT_EQ(response.status_code, 200l);
+    NES_DEBUG("{}", response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
+    NES_DEBUG("{}", res.dump());
+    EXPECT_EQ(res["success"], true);
+
+    nlohmann::json addLinkRequest1{};
+    addLinkRequest1["parentId"] = 1;
+    addLinkRequest1["childId"] = 2;
+    auto response1 = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                                      cpr::Header{{"Content-Type", "application/json"}},
+                                      cpr::Body{addLinkRequest1.dump()},
+                                      cpr::ConnectTimeout{3000},
+                                      cpr::Timeout{30000});
+    EXPECT_EQ(response1.status_code, 400l);
+
+
+    addLinkRequest1["bandwidth"] = 20;
+    addLinkRequest1["latency"] = 1;
+    response1 = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+                               cpr::Header{{"Content-Type", "application/json"}},
+                               cpr::Body{addLinkRequest1.dump()},
+                               cpr::ConnectTimeout{3000},
+                               cpr::Timeout{30000});
+    EXPECT_EQ(response1.status_code, 200l);
+
+    bool stopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(stopWrk1);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port {}", coordinatorConfig->restPort.getValue());
+    EXPECT_TRUE(stopCrd);
+}
+
 TEST_F(TopologyControllerTest, testRemoveParent) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));

@@ -74,17 +74,18 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
-
-    uint64_t nodeId = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port, 5000, 6, properties);
+    auto bandwidthInMbps = 50;
+    auto latencyInMs = 1;
+    uint64_t nodeId = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_NE(nodeId, 0u);
 
-    uint64_t nodeId1 = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 2, 5000, 6, properties);
+    uint64_t nodeId1 = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 2, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_EQ(nodeId1, 2u);
 
     //test register existing node
     // when trying to register with a workerId belonging to an active worker,
     // the next available workerId will be assigned instead
-    uint64_t nodeId2 = topologyManagerService->registerWorker(2, ip, publish_port + 4, 5000, 6, properties);
+    uint64_t nodeId2 = topologyManagerService->registerWorker(2, ip, publish_port + 4, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_EQ(nodeId2, 3u);
 
     //test unregister not existing node
@@ -96,12 +97,12 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     EXPECT_TRUE(successUnregisterExistingNode);
 
     //test register new node
-    uint64_t nodeId3 = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 6, 5000, 6, properties);
+    uint64_t nodeId3 = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 6, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_EQ(nodeId3, 4u);
 
     //test register new node with misconfigured worker id
     //when trying to register with a workerId that belongs to an already registered worker,
     //the next available workerId will be assigned
-    uint64_t nodeId4 = topologyManagerService->registerWorker(nodeId3, ip, publish_port + 8, 5000, 6, properties);
+    uint64_t nodeId4 = topologyManagerService->registerWorker(nodeId3, ip, publish_port + 8, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_EQ(nodeId4, 5u);
 }

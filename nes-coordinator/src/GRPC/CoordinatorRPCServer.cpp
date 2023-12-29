@@ -85,6 +85,8 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     auto grpcPort = registrationRequest->grpcport();
     auto dataPort = registrationRequest->dataport();
     auto slots = registrationRequest->numberofslots();
+    auto bandwidthInMbps = registrationRequest->bandwidthinmbps();
+    auto latencyInMs = registrationRequest->latencyinms();
     //construct worker property from the request
     std::map<std::string, std::any> workerProperties;
     workerProperties[NES::Worker::Properties::MAINTENANCE] = false;// During registration,
@@ -110,7 +112,8 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
     WorkerId workerId =
-        topologyManagerService->registerWorker(configWorkerId, address, grpcPort, dataPort, slots, workerProperties);
+        topologyManagerService
+            ->registerWorker(configWorkerId, address, grpcPort, dataPort, slots, workerProperties, bandwidthInMbps, latencyInMs);
 
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
                                                                    registrationRequest->waypoint().geolocation().lng());
