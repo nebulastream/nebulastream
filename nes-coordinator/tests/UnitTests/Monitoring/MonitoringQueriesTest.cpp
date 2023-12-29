@@ -147,6 +147,17 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         NES_DEBUG("MonitoringQueriesTest: Stop query");
         ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+        auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
+        // test metrics
+        for (uint64_t nodeId = 2; nodeId <= workerCnt + 1; nodeId++) {
+            Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
+            ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
+                                                 storedMetrics,
+                                                 expectedType,
+                                                 nodeId,
+                                                 2));
+        }
+
         auto cnt = 1;
         for (auto wrk : workers) {
             NES_DEBUG("MonitoringQueriesTest: Stop worker {}", cnt);
@@ -160,18 +171,6 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
         NES_DEBUG("MonitoringQueriesTest: Test finished");
-
-        auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
-
-        // test metrics
-        for (uint64_t nodeId = 2; nodeId <= workerCnt + 1; nodeId++) {
-            Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
-            ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
-                                                 storedMetrics,
-                                                 expectedType,
-                                                 nodeId,
-                                                 2));
-        }
     }
 };
 

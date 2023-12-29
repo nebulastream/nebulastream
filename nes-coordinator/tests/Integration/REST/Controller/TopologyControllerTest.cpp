@@ -201,6 +201,8 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 2;
+    request["bandwidth"] = 20;
+    request["latency"] = 1;
     auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
                               cpr::Header{{"Content-Type", "application/json"}},
                               cpr::Body{request.dump()},
