@@ -73,10 +73,10 @@ TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
     auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
     node->addNodeProperty("cores", 2);
 
-    ASSERT_TRUE(node->getNodeProperty("cores").has_value());
+    EXPECT_TRUE(node->getNodeProperty("cores").has_value());
 
     node->removeNodeProperty("cores");
-    EXPECT_THROW(node->getNodeProperty("cores"), Exceptions::RuntimeException);
+    EXPECT_FALSE(node->getNodeProperty("cores").has_value());
 }
 
 // test assigning link properties
@@ -145,8 +145,8 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     sourceNode->removeLinkProperty(destinationNode);
     destinationNode->removeLinkProperty(sourceNode);
 
-    EXPECT_THROW(sourceNode->getLinkProperty(destinationNode), Exceptions::RuntimeException);
-    EXPECT_THROW(destinationNode->getLinkProperty(sourceNode), Exceptions::RuntimeException);
+    EXPECT_FALSE(sourceNode->getLinkProperty(destinationNode));
+    EXPECT_FALSE(destinationNode->getLinkProperty(sourceNode));
 }
 
 }// namespace NES

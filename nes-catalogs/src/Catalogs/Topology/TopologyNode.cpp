@@ -123,6 +123,7 @@ bool TopologyNode::hasNodeProperty(const std::string& key) {
 std::any TopologyNode::getNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
         NES_ERROR("Property '{}' does not exist", key);
+        return std::any();
     } else {
         return nodeProperties.at(key);
     }
@@ -144,6 +145,7 @@ void TopologyNode::addLinkProperty(const TopologyNodePtr& linkedNode, const Link
 LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
         NES_ERROR("Link property with node '{}' does not exist", linkedNode->getId());
+        return nullptr;
     } else {
         return linkProperties.at(linkedNode->getId());
     }
