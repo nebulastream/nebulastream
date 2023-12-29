@@ -529,7 +529,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
     auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1), TestUtils::enableDebug()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
@@ -562,23 +562,18 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid={}", worker.getPid());
-
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());")";
     ss << R"(,"placement" : "BottomUp"})";
     ss << endl;
     NES_INFO("string submit={}", ss.str());
-
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
     QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
-
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-    //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
-
     worker.kill();
     sleep(5);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -612,14 +607,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     QueryId queryId = json_return["queryId"].get<uint64_t>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
-
     sleep(5);
     worker.kill();
     sleep(5);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-    //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery) {

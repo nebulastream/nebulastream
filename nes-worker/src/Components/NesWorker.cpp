@@ -260,7 +260,11 @@ bool NesWorker::stop(bool) {
 
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
-        NES_DEBUG("NesWorker::stopping health check");
+
+        NES_INFO("Sending disconnect request to coordinator");
+        disconnect();
+
+        NES_INFO("NesWorker::stopping health check");
         if (healthCheckService) {
             healthCheckService->stopHealthCheck();
         } else {
@@ -269,30 +273,30 @@ bool NesWorker::stop(bool) {
 
         if (workerMobilityHandler) {
             workerMobilityHandler->stop();
-            NES_TRACE("triggered stopping of location update push thread");
+            NES_INFO("triggered stopping of location update push thread");
         }
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
             NES_THROW_RUNTIME_ERROR("NesWorker::stop  error while stopping node engine");
         }
-        NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
+        NES_INFO("NesWorker::stop : Node engine stopped successfully");
         nodeEngine.reset();
 
-        NES_DEBUG("NesWorker: stopping rpc server");
+        NES_INFO("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
         //shut down the async queue
         completionQueue->Shutdown();
 
         if (rpcThread->joinable()) {
-            NES_DEBUG("NesWorker: join rpcThread");
+            NES_INFO("NesWorker: join rpcThread");
             rpcThread->join();
         }
 
         rpcServer.reset();
         rpcThread.reset();
         if (statisticOutputThread && statisticOutputThread->joinable()) {
-            NES_DEBUG("NesWorker: statistic collection thread join");
+            NES_INFO("NesWorker: statistic collection thread join");
             statisticOutputThread->join();
         }
         statisticOutputThread.reset();
@@ -384,6 +388,7 @@ bool NesWorker::connect() {
                     NES_DEBUG("NesWorker::connect() Persisted workerId={} successfully in yaml file.", workerId);
                 }
             }
+            workerConfig->workerId = workerId;
         }
         NES_DEBUG("NesWorker::registerWorker rpc register success with id {}", workerId);
         connected = true;
@@ -414,21 +419,29 @@ bool NesWorker::connect() {
 
 bool NesWorker::disconnect() {
     NES_DEBUG("NesWorker::disconnect()");
-    bool successPRCRegister = coordinatorRpcClient->unregisterNode();
-    if (successPRCRegister) {
+    bool successfulPRCUnregister = coordinatorRpcClient->unregisterNode();
+    if (successfulPRCUnregister) {
+        auto configPhysicalSourceTypes = workerConfig->physicalSourceTypes.getValues();
+        if (!configPhysicalSourceTypes.empty()) {
+            std::vector<PhysicalSourceTypePtr> physicalSourceTypes;
+            for (auto& physicalSourceType : configPhysicalSourceTypes) {
+                physicalSourceTypes.push_back(physicalSourceType);
+            }
+            NES_WARNING("NesWorker: stopping worker after de-registering the registered physical sources.");
+            bool success = unregisterPhysicalSource(physicalSourceTypes);
+            NES_INFO("unregistered = {}", success);
+            NES_ASSERT(success, "cannot register");
+        }
         NES_DEBUG("NesWorker::registerWorker rpc unregister success");
         connected = false;
-        NES_DEBUG("NesWorker::stop health check");
-        healthCheckService->stopHealthCheck();
-        NES_DEBUG("NesWorker::stop health check successful");
         return true;
     }
     NES_DEBUG("NesWorker::registerWorker rpc unregister failed");
     return false;
 }
 
-bool NesWorker::unregisterPhysicalSource(std::string logicalName, std::string physicalName) {
-    bool success = coordinatorRpcClient->unregisterPhysicalSource(std::move(logicalName), std::move(physicalName));
+bool NesWorker::unregisterPhysicalSource(std::vector<PhysicalSourceTypePtr> physicalSources) {
+    bool success = coordinatorRpcClient->unregisterPhysicalSource(physicalSources);
     NES_DEBUG("NesWorker::unregisterPhysicalSource success={}", success);
     return success;
 }

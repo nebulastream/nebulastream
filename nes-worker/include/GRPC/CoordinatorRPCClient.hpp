@@ -86,11 +86,10 @@ class CoordinatorRPCClient {
 
     /**
      * @brief this method removes a physical source from a logical source in the coordinator
-     * @param logicalSourceName name of the logical source
-     * @param physicalSourceName name of the physical source to be deleted
+     * @param physicalSourceTypes vector physical sources
      * @return bool indicating success of the removal
      */
-    bool unregisterPhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    bool unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes);
 
     /**
      * @brief method to add a new parent to an existing node

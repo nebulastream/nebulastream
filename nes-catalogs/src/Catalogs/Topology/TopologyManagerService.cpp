@@ -44,8 +44,8 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
     // if worker is started with a workerId
     // then check if invalid worker id or an active worker with given workerId already exists
     if (workerId == INVALID_WORKER_NODE_ID || topology->nodeWithWorkerIdExists(workerId)) {
-        NES_WARNING("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new "
-                    "worker id will be assigned.",
+        NES_WARNING("TopologyManagerService::registerWorker: worker id {} either invalid or a node with this id already "
+                    "exists. A new worker id will be assigned.",
                     workerId);
         workerId = getNextWorkerId();
     }
@@ -75,14 +75,13 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
 bool TopologyManagerService::unregisterNode(WorkerId workerId) {
 
     NES_DEBUG("TopologyManagerService::UnregisterNode: try to disconnect sensor with id  {}", workerId);
-    TopologyNodePtr physicalNode = topology->getCopyOfTopologyNodeWithId(workerId);
     if (!topology->nodeWithWorkerIdExists(workerId)) {
         NES_ERROR("Topology node with id not found  {}", workerId);
         return false;
     }
 
     //todo: remove mobile nodes here too?
-    auto spatialType = physicalNode->getSpatialNodeType();
+    auto spatialType = topology->getSpatialType(workerId);
     if (spatialType == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         topology->removeGeoLocation(workerId);
     }
@@ -125,7 +124,11 @@ bool TopologyManagerService::addLinkProperty(NES::WorkerId parentWorkerId,
     return topology->addLinkProperty(parentWorkerId, childWorkerId, bandwidthInMBPS, latencyInMS);
 }
 
-TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return topology->getCopyOfTopologyNodeWithId(nodeId); }
+bool TopologyManagerService::topologyNodeWithIdExists(WorkerId nodeId) { return topology->nodeWithWorkerIdExists(nodeId); }
+
+std::vector<WorkerId> TopologyManagerService::getParentTopologyNodeIds(NES::WorkerId nodeId) {
+    return topology->getParentTopologyNodeIds(nodeId);
+}
 
 WorkerId TopologyManagerService::getNextWorkerId() { return ++topologyNodeIdCounter; }
 

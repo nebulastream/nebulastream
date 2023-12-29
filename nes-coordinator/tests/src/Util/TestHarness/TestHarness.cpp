@@ -394,7 +394,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     auto start_timestamp = std::chrono::system_clock::now();
 
     for (const auto& workerId : workerIds) {
-        while (!topologyManagerService->findNodeWithId(workerId)) {
+        while (!topologyManagerService->topologyNodeWithIdExists(workerId)) {
             if (std::chrono::system_clock::now() > start_timestamp + SETUP_TIMEOUT_IN_SEC) {
                 NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find setup topology in given timeout.");
             }

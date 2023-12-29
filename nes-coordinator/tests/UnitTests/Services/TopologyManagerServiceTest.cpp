@@ -64,7 +64,6 @@ class TopologyManagerServiceTest : public Testing::BaseIntegrationTest {
     std::string host = "localhost";
     Testing::BorrowedPortPtr borrowed_publish_port;
     int publish_port;
-    //std::string sensor_type = "default";
 };
 
 TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
@@ -101,8 +100,8 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     EXPECT_EQ(nodeId3, 4u);
 
     //test register new node with misconfigured worker id
-    //when trying to register with a workerId that does not belong to an already active/inactive worker,
+    //when trying to register with a workerId that belongs to an already registered worker,
     //the next available workerId will be assigned
-    uint64_t nodeId4 = topologyManagerService->registerWorker(123, ip, publish_port + 8, 5000, 6, properties);
+    uint64_t nodeId4 = topologyManagerService->registerWorker(nodeId3, ip, publish_port + 8, 5000, 6, properties);
     EXPECT_EQ(nodeId4, 5u);
 }

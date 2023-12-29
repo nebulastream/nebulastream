@@ -119,10 +119,10 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     /**
     * @brief method to deregister physical source with the coordinator
-    * @param logical and physical of the source
+    * @param physicalSources vector of configured physical sources
      * @return bool indicating success
     */
-    bool unregisterPhysicalSource(std::string logicalName, std::string physicalName);
+    bool unregisterPhysicalSource(std::vector<PhysicalSourceTypePtr> physicalSources);
 
     /**
     * @brief method add new parent to this node

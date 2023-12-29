@@ -144,18 +144,12 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
-    bool success = wrk1->unregisterPhysicalSource("default_logical", "physical_test");
-    EXPECT_TRUE(success);
-
-    cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
-    std::vector<Catalogs::Source::SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
-
-    EXPECT_EQ(phys.size(), 0U);
-
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 
+    auto phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
+    EXPECT_EQ(phys.size(), 0U);
     cout << "stopping coordinator" << endl;
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -187,7 +181,12 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
-    bool success = wrk1->unregisterPhysicalSource("default_logical2", "default_physical");
+    std::vector<PhysicalSourceTypePtr> physicalSourceTypes;
+    const std::string& invalidLogicalSourceName = "default_logical2";
+    const std::string& invalidPhysicalSourceName = "default_physical1";
+    auto invalidPhysicalSource = CSVSourceType::create(invalidLogicalSourceName, invalidPhysicalSourceName);
+    physicalSourceTypes.push_back(invalidPhysicalSource);
+    bool success = wrk1->unregisterPhysicalSource(physicalSourceTypes);
     EXPECT_TRUE(!success);
 
     SchemaPtr sPtr = crd->getSourceCatalog()->getSchemaForLogicalSource("default_logical");
