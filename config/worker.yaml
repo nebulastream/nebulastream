@@ -155,6 +155,18 @@
       # Set password, needed for: OPCSource
       #password:
 
+      ###### Define only the following configurations for TCP stream
+      # socketHost:  Set the host to connect to  (e.g. localhost)
+      # socketPort:  Set the port to connect to
+      # socketDomain:  Set the domain of the socket (e.g. AF_INET)
+      # socketType:  Set the type of the socket (e.g. SOCK_STREAM)
+      # flushIntervalMS:  Set the flushIntervalMS of the socket, if set to zero the buffer will only be flushed once full
+      # inputFormat:  Set the input format of the socket (e.g. JSON, CSV)
+      # decideMessageSize:  Set the strategy for deciding the message size (e.g. TUPLE_SEPARATOR, USER_SPECIFIED_BUFFER_SIZE, BUFFER_SIZE_FROM_SOCKET)
+      # tupleSeparator:  if tuple separator is used, set the tuple separator (e.g "\n")
+      # socketBufferSize:  if user specified buffer size is used, set the buffer size
+      # bytesUsedForSocketBufferSizeTransfer:  if user specified buffer size is used, set the buffer size
+
 #mobility:
   # Set the radius within which the device should download information about field node positions
   #nodeInfoDownloadRadius: 20000

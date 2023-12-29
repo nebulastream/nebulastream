@@ -23,6 +23,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/OPCSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PluginRegistry.hpp>
@@ -116,6 +117,7 @@ PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceNam
         case SourceType::BINARY_SOURCE: return BinarySourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         case SourceType::ARROW_SOURCE: return ArrowSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::TCP_SOURCE: return TCPSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         case SourceType::DEFAULT_SOURCE:
             return DefaultSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
@@ -146,6 +148,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(std::s
         case SourceType::BINARY_SOURCE: return BinarySourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::TCP_SOURCE: return TCPSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::ARROW_SOURCE: return ArrowSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
