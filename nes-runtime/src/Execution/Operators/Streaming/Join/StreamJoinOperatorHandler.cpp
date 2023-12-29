@@ -83,10 +83,12 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
 
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
-        for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
+        for(auto it = windowToSlicesLocked->begin(); it != windowToSlicesLocked->end(); /* no increment */) {
+            auto& [windowInfo, slicesAndStateForWindow] = *it;
             if (windowInfo.windowEnd > newGlobalWatermark
                 || slicesAndStateForWindow.windowState == WindowInfoState::EMITTED_TO_PROBE) {
                 // This window can not be triggered yet or has already been triggered
+                ++it;
                 continue;
             }
 
@@ -94,6 +96,7 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
             NES_INFO("Emitting all slices for window {}", windowInfo.toString());
 
             toBeEmitted.emplace_back(windowInfo, std::move(slicesAndStateForWindow.slices));
+            windowToSlicesLocked->erase(it++);
         }
     }
 
