@@ -174,7 +174,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorNodePtr& log
         throw Exceptions::RuntimeException("No node available for further placement of operators");
     }
 
-    candidateTopologyNode->occupyResources(1);
+    candidateTopologyNode->occupySlots(1);
     logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
 
     auto isOperatorAPinnedDownStreamOperator =

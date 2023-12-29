@@ -176,13 +176,13 @@ void TopDownStrategy::identifyPinningLocation(const LogicalOperatorNodePtr& logi
         }
 
         //Pin the operator to the candidate node
-        candidateTopologyNode->occupyResources(1);
+        candidateTopologyNode->occupySlots(1);
         logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
         logicalOperator->addProperty(PROCESSED, true);
     } else {
         candidateTopologyNode = getTopologyNode(std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID)));
         //Pin the operator to the candidate node
-        candidateTopologyNode->occupyResources(1);
+        candidateTopologyNode->occupySlots(1);
         logicalOperator->addProperty(PROCESSED, true);
     }
 

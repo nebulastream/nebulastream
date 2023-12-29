@@ -682,7 +682,7 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
             // 1.2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
             // for placing the operators.
             auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
-            if (!topology->occupyResources(workerNodeId, consumedResources)) {
+            if (!topology->occupySlots(workerNodeId, consumedResources)) {
                 NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
                 if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
                     NES_ERROR("Unable to release lock on the locked node {}.", workerNodeId);
