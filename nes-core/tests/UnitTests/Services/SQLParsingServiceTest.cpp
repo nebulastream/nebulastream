@@ -75,18 +75,31 @@ TEST(SQLParsingServiceTest, selectionTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
     std::string inputQuery;
     QueryPlanPtr actualPlan;
+    double totalTime = 0.0;
 
 
     std::cout << "-------------------------Selection-------------------------\n";
 
     // Test case for simple selection
     inputQuery = "select f1 from StreamName where f1 > 10*3 INTO PRINT";
+    auto start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
     Query query = Query::from("StreamName").project(Attribute("f1")).filter(Attribute("f1")>30).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     inputQuery = "select * from StreamName where (f1 > 10 AND f2 < 10) INTO PRINT";
+    start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
+    std::cout << "Time taken for all Selection Queries: " << totalTime/2 << " ms" << std::endl;
+
     query = Query::from("StreamName").filter(Attribute("f1")>10 && Attribute("f2")<10).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
@@ -399,14 +412,53 @@ TEST(SQLParsingServiceTest, joinWindowTest) {
 TEST(SQLParsingServiceTest,subQueryTest){
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
-    std::string inputQuery = "SELECT *\n"
-                             "FROM (\n"
-                             "    SELECT f1\n"
-                             "    FROM subStream\n"
-                             "    WHERE f1 > 1\n"
-                             ")\n"
-                             "WHERE f1 < 5 INTO PRINT";
+    std::string inputQuery = "SELECT * FROM (SELECT f1 FROM subStream WHERE f1 > 1) WHERE f1 < 5 INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     auto query = Query::from("subStream").project(Attribute("f1")).filter(Attribute("f1")>1).filter(Attribute("f1")<5).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+}
+
+TEST(SQLParsingServiceTest,perfomanceTest1){
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+
+    std::vector<std::string> selectClauses = {
+        "select max(f2) as max_f2, sum(f2) as sum_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT",
+        "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT",
+        "SELECT name FROM employees;",
+        "SELECT department, COUNT(*) AS total FROM employees GROUP BY department window tumbling (timestamp, size 10 sec) INTO PRINT;",
+        "select f1 from StreamName where f1 > 10*3 INTO PRINT",
+        "select * from StreamName where (f1 > 10 AND f2 < 10) INTO PRINT",
+        "select * from StreamName as sn INTO PRINT",
+        "select f1,f2 from StreamName INTO PRINT",
+        "select column1 as c1, column2 as c2 from StreamName INTO PRINT;",
+        "select f1 from cars union select f1 from bikes INTO PRINT",
+        "select f1 from cars union select f1 from bikes union select f1 from autos INTO PRINT",
+        "select f1*f2 as newfield from StreamName INTO PRINT",
+        "select (f1*f2)/(f3+f4) as f5 from StreamName INTO PRINT",
+        "select f1*f2/f3+f4 as f5 from StreamName INTO PRINT",
+        "select f1*f2 as newfield, f1+5 as newfield2, f1 as f from StreamName INTO PRINT",
+        "select sum(f2), max(f3) from StreamName as sn window tumbling (timestamp, size 10 ms) INTO PRINT",
+        "select sum(f2) from StreamName WINDOW THRESHOLD (f1>2, 10) INTO PRINT",
+        "select sum(f2) from StreamName group by f2 window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT",
+        "SELECT name FROM employees;",
+        "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT",
+        "select * from purchases inner join tweets on purchases.user_id = tweets.user_id window tumbling (timestamp, size 10 sec) INTO PRINT",
+        "select count(f2) from StreamName window tumbling (size 10 sec) INTO PRINT",
+        "SELECT name, department FROM employees WHERE age > 30 INTO ZMQ (stream_name, localhost, 5555)",
+        "select sum(f2) as sum_f2 from StreamName window tumbling (size 10 ms) having sum_f2 > 5 INTO PRINT",
+        "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT",
+        "SELECT * FROM (SELECT f1 FROM subStream WHERE f1 > 1) WHERE f1 < 5 INTO PRINT"
+    };
+    double totalTime = 0.0;
+
+    for (const auto& SQLString : selectClauses) {
+        auto start = std::chrono::high_resolution_clock::now();
+        QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(SQLString);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        std::cout << "Time taken for \"" << SQLString << "\": " << duration.count() << " ms" << std::endl;
+        totalTime += duration.count();
+    }
+    std::cout << "Average time for all queries: " << totalTime/selectClauses.size() << " ms. " <<  "Amount of queries:" << selectClauses.size() << std::endl;
+
 }
