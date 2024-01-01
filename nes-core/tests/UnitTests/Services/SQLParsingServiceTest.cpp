@@ -108,6 +108,7 @@ TEST(SQLParsingServiceTest, selectionTest) {
 TEST(SQLParsingServiceTest, projectionTest) {
     std::string inputQuery;
     QueryPlanPtr actualPlan;
+    double totalTime = 0.0;
 
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
@@ -116,27 +117,70 @@ TEST(SQLParsingServiceTest, projectionTest) {
 
     // Test case for simple projection
     inputQuery = "select * from StreamName INTO PRINT;";
+    auto start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
     Query query = Query::from("StreamName").sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for projection with alias
     inputQuery = "select * from StreamName as sn INTO PRINT";
+    start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
     query = Query::from("StreamName").as("sn").sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for projection of specific fields
     inputQuery = "select f1,f2 from StreamName INTO PRINT";
+    start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
     query = Query::from("StreamName").project(Attribute("f1"),Attribute("f2")).sink(PrintSinkDescriptor::create());
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+
+    // Test case for projection of specific fields
+    inputQuery = "select f1,f2,f3 from StreamName INTO PRINT";
+    start = std::chrono::high_resolution_clock::now();
+    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
+    query = Query::from("StreamName").project(Attribute("f1"),Attribute("f2"),Attribute("f3")).sink(PrintSinkDescriptor::create());
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+
+    // Test case for projection of specific fields
+    inputQuery = "select f1,f2,f3, f4 as project4 from StreamName INTO PRINT";
+    start = std::chrono::high_resolution_clock::now();
+    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
+    query = Query::from("StreamName").project(Attribute("f1"),Attribute("f2"),Attribute("f3"), Attribute("f4").as("project4")).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for projection with rename
     inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT;";
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    start = std::chrono::high_resolution_clock::now();
+    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
+    std::cout << "Time taken for all Projection Queries: " << totalTime/6 << " ms" << std::endl;
     query=Query::from("StreamName").project(Attribute("column1").as("c1"),Attribute("column2").as("c2")).sink(PrintSinkDescriptor::create());
-    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
+    EXPECT_EQ(queryPlanToString(actualPlan), queryPlanToString(query.getQueryPlan()));
 
 
 }
@@ -144,6 +188,7 @@ TEST(SQLParsingServiceTest, projectionTest) {
 TEST(SQLParsingServiceTest, mergeTest) {
     std::string inputQuery;
     QueryPlanPtr actualPlan;
+    double totalTime = 0.0;
 
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
@@ -151,14 +196,45 @@ TEST(SQLParsingServiceTest, mergeTest) {
 
     // Test case for simple merge
     inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT";
+    auto start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
     Query query = Query::from("cars").project(Attribute("f1")).unionWith(Query::from("bikes").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+
+    inputQuery = "select f1 as project from cars union select f1 from bikes INTO PRINT";
+    start = std::chrono::high_resolution_clock::now();
+    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
+    query = Query::from("cars").project(Attribute("f1").as("project")).unionWith(Query::from("bikes").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+
+    inputQuery = "select f1 as project from cars where project > 5 union select f1 from bikes INTO PRINT";
+    start = std::chrono::high_resolution_clock::now();
+    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
+    query = Query::from("cars").project(Attribute("f1").as("project")).filter(Attribute("f1")>1).unionWith(Query::from("bikes").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for merge with multiple unions
     inputQuery = "select f1 from cars union select f1 from bikes union select f1 from autos INTO PRINT";
+    start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start;
+    totalTime += duration.count();
+    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
     query = Query::from("cars").project(Attribute("f1")).unionWith(Query::from("bikes").project(Attribute("f1"))).unionWith(Query::from("autos").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
+    std::cout << "Time taken for all Projection Queries: " << totalTime/4 << " ms" << std::endl;
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 
