@@ -145,7 +145,8 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
             //Fetch the leaf node of the topology and add all sources to it
             auto logicalSourceName = "example" + std::to_string(j + 1);
             auto physicalSourceName = "example" + std::to_string(j + 1) + std::to_string(i);
-            sourceCatalogService->registerPhysicalSource(physicalSourceName, logicalSourceName, 5);
+            int sourceTopologyId = 5;
+            sourceCatalogService->registerPhysicalSource(physicalSourceName, logicalSourceName, sourceTopologyId);
         }
     }
 }
@@ -183,14 +184,14 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     topologyManagerService->addLinkProperty(2, 3, 512, 100);
     topologyManagerService->addLinkProperty(3, 4, 512, 100);
     topologyManagerService->addLinkProperty(4, 5, 512, 100);
-    topologyManagerService->addParent(3, 2);
-    topologyManagerService->removeAsParent(3, 1);
+    topologyManagerService->addTopologyNodeAsChild(3, 2);
+    topologyManagerService->removeTopologyNodeAsChild(3, 1);
 
-    topologyManagerService->addParent(4, 3);
-    topologyManagerService->removeAsParent(4, 1);
+    topologyManagerService->addTopologyNodeAsChild(4, 3);
+    topologyManagerService->removeTopologyNodeAsChild(4, 1);
 
-    topologyManagerService->addParent(5, 4);
-    topologyManagerService->removeAsParent(5, 1);
+    topologyManagerService->addTopologyNodeAsChild(5, 4);
+    topologyManagerService->removeTopologyNodeAsChild(5, 1);
 }
 
 /**

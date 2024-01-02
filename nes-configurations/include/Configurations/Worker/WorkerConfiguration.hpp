@@ -112,12 +112,12 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief The link bandwidth of the link in Mbps.
      */
-    UIntOption bandwidth = {BANDWIDTH_IN_MBPS, 50, "The link bandwidth in Mbps."};
+    UIntOption bandwidth = {BANDWIDTH_IN_MBPS, 0, "The link bandwidth in Mbps."};
 
     /**
      * @brief The link latency in milliseconds.
      */
-    UIntOption latency = {LATENCY_IN_MS, 1, "The link latency in milliseconds."};
+    UIntOption latency = {LATENCY_IN_MS, 0, "The link latency in milliseconds."};
 
     /**
      * @brief Configures the number of worker threads.

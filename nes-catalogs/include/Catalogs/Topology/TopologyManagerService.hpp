@@ -89,23 +89,23 @@ class TopologyManagerService {
      * @param workerId
      * @return bool indicating success
      */
-    bool unregisterNode(uint64_t workerId);
+    bool unregisterNode(WorkerId workerId);
 
     /**
-     * @brief method to ad a new parent to a node
-     * @param childId
-     * @param parentId
+     * @brief method to add an existing topology node as child to another existing topology node
+     * @param parentId: id of the parent node
+     * @param childId: id of the child node
      * @return bool indicating success
      */
-    bool addParent(uint64_t childId, uint64_t parentId);
+    bool addTopologyNodeAsChild(WorkerId parentId,WorkerId childId);
 
     /**
-     * @brief method to remove an existing parent from a node
-     * @param childId
-     * @param parentId
+     * @brief method to remove an existing topology node as child to another existing topology node
+     * @param parentId: id of the parent node
+     * @param childId: id of the child node
      * @return bool indicating success
      */
-    bool removeAsParent(uint64_t childId, uint64_t parentId);
+    bool removeTopologyNodeAsChild(WorkerId parentId, WorkerId childId);
 
     /**
      * @brief Add properties to the link between parent and child topology node

@@ -27,7 +27,7 @@ TopologyNodePtr PathFinder::findCommonAncestor(std::vector<TopologyNodePtr> topo
     NES_DEBUG("Topology: find common node for a set of topology nodes.");
 
     if (topologyNodes.empty()) {
-        NES_ERROR("Topology: Input topology node list was empty.");
+        NES_WARNING("Topology: Input topology node list was empty.");
         return nullptr;
     }
 
@@ -93,8 +93,8 @@ TopologyNodePtr PathFinder::findCommonChild(std::vector<TopologyNodePtr> topolog
 
     NES_DEBUG("Topology: Selecting a start node to identify the common child.");
     TopologyNodePtr startNode = topologyNodes[0];
-    bool foundAncestor = false;
-    TopologyNodePtr resultAncestor;
+    bool foundDescendent = false;
+    TopologyNodePtr resultDescendent;
     NES_TRACE("Topology: Adding selected node to the deque for further processing.");
     std::deque<NodePtr> nodesToProcess{startNode};
     while (!nodesToProcess.empty()) {
@@ -110,13 +110,13 @@ TopologyNodePtr PathFinder::findCommonChild(std::vector<TopologyNodePtr> topolog
 
             if (found == parents.end()) {
                 NES_TRACE("Topology: Unable to find the input topology node as parent of the node under consideration.");
-                foundAncestor = false;
+                foundDescendent = false;
                 break;
             }
-            foundAncestor = true;
+            foundDescendent = true;
         }
 
-        if (foundAncestor) {
+        if (foundDescendent) {
             NES_TRACE("Topology: The node under consideration contains all input node as its parent.");
             return candidateNode;
         }

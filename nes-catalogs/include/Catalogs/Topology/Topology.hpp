@@ -113,6 +113,7 @@ class Topology {
 
     /**
      * @brief This method will remove a given topology node
+     * @warning If the root node is removed then the next worker that sends a register call will become the root
      * @param topologyNodeId : the node to be removed
      * @return true if successful
      */
@@ -358,6 +359,7 @@ class Topology {
      * @brief Find if searched node is in the parent list of the test node or its parents parent list
      * @param testNode: the test node
      * @param searchedNodes: the searched node
+     * @param uniqueNodes: map of all unique worker id to topology nodes observed during the iteration
      * @return the node where the searched node is found
      */
     TopologyNodePtr

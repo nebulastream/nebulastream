@@ -249,7 +249,7 @@ Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
 Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* request, AddParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::AddParent: request = {}", request->DebugString());
 
-    bool success = topologyManagerService->addParent(request->childid(), request->parentid());
+    bool success = topologyManagerService->addTopologyNodeAsChild(request->parentid(), request->childid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::AddParent success");
         reply->set_success(true);
@@ -263,10 +263,10 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request = {}", request->DebugString());
 
-    bool success = topologyManagerService->removeAsParent(request->childid(), request->oldparent());
+    bool success = topologyManagerService->removeTopologyNodeAsChild(request->oldparent(), request->childid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::ReplaceParent success removeAsParent");
-        bool success2 = topologyManagerService->addParent(request->childid(), request->newparent());
+        bool success2 = topologyManagerService->addTopologyNodeAsChild(request->newparent(), request->childid());
         if (success2) {
             NES_DEBUG("CoordinatorRPCServer::ReplaceParent success addParent topo=");
             reply->set_success(true);
@@ -286,7 +286,7 @@ Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRe
 Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequest* request, RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request = {}", request->DebugString());
 
-    bool success = topologyManagerService->removeAsParent(request->childid(), request->parentid());
+    bool success = topologyManagerService->removeTopologyNodeAsChild(request->parentid(), request->childid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
         reply->set_success(true);

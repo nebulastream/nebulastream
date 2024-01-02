@@ -187,14 +187,14 @@ bool Topology::removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId child
     (*lockedParentTopologyNode)->removeLinkProperty(childWorkerId);
     (*lockedChildTopologyNode)->removeLinkProperty(parentWorkerId);
 
-    return (*lockedParentTopologyNode)->remove((*lockedChildTopologyNode));
+    return (*lockedParentTopologyNode)->removeChild((*lockedChildTopologyNode));
 }
 
 bool Topology::addLinkProperty(NES::WorkerId parentWorkerId,
                                NES::WorkerId childWorkerId,
                                uint64_t bandwidthInMBPS,
                                uint64_t latencyInMS) {
-    NES_INFO("Removing node {} as child to the node {}", childWorkerId, parentWorkerId);
+    NES_INFO("Adding link properties between parent node {} and child node {}", childWorkerId, parentWorkerId);
 
     if (parentWorkerId == childWorkerId) {
         NES_WARNING("Can not add link property to self.");
@@ -231,21 +231,21 @@ bool Topology::addLinkProperty(NES::WorkerId parentWorkerId,
 
 bool Topology::occupySlots(WorkerId workerId, uint16_t amountToOccupy) {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
-    NES_INFO("Reduce {} resources from node with id {}", amountToOccupy, workerId);
     if (lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
+        NES_INFO("Reduce {} resources from node with id {}", amountToOccupy, workerId);
         return (*(*lockedWorkerIdToTopologyNodeMap)[workerId].wlock())->occupySlots(amountToOccupy);
     }
-    NES_WARNING("Unable to find node with id {}", workerId);
+    NES_WARNING("Unable to occupy slots as the node with id {} do not exists.", workerId);
     return false;
 }
 
 bool Topology::releaseSlots(WorkerId workerId, uint16_t amountToRelease) {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
-    NES_INFO("Increase {} resources from node with id {}", amountToRelease, workerId);
     if (lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
+        NES_INFO("Increase {} resources from node with id {}", amountToRelease, workerId);
         return (*(*lockedWorkerIdToTopologyNodeMap)[workerId].wlock())->releaseSlots(amountToRelease);
     }
-    NES_WARNING("Unable to find node with id {}", workerId);
+    NES_WARNING("Unable to release slots as the node with id {} do not exists.", workerId);
     return false;
 }
 
@@ -347,7 +347,7 @@ std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopol
                     sourceTopologyNodeId);
         return {};
     }
-    auto sourceTopologyNode = (*(readLockedSourceTopologyNode));
+    const auto& sourceTopologyNode = (*(readLockedSourceTopologyNode));
 
     //Fetch the destination topology node
     std::vector<TopologyNodePtr> destinationTopologyNodes;
@@ -357,9 +357,8 @@ std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopol
                     destinationTopologyNodeId);
         return {};
     }
-    auto destinationTopologyNode = (*(readLockedDestinationTopologyNode));
+    const auto& destinationTopologyNode = (*(readLockedDestinationTopologyNode));
 
-    std::optional<TopologyNodePtr> result;
     std::vector<TopologyNodePtr> searchedNodes{destinationTopologyNode};
     std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
     TopologyNodePtr found = find(sourceTopologyNode, searchedNodes, mapOfUniqueNodes);
@@ -370,7 +369,7 @@ std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopol
     NES_WARNING("Topology: Unable to find path between {} and {}",
                 sourceTopologyNode->toString(),
                 destinationTopologyNode->toString());
-    return result;
+    return std::nullopt;
 }
 
 std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes) {
@@ -546,18 +545,18 @@ nlohmann::json Topology::toJson() {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     auto lockedLocationIndex = locationIndex.wlock();
     auto root = (*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock();
-    std::deque<TopologyNodePtr> parentToAdd{(*root)};
-    std::deque<TopologyNodePtr> childToAdd;
+    std::deque<TopologyNodePtr> nodesToProcess{(*root)};
+    std::deque<TopologyNodePtr> childrenToProcess;
 
     std::vector<nlohmann::json> nodes = {};
     std::vector<nlohmann::json> edges = {};
 
-    while (!parentToAdd.empty()) {
+    while (!nodesToProcess.empty()) {
         // Current topology node to add to the JSON
-        TopologyNodePtr currentNode = parentToAdd.front();
+        TopologyNodePtr currentNode = nodesToProcess.front();
         nlohmann::json currentNodeJsonValue{};
 
-        parentToAdd.pop_front();
+        nodesToProcess.pop_front();
         // Add properties for current topology node
         currentNodeJsonValue["id"] = currentNode->getId();
         currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
@@ -580,13 +579,15 @@ nlohmann::json Topology::toJson() {
             currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
             currentEdgeJsonValue["target"] = currentNode->getId();
             edges.push_back(currentEdgeJsonValue);
-
-            childToAdd.push_back(child->as<TopologyNode>());
+            // Record the child for further processing
+            childrenToProcess.push_back(child->as<TopologyNode>());
         }
 
-        if (parentToAdd.empty()) {
-            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
-            childToAdd.clear();
+        // Once all parent nodes are processed, we add the observed children nodes to be the next processing queue
+        if (nodesToProcess.empty()) {
+            nodesToProcess.insert(nodesToProcess.end(), childrenToProcess.begin(), childrenToProcess.end());
+            // Clear the children queue
+            childrenToProcess.clear();
         }
 
         nodes.push_back(currentNodeJsonValue);
@@ -739,17 +740,17 @@ void Topology::getElegantPayload(nlohmann::json& payload) {
     NES_DEBUG("Getting the json representation of available nodes");
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     auto root = (*(*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock());
-    std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
-    std::deque<TopologyNodePtr> childToAdd;
+    std::deque<TopologyNodePtr> nodesToBeProcessed{std::move(root)};
+    std::deque<TopologyNodePtr> childrenToProcess;
 
     std::vector<nlohmann::json> nodes = {};
     std::vector<nlohmann::json> edges = {};
 
-    while (!parentToAdd.empty()) {
+    while (!nodesToBeProcessed.empty()) {
         // Current topology node to add to the JSON
-        TopologyNodePtr currentNode = parentToAdd.front();
+        TopologyNodePtr currentNode = nodesToBeProcessed.front();
         nlohmann::json currentNodeJsonValue{};
-        parentToAdd.pop_front();
+        nodesToBeProcessed.pop_front();
 
         // Add properties for current topology node
         currentNodeJsonValue[NODE_ID_KEY] = currentNode->getId();
@@ -766,12 +767,15 @@ void Topology::getElegantPayload(nlohmann::json& payload) {
             auto linkProperty = currentNode->getLinkProperty(childNodeId);
             currentEdgeJsonValue[TRANSFER_RATE_KEY] = std::to_string(linkProperty->bandwidth);
             edges.push_back(currentEdgeJsonValue);
-            childToAdd.push_back(child->as<TopologyNode>());
+            // Record the child for further processing
+            childrenToProcess.push_back(child->as<TopologyNode>());
         }
 
-        if (parentToAdd.empty()) {
-            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
-            childToAdd.clear();
+        // Once all parent nodes are processed, we add the observed children nodes to be the next processing queue
+        if (nodesToBeProcessed.empty()) {
+            nodesToBeProcessed.insert(nodesToBeProcessed.end(), childrenToProcess.begin(), childrenToProcess.end());
+            // Clear the children queue
+            childrenToProcess.clear();
         }
 
         nodes.push_back(currentNodeJsonValue);

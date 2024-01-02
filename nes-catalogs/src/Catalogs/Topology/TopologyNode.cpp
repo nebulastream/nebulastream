@@ -133,7 +133,7 @@ std::any TopologyNode::getNodeProperty(const std::string& key) {
 
 bool TopologyNode::removeNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
-        NES_ERROR("Property '{}' does not exist", key);
+        NES_WARNING("Property '{}' does not exist", key);
         return false;
     }
     nodeProperties.erase(key);
@@ -146,7 +146,7 @@ void TopologyNode::addLinkProperty(WorkerId linkedNodeId, const LinkPropertyPtr&
 
 LinkPropertyPtr TopologyNode::getLinkProperty(WorkerId linkedNodeId) {
     if (!linkProperties.contains(linkedNodeId)) {
-        NES_ERROR("Link property with node '{}' does not exist", linkedNodeId);
+        NES_WARNING("Link property with node '{}' does not exist", linkedNodeId);
         return nullptr;
     } else {
         return linkProperties.at(linkedNodeId);
@@ -155,7 +155,7 @@ LinkPropertyPtr TopologyNode::getLinkProperty(WorkerId linkedNodeId) {
 
 bool TopologyNode::removeLinkProperty(WorkerId linkedNodeId) {
     if (!linkProperties.contains(linkedNodeId)) {
-        NES_ERROR("Link property to node with id='{}' does not exist", linkedNodeId);
+        NES_WARNING("Link property to node with id='{}' does not exist", linkedNodeId);
         return false;
     }
     linkProperties.erase(linkedNodeId);

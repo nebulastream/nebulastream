@@ -81,8 +81,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         std::vector<int> sources{8, 9, 10, 11, 12};
 
         for (int i = 0; i < (int) resources.size(); i++) {
-            WorkerId workerId;
-            workerId = i + 1;
+            WorkerId workerId = i + 1;
 
             std::map<std::string, std::any> properties;
             properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -176,21 +175,47 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(sharedQueryPlan);
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     NES_DEBUG("MlHeuristicPlacementTest: topology: \n{}", topology->toString());
     NES_DEBUG("MlHeuristicPlacementTest: query plan \n{}", globalExecutionPlan->getAsString());
     NES_DEBUG("MlHeuristicPlacementTest: shared plan \n{}", sharedQueryPlan->getQueryPlan()->toString());
 
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     ASSERT_EQ(executionNodes.size(), 13U);
+
     // Index represents the id of the execution node
-    std::vector<uint64_t> querySubPlanSizeCompare = {1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
+    uint64_t totalQuerySubPlansOnNode1 = 1;
+    uint64_t totalQuerySubPlansOnNode2 = 5;
+    uint64_t totalQuerySubPlansOnNode3 = 5;
+    uint64_t totalQuerySubPlansOnNode4 = 5;
+    uint64_t totalQuerySubPlansOnNode5 = 5;
+    uint64_t totalQuerySubPlansOnNode6 = 5;
+    uint64_t totalQuerySubPlansOnNode7 = 5;
+    uint64_t totalQuerySubPlansOnNode8 = 5;
+    uint64_t totalQuerySubPlansOnNode9 = 5;
+    uint64_t totalQuerySubPlansOnNode10 = 4;
+    uint64_t totalQuerySubPlansOnNode11 = 3;
+    uint64_t totalQuerySubPlansOnNode12 = 2;
+    uint64_t totalQuerySubPlansOnNode13 = 1;
+    std::vector<uint64_t> querySubPlanSizeCompare = {totalQuerySubPlansOnNode1,
+                                                     totalQuerySubPlansOnNode2,
+                                                     totalQuerySubPlansOnNode3,
+                                                     totalQuerySubPlansOnNode4,
+                                                     totalQuerySubPlansOnNode5,
+                                                     totalQuerySubPlansOnNode6,
+                                                     totalQuerySubPlansOnNode7,
+                                                     totalQuerySubPlansOnNode8,
+                                                     totalQuerySubPlansOnNode9,
+                                                     totalQuerySubPlansOnNode10,
+                                                     totalQuerySubPlansOnNode11,
+                                                     totalQuerySubPlansOnNode12,
+                                                     totalQuerySubPlansOnNode13};
     for (const auto& executionNode : executionNodes) {
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-        auto querySubPlan = querySubPlans[0];
         NES_INFO("Worker Id {} ", executionNode->getId());
-        ASSERT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->getId()-1]);
+        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->getId() - 1]);
+        auto querySubPlan = querySubPlans[0];
         std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-        ASSERT_EQ(actualRootOperators.size(), 1U);
+        EXPECT_EQ(actualRootOperators.size(), 1U);
     }
 }
