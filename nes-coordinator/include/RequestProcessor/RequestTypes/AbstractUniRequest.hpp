@@ -37,7 +37,7 @@ class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker 
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle) override;
+    std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle) final;
 
   protected:
     /**
