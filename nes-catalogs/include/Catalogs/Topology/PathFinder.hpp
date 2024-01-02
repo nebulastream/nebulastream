@@ -40,14 +40,14 @@ class PathFinder {
     /**
      * @brief Find the immediate common ancestor for the set of Topology nodes
      * @param topologyNodes: the set of topology nodes
-     * @return the immediate common ancestor.
+     * @return the immediate common ancestor (when many then the left most ancestor is given) else nullptr.
      */
     TopologyNodePtr findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes);
 
     /**
      * @brief Find the immediate common child for the set of Topology nodes
      * @param topologyNodes: the set of topology nodes
-     * @return the immediate common child.
+     * @return the immediate common child (when many then the left most ancestor is given) else nullptr.
      */
     TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
 
@@ -55,7 +55,7 @@ class PathFinder {
      * @brief Find a node location that can be reachable from both the
      * @param childNodes: list of child nodes to be reachable
      * @param parenNodes: list of parent nodes to be reachable
-     * @return common node else nullptr
+     * @return common node (when many then the left most ancestor is given) else nullptr.
      */
     TopologyNodePtr findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes);
 
