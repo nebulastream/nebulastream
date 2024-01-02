@@ -1,0 +1,10 @@
+---
+# This Playbook deploys a NES cluster
+
+- hosts: coordinator
+  roles:
+    - role: coordinator
+
+- hosts: single_worker
+  roles:
+    - role: worker

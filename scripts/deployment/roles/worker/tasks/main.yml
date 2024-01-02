@@ -13,16 +13,22 @@
     update: no
     clone: yes
 
-- name: Copy worker binaries from fat server
-  copy:
-    src: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }}"
-    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
-    mode: +x
+#- name: Copy worker binaries from fat server
+#  copy:
+#    src: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }}"
+#    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
+#    mode: +x
 
 - name: Copy and populate configuration templates
   template:
     src: worker.yaml.j2
     dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/worker.yaml"
+
+- name: Copy and populate configuration templates in tmp
+  template:
+    src: worker.yaml.j2
+    dest: "/tmp/worker.yaml"
+
 
 - name: Copy smartgrid data file
   copy:
