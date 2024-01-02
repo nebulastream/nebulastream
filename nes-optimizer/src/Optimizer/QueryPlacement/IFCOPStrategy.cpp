@@ -27,6 +27,7 @@
 
 namespace NES::Optimizer {
 
+//TODO: This is a broken strategy and need to be fixed as part of the issue #2486
 BasePlacementStrategyPtr IFCOPStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                const TopologyPtr& topology,
                                                const TypeInferencePhasePtr& typeInferencePhase,

@@ -73,12 +73,12 @@ TEST_F(TopologyControllerTest, testGetTopology) {
     EXPECT_TRUE(stopCrd);
 }
 
-TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
+TEST_F(TopologyControllerTest, testaddAsChildMissingParentId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request{};
     request["childId"] = 1;
-    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addAsChild"},
                               cpr::Header{{"Content-Type", "application/json"}},
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
@@ -93,12 +93,12 @@ TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
     EXPECT_TRUE(stopCrd);
 }
 
-TEST_F(TopologyControllerTest, testAddParentMissingChildId) {
+TEST_F(TopologyControllerTest, testaddAsChildMissingChildId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request{};
     request["parentId"] = 1;
-    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addAsChild"},
                               cpr::Header{{"Content-Type", "application/json"}},
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
@@ -113,13 +113,13 @@ TEST_F(TopologyControllerTest, testAddParentMissingChildId) {
     EXPECT_TRUE(stopCrd);
 }
 
-TEST_F(TopologyControllerTest, testAddParentNoSuchChild) {
+TEST_F(TopologyControllerTest, testaddAsChildNoSuchChild) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 7;
-    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addAsChild"},
                               cpr::Header{{"Content-Type", "application/json"}},
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
@@ -134,7 +134,7 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchChild) {
     EXPECT_TRUE(stopCrd);
 }
 
-TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
+TEST_F(TopologyControllerTest, testaddAsChildNoSuchParent) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -148,7 +148,7 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
     nlohmann::json request{};
     request["parentId"] = 3;
     request["childId"] = 2;
-    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addAsChild"},
                               cpr::Header{{"Content-Type", "application/json"}},
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
@@ -165,14 +165,14 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
     EXPECT_TRUE(stopCrd);
 }
 
-TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
+TEST_F(TopologyControllerTest, testaddAsChildSameChildAndParent) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     nlohmann::json request{};
     request["parentId"] = 7;
     request["childId"] = 7;
-    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addAsChild"},
                               cpr::Header{{"Content-Type", "application/json"}},
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
@@ -187,7 +187,7 @@ TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
     EXPECT_TRUE(stopCrd);
 }
 
-TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
+TEST_F(TopologyControllerTest, testaddAsChildAlreadyExists) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -203,7 +203,7 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
     request["childId"] = 2;
     request["bandwidth"] = 20;
     request["latency"] = 1;
-    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+    auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addAsChild"},
                               cpr::Header{{"Content-Type", "application/json"}},
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
@@ -219,7 +219,7 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
     EXPECT_TRUE(stopCrd);
 }
 
-TEST_F(TopologyControllerTest, testAddParent) {
+TEST_F(TopologyControllerTest, testaddAsChild) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -233,7 +233,7 @@ TEST_F(TopologyControllerTest, testAddParent) {
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 2;
-    auto asyncResp = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/removeAsParent"},
+    auto asyncResp = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/removeAsChild"},
                                       cpr::Header{{"Content-Type", "application/json"}},
                                       cpr::Body{request.dump()},
                                       cpr::ConnectTimeout{3000},
@@ -250,17 +250,9 @@ TEST_F(TopologyControllerTest, testAddParent) {
     nlohmann::json addLinkRequest1{};
     addLinkRequest1["parentId"] = 1;
     addLinkRequest1["childId"] = 2;
-    auto response1 = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
-                                      cpr::Header{{"Content-Type", "application/json"}},
-                                      cpr::Body{addLinkRequest1.dump()},
-                                      cpr::ConnectTimeout{3000},
-                                      cpr::Timeout{30000});
-    EXPECT_EQ(response1.status_code, 400l);
-
-
     addLinkRequest1["bandwidth"] = 20;
     addLinkRequest1["latency"] = 1;
-    response1 = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
+    auto response1 = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addAsChild"},
                                cpr::Header{{"Content-Type", "application/json"}},
                                cpr::Body{addLinkRequest1.dump()},
                                cpr::ConnectTimeout{3000},
@@ -274,7 +266,7 @@ TEST_F(TopologyControllerTest, testAddParent) {
     EXPECT_TRUE(stopCrd);
 }
 
-TEST_F(TopologyControllerTest, testRemoveParent) {
+TEST_F(TopologyControllerTest, testRemoveChild) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -288,7 +280,7 @@ TEST_F(TopologyControllerTest, testRemoveParent) {
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 2;
-    auto asyncResp = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/removeAsParent"},
+    auto asyncResp = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/removeAsChild"},
                                       cpr::Header{{"Content-Type", "application/json"}},
                                       cpr::Body{request.dump()},
                                       cpr::ConnectTimeout{3000},

@@ -26,7 +26,7 @@ class LinkProperty {
     LinkProperty(uint64_t bandwidth, uint64_t latency) : bandwidth(bandwidth), latency(latency) {}
 
     /**
-     * @brief bandwidth in Megabytes per seconds
+     * @brief bandwidth in Megabits per seconds
      */
     uint64_t bandwidth;
 

@@ -87,7 +87,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("POST", "/addParent", addParent, BODY_STRING(String, request)) {
+    ENDPOINT("POST", "/addAsChild", addParent, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");
             //check if json is valid
@@ -100,16 +100,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 return optional.value();
             }
 
-            if (!reqJson.contains("bandwidth")) {
-                return errorHandler->handleError(Status::CODE_400, " Request body missing 'bandwidth'");
-            }
-            if (!reqJson.contains("latency")) {
-                return errorHandler->handleError(Status::CODE_400, " Request body missing 'latency'");
-            }
-
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
-            bool added = topologyManagerService->addParent(childId, parentId);
+            bool added = topologyManagerService->addTopologyNodeAsChild(parentId, childId);
             if (added) {
                 NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
             } else {
@@ -119,8 +112,15 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                     "TopologyController::handlePost:addParent: Failed to add link between parent and child nodes.");
             }
 
-            uint64_t bandwidth = reqJson["bandwidth"].get<uint64_t>();
-            uint64_t latency = reqJson["latency"].get<uint64_t>();
+            uint64_t bandwidth = 0;
+            if (reqJson.contains("bandwidth")) {
+                bandwidth = reqJson["bandwidth"].get<uint64_t>();
+            }
+
+            uint64_t latency = 0;
+            if (reqJson.contains("latency")) {
+                latency = reqJson["latency"].get<uint64_t>();
+            }
 
             bool success = topologyManagerService->addLinkProperty(parentId, childId, bandwidth, latency);
             if (success) {
@@ -145,7 +145,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("DELETE", "/removeAsParent", removeParent, BODY_STRING(String, request)) {
+    ENDPOINT("DELETE", "/removeAsChild", removeParent, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");
             //check if json is valid
@@ -159,7 +159,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
-            bool removed = topologyManagerService->removeAsParent(childId, parentId);
+            bool removed = topologyManagerService->removeTopologyNodeAsChild(parentId, childId);
             if (removed) {
                 NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully");
             } else {

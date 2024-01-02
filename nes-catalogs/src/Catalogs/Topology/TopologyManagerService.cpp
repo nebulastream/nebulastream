@@ -97,26 +97,25 @@ bool TopologyManagerService::unregisterNode(WorkerId workerId) {
     return successTopology;
 }
 
-bool TopologyManagerService::addParent(WorkerId childId, WorkerId parentId) {
-    NES_DEBUG("TopologyManagerService::addParent: childId= {}  parentId= {}", childId, parentId);
-
+bool TopologyManagerService::addTopologyNodeAsChild(WorkerId parentId, WorkerId childId) {
+    NES_DEBUG("Add topology node as child. ParentId= {} ChildId= {}", childId, parentId);
     bool added = topology->addTopologyNodeAsChild(parentId, childId);
     if (added) {
-        NES_DEBUG("TopologyManagerService::AddParent: created link successfully new topology is=");
+        NES_DEBUG("Added topology node as child. ParentId= {} ChildId= {}", childId, parentId);
         topology->print();
         return true;
     }
-    NES_ERROR("TopologyManagerService::AddParent: created NOT successfully added");
+    NES_ERROR("Created not successfully add as child.");
     return false;
 }
 
-bool TopologyManagerService::removeAsParent(WorkerId childId, WorkerId parentId) {
+bool TopologyManagerService::removeTopologyNodeAsChild(WorkerId parentId, WorkerId childId) {
     bool success = topology->removeTopologyNodeAsChild(parentId, childId);
     if (!success) {
-        NES_ERROR("TopologyManagerService::removeAsParent: edge between {} and {} could not be removed", childId, parentId);
+        NES_ERROR("TopologyManagerService::removeTopologyNodeAsChild: link between {} and {} could not be removed", childId, parentId);
         return false;
     }
-    NES_DEBUG("TopologyManagerService::removeAsParent: successful");
+    NES_DEBUG("TopologyManagerService::removeTopologyNodeAsChild: successful");
     return true;
 }
 
