@@ -117,7 +117,7 @@ class SourceCatalogService {
 
   private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::mutex mutex;
+    std::mutex sourceCatalogMutex;
 };
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 }// namespace NES

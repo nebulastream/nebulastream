@@ -54,8 +54,6 @@ class SourceCatalogEntry {
     static SourceCatalogEntryPtr
     create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
 
-    //    explicit SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
-
     /**
      * @brief Get the physical source
      * @return the shared pointer to the physical source
