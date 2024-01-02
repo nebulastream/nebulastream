@@ -4,6 +4,7 @@ add_source_files(unikernel-lib
         NetworkSource.cpp
         SinkMedium.cpp
         Util/CircularBuffer.cpp
+        Util/StacktraceLoader.cpp
 #        Sources/TCPSource.cpp
 )
 
