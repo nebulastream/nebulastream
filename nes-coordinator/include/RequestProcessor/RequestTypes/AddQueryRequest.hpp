@@ -21,7 +21,7 @@
 namespace z3 {
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}
+}// namespace z3
 
 namespace NES {
 
