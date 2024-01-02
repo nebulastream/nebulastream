@@ -91,19 +91,16 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
                   sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
 
         //get current physical source for this logical source
-        std::vector<SourceCatalogEntryPtr> physicalSources = logicalToPhysicalSourceMapping[logicalSourceName];
+        std::vector<SourceCatalogEntryPtr> existingSCEs = logicalToPhysicalSourceMapping[logicalSourceName];
 
         //check if physical source does not exist yet
-        for (const SourceCatalogEntryPtr& sourceCatalogEntry : physicalSources) {
-            auto physicalSourceToTest = sourceCatalogEntry->getPhysicalSource();
-            NES_DEBUG("test node id={} phyStr={}",
-                      sourceCatalogEntry->getTopologyNodeId(),
-                      physicalSourceToTest->getPhysicalSourceName());
-            if (physicalSourceToTest->getPhysicalSourceName() == sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
-                && sourceCatalogEntry->getTopologyNodeId() == sourceCatalogEntry->getTopologyNodeId()) {
+        for (const SourceCatalogEntryPtr& existingSCE : existingSCEs) {
+            if (existingSCE->getPhysicalSource()->getPhysicalSourceName()
+                    == sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
+                && existingSCE->getTopologyNodeId() == sourceCatalogEntry->getTopologyNodeId()) {
                 NES_ERROR("SourceCatalog: node with id={} name={} already exists",
                           sourceCatalogEntry->getTopologyNodeId(),
-                          physicalSourceToTest->getPhysicalSourceName());
+                          sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
                 return false;
             }
         }
