@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.13](https://github.com/nebulastream/nebulastream/tree/v0.6.13) (2024-01-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.12...v0.6.13)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor Topology class to use folly [\#4456](https://github.com/nebulastream/nebulastream/issues/4456)
+- \[TASK\] Add the ability to specify the transfer rate when adding links to the network topology [\#4447](https://github.com/nebulastream/nebulastream/issues/4447)
+
 ## [v0.6.12](https://github.com/nebulastream/nebulastream/tree/v0.6.12) (2024-01-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.11...v0.6.12)
@@ -1465,7 +1474,7 @@
 
 ### Bug Fixes 🐛
 
-- \[BUG\] On a worker failure Topology::removeTopologyNode rootNode-\>remove\(nodeToRemove\) is called [\#3881](https://github.com/nebulastream/nebulastream/issues/3881)
+- \[BUG\] On a worker failure Topology::removePhysicalNode rootNode-\>remove\(nodeToRemove\) is called [\#3881](https://github.com/nebulastream/nebulastream/issues/3881)
 
 ## [v0.5.128](https://github.com/nebulastream/nebulastream/tree/v0.5.128) (2023-07-01)
 
