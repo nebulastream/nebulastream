@@ -65,7 +65,6 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
 
-
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
@@ -81,25 +80,28 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
 
         std::vector<int> sources{8, 9, 10, 11, 12};
 
-        std::map<std::string, std::any> properties;
-        properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-        std::vector<TopologyNodePtr> nodes;
         for (int i = 0; i < (int) resources.size(); i++) {
-            nodes.push_back(TopologyNode::create(i, "localhost", 123, 124, resources[i], properties));
-            if (i == 0) {
-                topology->setAsRoot(nodes[i]);
-            } else {
-                topology->addNewTopologyNodeAsChild(nodes[parents[i]], nodes[i]);
-            }
+            WorkerId workerId;
+            workerId = i + 1;
+
+            std::map<std::string, std::any> properties;
+            properties[NES::Worker::Properties::MAINTENANCE] = false;
+            properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
             if (std::count(tf_enabled_nodes.begin(), tf_enabled_nodes.end(), i)) {
-                nodes[i]->addNodeProperty("tf_installed", true);
+                properties["tf_installed"] = true;
             }
             if (std::count(low_throughput_sources.begin(), low_throughput_sources.end(), i)) {
-                nodes[i]->addNodeProperty("low_throughput_source", true);
+                properties["low_throughput_source"] = true;
             }
             if (std::count(ml_hardwares.begin(), ml_hardwares.end(), i)) {
-                nodes[i]->addNodeProperty("ml_hardware", true);
+                properties["ml_hardware"] = true;
+            }
+
+            topology->registerTopologyNode(workerId, "localhost", 123, 124, resources[i], properties);
+            if (i == 0) {
+                topology->setRootTopologyNodeId(workerId);
+            } else {
+                topology->addTopologyNodeAsChild(workerId - 1, workerId);
             }
         }
 
@@ -131,8 +133,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         auto physicalSource = PhysicalSource::create(csvSourceType);
 
         for (int source : sources) {
-            auto streamCatalogEntry =
-                Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodes[source]);
+            auto streamCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, source + 1);
             sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 
