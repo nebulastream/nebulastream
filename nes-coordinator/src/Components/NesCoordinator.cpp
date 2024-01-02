@@ -86,8 +86,9 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
-    coordinatorHealthCheckService =
-        std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, HEALTH_SERVICE_NAME, this->coordinatorConfiguration);
+    coordinatorHealthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
+                                                                                    HEALTH_SERVICE_NAME,
+                                                                                    this->coordinatorConfiguration);
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 

@@ -528,8 +528,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1), TestUtils::enableDebug()});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::coordinatorHealthCheckWaitTime(1),
+                                                    TestUtils::enableDebug()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid={}", coordinator.getPid());
 

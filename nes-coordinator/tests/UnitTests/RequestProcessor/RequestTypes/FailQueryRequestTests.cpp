@@ -234,10 +234,8 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
             EXPECT_EQ(e.getMode(), RpcClientModes::Stop);
             const auto failedCallNodeIds = e.getFailedExecutionNodeIds();
             EXPECT_EQ(failedCallNodeIds.size(), 2);
-            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), rootId),
-                      failedCallNodeIds.cend());
-            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), workerId),
-                      failedCallNodeIds.cend());
+            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), rootId), failedCallNodeIds.cend());
+            EXPECT_NE(std::find(failedCallNodeIds.cbegin(), failedCallNodeIds.cend(), workerId), failedCallNodeIds.cend());
 
             //expect the query to be marked for failure and not failed, because the deployment did not succeed
             EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::MARKED_FOR_FAILURE);

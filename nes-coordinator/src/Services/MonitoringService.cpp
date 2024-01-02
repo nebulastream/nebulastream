@@ -54,7 +54,7 @@ nlohmann::json MonitoringService::requestMonitoringDataAsJson(uint64_t nodeId) {
 nlohmann::json MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
     nlohmann::json metricsJson;
     auto nodeIds = topology->getAllRegisteredNodeIds();
-    for (const auto& nodeId : nodeIds){
+    for (const auto& nodeId : nodeIds) {
         NES_INFO("MonitoringService: Requesting metrics for node {}", std::to_string(nodeId));
         metricsJson[std::to_string(nodeId)] = requestMonitoringDataAsJson(nodeId);
         Monitoring::StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(nodeId);
@@ -67,7 +67,7 @@ nlohmann::json MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
 nlohmann::json MonitoringService::requestNewestMonitoringDataFromMetricStoreAsJson() {
     nlohmann::json metricsJson;
     auto nodeIds = topology->getAllRegisteredNodeIds();
-    for (const auto& nodeId : nodeIds){
+    for (const auto& nodeId : nodeIds) {
         NES_INFO("MonitoringService: Requesting metrics for node {}", std::to_string(nodeId));
         Monitoring::StoredNodeMetricsPtr parsedValues = monitoringManager->getMonitoringDataFromMetricStore(nodeId);
         metricsJson[std::to_string(nodeId)] = Monitoring::MetricUtils::toJson(parsedValues);
