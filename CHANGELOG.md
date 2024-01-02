@@ -1,12 +1,16 @@
 # Changelog
 
-## [v0.6.11](https://github.com/nebulastream/nebulastream/tree/v0.6.11) (2024-01-02)
+## [v0.6.12](https://github.com/nebulastream/nebulastream/tree/v0.6.12) (2024-01-02)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.10...v0.6.11)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.11...v0.6.12)
 
 **Implemented enhancements:**
 
-- \[TASK\] Reduce the Time the `StreamJoinOperatorHandler` holds an exclusive lock [\#4316](https://github.com/nebulastream/nebulastream/issues/4316)
+- Implement an optimistic approach that performs a validation phase post-placement. [\#4432](https://github.com/nebulastream/nebulastream/issues/4432)
+
+## [v0.6.11](https://github.com/nebulastream/nebulastream/tree/v0.6.11) (2024-01-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.10...v0.6.11)
 
 ## [v0.6.10](https://github.com/nebulastream/nebulastream/tree/v0.6.10) (2023-12-21)
 
