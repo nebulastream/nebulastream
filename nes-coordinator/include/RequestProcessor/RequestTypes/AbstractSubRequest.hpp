@@ -81,7 +81,7 @@ class AbstractSubRequest : public StorageResourceLocker {
     virtual std::any executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
 
     /**
-     * @brief get an id that identifies this object to lock resources for exclusive use by this object
+     * @brief get an id that identifies this request to lock resources for exclusive use by this object
      * @return the id
      */
     RequestId getResourceLockingId() override;

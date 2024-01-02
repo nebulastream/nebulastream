@@ -69,9 +69,11 @@ void TwoPhaseLockingStorageHandler::releaseResources(const RequestId requestId) 
         //lock the holder data, increase the ticket number for the ticket to be served and notify all waiting threads
         std::unique_lock lock(holder.mutex);
         holder.holderId = INVALID_REQUEST_ID;
-        TicketId nextTicket = holder.currentTicket + 1;
-        nextTicket = nextTicket % MAX_TICKET;
+        TicketId nextTicket = (holder.currentTicket + 1) % MAX_TICKET;
         holder.currentTicket = nextTicket;
+
+        //unlocking the mutex before calling notify_all to prevent unnecessary wake-ups of waiting threads.
+        //see: https://en.cppreference.com/w/cpp/thread/condition_variable/notify_all
         lock.unlock();
         holder.cv.notify_all();
     }
