@@ -8,6 +8,11 @@ if (UNIKERNEL_USE_TSAN)
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-fsanitize=thread" "-g" "-fno-omit-frame-pointer")
 endif ()
 
+if(UNIKERNEL_USE_LIB_DWARF)
+    set(UNIKERNEL_LINK_OPTIONS ${UNIKERNEL_LINK_OPTIONS} "-ldw")
+    SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUSE_LIB_DWARF")
+endif ()
+
 add_library(unikernel-lib STATIC ${NES_UNIKERNEL_LIB_SOURCE_FILES})
 target_include_directories(unikernel-lib PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -26,7 +31,7 @@ SET(UNIKERNEL_CONFIGURATION_FILE /home/ls/DIMA/nebulastream/cmake-build-unikerne
 
 add_executable(unikernel src/main.cpp)
 set_target_properties(unikernel PROPERTIES OUTPUT_NAME "unikernel${UNIKERNEL_WORKER_ID}")
-target_compile_options(unikernel PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/include/Pipeline.h")
+target_compile_options(unikernel PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline.h")
 
 target_link_options(unikernel PRIVATE ${UNIKERNEL_LINK_OPTIONS})
 file(GLOB OPERATOR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/operators/*.o)

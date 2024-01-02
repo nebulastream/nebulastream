@@ -13,7 +13,6 @@
 # limitations under the License.
 
 add_source_files(unikernel-lib
-        StacktraceLoader.cpp
         ThreadNaming.cpp
         NonBlockingMonotonicSeqQueue.cpp
 )
