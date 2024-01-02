@@ -183,7 +183,6 @@ void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
 
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
-        auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_WORKER_ID));
         return;
     }
 
@@ -301,7 +300,7 @@ void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
                                     pinnedDownStreamOperators);
         }
         if (!canBePlacedHere) {
-            NES_ERROR("");
+            NES_ERROR("Operator can not be placed on {}", candidateTopologyNode->getId());
             return;
         }
 
