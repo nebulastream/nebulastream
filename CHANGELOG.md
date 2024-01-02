@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.11](https://github.com/nebulastream/nebulastream/tree/v0.6.11) (2024-01-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.10...v0.6.11)
+
+**Implemented enhancements:**
+
+- \[TASK\] Reduce the Time the `StreamJoinOperatorHandler` holds an exclusive lock [\#4316](https://github.com/nebulastream/nebulastream/issues/4316)
+
 ## [v0.6.10](https://github.com/nebulastream/nebulastream/tree/v0.6.10) (2023-12-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.9...v0.6.10)
