@@ -2,7 +2,7 @@
 
 # The build-dir to use for copying binaries
 # This should be the suffix of your CLion mappings
-cmake_build_dir: nebulastream/cmake-build-fat-1-debug/nes-core
+cmake_build_dir: nebulastream/cmake-build-fat-1-release/nes-core
 
 # The default log level
 log_level: LOG_DEBUG
