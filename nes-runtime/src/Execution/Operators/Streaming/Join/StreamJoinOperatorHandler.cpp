@@ -83,7 +83,7 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
 
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
-        for(auto it = windowToSlicesLocked->begin(); it != windowToSlicesLocked->end(); /* no increment */) {
+        for (auto it = windowToSlicesLocked->begin(); it != windowToSlicesLocked->end(); /* no increment */) {
             auto& [windowInfo, slicesAndStateForWindow] = *it;
             if (windowInfo.windowEnd > newGlobalWatermark
                 || slicesAndStateForWindow.windowState == WindowInfoState::EMITTED_TO_PROBE) {
