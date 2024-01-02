@@ -1,15 +1,15 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
@@ -79,33 +79,23 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
         watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
 
-    std::vector<std::pair<WindowInfo, std::vector<StreamSlicePtr>>> toBeEmitted;
-
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
-        for (auto it = windowToSlicesLocked->begin(); it != windowToSlicesLocked->end(); /* no increment */) {
-            auto& [windowInfo, slicesAndStateForWindow] = *it;
+        for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
             if (windowInfo.windowEnd > newGlobalWatermark
                 || slicesAndStateForWindow.windowState == WindowInfoState::EMITTED_TO_PROBE) {
                 // This window can not be triggered yet or has already been triggered
-                ++it;
                 continue;
             }
-
             slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
             NES_INFO("Emitting all slices for window {}", windowInfo.toString());
 
-            toBeEmitted.emplace_back(windowInfo, std::move(slicesAndStateForWindow.slices));
-            windowToSlicesLocked->erase(it++);
-        }
-    }
-
-    // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
-    // For bucketing, this should be only done once
-    for (const auto& [window, emittedSlices] : toBeEmitted) {
-        for (auto& sliceLeft : emittedSlices) {
-            for (auto& sliceRight : emittedSlices) {
-                emitSliceIdsToProbe(*sliceLeft, *sliceRight, window, pipelineCtx);
+            // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
+            // For bucketing, this should be only done once
+            for (auto& sliceLeft : slicesAndStateForWindow.slices) {
+                for (auto& sliceRight : slicesAndStateForWindow.slices) {
+                    emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
+                }
             }
         }
     }
