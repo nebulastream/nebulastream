@@ -56,20 +56,25 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 1. Find the path where operators need to be placed
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 2. Place operators on the selected path
-        performOperatorPlacement(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 2. Create copy of the query plan
+        auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. Compute query sub plans
-        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 3. Pin all unpinned operators
+        performOperatorPlacement(sharedQueryId, copiedPinnedOperators.copiedPinnedUpStreamOperators, copiedPinnedOperators.copiedPinnedDownStreamOperators);
 
-        // 4. add network source and sink operators
+        // 4. Compute query sub plans
+        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId,
+                                                          copiedPinnedOperators.copiedPinnedUpStreamOperators,
+                                                          copiedPinnedOperators.copiedPinnedDownStreamOperators);
+
+        // 5. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);
 
         if (DEFAULT_ENABLE_OPERATOR_REDUNDANCY_ELIMINATION) {
             performOperatorRedundancyElimination(sharedQueryId);
         }
 
-        // 5. update execution nodes
+        // 6. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());

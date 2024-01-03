@@ -28,11 +28,10 @@
 namespace NES::Optimizer {
 
 std::unique_ptr<BasePlacementAdditionStrategy> BottomUpStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                const TopologyPtr& topology,
-                                                                const TypeInferencePhasePtr& typeInferencePhase,
-                                                                PlacementAmenderMode placementAmenderMode) {
-    return std::make_unique<BottomUpStrategy>(
-        BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
+                                                                        const TopologyPtr& topology,
+                                                                        const TypeInferencePhasePtr& typeInferencePhase,
+                                                                        PlacementAmenderMode placementAmenderMode) {
+    return std::make_unique<BottomUpStrategy>(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
 }
 
 BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -49,16 +48,21 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 1. Find the path where operators need to be placed
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 2. Pin all unpinned operators
-        pinOperators(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 2. Create copy of the query plan
+        auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. Compute query sub plans
-        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 3. Pin all unpinned operators
+        pinOperators(copiedPinnedOperators.copiedPinnedUpStreamOperators, copiedPinnedOperators.copiedPinnedDownStreamOperators);
 
-        // 4. add network source and sink operators
+        // 4. Compute query sub plans
+        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId,
+                                                          copiedPinnedOperators.copiedPinnedUpStreamOperators,
+                                                          copiedPinnedOperators.copiedPinnedDownStreamOperators);
+
+        // 5. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);
 
-        // 5. update execution nodes
+        // 6. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
         NES_ERROR("Exception occurred during bottom up placement: {}", ex.what());

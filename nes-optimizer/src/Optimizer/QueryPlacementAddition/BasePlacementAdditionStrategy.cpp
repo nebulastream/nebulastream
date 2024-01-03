@@ -26,7 +26,6 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <thread>
@@ -36,9 +35,9 @@
 namespace NES::Optimizer {
 
 BasePlacementAdditionStrategy::BasePlacementAdditionStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                             const TopologyPtr& topology,
-                                             const TypeInferencePhasePtr& typeInferencePhase,
-                                             PlacementAmenderMode placementAmenderMode)
+                                                             const TopologyPtr& topology,
+                                                             const TypeInferencePhasePtr& typeInferencePhase,
+                                                             PlacementAmenderMode placementAmenderMode)
     : globalExecutionPlan(globalExecutionPlan), topology(topology), typeInferencePhase(typeInferencePhase),
       placementAmenderMode(placementAmenderMode) {
     //Initialize path finder
@@ -48,7 +47,7 @@ BasePlacementAdditionStrategy::BasePlacementAdditionStrategy(const GlobalExecuti
 bool BasePlacementAdditionStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
 void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
-                                                 const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators) {
+                                                         const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators) {
 
     //1. Find the topology nodes that will host upstream operators
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
@@ -95,8 +94,9 @@ void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalO
     }
 }
 
-bool BasePlacementAdditionStrategy::optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
-                                                    const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
+bool BasePlacementAdditionStrategy::optimisticPathSelection(
+    const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+    const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     bool success = false;
     uint8_t retryCount = 0;
@@ -156,8 +156,9 @@ bool BasePlacementAdditionStrategy::optimisticPathSelection(const std::set<Worke
     return success;
 }
 
-bool BasePlacementAdditionStrategy::pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
-                                                     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
+bool BasePlacementAdditionStrategy::pessimisticPathSelection(
+    const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+    const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
     bool success = false;
     uint8_t retryCount = 0;
     std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
@@ -246,7 +247,7 @@ bool BasePlacementAdditionStrategy::unlockTopologyNodesInSelectedPath() {
 
 std::vector<TopologyNodePtr>
 BasePlacementAdditionStrategy::findPath(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
-                                const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
+                                        const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     //1 Create the pinned upstream and downstream topology node vector
     std::vector upstreamTopologyNodes(topologyNodesWithUpStreamPinnedOperators.begin(),
@@ -259,10 +260,72 @@ BasePlacementAdditionStrategy::findPath(const std::set<WorkerId>& topologyNodesW
     return topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
 }
 
+CopiedPinnedOperators
+BasePlacementAdditionStrategy::createCopyOfQueryPlan(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                     const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+
+    std::set<LogicalOperatorNodePtr> copyOfPinnedUpStreamOperators;
+    std::set<LogicalOperatorNodePtr> copyOfPinnedDownStreamOperators;
+
+    // Temp container for iteration
+    std::queue<LogicalOperatorNodePtr> operatorsToProcess;
+    std::unordered_map<OperatorId, LogicalOperatorNodePtr> mapOfCopiedOperators;
+
+    std::set<OperatorId> pinnedUpStreamOperatorId;
+    for (auto pinnedUpStreamOperator : pinnedUpStreamOperators) {
+        OperatorId operatorId = pinnedUpStreamOperator->getId();
+        pinnedUpStreamOperatorId.emplace(operatorId);
+        operatorsToProcess.emplace(pinnedUpStreamOperator);
+        mapOfCopiedOperators[operatorId] = pinnedUpStreamOperator->copy()->as<LogicalOperatorNode>();
+    }
+
+    std::set<OperatorId> pinnedDownStreamOperatorId;
+    for (auto pinnedDownStreamOperator : pinnedDownStreamOperators) {
+        pinnedDownStreamOperatorId.emplace(pinnedDownStreamOperator->getId());
+    }
+
+    while (!operatorsToProcess.empty()) {
+        auto operatorToProcess = operatorsToProcess.front();
+        operatorsToProcess.pop();
+        // Skip if the topology node was visited previously
+        OperatorId operatorId = operatorToProcess->getId();
+        operatorIdToOriginalOperatorMap[operatorId] = operatorToProcess;
+        LogicalOperatorNodePtr operatorCopy = mapOfCopiedOperators[operatorId];
+
+        //If the operator is a pinned upstream operator then add to the set of pinned upstream copy
+        if (pinnedUpStreamOperatorId.contains(operatorId)) {
+            copyOfPinnedUpStreamOperators.emplace(operatorCopy);
+        }
+
+        //If the operator is a downstream operator then add to the set of pinned downstream copy
+        if (pinnedDownStreamOperatorId.contains(operatorId)) {
+            copyOfPinnedDownStreamOperators.emplace(operatorCopy);
+        }
+
+        // Add to the list of topology nodes for which locks are acquired
+        const auto& downstreamOperators = operatorToProcess->getParents();
+        std::for_each(downstreamOperators.begin(), downstreamOperators.end(), [&](const NodePtr& operatorNode) {
+            auto parentOperator = operatorNode->as<LogicalOperatorNode>();
+            auto parentOperatorId = parentOperator->getId();
+            LogicalOperatorNodePtr parentOperatorCopy;
+            if (mapOfCopiedOperators.contains(parentOperatorId)) {
+                parentOperatorCopy = mapOfCopiedOperators[parentOperatorId];
+            } else {
+                parentOperatorCopy = parentOperator->copy()->as<LogicalOperatorNode>();
+                mapOfCopiedOperators[parentOperatorId] = parentOperatorCopy;
+            }
+            operatorCopy->addParent(parentOperatorCopy);
+            operatorsToProcess.push(parentOperator);
+        });
+    }
+
+    return {copyOfPinnedUpStreamOperators, copyOfPinnedDownStreamOperators};
+}
+
 ComputedSubQueryPlans
 BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
-                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+                                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     // The trailing logic iterates over the completely pinned query plan in strict BFS order.
     // Starting from the upstream to downstream operators.
@@ -331,24 +394,25 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
     while (!pinnedOperators.empty()) {
 
         // 2.1. Fetch the pinned operator and the worker Id where it is pinned
-        // Skip further processing if operator was processed previously
         auto pinnedOperator = pinnedOperators.front();
         pinnedOperators.pop();
-        if (operatorIdToOperatorMap.contains(pinnedOperator->getId())) {
+        // Skip further processing if operator was processed previously
+        OperatorId operatorId = pinnedOperator->getId();
+        if (operatorIdToCopiedOperatorMap.contains(operatorId)) {
             continue;
         }
-        operatorIdToOperatorMap[pinnedOperator->getId()] = pinnedOperator;
+        //Add operator to processed operator set
+        operatorIdToCopiedOperatorMap[operatorId] = pinnedOperator;
         auto copyOfPinnedOperator = pinnedOperator->copy()->as<LogicalOperatorNode>();// Make a copy of the operator
         auto pinnedWorkerId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_WORKER_ID));
         if (pinnedOperator->getOperatorState() == OperatorState::TO_BE_PLACED
             || pinnedOperator->getOperatorState() == OperatorState::TO_BE_REPLACED) {
             workerIdToResourceConsumedMap[pinnedWorkerId]++;
         }
-        workerIdToPinnedOperatorMap[pinnedWorkerId].emplace_back(pinnedOperator);
+        workerIdToPinnedOperatorIdMap[pinnedWorkerId].emplace_back(operatorId);
 
         // 2.2. If the pinnedWorkerId has already placed query sub plans then compute an updated list of query sub plans
         if (computedSubQueryPlans.contains(pinnedWorkerId)) {
-
             // 2.2.1. Prepare an updated list of query sub plans and a new placed query plan for the operator under
             // considersation
             std::vector<QueryPlanPtr> updatedQuerySubPlans;
@@ -384,7 +448,7 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
 
                         // Check if all upstream operators of the considered pinnedOperator are co-located on same node
                         // We will use this information to compute network source and sink operators
-                        auto actualPlacedOperator = operatorIdToOperatorMap[placedOperator->getId()];
+                        auto actualPlacedOperator = operatorIdToCopiedOperatorMap[placedOperator->getId()];
                         if (actualPlacedOperator->getChildren().size() == placedOperator->getChildren().size()) {
                             placedOperator->addProperty(CO_LOCATED_UPSTREAM_OPERATORS, true);
                         }
@@ -444,7 +508,6 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             updatedQuerySubPlans.emplace_back(newPlacedQuerySubPlan);
             computedSubQueryPlans[pinnedWorkerId] = updatedQuerySubPlans;
         } else {// 2.2.1. If no query sub plan placed on the pinned worker node
-
             // Create a new placed query sub plan
             QueryPlanPtr newPlacedQuerySubPlan;
             if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
@@ -469,12 +532,11 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
         //2.3. If the operator is in the state placed then check if it is one of the pinned downstream operator
         if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
             //2.3.1. Check if this operator in the pinned downstream operator list.
-            const auto& isPinnedDownStreamOperator =
-                std::find_if(pinnedDownStreamOperators.begin(),
-                             pinnedDownStreamOperators.end(),
-                             [pinnedOperator](const auto& pinnedDownStreamOperator) {
-                                 return pinnedDownStreamOperator->getId() == pinnedOperator->getId();
-                             });
+            const auto& isPinnedDownStreamOperator = std::find_if(pinnedDownStreamOperators.begin(),
+                                                                  pinnedDownStreamOperators.end(),
+                                                                  [operatorId](const auto& pinnedDownStreamOperator) {
+                                                                      return pinnedDownStreamOperator->getId() == operatorId;
+                                                                  });
 
             //2.3.2. If reached the pinned downstream operator then skip further traversal
             if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
@@ -548,11 +610,11 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                     continue;
                 }
 
-                auto originalCandidateOperator = operatorIdToOperatorMap[candidateOperator->getId()];
+                auto originalCopiedOperator = operatorIdToCopiedOperatorMap[candidateOperator->getId()];
 
                 // 5. For each candidate operator not in the state "Placed" find the topology node hosting the immediate
                 // upstream logical operators.
-                for (const auto& upstreamOperator : originalCandidateOperator->getChildren()) {
+                for (const auto& upstreamOperator : originalCopiedOperator->getChildren()) {
 
                     // 6. Fetch the id of the topology node hosting the upstream operator to connect.
                     const auto& upstreamOperatorToConnect = upstreamOperator->as<LogicalOperatorNode>();
@@ -659,7 +721,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
     }
 }
 
-bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, ComputedSubQueryPlans& computedSubQueryPlans) {
+bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
+                                                         ComputedSubQueryPlans& computedSubQueryPlans) {
 
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
@@ -847,11 +910,12 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
             }
 
             // 1.7. Mark all operators as placed on the topology node as placed
-            if (workerIdToPinnedOperatorMap.contains(workerNodeId)) {
-                auto pinnedOperators = workerIdToPinnedOperatorMap[workerNodeId];
-                for (const auto& pinnedOperator : pinnedOperators) {
-                    pinnedOperator->setOperatorState(OperatorState::PLACED);
-                    pinnedOperator->addProperty(PINNED_WORKER_ID, workerNodeId);
+            if (workerIdToPinnedOperatorIdMap.contains(workerNodeId)) {
+                auto pinnedOperatorIds = workerIdToPinnedOperatorIdMap[workerNodeId];
+                for (auto pinnedOperatorId : pinnedOperatorIds) {
+                    auto originalOperator = operatorIdToOriginalOperatorMap[pinnedOperatorId];
+                    originalOperator->setOperatorState(OperatorState::PLACED);
+                    originalOperator->addProperty(PINNED_WORKER_ID, workerNodeId);
                 }
             }
 
@@ -893,8 +957,8 @@ TopologyNodePtr BasePlacementAdditionStrategy::getTopologyNode(WorkerId workerId
 }
 
 LogicalOperatorNodePtr BasePlacementAdditionStrategy::createNetworkSinkOperator(QueryId queryId,
-                                                                        OperatorId sourceOperatorId,
-                                                                        const TopologyNodePtr& sourceTopologyNode) {
+                                                                                OperatorId sourceOperatorId,
+                                                                                const TopologyNodePtr& sourceTopologyNode) {
 
     NES_TRACE("create Network Sink operator");
     Network::NodeLocation nodeLocation(sourceTopologyNode->getId(),
@@ -915,9 +979,9 @@ LogicalOperatorNodePtr BasePlacementAdditionStrategy::createNetworkSinkOperator(
 }
 
 LogicalOperatorNodePtr BasePlacementAdditionStrategy::createNetworkSourceOperator(QueryId queryId,
-                                                                          SchemaPtr inputSchema,
-                                                                          OperatorId operatorId,
-                                                                          const TopologyNodePtr& sinkTopologyNode) {
+                                                                                  SchemaPtr inputSchema,
+                                                                                  OperatorId operatorId,
+                                                                                  const TopologyNodePtr& sinkTopologyNode) {
     NES_TRACE("create Network Source operator");
     NES_ASSERT2_FMT(sinkTopologyNode, "Invalid sink node while placing query " << queryId);
     Network::NodeLocation upstreamNodeLocation(sinkTopologyNode->getId(),
