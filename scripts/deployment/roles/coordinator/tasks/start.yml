@@ -12,7 +12,7 @@
 
 - name: Start coordinator
   shell: |
-    nohup numactl -N 0 -m 0 /home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ coord_bin_name }} --configPath=/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/coordinator.yaml > /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ coord_bin_name }}.log 2>&1 & 
+    nohup numactl -N 0 -m 0 /home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ coord_bin_name }} --configPath=/tmp/coordinator.yaml > /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ coord_bin_name }}.log 2>&1 & 
     echo $! > /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ coord_bin_name }}.pid
 
 - name: Deploy Smartgrid schema

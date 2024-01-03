@@ -13,5 +13,5 @@
 
 - name: Start Worker
   shell: |
-    nohup numactl -N 0 -m 0 {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }} --configPath={{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/worker.yaml > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.log 2>&1 & 
+    nohup numactl -N 0 -m 0 /home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }} --configPath=/tmp/worker.yaml > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.log 2>&1 & 
     echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.pid
