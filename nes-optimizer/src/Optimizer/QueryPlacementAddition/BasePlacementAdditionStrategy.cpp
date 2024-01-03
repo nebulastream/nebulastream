@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -35,7 +35,7 @@
 
 namespace NES::Optimizer {
 
-BasePlacementStrategy::BasePlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+BasePlacementAdditionStrategy::BasePlacementAdditionStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                              const TopologyPtr& topology,
                                              const TypeInferencePhasePtr& typeInferencePhase,
                                              PlacementAmenderMode placementAmenderMode)
@@ -45,9 +45,9 @@ BasePlacementStrategy::BasePlacementStrategy(const GlobalExecutionPlanPtr& globa
     pathFinder = std::make_shared<PathFinder>((topology->getRootTopologyNodeId()));
 }
 
-bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
+bool BasePlacementAdditionStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
-void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
+void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
                                                  const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators) {
 
     //1. Find the topology nodes that will host upstream operators
@@ -95,7 +95,7 @@ void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorN
     }
 }
 
-bool BasePlacementStrategy::optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+bool BasePlacementAdditionStrategy::optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
                                                     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     bool success = false;
@@ -156,7 +156,7 @@ bool BasePlacementStrategy::optimisticPathSelection(const std::set<WorkerId>& to
     return success;
 }
 
-bool BasePlacementStrategy::pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+bool BasePlacementAdditionStrategy::pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
                                                      const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
     bool success = false;
     uint8_t retryCount = 0;
@@ -186,7 +186,7 @@ bool BasePlacementStrategy::pessimisticPathSelection(const std::set<WorkerId>& t
     return success;
 }
 
-bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes) {
+bool BasePlacementAdditionStrategy::lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes) {
     workerIdToTopologyNodeMap.clear();
     // Temp container for iteration
     std::queue<TopologyNodePtr> topologyNodesInBFSOrder;
@@ -226,7 +226,7 @@ bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<To
     return true;
 }
 
-bool BasePlacementStrategy::unlockTopologyNodesInSelectedPath() {
+bool BasePlacementAdditionStrategy::unlockTopologyNodesInSelectedPath() {
     NES_INFO("Releasing locks for all locked topology nodes.");
     //1 Check if there are nodes on which locks are acquired
     if (workerNodeIdsInBFS.empty()) {
@@ -245,7 +245,7 @@ bool BasePlacementStrategy::unlockTopologyNodesInSelectedPath() {
 }
 
 std::vector<TopologyNodePtr>
-BasePlacementStrategy::findPath(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+BasePlacementAdditionStrategy::findPath(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
                                 const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     //1 Create the pinned upstream and downstream topology node vector
@@ -260,7 +260,7 @@ BasePlacementStrategy::findPath(const std::set<WorkerId>& topologyNodesWithUpStr
 }
 
 ComputedSubQueryPlans
-BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
+BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
@@ -492,7 +492,7 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
     return computedSubQueryPlans;
 }
 
-void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedSubQueryPlans) {
+void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& computedSubQueryPlans) {
 
     // Iterate over all computed query sub plans and then add network source and sink operators
     //
@@ -659,7 +659,7 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
     }
 }
 
-bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, ComputedSubQueryPlans& computedSubQueryPlans) {
+bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, ComputedSubQueryPlans& computedSubQueryPlans) {
 
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
@@ -851,6 +851,7 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                 auto pinnedOperators = workerIdToPinnedOperatorMap[workerNodeId];
                 for (const auto& pinnedOperator : pinnedOperators) {
                     pinnedOperator->setOperatorState(OperatorState::PLACED);
+                    pinnedOperator->addProperty(PINNED_WORKER_ID, workerNodeId);
                 }
             }
 
@@ -866,7 +867,7 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
     return true;
 }
 
-ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
+ExecutionNodePtr BasePlacementAdditionStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
 
     ExecutionNodePtr candidateExecutionNode;
     if (globalExecutionPlan->checkIfExecutionNodeExists(candidateTopologyNode->getId())) {
@@ -879,7 +880,7 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
     return candidateExecutionNode;
 }
 
-TopologyNodePtr BasePlacementStrategy::getTopologyNode(WorkerId workerId) {
+TopologyNodePtr BasePlacementAdditionStrategy::getTopologyNode(WorkerId workerId) {
 
     NES_TRACE("Get the topology node {}", workerId);
     if (!workerIdToTopologyNodeMap.contains(workerId)) {
@@ -891,7 +892,7 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(WorkerId workerId) {
     return workerIdToTopologyNodeMap[workerId];
 }
 
-LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId,
+LogicalOperatorNodePtr BasePlacementAdditionStrategy::createNetworkSinkOperator(QueryId queryId,
                                                                         OperatorId sourceOperatorId,
                                                                         const TopologyNodePtr& sourceTopologyNode) {
 
@@ -913,7 +914,7 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId 
                                                       id);
 }
 
-LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId,
+LogicalOperatorNodePtr BasePlacementAdditionStrategy::createNetworkSourceOperator(QueryId queryId,
                                                                           SchemaPtr inputSchema,
                                                                           OperatorId operatorId,
                                                                           const TopologyNodePtr& sinkTopologyNode) {
@@ -933,7 +934,7 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryI
 }
 
 std::vector<TopologyNodePtr>
-BasePlacementStrategy::getTopologyNodesForChildrenOperators(const LogicalOperatorNodePtr& operatorNode) {
+BasePlacementAdditionStrategy::getTopologyNodesForChildrenOperators(const LogicalOperatorNodePtr& operatorNode) {
     std::vector<TopologyNodePtr> childTopologyNodes;
     NES_DEBUG("Get topology nodes with children operators");
     std::vector<NodePtr> children = operatorNode->getChildren();
@@ -957,7 +958,7 @@ BasePlacementStrategy::getTopologyNodesForChildrenOperators(const LogicalOperato
     return childTopologyNodes;
 }
 
-BasePlacementStrategy::~BasePlacementStrategy() {
+BasePlacementAdditionStrategy::~BasePlacementAdditionStrategy() {
     NES_INFO("~BasePlacementStrategy()");
     //Release the lock for pessimistic placement mode
     if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {

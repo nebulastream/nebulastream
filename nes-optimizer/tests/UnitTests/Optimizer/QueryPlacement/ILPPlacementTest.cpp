@@ -39,7 +39,7 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>

@@ -18,7 +18,7 @@
 #include <Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
 #include <set>
 #include <vector>

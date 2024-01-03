@@ -40,7 +40,7 @@
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Optimizer/QueryPlacementAddition/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>

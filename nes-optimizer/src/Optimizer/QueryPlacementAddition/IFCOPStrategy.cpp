@@ -18,7 +18,7 @@
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/IFCOPStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -40,7 +40,7 @@ IFCOPStrategy::IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,
                              const TypeInferencePhasePtr& typeInferencePhase,
                              PlacementAmenderMode placementAmenderMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // initiate operatorIdToNodePlacementMap

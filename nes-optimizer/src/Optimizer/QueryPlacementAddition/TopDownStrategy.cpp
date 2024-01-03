@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/TopDownStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -40,7 +40,7 @@ TopDownStrategy::TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPl
                                  const TopologyPtr& topology,
                                  const TypeInferencePhasePtr& typeInferencePhase,
                                  PlacementAmenderMode placementAmenderMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

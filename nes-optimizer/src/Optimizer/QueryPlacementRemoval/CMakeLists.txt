@@ -11,11 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Phases)
-add_subdirectory(QueryMerger)
-add_subdirectory(QueryPlacementAddition)
-add_subdirectory(QueryPlacementRemoval)
-add_subdirectory(QueryRewrite)
-add_subdirectory(QuerySignatures)
-add_subdirectory(RequestTypes)
-add_subdirectory(Exceptions)
+add_source_files(nes-optimizer
+        PlacementRemovalStrategy.cpp
+)

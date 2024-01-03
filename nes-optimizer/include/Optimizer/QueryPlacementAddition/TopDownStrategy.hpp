@@ -15,12 +15,12 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_TOPDOWNSTRATEGY_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_TOPDOWNSTRATEGY_HPP_
 
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <stack>
 
 namespace NES::Optimizer {
 
-class TopDownStrategy : public BasePlacementStrategy {
+class TopDownStrategy : public BasePlacementAdditionStrategy {
 
   public:
     ~TopDownStrategy() override = default;

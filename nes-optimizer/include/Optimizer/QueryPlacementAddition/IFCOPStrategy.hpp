@@ -15,14 +15,14 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
 
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <stack>
 
 namespace NES::Optimizer {
 
 using IdToIteratorIndexMapping = std::map<std::pair<OperatorId, uint64_t>, std::pair<uint64_t, uint64_t>>;
 
-class IFCOPStrategy : public BasePlacementStrategy {
+class IFCOPStrategy : public BasePlacementAdditionStrategy {
 
   public:
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,

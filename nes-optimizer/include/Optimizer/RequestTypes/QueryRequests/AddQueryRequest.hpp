@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_QUERYREQUESTS_ADDQUERYREQUEST_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_QUERYREQUESTS_ADDQUERYREQUEST_HPP_
 
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include  <Optimizer/RequestTypes/Request.hpp>
 #include <future>
 

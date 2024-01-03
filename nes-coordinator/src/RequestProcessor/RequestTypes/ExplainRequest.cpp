@@ -47,7 +47,7 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
@@ -64,7 +64,7 @@
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <cpr/cpr.h>
 #include <string>
 #include <utility>

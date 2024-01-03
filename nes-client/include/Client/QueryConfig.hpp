@@ -15,7 +15,7 @@
 #ifndef NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 #define NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <ostream>
 
 namespace NES::Client {

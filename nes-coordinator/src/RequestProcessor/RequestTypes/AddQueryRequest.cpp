@@ -60,7 +60,7 @@
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <string>
 #include <utility>
 

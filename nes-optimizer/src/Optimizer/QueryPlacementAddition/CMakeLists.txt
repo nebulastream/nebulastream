@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-optimizer
-        BasePlacementStrategy.cpp
+		BasePlacementAdditionStrategy.cpp
         BottomUpStrategy.cpp
         TopDownStrategy.cpp
         MlHeuristicStrategy.cpp

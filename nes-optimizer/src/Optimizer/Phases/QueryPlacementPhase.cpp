@@ -18,18 +18,18 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
-#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/ILPStrategy.hpp>
-#include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
-#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/ILPStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/MlHeuristicStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/TopDownStrategy.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <algorithm>
 #include <utility>
 

@@ -16,7 +16,7 @@
 #define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 
 #include <Identifiers.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <map>
 #include <memory>

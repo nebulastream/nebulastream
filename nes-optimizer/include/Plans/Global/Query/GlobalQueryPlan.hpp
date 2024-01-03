@@ -16,7 +16,7 @@
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 
 #include <Identifiers.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/RequestType.hpp>
 #include <algorithm>
 #include <iostream>
