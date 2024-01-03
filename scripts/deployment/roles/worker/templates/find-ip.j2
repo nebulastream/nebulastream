@@ -1,0 +1,6 @@
+{% set interface_name_contains = 'ibs' %}
+{% for interface in ansible_interfaces %}
+  {% if interface_name_contains in interface and hostvars[inventory_hostname]['ansible_' + interface]['ipv4'] is defined %}
+    {{ hostvars[inventory_hostname]['ansible_' + interface]['ipv4']['address'] }}
+  {% endif %}
+{% endfor %}

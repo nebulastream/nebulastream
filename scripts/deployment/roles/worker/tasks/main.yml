@@ -1,6 +1,14 @@
 ---
 # This Playbook runs all the deployment tasks for a worker
 
+- name: Determine Local Worker IP
+  set_fact:
+    local_worker_ip: "{{ lookup('template', 'find-ip.j2') | trim }}"
+
+- name: Found Local Worker IP
+  debug:
+    msg: "The local worker IP is {{ local_worker_ip }}"
+
 - name: Create the local-ssd log directory
   file:
     path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
@@ -19,10 +27,10 @@
 #    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
 #    mode: +x
 
-- name: Copy and populate configuration templates
-  template:
-    src: worker.yaml.j2
-    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/worker.yaml"
+#- name: Copy and populate configuration templates
+#  template:
+#    src: worker.yaml.j2
+#    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/worker.yaml"
 
 - name: Copy and populate configuration templates in tmp
   template:

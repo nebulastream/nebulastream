@@ -14,10 +14,10 @@
     update: no
     clone: yes
 
-- name: Copy and populate configuration template
-  template:
-    src: coordinator.yaml.j2
-    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/coordinator.yaml"
+#- name: Copy and populate configuration template
+#  template:
+#    src: coordinator.yaml.j2
+#    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/coordinator.yaml"
 
 - name: Copy and populate configuration template in tmp
   template:

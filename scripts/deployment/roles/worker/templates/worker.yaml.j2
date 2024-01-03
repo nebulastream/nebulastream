@@ -6,7 +6,7 @@ logLevel: {{ log_level }}
 ###
 ### Network configuration
 ###
-localWorkerIp: {{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
+localWorkerIp: {{ local_worker_ip }}
 coordinatorIp: {{ default_coordinator_ip }}
 coordinatorPort: {{ default_coordinator_ports[1] }}
 
@@ -20,7 +20,7 @@ dataPort: {{ default_worker_ports[1] }}
 ###
 physicalSources:
         - logicalSourceName: ktm
-          physicalSourceName: ktm_{{ hostvars[inventory_hostname]['ansible_all_ipv4_addresses'][1] }}
+          physicalSourceName: ktm_{{ local_worker_ip }}
           type: CSV_SOURCE
           configuration:
                   filePath: /tmp/ktm.csv

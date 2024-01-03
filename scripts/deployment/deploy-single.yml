@@ -6,5 +6,6 @@
     - role: coordinator
 
 - hosts: single_worker
+  gather_facts: yes
   roles:
     - role: worker
