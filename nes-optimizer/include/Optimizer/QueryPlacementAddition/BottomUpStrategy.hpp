@@ -44,12 +44,12 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
-  private:
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                               const TopologyPtr& topology,
                               const TypeInferencePhasePtr& typeInferencePhase,
                               PlacementAmenderMode placementAmenderMode);
 
+  private:
     /**
      * This method is responsible for pinning the operators to the worker nodes.
      * @param pinnedUpStreamOperators: pinned upstream operators

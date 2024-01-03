@@ -53,7 +53,8 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                          const TypeInferencePhasePtr& typeInferencePhase,
                          const z3::ContextPtr& z3Context,
                          PlacementAmenderMode placementAmenderMode)
-    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode), z3Context(z3Context) {}
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode),
+      z3Context(z3Context) {}
 
 bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -65,14 +66,17 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 1. Find the path where operators need to be placed
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
+        // 2. Create copy of the query plan
+        auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
+
         z3::optimize opt(*z3Context);
         std::map<std::string, z3::expr> placementVariables;
         std::map<OperatorId, z3::expr> operatorPositionMap;
         std::map<uint64_t, z3::expr> nodeUtilizationMap;
-        std::map<uint64_t, double> nodeMileageMap = computeMileage(pinnedUpStreamOperators);
+        std::map<uint64_t, double> nodeMileageMap = computeMileage(copiedPinnedOperators.copiedPinnedUpStreamOperators);
 
         // 2. Construct the placementVariable, compute distance, utilization and mileages
-        for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
+        for (const auto& pinnedUpStreamOperator : copiedPinnedOperators.copiedPinnedUpStreamOperators) {
 
             //2.1 Find all path between pinned upstream and downstream operators
             std::vector<NodePtr> operatorPath;
@@ -82,14 +86,14 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                 //Before further processing please identify if the operator to be processed is among the collection of pinned downstream operators
                 auto& operatorToProcess = operatorPath.back();
                 auto isPinnedDownStreamOperator = std::find_if(
-                    pinnedDownStreamOperators.begin(),
-                    pinnedDownStreamOperators.end(),
+                    copiedPinnedOperators.copiedPinnedDownStreamOperators.begin(),
+                    copiedPinnedOperators.copiedPinnedDownStreamOperators.end(),
                     [operatorToProcess](const LogicalOperatorNodePtr& pinnedDownStreamOperator) {
                         return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperatorNode>()->getId();
                     });
 
                 //Skip further processing if encountered pinned downstream operator
-                if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
+                if (isPinnedDownStreamOperator != copiedPinnedOperators.copiedPinnedDownStreamOperators.end()) {
                     NES_DEBUG("Found pinned downstream operator. Skipping further downstream operators.");
                     break;
                 }
@@ -238,7 +242,9 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         pinOperators(z3Model, placementVariables);
 
         // 9. Compute query sub plans
-        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId,
+                                                          copiedPinnedOperators.copiedPinnedUpStreamOperators,
+                                                          copiedPinnedOperators.copiedPinnedDownStreamOperators);
 
         // 10. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);

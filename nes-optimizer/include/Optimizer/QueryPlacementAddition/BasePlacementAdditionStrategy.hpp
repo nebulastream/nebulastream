@@ -17,10 +17,10 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Configurations/Enums/PlacementAmenderMode.hpp>
-#include <Util/Placement/PlacementConstants.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <folly/Synchronized.h>
+#include <Util/Placement/PlacementConstants.hpp>
 #include <chrono>
+#include <folly/Synchronized.h>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -80,6 +80,11 @@ using PlacementMatrix = std::vector<std::vector<bool>>;
 
 using ComputedSubQueryPlans = std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>;
 
+struct CopiedPinnedOperators {
+    std::set<LogicalOperatorNodePtr> copiedPinnedUpStreamOperators;
+    std::set<LogicalOperatorNodePtr> copiedPinnedDownStreamOperators;
+};
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -87,9 +92,9 @@ class BasePlacementAdditionStrategy {
 
   public:
     explicit BasePlacementAdditionStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                   const TopologyPtr& topology,
-                                   const TypeInferencePhasePtr& typeInferencePhase,
-                                   PlacementAmenderMode placementMode);
+                                           const TopologyPtr& topology,
+                                           const TypeInferencePhasePtr& typeInferencePhase,
+                                           PlacementAmenderMode placementMode);
 
     virtual ~BasePlacementAdditionStrategy();
 
@@ -112,6 +117,15 @@ class BasePlacementAdditionStrategy {
     virtual bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) = 0;
+
+    /**
+     * @brief creates a copy of given query plan for performing operator placement
+     * @param pinnedUpStreamOperators : pinned upstream operators
+     * @param pinnedDownStreamOperators : pinned down stream operators
+     * @return pair representing set of copied upstream and downstream operators
+     */
+    CopiedPinnedOperators createCopyOfQueryPlan(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
   protected:
     /**
@@ -264,8 +278,9 @@ class BasePlacementAdditionStrategy {
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
     std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
-    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOperatorMap;
-    std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>> workerIdToPinnedOperatorMap;
+    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
+    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToCopiedOperatorMap;
+    std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToPinnedOperatorIdMap;
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

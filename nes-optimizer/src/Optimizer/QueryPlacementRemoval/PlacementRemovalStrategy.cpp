@@ -47,7 +47,8 @@ bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId shar
 
     // Pessimistic Approach:
     //1. Find all topology nodes used to place the operators in the state Placed, To-Be-Re-Placed, and To-Be-Removed.
-    //      1.1. Iterate over the operators and collect the PINNED_WORKER_ID.
+    //      1.1. Iterate over the operators and collect the PINNED_WORKER_ID and information about the nodes where sys
+    //           operators are placed using CONNECTED_SYS_SUB_PLAN_DETAILS.
     //2. Lock all topology nodes.
     //3. Fetch all placed query sub plans by analyzing the PLACED_SUB_PLAN_ID and CONNECTED_SYS_SUB_PLAN_DETAILS.
     //4. Locally manipulate the placed query sub plans on the execution nodes and check if after releasing the

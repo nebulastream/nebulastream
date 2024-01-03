@@ -91,16 +91,21 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQue
                     + std::to_string(response.status_code) + " and msg " + response.reason);
         }
 
-        // 2. Parse the response of the external placement service
-        pinOperatorsBasedOnElegantService(sharedQueryId, pinnedDownStreamOperators, response);
+        // 2. Create copy of the query plan
+        auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. Compute query sub plans
-        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 3. Parse the response of the external placement service
+        pinOperatorsBasedOnElegantService(sharedQueryId, copiedPinnedOperators.copiedPinnedDownStreamOperators, response);
 
-        // 4. add network source and sink operators
+        // 4. Compute query sub plans
+        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId,
+                                                          copiedPinnedOperators.copiedPinnedUpStreamOperators,
+                                                          copiedPinnedOperators.copiedPinnedDownStreamOperators);
+
+        // 5. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);
 
-        // 5. update execution nodes
+        // 6. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (const std::exception& ex) {
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
