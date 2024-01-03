@@ -17,6 +17,7 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Configurations/Enums/PlacementAmenderMode.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <folly/Synchronized.h>
 #include <chrono>
@@ -72,30 +73,25 @@ namespace NES::Optimizer {
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
-class BasePlacementStrategy;
-using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
+class BasePlacementAdditionStrategy;
+using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;
 
 using PlacementMatrix = std::vector<std::vector<bool>>;
-
-const std::string PINNED_WORKER_ID = "PINNED_WORKER_ID";// Property indicating the location where the operator is pinned
-const std::string PROCESSED = "PROCESSED";              // Property indicating if operator was processed for placement
-const std::string CO_LOCATED_UPSTREAM_OPERATORS =
-    "CO_LOCATED_UPSTREAM_OPERATORS";// Property indicating if operator was processed for placement
 
 using ComputedSubQueryPlans = std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>;
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
-class BasePlacementStrategy {
+class BasePlacementAdditionStrategy {
 
   public:
-    explicit BasePlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+    explicit BasePlacementAdditionStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    const TopologyPtr& topology,
                                    const TypeInferencePhasePtr& typeInferencePhase,
                                    PlacementAmenderMode placementMode);
 
-    virtual ~BasePlacementStrategy();
+    virtual ~BasePlacementAdditionStrategy();
 
     /**
      * Update Global Execution plan by placing the input query plan

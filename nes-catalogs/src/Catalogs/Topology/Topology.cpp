@@ -16,7 +16,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Elegant/ElegantPayloadKeys.hpp>
+#include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>

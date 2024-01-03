@@ -16,14 +16,14 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Elegant/ElegantPayloadKeys.hpp>
+#include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
-#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -66,7 +66,7 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
                                                    const TopologyPtr& topology,
                                                    const TypeInferencePhasePtr& typeInferencePhase,
                                                    PlacementAmenderMode placementAmenderMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode), serviceURL(serviceURL),
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode), serviceURL(serviceURL),
       timeWeight(timeWeight) {}
 
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,

@@ -16,7 +16,7 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
 
 #include <Identifiers.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
 #include <set>
 #include <vector>
@@ -56,8 +56,8 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 namespace NES::Optimizer {
 
-class BasePlacementStrategy;
-using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
+class BasePlacementAdditionStrategy;
+using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;
 
 class QueryPlacementPhase;
 using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;

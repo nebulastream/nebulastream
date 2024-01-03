@@ -15,8 +15,8 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ELEGANTPLACEMENTSTRATEGY_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ELEGANTPLACEMENTSTRATEGY_HPP_
 
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <cpr/response.h>
 #include <nlohmann/json.hpp>
 
@@ -25,7 +25,7 @@ namespace NES::Optimizer {
 /**
  * @brief This class allows us to communicate with external planner service to perform operator placement.
  */
-class ElegantPlacementStrategy : public BasePlacementStrategy {
+class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
   public:
     // Keys for information that is used during ELEGANT placement and stored in node properties.
     // This key is also accessed in SampleCodeGenerationPhase.cpp.

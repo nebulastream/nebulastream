@@ -25,8 +25,8 @@
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
-#include <Optimizer/QueryPlacement/ILPStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/ILPStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -53,7 +53,7 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                          const TypeInferencePhasePtr& typeInferencePhase,
                          const z3::ContextPtr& z3Context,
                          PlacementAmenderMode placementAmenderMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode), z3Context(z3Context) {}
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode), z3Context(z3Context) {}
 
 bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

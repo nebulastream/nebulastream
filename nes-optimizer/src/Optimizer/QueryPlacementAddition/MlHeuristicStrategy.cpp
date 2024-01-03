@@ -24,7 +24,7 @@
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/MlHeuristicStrategy.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -34,7 +34,7 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BasePlacementStrategy> MlHeuristicStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+std::unique_ptr<BasePlacementAdditionStrategy> MlHeuristicStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                    const TopologyPtr& topology,
                                                                    const TypeInferencePhasePtr& typeInferencePhase,
                                                                    PlacementAmenderMode placementAmenderMode) {
@@ -46,7 +46,7 @@ MlHeuristicStrategy::MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExe
                                          const TopologyPtr& topology,
                                          const TypeInferencePhasePtr& typeInferencePhase,
                                          PlacementAmenderMode placementAmenderMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
 
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

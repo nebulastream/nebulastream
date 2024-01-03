@@ -16,7 +16,7 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
 
 #include <Nodes/Node.hpp>
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <z3++.h>
 
 namespace z3 {
@@ -36,7 +36,7 @@ namespace NES::Optimizer {
 /**
  * @brief This class implements Integer Linear Programming strategy to perform the operator placement
  */
-class ILPStrategy : public BasePlacementStrategy {
+class ILPStrategy : public BasePlacementAdditionStrategy {
   public:
     ~ILPStrategy() override = default;
 

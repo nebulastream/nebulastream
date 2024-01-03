@@ -20,14 +20,14 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+std::unique_ptr<BasePlacementAdditionStrategy> BottomUpStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                 const TopologyPtr& topology,
                                                                 const TypeInferencePhasePtr& typeInferencePhase,
                                                                 PlacementAmenderMode placementAmenderMode) {
@@ -39,7 +39,7 @@ BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecution
                                    const TopologyPtr& topology,
                                    const TypeInferencePhasePtr& typeInferencePhase,
                                    PlacementAmenderMode placementAmenderMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

@@ -16,7 +16,7 @@
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
-#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>

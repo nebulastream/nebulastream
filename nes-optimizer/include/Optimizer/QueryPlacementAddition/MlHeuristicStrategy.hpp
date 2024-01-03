@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
 
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <iostream>
 
 namespace NES {
@@ -32,7 +32,7 @@ namespace NES::Optimizer {
  *          placed at respective nes nodes but rest of the operators are placed starting near to the source and then
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
-class MlHeuristicStrategy : public BasePlacementStrategy {
+class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
   public:
     ~MlHeuristicStrategy() override = default;
 

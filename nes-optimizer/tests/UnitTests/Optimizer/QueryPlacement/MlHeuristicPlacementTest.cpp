@@ -39,7 +39,7 @@
 
 #include <Services/QueryService.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <z3++.h>
 
 using namespace NES;

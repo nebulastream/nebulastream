@@ -36,7 +36,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <nlohmann/json.hpp>
 

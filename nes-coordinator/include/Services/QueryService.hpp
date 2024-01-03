@@ -17,7 +17,7 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers.hpp>
-#include <Util/PlacementStrategy.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <future>
 #include <nlohmann/json.hpp>
 
