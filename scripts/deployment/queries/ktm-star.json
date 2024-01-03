@@ -1,4 +1,4 @@
 {
   "userQuery": "Query::from(\"ktm\").sink(NullOutputSinkDescriptor::create());",
-  "strategyName": "BottomUp"
+  "placement": "BottomUp"
 }
