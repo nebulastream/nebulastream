@@ -3,7 +3,7 @@
 
 - name: Start dool monitoring
   shell: |
-    nohup /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}/{{ dool_name }} -t -T -c -C {{ coord_cores }} -n -N {{ coord_iface }} -m --output /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv > /dev/null 2>&1 &
+    nohup /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}/{{ dool_name }} -tTcm -C {{ coord_cores }} --output /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv > /dev/null 2>&1 &
     echo $! > /home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid
 
 - name: Coordinator monitoring pid is created
@@ -13,3 +13,26 @@
 - name: Coordinator monitoring log is created
   wait_for:
     path: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv"
+
+- name: Read PID from file
+  slurp:
+    src: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}.pid"
+  register: pidfile_contents
+
+- name: Convert PID file contents to string
+  set_fact:
+    coord_mon_pid: "{{ pidfile_contents['content'] | b64decode | trim }}"
+
+- name: Check if process with PID is running
+  shell: "ps -p {{ coord_mon_pid }} > /dev/null"
+  register: ps_result
+  ignore_errors: yes
+
+- name: Set process running fact
+  set_fact:
+    process_running: "{{ ps_result.rc == 0 }}"
+
+- name: Print message if PID is not running
+  ansible.builtin.debug:
+    msg: "Coord monitoring not running in {{ ansible_hostname }}."
+  when: not process_running

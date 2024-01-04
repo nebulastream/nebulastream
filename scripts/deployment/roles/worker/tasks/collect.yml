@@ -1,9 +1,9 @@
 ---
 # This Playbook collects and cleans all logs of all workers
 
-- name: Transfer logs from worker to coordinator
+- name: Transfer worker logs
   fetch:
     src: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv"
-    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/worker-logs/"
+    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/experiment-logs/"
     flat: true
 
