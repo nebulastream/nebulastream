@@ -11,217 +11,52 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
-#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Optimizer/Phases/QueryMergerPhase.hpp>
-#include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/Phases/SignatureInferencePhase.hpp>
-#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
-#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
-#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <Phases/SampleCodeGenerationPhase.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <RequestProcessor/RequestTypes/TopologyChangeRequest.hpp>
+#include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Placement/PlacementConstants.hpp>
+#include <queue>
+namespace NES::RequestProcessor::Experimental {
 
-namespace NES::Optimizer {
-
-GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
-    const TopologyPtr& topology,
-    const QueryCatalogServicePtr& queryCatalogService,
-    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-    const GlobalQueryPlanPtr& globalQueryPlan,
-    const z3::ContextPtr& z3Context,
-    const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-    const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-    const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan)
-    : topology(topology), globalExecutionPlan(globalExecutionPlan), queryCatalogService(queryCatalogService),
-      globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
-
-    auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-    queryMergerPhase = QueryMergerPhase::create(z3Context, optimizerConfigurations);
-    typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    sampleCodeGenerationPhase = SampleCodeGenerationPhase::create();
-    queryRewritePhase = QueryRewritePhase::create(coordinatorConfiguration);
-    originIdInferencePhase = OriginIdInferencePhase::create();
-    topologySpecificQueryRewritePhase =
-        TopologySpecificQueryRewritePhase::create(this->topology, sourceCatalog, optimizerConfigurations);
-    signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
-    setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
+TopologyChangeRequestPtr TopologyChangeRequest::create() {
+    return std::shared_ptr<TopologyChangeRequest>();
 }
 
-GlobalQueryPlanUpdatePhasePtr
-GlobalQueryPlanUpdatePhase::create(const TopologyPtr& topology,
-                                   const QueryCatalogServicePtr& queryCatalogService,
-                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                   const GlobalQueryPlanPtr& globalQueryPlan,
-                                   const z3::ContextPtr& z3Context,
-                                   const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
-                                   const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                   const GlobalExecutionPlanPtr& globalExecutionPlan) {
-    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(topology,
-                                                                                   queryCatalogService,
-                                                                                   sourceCatalog,
-                                                                                   globalQueryPlan,
-                                                                                   z3Context,
-                                                                                   coordinatorConfiguration,
-                                                                                   udfCatalog,
-                                                                                   globalExecutionPlan));
+//todo: for testing, remove
+TopologyChangeRequest::TopologyChangeRequest(uint8_t maxRetries,
+                                             TopologyPtr topology,
+                                             GlobalQueryPlanPtr globalQueryPlan,
+                                             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan)
+    : AbstractUniRequest({}, maxRetries), topology(topology), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan) {}
+
+std::vector<AbstractRequestPtr>
+TopologyChangeRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
+    topology = storageHandle->getTopologyHandle(requestId);
+//    auto queryCatalogService = storageHandle->getQueryCatalogServiceHandle(requestId);
+//    auto sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
+    globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
+//    auto globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology, queryCatalogService, );
+globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
+    return {};
 }
 
-GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {
-    //FIXME: Proper error handling #1585
-    try {
-        //TODO: Parallelize this loop #1738
-        for (const auto& nesRequest : nesRequests) {
-            auto requestType = nesRequest->getRequestType();
-            switch (requestType) {
-                case RequestType::StopQuery: {
-                    processStopQueryRequest(nesRequest->as<StopQueryRequest>());
-                    break;
-                }
-                case RequestType::FailQuery: {
-                    processFailQueryRequest(nesRequest->as<FailQueryRequest>());
-                    break;
-                }
-                case RequestType::AddQuery: {
-                    processAddQueryRequest(nesRequest->as<AddQueryRequest>());
-                    break;
-                }
-                case RequestType::RemoveTopologyLink: {
-                    processRemoveTopologyLinkRequest(nesRequest->as<NES::Experimental::RemoveTopologyLinkRequest>());
-                    break;
-                }
-                case RequestType::RemoveTopologyNode: {
-                    processRemoveTopologyNodeRequest(nesRequest->as<NES::Experimental::RemoveTopologyNodeRequest>());
-                    break;
-                }
-                default:
-                    NES_ERROR("QueryProcessingService: Received unhandled request type  {}", nesRequest->toString());
-                    NES_WARNING("QueryProcessingService: Skipping to process next request.");
-            }
-        }
-        NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
-        return globalQueryPlan;
-    } catch (std::exception& ex) {
-        NES_ERROR("GlobalQueryPlanUpdatePhase: Exception occurred while updating global query plan with:  {}", ex.what());
-        throw GlobalQueryPlanUpdateException("GlobalQueryPlanUpdatePhase: Exception occurred while updating Global Query Plan");
-    }
-}
-
-void GlobalQueryPlanUpdatePhase::processStopQueryRequest(const StopQueryRequestPtr& stopQueryRequest) {
-    QueryId queryId = stopQueryRequest->getQueryId();
-    NES_INFO("QueryProcessingService: Request received for stopping the query {}", queryId);
-    globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-}
-
-void GlobalQueryPlanUpdatePhase::processFailQueryRequest(const FailQueryRequestPtr& failQueryRequest) {
-    SharedQueryId sharedQueryId = failQueryRequest->getSharedQueryId();
-    NES_INFO("QueryProcessingService: Request received for stopping the query {}", sharedQueryId);
-    globalQueryPlan->removeQuery(sharedQueryId, RequestType::FailQuery);
-}
-
-void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr& addQueryRequest) {
-    QueryId queryId = addQueryRequest->getQueryId();
-    auto runRequest = addQueryRequest->as<AddQueryRequest>();
-    auto queryPlan = runRequest->getQueryPlan();
-
-    //1. Add the initial version of the query to the query catalog
-    queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
-    NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query {}", queryId);
-
-    //2. Set query status as Optimizing
-    queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
-
-    //3. Execute type inference phase
-    NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    //4. Set memory layout of each logical operator
-    NES_DEBUG("QueryProcessingService: Performing query choose memory layout phase:  {}", queryId);
-    queryPlan = setMemoryLayoutPhase->execute(queryPlan);
-
-    //5. Perform query re-write
-    NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query:  {}", queryId);
-    queryPlan = queryRewritePhase->execute(queryPlan);
-
-    //6. Add the updated query plan to the query catalog
-    queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
-
-    //7. Execute type inference phase on rewritten query plan
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    //8. Generate sample code for elegant planner
-    if (addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_BALANCED
-        || addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_PERFORMANCE
-        || addQueryRequest->getQueryPlacementStrategy() == PlacementStrategy::ELEGANT_ENERGY) {
-        queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
-    }
-
-    //9. Perform signature inference phase for sharing identification among query plans
-    signatureInferencePhase->execute(queryPlan);
-
-    //10. Perform topology specific rewrites to the query plan
-    queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
-
-    //11. Add the updated query plan to the query catalog
-    queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
-
-    //12. Perform type inference over re-written query plan
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    //13. Identify the number of origins and their ids for all logical operators
-    queryPlan = originIdInferencePhase->execute(queryPlan);
-
-    //14. Set memory layout of each logical operator in the rewritten query
-    NES_DEBUG("QueryProcessingService: Performing query choose memory layout phase:  {}", queryId);
-    queryPlan = setMemoryLayoutPhase->execute(queryPlan);
-
-    //15. Add the updated query plan to the query catalog
-    queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
-
-    //16. Add the updated query plan to the global query plan
-    NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);
-    globalQueryPlan->addQueryPlan(queryPlan);
-
-    //17. Perform query merging for newly added query plan
-    NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
-    queryMergerPhase->execute(globalQueryPlan);
-}
-
-void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(
-    const NES::Experimental::RemoveTopologyLinkRequestPtr& removeTopologyLinkRequest) {
-
-    WorkerId upstreamNodeId = removeTopologyLinkRequest->getUpstreamNodeId();
-    WorkerId downstreamNodeId = removeTopologyLinkRequest->getDownstreamNodeId();
-
+void TopologyChangeRequest::processRemoveTopologyLinkRequest(WorkerId upstreamNodeId, WorkerId downstreamNodeId) {
     auto upstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(upstreamNodeId);
     auto downstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(downstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
     if (!upstreamExecutionNode || !downstreamExecutionNode) {
-        NES_INFO("RemoveTopologyLinkRequest: {} has no effect on the running queries", removeTopologyLinkRequest->toString());
+        NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return;
     }
 
@@ -229,7 +64,7 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(
     auto downstreamSharedQueryIds = downstreamExecutionNode->getPlacedSharedQueryPlanIds();
     //If any of the two execution nodes do not have any shared query plan placed then skip rest of the operation
     if (upstreamSharedQueryIds.empty() || downstreamSharedQueryIds.empty()) {
-        NES_INFO("RemoveTopologyLinkRequest: {} has no effect on the running queries", removeTopologyLinkRequest->toString());
+        NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return;
     }
 
@@ -254,26 +89,23 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(
     }
 }
 
-void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
-    const NES::Experimental::RemoveTopologyNodeRequestPtr& removeTopologyNodeRequest) {
-
-    WorkerId removedNodeId = removeTopologyNodeRequest->getWorkerId();
+void TopologyChangeRequest::processRemoveTopologyNodeRequest(WorkerId removedNodeId) {
 
     //1. If the removed execution nodes do not exist then remove skip rest of the operation
     auto removedExecutionNode = globalExecutionPlan->getExecutionNodeById(removedNodeId);
     if (!removedExecutionNode) {
-        NES_INFO("RemoveTopologyNodeRequest: {} has no effect on the running queries as there are no queries "
+        NES_INFO("Removing node {} has no effect on the running queries as there are no queries "
                  "placed on the node.",
-                 removeTopologyNodeRequest->toString());
+                 removedNodeId);
         return;
     }
 
     //2. If the removed execution nodes does not have any shared query plan placed then skip rest of the operation
     auto impactedSharedQueryIds = removedExecutionNode->getPlacedSharedQueryPlanIds();
     if (impactedSharedQueryIds.empty()) {
-        NES_INFO("RemoveTopologyNodeRequest: {} has no effect on the running queries as there are no queries placed "
+        NES_INFO("Removing node {} has no effect on the running queries as there are no queries placed "
                  "on the node.",
-                 removeTopologyNodeRequest->toString());
+                 removedNodeId);
         return;
     }
 
@@ -321,9 +153,9 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
     }
 }
 
-void GlobalQueryPlanUpdatePhase::markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
-                                                                     const ExecutionNodePtr& upstreamExecutionNode,
-                                                                     const ExecutionNodePtr& downstreamExecutionNode) {
+void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
+                                                                     const Optimizer::ExecutionNodePtr& upstreamExecutionNode,
+                                                                     const Optimizer::ExecutionNodePtr& downstreamExecutionNode) {
 
     //    //1. Iterate over all upstream sub query plans and extract the operator id of most upstream non-system
     //    // generated (anything except Network Sink or Source) operator.
@@ -347,69 +179,8 @@ void GlobalQueryPlanUpdatePhase::markOperatorsForReOperatorPlacement(SharedQuery
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 }
 
-void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
-                                                              const ExecutionNodePtr& upstreamExecutionNode,
-                                                              std::set<OperatorId>& upstreamOperatorIds) const {
-
-    auto upstreamDecomposedQueryPlans = upstreamExecutionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-    for (const auto& upstreamDecomposedQueryPlan : upstreamDecomposedQueryPlans) {
-        //1.1 Fetch all sink operators of the sub query plan to find the most upstream non-system generated operator.
-        auto sinkOperators = upstreamDecomposedQueryPlan->getSinkOperators();
-        for (const auto& sinkOperator : sinkOperators) {
-            //1.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
-            auto children = sinkOperator->getChildren();
-            for (const NodePtr& child : children) {
-                if (child->instanceOf<SourceLogicalOperatorNode>()
-                    && child->as<SourceLogicalOperatorNode>()
-                           ->getSourceDescriptor()
-                           ->instanceOf<Network::NetworkSourceDescriptor>()) {
-
-                    //1.3 Identify non-system generated pinned upstream operator from the next upstream execution node
-                    for (const auto& nextUpstreamExecutionNode : upstreamExecutionNode->getChildren()) {
-                        getUpstreamPinnedOperatorIds(sharedQueryPlanId,
-                                                     nextUpstreamExecutionNode->as<ExecutionNode>(),
-                                                     upstreamOperatorIds);
-                    }
-                } else {
-                    OperatorId upstreamOperatorId = child->as<LogicalOperatorNode>()->getId();
-                    upstreamOperatorIds.insert(upstreamOperatorId);
-                }
-            }
-        }
-    }
-}
-
-void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
-                                                                const ExecutionNodePtr& downstreamExecutionNode,
-                                                                std::set<OperatorId>& downstreamOperatorIds) const {
-
-    auto downstreamDecomposedQueryPlans = downstreamExecutionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-    for (const auto& downstreamDecomposedQueryPlan : downstreamDecomposedQueryPlans) {
-        //1.1 Fetch all source operators of the sub query plan to find the most downstream non-system generated operator.
-        auto sourceOperators = downstreamDecomposedQueryPlan->getSourceOperators();
-        for (const SourceLogicalOperatorNodePtr& sourceOperator : sourceOperators) {
-            //1.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
-            auto parents = sourceOperator->getParents();
-            for (const NodePtr& parent : parents) {
-                if (parent->instanceOf<SinkLogicalOperatorNode>()
-                    && parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
-                    //1.3 Identify non-system generated pinned downstream operator from the next downstream execution node
-                    for (const auto& nextDownstreamExecutionNode : downstreamExecutionNode->getParents()) {
-                        getDownstreamPinnedOperatorIds(sharedQueryPlanId,
-                                                       nextDownstreamExecutionNode->as<ExecutionNode>(),
-                                                       downstreamOperatorIds);
-                    }
-                } else {
-                    OperatorId downstreamOperatorId = parent->as<LogicalOperatorNode>()->getId();
-                    downstreamOperatorIds.insert(downstreamOperatorId);
-                }
-            }
-        }
-    }
-}
-
 std::pair<LogicalOperatorNodePtr, WorkerId>
-GlobalQueryPlanUpdatePhase::findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
+TopologyChangeRequest::findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
                                                            WorkerId downstreamWorkerId,
                                                            SharedQueryId sharedQueryId) {
     //find the upstream non system generated operators of the sink
@@ -460,7 +231,7 @@ GlobalQueryPlanUpdatePhase::findUpstreamNonSystemOperators(const LogicalOperator
 }
 
 std::pair<LogicalOperatorNodePtr, WorkerId>
-GlobalQueryPlanUpdatePhase::findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
+TopologyChangeRequest::findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
                                                              WorkerId upstreamWorkerId,
                                                              SharedQueryId sharedQueryId) {
     //find the upstream non system generated operators of the sink
@@ -512,9 +283,9 @@ GlobalQueryPlanUpdatePhase::findDownstreamNonSystemOperators(const LogicalOperat
 }
 
 std::pair<std::set<OperatorId>, std::set<OperatorId>>
-GlobalQueryPlanUpdatePhase::findAffectedTopologySubGraph(const SharedQueryId& sharedQueryPlanId,
-                                                         const ExecutionNodePtr& upstreamNode,
-                                                         const ExecutionNodePtr& downstreamNode) {
+TopologyChangeRequest::findAffectedTopologySubGraph(const SharedQueryId& sharedQueryPlanId,
+                                                         const Optimizer::ExecutionNodePtr& upstreamNode,
+                                                         const Optimizer::ExecutionNodePtr& downstreamNode) {
 
     auto upstreamDownstreamOperatorPairs = findNetworkOperatorsForLink(sharedQueryPlanId, upstreamNode, downstreamNode);
     std::vector<std::pair<std::pair<LogicalOperatorNodePtr, WorkerId>, std::pair<LogicalOperatorNodePtr, WorkerId>>>
@@ -617,9 +388,9 @@ GlobalQueryPlanUpdatePhase::findAffectedTopologySubGraph(const SharedQueryId& sh
 }
 
 std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
-GlobalQueryPlanUpdatePhase::findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
-                                                        const ExecutionNodePtr& upstreamNode,
-                                                        const ExecutionNodePtr& downstreamNode) {
+TopologyChangeRequest::findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
+                                                        const Optimizer::ExecutionNodePtr& upstreamNode,
+                                                        const Optimizer::ExecutionNodePtr& downstreamNode) {
     const auto& upstreamSubPlans = upstreamNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
     std::unordered_map<Network::NesPartition, LogicalOperatorNodePtr> upstreamSinkMap;
     auto downstreamWorkerId = downstreamNode->getId();
@@ -649,7 +420,7 @@ GlobalQueryPlanUpdatePhase::findNetworkOperatorsForLink(const SharedQueryId& sha
     return pairs;
 }
 
-std::pair<SinkLogicalOperatorNodePtr, WorkerId> GlobalQueryPlanUpdatePhase::findUpstreamNetworkSinkAndWorkerId(
+std::pair<SinkLogicalOperatorNodePtr, WorkerId> TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(
     const SharedQueryId& sharedQueryPlanId,
     const WorkerId workerId,
     const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor) {
@@ -668,7 +439,7 @@ std::pair<SinkLogicalOperatorNodePtr, WorkerId> GlobalQueryPlanUpdatePhase::find
     throw std::exception();
 }
 
-std::pair<SourceLogicalOperatorNodePtr, WorkerId> GlobalQueryPlanUpdatePhase::findDownstreamNetworkSourceAndWorkerId(
+std::pair<SourceLogicalOperatorNodePtr, WorkerId> TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(
     const SharedQueryId& sharedQueryPlanId,
     const WorkerId workerId,
     const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor) {
@@ -686,4 +457,10 @@ std::pair<SourceLogicalOperatorNodePtr, WorkerId> GlobalQueryPlanUpdatePhase::fi
     }
     throw std::exception();
 }
-}// namespace NES::Optimizer
+void TopologyChangeRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr& ) {}
+std::vector<AbstractRequestPtr> TopologyChangeRequest::rollBack(std::exception_ptr , const StorageHandlerPtr& ) {
+    return std::vector<AbstractRequestPtr>();
+}
+void TopologyChangeRequest::postRollbackHandle(std::exception_ptr , const StorageHandlerPtr& ) {}
+void TopologyChangeRequest::postExecution(const StorageHandlerPtr&) {}
+};// namespace NES::RequestProcessor::Experimental

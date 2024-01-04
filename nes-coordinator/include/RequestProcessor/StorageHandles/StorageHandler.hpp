@@ -52,10 +52,6 @@ class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 }// namespace Optimizer
 
-using SourceCatalogHandle = ResourceHandle<Catalogs::Source::SourceCatalog>;
-using CoordinatorConfigurationHandle = ResourceHandle<Configurations::CoordinatorConfiguration>;
-using GlobalExecutionPlanHandle = ResourceHandle<Optimizer::GlobalExecutionPlan>;
-
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 using GlobalQueryPlanHandle = ResourceHandle<GlobalQueryPlan>;
@@ -64,7 +60,6 @@ namespace Catalogs::UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
-using UDFCatalogHandle = ResourceHandle<Catalogs::UDF::UDFCatalog>;
 
 namespace RequestProcessor {
 
@@ -102,7 +97,7 @@ class StorageHandler {
      * @param requestId The id of the request which calls this function
      * @return a handle to the global execution plan.
      */
-    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId);
+    virtual Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlanHandle(RequestId requestId);
 
     /**
      * @brief Obtain a mutable topology handle.
@@ -130,21 +125,21 @@ class StorageHandler {
      * @param requestId The id of the request which calls this function
      * @return a handle to the source catalog.
      */
-    virtual SourceCatalogHandle getSourceCatalogHandle(RequestId requestId);
+    virtual Catalogs::Source::SourceCatalogPtr getSourceCatalogHandle(RequestId requestId);
 
     /**
      * @brief Obtain a mutable udf catalog handle.
      * @param requestId The id of the request which calls this function
      * @return a handle to the udf catalog.
      */
-    virtual UDFCatalogHandle getUDFCatalogHandle(RequestId requestId);
+    virtual Catalogs::UDF::UDFCatalogPtr getUDFCatalogHandle(RequestId requestId);
 
     /**
      * @brief Get coordinator configuration
      * @param requestId the id of the request which calls this function
      * @return  a handle to the coordinator configuration
      */
-    virtual CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId);
+    virtual Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId);
 
     /**
      * @brief obtain a new request id

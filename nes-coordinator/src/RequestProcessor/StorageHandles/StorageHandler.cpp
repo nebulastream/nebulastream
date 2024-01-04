@@ -21,7 +21,7 @@ void StorageHandler::acquireResources(const RequestId, std::vector<ResourceType>
 
 void StorageHandler::releaseResources(const RequestId) {}
 
-GlobalExecutionPlanHandle StorageHandler::getGlobalExecutionPlanHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+Optimizer::GlobalExecutionPlanPtr StorageHandler::getGlobalExecutionPlanHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 
 TopologyHandle StorageHandler::getTopologyHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 
@@ -29,11 +29,11 @@ QueryCatalogServiceHandle StorageHandler::getQueryCatalogServiceHandle(RequestId
 
 GlobalQueryPlanHandle StorageHandler::getGlobalQueryPlanHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 
-SourceCatalogHandle StorageHandler::getSourceCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+Catalogs::Source::SourceCatalogPtr StorageHandler::getSourceCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 
-UDFCatalogHandle StorageHandler::getUDFCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+Catalogs::UDF::UDFCatalogPtr StorageHandler::getUDFCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 
-CoordinatorConfigurationHandle StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
+Configurations::CoordinatorConfigurationPtr StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
 
 RequestId StorageHandler::generateRequestId() {
     std::unique_lock lock(idMutex);

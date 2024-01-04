@@ -186,7 +186,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  successors);
     } else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating network source");
-        const Network::networkSourceDescriptorPtr networkSourceDescriptor =
+        const Network::NetworkSourceDescriptorPtr networkSourceDescriptor =
             sourceDescriptor->as<Network::NetworkSourceDescriptor>();
         return createNetworkSource(networkSourceDescriptor->getSchema(),
                                    bufferManager,

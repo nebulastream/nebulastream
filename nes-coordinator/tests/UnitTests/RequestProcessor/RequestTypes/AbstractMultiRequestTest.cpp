@@ -73,7 +73,7 @@ class DummyRequest : public AbstractMultiRequest {
 class DummyStorageHandler : public StorageHandler {
   public:
     explicit DummyStorageHandler() = default;
-    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId) override { return nullptr; };
+    Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlanHandle(RequestId) override { return nullptr; };
 
     TopologyHandle getTopologyHandle(RequestId) override { return nullptr; };
 
@@ -81,11 +81,11 @@ class DummyStorageHandler : public StorageHandler {
 
     GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId) override { return nullptr; };
 
-    SourceCatalogHandle getSourceCatalogHandle(RequestId) override { return nullptr; };
+    Catalogs::Source::SourceCatalogPtr getSourceCatalogHandle(RequestId) override { return nullptr; };
 
-    UDFCatalogHandle getUDFCatalogHandle(RequestId) override { return nullptr; };
+    Catalogs::UDF::UDFCatalogPtr getUDFCatalogHandle(RequestId) override { return nullptr; };
 
-    CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId) override { return nullptr; }
+    Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId) override { return nullptr; }
 };
 
 class AbstractMultiRequestTest : public Testing::BaseUnitTest {
