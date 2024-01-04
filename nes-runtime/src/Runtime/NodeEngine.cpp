@@ -36,6 +36,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QueryState.hpp>
 #include <string>
 #include <utility>
 
@@ -656,7 +657,7 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
     }
 }
 
-bool NodeEngine::reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan) {
+bool NodeEngine::reconfigureSubPlan(const QueryPlanPtr& reconfiguredQueryPlan) {
     std::unique_lock lock(engineMutex);
     auto deployedPlanIterator = deployedQEPs.find(reconfiguredQueryPlan->getQuerySubPlanId());
 

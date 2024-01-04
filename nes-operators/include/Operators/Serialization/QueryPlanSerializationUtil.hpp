@@ -15,6 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_
 
+#include <SerializableQueryPlan.pb.h>
+#include <Util/QueryState.hpp>
 #include <memory>
 
 namespace NES {
@@ -43,6 +45,8 @@ class QueryPlanSerializationUtil {
      * @return the pointer to the deserialized query plan
      */
     static QueryPlanPtr deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan);
+    static NES::QueryState deserializeQueryState(NES::SerializableQueryState serializedQueryState);
+    static SerializableQueryState serializeQueryState(QueryState queryState);
 };
 }// namespace NES
 #endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_

@@ -207,7 +207,9 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId, const std::v
                 }
                 case QueryState::REDEPLOYED: {
                     //todo #4440: make non async function for this
-                    workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
+                    //workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
+                    //workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
+                    workerRPCClient->registerQuery(rpcAddress, querySubPlan);
                     break;
                 }
                 default: {

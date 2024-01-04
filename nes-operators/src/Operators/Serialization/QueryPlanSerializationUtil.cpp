@@ -52,6 +52,8 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
         serializableQueryPlan->add_rootoperatorids(rootOperatorId);
     }
 
+    serializableQueryPlan->set_querystate(serializeQueryState(queryPlan->getQueryState()));
+
     if (!isClientOriginated) {
         //Serialize the sub query plan and query plan id
         NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
@@ -89,6 +91,7 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     //set properties of the query plan
     uint64_t queryId = INVALID_QUERY_ID;
     uint64_t querySubPlanId = INVALID_QUERY_SUB_PLAN_ID;
+    QueryState queryState = QueryState::INVALID;
 
     if (serializedQueryPlan->has_queryid()) {
         queryId = serializedQueryPlan->queryid();
@@ -98,7 +101,56 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
         querySubPlanId = serializedQueryPlan->querysubplanid();
     }
 
-    return QueryPlan::create(queryId, querySubPlanId, rootOperators);
+    if (serializedQueryPlan->has_querystate()) {
+        queryState = deserializeQueryState(serializedQueryPlan->querystate());
+    }
+
+    return QueryPlan::create(queryId, querySubPlanId, rootOperators, queryState);
 }
 
+QueryState QueryPlanSerializationUtil::deserializeQueryState(SerializableQueryState serializedQueryState) {
+    switch (serializedQueryState) {
+        case QUERY_STATE_REGISTERED: return QueryState::REGISTERED;
+        case QUERY_STATE_OPTIMIZING: return QueryState::OPTIMIZING;
+        case QUERY_STATE_DEPLOYED: return QueryState::DEPLOYED;
+        case QUERY_STATE_RUNNING: return QueryState::RUNNING;
+        case QUERY_STATE_MARKED_FOR_HARD_STOP: return QueryState::MARKED_FOR_HARD_STOP;
+        case QUERY_STATE_MARKED_FOR_SOFT_STOP: return QueryState::MARKED_FOR_SOFT_STOP;
+        case QUERY_STATE_SOFT_STOP_TRIGGERED: return QueryState::SOFT_STOP_TRIGGERED;
+        case QUERY_STATE_SOFT_STOP_COMPLETED: return QueryState::SOFT_STOP_COMPLETED;
+        case QUERY_STATE_STOPPED: return QueryState::STOPPED;
+        case QUERY_STATE_MARKED_FOR_FAILURE: return QueryState::MARKED_FOR_FAILURE;
+        case QUERY_STATE_FAILED: return QueryState::FAILED;
+        case QUERY_STATE_RESTARTING: return QueryState::RESTARTING;
+        case QUERY_STATE_MIGRATING: return QueryState::MIGRATING;
+        case QUERY_STATE_MIGRATION_COMPLETED: return QueryState::MIGRATION_COMPLETED;
+        case QUERY_STATE_EXPLAINED: return QueryState::EXPLAINED;
+        case QUERY_STATE_RECONFIGURING: return QueryState::RECONFIGURING;
+        case QUERY_STATE_INVALID: return QueryState::INVALID;
+        case SerializableQueryState_INT_MIN_SENTINEL_DO_NOT_USE_: return QueryState::INVALID;
+        case SerializableQueryState_INT_MAX_SENTINEL_DO_NOT_USE_: return QueryState::INVALID;
+    }
+}
+
+SerializableQueryState QueryPlanSerializationUtil::serializeQueryState(QueryState queryState) {
+    switch (queryState) {
+        case QueryState::REGISTERED: return QUERY_STATE_REGISTERED;
+        case QueryState::OPTIMIZING: return QUERY_STATE_OPTIMIZING;
+        case QueryState::DEPLOYED: return QUERY_STATE_DEPLOYED;
+        case QueryState::RUNNING: return QUERY_STATE_RUNNING;
+        case QueryState::MARKED_FOR_HARD_STOP: return QUERY_STATE_MARKED_FOR_HARD_STOP;
+        case QueryState::MARKED_FOR_SOFT_STOP: return QUERY_STATE_MARKED_FOR_SOFT_STOP;
+        case QueryState::SOFT_STOP_TRIGGERED: return QUERY_STATE_SOFT_STOP_TRIGGERED;
+        case QueryState::SOFT_STOP_COMPLETED: return QUERY_STATE_SOFT_STOP_COMPLETED;
+        case QueryState::STOPPED: return QUERY_STATE_STOPPED;
+        case QueryState::MARKED_FOR_FAILURE: return QUERY_STATE_MARKED_FOR_FAILURE;
+        case QueryState::FAILED: return QUERY_STATE_FAILED;
+        case QueryState::RESTARTING: return QUERY_STATE_RESTARTING;
+        case QueryState::MIGRATING: return QUERY_STATE_MIGRATING;
+        case QueryState::MIGRATION_COMPLETED: return QUERY_STATE_MIGRATION_COMPLETED;
+        case QueryState::EXPLAINED: return QUERY_STATE_EXPLAINED;
+        case QueryState::RECONFIGURING: return QUERY_STATE_RECONFIGURING;
+        case QueryState::INVALID: return QUERY_STATE_INVALID;
+    }
+}
 }// namespace NES

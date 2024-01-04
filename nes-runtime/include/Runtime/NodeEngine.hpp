@@ -344,7 +344,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return true if a running sub query with a matching id was found and reconfigured. False if the id of the supplied
      * plan did not match any running sub query
      */
-    bool reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan);
+    bool reconfigureSubPlan(const QueryPlanPtr& reconfiguredQueryPlan);
 
   public:
     /**

@@ -19,6 +19,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <Util/QueryState.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <set>
@@ -27,12 +28,12 @@
 
 namespace NES {
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators) {
-    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, std::move(rootOperators)));
+QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators, QueryState state) {
+    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, state, std::move(rootOperators)));
 }
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId) {
-    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId));
+QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId, QueryState state) {
+    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, state));
 }
 
 QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
@@ -41,16 +42,16 @@ QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
 
 QueryPlanPtr QueryPlan::create() { return std::make_shared<QueryPlan>(QueryPlan()); }
 
-QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {}
+QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID), queryState(QueryState::INVALID) {}
 
-QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {
+QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID), queryState(QueryState::INVALID) {
     rootOperators.push_back(std::move(rootOperator));
 }
 
-QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators)
-    : rootOperators(std::move(rootOperators)), queryId(queryId), querySubPlanId(querySubPlanId) {}
+QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, QueryState state, std::vector<OperatorNodePtr> rootOperators)
+    : rootOperators(std::move(rootOperators)), queryId(queryId), querySubPlanId(querySubPlanId), queryState(state) {}
 
-QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId) : queryId(queryId), querySubPlanId(querySubPlanId) {}
+QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, QueryState state) : queryId(queryId), querySubPlanId(querySubPlanId), queryState(state) {}
 
 std::set<OperatorNodePtr> QueryPlan::getAllOperators() {
 
