@@ -94,5 +94,4 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
 
     return QueryPlan::create(queryId, rootOperators);
 }
-
 }// namespace NES

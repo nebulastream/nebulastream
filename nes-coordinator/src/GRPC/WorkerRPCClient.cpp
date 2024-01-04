@@ -106,41 +106,6 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-//todo #4450: move this logic to deployQuery method
-bool WorkerRPCClient::reconfigureQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
-    auto sharedQueryId = decomposedQueryPlan->getSharedQueryId();
-    auto decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("WorkerRPCClient::reconfigureQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
-              address,
-              sharedQueryId,
-              decomposedQueryPlanId);
-
-    // wrap the query id and the query operators in the protobuf reconfigure query request object.
-    ReconfigureQueryRequest request;
-
-    // serialize query plan.
-    auto serializedQueryPlan = request.mutable_decomposedqueryplan();
-    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializedQueryPlan);
-
-    NES_TRACE("WorkerRPCClient:reconfigureQuery -> {}", request.DebugString());
-    ReconfigureQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    auto status = workerStub->ReconfigureQuery(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::reconfigureQuery: status ok return success={}", reply.success());
-        return reply.success();
-    }
-    NES_DEBUG(" WorkerRPCClient::reconfigureQuery "
-              "error={}: {}",
-              status.error_code(),
-              status.error_message());
-    throw Exceptions::RuntimeException("Error while WorkerRPCClient::reconfigureQuery");
-}
-
 void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode={} for {} queues", magic_enum::enum_name(mode), queues.size());
     std::vector<Exceptions::RpcFailureInformation> failedRPCCalls;

@@ -232,17 +232,6 @@ class WorkerRPCClient {
      */
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
-    /**
-     * @brief reconfigures sources or sinks of a running query plan. In case of sink reconfiguration the new receiver
-     * location and partition only get scheduled and will not take effect before startQuery is called again on the plan.
-     * Source reconfigurations take effect immediately
-     * @param address: the ip address of the node
-     * @param decomposedQueryPlan: The query plan containing the updated source or sink information
-     * @return true if a plan with a matching id was found
-     * @throws runtimeException if the remote procedure call returned an error status
-     */
-    bool reconfigureQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan);
-
   private:
     WorkerRPCClient() = default;
 };
