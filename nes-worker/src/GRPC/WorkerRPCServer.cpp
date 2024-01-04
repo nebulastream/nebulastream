@@ -48,7 +48,12 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
               decomposedQueryPlan->toString());
     bool success = 0;
     try {
-        success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
+        //check if the plan is reconfigured
+        if (decomposedQueryPlan->getState() == QueryState::REDEPLOYED) {
+            success =  nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
+        } else {
+            success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
+        }
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: {}", error.what());
         success = false;
@@ -59,31 +64,6 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
         return Status::OK;
     }
     NES_ERROR("WorkerRPCServer::RegisterQuery: failed");
-    reply->set_success(false);
-    return Status::CANCELLED;
-}
-
-Status WorkerRPCServer::ReconfigureQuery(ServerContext*, const ReconfigureQueryRequest* request, ReconfigureQueryReply* reply) {
-    auto decomposedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
-        (SerializableDecomposedQueryPlan*) &request->decomposedqueryplan());
-    NES_DEBUG(
-        "WorkerRPCServer::ReconfigureQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
-        "{} plan={}",
-        decomposedQueryPlan->getSharedQueryId(),
-        decomposedQueryPlan->getDecomposedQueryPlanId(),
-        decomposedQueryPlan->toString());
-
-    try {
-        if (nodeEngine->reconfigureSubPlan(decomposedQueryPlan)) {
-            NES_DEBUG("WorkerRPCServer::ReconfigureQuery: success");
-            reply->set_success(true);
-            return Status::OK;
-        }
-    } catch (const std::exception& error) {
-        NES_ERROR("Reconfigure query crashed: {}", error.what());
-    }
-
-    NES_ERROR("WorkerRPCServer::ReconfigureQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
