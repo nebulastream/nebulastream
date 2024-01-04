@@ -6,5 +6,6 @@
     - include_tasks: roles/coordinator/tasks/start.yml
 
 - hosts: workers
+  gather_facts: yes
   tasks:
     - include_tasks: roles/worker/tasks/start.yml

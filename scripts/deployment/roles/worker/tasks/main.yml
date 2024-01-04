@@ -5,10 +5,6 @@
   set_fact:
     local_worker_ip: "{{ lookup('template', 'find-ip.j2') | trim }}"
 
-- name: Found Local Worker IP
-  debug:
-    msg: "The local worker IP is {{ local_worker_ip }}"
-
 - name: Create the local-ssd log directory
   file:
     path: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
@@ -21,22 +17,10 @@
     update: no
     clone: yes
 
-#- name: Copy worker binaries from fat server
-#  copy:
-#    src: "/home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }}"
-#    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes"
-#    mode: +x
-
-#- name: Copy and populate configuration templates
-#  template:
-#    src: worker.yaml.j2
-#    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/worker.yaml"
-
 - name: Copy and populate configuration templates in tmp
   template:
     src: worker.yaml.j2
-    dest: "/tmp/worker.yaml"
-
+    dest: "/tmp/worker-conf.yaml"
 
 - name: Copy smartgrid data file
   copy:
