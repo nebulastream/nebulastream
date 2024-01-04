@@ -30,15 +30,15 @@ namespace NES::Optimizer {
 std::unique_ptr<BasePlacementAdditionStrategy> BottomUpStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                         const TopologyPtr& topology,
                                                                         const TypeInferencePhasePtr& typeInferencePhase,
-                                                                        PlacementAmenderMode placementAmenderMode) {
-    return std::make_unique<BottomUpStrategy>(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+                                                                        PlacementAmendmentMode placementAmendmentMode) {
+    return std::make_unique<BottomUpStrategy>(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
 }
 
 BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    const TopologyPtr& topology,
                                    const TypeInferencePhasePtr& typeInferencePhase,
-                                   PlacementAmenderMode placementAmenderMode)
-    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
+                                   PlacementAmendmentMode placementAmendmentMode)
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

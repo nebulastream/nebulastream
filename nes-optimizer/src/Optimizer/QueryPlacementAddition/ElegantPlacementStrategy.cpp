@@ -41,7 +41,7 @@ BasePlacementStrategyPtr ElegantPlacementStrategy::create(const std::string& ser
                                                           const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                           const TopologyPtr& topology,
                                                           const TypeInferencePhasePtr& typeInferencePhase,
-                                                          PlacementAmenderMode placementAmenderMode) {
+                                                          PlacementAmendmentMode placementAmendmentMode) {
 
     float timeWeight = 0.0;
 
@@ -57,7 +57,7 @@ BasePlacementStrategyPtr ElegantPlacementStrategy::create(const std::string& ser
                                                                                globalExecutionPlan,
                                                                                topology,
                                                                                typeInferencePhase,
-                                                                               placementAmenderMode));
+                                                                               placementAmendmentMode));
 }
 
 ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL,
@@ -65,8 +65,8 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
                                                    const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    const TopologyPtr& topology,
                                                    const TypeInferencePhasePtr& typeInferencePhase,
-                                                   PlacementAmenderMode placementAmenderMode)
-    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode), serviceURL(serviceURL),
+                                                   PlacementAmendmentMode placementAmendmentMode)
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode), serviceURL(serviceURL),
       timeWeight(timeWeight) {}
 
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,

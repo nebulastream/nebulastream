@@ -85,11 +85,19 @@ class ExecutionNode : public Node {
     bool updateQuerySubPlans(SharedQueryId sharedQueryId, std::vector<QueryPlanPtr> querySubPlans);
 
     /**
-     * Get Query query sub plan for the given Id
+     * @brief Get Query query sub plan for the given Id
      * @param sharedQueryId
      * @return Query sub plan
      */
     std::vector<QueryPlanPtr> getQuerySubPlans(SharedQueryId sharedQueryId);
+
+    /**
+      * @brief Get the query sub plan
+      * @param sharedQueryId: shared query id
+      * @param querySubPlanId: query sub plan id
+      * @return placed query sub plan
+      */
+    QueryPlanPtr getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
     /**
      * Remove existing query sub plans belonging to a shared query
@@ -135,7 +143,7 @@ class ExecutionNode : public Node {
      * @param querySubPlan The query sub plan
      * @return the amount of resources
      */
-    static uint32_t getOccupiedResourcesForSubPlan(const QueryPlanPtr& querySubPlan) ;
+    static uint32_t getOccupiedResourcesForSubPlan(const QueryPlanPtr& querySubPlan);
 
   private:
     explicit ExecutionNode(const TopologyNodePtr& physicalNode);

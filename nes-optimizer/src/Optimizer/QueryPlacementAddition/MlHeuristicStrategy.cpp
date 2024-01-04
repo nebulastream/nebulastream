@@ -37,16 +37,16 @@ namespace NES::Optimizer {
 std::unique_ptr<BasePlacementAdditionStrategy> MlHeuristicStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                    const TopologyPtr& topology,
                                                                    const TypeInferencePhasePtr& typeInferencePhase,
-                                                                   PlacementAmenderMode placementAmenderMode) {
+                                                                           PlacementAmendmentMode placementAmendmentMode) {
     return std::make_unique<MlHeuristicStrategy>(
-        MlHeuristicStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
+        MlHeuristicStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode));
 }
 
 MlHeuristicStrategy::MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                          const TopologyPtr& topology,
                                          const TypeInferencePhasePtr& typeInferencePhase,
-                                         PlacementAmenderMode placementAmenderMode)
-    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
+                                         PlacementAmendmentMode placementAmendmentMode)
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

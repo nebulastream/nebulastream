@@ -19,6 +19,7 @@
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
+#include <Util/QueryState.hpp>
 #include <memory>
 #include <set>
 #include <vector>
@@ -80,7 +81,6 @@ class QueryPlan {
      * @return vector of operators
      */
     std::set<OperatorNodePtr> getAllOperators();
-
 
     /**
      * @brief Get all source operators
@@ -241,6 +241,15 @@ class QueryPlan {
     std::set<OperatorNodePtr> findAllOperatorsBetween(const std::set<OperatorNodePtr>& downstreamOperators,
                                                       const std::set<OperatorNodePtr>& upstreamOperators);
 
+    QueryState getQueryState();
+
+    void setQueryState();
+
+    uint32_t getVersion();
+
+    void incrementVersion();
+
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
@@ -281,8 +290,10 @@ class QueryPlan {
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;
+    QueryState queryState;
+    uint32_t version;
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
 }// namespace NES
-#endif // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

@@ -28,7 +28,7 @@ class IFCOPStrategy : public BasePlacementAdditionStrategy {
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmenderMode placementAmenderMode);
+                                           PlacementAmendmentMode placementAmendmentMode);
 
     ~IFCOPStrategy() override = default;
 
@@ -42,7 +42,7 @@ class IFCOPStrategy : public BasePlacementAdditionStrategy {
     IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                   const TopologyPtr& topology,
                   const TypeInferencePhasePtr& typeInferencePhase,
-                  PlacementAmenderMode placementAmenderMode);
+                  PlacementAmendmentMode placementAmendmentMode);
 
     /**
      * Get an random operator placement candidate

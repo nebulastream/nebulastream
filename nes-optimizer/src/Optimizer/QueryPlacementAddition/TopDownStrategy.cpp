@@ -31,16 +31,16 @@ namespace NES::Optimizer {
 BasePlacementStrategyPtr TopDownStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                  const TopologyPtr& topology,
                                                  const TypeInferencePhasePtr& typeInferencePhase,
-                                                 PlacementAmenderMode placementAmenderMode) {
+                                                 PlacementAmendmentMode placementAmendmentMode) {
     return std::make_unique<TopDownStrategy>(
-        TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
+        TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode));
 }
 
 TopDownStrategy::TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                  const TopologyPtr& topology,
                                  const TypeInferencePhasePtr& typeInferencePhase,
-                                 PlacementAmenderMode placementAmenderMode)
-    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
+                                 PlacementAmendmentMode placementAmendmentMode)
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

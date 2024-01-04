@@ -49,7 +49,7 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
                                            const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmenderMode placementAmenderMode);
+                                           PlacementAmendmentMode placementAmendmentMode);
 
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -61,7 +61,7 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
                                       const GlobalExecutionPlanPtr& globalExecutionPlan,
                                       const TopologyPtr& topology,
                                       const TypeInferencePhasePtr& typeInferencePhase,
-                                      PlacementAmenderMode placementAmenderMode);
+                                      PlacementAmendmentMode placementAmendmentMode);
 
     /**
      * @brief: Prepare the query payload for the external service

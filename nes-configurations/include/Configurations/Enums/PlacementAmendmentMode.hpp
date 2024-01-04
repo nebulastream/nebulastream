@@ -18,7 +18,7 @@
 #include <cstdint>
 
 namespace NES::Optimizer {
-enum class PlacementAmenderMode : uint8_t {
+enum class PlacementAmendmentMode : uint8_t {
     PESSIMISTIC,// uses strict 2PL
     OPTIMISTIC  // uses OCC
 };

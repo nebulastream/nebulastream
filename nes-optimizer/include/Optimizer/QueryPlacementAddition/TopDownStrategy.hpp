@@ -28,7 +28,7 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmenderMode placementAmenderMode);
+                                           PlacementAmendmentMode placementAmendmentMode);
 
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -38,7 +38,7 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
     TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                     const TopologyPtr& topology,
                     const TypeInferencePhasePtr& typeInferencePhase,
-                    PlacementAmenderMode placementAmenderMode);
+                    PlacementAmendmentMode placementAmendmentMode);
 
     /**
      * @brief place query operators and prepare the global execution plan

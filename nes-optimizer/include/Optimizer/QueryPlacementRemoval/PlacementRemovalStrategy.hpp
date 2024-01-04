@@ -15,10 +15,10 @@
 #ifndef NES_PLACEMENTREMOVALSTRATEGY_HPP
 #define NES_PLACEMENTREMOVALSTRATEGY_HPP
 
-#include <Configurations/Enums/PlacementAmenderMode.hpp>
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Identifiers.hpp>
+#include <Util/CopiedPinnedOperators.hpp>
 #include <folly/Synchronized.h>
-#include <memory>
 #include <set>
 
 namespace NES {
@@ -67,15 +67,15 @@ class PlacementRemovalStrategy {
     /**
      * @brief Create instance of placement removal strategy
      * @param globalExecutionPlan: the global execution plan to update
-     * @param topology : the topology
-     * @param typeInferencePhase : the type inference phase
-     * @param placementAmenderMode : the placement amender mode
+     * @param topology: the topology
+     * @param typeInferencePhase: the type inference phase
+     * @param placementAmendmentMode: the placement amended mode
      * @return a pointer to the placement
      */
     static PlacementRemovalStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                               const TopologyPtr& topology,
                                               const TypeInferencePhasePtr& typeInferencePhase,
-                                              PlacementAmenderMode placementAmenderMode);
+                                              PlacementAmendmentMode placementAmendmentMode);
 
     /**
      * Update Global execution plan by removing operators that are in the state To-Be-Removed and To-Be-Re-Placed
@@ -90,6 +90,14 @@ class PlacementRemovalStrategy {
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
   private:
+    /**
+     * @brief creates a copy of given query plan for performing operator placement
+     * @param pinnedUpStreamOperators : pinned upstream operators
+     * @param pinnedDownStreamOperators : pinned down stream operators
+     * @return pair representing set of copied upstream and downstream operators
+     */
+    CopiedPinnedOperators createCopyOfQueryPlan(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators
@@ -102,31 +110,9 @@ class PlacementRemovalStrategy {
     /**
      * @brief Select path for placement using pessimistic 2PL strategy. If attempt fails then an exponential retries are performed.
      * NOTE: These paths are local copies of the topology nodes. Any changes done on these nodes are not reflected in the topology catalog.
-     * @param topologyNodesWithUpStreamPinnedOperators : topology nodes hosting the pinned upstream operators
-     * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators
      * @return true if successful else false
      */
-    bool pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
-                                  const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
-
-    /**
-     * @brief Select path for placement using optimistic approach where no locks are acquired on chosen topology nodes
-     * after the path selection. If attempt fails then an exponential retries are performed.
-     * NOTE: These paths are local copies of the topology nodes. Any changes done on these nodes are not reflected in the topology catalog.
-     * @param topologyNodesWithUpStreamPinnedOperators : topology nodes hosting the pinned upstream operators
-     * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators
-     */
-    bool optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
-                                 const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
-
-    /**
-     * @brief Perform locking of all topology nodes selected by the path selection algorithm.
-     * We use "back-off and retry" mechanism to lock topology nodes following a strict breadth-first order.
-     * This allows us to prevent deadlocks and starvation situation.
-     * @param sourceTopologyNodes: the topology nodes hosting the pinned upstream operators
-     * @return true if successful else false
-     */
-    bool lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes);
+    bool pessimisticPathSelection();
 
     /**
      * @brief Perform unlocking of all topology nodes on which the lock was acquired.
@@ -135,20 +121,36 @@ class PlacementRemovalStrategy {
      */
     bool unlockTopologyNodesInSelectedPath();
 
+    /**
+     * @brief Update the query sub plans by removing the query operators
+     * @param upStreamPinnedOperators
+     * @param downStreamPinnedOperators
+     */
+    void updateQuerySubPlans(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
+                             const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
+
+    /**
+     * @brief Add the computed query sub plans tot he global execution plan
+     * @param sharedQueryId: the shared query plan id
+     * @return true if global execution plan gets updated successfully else false
+     */
+    bool updateExecutionNodes(SharedQueryId sharedQueryId);
+
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,
                              const TypeInferencePhasePtr& typeInferencePhase,
-                             PlacementAmenderMode placementMode);
+                             PlacementAmendmentMode placementMode);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
-    PlacementAmenderMode placementAmenderMode;
+    PlacementAmendmentMode placementAmendmentMode;
     PathFinderPtr pathFinder;
-    std::vector<WorkerId> workerNodeIdsInBFS;
-    std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
-    std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
-    std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
+    std::set<WorkerId> workerIdsInBFS;
+    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
+    std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
+    std::unordered_map<WorkerId, std::set<QuerySubPlanId>> workerIdToQuerySubPlanIds;
+    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>> workerIdToQuerySubPlans;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
 
     //Max retires for path selection before failing the placement
