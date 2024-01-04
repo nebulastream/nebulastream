@@ -38,7 +38,7 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmenderMode placementAmenderMode);
+                                           PlacementAmendmentMode placementAmendmentMode);
 
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -47,7 +47,7 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                               const TopologyPtr& topology,
                               const TypeInferencePhasePtr& typeInferencePhase,
-                              PlacementAmenderMode placementAmenderMode);
+                              PlacementAmendmentMode placementAmendmentMode);
 
   private:
     /**

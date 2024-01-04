@@ -16,8 +16,9 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Configurations/Enums/PlacementAmenderMode.hpp>
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Util/CopiedPinnedOperators.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <chrono>
 #include <folly/Synchronized.h>
@@ -66,9 +67,8 @@ namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs::Source
-}// namespace NES
 
-namespace NES::Optimizer {
+namespace Optimizer {
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
@@ -77,13 +77,7 @@ class BasePlacementAdditionStrategy;
 using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;
 
 using PlacementMatrix = std::vector<std::vector<bool>>;
-
 using ComputedSubQueryPlans = std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>;
-
-struct CopiedPinnedOperators {
-    std::set<LogicalOperatorNodePtr> copiedPinnedUpStreamOperators;
-    std::set<LogicalOperatorNodePtr> copiedPinnedDownStreamOperators;
-};
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
@@ -94,7 +88,7 @@ class BasePlacementAdditionStrategy {
     explicit BasePlacementAdditionStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmenderMode placementMode);
+                                           PlacementAmendmentMode placementAmendmentMode);
 
     virtual ~BasePlacementAdditionStrategy();
 
@@ -118,6 +112,8 @@ class BasePlacementAdditionStrategy {
                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
+  protected:
+
     /**
      * @brief creates a copy of given query plan for performing operator placement
      * @param pinnedUpStreamOperators : pinned upstream operators
@@ -127,7 +123,6 @@ class BasePlacementAdditionStrategy {
     CopiedPinnedOperators createCopyOfQueryPlan(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
-  protected:
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators
      * @param upStreamPinnedOperators: the pinned upstream operators
@@ -202,7 +197,7 @@ class BasePlacementAdditionStrategy {
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     PathFinderPtr pathFinder;
-    PlacementAmenderMode placementAmenderMode;
+    PlacementAmendmentMode placementAmendmentMode;
     std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
 
   private:
@@ -280,7 +275,7 @@ class BasePlacementAdditionStrategy {
     std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
     std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToCopiedOperatorMap;
-    std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToPinnedOperatorIdMap;
 };
-}// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
+}// namespace Optimizer
+}// namespace NES
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

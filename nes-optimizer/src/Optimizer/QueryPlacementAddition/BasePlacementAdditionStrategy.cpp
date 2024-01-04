@@ -27,6 +27,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/SysPlanMetaData.hpp>
 #include <algorithm>
 #include <thread>
 #include <unordered_set>
@@ -37,9 +38,9 @@ namespace NES::Optimizer {
 BasePlacementAdditionStrategy::BasePlacementAdditionStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                              const TopologyPtr& topology,
                                                              const TypeInferencePhasePtr& typeInferencePhase,
-                                                             PlacementAmenderMode placementAmenderMode)
+                                                             PlacementAmendmentMode placementAmendmentMode)
     : globalExecutionPlan(globalExecutionPlan), topology(topology), typeInferencePhase(typeInferencePhase),
-      placementAmenderMode(placementAmenderMode) {
+      placementAmendmentMode(placementAmendmentMode) {
     //Initialize path finder
     pathFinder = std::make_shared<PathFinder>((topology->getRootTopologyNodeId()));
 }
@@ -77,12 +78,12 @@ void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalO
 
     bool success = false;
     // 3. Find the path for placement based on the selected placement mode
-    switch (placementAmenderMode) {
-        case PlacementAmenderMode::PESSIMISTIC: {
+    switch (placementAmendmentMode) {
+        case PlacementAmendmentMode::PESSIMISTIC: {
             success = pessimisticPathSelection(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
             break;
         }
-        case PlacementAmenderMode::OPTIMISTIC: {
+        case PlacementAmendmentMode::OPTIMISTIC: {
             success = optimisticPathSelection(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
             break;
         }
@@ -409,7 +410,6 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             || pinnedOperator->getOperatorState() == OperatorState::TO_BE_REPLACED) {
             workerIdToResourceConsumedMap[pinnedWorkerId]++;
         }
-        workerIdToPinnedOperatorIdMap[pinnedWorkerId].emplace_back(operatorId);
 
         // 2.2. If the pinnedWorkerId has already placed query sub plans then compute an updated list of query sub plans
         if (computedSubQueryPlans.contains(pinnedWorkerId)) {
@@ -653,6 +653,9 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                     auto sourceSchema = upstreamOperatorToConnect->as<LogicalOperatorNode>()->getOutputSchema();
                     auto networkSourceOperatorId = getNextOperatorId();
 
+                    // compute a vector of sub plan id and worker node id where the system generated plans are placed
+                    std::vector<SysPlanMetaData> connectedSysSubPlanDetails;
+
                     // 12. Starting from the upstream to downstream topology node and add network sink source pairs.
                     for (uint16_t pathIndex = 0; pathIndex < topologyNodesBetween.size(); pathIndex++) {
 
@@ -672,6 +675,10 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                             operatorToConnectInMatchedPlan->addParent(networkSinkOperator);
                             querySubPlanWithUpstreamOperator->removeAsRootOperator(operatorToConnectInMatchedPlan);
                             querySubPlanWithUpstreamOperator->addRootOperator(networkSinkOperator);
+
+                            // 15. Add metadata about the plans and topology nodes hosting the system generated operators.
+                            operatorToConnectInMatchedPlan->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
+                                                                        connectedSysSubPlanDetails);
 
                         } else if (currentWorkerId == workerId) {
                             // 12. Add a network source operator to the leaf operator.
@@ -707,7 +714,10 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                             auto newQuerySubPlan =
                                 QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {networkSinkOperator});
 
-                            // 18. add the new query plan
+                            // 18. Record information about the query plan and worker id
+                            connectedSysSubPlanDetails.emplace_back((newQuerySubPlan->getQuerySubPlanId(), currentWorkerId));
+
+                            // 19. add the new query plan
                             if (computedSubQueryPlans.contains(currentWorkerId)) {
                                 computedSubQueryPlans[currentWorkerId].emplace_back(newQuerySubPlan);
                             } else {
@@ -727,9 +737,8 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
         TopologyNodeWLock lockedTopologyNode;
-
         // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
-        if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
+        if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
             //1.1. wait till lock is acquired
             while (!(lockedTopologyNode = topology->lockTopologyNode(workerNodeId))) {
                 std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
@@ -909,18 +918,29 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                 globalExecutionPlan->scheduleExecutionNode(executionNode);
             }
 
-            // 1.7. Mark all operators as placed on the topology node as placed
-            if (workerIdToPinnedOperatorIdMap.contains(workerNodeId)) {
-                auto pinnedOperatorIds = workerIdToPinnedOperatorIdMap[workerNodeId];
-                for (auto pinnedOperatorId : pinnedOperatorIds) {
-                    auto originalOperator = operatorIdToOriginalOperatorMap[pinnedOperatorId];
-                    originalOperator->setOperatorState(OperatorState::PLACED);
-                    originalOperator->addProperty(PINNED_WORKER_ID, workerNodeId);
+            // 1.7. Update state and properties of all operators placed on the execution node
+            placedQuerySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+            for (auto placedQuerySubPlan : placedQuerySubPlans) {
+                QuerySubPlanId querySubPlanId = placedQuerySubPlan->getQuerySubPlanId();
+                auto allPlacedOperators = placedQuerySubPlan->getAllOperators();
+                for (const auto& placedOperator : allPlacedOperators) {
+                    OperatorId operatorId = placedOperator->getId();
+                    //Set status to Placed and copy over metadata properties for
+                    if (operatorIdToOriginalOperatorMap.contains(operatorId)) {
+                        auto originalOperator = operatorIdToOriginalOperatorMap[operatorId];
+                        originalOperator->setOperatorState(OperatorState::PLACED);
+                        originalOperator->addProperty(PINNED_WORKER_ID, workerNodeId);
+                        originalOperator->addProperty(PLACED_SUB_PLAN_ID, querySubPlanId);
+                        if (placedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
+                            originalOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
+                                                          placedOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
+                        }
+                    }
                 }
             }
 
             // 1.8. Release lock on the topology node
-            if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
+            if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
                 lockedTopologyNode->unlock();
             }
         } catch (std::exception& ex) {
@@ -1025,7 +1045,7 @@ BasePlacementAdditionStrategy::getTopologyNodesForChildrenOperators(const Logica
 BasePlacementAdditionStrategy::~BasePlacementAdditionStrategy() {
     NES_INFO("~BasePlacementStrategy()");
     //Release the lock for pessimistic placement mode
-    if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
+    if (placementAmendmentMode == PlacementAmendmentMode::PESSIMISTIC) {
         unlockTopologyNodesInSelectedPath();
     }
 }

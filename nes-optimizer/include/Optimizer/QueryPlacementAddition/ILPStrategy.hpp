@@ -47,7 +47,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmenderMode placementAmenderMode);
+                                           PlacementAmendmentMode placementAmendmentMode);
 
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
@@ -87,7 +87,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
                          const TopologyPtr& topology,
                          const TypeInferencePhasePtr& typeInferencePhase,
                          const z3::ContextPtr& z3Context,
-                         PlacementAmenderMode placementAmenderMode);
+                         PlacementAmendmentMode placementAmendmentMode);
     /**
      * @brief assigns operators to topology nodes based on ILP solution
      * @param z3Model a Z3 z3Model from the Z3 Optimize

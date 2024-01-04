@@ -155,15 +155,15 @@ void QueryPlacementPhase::pinAllSinkOperators(const std::set<LogicalOperatorNode
 BasePlacementStrategyPtr QueryPlacementPhase::getStrategy(PlacementStrategy placementStrategy) {
 
     auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
-    auto placementAmenderMode = coordinatorConfiguration->optimizer.placementAmenderMode;
+    auto placementAmendmentMode = coordinatorConfiguration->optimizer.placementAmendmentMode;
 
     switch (placementStrategy) {
         case PlacementStrategy::ILP:
-            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
         case PlacementStrategy::BottomUp:
-            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
         case PlacementStrategy::TopDown:
-            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
         case PlacementStrategy::ELEGANT_PERFORMANCE:
         case PlacementStrategy::ELEGANT_ENERGY:
         case PlacementStrategy::ELEGANT_BALANCED:
@@ -172,12 +172,12 @@ BasePlacementStrategyPtr QueryPlacementPhase::getStrategy(PlacementStrategy plac
                                                     globalExecutionPlan,
                                                     topology,
                                                     typeInferencePhase,
-                                                    placementAmenderMode);
+                                                    placementAmendmentMode);
 
             // #2486        case PlacementStrategy::IFCOP:
             //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::MlHeuristic:
-            return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+            return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
         default:
             throw Exceptions::RuntimeException("Unknown placement strategy type "
                                                + std::string(magic_enum::enum_name(placementStrategy)));

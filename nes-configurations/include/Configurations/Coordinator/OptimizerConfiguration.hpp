@@ -17,7 +17,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
-#include <Configurations/Enums/PlacementAmenderMode.hpp>
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Configurations/Enums/QueryMergerRule.hpp>
 #include <iostream>
 #include <map>
@@ -140,9 +140,9 @@ class OptimizerConfiguration : public BaseConfiguration {
      * PESSIMISTIC -> Use a pessimistic 2PL strategy to concurrently amend operator placements.
      * OPTIMISTIC -> Use an optimistic OCC strategy to concurrently amend operator placements.
      */
-    EnumOption<Optimizer::PlacementAmenderMode> placementAmenderMode = {
+    EnumOption<Optimizer::PlacementAmendmentMode> placementAmendmentMode = {
         PLACEMENT_AMENDER_MODE_CONFIG,
-        Optimizer::PlacementAmenderMode::PESSIMISTIC,
+        Optimizer::PlacementAmendmentMode::PESSIMISTIC,
         "selects the placement amender mode to use [PESSIMISTIC|OPTIMISTIC]"};
 
   private:
@@ -158,7 +158,7 @@ class OptimizerConfiguration : public BaseConfiguration {
                 &performAdvanceSemanticValidation,
                 &enableNemoPlacement,
                 &allowExhaustiveContainmentCheck,
-                &placementAmenderMode};
+                &placementAmendmentMode};
     }
 };
 

@@ -23,7 +23,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Enums/PlacementAmenderMode.hpp>
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
@@ -1922,7 +1922,7 @@ TEST_F(QueryPlacementTest, testConcurrentOperatorPlacementUsingOptimisticTopDown
 
     setupTopologyAndSourceCatalog({6, 4, 4});
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->optimizer.placementAmenderMode = Optimizer::PlacementAmenderMode::OPTIMISTIC;
+    coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -2024,7 +2024,7 @@ TEST_F(QueryPlacementTest, testConcurrentOperatorPlacementUsingOptimisticBottomU
 
     setupTopologyAndSourceCatalog({4, 4, 4});
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->optimizer.placementAmenderMode = Optimizer::PlacementAmenderMode::OPTIMISTIC;
+    coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -2125,7 +2125,7 @@ TEST_F(QueryPlacementTest, testIfCanPlaceQueryAfterPlacementFailureConcurrentOpe
 
     setupTopologyAndSourceCatalog({2, 2, 2});
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->optimizer.placementAmenderMode = Optimizer::PlacementAmenderMode::OPTIMISTIC;
+    coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -2209,7 +2209,7 @@ TEST_F(QueryPlacementTest, testIfCanPlaceQueryAfterPlacementFailureConcurrentOpe
 
     setupTopologyAndSourceCatalog({1, 2, 2});
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->optimizer.placementAmenderMode = Optimizer::PlacementAmenderMode::PESSIMISTIC;
+    coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::PESSIMISTIC;
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
