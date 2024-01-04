@@ -46,7 +46,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     bool success = 0;
     try {
         //check if the plan is reconfigured
-        if (queryPlan->getQueryState() == QueryState::RECONFIGURING) {
+        if (queryPlan->getQueryState() == QueryState::REDEPLOYED) {
             success =  nodeEngine->reconfigureSubPlan(queryPlan);
         } else {
             success = nodeEngine->registerQueryInNodeEngine(queryPlan);

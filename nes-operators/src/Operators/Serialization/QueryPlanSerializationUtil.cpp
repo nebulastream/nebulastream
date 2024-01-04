@@ -91,7 +91,7 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     //set properties of the query plan
     uint64_t queryId = INVALID_QUERY_ID;
     uint64_t querySubPlanId = INVALID_QUERY_SUB_PLAN_ID;
-    QueryState queryState = QueryState::INVALID;
+    QueryState queryState = QueryState::REGISTERED;
 
     if (serializedQueryPlan->has_queryid()) {
         queryId = serializedQueryPlan->queryid();
@@ -125,10 +125,13 @@ QueryState QueryPlanSerializationUtil::deserializeQueryState(SerializableQuerySt
         case QUERY_STATE_MIGRATING: return QueryState::MIGRATING;
         case QUERY_STATE_MIGRATION_COMPLETED: return QueryState::MIGRATION_COMPLETED;
         case QUERY_STATE_EXPLAINED: return QueryState::EXPLAINED;
-        case QUERY_STATE_RECONFIGURING: return QueryState::RECONFIGURING;
-        case QUERY_STATE_INVALID: return QueryState::INVALID;
-        case SerializableQueryState_INT_MIN_SENTINEL_DO_NOT_USE_: return QueryState::INVALID;
-        case SerializableQueryState_INT_MAX_SENTINEL_DO_NOT_USE_: return QueryState::INVALID;
+        case QUERY_STATE_MARKED_FOR_DEPLOYMENT: return QueryState::MARKED_FOR_DEPLOYMENT;
+        case QUERY_STATE_MARKED_FOR_REDEPLOYMENT: return QueryState::MARKED_FOR_REDEPLOYMENT;
+        case QUERY_STATE_MARKED_FOR_MIGRATION: return QueryState::MARKED_FOR_MIGRATION;
+        case QUERY_STATE_REDEPLOYED: return QueryState::REDEPLOYED;
+            //todo: throw exception here
+        case SerializableQueryState_INT_MIN_SENTINEL_DO_NOT_USE_: NES_FATAL_ERROR("unexpected value"); return QueryState::REGISTERED;
+        case SerializableQueryState_INT_MAX_SENTINEL_DO_NOT_USE_: NES_FATAL_ERROR("unexpected value"); return QueryState::REGISTERED;
     }
 }
 
@@ -149,8 +152,10 @@ SerializableQueryState QueryPlanSerializationUtil::serializeQueryState(QueryStat
         case QueryState::MIGRATING: return QUERY_STATE_MIGRATING;
         case QueryState::MIGRATION_COMPLETED: return QUERY_STATE_MIGRATION_COMPLETED;
         case QueryState::EXPLAINED: return QUERY_STATE_EXPLAINED;
-        case QueryState::RECONFIGURING: return QUERY_STATE_RECONFIGURING;
-        case QueryState::INVALID: return QUERY_STATE_INVALID;
+        case QueryState::MARKED_FOR_DEPLOYMENT: return QUERY_STATE_MARKED_FOR_DEPLOYMENT;
+        case QueryState::MARKED_FOR_REDEPLOYMENT: return QUERY_STATE_MARKED_FOR_REDEPLOYMENT;
+        case QueryState::MARKED_FOR_MIGRATION: return QUERY_STATE_MARKED_FOR_MIGRATION;
+        case QueryState::REDEPLOYED: return QUERY_STATE_REDEPLOYED;
     }
 }
 }// namespace NES

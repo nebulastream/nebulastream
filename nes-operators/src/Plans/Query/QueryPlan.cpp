@@ -42,9 +42,9 @@ QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
 
 QueryPlanPtr QueryPlan::create() { return std::make_shared<QueryPlan>(QueryPlan()); }
 
-QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID), queryState(QueryState::INVALID) {}
+QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID), queryState(QueryState::REGISTERED) {}
 
-QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID), queryState(QueryState::INVALID) {
+QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID), queryState(QueryState::REGISTERED) {
     rootOperators.push_back(std::move(rootOperator));
 }
 

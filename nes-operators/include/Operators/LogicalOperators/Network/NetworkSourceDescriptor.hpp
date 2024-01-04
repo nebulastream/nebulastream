@@ -100,7 +100,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
     QuerySubPlanVersion version;
 };
 
-using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
+using NetworkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
 
 }// namespace NES::Network
 

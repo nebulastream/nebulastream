@@ -70,6 +70,7 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
         }
         return numberOfNodes == nodes;
     }
+
 };
 
 constexpr std::chrono::duration<int64_t, std::milli> defaultTimeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);

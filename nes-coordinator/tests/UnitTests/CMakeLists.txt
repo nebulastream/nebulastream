@@ -162,6 +162,9 @@ add_nes_unit_test(buffer-storage-tests "Runtime/BufferStorageTest.cpp")
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)
 
+### Global Query Plan Update Phase Tests ###
+add_nes_unit_test(find-query-delta-tests "Phases/FindQueryDeltaTests.cpp" Phases/FindQueryDeltaTests.cpp)
+
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
     add_nes_unit_test(kafka-sink-tests "Sink/KafkaSinkTest.cpp")
