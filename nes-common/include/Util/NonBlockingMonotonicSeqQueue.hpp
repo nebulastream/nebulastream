@@ -192,7 +192,7 @@ class NonBlockingMonotonicSeqQueue {
                         // Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber)) {
                             std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
-                        };
+                        }
                         continue;
                     }
                 }

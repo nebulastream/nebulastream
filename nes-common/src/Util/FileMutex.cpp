@@ -48,7 +48,6 @@ void FileMutex::lock() {
 }
 
 bool FileMutex::try_lock() {
-    bool acquired = false;
     struct flock lock;
     lock.l_type = F_WRLCK;
     lock.l_whence = SEEK_SET;
@@ -56,9 +55,9 @@ bool FileMutex::try_lock() {
     lock.l_len = 0;
     int ret = fcntl(fd, F_SETLK, &lock);
     if (ret == -1) {
-        return (errno == EAGAIN || errno == EACCES) ? (acquired = false, true) : false;
+        return (errno == EAGAIN || errno == EACCES);
     }
-    return (acquired = true);
+    return true;
 }
 
 void FileMutex::unlock() {

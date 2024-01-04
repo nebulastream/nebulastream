@@ -28,9 +28,9 @@ namespace NES::Exceptions {
 
 RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location)
     : errorMessage(std::move(msg)) {
-    NES_ERROR("{} at {}", errorMessage, location);
     errorMessage.append(":: callstack:\n");
     errorMessage.append(stacktrace);
+    NES_ERROR("{} at {}", errorMessage, location);
 }
 
 RuntimeException::RuntimeException(std::string msg, const std::string& stacktrace) : errorMessage(std::move(msg)) {

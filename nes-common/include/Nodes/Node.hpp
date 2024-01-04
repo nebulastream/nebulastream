@@ -187,7 +187,7 @@ class Node : public std::enable_shared_from_this<Node> {
     bool instanceOf() {
         if (dynamic_cast<NodeType*>(this)) {
             return true;
-        };
+        }
         return false;
     };
 
@@ -203,7 +203,6 @@ class Node : public std::enable_shared_from_this<Node> {
         }
         throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
                                + typeid(NodeType).name());
-        return nullptr;
     }
 
     /**

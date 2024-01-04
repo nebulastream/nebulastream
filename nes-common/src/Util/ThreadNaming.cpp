@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <algorithm>
 #include <cstdarg>

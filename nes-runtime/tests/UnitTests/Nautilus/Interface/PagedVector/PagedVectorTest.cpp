@@ -148,6 +148,7 @@ TEST_F(PagedVectorTest, storeAndRetrieveValuesNonDefaultPageSize) {
 
 TEST_F(PagedVectorTest, storeAndRetrieveValuesWithCustomItems) {
     struct __attribute__((packed)) CustomClass {
+        CustomClass(uint64_t id, int32_t val1, double val2) : id(id), val1(val1), val2(val2){};
         uint64_t id;
         int32_t val1;
         double val2;

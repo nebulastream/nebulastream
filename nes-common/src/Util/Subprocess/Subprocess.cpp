@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <csignal>
 #include <cstdio>
-#include <fcntl.h>
 #include <thread>
 #include <vector>
 

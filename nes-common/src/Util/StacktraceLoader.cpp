@@ -13,8 +13,8 @@
 */
 
 #include <Util/Backward/backward.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
-
 #define CALLSTACK_MAX_SIZE 32
 
 namespace NES {
@@ -30,7 +30,7 @@ std::string collectAndPrintStacktrace() {
     std::stringbuf buffer;
     std::ostream os(&buffer);
     printer.print(stackTrace, os);
-    //    NES_ERROR("Stacktrace:\n {}", buffer.str());
+    NES_ERROR("Stacktrace:\n {}", buffer.str());
     return buffer.str();
 }
 

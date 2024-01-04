@@ -303,14 +303,13 @@ constexpr std::size_t find(string_view str, char c) noexcept {
 #else
     constexpr bool workaround = false;
 #endif
-
+    //TODO: this is reported as unreachable code
     if constexpr (workaround) {
         for (std::size_t i = 0; i < str.size(); ++i) {
             if (str[i] == c) {
                 return i;
             }
         }
-
         return string_view::npos;
     } else {
         return str.find(c);
@@ -345,7 +344,7 @@ constexpr bool cmp_equal(string_view lhs,
     constexpr bool workaround = false;
 #endif
 
-    if constexpr (!is_default_predicate<BinaryPredicate>() || workaround) {
+    if constexpr (!is_default_predicate<BinaryPredicate>()) {
         if (lhs.size() != rhs.size()) {
             return false;
         }

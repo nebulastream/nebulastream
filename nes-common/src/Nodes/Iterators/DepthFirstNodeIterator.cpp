@@ -33,7 +33,7 @@ bool DepthFirstNodeIterator::iterator::operator!=(const iterator& other) const {
     // todo currently we only check if we reached the end of the iterator.
     if (workStack.empty() && other.workStack.empty()) {
         return false;
-    };
+    }
     return true;
 }
 

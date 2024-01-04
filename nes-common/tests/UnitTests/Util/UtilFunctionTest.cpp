@@ -21,7 +21,6 @@ class UtilFunctionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-
         NES_INFO("UtilFunctionTest test class SetUpTestCase.");
     }
     static void TearDownTestCase() { NES_INFO("UtilFunctionTest test class TearDownTestCase."); }

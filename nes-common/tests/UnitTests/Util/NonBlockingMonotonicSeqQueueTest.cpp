@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <atomic>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <random>
 #include <thread>
 
@@ -104,7 +103,6 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadRandomeUpdaterTest) {
                                        /*sequence number*/ i);
     }
     std::mt19937 randomGenerator(42);
-    auto value = randomGenerator();
     std::shuffle(watermarkBarriers.begin(), watermarkBarriers.end(), randomGenerator);
 
     std::vector<std::tuple<uint64_t, uint64_t>> observedUpdates;
@@ -188,7 +186,6 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithLostUpdateThreadTe
                 watermarkProcessor.emplace(std::get<0>(currentWatermark), std::get<1>(currentWatermark));
                 // check that the watermark manager returns a watermark that is <= to the max watermark
                 auto globalCurrentWatermark = watermarkProcessor.getCurrentValue();
-                auto maxCurrentWatermark = watermarkBarriers[globalUpdateCounter - 1];
                 ASSERT_LE(globalCurrentWatermark, std::get<0>(watermarkBarriers[lostUpdate]));
             }
         }));

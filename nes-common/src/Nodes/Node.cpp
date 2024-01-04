@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/StacktraceLoader.hpp>
 #include <queue>
 #include <utility>
 
@@ -51,7 +49,7 @@ bool Node::addChild(const NodePtr newNode) {
     }
     // checks if current new node is not part of children
     if (vectorContainsTheNode(children, newNode)) {
-        NES_ERROR("Node: the node is already part of its children so skip add chld operation.");
+        NES_ERROR("Node: the node is already part of its children so skip add child operation.");
         return false;
     }
     // add the node to the children
@@ -164,7 +162,7 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
     NES_INFO("Node: Create temporary copy of this nodes parents.");
     std::vector<NodePtr> copyOfChildren = children;
 
-    NES_INFO("Node: Remove all childs of this node.");
+    NES_INFO("Node: Remove all children of this node.");
     removeChildren();
 
     if (!addChild(newNode)) {
@@ -252,7 +250,7 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
     if (!oldNode->equal(newNode)) {
         // newNode is already inside children or parents and it's not oldNode
         if (find(children, newNode) || find(parents, newNode)) {
-            NES_DEBUG("Node: the new node is already part of the children or predessessors of the current node.");
+            NES_DEBUG("Node: the new node is already part of the children or predecessors of the current node.");
             return false;
         }
     }
@@ -287,7 +285,7 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
     if (!node) {
         return false;
     }
-    // detecting if newNode is one of oldNode's sblings
+    // detecting if newNode is one of oldNode's siblings
     for (auto&& parent : node->parents) {
         for (auto&& child : parent->children) {
             if (child == newNode) {
@@ -371,7 +369,7 @@ bool Node::removeAndJoinParentAndChildren() {
         }
         return true;
     } catch (...) {
-        NES_ERROR("Node: Error ocurred while joining this node's children and parents");
+        NES_ERROR("Node: Error occurred while joining this node's children and parents");
         return false;
     }
 }

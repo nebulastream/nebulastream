@@ -25,7 +25,6 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <cstdio>
 #include <fstream>
 #include <list>
 #include <memory>
@@ -1537,7 +1536,7 @@ class ParseImp {
             } else if (pLine->Type == Node::eType::SequenceType) {
                 NES_DEBUG("-");
             } else {
-                NES_DEBUG("> UNKOWN TYPE <");
+                NES_DEBUG("> UNKNOWN TYPE <");
             }
         }
     }

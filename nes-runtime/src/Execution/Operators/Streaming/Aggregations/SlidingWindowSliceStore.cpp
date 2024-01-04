@@ -47,12 +47,12 @@ void SlidingWindowSliceStore<SliceType>::insertSlice(SlidingWindowSliceStore::Sl
 }
 
 template<class SliceType>
-SlidingWindowSliceStore<SliceType>::SliceTypePtr& SlidingWindowSliceStore<SliceType>::getFirstSlice() {
+typename SlidingWindowSliceStore<SliceType>::SliceTypePtr& SlidingWindowSliceStore<SliceType>::getFirstSlice() {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     return slices.front();
 }
 template<class SliceType>
-SlidingWindowSliceStore<SliceType>::SliceTypePtr& SlidingWindowSliceStore<SliceType>::getLastSlice() {
+typename SlidingWindowSliceStore<SliceType>::SliceTypePtr& SlidingWindowSliceStore<SliceType>::getLastSlice() {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     return slices.back();
 }
