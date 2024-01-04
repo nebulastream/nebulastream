@@ -71,7 +71,6 @@ void TestWaitingHelper::completeTest() {
 }
 
 void TestWaitingHelper::startWaitingThread(std::string testName) {
-    auto self = this;
     waitThread = std::make_unique<std::thread>([this, testName = std::move(testName)]() mutable {
         auto future = testCompletion->get_future();
         switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP))) {
@@ -80,12 +79,10 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
                     auto res = future.get();
                     if (!res) {
                         NES_FATAL_ERROR("Got error in test [{}]", testName);
-                        std::exit(-127);
                     }
                 } catch (std::exception const& exception) {
                     NES_FATAL_ERROR("Got exception in test [{}]: {}", testName, exception.what());
                     FAIL();
-                    std::exit(-1);
                 }
                 break;
             }
@@ -93,13 +90,11 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
             case std::future_status::deferred: {
                 NES_ERROR("Cannot terminate test [{}] within deadline", testName);
                 FAIL();
-                std::exit(-127);
                 break;
             }
         }
     });
 }
 }// namespace detail
-
 }// namespace Testing
 }// namespace NES

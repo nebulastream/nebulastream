@@ -20,6 +20,9 @@ std::string Edge::toString() const {
     return ss.str();
 }
 
+Edge::Edge(WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode)
+    : upstreamTopologyNode(upstreamTopologyNode), downstreamTopologyNode(downstreamTopologyNode){};
+
 bool Edge::operator==(const Edge& other) const {
     return this->downstreamTopologyNode == other.downstreamTopologyNode
         && this->upstreamTopologyNode == other.upstreamTopologyNode;

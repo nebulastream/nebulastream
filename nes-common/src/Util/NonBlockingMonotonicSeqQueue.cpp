@@ -12,5 +12,4 @@
     limitations under the License.
 */
 
-#include <Util/NonBlockingMonotonicSeqQueue.hpp>
 namespace NES::Util {}

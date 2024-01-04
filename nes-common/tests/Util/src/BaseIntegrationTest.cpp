@@ -15,14 +15,9 @@
 #include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <detail/PortDispatcher.hpp>
-#include <fcntl.h>
 #include <filesystem>
-#include <fstream>
 #include <mutex>
 #include <random>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #if defined(__linux__)
 #include <pwd.h>
 #endif
@@ -56,7 +51,7 @@ std::string generateUUID() {
     ss << "-";
     for (i = 0; i < 12; i++) {
         ss << dis(gen);
-    };
+    }
     return ss.str();
 }
 }// namespace detail::uuid

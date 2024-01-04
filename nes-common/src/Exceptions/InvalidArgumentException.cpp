@@ -13,7 +13,6 @@
 */
 
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <cstring>
 
 namespace NES {
 

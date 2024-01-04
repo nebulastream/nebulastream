@@ -15,13 +15,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <detail/PortDispatcher.hpp>
 #include <filesystem>
-#include <fstream>
 #include <mutex>
 #include <unistd.h>
 #if defined(__linux__)
 #include <pwd.h>
 #endif
-#include <sys/types.h>
 
 namespace NES::Testing::detail {
 
@@ -98,7 +96,9 @@ PortDispatcher::PortDispatcher(uint16_t startPort, uint32_t numberOfPorts)
 }
 
 BorrowedPortPtr PortDispatcher::getNextPort() {
-    while (true) {
+    uint64_t tryCount = 0;
+    //We try 100 times
+    while (++tryCount < 100) {
         auto nextIndex = data.getNextIndex();
         auto expected = true;
         if (data[nextIndex].checksum != CHECKSUM) {
