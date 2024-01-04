@@ -55,6 +55,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
     serializableDecomposedQueryPlan->set_decomposedqueryplanid(decomposedQueryPlan->getDecomposedQueryPlanId());
     serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan->getSharedQueryId());
+    serializableDecomposedQueryPlan->set_state(serializeQueryState(decomposedQueryPlan->getState()));
 }
 
 DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
@@ -89,6 +90,10 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     SharedQueryId sharedQueryId = serializableDecomposedQueryPlan->sharedqueryplanid();
 
     auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, rootOperators);
+    if (serializableDecomposedQueryPlan->has_state()) {
+        auto state = deserializeQueryState(serializableDecomposedQueryPlan->state());
+        decomposedQueryPlan->setState(state);
+    }
     return decomposedQueryPlan;
 }
 

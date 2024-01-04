@@ -57,14 +57,14 @@ class SerialStorageHandler : public StorageHandler {
      * @param requestId The id of the request making the call
      * @return a handle to the source catalog.
      */
-    SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) override;
+    Catalogs::Source::SourceCatalogPtr getSourceCatalogHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global execution plan handle.
      * @param requestId The id of the request making the call
      * @return a handle to the global execution plan.
      */
-    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) override;
+    Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlanHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global query plan handle.
@@ -78,14 +78,14 @@ class SerialStorageHandler : public StorageHandler {
      * @param requestId The id of the request making the call
      * @return a handle to the udf catalog.
      */
-    UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) override;
+    Catalogs::UDF::UDFCatalogPtr getUDFCatalogHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable Coordinator configuration
      * @param requestId The id of the request making the call
      * @return a handle to the coordinator configuration
      */
-    CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
+    Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId) override;
 
     /**
      * @brief constructor

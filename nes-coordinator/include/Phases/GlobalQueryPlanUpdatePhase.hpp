@@ -49,6 +49,12 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
+namespace Network {
+class NetworkSourceDescriptor;
+using NetworkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
+class NetworkSinkDescriptor;
+using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
+}// namespace Network
 namespace Catalogs {
 
 namespace Source {
@@ -75,8 +81,17 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Optimizer {
 
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
+class SourceLogicalOperatorNode;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+
+class SinkLogicalOperatorNode;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+
+namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
@@ -109,6 +124,7 @@ using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 
 class MemoryLayoutSelectionPhase;
 using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase>;
+
 
 /**
  * @brief This class is responsible for accepting a batch of query requests and then updating the Global Query Plan accordingly.
@@ -143,6 +159,31 @@ class GlobalQueryPlanUpdatePhase {
      */
     GlobalQueryPlanPtr execute(const std::vector<NESRequestPtr>& nesRequests);
 
+    std::pair<SinkLogicalOperatorNodePtr, WorkerId>
+    findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& sharedQueryPlanId,
+                                       const WorkerId workerId,
+                                       const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor);
+
+    std::pair<std::set<OperatorId>, std::set<OperatorId>> findAffectedTopologySubGraph(const SharedQueryId& sharedQueryPlanId,
+                                 const ExecutionNodePtr& upstreamNode,
+                                 const ExecutionNodePtr& downstreamNode);
+
+    std::pair<SourceLogicalOperatorNodePtr, WorkerId>
+    findDownstreamNetworkSourceAndWorkerId(const SharedQueryId& sharedQueryPlanId,
+                                           const WorkerId workerId,
+                                           const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor);
+
+    static std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
+    findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
+                                                                                        const ExecutionNodePtr& upstreamNode,
+                                                                                        const ExecutionNodePtr& downstreamNode);
+
+    std::pair<LogicalOperatorNodePtr, WorkerId> findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
+                                                          WorkerId downstreamWorkerId,
+                                                          SharedQueryId sharedQueryId);
+    std::pair<LogicalOperatorNodePtr, WorkerId> findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
+                                                            WorkerId upstreamWorkerId,
+                                                            SharedQueryId sharedQueryId);
   private:
     explicit GlobalQueryPlanUpdatePhase(const TopologyPtr& topology,
                                         const QueryCatalogServicePtr& queryCatalogService,

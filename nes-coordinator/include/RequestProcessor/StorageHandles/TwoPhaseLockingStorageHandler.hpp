@@ -90,7 +90,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param requestId the id of the request calling this function
      * @return a handle to the global execution plan.
      */
-    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle(RequestId requestId) override;
+    Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlanHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable topology handle. Will throw an exception if the resource has not been locked in the
@@ -122,7 +122,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param requestId the id of the request calling this function
      * @return a handle to the source catalog.
      */
-    SourceCatalogHandle getSourceCatalogHandle(RequestId requestId) override;
+    Catalogs::Source::SourceCatalogPtr getSourceCatalogHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable udf catalog handle. Will throw an exception if the resource has not been locked in the
@@ -130,9 +130,9 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param requestId the id of the request calling this function
      * @return a handle to the udf catalog.
      */
-    UDFCatalogHandle getUDFCatalogHandle(RequestId requestId) override;
+    Catalogs::UDF::UDFCatalogPtr getUDFCatalogHandle(RequestId requestId) override;
 
-    CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
+    Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId) override;
 
     /**
      * @brief Used for testing

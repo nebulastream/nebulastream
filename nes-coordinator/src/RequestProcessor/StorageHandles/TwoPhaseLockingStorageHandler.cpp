@@ -117,7 +117,7 @@ void TwoPhaseLockingStorageHandler::lockResource(const ResourceType resourceType
     holderId = requestId;
 }
 
-GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanHandle(const RequestId requestId) {
+Optimizer::GlobalExecutionPlanPtr TwoPhaseLockingStorageHandler::getGlobalExecutionPlanHandle(const RequestId requestId) {
     if (globalExecutionPlanHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::GlobalExecutionPlan);
@@ -149,7 +149,7 @@ GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle(co
     return globalQueryPlan;
 }
 
-SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle(const RequestId requestId) {
+Catalogs::Source::SourceCatalogPtr TwoPhaseLockingStorageHandler::getSourceCatalogHandle(const RequestId requestId) {
     if (sourceCatalogHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::SourceCatalog);
@@ -157,7 +157,7 @@ SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle(const 
     return sourceCatalog;
 }
 
-UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(const RequestId requestId) {
+Catalogs::UDF::UDFCatalogPtr TwoPhaseLockingStorageHandler::getUDFCatalogHandle(const RequestId requestId) {
     if (udfCatalogHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::UdfCatalog);
@@ -165,7 +165,7 @@ UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(const Reques
     return udfCatalog;
 }
 
-CoordinatorConfigurationHandle TwoPhaseLockingStorageHandler::getCoordinatorConfiguration(RequestId requestId) {
+Configurations::CoordinatorConfigurationPtr TwoPhaseLockingStorageHandler::getCoordinatorConfiguration(RequestId requestId) {
     if (coordinatorConfigurationHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::CoordinatorConfiguration);

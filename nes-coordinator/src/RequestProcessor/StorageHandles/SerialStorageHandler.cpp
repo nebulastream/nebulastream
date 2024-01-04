@@ -31,7 +31,7 @@ StorageHandlerPtr SerialStorageHandler::create(StorageDataStructures storageData
     return std::make_shared<SerialStorageHandler>(storageDataStructures);
 }
 
-GlobalExecutionPlanHandle SerialStorageHandler::getGlobalExecutionPlanHandle(const RequestId) {
+Optimizer::GlobalExecutionPlanPtr SerialStorageHandler::getGlobalExecutionPlanHandle(const RequestId) {
     return {&*globalExecutionPlan, UnlockDeleter()};
 }
 
@@ -45,11 +45,11 @@ GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const Reque
     return {&*globalQueryPlan, UnlockDeleter()};
 }
 
-SourceCatalogHandle SerialStorageHandler::getSourceCatalogHandle(const RequestId) { return {&*sourceCatalog, UnlockDeleter()}; }
+Catalogs::Source::SourceCatalogPtr SerialStorageHandler::getSourceCatalogHandle(const RequestId) { return {&*sourceCatalog, UnlockDeleter()}; }
 
-UDFCatalogHandle SerialStorageHandler::getUDFCatalogHandle(const RequestId) { return {&*udfCatalog, UnlockDeleter()}; }
+Catalogs::UDF::UDFCatalogPtr SerialStorageHandler::getUDFCatalogHandle(const RequestId) { return {&*udfCatalog, UnlockDeleter()}; }
 
-CoordinatorConfigurationHandle SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
+Configurations::CoordinatorConfigurationPtr SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
     return {&*coordinatorConfiguration, UnlockDeleter()};
 }
 }// namespace NES::RequestProcessor
