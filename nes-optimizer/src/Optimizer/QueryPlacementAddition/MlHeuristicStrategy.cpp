@@ -70,62 +70,11 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 5. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);
 
-        if (DEFAULT_ENABLE_OPERATOR_REDUNDANCY_ELIMINATION) {
-            performOperatorRedundancyElimination(sharedQueryId);
-        }
-
         // 6. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
-}
-
-void MlHeuristicStrategy::performOperatorRedundancyElimination(SharedQueryId sharedQueryId) {
-    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-    auto context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
-
-    for (auto executionNode : executionNodes) {
-        auto querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
-
-        SignatureEqualityUtilPtr signatureEqualityUtil = SignatureEqualityUtil::create(context);
-
-        if (querySubPlans.size() >= 2) {
-            std::vector<QuerySignaturePtr> signatures;
-            std::vector<int> querysubplansToRemove;
-
-            for (auto qsp : querySubPlans) {
-                signatureInferencePhase->execute(qsp);
-                auto sinkOperator = qsp->getSinkOperators().at(0);
-                signatures.push_back(sinkOperator->as<LogicalUnaryOperatorNode>()->getZ3Signature());
-            }
-            for (int i = 0; i < (int) querySubPlans.size() - 1; ++i) {
-                for (int j = i + 1; j < (int) querySubPlans.size(); ++j) {
-                    if (!std::count(querysubplansToRemove.begin(), querysubplansToRemove.end(), j)
-                        && signatureEqualityUtil->checkEquality(signatures[i], signatures[j])) {
-                        auto targetRootOperator = querySubPlans[i]->getSourceOperators().at(0)->getParents().at(0);
-                        auto hostRootOperator = querySubPlans[j]->getSourceOperators().at(0)->getParents().at(0);
-                        auto hostRootChildren = hostRootOperator->getChildren();
-
-                        for (auto& hostChild : hostRootChildren) {
-                            bool addedNewParent = hostChild->addParent(targetRootOperator);
-                            if (!addedNewParent) {
-                                NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
-                            }
-                        }
-                        querysubplansToRemove.push_back(j);
-                    }
-                }
-            }
-            for (int i = (int) querysubplansToRemove.size() - 1; i >= 0; i--) {
-                querySubPlans.erase(querySubPlans.begin() + querysubplansToRemove[i]);
-            }
-        }
-        executionNode->updateQuerySubPlans(sharedQueryId, querySubPlans);
-    }
-    NES_DEBUG("Updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
 }
 
 void MlHeuristicStrategy::performOperatorPlacement(SharedQueryId sharedQueryId,

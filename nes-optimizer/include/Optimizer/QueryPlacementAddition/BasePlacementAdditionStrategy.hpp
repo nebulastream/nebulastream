@@ -113,7 +113,6 @@ class BasePlacementAdditionStrategy {
                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
   protected:
-
     /**
      * @brief creates a copy of given query plan for performing operator placement
      * @param pinnedUpStreamOperators : pinned upstream operators

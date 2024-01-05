@@ -89,6 +89,11 @@ class PlacementRemovalStrategy {
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
+    /**
+     * @brief Destructor releases all locks (if any acquired) for pessimistic mode
+     */
+    ~PlacementRemovalStrategy();
+
   private:
     /**
      * @brief creates a copy of given query plan for performing operator placement
@@ -123,10 +128,12 @@ class PlacementRemovalStrategy {
 
     /**
      * @brief Update the query sub plans by removing the query operators
+     * @param sharedQueryId
      * @param upStreamPinnedOperators
      * @param downStreamPinnedOperators
      */
-    void updateQuerySubPlans(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
+    void updateQuerySubPlans(SharedQueryId sharedQueryId,
+                             const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
                              const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
 
     /**
@@ -150,7 +157,8 @@ class PlacementRemovalStrategy {
     std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
     std::unordered_map<WorkerId, std::set<QuerySubPlanId>> workerIdToQuerySubPlanIds;
-    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>> workerIdToQuerySubPlans;
+    std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
+    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>> workerIdToUpdatedQuerySubPlans;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
 
     //Max retires for path selection before failing the placement
