@@ -26,9 +26,6 @@
 
 namespace NES {
 
-class Source;
-using SourcePtr = std::shared_ptr<Source>;
-
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
@@ -241,12 +238,27 @@ class QueryPlan {
     std::set<OperatorNodePtr> findAllOperatorsBetween(const std::set<OperatorNodePtr>& downstreamOperators,
                                                       const std::set<OperatorNodePtr>& upstreamOperators);
 
+    /**
+     * @brief Get state of the query plan
+     * @return query state
+     */
     QueryState getQueryState();
 
-    void setQueryState();
+    /**
+     * @brief Set state of the query plan
+     * @param queryState : new query plan state
+     */
+    void setQueryState(QueryState queryState);
 
+    /**
+     * @brief Get version of the query plan
+     * @return current version
+     */
     uint32_t getVersion();
 
+    /**
+     * @brief Increment the version fot he query plan
+     */
     void incrementVersion();
 
 

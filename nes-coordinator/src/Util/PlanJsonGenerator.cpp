@@ -147,44 +147,36 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPl
         currentExecutionNodeJsonValue["topologyNodeId"] = executionNode->getTopologyNode()->getId();
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] = executionNode->getTopologyNode()->getIpAddress();
 
-        std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
         if (!querySubPlans.empty()) {
-            queryToQuerySubPlansMap[queryId] = querySubPlans;
+            continue;
         }
 
-        std::vector<nlohmann::json> scheduledQueries = {};
+        nlohmann::json queryToQuerySubPlans{};
+        queryToQuerySubPlans["queryId"] = queryId;
 
-        for (auto& [queryId, querySubPlans] : queryToQuerySubPlansMap) {
+        std::vector<nlohmann::json> scheduledSubQueries;
+        // loop over all query sub plans inside the current executionNode
+        for (const auto& querySubPlan : querySubPlans) {
 
-            std::vector<nlohmann::json> scheduledSubQueries;
-            nlohmann::json queryToQuerySubPlans{};
-            queryToQuerySubPlans["queryId"] = queryId;
+            // prepare json object to hold information on current query sub plan
+            nlohmann::json currentQuerySubPlan{};
 
-            // loop over all query sub plans inside the current executionNode
-            for (const QueryPlanPtr& querySubPlan : querySubPlans) {
-                // prepare json object to hold information on current query sub plan
-                nlohmann::json currentQuerySubPlan{};
+            // id of current query sub plan
+            currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
 
-                // id of current query sub plan
-                currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
+            // add the string containing operator to the json object of current query sub plan
+            currentQuerySubPlan["querySubPlan"] = querySubPlan->toString();
 
-                // add the string containing operator to the json object of current query sub plan
-                currentQuerySubPlan["operator"] = querySubPlan->toString();
-
-                scheduledSubQueries.push_back(currentQuerySubPlan);
-            }
-            queryToQuerySubPlans["querySubPlans"] = scheduledSubQueries;
-            scheduledQueries.push_back(queryToQuerySubPlans);
+            scheduledSubQueries.push_back(currentQuerySubPlan);
         }
-
-        currentExecutionNodeJsonValue["ScheduledQueries"] = scheduledQueries;
+        queryToQuerySubPlans["querySubPlans"] = scheduledSubQueries;
+        currentExecutionNodeJsonValue["ScheduledQueries"] = queryToQuerySubPlans;
         nodes.push_back(currentExecutionNodeJsonValue);
     }
 
     // add `executionNodes` JSON array to the final JSON result
     executionPlanJson["executionNodes"] = nodes;
-
     return executionPlanJson;
 }
 

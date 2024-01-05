@@ -460,8 +460,8 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                                                            // plan then create a new or merge the placed query plan with
                                                            // the new query sub plan.
                     if (!newPlacedQuerySubPlan) {
-                        newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId,
-                                                                  placedQuerySubPlan->getQuerySubPlanId(),
+                        newPlacedQuerySubPlan = QueryPlan::create(placedQuerySubPlan->getQuerySubPlanId(),
+                                                                  sharedQueryId,
                                                                   placedQuerySubPlan->getRootOperators());
                         newPlacedQuerySubPlan->addRootOperator(copyOfPinnedOperator);
                     } else {
@@ -474,8 +474,8 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                                                                     // plan then create a new or merge the placed
                                                                     // query plan \with the previous new query sub plan.
                     if (!newPlacedQuerySubPlan) {
-                        newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId,
-                                                                  placedQuerySubPlan->getQuerySubPlanId(),
+                        newPlacedQuerySubPlan = QueryPlan::create(placedQuerySubPlan->getQuerySubPlanId(),
+                                                                  sharedQueryId,
                                                                   placedQuerySubPlan->getRootOperators());
                     } else {
                         const auto& rootOperators = placedQuerySubPlan->getRootOperators();
@@ -495,10 +495,10 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                 if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                     // Create a temporary query sub plans for the operator as it might need to be merged with another query
                     // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                    newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID, {copyOfPinnedOperator});
+                    newPlacedQuerySubPlan = QueryPlan::create(INVALID_QUERY_SUB_PLAN_ID, sharedQueryId, {copyOfPinnedOperator});
                 } else {
                     newPlacedQuerySubPlan =
-                        QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPinnedOperator});
+                        QueryPlan::create(PlanIdGenerator::getNextQuerySubPlanId(), sharedQueryId, {copyOfPinnedOperator});
                 }
             } else if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 newPlacedQuerySubPlan->setQuerySubPlanId(INVALID_QUERY_SUB_PLAN_ID);// set invalid query sub plan id
@@ -513,10 +513,10 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 // Create a temporary query sub plans for the operator as it might need to be merged with another query
                 // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID, {copyOfPinnedOperator});
+                newPlacedQuerySubPlan = QueryPlan::create(INVALID_QUERY_SUB_PLAN_ID, sharedQueryId, {copyOfPinnedOperator});
             } else {
                 newPlacedQuerySubPlan =
-                    QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPinnedOperator});
+                    QueryPlan::create(PlanIdGenerator::getNextQuerySubPlanId(), sharedQueryId, {copyOfPinnedOperator});
             }
 
             //2.2.2. Add the new query sub plan to the list
@@ -676,6 +676,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                             querySubPlanWithUpstreamOperator->removeAsRootOperator(operatorToConnectInMatchedPlan);
                             querySubPlanWithUpstreamOperator->addRootOperator(networkSinkOperator);
 
+                            //FIXME: we need to add this post iteration
                             // 15. Add metadata about the plans and topology nodes hosting the system generated operators.
                             operatorToConnectInMatchedPlan->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
                                                                         connectedSysSubPlanDetails);
@@ -712,7 +713,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
 
                             // 17. create the query sub plan
                             auto newQuerySubPlan =
-                                QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {networkSinkOperator});
+                                QueryPlan::create(PlanIdGenerator::getNextQuerySubPlanId(), sharedQueryId, {networkSinkOperator});
 
                             // 18. Record information about the query plan and worker id
                             connectedSysSubPlanDetails.emplace_back((newQuerySubPlan->getQuerySubPlanId(), currentWorkerId));
@@ -896,7 +897,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         }
 
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
-                        executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+                        executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQuerySubPlanId(), updatedQuerySubPlan);
                     } else {
                         NES_ERROR(
                             "A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "

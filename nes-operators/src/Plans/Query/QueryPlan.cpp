@@ -271,6 +271,9 @@ QueryPlanPtr QueryPlan::copy() {
     auto newQueryPlan = QueryPlan::create(queryId, INVALID_QUERY_ID, duplicateRootOperators);
     newQueryPlan->setSourceConsumed(sourceConsumed);
     newQueryPlan->setPlacementStrategy(placementStrategy);
+    newQueryPlan->setQuerySubPlanId(querySubPlanId);
+    newQueryPlan->setQueryState(queryState);
+    newQueryPlan->version = version;
     return newQueryPlan;
 }
 
@@ -352,5 +355,13 @@ QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& s
     }
     return operatorsBetween;
 }
+
+QueryState QueryPlan::getQueryState() { return queryState; }
+
+void QueryPlan::setQueryState(QueryState queryState) { this->queryState = queryState; }
+
+void QueryPlan::incrementVersion() { version++; }
+
+uint32_t QueryPlan::getVersion() { return version; }
 
 }// namespace NES

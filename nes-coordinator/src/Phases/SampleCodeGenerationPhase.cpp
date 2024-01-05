@@ -131,16 +131,15 @@ SampleCodeGenerationPhasePtr SampleCodeGenerationPhase::create() {
     return std::make_shared<SampleCodeGenerationPhase>(SampleCodeGenerationPhase());
 }
 
-QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& plan) {
+QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& queryPlan) {
     // use query compiler to generate operator code
     // we append a property to "code" some operators
-    auto request = QueryCompilation::QueryCompilationRequest::create(plan, nullptr);
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nullptr);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     if (result->hasError()) {
         std::rethrow_exception(result->getError());
     }
-    return plan;
+    return queryPlan;
 }
-
 }// namespace NES::Optimizer
