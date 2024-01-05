@@ -342,6 +342,12 @@ template<typename T>
 [[nodiscard]] std::string enableNautilusCoordinator();
 
 /**
+ * @brief Enables the usage of Nautilus at the coordinator
+ * @return Command line argument
+ */
+[[nodiscard]] std::string cppBackend();
+
+/**
  * @brief start a new instance of a nes coordinator with a set of configuration flags
  * @param flags
 * @return coordinator process, which terminates if it leaves the scope

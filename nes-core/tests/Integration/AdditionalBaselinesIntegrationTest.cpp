@@ -32,6 +32,7 @@ using namespace Configurations;
 */
 class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
   public:
+    //std::string debs_dir = "debs13_full/";
     std::string debs_dir = "debs13_full/";
 
     std::list<std::string> sources_short = {"100_ms", "13_ms", "24_ms", "47_ms", "54_ms", "62_ms", "67_ms", "74_ms", "98_ms",
@@ -55,9 +56,10 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setFilePath(std::move(inputPath));
         csvSourceType->setSkipHeader(false);
-        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setReplaceTimestamp(6);
+        csvSourceType->setGatheringInterval(100);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(20);
         //csvSourceType->setNumberOfBuffersToProduce(5);
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(200);
         return csvSourceType;
     }
 
@@ -73,7 +75,7 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
                 //config->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
                 config->optimizer.distributedWindowChildThreshold.setValue(childThreshold);
                 config->optimizer.distributedWindowCombinerThreshold.setValue(combinerThreshold);
-                config->worker.bufferSizeInBytes = 32000;
+                config->worker.bufferSizeInBytes = 4096;
             };
 
         auto inputSchema = Schema::create()
@@ -91,13 +93,13 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
                                ->addField("ay", DataTypeFactory::createInt64())
                                ->addField("az", DataTypeFactory::createInt64());
 
-        auto query = Query::from("debs_test")
-                         .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
+        auto query = Query::from("debs_test") //.project(Attribute("sid"), Attribute("ts"), Attribute("absolute_v"))
+                         .window(SlidingWindow::of(EventTime(Attribute("ts")), Minutes(1), Milliseconds(50)))
                          .byKey(Attribute("sid"))
-                         .apply(Sum(Attribute("absolute_v")));
+                         .apply(Min(Attribute("absolute_v")));
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                      .enableNautilus()
+                                      //.enableNautilus()
                                       .enableDistributedWindowOptimization()
                                       .addLogicalSource("debs_test", inputSchema);
 
@@ -183,6 +185,7 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
         uint64_t end;
         uint64_t sid;
         uint64_t absolute_v;
+        //uint64_t count;
 
         // overload the == operator to check if two instances are the same
         /**
@@ -319,7 +322,7 @@ TEST_F(AdditionalBaselinesIntegrationTest, testBottomUpApproach) {
         int64_t ay;
         int64_t az;
     };
-    auto testHarness = createTestHarness(3, 2, 4, childThreshold, combinerThreshold, 11);
+    auto testHarness = createTestHarness(3, 4, 2, childThreshold, combinerThreshold, 11);
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedTuples, "BottomUp", "NONE", "IN_MEMORY");
 
@@ -335,7 +338,7 @@ TEST_F(AdditionalBaselinesIntegrationTest, testBottomUpApproach) {
 TEST_F(AdditionalBaselinesIntegrationTest, testNemoApproach) {
     int64_t childThreshold = 1;
     int64_t combinerThreshold = 1;
-    uint64_t expectedTuples = 4;
+    uint64_t expectedTuples = 4000;
 
     struct Test {
         uint64_t sid;
@@ -352,7 +355,7 @@ TEST_F(AdditionalBaselinesIntegrationTest, testNemoApproach) {
         int64_t ay;
         int64_t az;
     };
-    auto testHarness = createTestHarness(3, 2, 4, childThreshold, combinerThreshold, 11);
+    auto testHarness = createTestHarness(3, 4, 2, childThreshold, combinerThreshold, 11);
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedTuples, "BottomUp", "NONE", "IN_MEMORY");
 

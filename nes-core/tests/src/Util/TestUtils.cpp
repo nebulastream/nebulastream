@@ -154,6 +154,8 @@ namespace TestUtils {
     return "--worker.queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER";
 }
 
+[[nodiscard]] std::string cppBackend() { return "--queryCompiler.queryCompilerNautilusBackendConfig=CPP_COMPILER"; }
+
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
    * @param flags
