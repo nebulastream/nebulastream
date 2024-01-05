@@ -40,7 +40,6 @@ add_source_files(nes-runtime
         ThreadPool.cpp
         Task.cpp
         QueryStatistics.cpp
-        NodeEngineBuilder.cpp
 )
 
 add_subdirectory(Profiler)
