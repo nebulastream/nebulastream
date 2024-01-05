@@ -637,6 +637,8 @@ add_subdirectory(nes-coordinator)
 add_subdirectory(nes-client)
 # Add targets for plugins
 add_subdirectory(nes-plugins)
+# Add targets for execution
+add_subdirectory(nes-execution)
 
 
 # Add targets for benchmarks

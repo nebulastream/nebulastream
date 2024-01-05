@@ -1,0 +1,5 @@
+add_subdirectory(Execution)
+add_subdirectory(QueryCompiler)
+add_subdirectory(Nautilus)
+add_subdirectory(Runtime)
+add_subdirectory(Util)
