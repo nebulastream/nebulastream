@@ -20,7 +20,7 @@
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
@@ -110,7 +110,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
             bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
             if (!placementSuccessful) {
-                throw Exceptions::QueryPlacementException(sharedQueryId,
+                throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
                                                           "QueryProcessingService: Failed to perform query placement for "
                                                           "query plan with shared query id: "
                                                               + std::to_string(sharedQueryId));
@@ -159,7 +159,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
 
     try {
         std::rethrow_exception(exception);
-    } catch (Exceptions::QueryPlacementException& ex) {
+    } catch (Exceptions::QueryPlacementAdditionException& ex) {
         failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
     } catch (QueryDeploymentException& ex) {
         //todo: #3821 change to more specific exceptions, remove QueryDeploymentException

@@ -18,7 +18,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/TopDownStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -67,7 +67,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 6. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
-        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
+        throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }
 }
 

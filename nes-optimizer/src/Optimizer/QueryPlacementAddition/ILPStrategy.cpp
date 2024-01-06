@@ -23,7 +23,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacementAddition/ILPStrategy.hpp>
@@ -252,7 +252,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 11. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
-        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
+        throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }
 }
 

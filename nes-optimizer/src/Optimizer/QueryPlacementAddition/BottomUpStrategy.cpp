@@ -18,7 +18,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -66,7 +66,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
         NES_ERROR("Exception occurred during bottom up placement: {}", ex.what());
-        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
+        throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }
 }
 
