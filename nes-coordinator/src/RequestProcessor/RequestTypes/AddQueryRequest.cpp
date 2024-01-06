@@ -33,7 +33,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -142,7 +142,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] std::
         markAsFailedInQueryCatalog(e, storageHandler);
     } catch (GlobalQueryPlanUpdateException& e) {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (Exceptions::QueryPlacementException& e) {
+    } catch (Exceptions::QueryPlacementAdditionException& e) {
         //todo #4296: remove from global execution plan as well
         removeFromGlobalQueryPlanAndMarkAsFailed(e, storageHandler);
     } catch (Exceptions::ExecutionNodeNotFoundException& e) {
@@ -327,7 +327,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
         if (!queryPlacementPhase->execute(sharedQueryPlan)) {
-            throw Exceptions::QueryPlacementException(sharedQueryId,
+            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
                                                       "QueryProcessingService: Failed to perform query placement for "
                                                       "query plan with shared query id: "
                                                           + std::to_string(sharedQueryId));

@@ -35,7 +35,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Optimizer//Exceptions/QueryPlacementException.hpp>
+#include <Optimizer//Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
@@ -234,7 +234,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
         if (!queryPlacementPhase->execute(sharedQueryPlan)) {
-            throw Exceptions::QueryPlacementException(sharedQueryId,
+            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
                                                       "QueryProcessingService: Failed to perform query placement for "
                                                       "query plan with shared query id: "
                                                           + std::to_string(sharedQueryId));

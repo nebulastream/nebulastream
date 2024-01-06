@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 
 namespace NES::Exceptions {
-QueryPlacementException::QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message)
+QueryPlacementAdditionException::QueryPlacementAdditionException(SharedQueryId sharedQueryId, const std::string& message)
     : RequestExecutionException(sharedQueryId, message) {}
 
-const char* QueryPlacementException::what() const noexcept { return RequestExecutionException::what(); }
+const char* QueryPlacementAdditionException::what() const noexcept { return RequestExecutionException::what(); }
 
 }// namespace NES::Exceptions

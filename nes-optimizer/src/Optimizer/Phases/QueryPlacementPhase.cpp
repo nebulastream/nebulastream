@@ -16,7 +16,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
@@ -87,7 +87,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             //4. Check if all operators are pinned
             if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators)
                 || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
-                throw Exceptions::QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
+                throw Exceptions::QueryPlacementAdditionException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
             }
 
             bool success = placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId,
@@ -119,7 +119,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
         //4. Check if all operators are pinned
         if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators) || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
-            throw Exceptions::QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
+            throw Exceptions::QueryPlacementAdditionException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
         }
 
         bool success =

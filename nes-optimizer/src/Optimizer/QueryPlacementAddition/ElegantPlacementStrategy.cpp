@@ -16,16 +16,16 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cpp-base64/base64.h>
 #include <cpr/api.h>
@@ -85,7 +85,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQue
                                            cpr::Body{payload.dump()},
                                            cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {
-            throw Exceptions::QueryPlacementException(
+            throw Exceptions::QueryPlacementAdditionException(
                 sharedQueryId,
                 "ElegantPlacementStrategy::updateGlobalExecutionPlan: Error in call to Elegant planner with code "
                     + std::to_string(response.status_code) + " and msg " + response.reason);
@@ -108,7 +108,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQue
         // 6. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (const std::exception& ex) {
-        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
+        throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }
 }
 
@@ -142,7 +142,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
         }
 
         if (!pinned) {
-            throw Exceptions::QueryPlacementException(sharedQueryId,
+            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
                                                       "Unable to find operator with id " + std::to_string(operatorId)
                                                           + " in the given list of operators.");
         }

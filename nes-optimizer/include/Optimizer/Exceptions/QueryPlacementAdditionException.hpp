@@ -23,12 +23,12 @@
 namespace NES::Exceptions {
 
 /**
- * @brief Exception indicating problem during operator placement phase
+ * @brief Exception indicating problem during operator placement addition phase
  */
-class QueryPlacementException : public Exceptions::RequestExecutionException {
+class QueryPlacementAdditionException : public Exceptions::RequestExecutionException {
 
   public:
-    explicit QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message);
+    explicit QueryPlacementAdditionException(SharedQueryId sharedQueryId, const std::string& message);
 
     const char* what() const noexcept override;
 };

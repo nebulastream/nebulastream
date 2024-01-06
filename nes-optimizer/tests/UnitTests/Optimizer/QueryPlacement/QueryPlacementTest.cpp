@@ -37,7 +37,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -2173,7 +2173,7 @@ TEST_F(QueryPlacementTest, testIfCanPlaceQueryAfterPlacementFailureConcurrentOpe
     // Initiate placement requests
     auto queryPlacementPhaseInstance1 =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    EXPECT_THROW(queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]), Exceptions::QueryPlacementException);
+    EXPECT_THROW(queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]), Exceptions::QueryPlacementAdditionException);
 
     auto queryPlacementPhaseInstance2 =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
@@ -2257,7 +2257,7 @@ TEST_F(QueryPlacementTest, testIfCanPlaceQueryAfterPlacementFailureConcurrentOpe
     // Initiate placement requests
     auto queryPlacementPhaseInstance1 =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    EXPECT_THROW(queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]), Exceptions::QueryPlacementException);
+    EXPECT_THROW(queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]), Exceptions::QueryPlacementAdditionException);
 
     auto queryPlacementPhaseInstance2 =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);

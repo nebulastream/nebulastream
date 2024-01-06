@@ -23,7 +23,7 @@
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -112,7 +112,7 @@ void RequestProcessorService::start() {
                             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                             bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                             if (!placementSuccessful) {
-                                throw Exceptions::QueryPlacementException(
+                                throw Exceptions::QueryPlacementAdditionException(
                                     sharedQueryId,
                                     "QueryProcessingService: Failed to perform query placement for "
                                     "query plan with shared query id: "
@@ -139,7 +139,7 @@ void RequestProcessorService::start() {
                             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                             bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
                             if (!placementSuccessful) {
-                                throw Exceptions::QueryPlacementException(
+                                throw Exceptions::QueryPlacementAdditionException(
                                     sharedQueryId,
                                     "QueryProcessingService: Failed to perform query placement for "
                                     "query plan with shared query id: "
@@ -199,7 +199,7 @@ void RequestProcessorService::start() {
                 }
 
                 //FIXME: Proper error handling #1585
-            } catch (Exceptions::QueryPlacementException& ex) {
+            } catch (Exceptions::QueryPlacementAdditionException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryPlacementException: {}", ex.what());
                 auto sharedQueryId = ex.getQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::FAILED);
