@@ -307,7 +307,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                     }
                     NES_ASSERT(querySubPlanStatus == QueryState::RUNNING || querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED
                                    || querySubPlanStatus == QueryState::MIGRATION_COMPLETED
-                                   || querySubPlanStatus == QueryState::RECONFIGURING,
+                                   || querySubPlanStatus == QueryState::REDEPLOYED,
                                "Unexpected subplan status.");
                 }
                 if (queryMigrationComplete) {
@@ -375,7 +375,7 @@ bool QueryCatalogService::checkAndMarkForMigration(SharedQueryId sharedQueryId,
 
         if (queryCatalogEntry->hasQuerySubPlanMetaData(querySubPlanId)) {
             auto subplanData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
-            subplanData->updateStatus(QueryState::MIGRATING);
+            subplanData->updateStatus(QueryState::MARKED_FOR_MIGRATION);
         }
     }
     return true;

@@ -84,12 +84,22 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         const auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
         for (auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
+            switch (subQueryPlan->getQueryState()) {
+                case QueryState::MARKED_FOR_DEPLOYMENT: subQueryPlan->setQueryState(QueryState::DEPLOYED); break;
+                case QueryState::MARKED_FOR_REDEPLOYMENT: subQueryPlan->setQueryState(QueryState::REDEPLOYED); break;
+                case QueryState::MARKED_FOR_MIGRATION: subQueryPlan->setQueryState(QueryState::MIGRATING); break;
+                case QueryState::RUNNING: break; //do not modify anything for running plans
+                case QueryState::MIGRATION_COMPLETED: break; //do not modfify plans that have been stopped after migration
+                default: NES_FATAL_ERROR("Unexpected query plan state");
+            }
             //todo #4452: avoid looping over all query ids by changing the structure of the query catalog
             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                 //set metadata only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
                 auto entry = queryCatalogService->getEntryForQuery(queryId);
                 if (!entry->hasQuerySubPlanMetaData(querySubPlanId)) {
-                    queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, QueryState::DEPLOYED);
+                    queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, subQueryPlan->getQueryState());
+                } else {
+                    entry->getQuerySubPlanMetaData(querySubPlanId)->updateStatus(subQueryPlan->getQueryState());
                 }
             }
         }
@@ -118,8 +128,18 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //mark subqueries that were reconfigured as running again
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         for (const auto& subPlanMetaData : queryCatalogService->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData()) {
-            if (subPlanMetaData->getSubQueryStatus() == QueryState::RECONFIGURING) {
+            if (subPlanMetaData->getSubQueryStatus() == QueryState::REDEPLOYED) {
                 subPlanMetaData->updateStatus(QueryState::RUNNING);
+            }
+        }
+    }
+    for (auto& executionNode : executionNodes) {
+        const auto workerId = executionNode->getId();
+        const auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
+        for (auto& subQueryPlan : subQueryPlans) {
+            QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
+            if (subQueryPlan->getQueryState() == QueryState::REDEPLOYED) {
+                subQueryPlan->setQueryState(QueryState::RUNNING);
             }
         }
     }
@@ -169,8 +189,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId, const std::v
             auto subplanMetaData =
                 queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
 
-            const auto subPlanState = subplanMetaData->getSubQueryStatus();
-            switch (subPlanState) {
+            switch (querySubPlan->getQueryState()) {
                 case QueryState::DEPLOYED: {
                     //If accelerate Java UDFs is enabled
                     if (accelerateJavaUDFs) {
@@ -180,12 +199,13 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId, const std::v
                     //enable this for sync calls
                     //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
                     workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
-                    subplanMetaData->updateStatus(QueryState::RUNNING);
+                    querySubPlan->setQueryState(QueryState::RUNNING);
+                    subplanMetaData->updateStatus(querySubPlan->getQueryState());
 
                     completionQueues[queueForExecutionNode] = querySubPlans.size();
                     break;
                 }
-                case QueryState::RECONFIGURING: {
+                case QueryState::REDEPLOYED: {
                     //todo #4440: make non async function for this
                     workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
                     break;
