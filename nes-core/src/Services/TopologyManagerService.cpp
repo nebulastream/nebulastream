@@ -94,10 +94,10 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    if (healthCheckService) {
-        //add node to health check
-        healthCheckService->addNodeToHealthCheck(newTopologyNode);
-    }
+//    if (healthCheckService) {
+//        //add node to health check
+//        healthCheckService->addNodeToHealthCheck(newTopologyNode);
+//    }
 
     NES_DEBUG("TopologyManagerService::registerWorker: topology after insert = ");
     topology->print();
