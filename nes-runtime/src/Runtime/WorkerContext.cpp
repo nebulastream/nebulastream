@@ -34,10 +34,10 @@ WorkerContext::WorkerContext(uint32_t workerId,
     });
     NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
     NES_ASSERT(!!localBufferPoolTLS, "Local buffer is not allowed to be null");
-    statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
+//    statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
 //    propagationFile.open("propagation" + std::to_string(workerId) + ".csv", std::ios::out);
 //    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
-    statisticsFile << "time,latency\n";
+//    statisticsFile << "time,latency\n";
 //    propagationFile << "time,propagationDelay,difference\n";
 //    storageFile << "time,oldStorageSize,newStorageSize\n";
 }
@@ -49,8 +49,8 @@ WorkerContext::~WorkerContext() {
 //    storageFile.close();
 //    propagationFile.flush();
 //    propagationFile.close();
-    statisticsFile.flush();
-    statisticsFile.close();
+//    statisticsFile.flush();
+//    statisticsFile.close();
 }
 
 size_t WorkerContext::getStorageSize() {

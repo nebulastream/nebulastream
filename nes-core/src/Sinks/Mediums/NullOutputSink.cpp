@@ -49,10 +49,10 @@ NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
+bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("Print tuple" << inputBuffer.getSequenceNumber());
-    workerContext.printStatistics(inputBuffer);
+//    workerContext.printStatistics(inputBuffer);
     updateWatermarkCallback(inputBuffer);
     return true;
 }
