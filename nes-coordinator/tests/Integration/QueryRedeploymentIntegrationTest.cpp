@@ -736,6 +736,12 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
 
         //set the old plan to migrating
         crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
+        //todo: make sure the state on the query plan is set in the right phase
+        crd->getGlobalExecutionPlan()
+            ->getExecutionNodeById(oldWorker->getWorkerId())
+            ->getQuerySubPlans(sharedQueryId)
+            .front()
+            ->setQueryState(QueryState::MARKED_FOR_MIGRATION);
         //check that the data for the migrating plan has been set correctly
         auto migratingEntries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
         ASSERT_EQ(migratingEntries.size(), 1);
@@ -746,7 +752,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
         int noOfRunningPlans = 0;
         for (auto& plan : subplans) {
             switch (plan->getSubQueryStatus()) {
-                case QueryState::MIGRATING: {
+                case QueryState::MARKED_FOR_MIGRATION: {
                     noOfMigratingPlans++;
                     break;
                 }
@@ -804,6 +810,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
             std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
         queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
         queryPlan3->getSinkOperators().front()->inferSchema();
+        queryPlan3->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
 
         //deploy new query
         auto topologyNode3 = topology->getCopyOfTopologyNodeWithId(wrk3->getWorkerId());
@@ -827,19 +834,19 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
                                                                                      EVENT_CHANNEL_RETRY_TIMES,
                                                                                      nextVersion);
         auto crdExecutionNode = globalExecutionPlan->getExecutionNodeById(crd->getNesWorker()->getWorkerId());
-        crdExecutionNode->getQuerySubPlans(sharedQueryId)
-            .front()
-            ->getSourceOperators()
-            .front()
-            ->setSourceDescriptor(reconfiguredSourceDescriptor);
+        auto subplanAtCrd = crdExecutionNode->getQuerySubPlans(sharedQueryId).front();
+        subplanAtCrd->getSourceOperators().front()->setSourceDescriptor(reconfiguredSourceDescriptor);
+        subplanAtCrd->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
         crd->getQueryCatalogService()
             ->getEntryForQuery(queryId)
             ->getQuerySubPlanMetaData(crd->getNesWorker()->getNodeEngine()->getSubQueryIds(sharedQueryId).front())
-            ->updateStatus(QueryState::RECONFIGURING);
+            ->updateStatus(QueryState::MARKED_FOR_REDEPLOYMENT);
 
         //sink reconfig
         auto wrk1ExecutionNode = globalExecutionPlan->getExecutionNodeById(wrk1->getWorkerId());
-        auto existingSink = wrk1ExecutionNode->getQuerySubPlans(sharedQueryId).front()->getSinkOperators().front();
+        auto subplanAtWrk1 = wrk1ExecutionNode->getQuerySubPlans(sharedQueryId).front();
+        subplanAtWrk1->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
+        auto existingSink = subplanAtWrk1->getSinkOperators().front();
         auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(
             newNodeLocation,
             networkSourceWrk3Partition,
@@ -852,7 +859,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
         crd->getQueryCatalogService()
             ->getEntryForQuery(queryId)
             ->getQuerySubPlanMetaData(wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId).front())
-            ->updateStatus(QueryState::RECONFIGURING);
+            ->updateStatus(QueryState::MARKED_FOR_REDEPLOYMENT);
 
         queryDeploymentPhase->execute(sqp);
 

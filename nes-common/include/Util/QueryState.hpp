@@ -38,8 +38,13 @@ namespace NES {
 enum class QueryState : uint8_t {
     REGISTERED = 0,
     OPTIMIZING,
+    MARKED_FOR_DEPLOYMENT,
+    MARKED_FOR_REDEPLOYMENT,
+    MARKED_FOR_MIGRATION,
     DEPLOYED,
+    REDEPLOYED,
     RUNNING,
+    MIGRATING,
     MARKED_FOR_HARD_STOP,
     MARKED_FOR_SOFT_STOP,
     SOFT_STOP_TRIGGERED,
@@ -48,10 +53,8 @@ enum class QueryState : uint8_t {
     MARKED_FOR_FAILURE,
     FAILED,
     RESTARTING,
-    MIGRATING,
     MIGRATION_COMPLETED,
     EXPLAINED,
-    RECONFIGURING,
 };
 
 }// namespace NES

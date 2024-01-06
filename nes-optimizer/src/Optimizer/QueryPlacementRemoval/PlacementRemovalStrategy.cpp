@@ -353,9 +353,9 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId)
                 }
                 updatedQuerySubPlan->incrementVersion();
                 if (updatedQuerySubPlan->getRootOperators().empty()) {
-                    updatedQuerySubPlan->setQueryState(QueryState::MIGRATING);
+                    updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_MIGRATION);
                 } else {
-                    updatedQuerySubPlan->setQueryState(QueryState::RECONFIGURING);
+                    updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
                 }
             }
 

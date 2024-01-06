@@ -460,8 +460,8 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                                                            // plan then create a new or merge the placed query plan with
                                                            // the new query sub plan.
                     if (!newPlacedQuerySubPlan) {
-                        newPlacedQuerySubPlan = QueryPlan::create(placedQuerySubPlan->getQuerySubPlanId(),
-                                                                  sharedQueryId,
+                        newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId,
+                                                                  placedQuerySubPlan->getQuerySubPlanId(),
                                                                   placedQuerySubPlan->getRootOperators());
                         newPlacedQuerySubPlan->addRootOperator(copyOfPinnedOperator);
                     } else {
@@ -474,8 +474,8 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                                                                     // plan then create a new or merge the placed
                                                                     // query plan \with the previous new query sub plan.
                     if (!newPlacedQuerySubPlan) {
-                        newPlacedQuerySubPlan = QueryPlan::create(placedQuerySubPlan->getQuerySubPlanId(),
-                                                                  sharedQueryId,
+                        newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId,
+                                                                  placedQuerySubPlan->getQuerySubPlanId(),
                                                                   placedQuerySubPlan->getRootOperators());
                     } else {
                         const auto& rootOperators = placedQuerySubPlan->getRootOperators();
@@ -495,10 +495,10 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                 if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                     // Create a temporary query sub plans for the operator as it might need to be merged with another query
                     // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                    newPlacedQuerySubPlan = QueryPlan::create(INVALID_QUERY_SUB_PLAN_ID, sharedQueryId, {copyOfPinnedOperator});
+                    newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID, {copyOfPinnedOperator});
                 } else {
                     newPlacedQuerySubPlan =
-                        QueryPlan::create(PlanIdGenerator::getNextQuerySubPlanId(), sharedQueryId, {copyOfPinnedOperator});
+                        QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPinnedOperator});
                 }
             } else if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 newPlacedQuerySubPlan->setQuerySubPlanId(INVALID_QUERY_SUB_PLAN_ID);// set invalid query sub plan id
@@ -513,10 +513,10 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 // Create a temporary query sub plans for the operator as it might need to be merged with another query
                 // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                newPlacedQuerySubPlan = QueryPlan::create(INVALID_QUERY_SUB_PLAN_ID, sharedQueryId, {copyOfPinnedOperator});
+                newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID,  {copyOfPinnedOperator});
             } else {
                 newPlacedQuerySubPlan =
-                    QueryPlan::create(PlanIdGenerator::getNextQuerySubPlanId(), sharedQueryId, {copyOfPinnedOperator});
+                    QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPinnedOperator});
             }
 
             //2.2.2. Add the new query sub plan to the list
@@ -655,7 +655,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
 
                     // compute a vector of sub plan id and worker node id where the system generated plans are placed
                     std::vector<SysPlanMetaData> connectedSysSubPlanDetails;
-
+                    OperatorNodePtr operatorToConnectInMatchedPlan;
                     // 12. Starting from the upstream to downstream topology node and add network sink source pairs.
                     for (uint16_t pathIndex = 0; pathIndex < topologyNodesBetween.size(); pathIndex++) {
 
@@ -670,7 +670,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                                                                                  topologyNodesBetween[pathIndex + 1]);
 
                             // 14. Find the upstream operator to connect in the matched query sub plan
-                            auto operatorToConnectInMatchedPlan =
+                            operatorToConnectInMatchedPlan =
                                 querySubPlanWithUpstreamOperator->getOperatorWithId(upstreamOperatorToConnect->getId());
                             operatorToConnectInMatchedPlan->addParent(networkSinkOperator);
                             querySubPlanWithUpstreamOperator->removeAsRootOperator(operatorToConnectInMatchedPlan);
@@ -713,7 +713,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
 
                             // 17. create the query sub plan
                             auto newQuerySubPlan =
-                                QueryPlan::create(PlanIdGenerator::getNextQuerySubPlanId(), sharedQueryId, {networkSinkOperator});
+                                QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(),  {networkSinkOperator});
 
                             // 18. Record information about the query plan and worker id
                             connectedSysSubPlanDetails.emplace_back((newQuerySubPlan->getQuerySubPlanId(), currentWorkerId));
@@ -832,8 +832,11 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                     }
                                 }
                             }
+                            updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         } else {
                             updatedQuerySubPlan = *(hostQuerySubPlans.begin());
+                            //no merging happened so this plan is deployed for the first time
+                            updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
                         }
                         //In the end, add root operators of computed plan as well.
                         for (const auto& rootOperator : computedQuerySubPlan->getRootOperators()) {
@@ -892,8 +895,11 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                     }
                                 }
                             }
+                            updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         } else {
                             updatedQuerySubPlan = *(hostQuerySubPlans.begin());
+                            //no merging happened so this plan is deployed for the first time
+                            updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
                         }
 
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
@@ -908,6 +914,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                     }
                 } else {
                     auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
+                    updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
                     executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
                 }
             }
