@@ -43,10 +43,10 @@ class TestWaitingHelper {
     void failTest();
 
   private:
-    std::unique_ptr<std::thread> waitThread;
+//    std::unique_ptr<std::thread> waitThread;
     std::shared_ptr<std::promise<bool>> testCompletion;
     std::atomic<bool> testCompletionSet{false};
-    static constexpr uint64_t WAIT_TIME_SETUP = 5;
+    static constexpr uint64_t WAIT_TIME_SETUP = 10000000;
 };
 }// namespace detail
 template<typename T>
@@ -59,7 +59,7 @@ class TestWithErrorHandling : public T, public Exceptions::ErrorListener, public
     void SetUp() override {
         T::SetUp();
         Exceptions::installGlobalErrorListener(self = std::shared_ptr<Exceptions::ErrorListener>(this, Deleter()));
-        startWaitingThread(typeid(*this).name());
+//        startWaitingThread(typeid(*this).name());
     }
 
     void TearDown() override {

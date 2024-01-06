@@ -99,6 +99,12 @@ class TopologyNode : public Node {
     uint64_t getMTBFValue() const;
 
     /**
+     * @brief method to set the mtbf value of the node
+     * @param uint64_t mtbf value
+     */
+    void setMTBFValue(uint64_t mtbfValue);
+
+    /**
      * @brief method to copy properties from one node to another
      * @param node from which the properties will be copied
      */
@@ -153,6 +159,31 @@ class TopologyNode : public Node {
      * @return uint64_t initial network capacity
      */
     uint64_t getInitialNetworkCapacity() const;
+
+    /**
+     * @brief method to set the launch time of the node
+     * @param uint64_t launch time
+     */
+    void setLaunchTime(uint64_t launchTime);
+
+    /**
+     * @brief method to set the ingestion rate of the node
+     * @param uint64_t ingestion rate
+     */
+    void setIngestionRate(uint64_t ingestionRate);
+
+    /**
+     * @brief method to set the initial memory capacity of the node
+     * @param uint64_t initial memory capacity
+     */
+    void setInitialMemoryCapacity(uint64_t memoryCapacity);
+
+
+    /**
+     * @brief method to set the initial network capacity of the node
+     * @param uint64_t initial network capacity
+     */
+    void setInitialNetworkCapacity(uint64_t networkCapacity);
 
     /**
      * @brief method to reduce the cpu capacity of the node

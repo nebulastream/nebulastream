@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
@@ -563,132 +564,151 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 }
 
 TEST_F(UpstreamBackupTest, testDecisionTime) {
-    auto topology = Topology::create();
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
 
-    uint64_t var = 1;
-    TopologyNodePtr rootNode = TopologyNode::create(var++, "localhost", 123, 124, 4, properties);
-    rootNode->addNodeProperty("tf_installed", true);
-    rootNode->addNodeProperty("slots", 100);
-    rootNode->addNodeProperty("reliability", 100);
-    topology->setAsRoot(rootNode);
+    NES_INFO("UpstreamBackupTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalogService()->registerLogicalSource("A", inputSchema);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("UpstreamBackupTest: Coordinator started successfully");
 
-    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                         "->addField(\"value\", BasicType::UINT64);";
-    const std::string sourceName = "car";
+    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t a;
+            uint64_t b;
+            uint64_t c;
+            uint64_t d;
+            uint64_t e;
+            uint64_t f;
+            uint64_t g;
+            uint64_t h;
+            uint64_t i;
+            uint64_t j;
+            uint64_t k;
+            uint64_t l;
+            uint64_t m;
+            uint64_t n;
+            uint64_t o;
+            uint64_t p;
+            uint64_t q;
+            uint64_t r;
+            uint64_t s;
+            uint64_t t;
+            uint64_t u;
+            uint64_t v;
+            uint64_t w;
+            uint64_t x;
+            uint64_t timestamp1;
+            uint64_t timestamp2;
+        };
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
-    sourceCatalog->addLogicalSource(sourceName, schema);
-    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
-
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setGatheringInterval(0);
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-
-    while (var < numberOfNodes) {
-        TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-        childNode->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(rootNode, childNode);
-        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-        childNode->addLinkProperty(rootNode, linkProperty);
-        childNode->addNodeProperty("slots", 100);
-        childNode->addNodeProperty("reliability", 100);
-        for (uint64_t j = 0; j < numberOfNodesPerLevel1; j++) {
-            TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-            subChildNode->addNodeProperty("tf_installed", true);
-            topology->addNewTopologyNodeAsChild(childNode, subChildNode);
-            LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-            subChildNode->addLinkProperty(childNode, linkProperty);
-            subChildNode->addNodeProperty("slots", 100);
-            subChildNode->addNodeProperty("reliability", 100);
-            for (uint64_t k = 0; k < numberOfNodesPerLevel2; k++) {
-                TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-                subSubChildNode->addNodeProperty("tf_installed", true);
-                topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
-                LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-                subSubChildNode->addLinkProperty(subChildNode, linkProperty);
-                subSubChildNode->addNodeProperty("slots", 100);
-                subSubChildNode->addNodeProperty("reliability", 100);
-                for (uint64_t l = 0; l < numberOfNodesPerLevel3; l++) {
-                    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-                    sourceNode->addNodeProperty("tf_installed", true);
-                    topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
-                    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-                    sourceNode->addLinkProperty(subSubChildNode, linkProperty);
-                    sourceNode->addNodeProperty("slots", 100);
-                    sourceNode->addNodeProperty("reliability", 100);
-
-                    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
-                        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
-
-
-                    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
-                }
-            }
+        auto* records = buffer.getBuffer<Record>();
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto epoch = now_ms.time_since_epoch();
+        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].a = u;
+            records[u].b = u % 2;
+            records[u].c = u % 3;
+            records[u].d = u % 4;
+            records[u].e = u % 5;
+            records[u].f = u % 6;
+            records[u].g = u % 7;
+            records[u].h = u % 8;
+            records[u].i = u % 9;
+            records[u].j = u % 10;
+            records[u].k = u % 11;
+            records[u].l = u % 12;
+            records[u].m = u % 13;
+            records[u].n = u % 14;
+            records[u].o = u % 15;
+            records[u].p = u % 16;
+            records[u].q = u % 17;
+            records[u].r = u % 18;
+            records[u].s = u % 19;
+            records[u].t = u % 20;
+            records[u].w = u % 21;
+            records[u].x = u % 22;
+            records[u].timestamp1 = value.count();
+            records[u].timestamp2 = value.count();
         }
+    };
+
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1),
+                                                      5000000000,
+                                                      900,
+                                                      GatheringMode::INGESTION_RATE_MODE);
+
+
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    uint64_t var = 1;
+    while (var < 3333) {
+        auto workerConfig = WorkerConfiguration::create();
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = 11;
+        workerConfig->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig->numberOfBuffersToProduce = 5000000;
+        workerConfig->sourceGatheringInterval = 100;
+        workerConfig->numWorkerThreads = 4;
+        workerConfig->numberOfBuffersPerEpoch = 4;
+        workerConfig->bufferSizeInBytes = 131072;
+        workerConfig->numberOfSlots = 20;
+        workerConfig->memoryCapacity = 350;
+        workerConfig->networkCapacity = 100;
+        workerConfig->mtbfValue = 55000;
+        workerConfig->launchTime = 1652692028;
+        workerConfig->ingestionRate = 900;
+
+        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
+        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        EXPECT_TRUE(retStart);
+        NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+        var++;
+        for (uint64_t l = 1; l < 3; l++) {
+            auto workerConfig1 = WorkerConfiguration::create();
+            workerConfig1->numberOfBuffersInSourceLocalBufferPool = 11;
+            workerConfig1->numberOfBuffersInGlobalBufferManager = 65536;
+            workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+            workerConfig1->numberOfBuffersToProduce = 5000000;
+            workerConfig1->sourceGatheringInterval = 100;
+            workerConfig1->numWorkerThreads = 4;
+            workerConfig1->numberOfBuffersPerEpoch = 4;
+            workerConfig1->bufferSizeInBytes = 131072;
+            workerConfig1->numberOfSlots = 20;
+            workerConfig1->memoryCapacity = 350;
+            workerConfig1->networkCapacity = 100;
+            workerConfig1->mtbfValue = 55000;
+            workerConfig1->launchTime = 1652692028;
+            workerConfig1->ingestionRate = 900;
+
+            auto physicalSource1 = PhysicalSource::create("A", "A" + to_string(l), lambdaSourceType1);
+            workerConfig1->physicalSources.add(physicalSource1);
+            NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+            bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+            EXPECT_TRUE(retStart1);
+            NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+
+            crd->getTopologyManagerService()->removeParent(var+l, 1);
+            crd->getTopologyManagerService()->addParent(var+l, var);
+        }
+        var += 2;
     }
     std::cout << "numberOfNodes" << var;
 
-//    TopologyNodePtr childNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//    childNode->addNodeProperty("tf_installed", true);
-//    topology->addNewTopologyNodeAsChild(rootNode, childNode);
-//    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//    childNode->addLinkProperty(rootNode, linkProperty);
-//    childNode->addNodeProperty("slots", 100);
-//    childNode->addNodeProperty("reliability", 100);
-//
-//    TopologyNodePtr subChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//    subChildNode->addNodeProperty("tf_installed", true);
-//    topology->addNewTopologyNodeAsChild(childNode, subChildNode);
-//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//    subChildNode->addLinkProperty(childNode, linkProperty);
-//    subChildNode->addNodeProperty("slots", 100);
-//    subChildNode->addNodeProperty("reliability", 100);
-//
-//    TopologyNodePtr subSubChildNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//    subSubChildNode->addNodeProperty("tf_installed", true);
-//    topology->addNewTopologyNodeAsChild(subChildNode, subSubChildNode);
-//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//    subSubChildNode->addLinkProperty(subChildNode, linkProperty);
-//    subSubChildNode->addNodeProperty("slots", 100);
-//    subSubChildNode->addNodeProperty("reliability", 100);
-//
-//    TopologyNodePtr sourceNode = TopologyNode::create(var++, "localhost", 123, 124, 300, properties);
-//    sourceNode->addNodeProperty("tf_installed", true);
-//    topology->addNewTopologyNodeAsChild(subSubChildNode, sourceNode);
-//    linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-//    sourceNode->addLinkProperty(subSubChildNode, linkProperty);
-//    sourceNode->addNodeProperty("slots", 100);
-//    sourceNode->addNodeProperty("reliability", 100);
 
-//    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
-//        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+    NES_INFO("UpstreamBackupTest: Submit query");
+    string query = "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
+
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    "BottomUp",
+                                                                    FaultToleranceType::HIGH,
+                                                                    LineageType::IN_MEMORY,
+                                                                    FaultTolerancePlacement::NAIVE);
 
 
-//    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
-
-    globalExecutionPlan = GlobalExecutionPlan::create();
-    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-
-    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-//    queryPlan->setFaultTolerancePlacement(FaultTolerancePlacement::NAIVE);
-
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
-    topologySpecificQueryRewrite->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-    auto queryId = sharedQueryPlan->getSharedQueryId();
-    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
-
-    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 }
 }// namespace NES

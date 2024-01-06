@@ -94,6 +94,16 @@ uint64_t TopologyNode::getInitialMemoryCapacity() const { return initialMemoryCa
 
 uint64_t TopologyNode::getInitialNetworkCapacity() const { return initialNetworkCapacity; }
 
+void TopologyNode::setMTBFValue(uint64_t mtbfValue) { this->mtbfValue = mtbfValue; }
+
+void TopologyNode::setLaunchTime(uint64_t launchTime) { this->launchTime = launchTime; }
+
+void TopologyNode::setIngestionRate(uint64_t ingestionRate) { this->ingestionRate = ingestionRate; }
+
+void TopologyNode::setInitialMemoryCapacity(uint64_t initialMemoryCapacity) { this->initialMemoryCapacity = initialMemoryCapacity; }
+
+void TopologyNode::setInitialNetworkCapacity(uint64_t initialNetworkCapacity) { this->initialNetworkCapacity = initialNetworkCapacity; }
+
 int TopologyNode::getResourcesUsed() { return usedResources; };
 
 std::map<std::string, std::any> TopologyNode::getNodeProperties() { return nodeProperties; };
