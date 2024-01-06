@@ -36,8 +36,8 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
-class QueryPlacementPhase;
-using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
+class QueryPlacementAmendmentPhase;
+using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentPhase>;
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
@@ -120,7 +120,7 @@ class RequestProcessorService {
     bool queryReconfiguration;
     QueryCatalogServicePtr queryCatalogService;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
+    Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     RequestQueuePtr queryRequestQueue;

@@ -30,7 +30,7 @@
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Identifiers.hpp>
-#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
@@ -89,7 +89,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+            Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     }
 
     void populateTopology() {
@@ -201,7 +201,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
     SourceCatalogServicePtr sourceCatalogService;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
-    Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
+    Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementPhase;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     QueryId queryId{};
     SharedQueryId sharedQueryId{};
