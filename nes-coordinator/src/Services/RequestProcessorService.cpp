@@ -24,7 +24,7 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
-#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
@@ -68,7 +68,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                udfCatalog,
                                                                                globalExecutionPlan);
     queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
 }

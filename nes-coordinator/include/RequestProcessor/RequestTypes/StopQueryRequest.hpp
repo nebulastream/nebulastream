@@ -26,8 +26,8 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
-class QueryPlacementPhase;
-using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
+class QueryPlacementAmendmentPhase;
+using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentPhase>;
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
@@ -158,7 +158,7 @@ class StopQueryRequest : public AbstractUniRequest {
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
+    Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementPhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     static constexpr uint8_t MAX_RETRIES_FOR_FAILURE = 1;
 };

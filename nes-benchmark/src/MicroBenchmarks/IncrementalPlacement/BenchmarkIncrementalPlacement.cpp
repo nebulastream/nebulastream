@@ -30,7 +30,7 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
-#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
@@ -401,7 +401,7 @@ int main(int argc, const char* argv[]) {
                                                                                         globalExecutionPlan);
 
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+            auto queryPlacementPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
                                                                               coordinatorConfiguration);

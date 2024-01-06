@@ -59,15 +59,16 @@ namespace NES::Optimizer {
 class BasePlacementAdditionStrategy;
 using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;
 
-class QueryPlacementPhase;
-using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
+class QueryPlacementAmendmentPhase;
+using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentPhase>;
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 /**
- * @brief This class is responsible for placing operators of an input query plan on a global execution plan.
+ * @brief This class is responsible for placing and removing operators (depending on their status) from the
+ * global execution.
  */
-class QueryPlacementPhase {
+class QueryPlacementAmendmentPhase {
   public:
     /**
      * This method creates an instance of query placement phase
@@ -77,22 +78,22 @@ class QueryPlacementPhase {
      * @param coordinatorConfiguration: coordinator configuration
      * @return pointer to query placement phase
      */
-    static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
+    static QueryPlacementAmendmentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
-     * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
-     * selected query placement strategy
-     * @param sharedQueryPlan : the shared query plan to place
-     * @return true is placement successful.
+     * @brief Method takes input as a placement strategy name and input query plan and performs first query operator placement
+     * removal and then addition based on the selected query placement strategy
+     * @param sharedQueryPlan : the input shared query plan
+     * @return true is placement amendment successful.
      * @throws QueryPlacementException
      */
     bool execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
-    explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
+    explicit QueryPlacementAmendmentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);

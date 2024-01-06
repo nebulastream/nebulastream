@@ -36,7 +36,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
@@ -655,7 +655,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUnusedLink) {
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
@@ -731,7 +731,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLink) {
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
@@ -815,7 +815,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithFilt
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
@@ -900,7 +900,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithUnio
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Execute remove topology link request
@@ -1007,7 +1007,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUnusedNodeWithFi
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Check state of the operators in the changelog entry
@@ -1092,7 +1092,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithFilt
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Check state of the operators in the changelog entry
@@ -1188,7 +1188,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
     //Perform query placement
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
+        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     ASSERT_TRUE(queryPlacementPhase->execute(updatedSharedQueryPlans[0]));
 
     //Check state of the operators in the changelog entry

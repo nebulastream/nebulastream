@@ -18,7 +18,7 @@ add_source_files(nes-optimizer
         QueryMergerPhase.cpp
         QueryPlacementRefinementPhase.cpp
         TypeInferencePhase.cpp
-        QueryPlacementPhase.cpp
+        QueryPlacementAmendmentPhase.cpp
         QueryRewritePhase.cpp
         MemoryLayoutSelectionPhase.cpp
         OriginIdInferencePhase.cpp
