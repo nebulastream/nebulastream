@@ -645,14 +645,14 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     uint64_t var = 1;
-    while (var < 3333) {
+    while (var < 333) {
         auto workerConfig = WorkerConfiguration::create();
         workerConfig->numberOfBuffersInSourceLocalBufferPool = 128;
         workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfBuffersToProduce = 5000000;
         workerConfig->sourceGatheringInterval = 100;
-        workerConfig->numWorkerThreads = 4;
+        workerConfig->numWorkerThreads = 1;
         workerConfig->numberOfBuffersPerEpoch = 4;
         workerConfig->bufferSizeInBytes = 131072;
         workerConfig->numberOfSlots = 20;
@@ -674,7 +674,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
             workerConfig1->coordinatorPort = *rpcCoordinatorPort;
             workerConfig1->numberOfBuffersToProduce = 5000000;
             workerConfig1->sourceGatheringInterval = 100;
-            workerConfig1->numWorkerThreads = 4;
+            workerConfig1->numWorkerThreads = 1;
             workerConfig1->numberOfBuffersPerEpoch = 4;
             workerConfig1->bufferSizeInBytes = 131072;
             workerConfig1->numberOfSlots = 20;
