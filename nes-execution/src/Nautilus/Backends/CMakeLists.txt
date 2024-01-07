@@ -14,10 +14,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     add_subdirectory(BCInterpreter)
 endif ()
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
-    add_subdirectory(MLIR)
-endif ()
-
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     add_subdirectory(Flounder)
 endif ()

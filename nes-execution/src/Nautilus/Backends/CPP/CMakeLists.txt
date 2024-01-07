@@ -12,8 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        CPPCompilationBackend.cpp
-        CPPExecutable.cpp
-        CPPLoweringProvider.cpp
         CPPPipelineProvider.cpp
         )

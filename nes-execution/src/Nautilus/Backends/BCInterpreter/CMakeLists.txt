@@ -13,7 +13,4 @@
 
 add_source_files(nes-execution
         BCInterpreterPipelineProvider.cpp
-        BCInterpreterBackend.cpp
-        BCInterpreter.cpp
-        BCLoweringProvider.cpp
         )

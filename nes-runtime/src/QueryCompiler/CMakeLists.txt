@@ -14,7 +14,6 @@
 add_subdirectory(Exceptions)
 
 add_source_files(nes-runtime
-        QueryCompilerOptions.cpp
         QueryCompilationRequest.cpp
         QueryCompilationResult.cpp
         )
