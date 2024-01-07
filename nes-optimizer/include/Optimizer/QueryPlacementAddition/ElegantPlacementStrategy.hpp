@@ -53,7 +53,8 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
 
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                   QuerySubPlanVersion querySubPlanVersion) override;
 
   private:
     explicit ElegantPlacementStrategy(const std::string& serviceURL,

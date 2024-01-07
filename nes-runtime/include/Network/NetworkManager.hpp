@@ -131,7 +131,7 @@ class NetworkManager {
                                                    Runtime::BufferManagerPtr bufferManager,
                                                    std::chrono::milliseconds waitTime,
                                                    uint8_t retryTimes,
-                                                   Version version = 0);
+                                                   QuerySubPlanVersion version = 0);
 
     /**
      * @brief This method is called on the sender side to asynchronously register a SubpartitionProducer. It returns a future
@@ -157,7 +157,7 @@ class NetworkManager {
                                       uint8_t retryTimes,
                                       Runtime::ReconfigurationMessage reconfigurationMessage,
                                       Runtime::QueryManagerPtr queryManager,
-                                      Version version = 0);
+                                      QuerySubPlanVersion version = 0);
 
     /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to

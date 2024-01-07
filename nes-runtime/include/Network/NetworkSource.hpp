@@ -34,19 +34,19 @@ class NetworkSource : public DataSource {
 
   public:
     /*
-   * @param SchemaPtr
-   * @param bufferManager
-   * @param queryManager
-   * @param networkManager
-   * @param nesPartition
-   * @param sinkLocation
-   * @param numSourceLocalBuffers
-   * @param waitTime
-   * @param retryTimes
-   * @param successors
-   * @param version The initial version number of this source when it starts
-   * @param physicalSourceName
-   */
+     * @param SchemaPtr
+     * @param bufferManager
+     * @param queryManager
+     * @param networkManager
+     * @param nesPartition
+     * @param sinkLocation
+     * @param numSourceLocalBuffers
+     * @param waitTime
+     * @param retryTimes
+     * @param successors
+     * @param version The initial version number of this source when it starts
+     * @param physicalSourceName
+     */
     NetworkSource(SchemaPtr schema,
                   Runtime::BufferManagerPtr bufferManager,
                   Runtime::QueryManagerPtr queryManager,
@@ -57,7 +57,7 @@ class NetworkSource : public DataSource {
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                  Version version,
+                  QuerySubPlanVersion version,
                   const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**
@@ -147,7 +147,7 @@ class NetworkSource : public DataSource {
     * @brief Getter for the initial version.
     * @return The version this source was started with
     */
-    Version getVersion() const override;
+    QuerySubPlanVersion getVersion() const override;
 
     bool bind();
 
@@ -160,8 +160,7 @@ class NetworkSource : public DataSource {
     // for event channel
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-
-    Version version;
+    QuerySubPlanVersion version;
 };
 
 }// namespace NES::Network

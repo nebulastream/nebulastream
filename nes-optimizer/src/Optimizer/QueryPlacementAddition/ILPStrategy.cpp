@@ -58,7 +58,8 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
 
 bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                            QuerySubPlanVersion querySubPlanVersion) {
 
     try {
         NES_INFO("Performing placement of the input query plan with id {}", sharedQueryId);
@@ -250,7 +251,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         addNetworkOperators(computedQuerySubPlans);
 
         // 11. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }

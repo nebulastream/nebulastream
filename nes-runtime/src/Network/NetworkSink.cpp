@@ -28,7 +28,7 @@ namespace NES::Network {
 struct VersionUpdate {
     NodeLocation nodeLocation;
     NesPartition partition;
-    Version version;
+    QuerySubPlanVersion version;
 };
 
 NetworkSink::NetworkSink(const SchemaPtr& schema,
@@ -42,7 +42,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
-                         Version version)
+                         QuerySubPlanVersion version)
     : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
@@ -306,7 +306,7 @@ void NetworkSink::configureNewSinkDescriptor(const NetworkSinkDescriptor& newNet
 void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                                       const NodeLocation& newNodeLocation,
                                                       NesPartition newNesPartition,
-                                                      Version newVersion) {
+                                                      QuerySubPlanVersion newVersion) {
     NES_DEBUG("NetworkSink: method clearOldAndConnectToNewChannelAsync() called {} qep {}, by thread {}",
               nesPartition.toString(),
               querySubPlanId,

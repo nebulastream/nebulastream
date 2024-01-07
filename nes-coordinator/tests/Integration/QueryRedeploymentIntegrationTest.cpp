@@ -367,7 +367,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     //create network sink
     auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
     auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
-    Version firstVersion = 0;
+    QuerySubPlanVersion firstVersion = 0;
     auto networkSinkDescriptor1 = Network::NetworkSinkDescriptor::create(networkSourceWrk2Location,
                                                                          networkSourceWrk2Partition,
                                                                          waitTime,
@@ -447,7 +447,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     //reconfiguration
     crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
 
-    Version nextVersion = 1;
+    QuerySubPlanVersion nextVersion = 1;
     //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
     auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
     EXPECT_EQ(subQueryIds.size(), 1);
@@ -784,7 +784,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
         networkSrcWrk3Id += 10;
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-        Version nextVersion = actualReconnects + 1;
+        QuerySubPlanVersion nextVersion = actualReconnects + 1;
 
         //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
         //create query for worker 3
@@ -1149,7 +1149,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
     //create network sink
     auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
     auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
-    Version firstVersion = 0;
+    QuerySubPlanVersion firstVersion = 0;
     auto networkSinkDescriptor1 = Network::NetworkSinkDescriptor::create(networkSourceWrk2Location,
                                                                          networkSourceWrk2Partition,
                                                                          waitTime,
@@ -1229,7 +1229,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
     //reconfiguration
     crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, 0, QueryState::MIGRATING);
 
-    Version nextVersion = 1;
+    QuerySubPlanVersion nextVersion = 1;
     //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
     auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
     EXPECT_EQ(subQueryIds.size(), 1);
@@ -1495,7 +1495,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     //create network sink
     auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
     auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
-    Version firstVersion = 0;
+    QuerySubPlanVersion firstVersion = 0;
     auto networkSinkDescriptor1 = Network::NetworkSinkDescriptor::create(networkSourceWrk2Location,
                                                                          networkSourceWrk2Partition,
                                                                          waitTime,
@@ -1573,7 +1573,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
 
     //reconfiguration
-    Version nextVersion = 1;
+    QuerySubPlanVersion nextVersion = 1;
     Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
     auto reconfiguredNetworkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
                                                                                         networkSourceCrdPartition,

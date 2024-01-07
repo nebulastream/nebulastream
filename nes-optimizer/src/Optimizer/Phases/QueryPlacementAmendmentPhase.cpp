@@ -36,24 +36,30 @@
 
 namespace NES::Optimizer {
 
+QuerySubPlanVersion getNextQuerySubPlanVersion() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
 QueryPlacementAmendmentPhase::QueryPlacementAmendmentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                         TopologyPtr topology,
-                                         TypeInferencePhasePtr typeInferencePhase,
-                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
+                                                           TopologyPtr topology,
+                                                           TypeInferencePhasePtr typeInferencePhase,
+                                                           Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
       typeInferencePhase(std::move(typeInferencePhase)), coordinatorConfiguration(std::move(coordinatorConfiguration)) {
     NES_DEBUG("QueryPlacementAmendmentPhase()");
+    placementAmendmentMode = this->coordinatorConfiguration->optimizer.placementAmendmentMode;
 }
 
 QueryPlacementAmendmentPhasePtr
 QueryPlacementAmendmentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                   TopologyPtr topology,
-                                                   TypeInferencePhasePtr typeInferencePhase,
-                                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
+                                     TopologyPtr topology,
+                                     TypeInferencePhasePtr typeInferencePhase,
+                                     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration) {
     return std::make_shared<QueryPlacementAmendmentPhase>(QueryPlacementAmendmentPhase(std::move(globalExecutionPlan),
-                                                                     std::move(topology),
-                                                                     std::move(typeInferencePhase),
-                                                                     std::move(coordinatorConfiguration)));
+                                                                                       std::move(topology),
+                                                                                       std::move(typeInferencePhase),
+                                                                                       std::move(coordinatorConfiguration)));
 }
 
 bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
@@ -61,13 +67,6 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
              std::to_string(sharedQueryPlan->getId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
-    auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
-    auto placementAdditionStrategy = getStrategy(placementStrategy);
-
-    auto placementAmendmentMode = coordinatorConfiguration->optimizer.placementAmendmentMode;
-    auto placementRemovalStrategy =
-        PlacementRemovalStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
-
     bool queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
 
     auto sharedQueryId = sharedQueryPlan->getId();
@@ -93,31 +92,43 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
             //4. Check if all operators are pinned
             if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators)
                 || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
-                throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                                  "QueryPlacementAmendmentPhase: Found operators without pinning.");
+                throw Exceptions::QueryPlacementAdditionException(
+                    sharedQueryId,
+                    "QueryPlacementAmendmentPhase: Found operators without pinning.");
             }
 
-            bool success = placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                               pinnedUpstreamOperators,
-                                                                               pinnedDownStreamOperators);
-
-            if (!success) {
-                NES_ERROR("Unable to perform placement removal for the change log entry");
-                return false;
+            auto nextQuerySubPlanVersion = getNextQuerySubPlanVersion();
+            {
+                auto placementRemovalStrategy =
+                    PlacementRemovalStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
+                bool success = placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                                   pinnedUpstreamOperators,
+                                                                                   pinnedDownStreamOperators,
+                                                                                   nextQuerySubPlanVersion);
+                if (!success) {
+                    NES_ERROR("Unable to perform placement removal for the change log entry");
+                    return false;
+                }
             }
 
-            success = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                           pinnedUpstreamOperators,
-                                                                           pinnedDownStreamOperators);
+            {
+                auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
+                auto placementAdditionStrategy = getStrategy(placementStrategy);
+                bool success = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                                    pinnedUpstreamOperators,
+                                                                                    pinnedDownStreamOperators,
+                                                                                    nextQuerySubPlanVersion);
 
-            if (!success) {
-                NES_ERROR("Unable to perform placement addition for the change log entry");
-                return false;
+                if (!success) {
+                    NES_ERROR("Unable to perform placement addition for the change log entry");
+                    return false;
+                }
             }
         }
         //Update the change log's till processed timestamp and clear all entries before the timestamp
         sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
     } else {
+
         //1. Fetch all upstream pinned operators
         std::set<LogicalOperatorNodePtr> pinnedUpstreamOperators;
         for (const auto& leafOperator : queryPlan->getLeafOperators()) {
@@ -139,22 +150,35 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
                                                               "QueryPlacementAmendmentPhase: Found operators without pinning.");
         }
 
-        bool success = placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                           pinnedUpstreamOperators,
-                                                                           pinnedDownStreamOperators);
+        auto nextQuerySubPlanVersion = getNextQuerySubPlanVersion();
 
-        if (!success) {
-            NES_ERROR("Unable to perform placement removal for the change log entry");
-            return false;
+        {
+            auto placementRemovalStrategy =
+                PlacementRemovalStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
+
+            bool success = placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                               pinnedUpstreamOperators,
+                                                                               pinnedDownStreamOperators,
+                                                                               nextQuerySubPlanVersion);
+
+            if (!success) {
+                NES_ERROR("Unable to perform placement removal for the change log entry");
+                return false;
+            }
         }
 
-        success = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                       pinnedUpstreamOperators,
-                                                                       pinnedDownStreamOperators);
+        {
+            auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
+            auto placementAdditionStrategy = getStrategy(placementStrategy);
+            bool success = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                                pinnedUpstreamOperators,
+                                                                                pinnedDownStreamOperators,
+                                                                                nextQuerySubPlanVersion);
 
-        if (!success) {
-            NES_ERROR("Unable to perform query placement for the change log entry");
-            return false;
+            if (!success) {
+                NES_ERROR("Unable to perform query placement for the change log entry");
+                return false;
+            }
         }
     }
 
@@ -182,7 +206,6 @@ void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOpe
 BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStrategy placementStrategy) {
 
     auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
-    auto placementAmendmentMode = coordinatorConfiguration->optimizer.placementAmendmentMode;
 
     switch (placementStrategy) {
         case PlacementStrategy::ILP:
@@ -200,7 +223,6 @@ BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStra
                                                     topology,
                                                     typeInferencePhase,
                                                     placementAmendmentMode);
-
             // #2486        case PlacementStrategy::IFCOP:
             //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::MlHeuristic:
@@ -210,4 +232,5 @@ BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStra
                                                + std::string(magic_enum::enum_name(placementStrategy)));
     }
 }
+
 }// namespace NES::Optimizer

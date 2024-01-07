@@ -615,7 +615,7 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
                                                     QuerySubPlanId querySubPlanId,
                                                     uint64_t uniqueNetworkSinkDescriptorId,
                                                     Network::NesPartition newPartition,
-                                                    Version version) {
+                                                    QuerySubPlanVersion version) {
     NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);

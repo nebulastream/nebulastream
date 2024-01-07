@@ -139,7 +139,7 @@ class PartitionManager {
         /**
          * @return the version number
          */
-        Version getVersion();
+        QuerySubPlanVersion getVersion();
 
       private:
         uint64_t partitionCounter{1};
@@ -204,7 +204,7 @@ class PartitionManager {
      * @param partition the partition for which to get the version number
      * @return the currrent version number
      */
-    Version getVersion(NesPartition partition);
+    QuerySubPlanVersion getVersion(NesPartition partition);
 
     /**
      * @brief add a pendign version for this partition to be activated once all channels of the current version have disconnected

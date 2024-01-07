@@ -191,7 +191,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
     //        }
     //    }
 
-//    assignRemainingOperator(queryPlan, topoIdx, matrixMapping, placedOperatorIds, placementCandidate);
+    //    assignRemainingOperator(queryPlan, topoIdx, matrixMapping, placedOperatorIds, placementCandidate);
 
     return placementCandidate;
 }
@@ -320,7 +320,8 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
                                               const std::set<LogicalOperatorNodePtr>& /*pinnedUpStreamNodes*/,
-                                              const std::set<LogicalOperatorNodePtr>& /*pinnedDownStreamNodes*/) {
+                                              const std::set<LogicalOperatorNodePtr>& /*pinnedDownStreamNodes*/,
+                                              QuerySubPlanVersion /*querySubPlanVersion*/) {
     NES_NOT_IMPLEMENTED();
 }
 

@@ -15,6 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
 
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
@@ -79,9 +80,9 @@ class QueryPlacementAmendmentPhase {
      * @return pointer to query placement phase
      */
     static QueryPlacementAmendmentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                         TopologyPtr topology,
-                                         TypeInferencePhasePtr typeInferencePhase,
-                                         Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+                                                  TopologyPtr topology,
+                                                  TypeInferencePhasePtr typeInferencePhase,
+                                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief Method takes input as a placement strategy name and input query plan and performs first query operator placement
@@ -94,9 +95,9 @@ class QueryPlacementAmendmentPhase {
 
   private:
     explicit QueryPlacementAmendmentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                 TopologyPtr topology,
-                                 TypeInferencePhasePtr typeInferencePhase,
-                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+                                          TopologyPtr topology,
+                                          TypeInferencePhasePtr typeInferencePhase,
+                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief: analyze the set and pin all unpinned sink operators
@@ -123,6 +124,7 @@ class QueryPlacementAmendmentPhase {
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    PlacementAmendmentMode placementAmendmentMode;
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

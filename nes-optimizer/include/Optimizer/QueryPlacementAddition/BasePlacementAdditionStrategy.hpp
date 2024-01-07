@@ -106,11 +106,13 @@ class BasePlacementAdditionStrategy {
      * @param sharedQueryId: id of the shared query
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
+     * @param querySubPlanVersion: the new version of the updated query sub plans
      * @return true if successful else false
      */
     virtual bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                           const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) = 0;
+                                           const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                           QuerySubPlanVersion querySubPlanVersion) = 0;
 
   protected:
     /**
@@ -151,9 +153,12 @@ class BasePlacementAdditionStrategy {
      * @brief Add the computed query sub plans tot he global execution plan
      * @param sharedQueryId: the shared query plan id
      * @param computedSubQueryPlans: the computed query sub plans
+     * @param querySubPlanVersion: the version of the query sub plan
      * @return true if global execution plan gets updated successfully else false
      */
-    bool updateExecutionNodes(SharedQueryId sharedQueryId, ComputedSubQueryPlans& computedSubQueryPlans);
+    bool updateExecutionNodes(SharedQueryId sharedQueryId,
+                              ComputedSubQueryPlans& computedSubQueryPlans,
+                              QuerySubPlanVersion querySubPlanVersion);
 
     /**
      * @brief Get Execution node for the input topology node

@@ -71,7 +71,8 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
 
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+                                                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                         QuerySubPlanVersion querySubPlanVersion) {
 
     try {
         NES_ASSERT(serviceURL != EMPTY_STRING, "ELEGANT planner URL is not set in elegant.plannerServiceURL");
@@ -106,7 +107,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQue
         addNetworkOperators(computedQuerySubPlans);
 
         // 6. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
     } catch (const std::exception& ex) {
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }

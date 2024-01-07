@@ -35,8 +35,8 @@
 namespace NES::Optimizer {
 
 std::unique_ptr<BasePlacementAdditionStrategy> MlHeuristicStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                   const TopologyPtr& topology,
-                                                                   const TypeInferencePhasePtr& typeInferencePhase,
+                                                                           const TopologyPtr& topology,
+                                                                           const TypeInferencePhasePtr& typeInferencePhase,
                                                                            PlacementAmendmentMode placementAmendmentMode) {
     return std::make_unique<MlHeuristicStrategy>(
         MlHeuristicStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode));
@@ -50,7 +50,8 @@ MlHeuristicStrategy::MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExe
 
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+                                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                    QuerySubPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
@@ -60,7 +61,9 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 3. Pin all unpinned operators
-        performOperatorPlacement(sharedQueryId, copiedPinnedOperators.copiedPinnedUpStreamOperators, copiedPinnedOperators.copiedPinnedDownStreamOperators);
+        performOperatorPlacement(sharedQueryId,
+                                 copiedPinnedOperators.copiedPinnedUpStreamOperators,
+                                 copiedPinnedOperators.copiedPinnedDownStreamOperators);
 
         // 4. Compute query sub plans
         auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId,
@@ -71,7 +74,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         addNetworkOperators(computedQuerySubPlans);
 
         // 6. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }

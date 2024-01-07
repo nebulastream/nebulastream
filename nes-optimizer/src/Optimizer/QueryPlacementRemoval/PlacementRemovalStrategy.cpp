@@ -57,7 +57,8 @@ PlacementRemovalStrategy::~PlacementRemovalStrategy() {
 
 bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId sharedQueryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+                                                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                         QuerySubPlanVersion querySubPlanVersion) {
 
     try {
         NES_INFO("Placement removal strategy called for the shared query plan {}", sharedQueryId);
@@ -72,9 +73,7 @@ bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId shar
         auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 4. Fetch all placed query sub plans by analyzing the PLACED_SUB_PLAN_ID and CONNECTED_SYS_SUB_PLAN_DETAILS.
-        updateQuerySubPlans(sharedQueryId,
-                            copiedPinnedOperators.copiedPinnedUpStreamOperators,
-                            copiedPinnedOperators.copiedPinnedDownStreamOperators);
+        updateQuerySubPlans(sharedQueryId);
 
         // 5. Iterate over the identified topology nodes in a strict order and perform validation as follow:
         //      5.1. Check if after releasing the occupied resources, the new occupied resources are >= 0.
@@ -83,7 +82,7 @@ bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId shar
         // 6. If validation is successful, then lock the topology node and update the operator to Removed or To-Be-Placed
         //    state, either mark the place query sub plan as "Stopped" (if all operators to be removed)
         //    or "Updated" (if plan was modified by removing operators).
-        return updateExecutionNodes(sharedQueryId);
+        return updateExecutionNodes(sharedQueryId, querySubPlanVersion);
     } catch (std::exception& ex) {
         NES_ERROR("Exception occurred during placement removal phase: {}", ex.what());
         throw Exceptions::QueryPlacementRemovalException(sharedQueryId, ex.what());
@@ -129,37 +128,40 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
         auto pinnedWorkerId = std::any_cast<WorkerId>(operatorToProcess->getProperty(PINNED_WORKER_ID));
         workerIdsInBFS.emplace(pinnedWorkerId);
 
-        // 8. Fetch the query sub plan id that hosts the operator and record the sub query plan id
-        auto subQueryPlanId = std::any_cast<QuerySubPlanId>(operatorToProcess->getProperty(PLACED_SUB_PLAN_ID));
-        if (workerIdToQuerySubPlanIds.contains(pinnedWorkerId)) {
-            auto subQueryPlanIds = workerIdToQuerySubPlanIds[pinnedWorkerId];
-            subQueryPlanIds.emplace(subQueryPlanId);
-            workerIdToQuerySubPlanIds[pinnedWorkerId] = subQueryPlanIds;
-        } else {
-            workerIdToQuerySubPlanIds[pinnedWorkerId] = {subQueryPlanId};
-        }
+        if (operatorState != OperatorState::TO_BE_PLACED) {
 
-        // 9. Record the operator id to be processed such that we can change its status later
-        if (workerIdToOperatorIdMap.contains(pinnedWorkerId)) {
-            auto placedOperatorIds = workerIdToOperatorIdMap[pinnedWorkerId];
-            placedOperatorIds.emplace_back(operatorId);
-            workerIdToOperatorIdMap[pinnedWorkerId] = placedOperatorIds;
-        } else {
-            workerIdToOperatorIdMap[pinnedWorkerId] = {operatorId};
-        }
+            // 8. Fetch the query sub plan id that hosts the operator and record the sub query plan id
+            auto subQueryPlanId = std::any_cast<QuerySubPlanId>(operatorToProcess->getProperty(PLACED_SUB_PLAN_ID));
+            if (workerIdToQuerySubPlanIds.contains(pinnedWorkerId)) {
+                auto subQueryPlanIds = workerIdToQuerySubPlanIds[pinnedWorkerId];
+                subQueryPlanIds.emplace(subQueryPlanId);
+                workerIdToQuerySubPlanIds[pinnedWorkerId] = subQueryPlanIds;
+            } else {
+                workerIdToQuerySubPlanIds[pinnedWorkerId] = {subQueryPlanId};
+            }
 
-        // 10. If the operator is connected by system generated operators then record the worker ids and query sub plan ids
-        if (operatorToProcess->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
-            auto sysPlansMetaData =
-                std::any_cast<std::vector<SysPlanMetaData>>(operatorToProcess->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
-            for (const auto& sysPlanMetaData : sysPlansMetaData) {
-                workerIdsInBFS.emplace(sysPlanMetaData.workerId);
-                if (workerIdToQuerySubPlanIds.contains(pinnedWorkerId)) {
-                    auto subQueryPlanIds = workerIdToQuerySubPlanIds[pinnedWorkerId];
-                    subQueryPlanIds.emplace(sysPlanMetaData.querySubPlanId);
-                    workerIdToQuerySubPlanIds[pinnedWorkerId] = subQueryPlanIds;
-                } else {
-                    workerIdToQuerySubPlanIds[pinnedWorkerId] = {sysPlanMetaData.querySubPlanId};
+            // 9. Record the operator id to be processed such that we can change its status later
+            if (workerIdToOperatorIdMap.contains(pinnedWorkerId)) {
+                auto placedOperatorIds = workerIdToOperatorIdMap[pinnedWorkerId];
+                placedOperatorIds.emplace_back(operatorId);
+                workerIdToOperatorIdMap[pinnedWorkerId] = placedOperatorIds;
+            } else {
+                workerIdToOperatorIdMap[pinnedWorkerId] = {operatorId};
+            }
+
+            // 10. If the operator is connected by system generated operators then record the worker ids and query sub plan ids
+            if (operatorToProcess->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
+                auto sysPlansMetaData =
+                    std::any_cast<std::vector<SysPlanMetaData>>(operatorToProcess->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
+                for (const auto& sysPlanMetaData : sysPlansMetaData) {
+                    workerIdsInBFS.emplace(sysPlanMetaData.workerId);
+                    if (workerIdToQuerySubPlanIds.contains(pinnedWorkerId)) {
+                        auto subQueryPlanIds = workerIdToQuerySubPlanIds[pinnedWorkerId];
+                        subQueryPlanIds.emplace(sysPlanMetaData.querySubPlanId);
+                        workerIdToQuerySubPlanIds[pinnedWorkerId] = subQueryPlanIds;
+                    } else {
+                        workerIdToQuerySubPlanIds[pinnedWorkerId] = {sysPlanMetaData.querySubPlanId};
+                    }
                 }
             }
         }
@@ -193,31 +195,32 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
     if (!success) {
         throw Exceptions::RuntimeException("Unable to find topology nodes or lock the identified topology nodes.");
     }
+    NES_INFO("Successfully selected path for placement removal");
 }
 
 bool PlacementRemovalStrategy::pessimisticPathSelection() {
+
+    NES_INFO("Pessimistically locking the selecting path for placement removal.");
 
     bool success = false;
     uint8_t retryCount = 0;
     std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
     // 1. Perform path selection and if failure than use the exponential back-off and retry strategy
     while (!success && retryCount < MAX_PATH_SELECTION_RETRIES) {
+        NES_INFO("Pessimistically locking selected path using retry {} of {}.", retryCount, MAX_PATH_SELECTION_RETRIES);
         success = true;
         // 2. Perform path selection and if failure than use the exponential back-off and retry strategy
         for (const auto& workerId : workerIdsInBFS) {
-            if (topology->nodeWithWorkerIdExists(workerId)) {
-                auto topologyNode = topology->getCopyOfTopologyNodeWithId(workerId);
-                // 3. Try to acquire the lock
-                TopologyNodeWLock lock = topology->lockTopologyNode(workerId);
-                if (!lock) {
-                    NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", workerId);
-                    // 4. Release all the acquired locks as part of back-off and retry strategy.
-                    unlockTopologyNodesInSelectedPath();
-                    success = false;
-                    break;
-                }
-                lockedTopologyNodeMap[workerId] = std::move(lock);
+            // 3. Try to acquire the lock
+            TopologyNodeWLock lock = topology->lockTopologyNode(workerId);
+            if (!lock) {
+                NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", workerId);
+                // 4. Release all the acquired locks as part of back-off and retry strategy.
+                unlockTopologyNodesInSelectedPath();
+                success = false;
+                break;
             }
+            lockedTopologyNodeMap[workerId] = std::move(lock);
         }
 
         // 5. If unable to lock the topology nodes then wait for other processes to release locks on the topology node
@@ -230,6 +233,7 @@ bool PlacementRemovalStrategy::pessimisticPathSelection() {
             backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
         }
     }
+    NES_INFO("Successfully locked selected path using pessimistic strategy.");
     return success;
 }
 
@@ -321,16 +325,15 @@ bool PlacementRemovalStrategy::unlockTopologyNodesInSelectedPath() {
     //2 Release the locks in the inverse order of their acquisition
     std::for_each(workerIdsInBFS.rbegin(), workerIdsInBFS.rend(), [&](const WorkerId& lockedTopologyNodeId) {
         //2.1 Release the lock on the locked topology node
-        lockedTopologyNodeMap[lockedTopologyNodeId]->unlock();
-        lockedTopologyNodeMap.erase(lockedTopologyNodeId);
+        if (lockedTopologyNodeMap.contains(lockedTopologyNodeId)) {
+            lockedTopologyNodeMap[lockedTopologyNodeId]->unlock();
+            lockedTopologyNodeMap.erase(lockedTopologyNodeId);
+        }
     });
-    workerIdsInBFS.clear();
     return true;
 }
 
-void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId,
-                                                   const std::set<LogicalOperatorNodePtr>&,
-                                                   const std::set<LogicalOperatorNodePtr>&) {
+void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) {
 
     NES_INFO("Update all query sub plans by removing the operators that are in the state To-Be-Removed or To-Be-RePlaced.");
     // 1. Iterate over the target query sub plans placed on different worker nodes to update them
@@ -351,22 +354,36 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId,
             // A Sys generated plan will contain only network source and sink operators.
             if (querySubPlanToUpdate->getRootOperators().size() == 1) {
                 auto rootOperator = querySubPlanToUpdate->getRootOperators()[0];
-                const auto& upstreamOperator = rootOperator->getChildren()[0];
-                if (upstreamOperator->instanceOf<SourceLogicalOperatorNode>()
-                    && upstreamOperator->as_if<SourceLogicalOperatorNode>()
-                           ->getSourceDescriptor()
-                           ->instanceOf<Network::NetworkSourceDescriptor>()) {
-                    // 6. Mark the plan for soft stop to flush the in network tuples
-                    querySubPlanToUpdate->setQueryState(QueryState::MARKED_FOR_MIGRATION);
-                    updatedQuerySubPlans.emplace_back(querySubPlanToUpdate);
-                    continue;
+                //Check if the root is of type network sink
+                if (rootOperator->instanceOf<SinkLogicalOperatorNode>()
+                    && rootOperator->as_if<SinkLogicalOperatorNode>()
+                           ->getSinkDescriptor()
+                           ->instanceOf<Network::NetworkSinkDescriptor>()) {
+                    const auto& upstreamOperator = rootOperator->getChildren()[0];
+                    //Check if the root is connected to a source of type network source
+                    if (upstreamOperator->instanceOf<SourceLogicalOperatorNode>()
+                        && upstreamOperator->as_if<SourceLogicalOperatorNode>()
+                               ->getSourceDescriptor()
+                               ->instanceOf<Network::NetworkSourceDescriptor>()) {
+                        // 6. Mark the plan for migration to flush the in network tuples
+                        querySubPlanToUpdate->setQueryState(QueryState::MARKED_FOR_MIGRATION);
+                        updatedQuerySubPlans.emplace_back(querySubPlanToUpdate);
+                        continue;
+                    }
                 }
             }
 
             // 7. Modify the query plan by removing the operators that are in to-be-Removed or in to-be-replaced state
             auto allOperators = querySubPlanToUpdate->getAllOperators();
             for (const auto& placedOperator : allOperators) {
-                OperatorState operatorState = placedOperator->as_if<LogicalOperatorNode>()->getOperatorState();
+                auto operatorId = placedOperator->as_if<LogicalOperatorNode>()->getId();
+                if (!operatorIdToOriginalOperatorMap.contains(operatorId)) {
+                    NES_WARNING("Found the operator {} not in the submitted query plan.", placedOperator->toString());
+                    //TODO: throw an exception when encountered a non-sys operator in this if block
+                    continue;
+                }
+
+                auto operatorState = operatorIdToOriginalOperatorMap[operatorId]->getOperatorState();
 
                 // 8. Remove all upstream and downstream operators of the operators in the state TO_BE_REMOVED or TO_BE_REPLACED
                 if (operatorState == OperatorState::TO_BE_REMOVED || operatorState == OperatorState::TO_BE_REPLACED) {
@@ -414,10 +431,15 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId,
     }
 }
 
-bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId) {
+bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, QuerySubPlanVersion querySubPlanVersion) {
 
     NES_INFO("Releasing locks for all locked topology nodes {}.", sharedQueryId);
     for (const auto& workerId : workerIdsInBFS) {
+
+        if (!workerIdToUpdatedQuerySubPlans.contains(workerId)) {
+            NES_WARNING("No plan to updated query sub plan on the worker {}. Skipping remainder of the processing.", workerId);
+            continue;
+        }
 
         TopologyNodeWLock lockedTopologyNode;
         // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
@@ -459,8 +481,8 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId)
                     return false;
                 }
 
-                // 5. Increment the version
-                updatedQuerySubPlan->incrementVersion();
+                // 5. Set the new version to the updated query sub plan
+                updatedQuerySubPlan->setVersion(querySubPlanVersion);
             }
 
             // 6. Save Update query sub plans and execution node
