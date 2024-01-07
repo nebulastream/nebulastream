@@ -117,7 +117,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
         + ")\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId) + ", querySubPlanId:" + std::to_string(querySubPlanId)
         + ")\n"
           "|  "
@@ -178,7 +178,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
         + ")\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(query1.getQueryPlan()->getQueryId()) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
         + ")\n"
           "|  "
@@ -187,7 +187,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  |--"
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(query2.getQueryPlan()->getQueryId()) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
         + ")\n"
           "|  "
@@ -243,7 +243,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
         + ")\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
         + ")\n"
           "|  "
@@ -252,7 +252,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  |--"
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
         + ")\n"
           "|  "
@@ -328,7 +328,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
         + ")\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId11)
         + ")\n"
           "|  "
@@ -337,7 +337,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  |--"
         + plan11->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId12)
         + ")\n"
           "|  "
@@ -346,7 +346,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  |--"
         + plan12->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId21)
         + ")\n"
           "|  "
@@ -355,7 +355,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  |--"
         + plan21->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId22)
         + ")\n"
           "|  "
@@ -423,7 +423,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode1->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode1->getTopologyNode()->getId())
         + ")\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
         + ")\n"
           "|  "
@@ -436,7 +436,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + std::to_string(executionNode2->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode2->getTopologyNode()->getId())
         + ")\n"
-          "|  | QuerySubPlan(queryId:"
+          "|  | QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
         + ")\n"
           "|  |  "
@@ -539,7 +539,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode1->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode1->getTopologyNode()->getId())
         + ")\n"
-          "| QuerySubPlan(queryId:"
+          "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
         + ")\n"
           "|  "
@@ -552,7 +552,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + std::to_string(executionNode2->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode2->getTopologyNode()->getId())
         + ")\n"
-          "|  | QuerySubPlan(queryId:"
+          "|  | QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
         + ")\n"
           "|  |  "
@@ -565,7 +565,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + std::to_string(executionNode3->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode3->getTopologyNode()->getId())
         + ")\n"
-          "|  |  | QuerySubPlan(queryId:"
+          "|  |  | QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId3) + ", querySubPlanId:" + std::to_string(querySubPlanId3)
         + ")\n"
           "|  |  |  "
@@ -578,7 +578,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + std::to_string(executionNode4->getId())
         + ", ip:localhost, topologyId:" + std::to_string(executionNode4->getTopologyNode()->getId())
         + ")\n"
-          "|  |  |  | QuerySubPlan(queryId:"
+          "|  |  |  | QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId4) + ", querySubPlanId:" + std::to_string(querySubPlanId4)
         + ")\n"
           "|  |  |  |  "
