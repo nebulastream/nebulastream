@@ -639,6 +639,8 @@ add_subdirectory(nes-client)
 add_subdirectory(nes-plugins)
 # Add targets for execution
 add_subdirectory(nes-execution)
+# Add targets for nautilus
+add_subdirectory(nes-nautilus)
 
 
 # Add targets for benchmarks

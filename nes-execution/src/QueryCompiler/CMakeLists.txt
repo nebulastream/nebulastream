@@ -13,6 +13,7 @@
 
 add_source_files(nes-execution
         NautilusQueryCompiler.cpp
+        QueryCompilerOptions.cpp
         )
 add_subdirectory(Operators)
 add_subdirectory(Phases)

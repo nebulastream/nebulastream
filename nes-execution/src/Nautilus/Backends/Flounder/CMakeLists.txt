@@ -13,8 +13,5 @@
 
 
 add_source_files(nes-execution
-        FlounderLoweringProvider.cpp
-        FlounderCompilationBackend.cpp
-        FlounderExecutable.cpp
         FlounderPipelineProvider.cpp
         )
