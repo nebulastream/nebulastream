@@ -13,7 +13,6 @@
 # limitations under the License.
 #set(CMAKE_VERBOSE_MAKEFILE on)
 
-# include(../cmake/LLVMIRUtil.cmake)
 include_directories(tests/include)
 
 # Set Sources and Headers
