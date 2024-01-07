@@ -42,7 +42,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     NesPartition nesPartition,
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
-                                    Version version,
+                                    QuerySubPlanVersion version,
                                     uint64_t numberOfOrigins,
                                     OperatorId uniqueId);
 
@@ -100,7 +100,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    NesPartition nesPartition,
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
-                                   Version version,
+                                   QuerySubPlanVersion version,
                                    uint64_t numberOfOrigins,
                                    OperatorId uniqueId);
 
@@ -108,7 +108,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
-    Version version;
+    QuerySubPlanVersion version;
     OperatorId uniqueNetworkSinkId;
 };
 

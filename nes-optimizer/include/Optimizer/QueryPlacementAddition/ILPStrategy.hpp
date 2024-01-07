@@ -42,7 +42,8 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
 
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                   QuerySubPlanVersion querySubPlanVersion) override;
 
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,

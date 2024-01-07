@@ -83,11 +83,13 @@ class PlacementRemovalStrategy {
      * @param sharedQueryId: id of the shared query
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
+     * @param querySubPlanVersion: the new version of the updated query sub plans
      * @return true if successful else false
      */
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                   QuerySubPlanVersion querySubPlanVersion);
 
     /**
      * @brief Destructor releases all locks (if any acquired) for pessimistic mode
@@ -129,19 +131,16 @@ class PlacementRemovalStrategy {
     /**
      * @brief Update the query sub plans by removing the query operators
      * @param sharedQueryId
-     * @param upStreamPinnedOperators
-     * @param downStreamPinnedOperators
      */
-    void updateQuerySubPlans(SharedQueryId sharedQueryId,
-                             const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
-                             const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
+    void updateQuerySubPlans(SharedQueryId sharedQueryId);
 
     /**
      * @brief Add the computed query sub plans tot he global execution plan
      * @param sharedQueryId: the shared query plan id
+     * @param querySubPlanVersion: the new version of the query sub plan
      * @return true if global execution plan gets updated successfully else false
      */
-    bool updateExecutionNodes(SharedQueryId sharedQueryId);
+    bool updateExecutionNodes(SharedQueryId sharedQueryId, QuerySubPlanVersion querySubPlanVersion);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,

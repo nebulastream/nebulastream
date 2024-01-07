@@ -360,8 +360,8 @@ QueryState QueryPlan::getQueryState() { return queryState; }
 
 void QueryPlan::setQueryState(QueryState queryState) { this->queryState = queryState; }
 
-void QueryPlan::incrementVersion() { version++; }
+void QueryPlan::setVersion(QuerySubPlanVersion newVersion) { version = newVersion; }
 
-uint32_t QueryPlan::getVersion() { return version; }
+QuerySubPlanVersion QueryPlan::getVersion() { return version; }
 
 }// namespace NES

@@ -254,12 +254,12 @@ class QueryPlan {
      * @brief Get version of the query plan
      * @return current version
      */
-    uint32_t getVersion();
+    QuerySubPlanVersion getVersion();
 
     /**
-     * @brief Increment the version fot he query plan
+     * @brief Set new version for the query sub plan
      */
-    void incrementVersion();
+    void setVersion(QuerySubPlanVersion newVersion);
 
 
   private:

@@ -23,7 +23,7 @@ NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema,
                                                  NodeLocation nodeLocation,
                                                  std::chrono::milliseconds waitTime,
                                                  uint32_t retryTimes,
-                                                 Version version)
+                                                 QuerySubPlanVersion version)
     : SourceDescriptor(std::move(schema)), nesPartition(nesPartition), nodeLocation(nodeLocation), waitTime(waitTime),
       retryTimes(retryTimes), version(version) {}
 
@@ -32,7 +32,7 @@ SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema,
                                                     NodeLocation nodeLocation,
                                                     std::chrono::milliseconds waitTime,
                                                     uint32_t retryTimes,
-                                                    Version version) {
+                                                    QuerySubPlanVersion version) {
     return std::make_shared<NetworkSourceDescriptor>(
         NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation, waitTime, retryTimes, version));
 }

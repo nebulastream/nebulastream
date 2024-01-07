@@ -93,6 +93,7 @@ void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalO
     if (!success) {
         throw Exceptions::RuntimeException("Unable to perform path selection.");
     }
+    NES_INFO("Selected path for placement addition.");
 }
 
 bool BasePlacementAdditionStrategy::optimisticPathSelection(
@@ -513,7 +514,7 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 // Create a temporary query sub plans for the operator as it might need to be merged with another query
                 // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID,  {copyOfPinnedOperator});
+                newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID, {copyOfPinnedOperator});
             } else {
                 newPlacedQuerySubPlan =
                     QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPinnedOperator});
@@ -713,7 +714,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
 
                             // 17. create the query sub plan
                             auto newQuerySubPlan =
-                                QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(),  {networkSinkOperator});
+                                QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {networkSinkOperator});
 
                             // 18. Record information about the query plan and worker id
                             connectedSysSubPlanDetails.emplace_back((newQuerySubPlan->getQuerySubPlanId(), currentWorkerId));
@@ -733,7 +734,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
 }
 
 bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
-                                                         ComputedSubQueryPlans& computedSubQueryPlans) {
+                                                         ComputedSubQueryPlans& computedSubQueryPlans,
+                                                         QuerySubPlanVersion querySubPlanVersion) {
 
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
@@ -843,6 +845,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                             updatedQuerySubPlan->addRootOperator(rootOperator);
                         }
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
+                        updatedQuerySubPlan->setVersion(querySubPlanVersion);
                         executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
 
                     } else if (containPinnedDownstreamOperator) {
@@ -903,6 +906,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         }
 
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
+                        updatedQuerySubPlan->setVersion(querySubPlanVersion);
                         executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQuerySubPlanId(), updatedQuerySubPlan);
                     } else {
                         NES_ERROR(
@@ -915,6 +919,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                 } else {
                     auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
                     updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
+                    updatedQuerySubPlan->setVersion(querySubPlanVersion);
                     executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
                 }
             }
@@ -993,7 +998,7 @@ LogicalOperatorNodePtr BasePlacementAdditionStrategy::createNetworkSinkOperator(
                                        sourceTopologyNode->getIpAddress(),
                                        sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
-    Version sinkVersion = 0;
+    QuerySubPlanVersion sinkVersion = 0;
     OperatorId id = getNextOperatorId();
     auto numberOfOrigins = 0;
     return LogicalOperatorFactory::createSinkOperator(Network::NetworkSinkDescriptor::create(nodeLocation,

@@ -42,16 +42,10 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     static const bool DEFAULT_LOW_THROUGHPUT_SOURCE = false;
     static const bool DEFAULT_ML_HARDWARE = false;
 
-    /**
-     * @brief Implementation of the virtual function of BasePlacementStrategy
-     * @param queryId
-     * @param pinnedUpStreamOperators
-     * @param pinnedDownStreamOperators
-     * @return
-     */
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                   QuerySubPlanVersion querySubPlanVersion) override;
 
     /**
      * @brief creates an Object of this class through a static create function

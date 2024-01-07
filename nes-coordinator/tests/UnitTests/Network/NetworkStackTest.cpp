@@ -507,16 +507,16 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         auto senderLocation = NodeLocation(0, "127.0.0.1", *senderPort);
 
         struct DataEmitterImpl : public DataEmitter {
-            DataEmitterImpl(PartitionManagerPtr partitionManager, Version version)
+            DataEmitterImpl(PartitionManagerPtr partitionManager, QuerySubPlanVersion version)
                 : partitionManager(partitionManager), version(version) {}
             void emitWork(TupleBuffer&) override {}
             void onVersionUpdate(NetworkSourceDescriptor networkSourceDescriptor) override {
                 NES_DEBUG("Updating version for data emitter");
                 version = networkSourceDescriptor.getVersion();
             }
-            Version getVersion() const override { return version; }
+            QuerySubPlanVersion getVersion() const override { return version; }
             PartitionManagerPtr partitionManager;
-            Version version;
+            QuerySubPlanVersion version;
         };
 
         auto nesPartition = NesPartition(0, 0, 0, 0);

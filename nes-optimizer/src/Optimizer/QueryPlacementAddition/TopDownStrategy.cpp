@@ -44,7 +44,8 @@ TopDownStrategy::TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPl
 
 bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                QuerySubPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
@@ -65,7 +66,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         addNetworkOperators(computedQuerySubPlans);
 
         // 6. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }

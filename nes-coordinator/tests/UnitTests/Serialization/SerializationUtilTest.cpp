@@ -363,7 +363,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         Network::NodeLocation nodeLocation{1, "localhost", 31337};
         Network::NesPartition nesPartition{1, 22, 33, 44};
         auto retryTimes = 8;
-        Version version = 5;
+        QuerySubPlanVersion version = 5;
         auto numberOfOrigins = 6;
         OperatorId uniqueId = 7;
         auto sink = Network::NetworkSinkDescriptor::create(nodeLocation,
