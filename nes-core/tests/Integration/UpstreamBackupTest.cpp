@@ -723,7 +723,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
                 crd->getTopologyManagerService()->addParent(var + (l - 1) * thirdLevel + k + l, var + (l - 1) * thirdLevel + l);
             }
         }
-        var += (firstLevel) * (secondLevel + 1);
+        var += (secondLevel) * (thirdLevel + 1);
     }
     std::cout << "numberOfNodes" << var;
 
