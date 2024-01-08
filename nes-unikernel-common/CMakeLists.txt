@@ -1,6 +1,5 @@
 find_package(yaml-cpp REQUIRED)
 add_subdirectory(src)
-set(BOOST_ROOT "${_VCPKG_INSTALLED_DIR}/x64-linux-nes")
 find_package(Boost REQUIRED COMPONENTS system iostreams)
 add_library(UnikernelCommon INTERFACE)
 target_link_libraries(UnikernelCommon INTERFACE
