@@ -50,7 +50,7 @@ using namespace Configurations;
 const int timestamp = 1644426604;
 const uint64_t numberOfTupleBuffers = 4;
 
-// ((1934 + 1) * 15 + 1) * 5
+// ((2 + 1) * 10 + 1) * 16
 //const uint64_t numberOfNodesPerLevel3 = 12;
 //const uint64_t numberOfNodesPerLevel2 = 4;
 //const uint64_t numberOfNodesPerLevel1 = 2;
@@ -644,11 +644,14 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    uint64_t firstLevel = 2;
+    uint64_t secondLevel = 10;
+    uint64_t thirdLevel = 16;
     uint64_t var = 1;
-    while (var < 1000) {
+    for (uint64_t i = 1; i < firstLevel + 1; i++) {
         auto workerConfig = WorkerConfiguration::create();
-        workerConfig->numberOfBuffersInSourceLocalBufferPool = 128;
-        workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig->numberOfBuffersInGlobalBufferManager = 8198;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfBuffersToProduce = 5000000;
         workerConfig->sourceGatheringInterval = 100;
@@ -667,10 +670,10 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
         EXPECT_TRUE(retStart);
         NES_INFO("UpstreamBackupTest: Worker" << var << "started successfully");
         var++;
-        for (uint64_t l = 1; l < 10; l++) {
+        for (uint64_t l = 1; l < secondLevel + 1; l++) {
             auto workerConfig = WorkerConfiguration::create();
-            workerConfig->numberOfBuffersInSourceLocalBufferPool = 128;
-            workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
+            workerConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
+            workerConfig->numberOfBuffersInGlobalBufferManager = 8198;
             workerConfig->coordinatorPort = *rpcCoordinatorPort;
             workerConfig->numberOfBuffersToProduce = 5000000;
             workerConfig->sourceGatheringInterval = 100;
@@ -688,14 +691,14 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
             bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
             EXPECT_TRUE(retStart);
             NES_INFO("UpstreamBackupTest: Worker" << var << "started successfully");
-            crd->getTopologyManagerService()->removeParent(var + 1, 1);
-            crd->getTopologyManagerService()->addParent(var + 1, var);
-            var++;
+            crd->getTopologyManagerService()->removeParent(var + (l - 1) * thirdLevel + l, 1);
+            crd->getTopologyManagerService()->addParent(var + (l - 1) * thirdLevel + l, var);
 
-            for (uint64_t l = 1; l < 3; l++) {
+
+            for (uint64_t k = 1; k < thirdLevel + 1; k++) {
                 auto workerConfig1 = WorkerConfiguration::create();
-                workerConfig1->numberOfBuffersInSourceLocalBufferPool = 128;
-                workerConfig1->numberOfBuffersInGlobalBufferManager = 1024;
+                workerConfig1->numberOfBuffersInSourceLocalBufferPool = 1024;
+                workerConfig1->numberOfBuffersInGlobalBufferManager = 8198;
                 workerConfig1->coordinatorPort = *rpcCoordinatorPort;
                 workerConfig1->numberOfBuffersToProduce = 5000000;
                 workerConfig1->sourceGatheringInterval = 100;
@@ -716,11 +719,11 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
                 EXPECT_TRUE(retStart1);
                 NES_INFO("UpstreamBackupTest: Worker" << var << " started successfully");
 
-                crd->getTopologyManagerService()->removeParent(var + l, 1);
-                crd->getTopologyManagerService()->addParent(var + l, var);
+                crd->getTopologyManagerService()->removeParent(var + (l - 1) * thirdLevel + k + l, 1);
+                crd->getTopologyManagerService()->addParent(var + (l - 1) * thirdLevel + k + l, var + (l - 1) * thirdLevel + l);
             }
-            var += 2;
         }
+        var += (firstLevel) * (secondLevel + 1);
     }
     std::cout << "numberOfNodes" << var;
 
