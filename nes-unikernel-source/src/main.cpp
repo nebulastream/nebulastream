@@ -22,14 +22,16 @@ using namespace std::literals::chrono_literals;
 
 class TcpServer {
   public:
-    TcpServer(boost::asio::io_service& ioService, Options option)
+    TcpServer(boost::asio::io_service& ioService, const Options& option)
         : acceptor(ioService, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), option.port)) {
-        bufferManager = std::make_shared<NES::Runtime::BufferManager>();
+        bufferManager = std::make_shared<NES::Runtime::BufferManager>(8192);
         bufferManager->createFixedSizeBufferPool(128);
         generator = AutomaticDataGenerator::create(option.schema);
         generator->setBufferManager(bufferManager);
-        delay = 100ms;
+        delay = std::chrono::milliseconds(option.delayInMS);
         format = std::make_unique<NES::CsvFormat>(option.schema, bufferManager);
+        auto buffer = generator->createData(1, 8192);
+        randomTuple = format->getFormattedBuffer(buffer[0]);
         startAccept();
     }
 
@@ -50,10 +52,8 @@ class TcpServer {
     }
 
     void startSend(std::shared_ptr<boost::asio::ip::tcp::socket> socket) {
-        auto buffer = generator->createData(1, 8192);
-        std::string randomTuple = format->getFormattedBuffer(buffer[0]);
         boost::asio::async_write(*socket,
-                                 boost::asio::buffer(randomTuple),
+                                 boost::asio::buffer(randomTuple.c_str(), randomTuple.size()),
                                  [this, socket](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
                                      if (!error) {
                                          if (delay > 0ms) {
@@ -72,6 +72,7 @@ class TcpServer {
     std::unique_ptr<NES::CsvFormat> format;
     boost::asio::ip::tcp::acceptor acceptor;
     std::chrono::milliseconds delay;
+    std::string randomTuple;
 };
 
 class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListener {
@@ -103,7 +104,7 @@ int runNetworkSource(Options options) {
 
     auto partition_manager = std::make_shared<PartitionManager>();
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
-    auto buffer_manager = std::make_shared<BufferManager>();
+    auto buffer_manager = std::make_shared<BufferManager>(8192);
     buffer_manager->createFixedSizeBufferPool(128);
 
     ExchangeProtocol exchange_protocol(partition_manager, exchange_listener);
@@ -153,7 +154,7 @@ int runNetworkSource(Options options) {
     return 0;
 }
 
-int runTcpSource(Options options) {
+int runTcpSource(const Options& options) {
     using namespace NES::Runtime;
     boost::asio::io_service ioService;
     TcpServer server(ioService, options);
@@ -162,7 +163,7 @@ int runTcpSource(Options options) {
 }
 
 int main(int argc, char* argv[]) {
-    NES::Logger::setupLogging("unikernel_source.log", NES::LogLevel::LOG_INFO);
+    NES::Logger::setupLogging("unikernel_source.log", NES::LogLevel::LOG_DEBUG);
     auto optionsResult = Options::fromCLI(argc, argv);
     if (optionsResult.has_error()) {
         NES_FATAL_ERROR("Failed to Parse Configuration: {}", optionsResult.error());
