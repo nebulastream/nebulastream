@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/StatisticCollectorType.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
@@ -244,8 +245,29 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  QuerySubPlanId querySubPlanId,
                                  uint64_t numberOfOrigins = 1);
 
-#ifdef ENABLE_KAFKA_BUILD
 /**
+ *
+ * @param schema the schema of the data
+ * @param statisticCollectorType the type of statisticCollector that will be written by the sink
+ * @param nodeEngine the nodeEngine
+ * @param numOfProducers
+ * @param queryId queryId the query producing the tuple(Buffers)
+ * @param querySubPlanId
+ * @param numberOfOrigins numberOfOrigins number of origins of a given query
+ * @return a pointer to an abstract DataSinkPtr
+ */
+
+DataSinkPtr
+createStatisticCollectorStorageSink(const SchemaPtr& schema,
+                                    NES::Experimental::Statistics::StatisticCollectorType statisticCollectorType,
+                                    Runtime::NodeEnginePtr const& nodeEngine,
+                                    uint32_t numOfProducers,
+                                    NES::QueryId queryId,
+                                    NES::QuerySubPlanId querySubPlanId,
+                                    uint64_t numberOfOrigins);
+
+#ifdef ENABLE_KAFKA_BUILD
+    /**
  * @brief create kafka sink
  * @param schema: schema of the data
  * @param queryId of the query that writes to the sink
@@ -258,15 +280,15 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
  * @param numberOfOrigins
  * @return a data sink pointer
  */
-DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
-                               QueryId queryId,
-                               QuerySubPlanId querySubPlanId,
-                               const Runtime::NodeEnginePtr& nodeEngine,
-                               uint32_t activeProducers,
-                               const std::string& brokers,
-                               const std::string& topic,
-                               uint64_t kafkaProducerTimeout,
-                               uint64_t numberOfOrigins);
+    DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
+                                   QueryId queryId,
+                                   QuerySubPlanId querySubPlanId,
+                                   const Runtime::NodeEnginePtr& nodeEngine,
+                                   uint32_t activeProducers,
+                                   const std::string& brokers,
+                                   const std::string& topic,
+                                   uint64_t kafkaProducerTimeout,
+                                   uint64_t numberOfOrigins);
 #endif
 #ifdef ENABLE_MQTT_BUILD
 /**

@@ -266,6 +266,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NES::Experimental::Statistics::StatisticManagerPtr getStatisticManager();
 
   private:
+
     /**
      * @brief method to register physical source with the coordinator
      * @param physicalSourceTypes: physical sources containing relevant information
@@ -285,7 +286,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     bool waitForConnect() const;
 
     void handleRpcs(WorkerRPCServer& service);
-
     const Configurations::WorkerConfigurationPtr workerConfig;
     std::atomic<uint16_t> localWorkerRpcPort;
     std::string rpcAddress;
@@ -294,8 +294,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr workerMobilityHandler;
     std::atomic<bool> isRunning{false};
     WorkerId workerId;
-    std::unique_ptr<WorkerHealthCheckService> healthCheckService;
 
+    std::unique_ptr<WorkerHealthCheckService> healthCheckService;
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     std::shared_ptr<std::thread> statisticOutputThread;

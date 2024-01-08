@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <GRPC/StatisticRequestUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
@@ -22,9 +21,7 @@
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Statistics/Requests/StatisticDeleteRequest.hpp>
-#include <Statistics/Requests/StatisticProbeRequest.hpp>
-#include <Statistics/StatisticManager/StatisticCollectorStorage.hpp>
+#include <Statistics/StatisticCollectorStorage.hpp>
 #include <Statistics/StatisticManager/StatisticManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
@@ -40,7 +37,8 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                                  NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor,
                                  NES::Experimental::Statistics::StatisticManagerPtr statisticManager)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)),
-      locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)), statisticManager(statisticManager) {
+      locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)),
+      statisticManager(statisticManager) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
@@ -222,18 +220,32 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
 
 Status WorkerRPCServer::ProbeStatistic(grpc::ServerContext*, const ProbeStatisticRequest* request, ProbeStatisticReply* reply) {
 
-    auto probeRequest = &request->proberequest();
-    auto serializedProbeRequest = StatisticRequestUtil::deserializeProbeRequest(probeRequest);
-    statisticManager->probeStatistic(serializedProbeRequest, reply, nodeEngine->getNodeId());
+    auto logicalSourceName = request->logicalsourcename();
+    auto grpcAllPhysicalSourceNames = request->allphysicalsourcenames();
+    std::vector<std::string> allPhysicalSourceNames(grpcAllPhysicalSourceNames.begin(), grpcAllPhysicalSourceNames.end());
+    auto fieldName = request->fieldname();
+    auto statisticCollectorType = (Experimental::Statistics::StatisticCollectorType) request->statisticcollectortype();
+
+    statisticManager->probeStatistic(logicalSourceName,
+                                     allPhysicalSourceNames,
+                                     nodeEngine->getNodeId(),
+                                     fieldName,
+                                     statisticCollectorType,
+                                     reply);
 
     return Status::OK;
 }
 
-Status WorkerRPCServer::DeleteStatistic(grpc::ServerContext*, const DeleteStatisticRequest* request, DeleteStatisticReply* reply) {
+Status
+WorkerRPCServer::DeleteStatistic(grpc::ServerContext*, const DeleteStatisticRequest* request, DeleteStatisticReply* reply) {
 
-    auto deleteRequest = &request->deleterequest();
-    auto serializedDeleteRequest = StatisticRequestUtil::deserializeDeleteRequest(deleteRequest);
-    auto success = statisticManager->deleteStatistic(serializedDeleteRequest, nodeEngine->getNodeId());
+    auto logicalSourceName = request->logicalsourcename();
+    auto grpcAllPhysicalSourceNames = request->allphysicalsourcenames();
+    std::vector<std::string> allPhysicalSourceNames(grpcAllPhysicalSourceNames.begin(), grpcAllPhysicalSourceNames.end());
+    auto fieldName = request->fieldname();
+    auto statisticCollectorType = (Experimental::Statistics::StatisticCollectorType) request->statisticcollectortype();
+
+    auto success = statisticManager->deleteStatistic(logicalSourceName, allPhysicalSourceNames, nodeEngine->getNodeId(), fieldName, statisticCollectorType);
     if (success == true) {
         reply->set_success(true);
         return Status::OK;

@@ -35,6 +35,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticStorageSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -1359,6 +1360,15 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         serializedSinkDescriptor.set_collectortype(magic_enum::enum_integer(monitoringSinkDescriptor->getCollectorType()));
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
+    } else if (sinkDescriptor.instanceOf<const NES::Experimental::Statistics::StatisticStorageSinkDescriptor>()) {
+        // serialize StatisticStorageSinkDescriptor descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableStatisticCollectorStorageSink");
+        auto statSinkDesc = sinkDescriptor.as<const NES::Experimental::Statistics::StatisticStorageSinkDescriptor>();
+        auto serializedSinkDesc = SerializableOperator_SinkDetails_SerializableStatisticStorageSinkDescriptor();
+        serializedSinkDesc.set_collectortype(magic_enum::enum_integer(statSinkDesc->getStatisticCollectorType()));
+        sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDesc);
+        sinkDetails.set_numberoforiginids(numberOfOrigins);
     }
 
 #ifdef ENABLE_OPC_BUILD
@@ -1493,6 +1503,15 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         return MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType(serializedSinkDescriptor.collectortype()),
                                                 deserializedNumberOfOrigins);
+    } else if (deserializedSinkDescriptor
+                   .Is<SerializableOperator_SinkDetails_SerializableStatisticStorageSinkDescriptor>()) {
+        // de-serialize StatisticStorageSinkDescriptor descriptor
+        NES_TRACE("OperatorSerializationUtil:: de-serialize SinkDescriptor as StatisticStorageSinkDescriptor");
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableStatisticStorageSinkDescriptor();
+        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
+        return NES::Experimental::Statistics::StatisticStorageSinkDescriptor::create(
+            Experimental::Statistics::StatisticCollectorType(serializedSinkDescriptor.collectortype()),
+            deserializedNumberOfOrigins);
     }
 #ifdef ENABLE_OPC_BUILD
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor>()) {

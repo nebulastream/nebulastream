@@ -710,4 +710,10 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
 
 bool NodeEngine::getConnectSinksAsync() { return connectSinksAsync; }
+
+const Experimental::Statistics::StatisticManagerPtr& NodeEngine::getStatisticManager() const { return statisticManager; }
+
+void NodeEngine::setStatisticManager(const Experimental::Statistics::StatisticManagerPtr& statisticManager) {
+    this->statisticManager = statisticManager;
+}
 }// namespace NES::Runtime

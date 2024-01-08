@@ -274,6 +274,10 @@ message SerializableOperator{
       uint64 collectorType = 1;
     }
 
+    message SerializableStatisticStorageSinkDescriptor {
+        uint64 collectorType = 1;
+    }
+
     message SerializableNullOutputSinkDescriptor {
     }
 

@@ -147,6 +147,11 @@ class QueryCompilerOptions;
 using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 }// namespace QueryCompilation
 
+namespace Experimental::Statistics {
+class StatisticCollectorStorage;
+using StatisticCollectorStoragePtr = std::shared_ptr<StatisticCollectorStorage>;
+}// namespace Experimental::Statistics
+
 }// namespace NES
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_

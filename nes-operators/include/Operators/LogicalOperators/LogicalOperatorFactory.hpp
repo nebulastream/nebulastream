@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
+#include <Util/StatisticCollectorType.hpp>
 
 namespace NES {
 
@@ -91,11 +91,12 @@ class LogicalOperatorFactory {
      * @param id the id of the operator. If not defined, then the next free operator id is used.
      * @return LogicalUnaryOperatorNodePtr
      */
-    static LogicalUnaryOperatorNodePtr createStatisticOperator(NES::Experimental::Statistics::WindowStatisticDescriptorPtr statisticDescriptor,
-                                                               const std::string& synopsisFieldName,
-                                                               uint64_t windowSize,
-                                                               uint64_t slideFactor,
-                                                               OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr
+    createStatisticOperator(NES::Experimental::Statistics::WindowStatisticDescriptorPtr statisticDescriptor,
+                            const std::string& synopsisFieldName,
+                            uint64_t windowSize,
+                            uint64_t slideFactor,
+                            OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new infer model operator.
@@ -240,4 +241,4 @@ class LogicalOperatorFactory {
 
 }// namespace NES
 
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_

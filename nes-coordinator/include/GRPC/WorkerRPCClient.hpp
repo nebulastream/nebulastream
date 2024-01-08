@@ -259,7 +259,7 @@ class WorkerRPCClient {
     /**
      * @brief Sends a request to a node to delete a specific statistic
      * @param destAddress the address of the node
-     * @param deleteRequest a request which contains all necessary info for the deletion of one one or more StatisticCollectors
+     * @param deleteRequest a request which contains all necessary info for the deletion of one one or more StatisticCollectorFormats
      * @return returns true when successful and false otherwise
      */
     bool deleteStatistic(const std::string& destAddress, Experimental::Statistics::StatisticDeleteRequest& deleteRequest);

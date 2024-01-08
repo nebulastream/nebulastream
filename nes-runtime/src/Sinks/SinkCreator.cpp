@@ -23,8 +23,11 @@
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
+#include <Sinks/Mediums/StatisticSink.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
+#include <Statistics/StatisticCollectorStorage.hpp>
+#include <Statistics/StatisticManager/StatisticManager.hpp>
 
 namespace NES {
 DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
@@ -219,6 +222,25 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                             queryId,
                                             querySubPlanId,
                                             numberOfOrigins);
+}
+
+DataSinkPtr createStatisticCollectorStorageSink(const SchemaPtr& schema,
+                                                NES::Experimental::Statistics::StatisticCollectorType statisticCollectorType,
+                                                Runtime::NodeEnginePtr const& nodeEngine,
+                                                uint32_t numOfProducers,
+                                                NES::QueryId queryId,
+                                                NES::QuerySubPlanId querySubPlanId,
+                                                uint64_t numberOfOrigins) {
+    SinkFormatPtr sinkFormat = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<NES::Experimental::Statistics::StatisticSink>(
+        nodeEngine->getStatisticManager()->getStatisticCollectorStorage(),
+        statisticCollectorType,
+        sinkFormat,
+        nodeEngine,
+        numOfProducers,
+        queryId,
+        querySubPlanId,
+        numberOfOrigins);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

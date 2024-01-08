@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <StatisticFieldIdentifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -79,10 +80,10 @@ QueryPlanPtr TypeInferencePhase::inferSchemaForStatisticQuery(NES::QueryPlanPtr 
                 }
             }
 
-            schema->addField("LogicalSourceName", BasicType::TEXT);
-            schema->addField("PhysicalSourceName", BasicType::TEXT);
-            schema->addField("SynopsisSourceDataFieldName", BasicType::TEXT);
-            schema->addField("TopologyNodeId", BasicType::UINT64);
+            schema->addField(NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT);
+            schema->addField(NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT);
+            schema->addField(NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT);
+            schema->addField(NES::Experimental::Statistics::WORKER_ID, BasicType::UINT64);
 
             sourceDescriptor->setSchema(schema);
             NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}",

@@ -46,6 +46,11 @@ class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 }//namespace Monitoring
 
+namespace Experimental::Statistics {
+class StatisticManager;
+using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
+}
+
 namespace Runtime {
 
 /**
@@ -346,6 +351,17 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan);
 
+    /**
+     * @return the statisticManager of the node on the specific node
+     */
+    const Experimental::Statistics::StatisticManagerPtr& getStatisticManager() const;
+
+    /**
+     * @brief sets the StatisticManager of the node on for the node Engine
+     * @param statisticManager the specific StatisticManager
+     */
+    void setStatisticManager(const Experimental::Statistics::StatisticManagerPtr& statisticManager);
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -366,7 +382,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersPerWorker,
                         bool sourceSharing,
                         bool connectSinksAsync = false);
-
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
@@ -390,6 +405,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     bool connectSinksAsync;
+    Experimental::Statistics::StatisticManagerPtr statisticManager;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

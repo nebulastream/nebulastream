@@ -68,7 +68,7 @@ class StatisticCoordinator {
 
     /**
      * @brief checks if the desired statistic exists for all specified physicalSources and if so, queries
-     * all StatisticCollectors for the specified statistic. Depending on the probeQuery many local statistics
+     * all StatisticCollectorFormats for the specified statistic. Depending on the probeQuery many local statistics
      * are returned or one globally merged statistic is returned
      * @param probeRequest the parameter object that specifies what statistic is desired. The user has to
      * specify the data source (logicalSource, physicalSource(s), and the field name),the time frame
@@ -79,9 +79,9 @@ class StatisticCoordinator {
     std::vector<double> probeStatistic(StatisticProbeRequest& probeRequest);
 
     /**
-     * @brief attempts to stops a statistic query and deletes all associated StatisticCollectors
+     * @brief attempts to stops a statistic query and deletes all associated StatisticCollectorFormats
      * @param deleteRequest specifies the data source (logicalSourceName and fieldName) for which to
-     * delete the StatisticCollector of StatisticCollectorType.
+     * delete the StatisticCollectorFormat of StatisticCollectorType.
      * @return true when successful and false otherwise
      */
     bool deleteStatistic(StatisticDeleteRequest& deleteRequest);

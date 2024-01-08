@@ -159,6 +159,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         if (metricStore != nullptr) {
             nodeEngine->setMetricStore(metricStore);
         }
+        if (statisticManager != nullptr) {
+            nodeEngine->setStatisticManager(this->statisticManager);
+        }
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
@@ -436,11 +439,11 @@ bool NesWorker::unregisterPhysicalSource(std::string logicalName, std::string ph
     return success;
 }
 
-const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const { return workerConfig; }
-
 NES::Experimental::Statistics::StatisticManagerPtr NesWorker::getStatisticManager() {
     return statisticManager;
 }
+
+const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const { return workerConfig; }
 
 bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes) {
     NES_ASSERT(!physicalSourceTypes.empty(), "invalid physical sources");
@@ -608,5 +611,4 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr NesWorker::g
 }
 
 NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr NesWorker::getMobilityHandler() { return workerMobilityHandler; }
-
 }// namespace NES

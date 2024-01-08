@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <sstream>
+#include <StatisticFieldIdentifiers.hpp>
 
 namespace NES::Experimental::Statistics {
 
@@ -62,9 +63,13 @@ bool WindowStatisticLogicalOperatorNode::inferSchema() {
     }
 
     auto inputSchema = getInputSchema();
-    outputSchema->addField("synopsisFieldName", BasicType::TEXT);
+    outputSchema->addField(OBSERVED_TUPLES, BasicType::UINT64);
+    outputSchema->addField(START_TIME, BasicType::UINT64);
+    outputSchema->addField(END_TIME, BasicType::UINT64);
+
+    outputSchema->addField(DATA, BasicType::TEXT);
+
     statisticDescriptor->addStatisticFields(outputSchema);
-    outputSchema->addField("synopsisData", BasicType::TEXT);
 
     return true;
 }

@@ -15,17 +15,16 @@
 #include <API/Schema.hpp>
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/StatisticRequestUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Statistics/Requests/StatisticDeleteRequest.hpp>
-#include <Statistics/Requests/StatisticProbeRequest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
+#include <Statistics/Requests/StatisticDeleteRequest.hpp>
+#include <Statistics/Requests/StatisticProbeRequest.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
@@ -493,13 +492,18 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
 }
 
 std::vector<double> WorkerRPCClient::probeStatistic(const std::string& destAddress,
-                                               Experimental::Statistics::StatisticProbeRequest& probeRequest) {
+                                                    Experimental::Statistics::StatisticProbeRequest& probeRequest) {
     NES_DEBUG("WorkerRPCClient: Statistic probe request address={}", destAddress);
 
     ClientContext context;
     ProbeStatisticRequest request;
-    auto grpcProbeRequest = request.mutable_proberequest();
-    StatisticRequestUtil::serializeProbeRequest(probeRequest, grpcProbeRequest);
+
+    request.set_logicalsourcename(probeRequest.getLogicalSourceName());
+    for (const auto& physicalSourceName : probeRequest.getPhysicalSourceNames()) {
+        request.add_allphysicalsourcenames(physicalSourceName);
+    }
+    request.set_fieldname(probeRequest.getFieldName());
+    request.set_statisticcollectortype((int32_t) probeRequest.getStatisticCollectorType());
 
     ProbeStatisticReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());
@@ -516,13 +520,19 @@ std::vector<double> WorkerRPCClient::probeStatistic(const std::string& destAddre
     }
 }
 
-bool WorkerRPCClient::deleteStatistic(const std::string& destAddress, Experimental::Statistics::StatisticDeleteRequest& deleteRequest) {
+bool WorkerRPCClient::deleteStatistic(const std::string& destAddress,
+                                      Experimental::Statistics::StatisticDeleteRequest& deleteRequest) {
     NES_DEBUG("WorkerRPCClient: Statistic delete request address={}", destAddress);
 
     ClientContext context;
     DeleteStatisticRequest request;
-    auto grpcDeleteRequest = request.mutable_deleterequest();
-    StatisticRequestUtil::serializeDeleteRequest(deleteRequest, grpcDeleteRequest);
+
+    request.set_logicalsourcename(deleteRequest.getLogicalSourceName());
+    for (const auto& physicalSourceName : deleteRequest.getPhysicalSourceNames()) {
+        request.add_allphysicalsourcenames(physicalSourceName);
+    }
+    request.set_fieldname(deleteRequest.getFieldName());
+    request.set_statisticcollectortype((int32_t) deleteRequest.getStatisticCollectorType());
 
     DeleteStatisticReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());

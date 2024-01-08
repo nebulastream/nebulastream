@@ -16,17 +16,17 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
 #include <Statistics/Requests/StatisticCreateRequest.hpp>
 #include <Statistics/Requests/StatisticDeleteRequest.hpp>
 #include <Statistics/Requests/StatisticProbeRequest.hpp>
 #include <Statistics/Requests/StatisticRequest.hpp>
+#include <Util/StatisticCollectorType.hpp>
 
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
-#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
+#include <Util/StatisticCollectorType.hpp>
 
 namespace NES {
 

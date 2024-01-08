@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
+#include <StatisticFieldIdentifiers.hpp>
 
 namespace NES::Experimental::Statistics {
 
@@ -31,8 +32,7 @@ bool CountMinDescriptor::operator==(WindowStatisticDescriptor& statisticDescript
 }
 
 void CountMinDescriptor::addStatisticFields(NES::SchemaPtr schema) {
-    schema->addField("depth", BasicType::UINT64);
-    schema->addField("width", BasicType::UINT64);
+    schema->addField(WIDTH, BasicType::UINT64);
 }
 
 double CountMinDescriptor::getDepth() const { return depth; }

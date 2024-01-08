@@ -15,8 +15,6 @@
 syntax = "proto3";
 import "SerializableQueryPlan.proto";
 import "WorkerLocation.proto";
-import "StatisticProbeRequest.proto";
-import "StatisticDeleteRequest.proto";
 
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
@@ -187,7 +185,13 @@ message MlModelFileUploadResponse {
 }
 
 message ProbeStatisticRequest {
-  NES.GRPCStatisticProbeRequest probeRequest = 1;
+  string logicalSourceName = 1;
+  repeated string allPhysicalSourceNames = 2;
+  string fieldName = 3;
+  int32 statisticCollectorType = 4;
+  string probeExpression = 5;
+  uint64 startTime = 6;
+  uint64 endTime = 7;
 }
 
 message ProbeStatisticReply {
@@ -195,7 +199,11 @@ message ProbeStatisticReply {
 }
 
 message DeleteStatisticRequest {
-  NES.GRPCStatisticDeleteRequest deleteRequest = 1;
+  string logicalSourceName = 1;
+  repeated string allPhysicalSourceNames = 2;
+  string FieldName = 3;
+  int32 statisticCollectorType = 4;
+  uint64 endTime = 5;
 }
 
 message DeleteStatisticReply {

@@ -125,6 +125,7 @@ std::vector<double> StatisticCoordinator::probeStatistic(StatisticProbeRequest& 
                     break;
                 }
             }
+
             auto localStatistics = workerClient->probeStatistic(destAddress, probeRequest);
             statistics.insert(statistics.end(), localStatistics.begin(), localStatistics.end());
         }
@@ -166,7 +167,7 @@ bool StatisticCoordinator::deleteStatistic(StatisticDeleteRequest& deleteRequest
         //        }
 
         trackedStatistics.erase(statisticQueryIdentifier);
-        NES_DEBUG("StatisticCollectors successfully deleted!");
+        NES_DEBUG("StatisticCollectorFormats successfully deleted!");
         NES_DEBUG("Statistic queries successfully stopped!");
         return success;
     }

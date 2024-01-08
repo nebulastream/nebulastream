@@ -22,6 +22,7 @@ add_source_files(nes-common
         PluginLoader.cpp
         SpatialUtils.cpp
         StacktraceLoader.cpp
+        StatisticCollectorIdentifier.cpp
         ThreadNaming.cpp
         TimeMeasurement.cpp
         QueryStateHistory.cpp

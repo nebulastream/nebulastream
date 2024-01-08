@@ -23,10 +23,13 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticStorageSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Statistics/StatisticCollectorStorage.hpp>
+#include <Statistics/StatisticManager/StatisticManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -84,6 +87,16 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     querySubPlan->getQueryId(),
                                     querySubPlan->getQuerySubPlanId(),
                                     monitoringSinkDescriptor->getNumberOfOrigins());
+    } else if (sinkDescriptor->instanceOf<NES::Experimental::Statistics::StatisticStorageSinkDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating Statistics sink");
+        auto statisticStorageSinkDesc = sinkDescriptor->as<NES::Experimental::Statistics::StatisticStorageSinkDescriptor>();
+        return createStatisticCollectorStorageSink(schema,
+                                                   statisticStorageSinkDesc->getStatisticCollectorType(),
+                                                   nodeEngine,
+                                                   numOfProducers,
+                                                   querySubPlan->getQueryId(),
+                                                   querySubPlan->getQuerySubPlanId(),
+                                                   statisticStorageSinkDesc->getNumberOfOrigins());
     }
 #ifdef ENABLE_KAFKA_BUILD
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
