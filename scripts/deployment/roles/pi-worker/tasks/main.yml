@@ -1,0 +1,33 @@
+---
+# This Playbook runs all the deployment tasks for a worker
+
+- name: Determine Local Worker IP
+  set_fact:
+    local_worker_ip: "{{ lookup('template', 'find-ip.j2') | trim }}"
+
+- name: Create the log directory
+  file:
+    path: "/home/ubuntu/dimitrios"
+    state: directory
+
+- name: Clone dool repository
+  git:
+    repo: 'https://github.com/scottchiefbaker/dool.git'
+    dest: "/home/ubuntu/git/{{ dool_name }}"
+    update: no
+    clone: yes
+
+- name: Copy and populate configuration templates in tmp
+  template:
+    src: worker.yaml.j2
+    dest: "/tmp/worker-conf.yaml"
+
+- name: Copy smartgrid data file
+  copy:
+    src: smartgrid.csv.j2
+    dest: /tmp/smartgrid.csv
+
+- name: Copy KTM data file
+  copy:
+    src: ktm.csv.j2
+    dest: /tmp/ktm.csv

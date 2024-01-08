@@ -1,0 +1,31 @@
+###
+### General configuration
+###
+logLevel: {{ log_level }}
+
+###
+### Network configuration
+###
+localWorkerIp: {{ local_worker_ip }}
+coordinatorIp: {{ default_pi_master_ip }}
+coordinatorPort: {{ default_coordinator_ports[1] }}
+
+# Set RPC server port of NES Worker
+rpcPort: {{ default_worker_ports[0] }}
+# Set the data port of the NES Worker
+dataPort: {{ default_worker_ports[1] }}
+
+###
+### Physical source configuration
+###
+physicalSources:
+        - logicalSourceName: ktm
+          physicalSourceName: ktm_{{ local_worker_ip }}
+          type: CSV_SOURCE
+          configuration:
+                  filePath: /tmp/ktm.csv
+                  numberOfBuffersToProduce: 1024
+                  numberOfTuplesToProducePerBuffer: 1
+                  skipHeader: false
+                  sourceGatheringMode: ADAPTIVE_MODE
+                  sourceGatheringInterval: 4000

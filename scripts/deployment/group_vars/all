@@ -53,3 +53,6 @@ coord_iface: ibs3f0
 
 # Worker interface to keep track of
 worker_iface: ibs2
+
+# Pi master default IP
+default_pi_master_ip: 192.168.2.30

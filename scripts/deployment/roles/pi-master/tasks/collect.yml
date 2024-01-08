@@ -1,0 +1,8 @@
+---
+# This Playbook collects and cleans all logs of all workers
+
+- name: Transfer coordinator logs
+  fetch:
+    src: /home/ubuntu/dimitrios/{{ ansible_hostname }}-sysStat.csv
+    dest: "/home/ubuntu/dimitrios/experiment-logs/"
+    flat: true

@@ -1,0 +1,7 @@
+---
+# This Playbook runs all the common plays in the deployment
+
+- name: Delete the local-ssd log directory contents
+  file:
+    path: "/home/ubuntu/dimitrios"
+    state: absent
