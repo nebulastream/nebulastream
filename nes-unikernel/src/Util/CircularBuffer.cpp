@@ -16,52 +16,68 @@
 #include <Util/Logger/Logger.hpp>
 #include <sys/mman.h>
 
-CircularBuffer::CircularBuffer(size_t capacity) : capacity(capacity) {
-    NES_ASSERT(capacity % getpagesize() == 0, "Cirular Buffer requires a capacity that is divisible by the getpagesize()");
-    fd = memfd_create("queue_buffer", 0);
-    ftruncate(fd, capacity);
-    data = static_cast<char*>(mmap(NULL, 2 * capacity, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
-    mmap(data, capacity, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
-    mmap(data + capacity, capacity, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
+std::span<char> CircularBuffer::reserveDataForWrite() {
+    auto segment_size = contigous_write_range();
+    NES_TRACE("Write: Reserving {} bytes\n", segment_size);
+    std::span<char> segment{buffer.data() + write, segment_size};
+    advance_write(segment_size);
+    return segment;
 }
-CircularBuffer::~CircularBuffer() {
-    munmap(data + capacity, capacity);
-    munmap(data, capacity);
-    close(fd);
+void CircularBuffer::returnMemoryForWrite(std::span<char> segment, size_t bytes_written) {
+    auto bytes_returned = segment.size() - bytes_written;
+    NES_TRACE("Return: Returning {} bytes\n", bytes_returned);
+    return_write(bytes_returned);
 }
-std::span<char> CircularBuffer::reserveDataForWrite(size_t requestedSize) {
-    const auto actualSize = std::min(requestedSize, getCapacity() - size());
-    const auto memory = std::span(data + write, actualSize);
-    write += actualSize;
-    return memory;
-}
-void CircularBuffer::returnMemoryForWrite(std::span<char> reserved, size_t usedBytes) {
-    assert(reserved.size() <= size());
-    assert(reserved.size() >= usedBytes);
 
-    const auto left_over = reserved.size() - usedBytes;
-    write -= left_over;
-}
-std::span<const char> CircularBuffer::popData(size_t requestedSize) {
-    const auto actualSize = std::min(requestedSize, size());
-    const auto memory = std::span(data + read, actualSize);
-    read += actualSize;
-
-    if(read > capacity) {
-        write -= capacity;
-        read -= capacity;
+[[nodiscard]] std::span<char> CircularBuffer::popData(std::span<char>&& possible_span) {
+    auto total_read_size = std::min(possible_span.size(), static_cast<size_t>(size_));
+    auto current_max_contigoues_range = contigous_read_range();
+    if (current_max_contigoues_range >= total_read_size) {
+        NES_TRACE("Pop: Reading {} bytes\n", total_read_size);
+        std::span<char> segment{buffer.data() + read, total_read_size};
+        advance_read(total_read_size);
+        return segment;
+    } else {
+        std::memcpy(possible_span.data(), buffer.data() + read, current_max_contigoues_range);
+        advance_read(current_max_contigoues_range);
+        auto bytes_left_to_read = total_read_size - current_max_contigoues_range;
+        NES_ASSERT(contigous_read_range() >= bytes_left_to_read, "Wrap around did not work as expected");
+        std::memcpy(possible_span.data() + current_max_contigoues_range, buffer.data() + read, bytes_left_to_read);
+        advance_read(bytes_left_to_read);
+        return possible_span;
     }
-
-    return memory;
 }
 
-std::span<const char> CircularBuffer::peekData(size_t requestedSize) {
-    const auto actualSize = std::min(requestedSize, size());
-    const auto memory = std::span(data + read, actualSize);
-    return memory;
+size_t CircularBuffer::size() const { return size_; }
+bool CircularBuffer::full() const { return size_ == static_cast<int64_t>(buffer.size()); }
+bool CircularBuffer::empty() const { return size_ == 0; }
+size_t CircularBuffer::capacity() const { return buffer.size(); }
+size_t CircularBuffer::contigous_write_range() const {
+    if (write >= read) {
+        return std::min(static_cast<int64_t>(buffer.size()) - write, static_cast<int64_t>(buffer.size()) - size_);
+    } else {
+        return std::min(read - write, static_cast<int64_t>(buffer.size()) - size_);
+    }
 }
-
-size_t CircularBuffer::size() const { return (write - read); }
-size_t CircularBuffer::getCapacity() const { return capacity; }
-bool CircularBuffer::full() const { return size() == getCapacity(); }
-bool CircularBuffer::empty() const { return size() == 0; }
+size_t CircularBuffer::contigous_read_range() const {
+    if (read >= write) {
+        return std::min(static_cast<int64_t>(buffer.size()) - read, size_);
+    } else {
+        return std::min(write - read, size_);
+    }
+}
+void CircularBuffer::return_write(size_t bytes_returned) {
+    size_ -= bytes_returned;
+    write = (write - bytes_returned) % buffer.size();
+    NES_ASSERT(size_ >= 0, "Overflow");
+}
+void CircularBuffer::advance_write(size_t bytes_written) {
+    size_ += bytes_written;
+    write = (write + bytes_written) % buffer.size();
+    NES_ASSERT(size_ >= 0, "Overflow");
+}
+void CircularBuffer::advance_read(size_t bytes_read) {
+    size_ -= bytes_read;
+    read = (read + bytes_read) % buffer.size();
+    NES_ASSERT(size_ >= 0, "Overflow");
+}

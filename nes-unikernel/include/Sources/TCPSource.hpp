@@ -46,7 +46,7 @@ class TCPSource : public DataSource<TCPConfig> {
      * @param successor executable operators coming after this source
      */
     explicit TCPSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
-        : DataSource<TCPConfig>(successor), circularBuffer(getpagesize()) {}
+        : DataSource<TCPConfig>(successor), circularBuffer(getpagesize() * 8) {}
 
     /**
      * @brief override the receiveData method for the csv source
@@ -76,16 +76,14 @@ class TCPSource : public DataSource<TCPConfig> {
      * @token to search for
      * @return number of places until first occurrence of token (place of token IS included)
      */
-    uint64_t sizeUntilSearchToken(char token) {
+    std::optional<uint64_t> sizeUntilSearchToken(char token) {
         uint64_t places = 0;
-        auto buffer = circularBuffer.peekData(circularBuffer.size());
-
-        std::ranges::find_if(buffer, [&places, token](auto c) {
+        auto position = std::find_if(circularBuffer.begin(), circularBuffer.end(), [&places, token](auto c) {
             places++;
             return c == token;
         });
 
-        return places;
+        return position != circularBuffer.end() ? std::optional<int64_t>(places) : std::nullopt;
     }
 
     /**
@@ -117,7 +115,7 @@ class TCPSource : public DataSource<TCPConfig> {
                 //fill created buffer with data from socket. Socket returns the number of bytes it actually sent.
                 //might send more than one tuple at a time, hence we need to extract one tuple below in switch case.
                 //user needs to specify how to find out tuple size when creating TCPSource
-                auto bufferReservation = circularBuffer.reserveDataForWrite(circularBuffer.getCapacity());
+                auto bufferReservation = circularBuffer.reserveDataForWrite();
                 bufferSizeReceived = read(sockfd, bufferReservation.data(), bufferReservation.size());
                 //if read method returned -1 an error occurred during read.
                 if (bufferSizeReceived == -1) {
@@ -133,19 +131,25 @@ class TCPSource : public DataSource<TCPConfig> {
                 //if size of received data is not 0 (no data received), push received data to circular buffer
             }
 
-            if (!circularBuffer.empty()) {
-                inputTupleSize = sizeUntilSearchToken('\n');
+            while (!circularBuffer.empty() && tupleCount < tuplesThisPass) {
+                auto possibleInputTupleSize = sizeUntilSearchToken('\n');
+                if (!possibleInputTupleSize) {
+                    break;
+                }
+                inputTupleSize = *possibleInputTupleSize;
+
+                backupBuffer.resize(inputTupleSize);
                 NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: {}.", inputTupleSize);
                 NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: {}.", circularBuffer.size());
                 //copy and delete tuple from circularBuffer, delete tuple separator
-                auto tupleMemory = circularBuffer.popData(inputTupleSize);
+                auto tupleMemory = circularBuffer.popData(std::span(backupBuffer.data(), backupBuffer.size()));
 
                 NES_TRACE("TCPSOURCE::fillBuffer: Successfully prepared tuples? '{}'", popped);
                 //if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
                 if (inputTupleSize != 0 && popped) {
                     std::string_view sv(tupleMemory.data(), tupleMemory.size());
                     auto iss = boost::iostreams::stream<boost::iostreams::array_source>(sv.data(), sv.size());
-                    NES_DEBUG("TCPSOURCE::fillBuffer: Client consume message: '{}'.", sv.substr(0, sv.size() - 1));
+                    // NES_DEBUG("TCPSOURCE::fillBuffer: Client consume message: '{}'.", sv.substr(0, sv.size() - 1));
                     tupleCount += parseCSVIntoBuffer(iss, tupleBuffer);
                 } else {
                     break;
@@ -230,6 +234,7 @@ class TCPSource : public DataSource<TCPConfig> {
     uint64_t tuplesThisPass;
     int sockfd = -1;
     CircularBuffer circularBuffer;
+    std::vector<char> backupBuffer;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SOURCES_TCPSOURCE_HPP_
