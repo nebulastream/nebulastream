@@ -31,7 +31,7 @@ SET(UNIKERNEL_CONFIGURATION_FILE /home/ls/DIMA/nebulastream/cmake-build-unikerne
 
 add_executable(unikernel src/main.cpp)
 set_target_properties(unikernel PROPERTIES OUTPUT_NAME "unikernel${UNIKERNEL_WORKER_ID}")
-target_compile_options(unikernel PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline.h")
+target_compile_options(unikernel PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline${UNIKERNEL_WORKER_ID}.hpp")
 
 target_link_options(unikernel PRIVATE ${UNIKERNEL_LINK_OPTIONS})
 file(GLOB OPERATOR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/operators/*.o)
