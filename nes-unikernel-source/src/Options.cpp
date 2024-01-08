@@ -119,10 +119,11 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        downstream.partitionId,
                        downstream.subpartitionId,
                        schema,
+                       source.delayInMS.value_or(0),
                        source.type};
     } else if (source.type == TcpSource) {
 
-        return Options{0, 0, 0, 0, 0, source.ip, source.port, "", 0, 0, 0, 0, 0, schema, source.type};
+        return Options{0, 0, 0, 0, 0, source.ip, source.port, "", 0, 0, 0, 0, 0, schema, source.delayInMS.value_or(0), source.type};
     } else {
         NES_NOT_IMPLEMENTED();
     }

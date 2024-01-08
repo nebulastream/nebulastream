@@ -26,6 +26,7 @@ struct Options {
     NES::PartitionId partitionId;
     NES::SubpartitionId subPartitionId;
     NES::SchemaPtr schema;
+    size_t delayInMS;
     SourceType type;
 
     using Result = boost::outcome_v2::result<Options, std::string>;

@@ -23,7 +23,21 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <queue>
+#include <type_traits>
 #include <yaml-cpp/yaml.h>
+
+#define UNIKERNEL_MODEL_YAML_ENCODE_OPT(field)                                                                                   \
+    do {                                                                                                                         \
+        if (rhs.field.has_value()) {                                                                                             \
+            node[#field] = *rhs.field;                                                                                           \
+        }                                                                                                                        \
+    } while (0)
+#define UNIKERNEL_MODEL_YAML_DECODE_OPT(field)                                                                                   \
+    do {                                                                                                                         \
+        if (node[#field]) {                                                                                                      \
+            rhs.field.emplace(node[#field].as<std::decay_t<decltype(rhs.field.value())>>());                                     \
+        }                                                                                                                        \
+    } while (0)
 
 #define UNIKERNEL_MODEL_YAML_DECODE(field) rhs.field = node[#field].as<decltype(rhs.field)>()
 #define UNIKERNEL_MODEL_YAML_ENCODE(field) node[#field] = rhs.field
@@ -154,6 +168,7 @@ struct SourceEndpointConfiguration {
     uint32_t port;
     NES::NodeId nodeId;
     NES::OriginId originId;
+    std::optional<size_t> delayInMS;
     SourceType type;
 };
 
@@ -165,6 +180,7 @@ struct convert<SourceEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(schema);
         UNIKERNEL_MODEL_YAML_ENCODE(ip);
         UNIKERNEL_MODEL_YAML_ENCODE(port);
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(delayInMS);
         node["type"] = std::string(magic_enum::enum_name(rhs.type));
 
         if (rhs.type == NetworkSource) {
@@ -180,6 +196,7 @@ struct convert<SourceEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(ip);
         UNIKERNEL_MODEL_YAML_DECODE(schema);
         UNIKERNEL_MODEL_YAML_DECODE(port);
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(delayInMS);
         rhs.type = magic_enum::enum_cast<SourceType>(node["type"].as<std::string>()).value();
 
         if (rhs.type == NetworkSource) {
