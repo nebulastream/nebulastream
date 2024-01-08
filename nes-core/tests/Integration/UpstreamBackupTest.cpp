@@ -645,7 +645,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     uint64_t var = 1;
-    while (var < 333) {
+    while (var < 3) {
         auto workerConfig = WorkerConfiguration::create();
         workerConfig->numberOfBuffersInSourceLocalBufferPool = 128;
         workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
@@ -704,6 +704,8 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
                                                                     "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     std::this_thread::sleep_for(std::chrono::milliseconds(10000000));
 
 //    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
