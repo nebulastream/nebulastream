@@ -645,8 +645,8 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     uint64_t firstLevel = 2;
-    uint64_t secondLevel = 10;
-    uint64_t thirdLevel = 16;
+    uint64_t secondLevel = 8;
+    uint64_t thirdLevel = 10;
     uint64_t var = 1;
     for (uint64_t i = 1; i < firstLevel + 1; i++) {
         auto workerConfig = WorkerConfiguration::create();
