@@ -704,7 +704,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
                                                                     "BottomUp");
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000000));
 
 //    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 }
