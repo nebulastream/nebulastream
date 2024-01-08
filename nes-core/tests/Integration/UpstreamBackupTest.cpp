@@ -644,9 +644,9 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    uint64_t firstLevel = 2;
-    uint64_t secondLevel = 8;
-    uint64_t thirdLevel = 10;
+    uint64_t firstLevel = 100;
+    uint64_t secondLevel = 2;
+//    uint64_t thirdLevel = 10;
     uint64_t var = 1;
     for (uint64_t i = 1; i < firstLevel + 1; i++) {
         auto workerConfig = WorkerConfiguration::create();
@@ -655,7 +655,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfBuffersToProduce = 5000000;
         workerConfig->sourceGatheringInterval = 100;
-        workerConfig->numWorkerThreads = 1;
+        workerConfig->numWorkerThreads = 4;
         workerConfig->numberOfBuffersPerEpoch = 4;
         workerConfig->bufferSizeInBytes = 131072;
         workerConfig->numberOfSlots = 20;
@@ -670,39 +670,39 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
         EXPECT_TRUE(retStart);
         NES_INFO("UpstreamBackupTest: Worker" << var << "started successfully");
         var++;
-        for (uint64_t l = 1; l < secondLevel + 1; l++) {
-            auto workerConfig = WorkerConfiguration::create();
-            workerConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
-            workerConfig->numberOfBuffersInGlobalBufferManager = 8198;
-            workerConfig->coordinatorPort = *rpcCoordinatorPort;
-            workerConfig->numberOfBuffersToProduce = 5000000;
-            workerConfig->sourceGatheringInterval = 100;
-            workerConfig->numWorkerThreads = 1;
-            workerConfig->numberOfBuffersPerEpoch = 4;
-            workerConfig->bufferSizeInBytes = 131072;
-            workerConfig->numberOfSlots = 20;
-            workerConfig->memoryCapacity = 350;
-            workerConfig->networkCapacity = 100;
-            workerConfig->mtbfValue = 55000;
-            workerConfig->launchTime = 1652692028;
-            workerConfig->ingestionRate = 900;
+//        for (uint64_t l = 1; l < secondLevel + 1; l++) {
+//            auto workerConfig = WorkerConfiguration::create();
+//            workerConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
+//            workerConfig->numberOfBuffersInGlobalBufferManager = 8198;
+//            workerConfig->coordinatorPort = *rpcCoordinatorPort;
+//            workerConfig->numberOfBuffersToProduce = 5000000;
+//            workerConfig->sourceGatheringInterval = 100;
+//            workerConfig->numWorkerThreads = 4;
+//            workerConfig->numberOfBuffersPerEpoch = 4;
+//            workerConfig->bufferSizeInBytes = 131072;
+//            workerConfig->numberOfSlots = 20;
+//            workerConfig->memoryCapacity = 350;
+//            workerConfig->networkCapacity = 100;
+//            workerConfig->mtbfValue = 55000;
+//            workerConfig->launchTime = 1652692028;
+//            workerConfig->ingestionRate = 900;
+//
+//            NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
+//            bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+//            EXPECT_TRUE(retStart);
+//            NES_INFO("UpstreamBackupTest: Worker" << var << "started successfully");
+//            crd->getTopologyManagerService()->removeParent(var + (l - 1) * thirdLevel + l, 1);
+//            crd->getTopologyManagerService()->addParent(var + (l - 1) * thirdLevel + l, var);
 
-            NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
-            bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-            EXPECT_TRUE(retStart);
-            NES_INFO("UpstreamBackupTest: Worker" << var << "started successfully");
-            crd->getTopologyManagerService()->removeParent(var + (l - 1) * thirdLevel + l, 1);
-            crd->getTopologyManagerService()->addParent(var + (l - 1) * thirdLevel + l, var);
 
-
-            for (uint64_t k = 1; k < thirdLevel + 1; k++) {
+            for (uint64_t k = 1; k < secondLevel + 1; k++) {
                 auto workerConfig1 = WorkerConfiguration::create();
                 workerConfig1->numberOfBuffersInSourceLocalBufferPool = 1024;
                 workerConfig1->numberOfBuffersInGlobalBufferManager = 8198;
                 workerConfig1->coordinatorPort = *rpcCoordinatorPort;
                 workerConfig1->numberOfBuffersToProduce = 5000000;
                 workerConfig1->sourceGatheringInterval = 100;
-                workerConfig1->numWorkerThreads = 1;
+                workerConfig1->numWorkerThreads = 4;
                 workerConfig1->numberOfBuffersPerEpoch = 4;
                 workerConfig1->bufferSizeInBytes = 131072;
                 workerConfig1->numberOfSlots = 20;
@@ -712,18 +712,18 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
                 workerConfig1->launchTime = 1652692028;
                 workerConfig1->ingestionRate = 900;
 
-                auto physicalSource1 = PhysicalSource::create("A", "A" + to_string(l), lambdaSourceType1);
+                auto physicalSource1 = PhysicalSource::create("A", "A" + to_string(var + k), lambdaSourceType1);
                 workerConfig1->physicalSources.add(physicalSource1);
                 NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
                 bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
                 EXPECT_TRUE(retStart1);
                 NES_INFO("UpstreamBackupTest: Worker" << var << " started successfully");
 
-                crd->getTopologyManagerService()->removeParent(var + (l - 1) * thirdLevel + k + l, 1);
-                crd->getTopologyManagerService()->addParent(var + (l - 1) * thirdLevel + k + l, var + (l - 1) * thirdLevel + l);
+                crd->getTopologyManagerService()->removeParent(var + k, 1);
+                crd->getTopologyManagerService()->addParent(var + k, var);
             }
-        }
-        var += (secondLevel) * (thirdLevel + 1);
+//        }
+        var += secondLevel;
     }
     std::cout << "numberOfNodes" << var;
 
