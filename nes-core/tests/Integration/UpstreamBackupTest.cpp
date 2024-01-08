@@ -645,7 +645,7 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     uint64_t var = 1;
-    while (var < 3) {
+    while (var < 33) {
         auto workerConfig = WorkerConfiguration::create();
         workerConfig->numberOfBuffersInSourceLocalBufferPool = 128;
         workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
