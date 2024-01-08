@@ -74,25 +74,25 @@ class UnikernelPipelineExecutionContext {
         }
     }
     void dispatchBuffer(NES::Runtime::TupleBuffer& tb) const {
-        NES_INFO("Dispatching to {}", nextStageId);
+        NES_TRACE("Dispatching to {}", nextStageId);
 
-        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(NES::LogLevel::LOG_DEBUG)) {
+        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(NES::LogLevel::LOG_TRACE)) {
             auto buffer = tb.getBuffer();
             std::stringstream ss;
             printHexBuffer(buffer, 32, ss);
-            NES_DEBUG("Buffer Content: \n{}", ss.str());
+            NES_TRACE("Buffer Content: \n{}", ss.str());
         }
 
         emitProxy(tb);
     }
     void emit(NES::Runtime::TupleBuffer& tb) const {
-        NES_INFO("Emitting to {}", nextStageId);
+        NES_TRACE("Emitting to {}", nextStageId);
 
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(NES::LogLevel::LOG_DEBUG)) {
             auto buffer = tb.getBuffer();
             std::stringstream ss;
             printHexBuffer(buffer, 32, ss);
-            NES_DEBUG("Buffer Content: \n{}", ss.str());
+            NES_TRACE("Buffer Content: \n{}", ss.str());
         }
 
         emitProxy(tb);

@@ -40,7 +40,7 @@ class UnikernelSourceImpl {
             source->bind();
             source->start();
         } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
-            NES_INFO("Calling Setup for KafkaSource");
+            NES_INFO("Calling Setup for TCPSource");
             UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
             source->start();
             source->runningRoutine();
