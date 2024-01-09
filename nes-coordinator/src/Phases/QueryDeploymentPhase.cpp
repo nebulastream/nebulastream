@@ -144,21 +144,22 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
+    //todo: remove this if the numbers of execution nodes do not match
     //remove subplans from global query plan if they were stopped due to migration
-    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
-    for (const auto& node : executionNodes) {
-        auto subPlans = node->getQuerySubPlans(sharedQueryId);
-        for (const auto& querySubPlan : subPlans) {
-            const auto subplanMetaData =
-                queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
-            auto subPlanStatus = subplanMetaData->getSubQueryStatus();
-            if (subPlanStatus == QueryState::MIGRATING) {
-                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlan->getQuerySubPlanId());
-                auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(querySubPlan);
-                node->getTopologyNode()->releaseSlots(resourceAmount);
-            }
-        }
-    }
+//    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
+//    for (const auto& node : executionNodes) {
+//        auto subPlans = node->getQuerySubPlans(sharedQueryId);
+//        for (const auto& querySubPlan : subPlans) {
+//            const auto subplanMetaData =
+//                queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
+//            auto subPlanStatus = subplanMetaData->getSubQueryStatus();
+//            if (subPlanStatus == QueryState::MIGRATING) {
+//                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlan->getQuerySubPlanId());
+//                auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(querySubPlan);
+//                node->getTopologyNode()->releaseSlots(resourceAmount);
+//            }
+//        }
+//    }
 
     NES_DEBUG("QueryService: start query");
     startQuery(sharedQueryId, executionNodes);

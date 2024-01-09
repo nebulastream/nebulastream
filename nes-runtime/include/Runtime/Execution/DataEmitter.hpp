@@ -59,7 +59,10 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     /**
      * @brief reconfigure with sink to perform an update of its version
      */
-    virtual void onVersionUpdate(Network::NetworkSourceDescriptor){};
+    //virtual void onVersionUpdate(Network::NetworkSourceDescriptor){};
+    virtual bool startNewVersion(){ return false; };
+
+    virtual bool scheduleNewDescriptor(const Network::NetworkSourceDescriptor&) { return false; }
 };
 }// namespace NES
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

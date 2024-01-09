@@ -62,5 +62,4 @@ uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 uint16_t NetworkSinkDescriptor::getVersion() const { return version; }
 
 OperatorId NetworkSinkDescriptor::getUniqueId() const { return uniqueNetworkSinkId; }
-
 }// namespace NES::Network

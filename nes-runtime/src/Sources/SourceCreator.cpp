@@ -322,7 +322,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   uint8_t retryTimes,
                                   const std::string& physicalSourceName,
                                   QuerySubPlanVersion version,
-                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors, OperatorId uniqueNetworkSourceId) {
     return std::make_shared<Network::NetworkSource>(schema,
                                                     bufferManager,
                                                     queryManager,
@@ -334,6 +334,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     retryTimes,
                                                     successors,
                                                     version,
+                                                    uniqueNetworkSourceId,
                                                     physicalSourceName);
 }
 

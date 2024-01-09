@@ -690,7 +690,10 @@ bool NodeEngine::reconfigureSubPlan(const QueryPlanPtr& reconfiguredQueryPlan) {
                 auto reconfiguredNetworkSourceDescriptor =
                     std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
                 //todo #4449: perform reconfiguration through source
-                partitionManager->addNextVersion(*reconfiguredNetworkSourceDescriptor);
+                //partitionManager->addNextVersion(*reconfiguredNetworkSourceDescriptor);
+                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
+                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
+                }
             }
         }
     }

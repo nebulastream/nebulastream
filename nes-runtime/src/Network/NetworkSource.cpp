@@ -38,6 +38,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              uint8_t retryTimes,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                              QuerySubPlanVersion version,
+                             uint64_t uniqueNetworkSourceIdentifier,
                              const std::string& physicalSourceName)
 
     : DataSource(std::move(schema),
@@ -50,7 +51,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  physicalSourceName,
                  std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)),
-      waitTime(waitTime), retryTimes(retryTimes), version(version) {
+      waitTime(waitTime), retryTimes(retryTimes), version(version), uniqueNetworkSourceIdentifier(uniqueNetworkSourceIdentifier) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
 }
 
@@ -163,6 +164,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                       nesPartition.toString(),
                       Runtime::NesThread::getId());
             //there is not break here because the code for initialized is supposed to be executed after the old channel was released
+            //todo: register consumer here
         }
         case Runtime::ReconfigurationType::Initialize: {
             // we need to check again because between the invocations of
@@ -173,11 +175,14 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             }
 
             //todo #4441: enable asynchronous registration of event channels
+            auto retryTimesOverride = 1u;
+            (void) retryTimes;
             auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
                                                                              nesPartition,
                                                                              localBufferManager,
                                                                              waitTime,
-                                                                             retryTimes);
+                                                                             retryTimesOverride);
+                                                                             //retryTimes);
             if (channel == nullptr) {
                 NES_DEBUG("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
                           nesPartition.toString(),
@@ -273,15 +278,23 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
-void NetworkSource::onVersionUpdate(NetworkSourceDescriptor newDescriptor) {
+bool NetworkSource::startNewVersion() {
     NES_DEBUG("Updating version for network source {}", nesPartition);
+    if (!nextSourceDescriptor) {
+        return false;
+    }
+    auto newDescriptor = nextSourceDescriptor.value();
     version = newDescriptor.getVersion();
     sinkLocation = newDescriptor.getNodeLocation();
+    nesPartition = newDescriptor.getNesPartition();
+    //bind the sink to the new partition
+    bind();
     auto reconfMessage = Runtime::ReconfigurationMessage(-1,
                                                          -1,
                                                          Runtime::ReconfigurationType::UpdateVersion,
                                                          Runtime::Reconfigurable::shared_from_this());
     queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+    return true;
 }
 
 QuerySubPlanVersion NetworkSource::getVersion() const { return version; }
@@ -294,4 +307,13 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
     }
 }
 
+OperatorId NetworkSource::getUniqueId() const { return uniqueNetworkSourceIdentifier; }
+
+bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
+    if (nesPartition != networkSourceDescriptor.getNesPartition()) {
+        nextSourceDescriptor = networkSourceDescriptor;
+        return true;
+    }
+    return false;
+}
 }// namespace NES::Network

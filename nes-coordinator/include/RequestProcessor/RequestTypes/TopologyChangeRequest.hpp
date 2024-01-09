@@ -14,7 +14,7 @@
 #ifndef NES_TOPOLOGYCHANGEREQUEST_HPP
 #define NES_TOPOLOGYCHANGEREQUEST_HPP
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 
 namespace NES {
 class GlobalExecutionPlan;
@@ -30,17 +30,23 @@ namespace RequestProcessor::Experimental {
 class TopologyChangeRequest;
 using TopologyChangeRequestPtr = std::shared_ptr<TopologyChangeRequest>;
 
-class TopologyChangeRequest : public AbstractRequest {
+class TopologyChangeRequest : public AbstractUniRequest {
   public:
     TopologyChangeRequest(uint8_t maxRetries,
                           TopologyPtr topology,
                           GlobalQueryPlanPtr globalQueryPlan,
                           GlobalExecutionPlanPtr globalExecutionPlan);
 
-    TopologyChangeRequestPtr create();
+    TopologyChangeRequest(std::vector<std::pair<WorkerId, WorkerId>> removedLinks,
+                          std::vector<std::pair<WorkerId, WorkerId>> addedLinks,
+                          uint8_t maxRetries);
+
+    static TopologyChangeRequestPtr create(std::vector<std::pair<WorkerId, WorkerId>> removedLinks,
+                                           std::vector<std::pair<WorkerId, WorkerId>> addedLinks,
+                                           uint8_t maxRetries);
 
     std::vector<AbstractRequestPtr>
-    executeRequestLogic(const NES::RequestProcessor::Experimental::StorageHandlerPtr& storageHandle) override;
+    executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) override;
 
     void processRemoveTopologyLinkRequest(unsigned long upstreamNodeId, unsigned long downstreamNodeId);
 
@@ -101,6 +107,12 @@ class TopologyChangeRequest : public AbstractRequest {
     TopologyPtr topology;
     GlobalQueryPlanPtr globalQueryPlan;
     GlobalExecutionPlanPtr globalExecutionPlan;
+    std::vector<std::pair<WorkerId, WorkerId>> removedLinks;
+    std::vector<std::pair<WorkerId, WorkerId>> addedLinks;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    QueryCatalogServicePtr queryCatalogService;
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

@@ -202,12 +202,6 @@ class NetworkManager {
      */
     uint16_t getServerDataPort() const;
 
-    /**
-     * @brief update the version number and reset the recorded number of disconnects that have occurred for the partition
-     * @return true if a pending version was found and was set as the current version, false otherwise
-     */
-    bool startNewVersion(NesPartition partition);
-
   private:
     NodeLocation nodeLocation;
     ZmqServerPtr server;

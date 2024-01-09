@@ -229,6 +229,7 @@ message SerializableOperator{
       uint64 waitTime = 4;
       uint32 retryTimes = 5;
       uint32 version = 6;
+      uint64 uniqueId = 7;
     }
 
     message SerializableMaterializedViewSourceDescriptor {

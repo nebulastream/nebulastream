@@ -553,6 +553,9 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                 }
 
                 auto originalCopiedOperator = operatorIdToCopiedOperatorMap[candidateOperator->getId()];
+                //todo: test this logic
+                //auto upstreamNonSystemOperatorId = candidateOperator->getId();
+                auto downStreamNonSystemOperatorId = candidateOperator->getId();
 
                 // 5. For each candidate operator not in the state "Placed" find the topology node hosting the immediate
                 // upstream logical operators.
@@ -561,6 +564,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                     // 6. Fetch the id of the topology node hosting the upstream operator to connect.
                     const auto& upstreamOperatorToConnect = upstreamOperator->as<LogicalOperatorNode>();
                     auto upstreamWorkerId = std::any_cast<WorkerId>(upstreamOperatorToConnect->getProperty(PINNED_WORKER_ID));
+                    //auto downStreamNonSystemOperatorId = upstreamOperatorToConnect->getId();
+                    auto upstreamNonSystemOperatorId = upstreamOperatorToConnect->getId();
 
                     // 7. If both operators are co-located we do not need to add network source or sink
                     if (workerId == upstreamWorkerId) {
@@ -612,6 +617,9 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                                                                                  topologyNodesBetween[pathIndex + 1]);
 
                             // 14. Find the upstream operator to connect in the matched query sub plan
+                            //set properties on new sink
+                            networkSinkOperator->addProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID, upstreamNonSystemOperatorId);
+                            networkSinkOperator->addProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID, downStreamNonSystemOperatorId);
                             operatorToConnectInMatchedPlan =
                                 querySubPlanWithUpstreamOperator->getOperatorWithId(upstreamOperatorToConnect->getId());
                             operatorToConnectInMatchedPlan->addParent(networkSinkOperator);
@@ -630,6 +638,10 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                                                                                      networkSourceOperatorId,
                                                                                      topologyNodesBetween[pathIndex - 1]);
                             candidateOperator->addChild(networkSourceOperator);
+
+                            //set properties on new source
+                            networkSourceOperator->addProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID, upstreamNonSystemOperatorId);
+                            networkSourceOperator->addProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID, downStreamNonSystemOperatorId);
                             break;
                         } else {
                             // 12. Compute a network source sink plan.
@@ -747,8 +759,45 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                         // Add all newly computed pinned downstream operators to the matching placed leaf operator
                                         auto pinnedDownstreamOperators = pinnedLeafOperator->getParents();
                                         for (const auto& pinnedDownstreamOperator : pinnedDownstreamOperators) {
-                                            pinnedDownstreamOperator->removeChild(pinnedLeafOperator);
-                                            pinnedDownstreamOperator->addChild(matchingPlacedLeafOperator);
+                                            //todo: remove here
+                                            bool replacedOperator = false;
+                                            for (const auto& existingParent : matchingPlacedLeafOperator->getParents()) {
+                                                //todo: additional checks not necessary?
+                                                auto existingParentOperatorNode = existingParent->as<LogicalOperatorNode>();
+                                                auto newOperatorNode = pinnedDownstreamOperator->as<LogicalOperatorNode>();
+                                                if (existingParentOperatorNode->hasProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID)
+                                                    && newOperatorNode->hasProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID)
+                                                    && std::any_cast<OperatorId>(existingParentOperatorNode->getProperty(
+                                                           DOWNSTREAM_NON_SYSTEM_OPERATOR_ID))
+                                                        == std::any_cast<OperatorId>(
+                                                            newOperatorNode->getProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID))) {
+                                                    auto newNetworkSinkDescriptor =
+                                                        std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(
+                                                            pinnedDownstreamOperator->as<SinkLogicalOperatorNode>()
+                                                                ->getSinkDescriptor());
+                                                    auto existingNetworkSink =
+                                                        existingParentOperatorNode->as<SinkLogicalOperatorNode>();
+                                                    auto existingNetworkSinkDescriptor =
+                                                        std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(
+                                                            existingNetworkSink->getSinkDescriptor());
+                                                    auto mergedNetworkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+                                                        newNetworkSinkDescriptor->getNodeLocation(),
+                                                        newNetworkSinkDescriptor->getNesPartition(),
+                                                        SINK_RETRY_WAIT,
+                                                        SINK_RETRIES,
+                                                        querySubPlanVersion,
+                                                        newNetworkSinkDescriptor->getNumberOfOrigins(),
+                                                        existingNetworkSinkDescriptor->getUniqueId());
+                                                    existingNetworkSink->setSinkDescriptor(mergedNetworkSinkDescriptor);
+                                                    computedQuerySubPlan->removeAsRootOperator(newOperatorNode);
+                                                    replacedOperator = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (!replacedOperator) {
+                                                pinnedDownstreamOperator->removeChild(pinnedLeafOperator);
+                                                pinnedDownstreamOperator->addChild(matchingPlacedLeafOperator);
+                                            }
                                         }
                                         hostQuerySubPlans.emplace(placedQuerySubPlan);
                                         foundHostQuerySubPlan = true;
@@ -811,7 +860,43 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                     if (matchingPinnedRootOperator) {
                                         // Add all newly computed downstream operators to matching placed leaf operator
                                         for (const auto& upstreamOperator : pinnedRootOperator->getChildren()) {
-                                            matchingPinnedRootOperator->addChild(upstreamOperator);
+                                            bool replacedOperator = false;
+                                            for (const auto& existingChild : matchingPinnedRootOperator->getChildren()) {
+                                                auto existingChildOperatorNode = existingChild->as<LogicalOperatorNode>();
+                                                auto newOperatorNode = upstreamOperator->as<LogicalOperatorNode>();
+                                                if (existingChildOperatorNode->hasProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID)
+                                                    && newOperatorNode->hasProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID)
+                                                    && std::any_cast<OperatorId>(existingChildOperatorNode->getProperty(
+                                                           UPSTREAM_NON_SYSTEM_OPERATOR_ID))
+                                                        == std::any_cast<OperatorId>(
+                                                            newOperatorNode->getProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID))) {
+                                                    auto newNetworkSourceDescriptor =
+                                                        std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(
+                                                            upstreamOperator->as<SourceLogicalOperatorNode>()
+                                                                ->getSourceDescriptor());
+                                                    auto existingNetworkSourceDescriptor =
+                                                        std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(
+                                                            existingChildOperatorNode->as<SourceLogicalOperatorNode>()
+                                                                ->getSourceDescriptor());
+                                                    auto existingNetworkSource =
+                                                        existingChildOperatorNode->as<SourceLogicalOperatorNode>();
+                                                    auto mergedNetworkSourceDescriptor = Network::NetworkSourceDescriptor::create(
+                                                        newNetworkSourceDescriptor->getSchema(),
+                                                        newNetworkSourceDescriptor->getNesPartition(),
+                                                        newNetworkSourceDescriptor->getNodeLocation(),
+                                                        SOURCE_RETRY_WAIT,
+                                                        SOURCE_RETRIES,
+                                                        querySubPlanVersion,
+                                                        existingNetworkSourceDescriptor->getUniqueId()); //todo: add unique identifier form old version
+                                                    existingNetworkSource->setSourceDescriptor(mergedNetworkSourceDescriptor);
+                                                    pinnedRootOperator->removeChild(newOperatorNode);
+                                                    replacedOperator = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (!replacedOperator) {
+                                                matchingPinnedRootOperator->addChild(upstreamOperator);
+                                            }
                                         }
                                         hostQuerySubPlans.emplace(placedQuerySubPlan);
                                         foundHostQuerySubPlan = true;
@@ -965,7 +1050,8 @@ LogicalOperatorNodePtr BasePlacementAdditionStrategy::createNetworkSourceOperato
                                                                                                   upstreamNodeLocation,
                                                                                                   SOURCE_RETRY_WAIT,
                                                                                                   SOURCE_RETRIES,
-                                                                                                  0);
+                                                                                                  0,
+                                                                                                  operatorId);
     return LogicalOperatorFactory::createSourceOperator(networkSourceDescriptor, operatorId);
 }
 
