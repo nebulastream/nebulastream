@@ -36,7 +36,7 @@ class NesThread {
     /// If the table runs out of entries, then the current implementation will throw a
     /// std::runtime_error.
     /// do not change this value
-    static constexpr uint64_t MaxNumThreads = 32768;
+    static constexpr uint64_t MaxNumThreads = 131072;
 
   private:
     /// Encapsulates a thread ID, getting a free ID from the Thread class when the thread starts, and
