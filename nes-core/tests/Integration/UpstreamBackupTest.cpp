@@ -114,7 +114,8 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
         coordinatorConfig->numWorkerThreads = 1;
-        coordinatorConfig->bufferSizeInBytes = 131072;
+        coordinatorConfig->numberOfBuffersPerEpoch = 100;
+        coordinatorConfig->bufferSizeInBytes = 256;
         coordinatorConfig->numberOfSlots = 20;
         coordinatorConfig->memoryCapacity = 0;
         coordinatorConfig->networkCapacity = 0;
@@ -653,8 +654,8 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
         workerConfig->numberOfBuffersToProduce = 5000000;
         workerConfig->sourceGatheringInterval = 100;
         workerConfig->numWorkerThreads = 1;
-        workerConfig->numberOfBuffersPerEpoch = 4;
-        workerConfig->bufferSizeInBytes = 131072;
+        workerConfig->numberOfBuffersPerEpoch = 100;
+        workerConfig->bufferSizeInBytes = 256;
         workerConfig->numberOfSlots = 20;
         workerConfig->memoryCapacity = 350;
         workerConfig->networkCapacity = 100;
@@ -675,8 +676,8 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
             workerConfig1->numberOfBuffersToProduce = 5000000;
             workerConfig1->sourceGatheringInterval = 100;
             workerConfig1->numWorkerThreads = 1;
-            workerConfig1->numberOfBuffersPerEpoch = 4;
-            workerConfig1->bufferSizeInBytes = 131072;
+            workerConfig1->numberOfBuffersPerEpoch = 100;
+            workerConfig1->bufferSizeInBytes = 256;
             workerConfig1->numberOfSlots = 20;
             workerConfig1->memoryCapacity = 350;
             workerConfig1->networkCapacity = 100;
