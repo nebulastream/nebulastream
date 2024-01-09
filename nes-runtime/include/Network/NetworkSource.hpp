@@ -58,6 +58,7 @@ class NetworkSource : public DataSource {
                   uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                   DecomposedQueryPlanVersion version,
+                  uint64_t uniqueNetworkSourceIdentifier,
                   const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**
@@ -141,13 +142,24 @@ class NetworkSource : public DataSource {
      * @brief Reconfigures this sink with ReconfigurationType::UpdateVersion causing it to close event channels to the old
      * upstream sink and open channels to the new one
      */
-    void onVersionUpdate(NetworkSourceDescriptor newDescriptor) override;
+    //void onVersionUpdate(NetworkSourceDescriptor newDescriptor) override;
+
+    bool startNewVersion() override;
 
     /**
     * @brief Getter for the initial version.
     * @return The version this source was started with
     */
     DecomposedQueryPlanVersion getVersion() const override;
+
+    /**
+     * @brief getter for the network sinks unique id
+     * @return the unique id
+     */
+    OperatorId getUniqueId() const;
+
+
+    bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) override;
 
     bool bind();
 
@@ -161,6 +173,8 @@ class NetworkSource : public DataSource {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
+    uint64_t uniqueNetworkSourceIdentifier;
+    std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
 };
 
 }// namespace NES::Network

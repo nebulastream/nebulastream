@@ -27,6 +27,8 @@ const std::string CO_LOCATED_UPSTREAM_OPERATORS =
     "CO_LOCATED_UPSTREAM_OPERATORS";// Property indicating if operator was processed for placement
 const std::string CONNECTED_SYS_SUB_PLAN_DETAILS =
     "CONNECTED_SYS_SUB_PLAN_DETAILS";// Property describing the details of the connected downstream system generated sub plans locations and query sub plan ids
+const std::string UPSTREAM_NON_SYSTEM_OPERATOR_ID = "UPSTREAM_NON_SYSTEM_OPERATOR_ID"; // Property containing the id of the next upstream non system operator of a system generated operator
+const std::string DOWNSTREAM_NON_SYSTEM_OPERATOR_ID = "DOWNSTREAM_NON_SYSTEM_OPERATOR_ID"; // Property containing the id of the next downstream non system operator of a system generated operator
 }// namespace NES::Optimizer
 
 #endif//NES_PLACEMENTCONSTANTS_HPP

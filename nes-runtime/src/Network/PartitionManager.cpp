@@ -37,32 +37,11 @@ void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; }
 
 void PartitionManager::PartitionConsumerEntry::unpin() {
     partitionCounter--;
-    disconnectCount++;
 }
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
 DecomposedQueryPlanVersion PartitionManager::PartitionConsumerEntry::getVersion() { return consumer->getVersion(); }
-
-uint64_t PartitionManager::PartitionConsumerEntry::getDisconnectCount() const { return disconnectCount; }
-
-bool PartitionManager::PartitionConsumerEntry::startNewVersion() {
-    if (!nextSourceDescriptor.has_value()) {
-        return false;
-    }
-    consumer->onVersionUpdate(nextSourceDescriptor.value());
-    nextSourceDescriptor = std::nullopt;
-    disconnectCount = 0;
-    return true;
-}
-
-bool PartitionManager::PartitionConsumerEntry::addNextVersion(const NetworkSourceDescriptor& nextNetworkSourceDescriptor) {
-    if (nextNetworkSourceDescriptor.getVersion() == consumer->getVersion()) {
-        return false;
-    }
-    this->nextSourceDescriptor = nextNetworkSourceDescriptor;
-    return true;
-}
 
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
     : receiverLocation(std::move(senderLocation)) {
@@ -140,22 +119,6 @@ std::optional<uint64_t> PartitionManager::getSubpartitionConsumerCounter(NesPart
     return std::nullopt;
 }
 
-std::optional<uint64_t> PartitionManager::getSubpartitionConsumerDisconnectCount(NesPartition partition) {
-    std::unique_lock lock(consumerPartitionsMutex);
-    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        return it->second.getDisconnectCount();
-    }
-    return std::nullopt;
-}
-
-bool PartitionManager::startNewVersion(NesPartition partition) {
-    std::unique_lock lock(consumerPartitionsMutex);
-    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        return it->second.startNewVersion();
-    }
-    return false;
-}
-
 DecomposedQueryPlanVersion PartitionManager::getVersion(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
@@ -163,13 +126,6 @@ DecomposedQueryPlanVersion PartitionManager::getVersion(NesPartition partition) 
     }
     NES_ASSERT(false, "Trying to check version of inexistent partition");
     return false;
-}
-
-void PartitionManager::addNextVersion(const NetworkSourceDescriptor& nextNetworkSourceDescriptor) {
-    std::unique_lock lock(consumerPartitionsMutex);
-    if (auto it = consumerPartitions.find(nextNetworkSourceDescriptor.getNesPartition()); it != consumerPartitions.end()) {
-        it->second.addNextVersion(nextNetworkSourceDescriptor);
-    }
 }
 
 DataEmitterPtr PartitionManager::getDataEmitter(NesPartition partition) {

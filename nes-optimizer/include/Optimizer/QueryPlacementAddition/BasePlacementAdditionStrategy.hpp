@@ -17,6 +17,7 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/CopiedPinnedOperators.hpp>
 #include <Util/Placement/PlacementConstants.hpp>

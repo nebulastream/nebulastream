@@ -149,12 +149,14 @@ TEST_F(FindQueryDeltaTest, testFindUpstreamNetworkSource) {
     auto plan1 = DecomposedQueryPlan::create(sharedQueryId, planId1);
     auto sinkLocationWrk2 = NES::Network::NodeLocation(worker2Id, "localhost", 124);
     auto networkSourceWrk1Partition = NES::Network::NesPartition(sharedQueryId, sourceId1, 0, 0);
+    auto uniqueId = 1;
     auto networkSourceDescriptorWrk1 = Network::NetworkSourceDescriptor::create(schema,
                                                                                 networkSourceWrk1Partition,
                                                                                 sinkLocationWrk2,
                                                                                 WAIT_TIME,
                                                                                 EVENT_CHANNEL_RETRY_TIMES,
-                                                                                version);
+                                                                                version, uniqueId);
+    uniqueId++;
     auto sourceOperatorNodeWrk1 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk1, sourceId1);
     plan1->addRootOperator(sourceOperatorNodeWrk1);
     executionNode1->registerNewDecomposedQueryPlan(sharedQueryId, plan1);
@@ -316,12 +318,14 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
     auto nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, 0, 0);
     //networkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema, Network::NesPartition(sharedQueryId, operatorId, 0, 0), Network::NodeLocation(2, workerAddress, dataPort), WAIT_TIME, EVENT_CHANNEL_RETRY_TIMES, version);
     auto networkSinkHostWorkerId = 2;
+    auto uniqueId = 1;
     networkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
                                                                        nesPartition,
                                                                        Network::NodeLocation(networkSinkHostWorkerId, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version);
+                                                                       version, uniqueId);
+    uniqueId++;
     sourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
     fileSinkOperatorNode->addChild(sourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(1)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
@@ -353,7 +357,8 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
                                                                        Network::NodeLocation(3, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version);
+                                                                       version, uniqueId);
+    uniqueId++;
     sourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
     unaryOperatorNode->addChild(sourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(2)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
@@ -393,7 +398,8 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
                                                                        Network::NodeLocation(6, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version);
+                                                                       version, uniqueId);
+    uniqueId++;
     auto leftsourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
     binaryOperatorNode->addChild(leftsourceLogicalOperatorNode);
     //network source right
@@ -404,7 +410,8 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
                                                                        Network::NodeLocation(6, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version);
+                                                                       version, uniqueId);
+    uniqueId++;
     auto rightsourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
     binaryOperatorNode->addChild(rightsourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(3)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
@@ -429,7 +436,8 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
                                                                        Network::NodeLocation(7, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version);
+                                                                       version, uniqueId);
+    uniqueId++;
     sourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
     sinkLogicalOperatorNode->addChild(sourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
@@ -476,7 +484,8 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
                                                                        Network::NodeLocation(8, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version);
+                                                                       version, uniqueId);
+    uniqueId++;
     sourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
     sinkLogicalOperatorNode->addChild(sourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
@@ -513,7 +522,8 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
                                                                        Network::NodeLocation(9, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version);
+                                                                       version, uniqueId);
+    uniqueId++;
     auto secondRightsourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
     binaryOperatorNode->addChild(secondRightsourceLogicalOperatorNode);
 

@@ -183,7 +183,7 @@ class QueryCatalogService {
      * @param querySubPlanStatus : the new status
      * @return true if successful else false
      */
-    bool checkAndMarkForMigration(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId, QueryState querySubPlanStatus);
+    bool checkAndMarkForMigration(SharedQueryId sharedQueryId, QueryState querySubPlanStatus);
   private:
     /**
      * Handle soft stop for sub query plans
