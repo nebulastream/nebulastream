@@ -18,7 +18,8 @@
 namespace NES::RequestProcessor {
 
 /**
- * @brief This class serves as the base class for all coordinator side request logic that is to executed serially.
+ * @brief This class serves as the base class for all coordinator side request logic that is to executed serially
+ * inside a single (uni) thread of execution.
  * Requests are queued into the async request processor and then picked up and executed by a thread
  */
 class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker {

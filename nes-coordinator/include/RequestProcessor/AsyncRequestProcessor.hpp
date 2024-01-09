@@ -30,8 +30,9 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 class AsyncRequestProcessor {
     //define an empty request type that does nothing and is used only for flushing the executor
     class FlushRequest : public AbstractUniRequest {
+        static constexpr auto NO_RETRIES = 0;
       public:
-        FlushRequest() : AbstractUniRequest({}, 0) {}
+        FlushRequest() : AbstractUniRequest({}, NO_RETRIES) {}
         std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override { return {}; }
         //request type uses exception_ptr so it can set the exception state on its response promise without casting or slicing
         std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }

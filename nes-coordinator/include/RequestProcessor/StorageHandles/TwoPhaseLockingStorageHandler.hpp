@@ -24,7 +24,7 @@ namespace NES::RequestProcessor {
 struct StorageDataStructures;
 using TicketId = uint16_t;
 
-static constexpr RequestId MAX_TICKET = std::numeric_limits<TicketId>::max();
+static constexpr TicketId MAX_TICKET = std::numeric_limits<TicketId>::max();
 /**
  * @brief Resource handles created by this class ensure that the resource has been locked in the growing phase and stay locked
  * until the handle goes out of scope.

@@ -37,7 +37,7 @@ CoordinatorConfigurationHandle StorageHandler::getCoordinatorConfiguration(Reque
 
 RequestId StorageHandler::generateRequestId() {
     std::unique_lock lock(idMutex);
-    RequestId requestId = nextFreeRequestId;
+    auto requestId = nextFreeRequestId;
     nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
     return requestId;
 }
