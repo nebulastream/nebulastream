@@ -11,7 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 add_subdirectory(Expressions)
 add_subdirectory(Operators)
 add_subdirectory(Aggregation)
 add_subdirectory(PipelineExecution)
+
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
+    add_nes_execution_test(nautilus-proxy-inlining-test "ProxyInliningCompilationTest.cpp")
+endif ()
