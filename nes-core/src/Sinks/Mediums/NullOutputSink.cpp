@@ -18,6 +18,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <sstream>
 #include <string>
+#include <iomanip>
 #include <sys/time.h>
 
 namespace NES {
