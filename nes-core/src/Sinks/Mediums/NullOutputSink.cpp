@@ -18,6 +18,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <sstream>
 #include <string>
+#include <sys/time.h>
 
 namespace NES {
 NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
