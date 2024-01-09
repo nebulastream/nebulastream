@@ -84,6 +84,7 @@ class NullOutputSink : public SinkMedium {
 
   private:
     std::shared_ptr<std::thread> trimmingThread;
+    std::ofstream statisticsFile;
 };
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
 }// namespace NES
