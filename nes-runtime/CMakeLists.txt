@@ -76,9 +76,11 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     target_link_libraries(nes-runtime PRIVATE nes-compiler)
 endif ()
 
+
 if (NES_USE_GPU)
     target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_CUDA})
 endif ()
+
 
 if (NES_USE_OPENCL)
     find_package(OpenCL REQUIRED)
@@ -94,43 +96,13 @@ if (NES_USE_OPENCL)
     endif ()
 endif (NES_USE_OPENCL)
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
-    message(STATUS "Enable dyncall")
 
-    # We use the dyncall lib to call arbitrary runtime function.
-    # Set the path to the dyncall directory
-    set(dyncall_dir "${CMAKE_CURRENT_BINARY_DIR}/lib/dyncall")
-
-    # Create the include directory for dyncall
-    file(MAKE_DIRECTORY ${dyncall_dir}/include)
-
-    # Download and build the external project
-    ExternalProject_Add(dyncallProject
-            GIT_REPOSITORY "https://github.com/nebulastream/dyncall"
-            GIT_TAG "origin/main"
-            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> # Specify installation directory
-            BUILD_IN_SOURCE true # Build the project in the source directory
-            BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a # Specify path to the library file that will be built
-            INSTALL_DIR ${dyncall_dir} # Install dyncall to the specified directory
-            UPDATE_DISCONNECTED 1
-    )
-
-    # Create a static imported library for the external project
-    add_library(dyncall STATIC IMPORTED)
-    add_dependencies(dyncall dyncallProject)
-
-    # Get the installation directory of the external project
-    ExternalProject_Get_Property(dyncallProject install_dir)
-
-    # Add the include directory of the external project to the interface of extLib
-    target_include_directories(dyncall INTERFACE ${install_dir}/include)
-
-    # Set the imported location of the external library to the installation directory
-    set_target_properties(dyncall PROPERTIES IMPORTED_LOCATION ${install_dir}/lib/libdyncall_s.a)
-
-    # Link the external library to nes-runtime
-    target_link_libraries(nes-runtime PRIVATE dyncall)
-
+if (NES_ENABLES_TESTS)
+    # Add tests with command
+    add_subdirectory(tests)
+    message(STATUS "Tests are enabled")
+else ()
+    message(STATUS "Tests are disabled")
 endif ()
 
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp Runtime/MemoryLayout/DynamicTupleBuffer.hpp)

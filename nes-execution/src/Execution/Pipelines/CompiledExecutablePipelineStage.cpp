@@ -92,6 +92,8 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     auto ir = createIR(dumpHelper, timer);
     auto executable = compiler->compile(ir, options, dumpHelper);
     timer.snapshot("Compilation");
+    // auto dumpContext = DumpContext::create("QueryCompilation-" + query);
+    // NES_DEBUG("Nautilus IR:\n {}", ir->toString());
     std::stringstream timerAsString;
     timerAsString << timer;
     NES_INFO("{}", timerAsString.str());

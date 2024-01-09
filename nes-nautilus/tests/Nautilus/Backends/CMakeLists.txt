@@ -11,4 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Execution)
+
+add_nes_execution_test(nautilus-backend-tests
+        "ExpressionCompilationTest.cpp"
+        "IfCompilationTest.cpp"
+        "LoopCompilationTest.cpp"
+        "MemoryAccessCompilationTest.cpp"
+        "TypeCompilationTest.cpp"
+        "FunctionCompilationTest.cpp")

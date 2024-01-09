@@ -38,8 +38,9 @@ add_library(nes-coordinator-test-util SHARED "src/Util/DummySink.cpp"
 target_include_directories(nes-coordinator-test-util PUBLIC "./include")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nes-coordinator-test-util PUBLIC nes-common nes-data-types nes-operators nes-grpc nes-catalogs nes-optimizer nes-compiler nes-runtime nes-test-util nes-client nes-worker nes-coordinator nes-configurations)
-target_link_libraries(nes-coordinator-test-util PUBLIC nes-operators-test-util nes-runtime-test-util)
+#Todo: remove nes-runtime?
+target_link_libraries(nes-coordinator-test-util PUBLIC nes-common nes-data-types nes-operators nes-grpc nes-catalogs nes-optimizer nes-compiler nes-runtime nes-test-util nes-client nes-worker nes-coordinator nes-configurations nes-execution nes-nautilus)
+target_link_libraries(nes-coordinator-test-util PUBLIC nes-operators-test-util nes-execution-test-util)
 target_link_libraries(nes-coordinator-test-util PUBLIC cpr::cpr )
 find_package(oatpp REQUIRED)
 target_link_libraries(nes-coordinator-test-util PUBLIC oatpp::oatpp oatpp::oatpp-test)

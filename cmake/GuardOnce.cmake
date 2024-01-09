@@ -57,6 +57,12 @@ macro(project_enable_fixguards)
             COMMAND python3 -m guardonce.guard2once -r nes-worker/include/
             COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-worker/include/
 
+            COMMAND python3 -m guardonce.guard2once -r nes-execution/include/
+            COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-execution/include/
+
+            COMMAND python3 -m guardonce.guard2once -r nes-nautilus/include/
+            COMMAND python3 -m guardonce.once2guard -r -p 'path | append _ | upper' -s '\#endif  // %\\n' nes-nautilus/include/
+
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             )
     message(" -- guardonce utility to fix ifdefs is available via the 'fix-guards' target")
