@@ -648,8 +648,8 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     uint64_t var = 1;
     while (var < 10000) {
         auto workerConfig = WorkerConfiguration::create();
-        workerConfig->numberOfBuffersInSourceLocalBufferPool = 32;
-        workerConfig->numberOfBuffersInGlobalBufferManager = 256;
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = 128;
+        workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfBuffersToProduce = 5000000;
         workerConfig->sourceGatheringInterval = 100;
@@ -670,8 +670,8 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
         var++;
         for (uint64_t l = 1; l < 3; l++) {
             auto workerConfig1 = WorkerConfiguration::create();
-            workerConfig1->numberOfBuffersInSourceLocalBufferPool = 32;
-            workerConfig1->numberOfBuffersInGlobalBufferManager = 256;
+            workerConfig1->numberOfBuffersInSourceLocalBufferPool = 128;
+            workerConfig1->numberOfBuffersInGlobalBufferManager = 1024;
             workerConfig1->coordinatorPort = *rpcCoordinatorPort;
             workerConfig1->numberOfBuffersToProduce = 5000000;
             workerConfig1->sourceGatheringInterval = 100;
