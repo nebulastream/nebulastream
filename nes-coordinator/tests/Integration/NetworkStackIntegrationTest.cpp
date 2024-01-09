@@ -318,6 +318,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
             // register the incoming channel
             auto sink = std::make_shared<NullOutputSink>(recvEngine, 1, 0, 0);
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> succ = {sink};
+            auto uniqueId = 1;
             auto source = std::make_shared<NetworkSource>(schema,
                                                           recvEngine->getBufferManager(),
                                                           recvEngine->getQueryManager(),
@@ -328,7 +329,8 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           NSOURCE_RETRY_WAIT,
                                                           NSOURCE_RETRIES,
                                                           std::move(succ),
-                                                          INITIAL_VERSION);
+                                                          INITIAL_VERSION,
+                                                          uniqueId);
             auto qep = Runtime::Execution::ExecutableQueryPlan::create(0,
                                                                        0,
                                                                        {source},
@@ -518,6 +520,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                 const Runtime::NodeEnginePtr&,
                 size_t numSourceLocalBuffers,
                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) -> DataSourcePtr {
+                auto uniqueId = 1;
                 return std::make_shared<NetworkSource>(schema,
                                                        nodeEngineReceiver->getBufferManager(),
                                                        nodeEngineReceiver->getQueryManager(),
@@ -528,7 +531,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                        NSOURCE_RETRY_WAIT,
                                                        NSOURCE_RETRIES,
                                                        successors,
-                                                       0);
+                                                       0,
+                                                       uniqueId);
             });
 
         auto testSink =
@@ -806,6 +810,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) -> DataSourcePtr {
+            auto uniqueId = 1;
             return std::make_shared<NetworkSource>(schema,
                                                    nodeEngineReceiver->getBufferManager(),
                                                    nodeEngineReceiver->getQueryManager(),
@@ -816,7 +821,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                                    NSOURCE_RETRY_WAIT,
                                                    NSOURCE_RETRIES,
                                                    successors,
-                                                   0);
+                                                   0, uniqueId);
         });
 
     class TestSourceEvent : public GeneratorSource {

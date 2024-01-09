@@ -341,13 +341,11 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
 }
 
 bool QueryCatalogService::checkAndMarkForMigration(SharedQueryId sharedQueryId,
-                                                   DecomposedQueryPlanId querySubPlanId,
                                                    QueryState querySubPlanStatus) {
     std::unique_lock lock(serviceMutex);
-    NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
+    NES_DEBUG("QueryCatalogService: Updating the status to {} for shared query "
               "plan with id {}",
               std::string(magic_enum::enum_name(querySubPlanStatus)),
-              querySubPlanId,
               sharedQueryId);
 
     //Fetch query catalog entries
@@ -360,24 +358,24 @@ bool QueryCatalogService::checkAndMarkForMigration(SharedQueryId sharedQueryId,
         if (currentQueryStatus != QueryState::DEPLOYED && currentQueryStatus != QueryState::RUNNING
             && currentQueryStatus != QueryState::REGISTERED && currentQueryStatus != QueryState::OPTIMIZING
             && currentQueryStatus != QueryState::MIGRATING) {
-            NES_WARNING("Found query in {} but received {} for the sub query with id {} for query id {}",
+            NES_WARNING("Found query in {} but received {} for query id {}",
                         queryCatalogEntry->getQueryStatusAsString(),
                         std::string(magic_enum::enum_name(querySubPlanStatus)),
-                        querySubPlanId,
                         queryId);
             //todo #4089: fix what to do when this occurs
             NES_ASSERT(false,
                        "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
                                          << std::string(magic_enum::enum_name(querySubPlanStatus))
-                                         << " for the sub query with id " << querySubPlanId << " for query id " << queryId);
+                                         << " for query id " << queryId);
         }
 
         queryCatalogEntry->setQueryStatus(querySubPlanStatus);
 
-        if (queryCatalogEntry->hasQuerySubPlanMetaData(querySubPlanId)) {
-            auto subplanData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
-            subplanData->updateStatus(QueryState::MARKED_FOR_MIGRATION);
-        }
+        //todo: remove this?
+//        if (queryCatalogEntry->hasQuerySubPlanMetaData(querySubPlanId)) {
+//            auto subplanData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
+//            subplanData->updateStatus(QueryState::MARKED_FOR_MIGRATION);
+//        }
     }
     return true;
 }

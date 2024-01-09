@@ -33,6 +33,9 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <RequestProcessor/RequestTypes/TopologyChangeRequest.hpp>
+#include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
+#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -70,7 +73,6 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
         }
         return numberOfNodes == nodes;
     }
-
 };
 
 constexpr std::chrono::duration<int64_t, std::milli> defaultTimeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
@@ -554,8 +556,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
 /**
  * @brief This tests multiple iterations of inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
-// TODO enabled/refactored in #3083
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects) {
+TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     const uint64_t numberOfReconnectsToPerform = 3;
     const uint64_t numBuffersToProduceBeforeReconnect = 10;
     const uint64_t numBuffersToProduceWhileBuffering = 10;
@@ -735,134 +736,169 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
         }
         compareStringAfter = ossAfter.str();
 
-        //set the old plan to migrating
-        crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
-        //todo: make sure the state on the query plan is set in the right phase
-        crd->getGlobalExecutionPlan()
-            ->getExecutionNodeById(oldWorker->getWorkerId())
-            ->getQuerySubPlans(sharedQueryId)
-            .front()
-            ->setQueryState(QueryState::MARKED_FOR_MIGRATION);
-        //check that the data for the migrating plan has been set correctly
-        auto migratingEntries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
-        ASSERT_EQ(migratingEntries.size(), 1);
-        auto subplans = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
-        ASSERT_FALSE(subplans.empty());
+        //auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
         int noOfMigratingPlans = 0;
         int noOfCompletedMigrations = 0;
         int noOfRunningPlans = 0;
-        for (auto& plan : subplans) {
-            switch (plan->getSubQueryStatus()) {
-                case QueryState::MARKED_FOR_MIGRATION: {
-                    noOfMigratingPlans++;
-                    break;
-                }
-                case QueryState::MIGRATION_COMPLETED: {
-                    noOfCompletedMigrations++;
-                    continue;
-                }
-                case QueryState::RUNNING: {
-                    noOfRunningPlans++;
-                    continue;
-                }
-                default: {
-                    NES_DEBUG("Found subplan in unexpected state");
-                    FAIL();
-                }
-            }
-        }
-        ASSERT_EQ(noOfMigratingPlans, 1);
-        ASSERT_EQ(noOfCompletedMigrations, actualReconnects);
-        ASSERT_EQ(noOfRunningPlans, 2);
-        ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 3);
 
-        //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
-        auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
-        EXPECT_EQ(subQueryIds.size(), 1);
+        //========================================================
 
-        //retrieve data about running network sink at wrk1
-        Network::NodeLocation newNodeLocation(wrk3->getWorkerId(), "localhost", *wrk3DataPort);
-        networkSrcWrk3Id += 10;
-        networkSinkWrk3Id += 10;
-        auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-        QuerySubPlanVersion nextVersion = actualReconnects + 1;
+        //        //modify topology
+        //        topology->removeTopologyNodeAsChild(oldWorker->getWorkerId(), wrk1->getWorkerId());
+        //        topology->addTopologyNodeAsChild(wrk3->getWorkerId(), wrk1->getWorkerId());
+        //
+        //
+        //        //set the old plan to migrating
+        //        //todo: this should now be done in the amendment phase
+        //        crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
+        //        //todo: make sure the state on the query plan is set in the right phase
+        //        crd->getGlobalExecutionPlan()
+        //            ->getExecutionNodeById(oldWorker->getWorkerId())
+        //            ->getQuerySubPlans(sharedQueryId)
+        //            .front()
+        //            ->setQueryState(QueryState::MARKED_FOR_MIGRATION);
+        //
+        //        //todo:L these checks appear in what it now in between the change request, we need to modify of skip them
+        //        //check that the data for the migrating plan has been set correctly
+        //        auto migratingEntries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
+        //        ASSERT_EQ(migratingEntries.size(), 1);
+        //        auto subplans = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
+        //        ASSERT_FALSE(subplans.empty());
+        //        int noOfMigratingPlans = 0;
+        //        int noOfCompletedMigrations = 0;
+        //        int noOfRunningPlans = 0;
+        //        for (auto& plan : subplans) {
+        //            switch (plan->getSubQueryStatus()) {
+        //                case QueryState::MARKED_FOR_MIGRATION: {
+        //                    noOfMigratingPlans++;
+        //                    break;
+        //                }
+        //                case QueryState::MIGRATION_COMPLETED: {
+        //                    noOfCompletedMigrations++;
+        //                    continue;
+        //                }
+        //                case QueryState::RUNNING: {
+        //                    noOfRunningPlans++;
+        //                    continue;
+        //                }
+        //                default: {
+        //                    NES_DEBUG("Found subplan in unexpected state");
+        //                    FAIL();
+        //                }
+        //            }
+        //        }
+        //        ASSERT_EQ(noOfMigratingPlans, 1);
+        //        ASSERT_EQ(noOfCompletedMigrations, actualReconnects);
+        //        ASSERT_EQ(noOfRunningPlans, 2);
+        //        ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 3);
+        //
+        //        //todo: reconfigurations should happen by themselves
+        //        //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
+        //        auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
+        //        EXPECT_EQ(subQueryIds.size(), 1);
+        //
+        //        //retrieve data about running network sink at wrk1
+        //        Network::NodeLocation newNodeLocation(wrk3->getWorkerId(), "localhost", *wrk3DataPort);
+        //        networkSrcWrk3Id += 10;
+        //        networkSinkWrk3Id += 10;
+        //        auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
+        //        QuerySubPlanVersion nextVersion = actualReconnects + 1;
+        //
+        //        //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
+        //        //create query for worker 3
+        //        auto queryPlan3 = QueryPlan::create(sharedQueryId, subPlanIdWrk3);
+        //        //create network source getting data from sink at wrk1
+        //        auto networkSourceDescriptorWrk3 = Network::NetworkSourceDescriptor::create(schema,
+        //                                                                                    networkSourceWrk3Partition,
+        //                                                                                    sinkLocationWrk1,
+        //                                                                                    WAIT_TIME,
+        //                                                                                    EVENT_CHANNEL_RETRY_TIMES,
+        //                                                                                    nextVersion);
+        //        auto sourceOperatorNodeWrk3 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk3, networkSrcWrk3Id);
+        //        queryPlan3->addRootOperator(sourceOperatorNodeWrk3);
+        //        //create network sink connected to coordinator
+        //        auto networkSinkDescriptorWrk3 = Network::NetworkSinkDescriptor::create(networkSourceCrdLocation,
+        //                                                                                networkSourceCrdPartition,
+        //                                                                                waitTime,
+        //                                                                                DATA_CHANNEL_RETRY_TIMES,
+        //                                                                                nextVersion,
+        //                                                                                DEFAULT_NUMBER_OF_ORIGINS,
+        //                                                                                networkSinkWrk3Id);
+        //        auto networkSinkOperatorNodeWrk3 =
+        //            std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
+        //        queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
+        //        queryPlan3->getSinkOperators().front()->inferSchema();
+        //        queryPlan3->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
+        //
+        //        //deploy new query
+        //        auto topologyNode3 = topology->getCopyOfTopologyNodeWithId(wrk3->getWorkerId());
+        //        auto executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
+        //        executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
+        //        executionNode3->getTopologyNode()->occupySlots(1);
+        //        crd->getGlobalExecutionPlan()->addExecutionNode(executionNode3);
+        //        ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 4);
+        //        auto queryDeploymentPhase =
+        //            QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
+        //        auto sqp = crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId);
+        //        sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
+        //
+        //        auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+        //
+        //        //source reconfig
+        //        auto reconfiguredSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
+        //                                                                                     networkSourceCrdPartition,
+        //                                                                                     newNodeLocation,
+        //                                                                                     waitTime,
+        //                                                                                     EVENT_CHANNEL_RETRY_TIMES,
+        //                                                                                     nextVersion);
+        //        auto crdExecutionNode = globalExecutionPlan->getExecutionNodeById(crd->getNesWorker()->getWorkerId());
+        //        auto subplanAtCrd = crdExecutionNode->getQuerySubPlans(sharedQueryId).front();
+        //        subplanAtCrd->getSourceOperators().front()->setSourceDescriptor(reconfiguredSourceDescriptor);
+        //        subplanAtCrd->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
+        //        crd->getQueryCatalogService()
+        //            ->getEntryForQuery(queryId)
+        //            ->getQuerySubPlanMetaData(crd->getNesWorker()->getNodeEngine()->getSubQueryIds(sharedQueryId).front())
+        //            ->updateStatus(QueryState::MARKED_FOR_REDEPLOYMENT);
+        //
+        //        //sink reconfig
+        //        auto wrk1ExecutionNode = globalExecutionPlan->getExecutionNodeById(wrk1->getWorkerId());
+        //        auto subplanAtWrk1 = wrk1ExecutionNode->getQuerySubPlans(sharedQueryId).front();
+        //        subplanAtWrk1->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
+        //        auto existingSink = subplanAtWrk1->getSinkOperators().front();
+        //        auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(
+        //            newNodeLocation,
+        //            networkSourceWrk3Partition,
+        //            waitTime,
+        //            DATA_CHANNEL_RETRY_TIMES,
+        //            nextVersion,
+        //            DEFAULT_NUMBER_OF_ORIGINS,
+        //            existingSink->getId());//on the coordinator side the operator id equals the unique identifier
+        //        existingSink->setSinkDescriptor(reconfiguredSinkDescriptor);
+        //        crd->getQueryCatalogService()
+        //            ->getEntryForQuery(queryId)
+        //            ->getQuerySubPlanMetaData(wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId).front())
+        //            ->updateStatus(QueryState::MARKED_FOR_REDEPLOYMENT);
+        //
+        //        queryDeploymentPhase->execute(sqp);
 
-        //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
-        //create query for worker 3
-        auto queryPlan3 = QueryPlan::create(sharedQueryId, subPlanIdWrk3);
-        //create network source getting data from sink at wrk1
-        auto networkSourceDescriptorWrk3 = Network::NetworkSourceDescriptor::create(schema,
-                                                                                    networkSourceWrk3Partition,
-                                                                                    sinkLocationWrk1,
-                                                                                    WAIT_TIME,
-                                                                                    EVENT_CHANNEL_RETRY_TIMES,
-                                                                                    nextVersion);
-        auto sourceOperatorNodeWrk3 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk3, networkSrcWrk3Id);
-        queryPlan3->addRootOperator(sourceOperatorNodeWrk3);
-        //create network sink connected to coordinator
-        auto networkSinkDescriptorWrk3 = Network::NetworkSinkDescriptor::create(networkSourceCrdLocation,
-                                                                                networkSourceCrdPartition,
-                                                                                waitTime,
-                                                                                DATA_CHANNEL_RETRY_TIMES,
-                                                                                nextVersion,
-                                                                                DEFAULT_NUMBER_OF_ORIGINS,
-                                                                                networkSinkWrk3Id);
-        auto networkSinkOperatorNodeWrk3 =
-            std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
-        queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
-        queryPlan3->getSinkOperators().front()->inferSchema();
-        queryPlan3->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
+        //========================================================
 
-        //deploy new query
-        auto topologyNode3 = topology->getCopyOfTopologyNodeWithId(wrk3->getWorkerId());
-        auto executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
-        executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
-        executionNode3->getTopologyNode()->occupySlots(1);
-        crd->getGlobalExecutionPlan()->addExecutionNode(executionNode3);
-        ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 4);
-        auto queryDeploymentPhase =
-            QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
-        auto sqp = crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId);
-        sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
+        RequestProcessor::StorageDataStructures storageDataStructures(coordinatorConfig,
+                                                                                    topology,
+                                                                                    crd->getGlobalExecutionPlan(),
+                                                                                    crd->getQueryCatalogService(),
+                                                                                    crd->getGlobalQueryPlan(),
+                                                                                    crd->getSourceCatalog(),
+                                                                                    crd->getUDFCatalog());
+        auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
+        std::vector<std::pair<WorkerId, WorkerId>> removedLinks = {{wrk1->getWorkerId(), oldWorker->getWorkerId()}};
+        std::vector<std::pair<WorkerId, WorkerId>> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
+        auto maxRetries = 1;
+        auto topologyChangeRequest =
+            RequestProcessor::Experimental::TopologyChangeRequest::create(removedLinks, addedLinks, maxRetries);
+        topologyChangeRequest->executeRequestLogic(storageHandler);
 
-        auto globalExecutionPlan = crd->getGlobalExecutionPlan();
-
-        //source reconfig
-        auto reconfiguredSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
-                                                                                     networkSourceCrdPartition,
-                                                                                     newNodeLocation,
-                                                                                     waitTime,
-                                                                                     EVENT_CHANNEL_RETRY_TIMES,
-                                                                                     nextVersion);
-        auto crdExecutionNode = globalExecutionPlan->getExecutionNodeById(crd->getNesWorker()->getWorkerId());
-        auto subplanAtCrd = crdExecutionNode->getQuerySubPlans(sharedQueryId).front();
-        subplanAtCrd->getSourceOperators().front()->setSourceDescriptor(reconfiguredSourceDescriptor);
-        subplanAtCrd->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
-        crd->getQueryCatalogService()
-            ->getEntryForQuery(queryId)
-            ->getQuerySubPlanMetaData(crd->getNesWorker()->getNodeEngine()->getSubQueryIds(sharedQueryId).front())
-            ->updateStatus(QueryState::MARKED_FOR_REDEPLOYMENT);
-
-        //sink reconfig
-        auto wrk1ExecutionNode = globalExecutionPlan->getExecutionNodeById(wrk1->getWorkerId());
-        auto subplanAtWrk1 = wrk1ExecutionNode->getQuerySubPlans(sharedQueryId).front();
-        subplanAtWrk1->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
-        auto existingSink = subplanAtWrk1->getSinkOperators().front();
-        auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(
-            newNodeLocation,
-            networkSourceWrk3Partition,
-            waitTime,
-            DATA_CHANNEL_RETRY_TIMES,
-            nextVersion,
-            DEFAULT_NUMBER_OF_ORIGINS,
-            existingSink->getId());//on the coordinator side the operator id equals the unique identifier
-        existingSink->setSinkDescriptor(reconfiguredSinkDescriptor);
-        crd->getQueryCatalogService()
-            ->getEntryForQuery(queryId)
-            ->getQuerySubPlanMetaData(wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId).front())
-            ->updateStatus(QueryState::MARKED_FOR_REDEPLOYMENT);
-
-        queryDeploymentPhase->execute(sqp);
+        //========================================================
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
         waitForFinalCount = false;
@@ -883,6 +919,15 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
         }
         ASSERT_NE(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition),
                   Network::PartitionRegistrationStatus::Registered);
+        auto networkSourceWrk3Partition =
+            std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(crd->getGlobalExecutionPlan()
+                                                                            ->getExecutionNodeById(wrk3->getWorkerId())
+                                                                            ->getQuerySubPlans(sharedQueryId)
+                                                                            .front()
+                                                                            ->getSourceOperators()
+                                                                            .front()
+                                                                            ->getSourceDescriptor())
+                ->getNesPartition();
         ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
                   Network::PartitionRegistrationStatus::Registered);
         EXPECT_NE(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
@@ -938,6 +983,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects)
         ASSERT_EQ(noOfMigratingPlans, 0);
         ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 1);
         ASSERT_EQ(noOfRunningPlans, 3);
+        ASSERT_EQ(topology->getParentTopologyNodeIds(wrk1->getWorkerId()), std::vector<WorkerId>{wrk3->getWorkerId()});
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));

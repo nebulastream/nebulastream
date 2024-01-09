@@ -268,12 +268,13 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         Network::NodeLocation nodeLocation{0, "*", 31337};
         Network::NesPartition nesPartition{1, 22, 33, 44};
         uint16_t version = 55;
+        auto uniqueId = 1;
         auto source = Network::NetworkSourceDescriptor::create(schema,
                                                                nesPartition,
                                                                nodeLocation,
                                                                NSOURCE_RETRY_WAIT,
                                                                NSOURCE_RETRIES,
-                                                               version);
+                                                               version, uniqueId);
         SerializableOperator_SourceDetails sourceDetails;
         OperatorSerializationUtil::serializeSourceDescriptor(*source, sourceDetails);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(sourceDetails);

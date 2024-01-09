@@ -106,22 +106,6 @@ class PartitionManager {
         [[nodiscard]] uint64_t getDisconnectCount() const;
 
         /**
-         * @brief update the version number and reset the recorded number of disconnects that have occurred for the partition
-         * @return true if a pending version was found and was set as the current version, false otherwise
-         */
-        bool startNewVersion();
-
-        /**
-         * @brief add the next version to be activated for this partition once all channels for the old version have
-         * been closes
-         * @param nextNetworkSourceDescriptor a network source descriptor containing the location of the sink from which
-         * new data will be accepted after the version change and the version number of the next version
-         * @return true if a pending version was added, false if the already running version has the same version number
-         * and no pending version was added
-         */
-        bool addNextVersion(const NetworkSourceDescriptor& nextNetworkSourceDescriptor);
-
-        /**
          * @brief increment ref cnt by 1
          */
         void pin();
@@ -143,8 +127,6 @@ class PartitionManager {
 
       private:
         uint64_t partitionCounter{1};
-        uint64_t disconnectCount{0};
-        std::optional<NetworkSourceDescriptor> nextSourceDescriptor{std::nullopt};
         NodeLocation senderLocation;
         DataEmitterPtr consumer{nullptr};
     };
@@ -186,33 +168,11 @@ class PartitionManager {
     std::optional<uint64_t> getSubpartitionConsumerCounter(NesPartition partition);
 
     /**
-     * @brief returns the number of disconnects that have occurred for a given partition
-     * @param partition the partition
-     * @return number of disconnects that occurred
-     */
-    std::optional<uint64_t> getSubpartitionConsumerDisconnectCount(NesPartition partition);
-
-    /**
-     * @brief start a new version by updating the version number, clearing the pending version and resetting the disconnect count
-     * @param partition the partition for which to start a new version
-     * @return true if a version was pending and is now started
-     */
-    bool startNewVersion(NesPartition partition);
-
-    /**
      * @brief get the current version number of the operator associated with this partition
      * @param partition the partition for which to get the version number
      * @return the currrent version number
      */
     DecomposedQueryPlanVersion getVersion(NesPartition partition);
-
-    /**
-     * @brief add a pendign version for this partition to be activated once all channels of the current version have disconnected
-     * @param partition the partition to which the pending version should be added
-     * @param pendingVersion the number of the pending version
-     * @param pendingSenderLocation the node location of the sending sink for the new version
-     */
-    void addNextVersion(const NetworkSourceDescriptor& nextNetworkSourceDescriptor);
 
     /**
      * @brief checks if a partition is registered

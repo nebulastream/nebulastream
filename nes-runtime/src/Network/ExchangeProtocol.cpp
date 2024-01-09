@@ -15,6 +15,7 @@
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Common.hpp>
 
@@ -66,12 +67,12 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             status == PartitionRegistrationStatus::Registered) {
 
             //check version
-            if (partitionManager->getVersion(nesPartition) != msg.getVersion()) {
-                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}",
-                          msg.getVersion(),
-                          partitionManager->getVersion(nesPartition));
-                return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
-            }
+//            if (partitionManager->getVersion(nesPartition) != msg.getVersion()) {
+//                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}",
+//                          msg.getVersion(),
+//                          partitionManager->getVersion(nesPartition));
+//                return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
+//            }
 
             // increment the counter
             partitionManager->pinSubpartitionConsumer(nesPartition);
@@ -161,21 +162,15 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         if (!lastEOS) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} but there is still some active "
                       "subpartition: {}",
-                      eosChannelId.toString(),
-                      *partitionManager->getSubpartitionConsumerCounter(eosNesPartition));
-            //todo #4313: count connects instead of disconnects and implement timeout
-        } else if (partitionManager->getSubpartitionConsumerDisconnectCount(eosNesPartition).value()
-                   < expectedTotalConnectionsInPartitionManager /*todo #4313: check timeout here*/) {
-            NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total channel "
-                      "disconnects for "
-                      "subpartition: {} has not been reached: {}/{}",
-                      eosChannelId.toString(),
-                      *partitionManager->getSubpartitionConsumerCounter(eosNesPartition),
-                      partitionManager->getSubpartitionConsumerDisconnectCount(eosNesPartition).value(),
-                      expectedTotalConnectionsInPartitionManager);
-        } else if (!partitionManager->startNewVersion(eosNesPartition)) {
-            partitionManager->getDataEmitter(eosNesPartition)->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
-            protocolListener->onEndOfStream(endOfStreamMessage);
+                      endOfStreamMessage.getChannelId().toString(),
+                      *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
+        } else {
+            auto dataEmitter = partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition());
+            auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);
+            if (!(networkSource && networkSource->startNewVersion())) {
+                dataEmitter->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
+                protocolListener->onEndOfStream(endOfStreamMessage);
+            }
         }
     } else if (partitionManager->getProducerRegistrationStatus(eosNesPartition) == PartitionRegistrationStatus::Registered) {
         NES_ASSERT2_FMT(endOfStreamMessage.isEventChannel(),

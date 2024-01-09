@@ -40,7 +40,13 @@ class TopologyChangeRequest : public AbstractUniRequest {
                           GlobalQueryPlanPtr globalQueryPlan,
                           Optimizer::GlobalExecutionPlanPtr globalExecutionPlan);
 
-    TopologyChangeRequestPtr create();
+    TopologyChangeRequest(std::vector<std::pair<WorkerId, WorkerId>> removedLinks,
+                                                 std::vector<std::pair<WorkerId, WorkerId>> addedLinks,
+                                                 uint8_t maxRetries);
+
+    TopologyChangeRequestPtr create(std::vector<std::pair<WorkerId, WorkerId>> removedLinks,
+                                                           std::vector<std::pair<WorkerId, WorkerId>> addedLinks,
+                                                           uint8_t maxRetries);
 
     std::vector<AbstractRequestPtr>
     executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
@@ -104,6 +110,12 @@ class TopologyChangeRequest : public AbstractUniRequest {
     TopologyPtr topology;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+    std::vector<std::pair<WorkerId, WorkerId>> removedLinks;
+    std::vector<std::pair<WorkerId, WorkerId>> addedLinks;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    QueryCatalogServicePtr queryCatalogService;
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES
