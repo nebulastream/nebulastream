@@ -635,12 +635,12 @@ add_subdirectory(nes-worker)
 add_subdirectory(nes-coordinator)
 # Add target for client
 add_subdirectory(nes-client)
-# Add targets for plugins
-add_subdirectory(nes-plugins)
 # Add targets for execution
 add_subdirectory(nes-execution)
 # Add targets for nautilus
 add_subdirectory(nes-nautilus)
+# Add targets for plugins
+add_subdirectory(nes-plugins)
 
 
 # Add targets for benchmarks
