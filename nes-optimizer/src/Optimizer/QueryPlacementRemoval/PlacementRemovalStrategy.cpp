@@ -69,17 +69,23 @@ bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId shar
         // 2. Lock all topology nodes.
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. Create the copy of the query plans
+        // 3. If no operator in the state PLACED or TO_BE_REPLACED or TO_BE_REMOVED then skip rest of the process.
+        if (workerIdsInBFS.empty()) {
+            NES_WARNING("Skipping placement removal phase as nothing to be removed.");
+            return true;
+        }
+
+        // 4. Create the copy of the query plans
         auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 4. Fetch all placed query sub plans by analyzing the PLACED_SUB_PLAN_ID and CONNECTED_SYS_SUB_PLAN_DETAILS.
+        // 5. Fetch all placed query sub plans by analyzing the PLACED_SUB_PLAN_ID and CONNECTED_SYS_SUB_PLAN_DETAILS.
         updateQuerySubPlans(sharedQueryId);
 
-        // 5. Iterate over the identified topology nodes in a strict order and perform validation as follow:
-        //      5.1. Check if after releasing the occupied resources, the new occupied resources are >= 0.
-        //      5.2. The local query sub plan version and query sub plan version on the execution node are the same
+        // 6. Iterate over the identified topology nodes in a strict order and perform validation as follow:
+        //      6.1. Check if after releasing the occupied resources, the new occupied resources are >= 0.
+        //      6.2. The local query sub plan version and query sub plan version on the execution node are the same
         //           (If they are different then some parallel task has also manipulated the sub plan).
-        // 6. If validation is successful, then lock the topology node and update the operator to Removed or To-Be-Placed
+        // 7. If validation is successful, then lock the topology node and update the operator to Removed or To-Be-Placed
         //    state, either mark the place query sub plan as "Stopped" (if all operators to be removed)
         //    or "Updated" (if plan was modified by removing operators).
         return updateExecutionNodes(sharedQueryId, querySubPlanVersion);
@@ -124,11 +130,11 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                                                "operators without pinned worker id.");
         }
 
-        // 7. Fetch the worker id where the operator is placed
-        auto pinnedWorkerId = std::any_cast<WorkerId>(operatorToProcess->getProperty(PINNED_WORKER_ID));
-        workerIdsInBFS.emplace(pinnedWorkerId);
-
         if (operatorState != OperatorState::TO_BE_PLACED) {
+
+            // 7. Fetch the worker id where the operator is placed
+            auto pinnedWorkerId = std::any_cast<WorkerId>(operatorToProcess->getProperty(PINNED_WORKER_ID));
+            workerIdsInBFS.emplace(pinnedWorkerId);
 
             // 8. Fetch the query sub plan id that hosts the operator and record the sub query plan id
             auto subQueryPlanId = std::any_cast<QuerySubPlanId>(operatorToProcess->getProperty(PLACED_SUB_PLAN_ID));
@@ -155,12 +161,12 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                     std::any_cast<std::vector<SysPlanMetaData>>(operatorToProcess->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
                 for (const auto& sysPlanMetaData : sysPlansMetaData) {
                     workerIdsInBFS.emplace(sysPlanMetaData.workerId);
-                    if (workerIdToQuerySubPlanIds.contains(pinnedWorkerId)) {
-                        auto subQueryPlanIds = workerIdToQuerySubPlanIds[pinnedWorkerId];
+                    if (workerIdToQuerySubPlanIds.contains(sysPlanMetaData.workerId)) {
+                        auto subQueryPlanIds = workerIdToQuerySubPlanIds[sysPlanMetaData.workerId];
                         subQueryPlanIds.emplace(sysPlanMetaData.querySubPlanId);
-                        workerIdToQuerySubPlanIds[pinnedWorkerId] = subQueryPlanIds;
+                        workerIdToQuerySubPlanIds[sysPlanMetaData.workerId] = subQueryPlanIds;
                     } else {
-                        workerIdToQuerySubPlanIds[pinnedWorkerId] = {sysPlanMetaData.querySubPlanId};
+                        workerIdToQuerySubPlanIds[sysPlanMetaData.workerId] = {sysPlanMetaData.querySubPlanId};
                     }
                 }
             }
@@ -172,7 +178,7 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                                   [&](LogicalOperatorNodePtr operatorPin) {
                                       return operatorPin->getId() == operatorToProcess->getId();
                                   });
-        if (found == downStreamPinnedOperators.end()) {
+        if (found != downStreamPinnedOperators.end()) {
             continue;
         }
 
@@ -182,19 +188,14 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
         }
     }
 
-    // 13.  If managed to find worker ids
-    bool success = (!workerIdsInBFS.empty());
-    if (success) {
-        // 14. Lock all identified worker ids before processing if the mode is pessimistic
-        if (placementAmendmentMode == PlacementAmendmentMode::PESSIMISTIC) {
-            success = pessimisticPathSelection();
+    // 14. try to lock all selected topology nodes
+    if (!workerIdsInBFS.empty() && placementAmendmentMode == PlacementAmendmentMode::PESSIMISTIC) {
+        // 15. Raise exception if unable to Lock all identified worker ids before processing if the mode is pessimistic
+        if (!pessimisticPathSelection()) {
+            throw Exceptions::RuntimeException("Unable to find topology nodes or lock the identified topology nodes.");
         }
     }
 
-    // 15. Raise exception if unable to find nodes or lock all topology nodes
-    if (!success) {
-        throw Exceptions::RuntimeException("Unable to find topology nodes or lock the identified topology nodes.");
-    }
     NES_INFO("Successfully selected path for placement removal");
 }
 

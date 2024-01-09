@@ -62,7 +62,7 @@ bool TopologyNode::releaseSlots(uint16_t freedSlots) {
 }
 
 bool TopologyNode::occupySlots(uint16_t occupySlots) {
-    NES_DEBUG("Reducing resources {} Currently occupied {} of {}", occupySlots, occupiedSlots, totalSlots);
+    NES_DEBUG("Reducing resources {} on topology node {}. Currently occupied {} of {}", occupySlots, workerId, occupiedSlots, totalSlots);
     NES_ASSERT(occupySlots <= (totalSlots - occupiedSlots),
                "Amount of resources to be used should not be more than available resources.");
     occupiedSlots = occupiedSlots + occupySlots;
