@@ -599,11 +599,10 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
 
                 // 4. Check if candidate operator in the state "Placed" or is of type Network Source or Sink then skip
                 // the operation
-                if (candidateOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED
-                    || (candidateOperator->instanceOf<SourceLogicalOperatorNode>()
-                        && candidateOperator->as_if<SourceLogicalOperatorNode>()
-                               ->getSourceDescriptor()
-                               ->instanceOf<Network::NetworkSourceDescriptor>())
+                if ((candidateOperator->instanceOf<SourceLogicalOperatorNode>()
+                     && candidateOperator->as_if<SourceLogicalOperatorNode>()
+                            ->getSourceDescriptor()
+                            ->instanceOf<Network::NetworkSourceDescriptor>())
                     || (candidateOperator->instanceOf<SinkLogicalOperatorNode>()
                         && candidateOperator->as_if<SinkLogicalOperatorNode>()
                                ->getSinkDescriptor()
@@ -677,15 +676,12 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                             querySubPlanWithUpstreamOperator->removeAsRootOperator(operatorToConnectInMatchedPlan);
                             querySubPlanWithUpstreamOperator->addRootOperator(networkSinkOperator);
 
-                            //FIXME: we need to add this post iteration
-                            // 15. Add metadata about the plans and topology nodes hosting the system generated operators.
-                            operatorToConnectInMatchedPlan->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
-                                                                        connectedSysSubPlanDetails);
-
                         } else if (currentWorkerId == workerId) {
                             // 12. Add a network source operator to the leaf operator.
 
-                            // 13. create network source operator
+                            // 13. Record information about the query plan and worker id
+                            connectedSysSubPlanDetails.emplace_back(SysPlanMetaData(querySubPlan->getQuerySubPlanId(), currentWorkerId));
+                            // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
                                                                                      networkSourceOperatorId,
@@ -717,7 +713,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                                 QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {networkSinkOperator});
 
                             // 18. Record information about the query plan and worker id
-                            connectedSysSubPlanDetails.emplace_back((newQuerySubPlan->getQuerySubPlanId(), currentWorkerId));
+                            connectedSysSubPlanDetails.emplace_back(SysPlanMetaData(newQuerySubPlan->getQuerySubPlanId(), currentWorkerId));
 
                             // 19. add the new query plan
                             if (computedSubQueryPlans.contains(currentWorkerId)) {
@@ -727,6 +723,9 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                             }
                         }
                     }
+
+                    // 15. Add metadata about the plans and topology nodes hosting the system generated operators.
+                    operatorToConnectInMatchedPlan->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS, connectedSysSubPlanDetails);
                 }
             }
         }
@@ -824,7 +823,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
 
                         QueryPlanPtr updatedQuerySubPlan;
                         // Merge the two host query sub plans
-                        if (hostQuerySubPlans.size() > 1) {
+                        if (!hostQuerySubPlans.empty()) {
                             for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
                                 if (!updatedQuerySubPlan) {
                                     updatedQuerySubPlan = hostQuerySubPlan;
@@ -834,16 +833,15 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                     }
                                 }
                             }
-                            updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
-                        } else {
-                            updatedQuerySubPlan = *(hostQuerySubPlans.begin());
-                            //no merging happened so this plan is deployed for the first time
-                            updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
                         }
+
                         //In the end, add root operators of computed plan as well.
                         for (const auto& rootOperator : computedQuerySubPlan->getRootOperators()) {
                             updatedQuerySubPlan->addRootOperator(rootOperator);
                         }
+
+                        //As we are updating an existing query sub plan we mark the plan for re-deployment
+                        updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         updatedQuerySubPlan->setVersion(querySubPlanVersion);
                         executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
@@ -888,7 +886,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
 
                         QueryPlanPtr updatedQuerySubPlan;
                         // Merge the two host query sub plans
-                        if (hostQuerySubPlans.size() > 1) {
+                        if (!hostQuerySubPlans.empty()) {
                             for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
                                 if (!updatedQuerySubPlan) {
                                     updatedQuerySubPlan = hostQuerySubPlan;
@@ -898,16 +896,13 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                     }
                                 }
                             }
-                            updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
-                        } else {
-                            updatedQuerySubPlan = *(hostQuerySubPlans.begin());
-                            //no merging happened so this plan is deployed for the first time
-                            updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
                         }
 
+                        //As we are updating an existing query sub plan we mark the plan for re-deployment
+                        updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQuerySubPlanId(), updatedQuerySubPlan);
+                        executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
                     } else {
                         NES_ERROR(
                             "A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
