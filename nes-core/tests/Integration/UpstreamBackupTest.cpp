@@ -111,8 +111,8 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->numberOfBuffersPerEpoch = 100;
-        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
-        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
+        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 131072;
+        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 8192;
         coordinatorConfig->numWorkerThreads = 1;
         coordinatorConfig->numberOfBuffersPerEpoch = 100;
         coordinatorConfig->bufferSizeInBytes = 256;
