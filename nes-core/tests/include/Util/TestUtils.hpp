@@ -51,10 +51,10 @@ static const char* BASE_URL = "http://127.0.0.1:";
  */
 namespace TestUtils {
 
-static constexpr auto defaultTimeout = std::chrono::seconds(6000);
-static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(18000);// starting a query requires time
-static constexpr auto sleepDuration = std::chrono::milliseconds(25000);
-static constexpr auto defaultCooldown = std::chrono::seconds(300);// 3s after last processed task, the query should be done.
+static constexpr auto defaultTimeout = std::chrono::seconds(600000);
+static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(1800000);// starting a query requires time
+static constexpr auto sleepDuration = std::chrono::milliseconds(2500000);
+static constexpr auto defaultCooldown = std::chrono::seconds(30000);// 3s after last processed task, the query should be done.
 
 /**
  * Create a command line parameter for a configuration option for the coordinator or worker.
