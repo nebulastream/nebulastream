@@ -79,4 +79,4 @@ class FilterMergeRule : public BaseRewriteRule {
     static std::vector<FilterLogicalOperatorNodePtr> getConsecutiveFilters(const NES::FilterLogicalOperatorNodePtr& firstFilter);
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_

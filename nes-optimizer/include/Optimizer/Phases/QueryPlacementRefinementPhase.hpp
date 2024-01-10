@@ -48,4 +48,4 @@ class QueryPlacementRefinementPhase {
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTREFINEMENTPHASE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTREFINEMENTPHASE_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_SUBREQUESTFUTURE_HPP
-#define NES_SUBREQUESTFUTURE_HPP
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_SUBREQUESTFUTURE_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_SUBREQUESTFUTURE_HPP_
 #include <any>
 #include <future>
 #include <memory>
@@ -48,4 +48,4 @@ class SubRequestFuture {
     std::future<std::any> future;
 };
 }// namespace NES::RequestProcessor
-#endif//NES_SUBREQUESTFUTURE_HPP
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_SUBREQUESTFUTURE_HPP_

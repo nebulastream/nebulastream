@@ -64,4 +64,4 @@ class ChangeLogEntry {
     std::set<OperatorId> computePoSet();
 };
 }// namespace NES::Optimizer::Experimental
-#endif  // NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_

@@ -52,4 +52,4 @@ std::string concatenateVectorAsString(const std::vector<T>& vector) {
 };// namespace Util
 
 
-#endif  // NES_OPERATORS_INCLUDE_UTIL_OPERATORSUTIL_HPP_
+#endif // NES_OPERATORS_INCLUDE_UTIL_OPERATORSUTIL_HPP_

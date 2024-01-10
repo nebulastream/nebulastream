@@ -37,4 +37,4 @@ class QuerySignatureContext {
 }// namespace Optimizer
 }// namespace NES
 
-#endif  // NES_OPERATORS_INCLUDE_UTIL_QUERYSIGNATURECONTEXT_HPP_
+#endif // NES_OPERATORS_INCLUDE_UTIL_QUERYSIGNATURECONTEXT_HPP_

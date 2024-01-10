@@ -25,4 +25,4 @@ enum class StorageHandlerType : uint8_t { SerialHandler = 0, TwoPhaseLocking };
 
 }// namespace NES::RequestProcessor::Experimental
 
-#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_

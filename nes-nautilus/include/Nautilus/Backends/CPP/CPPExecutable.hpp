@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
 #include <Compiler/DynamicObject.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <memory>
@@ -40,4 +40,4 @@ class CPPExecutable : public Executable {
 };
 }// namespace NES::Nautilus::Backends::CPP
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_

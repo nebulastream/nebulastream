@@ -82,4 +82,4 @@ using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
 }// namespace InferModel
 
 }// namespace NES
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

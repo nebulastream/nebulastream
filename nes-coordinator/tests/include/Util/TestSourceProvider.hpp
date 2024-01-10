@@ -41,4 +41,4 @@ class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override;
 };
 }// namespace NES::TestUtils
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_

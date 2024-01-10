@@ -104,4 +104,4 @@ class LogicalBatchJoinDefinition {// todo jm its dumb that this is in the window
 
 using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
 }// namespace NES::Join::Experimental
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDEFINITION_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDEFINITION_HPP_

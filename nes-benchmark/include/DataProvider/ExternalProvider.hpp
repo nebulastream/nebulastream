@@ -134,4 +134,4 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
 };
 }// namespace NES::Benchmark::DataProvision
 
-#endif// NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_

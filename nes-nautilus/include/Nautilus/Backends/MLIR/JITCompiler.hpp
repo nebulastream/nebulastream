@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
 
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
@@ -44,4 +44,4 @@ class JITCompiler {
                      const DumpHelper& dumpHelper);
 };
 }// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_

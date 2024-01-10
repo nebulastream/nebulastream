@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -85,4 +85,4 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 
 }// namespace NES::Nautilus::IR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_

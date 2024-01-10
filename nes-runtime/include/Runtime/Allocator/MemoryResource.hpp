@@ -25,4 +25,4 @@ using memory_resource = std::experimental::pmr::memory_resource;
 }
 }// namespace std
 #endif
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_

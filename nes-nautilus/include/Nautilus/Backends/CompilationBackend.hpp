@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <Util/DumpHelper.hpp>
@@ -40,4 +40,4 @@ using CompilationBackendRegistry = Util::NamedPluginRegistry<CompilationBackend>
 
 }// namespace NES::Nautilus::Backends
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_

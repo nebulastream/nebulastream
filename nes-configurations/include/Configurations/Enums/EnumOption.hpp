@@ -51,4 +51,4 @@ class EnumOption : public TypedBaseOption<EnumType> {
 
 }// namespace NES::Configurations
 
-#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_

@@ -57,4 +57,4 @@ class MapUDFLogicalOperatorNode : public UDFLogicalOperator {
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
 }// namespace NES
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_MAPUDF_MAPUDFLOGICALOPERATORNODE_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_MAPUDF_MAPUDFLOGICALOPERATORNODE_HPP_

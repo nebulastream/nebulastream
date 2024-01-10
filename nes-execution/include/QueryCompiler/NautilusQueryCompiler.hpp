@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
-#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
+#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
+#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
 #include <QueryCompiler/QueryCompiler.hpp>
 
 namespace NES::QueryCompilation {
@@ -53,4 +53,4 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
 
 }// namespace NES::QueryCompilation
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_NAUTILUSQUERYCOMPILER_HPP_

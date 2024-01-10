@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
@@ -292,4 +292,4 @@ class UInt64 : public Int {
 
 }// namespace NES::Nautilus
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_

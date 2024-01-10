@@ -272,4 +272,4 @@ class BasePlacementStrategy {
     std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>> workerIdToPinnedOperatorMap;
 };
 }// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

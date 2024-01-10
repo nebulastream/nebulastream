@@ -42,4 +42,4 @@ static constexpr RequestId INVALID_REQUEST_ID = 0;
 
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_HPP_

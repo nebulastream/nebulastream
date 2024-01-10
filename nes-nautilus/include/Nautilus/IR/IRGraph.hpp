@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
 
 #include <memory>
 #include <string>
@@ -64,4 +64,4 @@ class IRGraph {
 
 }// namespace NES::Nautilus::IR
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_

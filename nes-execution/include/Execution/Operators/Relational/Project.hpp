@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_
+#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_
+#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -38,4 +38,4 @@ class Project : public ExecutableOperator {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PROJECT_HPP_

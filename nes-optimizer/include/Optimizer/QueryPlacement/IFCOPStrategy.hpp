@@ -116,4 +116,4 @@ class IFCOPStrategy : public BasePlacementStrategy {
     std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;
 };
 }// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_

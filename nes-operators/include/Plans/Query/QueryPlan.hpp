@@ -285,4 +285,4 @@ class QueryPlan {
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
 }// namespace NES
-#endif  // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+#endif // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

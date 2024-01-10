@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
 
 #include <Nautilus/Backends/MLIR/ProxyFunctions.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
@@ -219,4 +219,4 @@ class MLIRLoweringProvider {
     ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
 };
 }// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_

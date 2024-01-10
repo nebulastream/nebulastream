@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_STORAGERESOURCELOCKER_HPP
-#define NES_STORAGERESOURCELOCKER_HPP
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_
 #include <Identifiers.hpp>
 #include <cstdint>
 #include <future>
@@ -57,4 +57,4 @@ class StorageResourceLocker {
     std::vector<ResourceType> requiredResources;
 };
 }// namespace NES::RequestProcessor
-#endif//NES_STORAGERESOURCELOCKER_HPP
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_

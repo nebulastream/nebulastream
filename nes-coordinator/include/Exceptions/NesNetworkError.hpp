@@ -35,4 +35,4 @@ class NesNetworkException : public Exceptions::RuntimeException {
 };
 
 }// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_

@@ -142,4 +142,4 @@ class LocationIndex {
 #endif
 };
 }// namespace NES::Spatial::Index::Experimental
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_

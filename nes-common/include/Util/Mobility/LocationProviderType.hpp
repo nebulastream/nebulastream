@@ -29,4 +29,4 @@ enum class LocationProviderType : uint8_t {
 
 }// namespace NES::Spatial::Mobility::Experimental
 
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_LOCATIONPROVIDERTYPE_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_LOCATIONPROVIDERTYPE_HPP_

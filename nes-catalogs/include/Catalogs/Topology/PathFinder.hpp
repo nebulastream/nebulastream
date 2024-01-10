@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PATHFINDER_HPP
-#define NES_PATHFINDER_HPP
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_
 
 #include <Identifiers.hpp>
 #include <map>
@@ -81,4 +81,4 @@ class PathFinder {
 };
 }// namespace NES
 
-#endif//NES_PATHFINDER_HPP
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_

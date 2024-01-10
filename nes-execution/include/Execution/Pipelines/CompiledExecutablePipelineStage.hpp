@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
+#ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
+#define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -55,4 +55,4 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
 
 }// namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
