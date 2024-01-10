@@ -148,7 +148,6 @@ TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningWithoutOptim
 auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(testFunctionCalls,
                         ProxyFunctionInliningExecutionTest,
-                        // ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
                         ::testing::Values("MLIR"),
                         [](const testing::TestParamInfo<ProxyFunctionInliningExecutionTest::ParamType>& info) {
                             return info.param;
