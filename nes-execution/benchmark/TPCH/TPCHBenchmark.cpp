@@ -214,8 +214,7 @@ class Query3Runner : public BenchmarkRunner {
 
 int main(int, char**) {
     NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F0_01;
-    std::vector<std::string> compilers = {"PipelineCompiler"};
-    // std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
+    std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
     for (const auto& c : compilers) {
         NES::Runtime::Execution::Query6Runner(targetScaleFactor, c).run();
     }

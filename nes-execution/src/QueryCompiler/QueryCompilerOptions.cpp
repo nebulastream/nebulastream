@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-// #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation {
