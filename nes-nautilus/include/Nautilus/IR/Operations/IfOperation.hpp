@@ -30,6 +30,7 @@ class IfOperation : public Operation {
 
     BasicBlockPtr getMergeBlock();
     OperationPtr getBooleanValue();
+    void setBooleanValue(OperationPtr newBooleanValue);
     void setMergeBlock(BasicBlockPtr mergeBlock);
     BasicBlockInvocation& getTrueBlockInvocation();
     BasicBlockInvocation& getFalseBlockInvocation();

@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include "Util/Logger/Logger.hpp"
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 
 namespace NES::Nautilus::IR::Operations {
 ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
                                        OperationIdentifier identifier,
-                                       std::vector<OperationWPtr> inputArguments,
+                                       std::vector<OperationPtr> inputArguments,
                                        Types::StampPtr resultType)
     : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
       inputArguments(std::move(inputArguments)) {}
@@ -26,18 +27,25 @@ ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
                                        std::string functionSymbol,
                                        void* functionPtr,
                                        OperationIdentifier identifier,
-                                       std::vector<OperationWPtr> inputArguments,
+                                       std::vector<OperationPtr> inputArguments,
                                        Types::StampPtr resultType)
     : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
       mangedFunctionSymbol(functionSymbol), functionPtr(functionPtr), inputArguments(std::move(inputArguments)) {}
 
 Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
-std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
-    std::vector<OperationPtr> args;
-    for (auto input : inputArguments) {
-        args.emplace_back(input.lock());
-    }
-    return args;
+
+std::vector<OperationPtr> ProxyCallOperation::getInputArguments() const {
+    // std::vector<OperationPtr> lockedArguments;
+    // for (auto& arg : this->inputArguments) {
+        // NES_DEBUG("use count: {}", arg.use_count());
+        // NES_DEBUG("is expired: {}", arg.expired());
+        // lockedArguments.emplace_back(arg.lock());
+    // }
+    // return lockedArguments;
+    return inputArguments;
+}
+void ProxyCallOperation::setInputArguments(std::vector<OperationPtr> newInputArguments) {
+    this->inputArguments = newInputArguments;
 }
 
 std::string ProxyCallOperation::toString() {
@@ -47,9 +55,11 @@ std::string ProxyCallOperation::toString() {
     }
     baseString = baseString + getFunctionSymbol() + "(";
     if (!inputArguments.empty()) {
-        baseString += inputArguments[0].lock()->getIdentifier();
+        baseString += inputArguments[0]->getIdentifier();
+        // baseString += inputArguments[0].lock()->getIdentifier();
         for (int i = 1; i < (int) inputArguments.size(); ++i) {
-            baseString += ", " + inputArguments.at(i).lock()->getIdentifier();
+            baseString += ", " + inputArguments.at(i)->getIdentifier();
+            // baseString += ", " + inputArguments.at(i).lock()->getIdentifier();
         }
     }
     return baseString + ")";

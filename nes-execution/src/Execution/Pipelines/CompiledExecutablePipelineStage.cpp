@@ -18,6 +18,8 @@
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
+#include <Nautilus/IR/Phases/ConstantValuePropagationPhase.hpp>
+#include <Nautilus/IR/Phases/RedundantOperationRemovalPhase.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
@@ -77,6 +79,15 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> CompiledExecutablePipelineStage::cre
     auto ir = irCreationPhase.apply(executionTrace);
     timer.snapshot("IR Generation");
     dumpHelper.dump("2. IR AfterGeneration.ir", ir->toString());
+
+    // Apply IR phases:
+    Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
+    Nautilus::IR::ConstantValuePropagationPhase constValuePropagationPhase;
+    Nautilus::IR::RedundantOperationRemovalPhase redundantOperationRemovalPhase;
+    std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
+    removeBrOnlyBlocksPhase.apply(ir);
+    constValuePropagationPhase.apply(ir);
+    redundantOperationRemovalPhase.apply(ir);
     return ir;
 }
 

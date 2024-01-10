@@ -23,17 +23,18 @@ class ProxyCallOperation : public Operation {
   public:
     ProxyCallOperation(ProxyCallType proxyCallType,
                        OperationIdentifier identifier,
-                       std::vector<OperationWPtr> inputArguments,
+                       std::vector<OperationPtr> inputArguments,
                        Types::StampPtr resultType);
     ProxyCallOperation(ProxyCallType proxyCallType,
                        std::string mangedFunctionSymbol,
                        void* functionPtr,
                        OperationIdentifier identifier,
-                       std::vector<OperationWPtr> inputArguments,
+                       std::vector<OperationPtr> inputArguments,
                        Types::StampPtr resultType);
     ~ProxyCallOperation() override = default;
     ProxyCallType getProxyCallType();
-    std::vector<OperationPtr> getInputArguments();
+    std::vector<OperationPtr> getInputArguments() const;
+    void setInputArguments(std::vector<OperationPtr> newInputArguments);
     std::string getFunctionSymbol();
     std::string toString() override;
     void* getFunctionPtr();
@@ -42,7 +43,7 @@ class ProxyCallOperation : public Operation {
     ProxyCallType proxyCallType;
     std::string mangedFunctionSymbol;
     void* functionPtr;
-    std::vector<OperationWPtr> inputArguments;
+    std::vector<OperationPtr> inputArguments;
 };
 }// namespace NES::Nautilus::IR::Operations
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_

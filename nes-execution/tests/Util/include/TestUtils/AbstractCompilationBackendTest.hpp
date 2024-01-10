@@ -19,6 +19,8 @@
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/Phases/LoopDetectionPhase.hpp>
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
+#include <Nautilus/IR/Phases/ConstantValuePropagationPhase.hpp>
+#include <Nautilus/IR/Phases/RedundantOperationRemovalPhase.hpp>
 #include <Nautilus/IR/Phases/StructuredControlFlowPhase.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
@@ -34,6 +36,8 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
+    Nautilus::IR::ConstantValuePropagationPhase constantValuePropagationPhase;
+    Nautilus::IR::RedundantOperationRemovalPhase redundantOperationRemovalPhase;
     Nautilus::IR::LoopDetectionPhase loopDetectionPhase;
     Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
     std::unique_ptr<Nautilus::Backends::Executable>

@@ -30,4 +30,10 @@ bool AndOperation::classof(const Operation* Op) { return Op->getOperationType() 
 
 OperationPtr AndOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr AndOperation::getRightInput() { return rightInput.lock(); }
+void AndOperation::setLeftInput(OperationWPtr newLeftInput) {
+    this->leftInput = newLeftInput;
+}
+void AndOperation::setRightInput(OperationWPtr newRightInput) {
+    this->rightInput = newRightInput;
+}
 }// namespace NES::Nautilus::IR::Operations

@@ -22,6 +22,10 @@ CastOperation::CastOperation(OperationIdentifier identifier, OperationPtr input,
 
 OperationPtr CastOperation::getInput() { return input.lock(); }
 
+void CastOperation::setInput(OperationWPtr newInput) {
+    this->input = newInput;
+}
+
 std::string CastOperation::toString() {
     return identifier + " = " + getInput()->getIdentifier() + " cast_to " + getStamp()->toString();
 }

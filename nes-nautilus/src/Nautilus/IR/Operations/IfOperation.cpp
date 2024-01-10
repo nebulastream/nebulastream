@@ -34,11 +34,15 @@ void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) {
 
 BasicBlockPtr IfOperation::getMergeBlock() { return mergeBlock.lock(); }
 OperationPtr IfOperation::getBooleanValue() { return booleanValue.lock(); }
+void IfOperation::setBooleanValue(OperationPtr newBooleanValue) {
+    this->booleanValue = newBooleanValue;
+}
 void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) { this->mergeBlock = mergeBlock; }
 
 std::string IfOperation::toString() {
+    auto comparatorOp = getValue();
     std::string baseString =
-        "if " + getValue()->getIdentifier() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
+        "if " + comparatorOp->getIdentifier() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
     if (trueBlockInvocation.getArguments().size() > 0) {
         baseString += trueBlockInvocation.getArguments()[0]->getIdentifier();
         for (int i = 1; i < (int) trueBlockInvocation.getArguments().size(); ++i) {

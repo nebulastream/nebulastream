@@ -65,7 +65,9 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     void addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector<Operations::OperationPtr> inputArguments);
     std::shared_ptr<BasicBlock> addTrueBlock(std::shared_ptr<BasicBlock> thenBlock);
     std::shared_ptr<BasicBlock> addFalseBlock(std::shared_ptr<BasicBlock> elseBlock);
+    void replaceOperation(size_t operationIndex, Operations::OperationPtr operation);
     void removeOperation(Operations::OperationPtr operation);
+    void removeArgument(std::shared_ptr<Operations::BasicBlockArgument> argument);
     void addOperationBefore(Operations::OperationPtr before, Operations::OperationPtr operation);
     void addPredecessor(std::shared_ptr<BasicBlock> predecessor);
     std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();

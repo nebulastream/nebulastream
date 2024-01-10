@@ -29,4 +29,10 @@ bool DivOperation::classof(const Operation* Op) { return Op->getOperationType() 
 
 OperationPtr DivOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr DivOperation::getRightInput() { return rightInput.lock(); }
+void DivOperation::setLeftInput(OperationWPtr newLeftInput) {
+    this->leftInput = newLeftInput;
+}
+void DivOperation::setRightInput(OperationWPtr newRightInput) {
+    this->rightInput = newRightInput;
+}
 }// namespace NES::Nautilus::IR::Operations

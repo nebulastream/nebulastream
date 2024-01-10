@@ -27,6 +27,12 @@ CompareOperation::CompareOperation(OperationIdentifier identifier,
 
 OperationPtr CompareOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr CompareOperation::getRightInput() { return rightInput.lock(); }
+void CompareOperation::setLeftInput(OperationWPtr newLeftInput) {
+    this->leftInput = newLeftInput;
+}
+void CompareOperation::setRightInput(OperationWPtr newRightInput) {
+    this->rightInput = newRightInput;
+}
 CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
 
 bool CompareOperation::isLessThan() { return (comparator == LT); }
@@ -38,18 +44,19 @@ bool CompareOperation::isLessThanOrGreaterThan() { return isLessThan() || isGrea
 bool CompareOperation::isLess() { return isLessThan() || isLessEqual(); }
 bool CompareOperation::isGreater() { return isGreaterThan() || isGreaterEqual(); }
 
-std::string CompareOperation::toString() {
-    std::string comperator;
+std::string CompareOperation::getComparatorAsString() {
     switch (comparator) {
-        case EQ: comperator = "=="; break;
-        case NE: comperator = "!="; break;
-        case LT: comperator = "<"; break;
-        case LE: comperator = "<="; break;
-        case GT: comperator = ">"; break;
-        case GE: comperator = ">="; break;
+        case EQ: return "==";
+        case NE: return "!=";
+        case LT: return "<";
+        case LE: return "<=";
+        case GT: return ">";
+        case GE: return ">=";
     }
+}
 
-    return identifier + " = " + getLeftInput()->getIdentifier() + " " + comperator + " " + getRightInput()->getIdentifier();
+std::string CompareOperation::toString() {
+    return identifier + " = " + getLeftInput()->getIdentifier() + " " + getComparatorAsString() + " " + getRightInput()->getIdentifier();
 }
 
 }// namespace NES::Nautilus::IR::Operations

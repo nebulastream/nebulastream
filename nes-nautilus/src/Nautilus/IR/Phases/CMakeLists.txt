@@ -16,4 +16,6 @@ add_source_files(nes-nautilus
         RemoveBrOnlyBlocksPhase.cpp
         StructuredControlFlowPhase.cpp
         LoopDetectionPhase.cpp
+        ConstantValuePropagationPhase.cpp
+        RedundantOperationRemovalPhase.cpp
         )

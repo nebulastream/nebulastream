@@ -24,6 +24,7 @@ class NegateOperation : public Operation {
     NegateOperation(OperationIdentifier identifier, OperationPtr input);
     ~NegateOperation() override = default;
     OperationPtr getInput();
+    void setInput(OperationWPtr newInput);
     std::string toString() override;
     bool classof(const Operation* Op);
 

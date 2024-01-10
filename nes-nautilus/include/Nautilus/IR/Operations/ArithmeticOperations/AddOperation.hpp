@@ -26,6 +26,8 @@ class AddOperation : public Operation {
     ~AddOperation() override = default;
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
+    void setLeftInput(OperationPtr newLeftInput);
+    void setRightInput(OperationPtr newRightInput);
     std::string toString() override;
     bool classof(const Operation* Op);
 

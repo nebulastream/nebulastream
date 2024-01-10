@@ -31,6 +31,9 @@ std::string ReturnOperation::toString() {
     }
 }
 OperationPtr ReturnOperation::getReturnValue() { return returnValue.lock(); }
+void ReturnOperation::setReturnValue(OperationWPtr newReturnValue) { 
+    this->returnValue = newReturnValue;    
+}
 bool ReturnOperation::hasReturnValue() { return !stamp->isVoid(); }
 
 }// namespace NES::Nautilus::IR::Operations

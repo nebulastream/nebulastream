@@ -40,6 +40,7 @@ uint32_t BasicBlock::getNumLoopBackEdges() { return numLoopBackEdges; }
 void BasicBlock::incrementNumLoopBackEdge() { ++this->numLoopBackEdges; }
 bool BasicBlock::isLoopHeaderBlock() { return numLoopBackEdges > 0; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
+
 [[nodiscard]] Operations::OperationPtr BasicBlock::getOperationAt(size_t index) { return operations.at(index); }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
 std::vector<std::shared_ptr<Operations::BasicBlockArgument>> BasicBlock::getArguments() { return arguments; }
@@ -94,9 +95,17 @@ void BasicBlock::addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector
     //Todo #3167 : can we use this to replace the addPredecessor pass? (also: addTrueBlock, and addFalseBlock)
     // nextBlock->addPredecessor(shared_from_this());
 }
+void BasicBlock::replaceOperation(size_t operationIndex, Operations::OperationPtr operation) {
+    operations.at(operationIndex) = operation;
+}
 void BasicBlock::removeOperation(Operations::OperationPtr operation) {
     operations.erase(std::find(operations.begin(), operations.end(), operation));
 }
+
+void BasicBlock::removeArgument(std::shared_ptr<Operations::BasicBlockArgument> argument) {
+    arguments.erase(std::find(arguments.begin(), arguments.end(), argument));
+}
+
 void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations::OperationPtr operation) {
     auto position = std::find(operations.begin(), operations.end(), before);
     operations.insert(position, operation);

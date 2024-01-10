@@ -37,7 +37,7 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::process() {
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
     addPredecessors(rootOperation->getFunctionBasicBlock());
     removeBrOnlyBlocks(rootOperation->getFunctionBasicBlock());
-    NES_DEBUG("{}", ir->toString());
+    NES_TRACE("{}", ir->toString());
 }
 
 void inline addPredecessorToBlock(IR::BasicBlockPtr currentBlock,

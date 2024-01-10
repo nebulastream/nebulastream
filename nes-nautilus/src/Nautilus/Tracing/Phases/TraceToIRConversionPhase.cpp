@@ -512,7 +512,7 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
                                                                 NES::Nautilus::IR::BasicBlockPtr& currentBlock,
                                                                 TraceOperation& operation) {
 
-    auto inputArguments = std::vector<NES::Nautilus::IR::Operations::OperationWPtr>{};
+    auto inputArguments = std::vector<NES::Nautilus::IR::Operations::OperationPtr>{};
     auto functionCallTarget = std::get<FunctionCallTarget>(operation.input[0]);
 
     for (uint32_t i = 1; i < operation.input.size(); i++) {

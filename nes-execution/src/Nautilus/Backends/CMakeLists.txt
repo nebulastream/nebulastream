@@ -11,6 +11,7 @@
 # limitations under the License.
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
+    message("ACTIVATED BYTECODE INTERPRETER")
     add_subdirectory(BCInterpreter)
 endif ()
 

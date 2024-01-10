@@ -22,6 +22,9 @@ LoadOperation::LoadOperation(OperationIdentifier identifier, OperationPtr addres
 }
 
 OperationPtr LoadOperation::getAddress() { return address.lock(); }
+void LoadOperation::setAddress(OperationWPtr newAddress) { 
+    this->address = newAddress;
+ }
 
 std::string LoadOperation::toString() { return identifier + " = load(" + getAddress()->getIdentifier() + ")"; }
 

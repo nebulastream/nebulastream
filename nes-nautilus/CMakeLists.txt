@@ -173,7 +173,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     set_target_properties(dyncall PROPERTIES IMPORTED_LOCATION ${install_dir}/lib/libdyncall_s.a)
 
     # Link the external library to nes-runtime
-    target_link_libraries(nes-runtime PRIVATE dyncall)
+    target_link_libraries(nes-nautilus PRIVATE dyncall)
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)

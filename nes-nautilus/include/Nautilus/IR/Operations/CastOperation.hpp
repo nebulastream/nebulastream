@@ -27,6 +27,7 @@ class CastOperation : public Operation {
     std::string toString() override;
 
     OperationPtr getInput();
+    void setInput(OperationWPtr newInput);
 
   private:
     OperationWPtr input;

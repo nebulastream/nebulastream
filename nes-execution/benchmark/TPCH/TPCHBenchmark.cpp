@@ -213,9 +213,12 @@ class Query3Runner : public BenchmarkRunner {
 }// namespace NES::Runtime::Execution
 
 int main(int, char**) {
-    NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F0_01;
-    std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
+    // NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F0_01;
+    NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F1;
+    // std::vector<std::string> compilers = {"PipelineCompiler"};
+    std::vector<std::string> compilers = {"BCInterpreter"};
+    // std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
     for (const auto& c : compilers) {
-        NES::Runtime::Execution::Query6Runner(targetScaleFactor, c).run();
+        NES::Runtime::Execution::Query1Runner(targetScaleFactor, c).run();
     }
 }

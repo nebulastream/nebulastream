@@ -26,6 +26,8 @@ class StoreOperation : public Operation {
 
     OperationPtr getValue();
     OperationPtr getAddress();
+    void setValue(OperationWPtr newValue);
+    void setAddress(OperationWPtr newAddress);
 
     std::string toString() override;
 

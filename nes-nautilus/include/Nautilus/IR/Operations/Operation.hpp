@@ -69,9 +69,14 @@ class Operation {
     OperationIdentifier getIdentifier();
     virtual std::string toString() = 0;
     OperationType getOperationType() const;
+    // std::string getOperationTypeAsString() const;
     const Types::StampPtr& getStamp() const;
     void addUsage(const Operation*);
     const std::vector<const Operation*>& getUsages();
+
+    bool isConstOperation() const;
+    std::vector<std::shared_ptr<Operation>> getInputs();
+    void replaceInput(const std::shared_ptr<Operations::Operation>& toReplace, std::shared_ptr<Operations::Operation> replaceWith);
 
   protected:
     OperationType opType;

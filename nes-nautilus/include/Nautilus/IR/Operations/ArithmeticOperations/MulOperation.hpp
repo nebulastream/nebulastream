@@ -26,6 +26,8 @@ class MulOperation : public Operation {
 
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
+    void setLeftInput(OperationWPtr newLeftInput);
+    void setRightInput(OperationWPtr newRightInput);
 
     std::string toString() override;
     bool classof(const Operation* Op);

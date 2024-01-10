@@ -24,15 +24,25 @@ void BasicBlockInvocation::setBlock(BasicBlockPtr block) { this->basicBlock = bl
 BasicBlockPtr BasicBlockInvocation::getBlock() const { return basicBlock; }
 
 void BasicBlockInvocation::addArgument(OperationPtr argument) {
-    this->operations.emplace_back(argument);
+    this->arguments.emplace_back(argument);
     argument->addUsage(this);
 }
 
-void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) { operations.erase(operations.begin() + argumentIndex); }
+void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) { arguments.erase(arguments.begin() + argumentIndex); }
+
+void BasicBlockInvocation::replaceArgument(OperationPtr toReplace, OperationPtr replaceWith) {
+    auto argumentIndex = 0;
+    for(auto const& argument : arguments) {
+        if (argument.lock() == toReplace) {
+            arguments.at(argumentIndex) = replaceWith;
+        }
+        ++argumentIndex;
+    }
+}
 
 int BasicBlockInvocation::getOperationArgIndex(Operations::OperationPtr arg) {
-    for (uint64_t i = 0; i < operations.size(); i++) {
-        if (operations[i].lock() == arg) {
+    for (uint64_t i = 0; i < arguments.size(); i++) {
+        if (arguments[i].lock() == arg) {
             return i;
         }
     }
@@ -40,11 +50,11 @@ int BasicBlockInvocation::getOperationArgIndex(Operations::OperationPtr arg) {
 }
 
 std::vector<OperationPtr> BasicBlockInvocation::getArguments() const {
-    std::vector<OperationPtr> arguments;
-    for (auto& arg : this->operations) {
-        arguments.emplace_back(arg.lock());
+    std::vector<OperationPtr> lockedArguments;
+    for (auto& arg : this->arguments) {
+        lockedArguments.emplace_back(arg.lock());
     }
-    return arguments;
+    return lockedArguments;
 }
 std::string BasicBlockInvocation::toString() { return "BasicBlockInvocation"; }
 

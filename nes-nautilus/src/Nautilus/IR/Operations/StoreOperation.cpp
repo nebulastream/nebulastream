@@ -25,8 +25,13 @@ StoreOperation::StoreOperation(OperationPtr value, OperationPtr address)
 }
 
 OperationPtr StoreOperation::getValue() { return value.lock(); }
-
 OperationPtr StoreOperation::getAddress() { return address.lock(); }
+void StoreOperation::setValue(OperationWPtr newValue) {
+    this->value = newValue;
+}
+void StoreOperation::setAddress(OperationWPtr newAddress) {
+    this->address = newAddress;
+}
 
 std::string StoreOperation::toString() {
     return "store(" + getValue()->getIdentifier() + ", " + getAddress()->getIdentifier() + ")";

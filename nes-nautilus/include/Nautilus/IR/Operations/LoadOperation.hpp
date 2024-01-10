@@ -23,6 +23,7 @@ class LoadOperation : public Operation {
     explicit LoadOperation(OperationIdentifier identifier, OperationPtr address, Types::StampPtr stamp);
     ~LoadOperation() override = default;
     OperationPtr getAddress();
+    void setAddress(OperationWPtr newAddress);
     std::string toString() override;
 
   private:

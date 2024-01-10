@@ -25,6 +25,9 @@ class BasicBlockInvocation : public Operation {
     BasicBlockPtr getBlock() const;
     void addArgument(OperationPtr argument);
     void removeArgument(uint64_t argumentIndex);
+    void replaceArgument(OperationPtr toReplace, OperationPtr replaceWith);
+
+    std::vector<OperationPtr> getArguments() const;
 
     /**
      * @brief Iterate over args, find arg that matches OperationPtr and return index.
@@ -33,17 +36,11 @@ class BasicBlockInvocation : public Operation {
      */
     int getOperationArgIndex(Operations::OperationPtr);
 
-    /**
-     * @brief Get all arguments of next block invocation, meaning all args of the branching operation (br, if, loop,..)
-     * 
-     * @return std::vector<OperationPtr> : vector with all arguments of the next block invocation.
-     */
-    std::vector<OperationPtr> getArguments() const;
     std::string toString() override;
 
   private:
     BasicBlockPtr basicBlock;
-    std::vector<OperationWPtr> operations;
+    std::vector<OperationWPtr> arguments;
 };
 
 }// namespace NES::Nautilus::IR::Operations

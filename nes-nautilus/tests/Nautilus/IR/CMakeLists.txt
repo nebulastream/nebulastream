@@ -13,3 +13,4 @@
 
 
 add_nes_execution_test(nautilus-phase-tests "RemoveBranchOnlyBlocksPhaseTest.cpp" "StructuredControlFlowPhaseTest.cpp")
+add_nes_execution_test(nautilus-constant-propagation-phase-tests "ConstantValuePropagationPhaseTest.cpp")
