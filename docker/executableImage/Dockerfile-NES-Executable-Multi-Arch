@@ -1,6 +1,8 @@
 FROM ubuntu:22.04 AS execimg
 ARG TARGETARCH
 COPY ./nes-$TARGETARCH.deb nes.deb
+COPY ./opencv-libs-$TARGETARCH.deb opencv-libs.deb
+COPY ./opencv-java-$TARGETARCH.deb opencv-java.deb
 
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  \
     libstdc++-11-dev \
@@ -19,9 +21,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  
     libdw-dev iproute2  \
     ifupdown  \
     openjdk-17-jre \
-    libopencv4.5-java \
-    libopencv4.5d-jni \
-    net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -y -qq  ./nes.deb &&  rm nes.deb
+    net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -y -qq  ./nes.deb ./opencv-libs.deb ./opencv-java.deb &&  rm nes.deb opencv-libs.deb opencv-java.deb
 
 COPY ./docker/executableImage/entrypoint-nes-executable.sh /entrypoint.sh
 

@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
+RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
   libdwarf-dev \
     libdwarf1 \
     binutils-dev \
@@ -15,7 +15,10 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     libjemalloc-dev \
     git \
     wget \
+    ant \
+    file \
     python3 \
+    python3-numpy \
     python3-dev \
     libsodium-dev \
     tar \
