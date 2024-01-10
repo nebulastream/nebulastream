@@ -65,7 +65,7 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 namespace RequestProcessor {
 class AsyncRequestProcessor;
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping.

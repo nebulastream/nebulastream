@@ -65,5 +65,5 @@ class UnlockDeleter {
   private:
     std::unique_lock<std::mutex> lock;
 };
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_UNLOCKDELETER_HPP_

@@ -17,8 +17,8 @@
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 #include <atomic>
+#include <utility>
 
 namespace NES::RequestProcessor {
 
@@ -173,11 +173,9 @@ CoordinatorConfigurationHandle TwoPhaseLockingStorageHandler::getCoordinatorConf
     return coordinatorConfiguration;
 }
 
-TicketId TwoPhaseLockingStorageHandler::getCurrentTicket(ResourceType resource) {
-    return getHolder(resource).currentTicket;
-}
+TicketId TwoPhaseLockingStorageHandler::getCurrentTicket(ResourceType resource) { return getHolder(resource).currentTicket; }
 
 TicketId TwoPhaseLockingStorageHandler::getNextAvailableTicket(ResourceType resource) {
     return getHolder(resource).nextAvailableTicket;
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

@@ -32,10 +32,10 @@ FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
                                    const NES::QuerySubPlanId failedSubPlanId,
                                    const uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::GlobalQueryPlan,
-                       ResourceType::QueryCatalogService,
-                       ResourceType::Topology,
-                       ResourceType::GlobalExecutionPlan},
-                      maxRetries),
+                          ResourceType::QueryCatalogService,
+                          ResourceType::Topology,
+                          ResourceType::GlobalExecutionPlan},
+                         maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId) {}
 
 FailQueryRequestPtr FailQueryRequest::create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries) {

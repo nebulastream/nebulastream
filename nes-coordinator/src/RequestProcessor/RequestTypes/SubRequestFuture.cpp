@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <RequestProcessor/RequestTypes/SubRequestFuture.hpp>
 #include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
+#include <RequestProcessor/RequestTypes/SubRequestFuture.hpp>
 
 namespace NES::RequestProcessor {
 SubRequestFuture::SubRequestFuture(AbstractSubRequestPtr request, std::future<std::any> future)
@@ -22,4 +22,4 @@ std::any SubRequestFuture::get() {
     request->execute();
     return future.get();
 }
-}
+}// namespace NES::RequestProcessor

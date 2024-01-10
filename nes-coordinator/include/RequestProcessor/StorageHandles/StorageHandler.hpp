@@ -153,6 +153,6 @@ class StorageHandler {
     std::mutex idMutex;
     RequestId nextFreeRequestId{1};
 };
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 }// namespace NES
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_

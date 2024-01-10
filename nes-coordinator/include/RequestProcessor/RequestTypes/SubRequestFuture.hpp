@@ -13,9 +13,9 @@
 */
 #ifndef NES_SUBREQUESTFUTURE_HPP
 #define NES_SUBREQUESTFUTURE_HPP
-#include <memory>
-#include <future>
 #include <any>
+#include <future>
+#include <memory>
 
 namespace NES::RequestProcessor {
 class AbstractSubRequest;
@@ -47,5 +47,5 @@ class SubRequestFuture {
     AbstractSubRequestPtr request;
     std::future<std::any> future;
 };
-}
+}// namespace NES::RequestProcessor
 #endif//NES_SUBREQUESTFUTURE_HPP

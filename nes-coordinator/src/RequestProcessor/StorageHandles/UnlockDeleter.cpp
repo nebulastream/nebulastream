@@ -31,4 +31,4 @@ UnlockDeleter::UnlockDeleter(std::unique_lock<std::mutex> lock) : lock(std::move
         throw std::exception();
     }
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

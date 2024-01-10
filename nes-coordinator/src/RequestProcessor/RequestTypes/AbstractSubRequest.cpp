@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
 #include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -46,9 +46,7 @@ bool AbstractSubRequest::execute() {
     return true;
 }
 
-bool AbstractSubRequest::executionHasStarted() {
-    return executionStarted.load();
-}
+bool AbstractSubRequest::executionHasStarted() { return executionStarted.load(); }
 
 RequestId AbstractSubRequest::getResourceLockingId() { return requestId; }
 }// namespace NES::RequestProcessor

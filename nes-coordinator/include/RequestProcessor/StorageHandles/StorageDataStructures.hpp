@@ -66,6 +66,6 @@ struct StorageDataStructures {
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 }// namespace NES
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_

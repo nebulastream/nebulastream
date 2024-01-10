@@ -72,13 +72,13 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                                  const z3::ContextPtr& z3Context,
                                  const QueryParsingServicePtr& queryParsingService)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
-                       ResourceType::GlobalExecutionPlan,
-                       ResourceType::Topology,
-                       ResourceType::GlobalQueryPlan,
-                       ResourceType::UdfCatalog,
-                       ResourceType::SourceCatalog,
-                       ResourceType::CoordinatorConfiguration},
-                      maxRetries),
+                          ResourceType::GlobalExecutionPlan,
+                          ResourceType::Topology,
+                          ResourceType::GlobalQueryPlan,
+                          ResourceType::UdfCatalog,
+                          ResourceType::SourceCatalog,
+                          ResourceType::CoordinatorConfiguration},
+                         maxRetries),
       queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(queryParsingService) {}
 
@@ -87,13 +87,13 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                                  const uint8_t maxRetries,
                                  const z3::ContextPtr& z3Context)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
-                       ResourceType::GlobalExecutionPlan,
-                       ResourceType::Topology,
-                       ResourceType::GlobalQueryPlan,
-                       ResourceType::UdfCatalog,
-                       ResourceType::SourceCatalog,
-                       ResourceType::CoordinatorConfiguration},
-                      maxRetries),
+                          ResourceType::GlobalExecutionPlan,
+                          ResourceType::Topology,
+                          ResourceType::GlobalQueryPlan,
+                          ResourceType::UdfCatalog,
+                          ResourceType::SourceCatalog,
+                          ResourceType::CoordinatorConfiguration},
+                         maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(nullptr) {}
 
@@ -354,4 +354,4 @@ void AddQueryRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     }
 }
 
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

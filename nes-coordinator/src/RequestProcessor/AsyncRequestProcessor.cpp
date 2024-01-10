@@ -27,8 +27,7 @@
 
 namespace NES::RequestProcessor {
 
-AsyncRequestProcessor::AsyncRequestProcessor(StorageDataStructures& storageDataStructures)
-    : running(true) {
+AsyncRequestProcessor::AsyncRequestProcessor(StorageDataStructures& storageDataStructures) : running(true) {
 
     numOfThreads = storageDataStructures.coordinatorConfiguration->requestExecutorThreads.getValue();
     auto storageHandlerType = storageDataStructures.coordinatorConfiguration->storageHandlerType.getValue();
@@ -138,4 +137,4 @@ void AsyncRequestProcessor::runningRoutine() {
 
 AsyncRequestProcessor::~AsyncRequestProcessor() { stop(); }
 
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
