@@ -50,7 +50,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         ChannelId channelId(nesPartition, Runtime::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         zmqSocket.set(zmq::sockopt::linger, linger);
-        long long zmqSize = 10000;
+        const long long zmqSize = 10000;
         // Sets the timeout for receive operation on the socket. If the value is 0, zmq_recv(3) will return immediately,
         // with a EAGAIN error if there is no message to receive. If the value is -1, it will block until a message is available.
         // For all other values, it will wait for a message for that amount of time before returning with an EAGAIN error.
