@@ -169,6 +169,10 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     void injectClassesIntoClassLoader() const;
     /** @brief Deserialize the UDF instance. */
     void deserializeInstance();
+#ifdef ENABLE_JNI_OPENCV
+    /** @brief Load JNI OpenCV library. */
+    void loadOpenCVLibrary();
+#endif
 
     const std::string className;
     const std::string classJNIName;
@@ -189,6 +193,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     jni::jobject classLoader;
     jni::jmethodID injectClassMethod;
     jni::jmethodID loadClassMethod;
+
 };
 
 }// namespace NES::Runtime::Execution::Operators

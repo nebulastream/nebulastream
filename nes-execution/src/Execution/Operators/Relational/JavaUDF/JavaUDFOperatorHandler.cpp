@@ -38,6 +38,10 @@ JavaUDFOperatorHandler::JavaUDFOperatorHandler(const std::string& className,
     auto& jvm = jni::JVM::get();
     if (!jvm.isInitialized()) {
         jvm.addClasspath(JAVA_UDF_UTILS_JAR);
+#ifdef ENABLE_JNI_OPENCV
+        jvm.addClasspath("/usr/share/java/opencv4/opencv-455.jar");
+        jvm.addOption("-Djava.library.path=/usr/share/java/opencv4");
+#endif
         if (javaPath.has_value()) {
             jvm.addClasspath(javaPath.value());
         }
@@ -49,6 +53,9 @@ void JavaUDFOperatorHandler::setup() {
     auto env = jni::getEnv();
     setupClassLoader();
     injectClassesIntoClassLoader();
+#ifdef ENABLE_JNI_OPENCV
+    loadOpenCVLibrary();
+#endif
 
     // Find udf function
     std::string sig = "(L" + getInputClassJNIName() + ";)L" + getOutputClassJNIName() + ";";
@@ -168,5 +175,16 @@ void JavaUDFOperatorHandler::injectClassesIntoClassLoader() const {
         jni::jniErrorCheck();
     }
 }
+
+#ifdef ENABLE_JNI_OPENCV
+void JavaUDFOperatorHandler::loadOpenCVLibrary() {
+    NES_DEBUG("Loading OpenCV JNI library.");
+    auto env = jni::getEnv();
+    auto loaderClazz = jni::findClass("stream/nebula/UDFClassLoader");
+    auto loadOpenCVLibraryMethod = env->GetStaticMethodID(loaderClazz, "loadOpenCVLibrary", "()V");
+    env->CallStaticVoidMethod(loaderClazz, loadOpenCVLibraryMethod);
+    jni::jniErrorCheck();
+}
+#endif
 
 }// namespace NES::Runtime::Execution::Operators

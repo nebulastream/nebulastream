@@ -58,6 +58,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
+option(NES_USE_JNI_OPENCV "Build with OpenCV over JNI support" OFF)
 
 # Plugins
 option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
@@ -529,6 +530,10 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
         message(FATAL_ERROR "JNI not found")
     endif ()
 endif ()
+
+if (NES_USE_JNI_OPENCV)
+    add_compile_definitions("ENABLE_JNI_OPENCV")
+endif()
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")

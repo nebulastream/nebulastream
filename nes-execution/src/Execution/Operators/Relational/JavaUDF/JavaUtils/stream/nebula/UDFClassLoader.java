@@ -67,6 +67,16 @@ public class UDFClassLoader extends ClassLoader {
         classes.put(className, copy);
     }
 
+    /** Load OpenCV JNI library.
+     * Assumes that OpenCV 4.5.5 is installed.
+     */
+    public static void loadOpenCVLibrary() {
+        String libraryPath = "opencv_java455";
+        System.out.println("UDFClassLoader: Loading: " + libraryPath);
+        System.loadLibrary(libraryPath);
+        System.out.println("UDFClassLoader: Done");
+    }
+
     @Override
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
         // Create classes based on the injected bytecode.
