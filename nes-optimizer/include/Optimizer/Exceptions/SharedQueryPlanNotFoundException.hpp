@@ -37,4 +37,4 @@ class SharedQueryPlanNotFoundException : public RequestExecutionException {
     SharedQueryId id;
 };
 }// namespace NES::Exceptions
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_

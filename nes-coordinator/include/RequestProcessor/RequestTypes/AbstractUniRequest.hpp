@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_ABSTRACTUNIREQUEST_HPP
-#define NES_ABSTRACTUNIREQUEST_HPP
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTUNIREQUEST_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTUNIREQUEST_HPP_
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 
 namespace NES::RequestProcessor {
@@ -56,4 +56,4 @@ class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker 
     RequestId getResourceLockingId() override;
 };
 }// namespace NES::RequestProcessor
-#endif//NES_ABSTRACTUNIREQUEST_HPP
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTUNIREQUEST_HPP_

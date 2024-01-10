@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -37,4 +37,4 @@ class CountedLoopInfo : public LoopInfo {
 
 }// namespace NES::Nautilus::IR::Operations
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_

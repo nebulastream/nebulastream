@@ -140,4 +140,4 @@ class NemoWindowPinningRule : public DistributedWindowRule {
     bool enableNemoPlacement;
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOWINDOWPINNINGRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOWINDOWPINNINGRULE_HPP_

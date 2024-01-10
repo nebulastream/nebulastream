@@ -40,4 +40,4 @@ class BaseQueryMergerRule {
 };
 using BaseQueryMergerRulePtr = std::shared_ptr<BaseQueryMergerRule>;
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_BASEQUERYMERGERRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_BASEQUERYMERGERRULE_HPP_

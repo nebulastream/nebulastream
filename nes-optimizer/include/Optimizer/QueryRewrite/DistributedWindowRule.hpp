@@ -114,4 +114,4 @@ class DistributedWindowRule : public BaseRewriteRule {
     uint64_t windowDistributionCombinerThreshold;
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDWINDOWRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDWINDOWRULE_HPP_

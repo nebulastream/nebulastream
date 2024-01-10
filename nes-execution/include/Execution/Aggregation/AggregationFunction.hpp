@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
+#ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
+#define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -89,4 +89,4 @@ class AggregationFunction {
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
+#ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
+#define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <type_traits>
@@ -47,4 +47,4 @@ using ConstantBooleanValueExpression = ConstantValueExpression<bool>;
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_

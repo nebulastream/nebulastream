@@ -86,4 +86,4 @@ struct formatter<NES::Network::NesPartition> : formatter<std::string> {
     auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out());
 };
 }//namespace fmt
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_

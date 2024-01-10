@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_
 #include <Nautilus/Backends/Executable.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 
@@ -34,4 +34,4 @@ class MLIRExecutable : public Executable {
     std::unique_ptr<mlir::ExecutionEngine> engine;
 };
 }// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_

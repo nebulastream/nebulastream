@@ -32,4 +32,4 @@ std::string base64_encode_mime(std::string_view s);
 std::string base64_decode(std::string_view s, bool remove_linebreaks = false);
 #endif  // __cplusplus >= 201703L
 
-#endif  // NES_COMMON_INCLUDE_CPP_BASE64_BASE64_H_
+#endif // NES_COMMON_INCLUDE_CPP_BASE64_BASE64_H_

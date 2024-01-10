@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
-#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
+#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
+#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
 
 #include <Nodes/Node.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -174,4 +174,4 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
 
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_

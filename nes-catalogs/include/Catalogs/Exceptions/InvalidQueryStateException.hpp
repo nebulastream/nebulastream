@@ -37,4 +37,4 @@ class InvalidQueryStateException : public RequestExecutionException {
     QueryState actualState;
 };
 }// namespace NES::Exceptions
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_

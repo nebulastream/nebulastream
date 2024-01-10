@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_LOOPDETECTIONPHASE_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_LOOPDETECTIONPHASE_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_LOOPDETECTIONPHASE_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_LOOPDETECTIONPHASE_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -115,4 +115,4 @@ class LoopDetectionPhase {
 };
 
 }// namespace NES::Nautilus::IR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_LOOPDETECTIONPHASE_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_LOOPDETECTIONPHASE_HPP_

@@ -47,4 +47,4 @@ class UDFException : public Exceptions::RequestExecutionException {
 };
 
 }// namespace NES
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Tag/Tag.hpp>
@@ -175,4 +175,4 @@ std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func) {
 
 }// namespace NES::Nautilus::Tracing
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_

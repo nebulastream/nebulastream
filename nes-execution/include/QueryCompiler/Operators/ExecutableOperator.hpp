@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
-#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
+#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
+#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
@@ -59,4 +59,4 @@ class ExecutableOperator : public UnaryOperatorNode {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_

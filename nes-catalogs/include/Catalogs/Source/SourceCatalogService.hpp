@@ -121,4 +121,4 @@ class SourceCatalogService {
 };
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 }// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_

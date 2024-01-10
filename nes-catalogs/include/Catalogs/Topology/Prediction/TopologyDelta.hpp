@@ -64,4 +64,4 @@ class TopologyDelta {
     std::vector<Edge> removed;
 };
 }// namespace NES::Experimental::TopologyPrediction
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYDELTA_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYDELTA_HPP_

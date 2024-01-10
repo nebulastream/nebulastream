@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTITHREADEDREQUEST_HPP_
-#define NES_CORE_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTITHREADEDREQUEST_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <any>
 #include <deque>
@@ -84,4 +84,4 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
     StorageHandlerPtr storageHandle;
 };
 }// namespace NES::RequestProcessor
-#endif// NES_CORE_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTITHREADEDREQUEST_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_

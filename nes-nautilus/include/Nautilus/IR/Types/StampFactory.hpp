@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_
 
 #include <memory>
 namespace NES::Nautilus::IR::Types {
@@ -38,4 +38,4 @@ class StampFactory {
 
 }// namespace NES::Nautilus::IR::Types
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_STAMPFACTORY_HPP_

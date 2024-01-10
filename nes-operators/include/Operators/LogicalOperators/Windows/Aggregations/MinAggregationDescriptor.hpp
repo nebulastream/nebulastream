@@ -49,4 +49,4 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
     MinAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MINAGGREGATIONDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_MINAGGREGATIONDESCRIPTOR_HPP_

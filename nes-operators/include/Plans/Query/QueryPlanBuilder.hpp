@@ -177,4 +177,4 @@ class QueryPlanBuilder {
                                                               QueryPlanPtr rightQueryPlan);
 };
 }// end namespace NES
-#endif  // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
+#endif // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_

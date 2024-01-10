@@ -53,4 +53,4 @@ class DistributeJoinRule : public BaseRewriteRule {
     explicit DistributeJoinRule();
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEJOINRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEJOINRULE_HPP_

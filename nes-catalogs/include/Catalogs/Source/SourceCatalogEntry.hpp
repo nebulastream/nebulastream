@@ -94,4 +94,4 @@ class SourceCatalogEntry {
 }// namespace Catalogs::Source
 }// namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_

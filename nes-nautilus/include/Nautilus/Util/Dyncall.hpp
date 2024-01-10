@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
 
 #include <cinttypes>
 #include <cstdint>
@@ -177,4 +177,4 @@ class Dyncall {
 };
 }// namespace NES::Nautilus::Backends::BC
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_

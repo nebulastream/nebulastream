@@ -576,4 +576,4 @@ void Serialize(Node const& root, std::iostream& stream, SerializeConfig const& c
 void Serialize(Node const& root, std::string& string, SerializeConfig const& config);
 
 }// namespace Yaml
-#endif// NES_COMMON_INCLUDE_UTIL_YAML_YAML_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_YAML_YAML_HPP_

@@ -64,4 +64,4 @@ class PythonUDFDescriptor : public UDFDescriptor {
     const std::string functionString;
 };
 }// namespace NES::Catalogs::UDF
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_PYTHONUDFDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_PYTHONUDFDESCRIPTOR_HPP_

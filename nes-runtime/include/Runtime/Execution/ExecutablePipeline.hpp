@@ -202,4 +202,4 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
 
 }// namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_

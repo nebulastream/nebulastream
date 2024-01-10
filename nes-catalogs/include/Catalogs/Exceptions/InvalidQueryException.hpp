@@ -29,4 +29,4 @@ class InvalidQueryException : public Exceptions::RequestExecutionException {
 };
 }// namespace NES
 
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_

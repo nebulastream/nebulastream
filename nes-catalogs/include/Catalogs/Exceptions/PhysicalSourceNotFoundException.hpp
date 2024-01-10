@@ -30,4 +30,4 @@ class PhysicalSourceNotFoundException : public RequestExecutionException {
     explicit PhysicalSourceNotFoundException(const std::string& message);
 };
 }// namespace NES::Exceptions
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_

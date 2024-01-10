@@ -197,4 +197,4 @@ using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCP
 
 }// namespace NES::Configurations
 
-#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_

@@ -36,4 +36,4 @@ class InvalidOperatorStateException : public RequestExecutionException {
     std::string message;
 };
 }// namespace NES::Exceptions
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_

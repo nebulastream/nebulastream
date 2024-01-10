@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
+#ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
+#define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 namespace NES::Runtime::Execution {
@@ -26,4 +26,4 @@ class CompilationPipelineProvider : public ExecutablePipelineProvider {
                                                     const Nautilus::CompilationOptions& options) override;
 };
 }// namespace NES::Runtime::Execution
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 namespace NES::Nautilus::Backends::MLIR {
@@ -27,4 +27,4 @@ class MLIRCompilationBackend : public CompilationBackend {
 };
 
 }// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_

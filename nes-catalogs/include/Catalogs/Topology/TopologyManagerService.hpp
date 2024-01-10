@@ -226,4 +226,4 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 }//namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYMANAGERSERVICE_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYMANAGERSERVICE_HPP_

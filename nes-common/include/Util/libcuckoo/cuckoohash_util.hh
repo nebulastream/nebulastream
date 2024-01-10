@@ -126,4 +126,4 @@ private:
     const size_t hashpower_;
 };
 
-#endif  // NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_UTIL_HH_
+#endif // NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_UTIL_HH_

@@ -51,4 +51,4 @@ class LogicalSource {
     SchemaPtr schema;
 };
 }// namespace NES
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_

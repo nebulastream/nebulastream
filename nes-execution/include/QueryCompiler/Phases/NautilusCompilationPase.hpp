@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_
-#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_
+#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_
+#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <functional>
@@ -55,4 +55,4 @@ class NautilusCompilationPhase {
 };
 };// namespace NES::QueryCompilation
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_

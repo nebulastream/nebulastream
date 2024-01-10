@@ -62,4 +62,4 @@ class TCPSourceDescriptor : public SourceDescriptor {
 using TCPSourceDescriptorPtr = std::shared_ptr<TCPSourceDescriptor>;
 
 }// namespace NES
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_

@@ -65,4 +65,4 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public Origin
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 }// namespace NES
 
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATORNODE_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATORNODE_HPP_

@@ -45,4 +45,4 @@ void executeSingleRun(E2EBenchmarkConfigPerRun& configPerRun,
 void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
 
 }// namespace NES::Benchmark
-#endif// NES_BENCHMARK_INCLUDE_E2E_E2ERUNNER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_E2E_E2ERUNNER_HPP_

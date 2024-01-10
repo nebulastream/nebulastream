@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_
 
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
@@ -149,4 +149,4 @@ class TypedList final : public List {
 };
 
 }// namespace NES::Nautilus
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_

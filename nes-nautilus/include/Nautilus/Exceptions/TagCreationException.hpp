@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_EXCEPTIONS_TAGCREATIONEXCEPTION_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_EXCEPTIONS_TAGCREATIONEXCEPTION_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_EXCEPTIONS_TAGCREATIONEXCEPTION_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_EXCEPTIONS_TAGCREATIONEXCEPTION_HPP_
 #include <Exceptions/RuntimeException.hpp>
 namespace NES::Nautilus {
 
@@ -23,4 +23,4 @@ class TagCreationException final : public Exceptions::RuntimeException {
                                   const std::source_location location = std::source_location::current());
 };
 }// namespace NES::Nautilus
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_EXCEPTIONS_TAGCREATIONEXCEPTION_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_EXCEPTIONS_TAGCREATIONEXCEPTION_HPP_

@@ -169,4 +169,4 @@ struct formatter<NES::Network::ZmqServer> : formatter<std::string> {
 };
 }// namespace fmt
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_
 #include <memory>
 #include <typeinfo>
 
@@ -134,4 +134,4 @@ T* cast_if(Typed* typed) {
 
 }// namespace NES::Nautilus
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_

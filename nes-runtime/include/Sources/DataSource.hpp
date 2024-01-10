@@ -330,4 +330,4 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_

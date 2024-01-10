@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 namespace NES::Nautilus::Tracing {
 class ValueRef;
@@ -75,4 +75,4 @@ void traceStoreOperation(const Tracing::ValueRef& memRef, const Tracing::ValueRe
 
 }// namespace NES::Nautilus::Tracing::TraceUtil
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_

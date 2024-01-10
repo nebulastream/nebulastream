@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
@@ -59,4 +59,4 @@ class MurMur3HashFunction : public HashFunction {
 };
 }// namespace NES::Nautilus::Interface
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_

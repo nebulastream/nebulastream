@@ -115,4 +115,4 @@ class QueryDeploymentPhase {
     const std::string DEVICE_INFO_KEY = "deviceInfo";
 };
 }// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_

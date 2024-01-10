@@ -83,4 +83,4 @@ class NullOutputSink : public SinkMedium {
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
 
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
@@ -44,4 +44,4 @@ class Boolean : public TraceableType {
 
 }// namespace NES::Nautilus
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
