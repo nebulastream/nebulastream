@@ -154,8 +154,30 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
             } else {
                 workerIdToOperatorIdMap[pinnedWorkerId] = {operatorId};
             }
+        }
 
-            // 10. If the operator is connected by system generated operators then record the worker ids and query sub plan ids
+        // 10. If the operator is one of the downstream pinned operator then continue
+        auto found = std::find_if(downStreamPinnedOperators.begin(),
+                                  downStreamPinnedOperators.end(),
+                                  [&](LogicalOperatorNodePtr operatorPin) {
+                                      return operatorPin->getId() == operatorToProcess->getId();
+                                  });
+        if (found != downStreamPinnedOperators.end()) {
+            continue;
+        }
+
+        // 11. Fetch all connected upstream operators for further processing
+        bool downStreamInToBePlacedState = true;
+        for (const auto& parent : operatorToProcess->getParents()) {
+            const auto& downStreamOperator = parent->as<LogicalOperatorNode>();
+            if (downStreamInToBePlacedState && downStreamOperator->getOperatorState() != OperatorState::TO_BE_PLACED) {
+                downStreamInToBePlacedState = false;
+            }
+            operatorsToProcessInBFSOrder.emplace(downStreamOperator);
+        }
+
+        // 10. If the operator is connected by system generated operators then record the worker ids and query sub plan ids
+        if (operatorState != OperatorState::TO_BE_PLACED && !downStreamInToBePlacedState) {
             if (operatorToProcess->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
                 auto sysPlansMetaData =
                     std::any_cast<std::vector<SysPlanMetaData>>(operatorToProcess->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
@@ -170,21 +192,6 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                     }
                 }
             }
-        }
-
-        // 11. If the operator is one of the downstream pinned operator then continue
-        auto found = std::find_if(downStreamPinnedOperators.begin(),
-                                  downStreamPinnedOperators.end(),
-                                  [&](LogicalOperatorNodePtr operatorPin) {
-                                      return operatorPin->getId() == operatorToProcess->getId();
-                                  });
-        if (found != downStreamPinnedOperators.end()) {
-            continue;
-        }
-
-        // 12. Fetch all connected upstream operators for further processing
-        for (const auto& downstreamOperator : operatorToProcess->getParents()) {
-            operatorsToProcessInBFSOrder.emplace(downstreamOperator->as<LogicalOperatorNode>());
         }
     }
 
