@@ -174,6 +174,7 @@ bool OperatorNode::hasProperty(const std::string& key) { return properties.find(
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 
 bool OperatorNode::containAsGrandChild(NodePtr operatorNode) {
+
     auto operatorIdToCheck = operatorNode->as<OperatorNode>()->getId();
     // populate all ancestors
     std::vector<NodePtr> ancestors{};

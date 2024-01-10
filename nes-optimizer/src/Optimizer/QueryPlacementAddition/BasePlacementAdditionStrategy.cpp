@@ -307,17 +307,32 @@ BasePlacementAdditionStrategy::createCopyOfQueryPlan(const std::set<LogicalOpera
         // Add to the list of topology nodes for which locks are acquired
         const auto& downstreamOperators = operatorToProcess->getParents();
         std::for_each(downstreamOperators.begin(), downstreamOperators.end(), [&](const NodePtr& operatorNode) {
-            auto parentOperator = operatorNode->as<LogicalOperatorNode>();
-            auto parentOperatorId = parentOperator->getId();
-            LogicalOperatorNodePtr parentOperatorCopy;
-            if (mapOfCopiedOperators.contains(parentOperatorId)) {
-                parentOperatorCopy = mapOfCopiedOperators[parentOperatorId];
-            } else {
-                parentOperatorCopy = parentOperator->copy()->as<LogicalOperatorNode>();
-                mapOfCopiedOperators[parentOperatorId] = parentOperatorCopy;
+            // only process downstream operators that are either directly or indirectly connected to pinned downstream
+            // operators
+            bool connectedToPinnedDownstreamOperator =
+                std::any_of(pinnedDownStreamOperators.begin(),
+                            pinnedDownStreamOperators.end(),
+                            [&](const auto& pinnedDownStreamOperator) {
+                                OperatorId downStreamOperatorId = operatorNode->as<OperatorNode>()->getId();
+                                return pinnedDownStreamOperator->getId() == downStreamOperatorId
+                                    || pinnedDownStreamOperator->getChildWithOperatorId(downStreamOperatorId);
+                            });
+
+            // Add the  remaining process if not connected
+            if (connectedToPinnedDownstreamOperator) {
+
+                auto parentOperator = operatorNode->as<LogicalOperatorNode>();
+                auto parentOperatorId = parentOperator->getId();
+                LogicalOperatorNodePtr parentOperatorCopy;
+                if (mapOfCopiedOperators.contains(parentOperatorId)) {
+                    parentOperatorCopy = mapOfCopiedOperators[parentOperatorId];
+                } else {
+                    parentOperatorCopy = parentOperator->copy()->as<LogicalOperatorNode>();
+                    mapOfCopiedOperators[parentOperatorId] = parentOperatorCopy;
+                }
+                operatorCopy->addParent(parentOperatorCopy);
+                operatorsToProcess.push(parentOperator);
             }
-            operatorCopy->addParent(parentOperatorCopy);
-            operatorsToProcess.push(parentOperator);
         });
     }
 
@@ -548,7 +563,12 @@ BasePlacementAdditionStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
         // 2.4. Add next downstream operators for the traversal
         auto downStreamOperators = pinnedOperator->getParents();
         std::for_each(downStreamOperators.begin(), downStreamOperators.end(), [&](const NodePtr& operatorNode) {
-            pinnedOperators.push(operatorNode->as<LogicalOperatorNode>());
+            // 2.5. Only add those operators that are to be processed as part of the given query plan.
+            // NOTE: It can happen that an operator is connected to multiple downstream operators but some of them are not to be considered during the placement.
+            const auto& downStreamOperator = operatorNode->as<LogicalOperatorNode>();
+            if (operatorIdToOriginalOperatorMap.contains(downStreamOperator->getId())) {
+                pinnedOperators.push(downStreamOperator);
+            }
         });
     }
 
@@ -680,7 +700,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                             // 12. Add a network source operator to the leaf operator.
 
                             // 13. Record information about the query plan and worker id
-                            connectedSysSubPlanDetails.emplace_back(SysPlanMetaData(querySubPlan->getQuerySubPlanId(), currentWorkerId));
+                            connectedSysSubPlanDetails.emplace_back(
+                                SysPlanMetaData(querySubPlan->getQuerySubPlanId(), currentWorkerId));
                             // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
@@ -713,7 +734,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedSubQueryPlans& c
                                 QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {networkSinkOperator});
 
                             // 18. Record information about the query plan and worker id
-                            connectedSysSubPlanDetails.emplace_back(SysPlanMetaData(newQuerySubPlan->getQuerySubPlanId(), currentWorkerId));
+                            connectedSysSubPlanDetails.emplace_back(
+                                SysPlanMetaData(newQuerySubPlan->getQuerySubPlanId(), currentWorkerId));
 
                             // 19. add the new query plan
                             if (computedSubQueryPlans.contains(currentWorkerId)) {
