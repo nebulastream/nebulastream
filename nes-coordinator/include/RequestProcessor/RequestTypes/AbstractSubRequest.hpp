@@ -13,11 +13,11 @@
 */
 #ifndef NES_ABSTRACTSUBREQUEST_HPP
 #define NES_ABSTRACTSUBREQUEST_HPP
+#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 #include <any>
 #include <future>
 #include <memory>
 #include <vector>
-#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 
 namespace NES::RequestProcessor {
 class AbstractRequest;
@@ -91,6 +91,6 @@ class AbstractSubRequest : public StorageResourceLocker {
     std::atomic<bool> executionStarted{false};
     RequestId requestId{INVALID_REQUEST_ID};
 };
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
 
 #endif//NES_ABSTRACTSUBREQUEST_HPP

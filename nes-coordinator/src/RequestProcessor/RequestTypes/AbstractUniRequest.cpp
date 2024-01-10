@@ -11,13 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Logger/Logger.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::RequestProcessor {
-AbstractUniRequest::AbstractUniRequest(const std::vector<ResourceType>& requiredResources,
-                                       uint8_t maxRetries)
+AbstractUniRequest::AbstractUniRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries)
     : AbstractRequest(maxRetries), StorageResourceLocker(requiredResources) {}
-
 
 std::vector<AbstractRequestPtr> AbstractUniRequest::execute(const StorageHandlerPtr& storageHandle) {
     if (requestId == INVALID_REQUEST_ID) {
@@ -35,4 +33,4 @@ std::vector<AbstractRequestPtr> AbstractUniRequest::execute(const StorageHandler
 }
 
 RequestId AbstractUniRequest::getResourceLockingId() { return requestId; }
-}
+}// namespace NES::RequestProcessor

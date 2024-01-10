@@ -38,13 +38,13 @@ namespace NES::RequestProcessor::Experimental {
 
 StopQueryRequest::StopQueryRequest(QueryId queryId, uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
-                       ResourceType::GlobalExecutionPlan,
-                       ResourceType::Topology,
-                       ResourceType::GlobalQueryPlan,
-                       ResourceType::UdfCatalog,
-                       ResourceType::SourceCatalog,
-                       ResourceType::CoordinatorConfiguration},
-                      maxRetries),
+                          ResourceType::GlobalExecutionPlan,
+                          ResourceType::Topology,
+                          ResourceType::GlobalQueryPlan,
+                          ResourceType::UdfCatalog,
+                          ResourceType::SourceCatalog,
+                          ResourceType::CoordinatorConfiguration},
+                         maxRetries),
       queryId(queryId) {}
 
 StopQueryRequestPtr StopQueryRequest::create(QueryId queryId, uint8_t maxRetries) {

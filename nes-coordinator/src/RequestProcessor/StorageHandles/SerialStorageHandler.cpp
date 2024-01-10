@@ -52,4 +52,4 @@ UDFCatalogHandle SerialStorageHandler::getUDFCatalogHandle(const RequestId) { re
 CoordinatorConfigurationHandle SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
     return {&*coordinatorConfiguration, UnlockDeleter()};
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

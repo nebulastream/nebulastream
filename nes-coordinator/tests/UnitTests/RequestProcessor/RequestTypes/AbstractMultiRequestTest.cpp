@@ -41,10 +41,7 @@ class DummySubRequest : public AbstractSubRequest {
 
 class DummyRequest : public AbstractMultiRequest {
   public:
-    DummyRequest(uint8_t maxRetries,
-                 uint32_t initialValue,
-                 uint32_t additionValue,
-                 uint32_t returnNewRequestFrequency)
+    DummyRequest(uint8_t maxRetries, uint32_t initialValue, uint32_t additionValue, uint32_t returnNewRequestFrequency)
         : AbstractMultiRequest(maxRetries), responseValue(initialValue), additionValue(additionValue),
           returnNewRequestFrequency(returnNewRequestFrequency){};
 
@@ -139,4 +136,4 @@ TEST_F(AbstractMultiRequestTest, testOneMainThreadTwoExecutors) {
     ASSERT_TRUE(request.isDone());
     ASSERT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

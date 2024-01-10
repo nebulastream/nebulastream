@@ -23,8 +23,7 @@
 
 namespace NES::RequestProcessor {
 
-AbstractMultiRequest::AbstractMultiRequest(const uint8_t maxRetries)
-    : AbstractRequest(maxRetries) {}
+AbstractMultiRequest::AbstractMultiRequest(const uint8_t maxRetries) : AbstractRequest(maxRetries) {}
 
 std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandlerPtr& storageHandle) {
     std::vector<AbstractRequestPtr> result;
@@ -40,7 +39,7 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
 
         //verify that all requests have been executed
         if (!subRequestQueue.empty()) {
-            for (auto& subRequedt: subRequestQueue) {
+            for (auto& subRequedt : subRequestQueue) {
                 NES_ASSERT(subRequedt->executionHasStarted(), "Not all scheduled requests were executed");
             }
         }
@@ -82,4 +81,4 @@ SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr 
     cv.notify_all();
     return SubRequestFuture(subRequest, std::move(future));
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

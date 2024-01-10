@@ -188,6 +188,6 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     ResourceHolderData sourceCatalogHolder;
     ResourceHolderData udfCatalogHolder;
 };
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
 
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_TWOPHASELOCKINGSTORAGEHANDLER_HPP_

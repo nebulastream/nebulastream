@@ -111,12 +111,12 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                              z3Context);
 
     RequestProcessor::StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
-                                                                                   topology,
-                                                                                   globalExecutionPlan,
-                                                                                   queryCatalogService,
-                                                                                   globalQueryPlan,
-                                                                                   sourceCatalog,
-                                                                                   udfCatalog};
+                                                                     topology,
+                                                                     globalExecutionPlan,
+                                                                     queryCatalogService,
+                                                                     globalQueryPlan,
+                                                                     sourceCatalog,
+                                                                     udfCatalog};
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
     bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();

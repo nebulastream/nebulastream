@@ -97,10 +97,10 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
     } else {
 
         auto addRequest = RequestProcessor::AddQueryRequest::create(queryString,
-                                                                                  placementStrategy,
-                                                                                  RequestProcessor::DEFAULT_RETRIES,
-                                                                                  z3Context,
-                                                                                  queryParsingService);
+                                                                    placementStrategy,
+                                                                    RequestProcessor::DEFAULT_RETRIES,
+                                                                    z3Context,
+                                                                    queryParsingService);
         asyncRequestExecutor->runAsync(addRequest);
         auto future = addRequest->getFuture();
         return std::static_pointer_cast<RequestProcessor::AddQueryResponse>(future.get())->queryId;
@@ -143,10 +143,8 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         }
         throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
     } else {
-        auto addRequest = RequestProcessor::AddQueryRequest::create(queryPlan,
-                                                                                  placementStrategy,
-                                                                                  RequestProcessor::DEFAULT_RETRIES,
-                                                                                  z3Context);
+        auto addRequest =
+            RequestProcessor::AddQueryRequest::create(queryPlan, placementStrategy, RequestProcessor::DEFAULT_RETRIES, z3Context);
         asyncRequestExecutor->runAsync(addRequest);
         auto future = addRequest->getFuture();
         return std::static_pointer_cast<RequestProcessor::AddQueryResponse>(future.get())->queryId;
@@ -179,8 +177,7 @@ bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
         }
         return false;
     } else {
-        auto stopRequest =
-            RequestProcessor::Experimental::StopQueryRequest::create(queryId, RequestProcessor::DEFAULT_RETRIES);
+        auto stopRequest = RequestProcessor::Experimental::StopQueryRequest::create(queryId, RequestProcessor::DEFAULT_RETRIES);
         auto future = stopRequest->getFuture();
         asyncRequestExecutor->runAsync(stopRequest);
         try {
@@ -202,10 +199,9 @@ bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
         auto request = FailQueryRequest::create(sharedQueryId, failureReason);
         return queryRequestQueue->add(request);
     } else {
-        auto failRequest =
-            RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId,
-                                                                     querySubPlanId,
-                                                                     RequestProcessor::DEFAULT_RETRIES);
+        auto failRequest = RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId,
+                                                                                    querySubPlanId,
+                                                                                    RequestProcessor::DEFAULT_RETRIES);
         auto future = failRequest->getFuture();
         asyncRequestExecutor->runAsync(failRequest);
         auto returnedSharedQueryId =

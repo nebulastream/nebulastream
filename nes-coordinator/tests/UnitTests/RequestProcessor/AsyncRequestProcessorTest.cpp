@@ -183,10 +183,7 @@ class DummySubRequest : public AbstractSubRequest {
 //todo: rename
 class DummyMultiRequest : public AbstractMultiRequest {
   public:
-    DummyMultiRequest(uint8_t maxRetries,
-                                         uint32_t initialValue,
-                                         uint32_t additionValue,
-                                         uint32_t returnNewRequestFrequency)
+    DummyMultiRequest(uint8_t maxRetries, uint32_t initialValue, uint32_t additionValue, uint32_t returnNewRequestFrequency)
         : AbstractMultiRequest(maxRetries), responseValue(initialValue), additionValue(additionValue),
           returnNewRequestFrequency(returnNewRequestFrequency){};
 

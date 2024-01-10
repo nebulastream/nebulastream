@@ -31,6 +31,7 @@ class AsyncRequestProcessor {
     //define an empty request type that does nothing and is used only for flushing the executor
     class FlushRequest : public AbstractUniRequest {
         static constexpr auto NO_RETRIES = 0;
+
       public:
         FlushRequest() : AbstractUniRequest({}, NO_RETRIES) {}
         std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override { return {}; }
@@ -86,5 +87,5 @@ class AsyncRequestProcessor {
 };
 
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_

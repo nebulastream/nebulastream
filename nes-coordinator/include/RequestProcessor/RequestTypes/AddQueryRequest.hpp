@@ -220,6 +220,6 @@ class AddQueryRequest : public AbstractUniRequest {
     void markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler);
     void removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler);
 };
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 }// namespace NES
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_

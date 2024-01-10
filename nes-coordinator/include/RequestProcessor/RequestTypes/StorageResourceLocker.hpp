@@ -13,10 +13,10 @@
 */
 #ifndef NES_STORAGERESOURCELOCKER_HPP
 #define NES_STORAGERESOURCELOCKER_HPP
+#include <Identifiers.hpp>
 #include <cstdint>
 #include <future>
 #include <vector>
-#include <Identifiers.hpp>
 
 namespace NES::RequestProcessor {
 using RequestId = uint64_t;
@@ -56,5 +56,5 @@ class StorageResourceLocker {
   private:
     std::vector<ResourceType> requiredResources;
 };
-}
+}// namespace NES::RequestProcessor
 #endif//NES_STORAGERESOURCELOCKER_HPP

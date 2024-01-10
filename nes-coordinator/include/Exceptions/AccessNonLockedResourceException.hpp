@@ -24,8 +24,7 @@ namespace Exceptions {
  */
 class AccessNonLockedResourceException : public RequestExecutionException {
   public:
-    explicit AccessNonLockedResourceException(const std::string& message,
-                                              RequestProcessor::ResourceType resourceType);
+    explicit AccessNonLockedResourceException(const std::string& message, RequestProcessor::ResourceType resourceType);
 
     /**
      * @brief Access the type of the resource which could not be accessed

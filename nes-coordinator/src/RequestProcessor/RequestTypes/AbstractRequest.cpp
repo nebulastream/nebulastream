@@ -20,8 +20,7 @@
 #include <utility>
 
 namespace NES::RequestProcessor {
-AbstractRequest::AbstractRequest(const uint8_t maxRetries)
-    : responsePromise(), maxRetries(maxRetries) {}
+AbstractRequest::AbstractRequest(const uint8_t maxRetries) : responsePromise(), maxRetries(maxRetries) {}
 
 std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exception_ptr& ex,
                                                              const StorageHandlerPtr& storageHandle) {
@@ -47,9 +46,7 @@ std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exceptio
 
 bool AbstractRequest::retry() { return actualRetries++ < maxRetries; }
 
-
 std::future<AbstractRequestResponsePtr> AbstractRequest::getFuture() { return responsePromise.get_future(); }
-
 
 void AbstractRequest::trySetExceptionInPromise(std::exception_ptr exception) {
     try {
@@ -70,4 +67,4 @@ void AbstractRequest::setExceptionInPromiseOrRethrow(std::exception_ptr exceptio
 }
 
 void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
