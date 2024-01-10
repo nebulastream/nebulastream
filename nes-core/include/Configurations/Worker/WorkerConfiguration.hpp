@@ -258,7 +258,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configuration of waiting time of the worker health check.
      * Set the number of seconds waiting to perform health checks
      */
-    UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
+    UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 100, "Number of seconds to wait between health checks"};
 
     /* Network specific settings */
 

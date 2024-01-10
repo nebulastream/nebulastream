@@ -182,7 +182,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Configuration of waiting time of the coordinator health check.
      * Set the number of seconds waiting to perform health checks
      */
-    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
+    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 100, "Number of seconds to wait between health checks"};
 
     /**
      * Create a CoordinatorConfiguration object with default values.

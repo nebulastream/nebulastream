@@ -109,11 +109,11 @@ class BasePlacementStrategy {
 
   private:
     //Number of retries to connect to downstream source operators
-    static constexpr auto SINK_RETRIES = 100;
+    static constexpr auto SINK_RETRIES = 1000000;
     //Time interval in which to retry
     static constexpr auto SINK_RETRY_WAIT = std::chrono::milliseconds(10);
     //Number of retries to connect to upstream sink operators
-    static constexpr auto SOURCE_RETRIES = 100;
+    static constexpr auto SOURCE_RETRIES = 1000000;
     //Time interval in which to retry
     static constexpr auto SOURCE_RETRY_WAIT = std::chrono::milliseconds(10);
 
