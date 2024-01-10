@@ -23,7 +23,7 @@ docker/executableImage/resources/NebulaStream*.deb
 venv
 
 # Nes files
-# .z3-trace
+.z3-trace
 
 # Visual Studio Code Folders
 .cache
