@@ -646,56 +646,57 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     uint64_t var = 1;
-    while (var < 298) {
-        auto workerConfig = WorkerConfiguration::create();
-        workerConfig->numberOfBuffersInSourceLocalBufferPool = 128;
-        workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
-        workerConfig->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig->numberOfBuffersToProduce = 5000000;
-        workerConfig->sourceGatheringInterval = 100;
-        workerConfig->numWorkerThreads = 1;
-        workerConfig->numberOfBuffersPerEpoch = 100;
-        workerConfig->bufferSizeInBytes = 256;
-        workerConfig->numberOfSlots = 20;
-        workerConfig->memoryCapacity = 350;
-        workerConfig->networkCapacity = 100;
-        workerConfig->mtbfValue = 55000;
-        workerConfig->launchTime = 1652692028;
-        workerConfig->ingestionRate = 900;
+    while (var < 300) {
+//        auto workerConfig = WorkerConfiguration::create();
+//        workerConfig->numberOfBuffersInSourceLocalBufferPool = 128;
+//        workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
+//        workerConfig->coordinatorPort = *rpcCoordinatorPort;
+//        workerConfig->numberOfBuffersToProduce = 5000000;
+//        workerConfig->sourceGatheringInterval = 100;
+//        workerConfig->numWorkerThreads = 1;
+//        workerConfig->numberOfBuffersPerEpoch = 100;
+//        workerConfig->bufferSizeInBytes = 256;
+//        workerConfig->numberOfSlots = 20;
+//        workerConfig->memoryCapacity = 350;
+//        workerConfig->networkCapacity = 100;
+//        workerConfig->mtbfValue = 55000;
+//        workerConfig->launchTime = 1652692028;
+//        workerConfig->ingestionRate = 900;
+//
+//        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
+//        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+//        EXPECT_TRUE(retStart);
+//        NES_INFO("UpstreamBackupTest: Worker" << var << "started successfully");
+//        var++;
+//        for (uint64_t l = 1; l < 3; l++) {
+        auto workerConfig1 = WorkerConfiguration::create();
+        workerConfig1->numberOfBuffersInSourceLocalBufferPool = 128;
+        workerConfig1->numberOfBuffersInGlobalBufferManager = 1024;
+        workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig1->numberOfBuffersToProduce = 5000000;
+        workerConfig1->sourceGatheringInterval = 100;
+        workerConfig1->numWorkerThreads = 1;
+        workerConfig1->numberOfBuffersPerEpoch = 100;
+        workerConfig1->bufferSizeInBytes = 256;
+        workerConfig1->numberOfSlots = 20;
+        workerConfig1->memoryCapacity = 350;
+        workerConfig1->networkCapacity = 100;
+        workerConfig1->mtbfValue = 55000;
+        workerConfig1->launchTime = 1652692028;
+        workerConfig1->ingestionRate = 900;
 
-        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
-        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-        EXPECT_TRUE(retStart);
-        NES_INFO("UpstreamBackupTest: Worker" << var << "started successfully");
+        auto physicalSource1 = PhysicalSource::create("A", "A" + to_string(var), lambdaSourceType1);
+        workerConfig1->physicalSources.add(physicalSource1);
+        NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+        bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+        EXPECT_TRUE(retStart1);
+        NES_INFO("UpstreamBackupTest: Worker" << var << " started successfully");
+//
+//            crd->getTopologyManagerService()->removeParent(var+l, 1);
+//            crd->getTopologyManagerService()->addParent(var+l, var);
         var++;
-        for (uint64_t l = 1; l < 3; l++) {
-            auto workerConfig1 = WorkerConfiguration::create();
-            workerConfig1->numberOfBuffersInSourceLocalBufferPool = 128;
-            workerConfig1->numberOfBuffersInGlobalBufferManager = 1024;
-            workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-            workerConfig1->numberOfBuffersToProduce = 5000000;
-            workerConfig1->sourceGatheringInterval = 100;
-            workerConfig1->numWorkerThreads = 1;
-            workerConfig1->numberOfBuffersPerEpoch = 100;
-            workerConfig1->bufferSizeInBytes = 256;
-            workerConfig1->numberOfSlots = 20;
-            workerConfig1->memoryCapacity = 350;
-            workerConfig1->networkCapacity = 100;
-            workerConfig1->mtbfValue = 55000;
-            workerConfig1->launchTime = 1652692028;
-            workerConfig1->ingestionRate = 900;
-
-            auto physicalSource1 = PhysicalSource::create("A", "A" + to_string(l), lambdaSourceType1);
-            workerConfig1->physicalSources.add(physicalSource1);
-            NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-            bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-            EXPECT_TRUE(retStart1);
-            NES_INFO("UpstreamBackupTest: Worker" << var << " started successfully");
-
-            crd->getTopologyManagerService()->removeParent(var+l, 1);
-            crd->getTopologyManagerService()->addParent(var+l, var);
-        }
-        var += 2;
+//        }
+//        var += 2;
     }
     std::cout << "numberOfNodes" << var;
 

@@ -106,15 +106,15 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     builder.RegisterService(&service);
     completionQueue = builder.AddCompletionQueue();
 
-    std::unique_ptr<grpc::HealthCheckServiceInterface> healthCheckServiceInterface;
-    std::unique_ptr<grpc::ServerBuilderOption> option(
-        new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
-    builder.SetOption(std::move(option));
-    HealthCheckRPCServer healthCheckServiceImpl;
-    healthCheckServiceImpl.SetStatus(
-        HEALTH_SERVICE_NAME,
-        grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
-    builder.RegisterService(&healthCheckServiceImpl);
+//    std::unique_ptr<grpc::HealthCheckServiceInterface> healthCheckServiceInterface;
+//    std::unique_ptr<grpc::ServerBuilderOption> option(
+//        new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
+//    builder.SetOption(std::move(option));
+//    HealthCheckRPCServer healthCheckServiceImpl;
+//    healthCheckServiceImpl.SetStatus(
+//        HEALTH_SERVICE_NAME,
+//        grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
+//    builder.RegisterService(&healthCheckServiceImpl);
 
     rpcServer = builder.BuildAndStart();
     portPromise->set_value(actualRpcPort);
@@ -642,12 +642,12 @@ bool NesWorker::stop(bool) {
 
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
-        NES_DEBUG("NesWorker::stopping health check");
-        if (healthCheckService) {
-            healthCheckService->stopHealthCheck();
-        } else {
-            NES_WARNING("No health check service was created");
-        }
+//        NES_DEBUG("NesWorker::stopping health check");
+//        if (healthCheckService) {
+//            healthCheckService->stopHealthCheck();
+//        } else {
+//            NES_WARNING("No health check service was created");
+//        }
 
         if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
             if (workerMobilityHandler) {
@@ -730,21 +730,21 @@ bool NesWorker::connect() {
         NES_DEBUG("NesWorker::registerWorker rpc register success with id " << workerId);
         connected = true;
         nodeEngine->setNodeId(workerId);
-        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
-                                                                        HEALTH_SERVICE_NAME,
-                                                                        this->inherited0::shared_from_this());
-        NES_DEBUG("NesWorker start health check");
-        healthCheckService->startHealthCheck();
+//        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
+//                                                                        HEALTH_SERVICE_NAME,
+//                                                                        this->inherited0::shared_from_this());
+//        NES_DEBUG("NesWorker start health check");
+//        healthCheckService->startHealthCheck();
 
-        if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            workerMobilityHandler =
-                std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
-                                                                                              coordinatorRpcClient,
-                                                                                              nodeEngine,
-                                                                                              mobilityConfig);
-            //FIXME: currently the worker mobility handler will only work with exactly one parent
-            workerMobilityHandler->start(std::vector<uint64_t>({workerConfig->parentId.getValue()}));
-        }
+//        if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+//            workerMobilityHandler =
+//                std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
+//                                                                                              coordinatorRpcClient,
+//                                                                                              nodeEngine,
+//                                                                                              mobilityConfig);
+//            //FIXME: currently the worker mobility handler will only work with exactly one parent
+//            workerMobilityHandler->start(std::vector<uint64_t>({workerConfig->parentId.getValue()}));
+//        }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
         if (!configPhysicalSources.empty()) {
@@ -770,9 +770,9 @@ bool NesWorker::disconnect() {
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerWorker rpc unregister success");
         connected = false;
-        NES_DEBUG("NesWorker::stop health check");
-        healthCheckService->stopHealthCheck();
-        NES_DEBUG("NesWorker::stop health check successful");
+//        NES_DEBUG("NesWorker::stop health check");
+//        healthCheckService->stopHealthCheck();
+//        NES_DEBUG("NesWorker::stop health check successful");
         return true;
     }
     NES_DEBUG("NesWorker::registerWorker rpc unregister failed");

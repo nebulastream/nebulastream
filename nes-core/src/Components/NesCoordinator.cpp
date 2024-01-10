@@ -260,13 +260,13 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-    healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
-                                                                         workerRpcClient,
-                                                                         HEALTH_SERVICE_NAME,
-                                                                         coordinatorConfiguration);
-    topologyManagerService->setHealthService(healthCheckService);
-    NES_DEBUG("NesCoordinator start health check");
-    healthCheckService->startHealthCheck();
+//    healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
+//                                                                         workerRpcClient,
+//                                                                         HEALTH_SERVICE_NAME,
+//                                                                         coordinatorConfiguration);
+//    topologyManagerService->setHealthService(healthCheckService);
+//    NES_DEBUG("NesCoordinator start health check");
+//    healthCheckService->startHealthCheck();
 
 
     statisticOutputThread = std::make_shared<std::thread>(([this]() {
@@ -317,8 +317,8 @@ bool NesCoordinator::stopCoordinator(bool force) {
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
 
-        NES_DEBUG("NesCoordinator::stop health check");
-        healthCheckService->stopHealthCheck();
+//        NES_DEBUG("NesCoordinator::stop health check");
+//        healthCheckService->stopHealthCheck();
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
@@ -390,15 +390,15 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
 
-    std::unique_ptr<grpc::HealthCheckServiceInterface> healthCheckServiceInterface;
-    std::unique_ptr<grpc::ServerBuilderOption> option(
-        new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
-    builder.SetOption(std::move(option));
-    HealthCheckRPCServer healthCheckServiceImpl;
-    healthCheckServiceImpl.SetStatus(
-        HEALTH_SERVICE_NAME,
-        grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
-    builder.RegisterService(&healthCheckServiceImpl);
+//    std::unique_ptr<grpc::HealthCheckServiceInterface> healthCheckServiceInterface;
+//    std::unique_ptr<grpc::ServerBuilderOption> option(
+//        new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
+//    builder.SetOption(std::move(option));
+//    HealthCheckRPCServer healthCheckServiceImpl;
+//    healthCheckServiceImpl.SetStatus(
+//        HEALTH_SERVICE_NAME,
+//        grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
+//    builder.RegisterService(&healthCheckServiceImpl);
 
     rpcServer = builder.BuildAndStart();
     prom->set_value(true);
