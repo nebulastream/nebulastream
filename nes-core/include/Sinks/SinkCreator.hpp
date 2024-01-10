@@ -267,7 +267,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               std::chrono::milliseconds waitTime,
                               FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1,
-                              uint8_t retryTimes = 500,
+                              uint8_t retryTimes = 5000000,
                               bool isBuffering = false);
 
 /**
