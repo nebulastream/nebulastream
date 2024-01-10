@@ -25,11 +25,12 @@ then
     # Build OpenCV
     ccache --set-config=cache_dir=/cache_dir/
     ccache -M 10G
-    cmake --fresh -B /build_dir -DWITH_PROTOBUF=OFF -DBUILD_JAVA=ON /opencv/
+    cmake --fresh -B /build_dir -DWITH_PROTOBUF=OFF -DBUILD_JAVA=ON -DCPACK_BINARY_DEB:BOOL=ON -DCMAKE_INSTALL_PREFIX=/usr /opencv/
     cmake --build /build_dir -j12
+    cmake --install /build_dir
     cd /build_dir
     rm *deb
-    cpack
+    cpack -G DEB
 else
     exec $@
 fi
