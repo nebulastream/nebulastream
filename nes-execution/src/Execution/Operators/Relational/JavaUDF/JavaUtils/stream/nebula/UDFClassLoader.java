@@ -20,8 +20,10 @@ import java.util.Map;
  */
 public class UDFClassLoader extends ClassLoader {
 
+    // Hold bytecode of injected classes.
     Map<String, byte[]> classes = new HashMap<>();
 
+    /** Helper class to deserialize a an object inside a custom classloader */
     static class ClassLoaderObjectInputStream extends ObjectInputStream {
 
         private final ClassLoader classLoader;
@@ -67,10 +69,12 @@ public class UDFClassLoader extends ClassLoader {
 
     @Override
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
+        // Create classes based on the injected bytecode.
         byte[] byteCode = classes.get(name);
         if (byteCode == null) {
             throw new ClassNotFoundException(name);
         }
+        // Class was not injected; load it using normal class loading facilities.
         return defineClass(name, byteCode, 0, byteCode.length);
     }
 }
