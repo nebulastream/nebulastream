@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.14](https://github.com/nebulastream/nebulastream/tree/v0.6.14) (2024-01-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.13...v0.6.14)
+
+**Implemented enhancements:**
+
+- \[TASK\] Code Quality Improvement NES-Common [\#4464](https://github.com/nebulastream/nebulastream/issues/4464)
+
 ## [v0.6.13](https://github.com/nebulastream/nebulastream/tree/v0.6.13) (2024-01-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.12...v0.6.13)
