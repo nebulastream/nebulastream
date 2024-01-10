@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.15](https://github.com/nebulastream/nebulastream/tree/v0.6.15) (2024-01-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.14...v0.6.15)
+
+**Implemented enhancements:**
+
+- \[TASK\] Allow multithreaded execution of a single coordinator side request [\#4318](https://github.com/nebulastream/nebulastream/issues/4318)
+
 ## [v0.6.14](https://github.com/nebulastream/nebulastream/tree/v0.6.14) (2024-01-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.13...v0.6.14)
