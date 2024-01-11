@@ -28,7 +28,9 @@ BaseNetworkChannel::BaseNetworkChannel(zmq::socket_t&& zmqSocket,
 
 void BaseNetworkChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR("{}", errorMsg.getErrorTypeAsString()); }
 
-void BaseNetworkChannel::close(bool isEventOnly, Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads,
+void BaseNetworkChannel::close(bool isEventOnly,
+                               Runtime::QueryTerminationType terminationType,
+                               uint16_t numSendingThreads,
                                uint64_t currentMessageSequenceNumber) {
     if (isClosed) {
         return;

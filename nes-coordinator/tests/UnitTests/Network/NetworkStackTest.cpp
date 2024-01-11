@@ -1266,7 +1266,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
                             buffer.getBuffer<uint64_t>()[j] = j;
                         }
                         buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
-                        buffer.setSequenceNumber(sentBuffers +1);
+                        buffer.setSequenceNumber(sentBuffers + 1);
                         senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBuffers + 1);
                         usleep(gen(rnd));
                     }

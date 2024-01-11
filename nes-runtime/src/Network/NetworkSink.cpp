@@ -54,8 +54,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      messageSequenceNumber(0), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes),
-      version(version) {
+      messageSequenceNumber(0), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), version(version) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
 }

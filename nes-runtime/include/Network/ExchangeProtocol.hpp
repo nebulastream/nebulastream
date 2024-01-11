@@ -14,8 +14,8 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
-#include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <Network/NetworkMessage.hpp>
+#include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <folly/Synchronized.h>
 #include <map>
 #include <variant>
@@ -94,7 +94,8 @@ class ExchangeProtocol {
   private:
     std::shared_ptr<PartitionManager> partitionManager{nullptr};
     std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
-    folly::Synchronized<std::unordered_map<NesPartition, Util::NonBlockingMonotonicSeqQueue<uint64_t>>> maxSeqNumberPerNesPartition;
+    folly::Synchronized<std::unordered_map<NesPartition, Util::NonBlockingMonotonicSeqQueue<uint64_t>>>
+        maxSeqNumberPerNesPartition;
 };
 
 }// namespace NES::Network
