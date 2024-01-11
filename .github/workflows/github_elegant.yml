@@ -1,0 +1,233 @@
+name: NES ELEGANT Release
+
+# This pipeline is executed whenever we tag a commit with "elegant-v*".
+
+on:
+  push:
+    tags:
+      - 'elegant-v*'
+
+jobs:
+  validateTrigger:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: verify-user
+        uses: tspascoal/get-user-teams-membership@v3
+        id: checkUserMember
+        with:
+          username: ${{ github.actor }}
+          team: 'NebulaStream-Admins'
+          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+      - name: verify-run-privilage
+        if: steps.checkUserMember.outputs.isTeamMember == 'false' && github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Unauthorized user triggering release"
+          exit 1
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Contextual QA Checklists
+        if: github.event_name == 'pull_request'
+        uses: wyozi/contextual-qa-checklist-action@1.3.2
+        with:
+          gh-token: ${{ secrets.NES_CI_SECRET }}
+          comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
+
+  pre-build-checks:
+    name: "Pre-Build-Checks"
+    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
+    runs-on: [ self-hosted, linux, X64, Build ]
+    needs: [ validateTrigger ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.0
+        with:
+          access_token: ${{ secrets.NES_CI_SECRET }}
+      - name: preamble-check
+        run: |
+          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nebulastream/nes-build-image:latest
+      #      - name: format-check
+      #        run: |
+      #          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
+      #      - name: guard-check
+      #        run: |
+      #          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
+      - name: docker cleanup
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+        run: |
+          docker rm -f ${{ github.run_id }}_preamble-check
+
+  build-linux:
+    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
+    name: ${{ matrix.osversion }} ${{ matrix.arch }}
+    needs: [ pre-build-checks ]
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - osversion: ubuntu-22_04
+            arch: "X64"
+            require_build: "true"
+            require_test: "true"
+            build_parallelism: "16"
+            test_parallelism: "4"
+          - osversion: ubuntu-22_04
+            arch: "arm64"
+            require_build: "true"
+            require_test: "true"
+            build_parallelism: "8"
+            test_parallelism: "4"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.0
+        with:
+          access_token: ${{ secrets.NES_CI_SECRET }}
+      - name: Build Docker
+        id: builddocker
+        if: github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+      - name: Build Nebulastream
+        if: github.event_name != 'workflow_dispatch'
+        # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
+        run: |
+          cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
+          echo "cache_dir=$cache_dir"
+          mkdir -p $cache_dir
+          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          echo "build_dir=$build_dir"
+          mkdir -p $build_dir
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
+      - name: Run tests
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }}
+      - name: docker cleanup
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+        run: |
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_test
+
+  create-tag:
+    runs-on: [self-hosted, linux, X64, Build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ssh-strict: 'false'
+          fetch-depth: '0'
+          ssh-key: ${{ secrets.CI_SECRET }}
+          token: ${{ secrets.CI_TOKEN }}
+          repository: 'nebulastream/nebulastream-dev-builds'
+          path: nebulastream
+      - name: "Create Tag in nebulastream-dev-builds Repo"
+        run: |
+          cd nebulastream
+          tag_name=$GITHUB_REF_NAME
+          git config --global user.email "${{ secrets.CI_EMAIL }}"
+          git config --global user.name "CIUser"         
+          git tag -fa "$tag_name" -m "$tag_name"
+          git push --force origin "$tag_name"
+
+  package-debian-package:
+    needs: [create-tag, create-tag-tutorial]
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [X64, arm64]
+        osversion: [ubuntu-22_04]
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - name: "Checkout NebulaStream Repository"
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+          token: ${{ secrets.CI_TOKEN }}
+      - name: "Fetch Changelog Entry For The Tag"
+        id: changelog_reader
+        uses: mindsers/changelog-reader-action@v1
+        with:
+          version: $GITHUB_REF_NAME
+          path: CHANGELOG.md
+      - name: Build Docker
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+      - name: "Build Debian Packages"
+        run: |
+          cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
+          echo "cache_dir=$cache_dir"
+          mkdir -p $cache_dir
+          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          echo "build_dir=$build_dir"
+          echo "build_dir=$build_dir" >> $GITHUB_ENV     
+          mkdir -p $build_dir
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $cache_dir:/cache_dir -v $build_dir:/build_dir -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-prepare-nes-package.sh nes_package_${{ matrix.osversion }}
+      - name: "Fetch Debian Files"
+        run: |
+          nes_version=${GITHUB_REF_NAME}
+          DEB_NAME=NebulaStream-$nes_version-${{ matrix.osversion}}-Linux.${{ matrix.arch }}
+          mv ${{ env.build_dir }}/*deb ${{ env.build_dir }}/$DEB_NAME.deb
+          echo "DEB_FILE=${{ env.build_dir }}/$DEB_NAME.deb" >> $GITHUB_ENV
+      - name: "Perform Release for nebulastream-dev-builds Repository"
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          files: |
+            ${{ env.DEB_FILE }}
+          repository: nebulastream/nebulastream-dev-builds
+          token: ${{ secrets.CI_TOKEN }}
+          body: ${{ steps.changelog_reader.outputs.log_entry }}
+      - name: "Perform Docker Cleanup"
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_package
+
+  build-docker:
+    needs: [package-debian-package]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+      UBUNTU_VERSION: 22_04
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: "Build and Release NES Executable Image"
+        run: |
+          nes_version=${GITHUB_REF_NAME}
+          echo "Preparing and Releasing new executable image with version $nes_version and latest"
+          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+          wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-$UBUNTU_VERSION-Linux.X64.deb
+          wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-$UBUNTU_VERSION-Linux.arm64.deb
+          wget --no-check-certificate -O opencv-libs-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/opencv-4.5.5/OpenCV-4.5.5-x86_64-libs.deb
+          wget --no-check-certificate -O opencv-java-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/opencv-4.5.5/OpenCV-4.5.5-x86_64-java.deb
+          wget --no-check-certificate -O opencv-libs-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/opencv-4.5.5/OpenCV-4.5.5-aarch64-libs.deb
+          wget --no-check-certificate -O opencv-java-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/opencv-4.5.5/OpenCV-4.5.5-aarch64-java.deb
+          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-elegant-image:$nes_version --tag nebulastream/nes-elegant-image:latest --push
+          rm -rf nes-amd64.deb nes-arm64.deb
+          echo "Pushed the execution image"
+          docker logout
