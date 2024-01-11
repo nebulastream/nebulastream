@@ -50,24 +50,6 @@ if (NES_RUNTIME_BENCHMARKS)
     message(STATUS "Execution benchmarks are enabled")
 endif ()
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    target_link_libraries(nes-execution PUBLIC ${JNI_LIBRARIES})
-    # Define map java udf utils class file
-    SET(NES_JAVA_UTILS_SRC_PATH "src/Execution/Operators/Relational/JavaUDF")
-    if (NES_JAVA_UDF_UTILS_PATH)
-        # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
-        SET(JAVA_UDF_UTILS_JAR "${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}/JavaUtils.jar")
-        target_compile_definitions(nes-execution PUBLIC JAVA_UDF_UTILS_JAR="${JAVA_UDF_UTILS_JAR}")
-        message(STATUS "Setting JAR with Java helpers to: ${JAVA_UDF_UTILS_JAR}")
-        # Install Java Utils JAR
-        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/JavaUtils.jar" DESTINATION ${NES_JAVA_UDF_UTILS_PATH})
-    else ()
-        # Use Java helpers from test directory when working in CLion.
-        target_compile_definitions(nes-execution PUBLIC JAVA_UDF_UTILS_JAR="${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/JavaUtils.jar")
-    endif()
-endif()
-
-
 #Add the nes common and headers to cpack
 install(TARGETS nes-execution
         EXPORT NebulaStreamTargets
