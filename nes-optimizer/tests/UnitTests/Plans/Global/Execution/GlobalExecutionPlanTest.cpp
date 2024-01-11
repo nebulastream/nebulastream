@@ -25,6 +25,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -103,6 +104,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     QuerySubPlanId querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
     plan->setQueryId(queryId);
+    plan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     plan->setQuerySubPlanId(querySubPlanId);
     executionNode->addNewQuerySubPlan(queryId, plan);
 
@@ -119,6 +121,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId) + ", querySubPlanId:" + std::to_string(querySubPlanId)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan->getRootOperators()[0]->toString()
@@ -157,6 +160,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId);
+    plan1->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     plan1->setQuerySubPlanId(querySubPlanId1);
     executionNode->addNewQuerySubPlan(queryId, plan1);
 
@@ -167,6 +171,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId);
     plan2->setQuerySubPlanId(querySubPlanId2);
+    plan2->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->addNewQuerySubPlan(queryId, plan2);
 
     globalExecutionPlan->addExecutionNode(executionNode);
@@ -180,6 +185,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(query1.getQueryPlan()->getQueryId()) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -189,6 +195,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(query2.getQueryPlan()->getQueryId()) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan2->getRootOperators()[0]->toString()
@@ -222,6 +229,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
+    plan1->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->addNewQuerySubPlan(queryId1, plan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
@@ -232,6 +240,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
+    plan2->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->addNewQuerySubPlan(queryId2, plan2);
 
     globalExecutionPlan->addExecutionNode(executionNode);
@@ -245,6 +254,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -254,6 +264,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan2->getRootOperators()[0]->toString()
@@ -288,6 +299,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId11 = PlanIdGenerator::getNextQuerySubPlanId();
     plan11->setQueryId(queryId1);
     plan11->setQuerySubPlanId(querySubPlanId11);
+    plan11->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->addNewQuerySubPlan(queryId1, plan11);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
@@ -297,6 +309,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId12 = PlanIdGenerator::getNextQuerySubPlanId();
     plan12->setQueryId(queryId1);
     plan12->setQuerySubPlanId(querySubPlanId12);
+    plan12->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->addNewQuerySubPlan(queryId1, plan12);
 
     //query sub plans for query 2
@@ -308,6 +321,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId21 = PlanIdGenerator::getNextQuerySubPlanId();
     plan21->setQueryId(queryId2);
     plan21->setQuerySubPlanId(querySubPlanId21);
+    plan21->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->addNewQuerySubPlan(queryId2, plan21);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
@@ -317,10 +331,10 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId22 = PlanIdGenerator::getNextQuerySubPlanId();
     plan22->setQueryId(queryId2);
     plan22->setQuerySubPlanId(querySubPlanId22);
+    plan22->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->addNewQuerySubPlan(queryId2, plan22);
 
     globalExecutionPlan->addExecutionNode(executionNode);
-
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
@@ -330,6 +344,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId11)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan11->getRootOperators()[0]->toString()
@@ -339,6 +354,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId12)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan12->getRootOperators()[0]->toString()
@@ -348,6 +364,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId21)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan21->getRootOperators()[0]->toString()
@@ -357,6 +374,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId22)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan22->getRootOperators()[0]->toString()
@@ -393,6 +411,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
+    plan1->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode1->addNewQuerySubPlan(queryId1, plan1);
 
     //create execution node
@@ -411,6 +430,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
+    plan2->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode2->addNewQuerySubPlan(queryId2, plan2);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
@@ -425,6 +445,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -438,6 +459,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + ")\n"
           "|  | QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  "
         + plan2->getRootOperators()[0]->toString()
@@ -486,6 +508,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
+    plan1->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode1->addNewQuerySubPlan(queryId1, plan1);
 
     //create execution node 2
@@ -499,6 +522,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
+    plan2->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode2->addNewQuerySubPlan(queryId2, plan2);
 
     //create execution node 3
@@ -512,6 +536,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId3 = PlanIdGenerator::getNextQuerySubPlanId();
     plan3->setQueryId(queryId3);
     plan3->setQuerySubPlanId(querySubPlanId3);
+    plan3->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode3->addNewQuerySubPlan(queryId3, plan3);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
@@ -529,6 +554,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId4 = PlanIdGenerator::getNextQuerySubPlanId();
     plan4->setQueryId(queryId4);
     plan4->setQuerySubPlanId(querySubPlanId4);
+    plan4->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode4->addNewQuerySubPlan(queryId4, plan4);
 
     globalExecutionPlan->addExecutionNode(executionNode4);
@@ -541,6 +567,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
         + plan1->getRootOperators()[0]->toString()
@@ -554,6 +581,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + ")\n"
           "|  | QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  "
         + plan2->getRootOperators()[0]->toString()
@@ -567,6 +595,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + ")\n"
           "|  |  | QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId3) + ", querySubPlanId:" + std::to_string(querySubPlanId3)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  |  "
         + plan3->getRootOperators()[0]->toString()
@@ -580,6 +609,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + ")\n"
           "|  |  |  | QuerySubPlan(SharedQueryId:"
         + std::to_string(queryId4) + ", querySubPlanId:" + std::to_string(querySubPlanId4)
+        + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  |  |  "
         + plan4->getRootOperators()[0]->toString()

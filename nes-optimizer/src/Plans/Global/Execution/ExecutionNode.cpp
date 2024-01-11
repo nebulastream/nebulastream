@@ -192,7 +192,7 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
         for (const auto& [querySubPlanId, querySubPlan] : mapOfQuerySubPlan.second) {
             lines.push_back("QuerySubPlan(SharedQueryId:" + std::to_string(mapOfQuerySubPlan.first)
                             + ", querySubPlanId:" + std::to_string(querySubPlan->getQuerySubPlanId())
-                            + ", queryStatus:" + std::string(magic_enum::enum_name(querySubPlan->getQueryState())) + ")");
+                            + ", queryState:" + std::string(magic_enum::enum_name(querySubPlan->getQueryState())) + ")");
 
             // Split the string representation of the queryPlan into multiple lines
             std::string s = querySubPlan->toString();
