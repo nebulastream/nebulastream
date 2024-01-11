@@ -128,7 +128,7 @@ class NemoIntegrationTest : public Testing::BaseIntegrationTest {
 TEST_F(NemoIntegrationTest, testThreeLevelsTopologyTopDown) {
     uint64_t expectedTuples = 54;
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config) {
-        config->optimizer.enableNemoPlacement.setValue(false);
+        config->optimizer.enableNemoPlacement.setValue(true);
         //config->optimizer.distributedWindowChildThreshold = 0;
         //config->optimizer.distributedWindowCombinerThreshold = 0;
     };
