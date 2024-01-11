@@ -126,6 +126,7 @@ jobs:
 
   create-tag:
     runs-on: [self-hosted, linux, X64, Build]
+    needs: [ build-linux ]
     steps:
       - uses: actions/checkout@v4
         with:
