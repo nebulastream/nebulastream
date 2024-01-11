@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.16](https://github.com/nebulastream/nebulastream/tree/v0.6.16) (2024-01-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.15...v0.6.16)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move Execution into own module [\#4336](https://github.com/nebulastream/nebulastream/issues/4336)
+
 ## [v0.6.15](https://github.com/nebulastream/nebulastream/tree/v0.6.15) (2024-01-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.14...v0.6.15)
