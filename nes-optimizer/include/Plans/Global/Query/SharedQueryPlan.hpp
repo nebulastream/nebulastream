@@ -230,12 +230,17 @@ class SharedQueryPlan {
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
     /**
-     * @brief Recursively remove the operator and all its subsequent upstream operators. The function terminates upon encountering
+     * @brief Recursively mark input and all its connected upstream operators for To-Be-Removed. The function terminates upon encountering
      * an upstream operator that is connected to another downstream operator and returns it as output.
-     * @param operatorToRemove : the operator to remove
-     * @return last upstream operators that are not removed
+     * @param connectedDownStreamOperator : the operator to remove
+     * @return last upstream operators that was marked for removal
      */
-    std::set<LogicalOperatorNodePtr> removeOperator(const LogicalOperatorNodePtr& operatorToRemove);
+    std::set<LogicalOperatorNodePtr> markOperatorsToBeRemoved(const LogicalOperatorNodePtr& connectedDownStreamOperator);
+
+    /**
+     * @brief Recursively remove the input and all its subsequent upstream operators that are marked as Removed.
+     */
+    void removeOperator(const LogicalOperatorNodePtr& operatorToRemove);
 
     /**
      * @brief Update the hash based signatures with new values
@@ -248,7 +253,8 @@ class SharedQueryPlan {
     SharedQueryPlanStatus sharedQueryPlanStatus;
     QueryPlanPtr queryPlan;
     std::map<QueryId, std::set<LogicalOperatorNodePtr>> queryIdToSinkOperatorMap;
-    std::vector<QueryId> queryIds;
+    std::vector<QueryId> runningQueryIds;
+    std::vector<QueryId> removeQueryIds;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     Optimizer::PlacementStrategy placementStrategy;
@@ -256,4 +262,4 @@ class SharedQueryPlan {
 };
 }// namespace NES
 
-#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_

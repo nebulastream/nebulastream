@@ -141,7 +141,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      * OPTIMISTIC -> Use an optimistic OCC strategy to concurrently amend operator placements.
      */
     EnumOption<Optimizer::PlacementAmendmentMode> placementAmendmentMode = {
-        PLACEMENT_AMENDER_MODE_CONFIG,
+        PLACEMENT_AMENDMENT_MODE_CONFIG,
         Optimizer::PlacementAmendmentMode::PESSIMISTIC,
         "selects the placement amender mode to use [PESSIMISTIC|OPTIMISTIC]"};
 

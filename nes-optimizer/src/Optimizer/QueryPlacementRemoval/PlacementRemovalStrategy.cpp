@@ -63,20 +63,21 @@ bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId shar
     try {
         NES_INFO("Placement removal strategy called for the shared query plan {}", sharedQueryId);
 
-        // 1. Find all topology nodes used to place the operators in the state Placed, To-Be-Re-Placed, and To-Be-Removed.
-        //      1.1. Iterate over the operators and collect the PINNED_WORKER_ID and information about the nodes where sys
-        //           operators are placed using CONNECTED_SYS_SUB_PLAN_DETAILS.
-        // 2. Lock all topology nodes.
-        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 1. Create the copy of the query plans
+        auto copy =
+            CopiedPinnedOperators::create(pinnedUpStreamOperators, pinnedDownStreamOperators, operatorIdToOriginalOperatorMap);
 
-        // 3. If no operator in the state PLACED or TO_BE_REPLACED or TO_BE_REMOVED then skip rest of the process.
+        // 2. Find all topology nodes used to place the operators in the state Placed, To-Be-Re-Placed, and To-Be-Removed.
+        //      2.1. Iterate over the operators and collect the PINNED_WORKER_ID and information about the nodes where sys
+        //           operators are placed using CONNECTED_SYS_SUB_PLAN_DETAILS.
+        // 3. Lock all topology nodes.
+        performPathSelection(copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
+
+        // 4. If no operator in the state PLACED or TO_BE_REPLACED or TO_BE_REMOVED then skip rest of the process.
         if (workerIdsInBFS.empty()) {
             NES_WARNING("Skipping placement removal phase as nothing to be removed.");
             return true;
         }
-
-        // 4. Create the copy of the query plans
-        auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 5. Fetch all placed query sub plans by analyzing the PLACED_SUB_PLAN_ID and CONNECTED_SYS_SUB_PLAN_DETAILS.
         updateQuerySubPlans(sharedQueryId);
@@ -176,7 +177,7 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
             operatorsToProcessInBFSOrder.emplace(downStreamOperator);
         }
 
-        // 10. If the operator is connected by system generated operators then record the worker ids and query sub plan ids
+        // 12. If the operator is connected by system generated operators then record the worker ids and query sub plan ids
         if (operatorState != OperatorState::TO_BE_PLACED && !downStreamInToBePlacedState) {
             if (operatorToProcess->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
                 auto sysPlansMetaData =
@@ -195,9 +196,9 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
         }
     }
 
-    // 14. try to lock all selected topology nodes
+    // 13. try to lock all selected topology nodes
     if (!workerIdsInBFS.empty() && placementAmendmentMode == PlacementAmendmentMode::PESSIMISTIC) {
-        // 15. Raise exception if unable to Lock all identified worker ids before processing if the mode is pessimistic
+        // 14. Raise exception if unable to Lock all identified worker ids before processing if the mode is pessimistic
         if (!pessimisticPathSelection()) {
             throw Exceptions::RuntimeException("Unable to find topology nodes or lock the identified topology nodes.");
         }
@@ -243,83 +244,6 @@ bool PlacementRemovalStrategy::pessimisticPathSelection() {
     }
     NES_INFO("Successfully locked selected path using pessimistic strategy.");
     return success;
-}
-
-CopiedPinnedOperators
-PlacementRemovalStrategy::createCopyOfQueryPlan(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
-
-    // 1. Create duplicated pinned upstream and downstream operators
-    std::set<LogicalOperatorNodePtr> copyOfPinnedUpStreamOperators;
-    std::set<LogicalOperatorNodePtr> copyOfPinnedDownStreamOperators;
-
-    // 2. Temp container for iteration and book keeping
-    std::queue<LogicalOperatorNodePtr> operatorsToProcess;
-    std::unordered_map<OperatorId, LogicalOperatorNodePtr> mapOfCopiedOperators;
-
-    // 3. Record ids of pinned upstream operators
-    std::set<OperatorId> pinnedUpStreamOperatorId;
-    for (auto pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        OperatorId operatorId = pinnedUpStreamOperator->getId();
-        pinnedUpStreamOperatorId.emplace(operatorId);
-        operatorsToProcess.emplace(pinnedUpStreamOperator);
-        mapOfCopiedOperators[operatorId] = pinnedUpStreamOperator->copy()->as<LogicalOperatorNode>();
-    }
-
-    // 4. Record ids of pinned downstream operators
-    std::set<OperatorId> pinnedDownStreamOperatorId;
-    for (auto pinnedDownStreamOperator : pinnedDownStreamOperators) {
-        pinnedDownStreamOperatorId.emplace(pinnedDownStreamOperator->getId());
-    }
-
-    // 5. Iterate till further operators are present to be processed
-    while (!operatorsToProcess.empty()) {
-
-        // 6. Fetch the operator to be processed
-        auto operatorToProcess = operatorsToProcess.front();
-        operatorsToProcess.pop();
-        OperatorId operatorId = operatorToProcess->getId();
-
-        // 7. Record the original operator in a map for later processing
-        operatorIdToOriginalOperatorMap[operatorId] = operatorToProcess;
-        LogicalOperatorNodePtr operatorCopy = mapOfCopiedOperators[operatorId];
-
-        // 8. If the operator is a pinned upstream operator then add to the set of pinned upstream copy
-        if (pinnedUpStreamOperatorId.contains(operatorId)) {
-            copyOfPinnedUpStreamOperators.emplace(operatorCopy);
-        }
-
-        // 9. If the operator is a downstream operator then add to the set of pinned downstream copy
-        if (pinnedDownStreamOperatorId.contains(operatorId)) {
-            copyOfPinnedDownStreamOperators.emplace(operatorCopy);
-        }
-
-        // 10. Add to the list of further operator nodes to be processed and compute the query plan by adding the down
-        // stream operators.
-        const auto& downstreamOperators = operatorToProcess->getParents();
-        std::for_each(downstreamOperators.begin(), downstreamOperators.end(), [&](const NodePtr& operatorNode) {
-            auto downstreamOperator = operatorNode->as<LogicalOperatorNode>();
-            auto downStreamOperatorId = downstreamOperator->getId();
-
-            // 11. Create or fetch copy of the next downstream operator
-            LogicalOperatorNodePtr parentOperatorCopy;
-            if (mapOfCopiedOperators.contains(downStreamOperatorId)) {
-                parentOperatorCopy = mapOfCopiedOperators[downStreamOperatorId];
-            } else {
-                parentOperatorCopy = downstreamOperator->copy()->as<LogicalOperatorNode>();
-                mapOfCopiedOperators[downStreamOperatorId] = parentOperatorCopy;
-            }
-
-            // 12. Add the the copy of currently processed operator the copy of next downstream operator
-            operatorCopy->addParent(parentOperatorCopy);
-
-            // 13. Record the downstream operator for further processing
-            operatorsToProcess.push(downstreamOperator);
-        });
-    }
-
-    // 14. Return the copies of the pinned upstream and downstream operators
-    return {copyOfPinnedUpStreamOperators, copyOfPinnedDownStreamOperators};
 }
 
 bool PlacementRemovalStrategy::unlockTopologyNodesInSelectedPath() {
@@ -387,7 +311,6 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
                 auto operatorId = placedOperator->as_if<LogicalOperatorNode>()->getId();
                 if (!operatorIdToOriginalOperatorMap.contains(operatorId)) {
                     NES_WARNING("Found the operator {} not in the submitted query plan.", placedOperator->toString());
-                    //TODO: throw an exception when encountered a non-sys operator in this if block
                     continue;
                 }
 

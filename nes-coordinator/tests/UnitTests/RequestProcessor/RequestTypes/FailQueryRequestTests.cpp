@@ -88,7 +88,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
         sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        queryPlacementPhase =
+        queryPlacementAmendmentPhase =
             Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfig);
     }
 
@@ -139,7 +139,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
 
         //Perform placement of new shared query plan
         NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-        bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
+        bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
         ASSERT_TRUE(placementSuccessful);
 
         //skip deployment
@@ -201,7 +201,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
     SourceCatalogServicePtr sourceCatalogService;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
-    Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementPhase;
+    Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementAmendmentPhase;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     QueryId queryId{};
     SharedQueryId sharedQueryId{};

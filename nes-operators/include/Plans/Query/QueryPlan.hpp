@@ -258,6 +258,7 @@ class QueryPlan {
 
     /**
      * @brief Set new version for the query sub plan
+     * @param newVersion: new version of the query sub plan
      */
     void setVersion(QuerySubPlanVersion newVersion);
 

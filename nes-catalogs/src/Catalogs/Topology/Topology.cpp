@@ -16,7 +16,6 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
@@ -24,6 +23,7 @@
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <algorithm>
 #include <deque>
 #include <utility>
@@ -811,18 +811,24 @@ nlohmann::json Topology::requestLocationAndParentDataFromAllMobileNodes() {
     uint32_t count = 0;
     uint32_t edgeCount = 0;
 
-    for (const auto& [nodeId, location] : nodeVector) {
-        auto topologyNode = (*(*lockedWorkerIdToTopologyNodeMap)[nodeId].rlock());
+    for (const auto& [sourceWorkerId, location] : nodeVector) {
+        auto topologyNode = (*(*lockedWorkerIdToTopologyNodeMap)[sourceWorkerId].rlock());
         if (topologyNode && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
+            nlohmann::json nodeInfo = convertNodeLocationInfoToJson(sourceWorkerId, location);
             locationMapJson[count] = nodeInfo;
             for (const auto& parent : topologyNode->getParents()) {
-                const nlohmann::json edge{{"source", nodeId}, {"target", parent->as<TopologyNode>()->getId()}};
-                /*
-                edge["source"] = nodeId;
-                edge["target"] = parent->as<TopologyNode>()->getId();
-                 */
-                mobileEdgesJson[edgeCount] = edge;
+                const auto& parentWorkerId = parent->as<TopologyNode>()->getId();
+                auto linkProperty = topologyNode->getLinkProperty(parentWorkerId);
+                if (linkProperty) {
+                    const nlohmann::json edge{{"source", sourceWorkerId},
+                                              {"target", parentWorkerId},
+                                              {"bandwidth", linkProperty->bandwidth},
+                                              {"latency", linkProperty->latency}};
+                    mobileEdgesJson[edgeCount] = edge;
+                } else {
+                    const nlohmann::json edge{{"source", sourceWorkerId}, {"target", parentWorkerId}};
+                    mobileEdgesJson[edgeCount] = edge;
+                }
                 ++edgeCount;
             }
             ++count;

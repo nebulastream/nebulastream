@@ -102,7 +102,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                                                             {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REPLACED},
                                                             this->operatorState);
         case OperatorState::REMOVED:
-            if (this->operatorState == OperatorState::TO_BE_REMOVED) {
+            if (this->operatorState == OperatorState::TO_BE_PLACED || this->operatorState == OperatorState::TO_BE_REMOVED) {
                 this->operatorState = OperatorState::REMOVED;
                 break;
             }

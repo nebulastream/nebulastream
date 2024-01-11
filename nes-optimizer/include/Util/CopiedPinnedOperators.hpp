@@ -16,7 +16,9 @@
 #define NES_COPIEDPINNEDOPERATORS_HPP
 
 #include <memory>
+#include <queue>
 #include <set>
+#include <unordered_map>
 
 namespace NES {
 
@@ -26,11 +28,28 @@ using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 namespace Optimizer {
 
 /**
- * @brief Struct to store copied pinned up and down stream operators
+ * @brief class to store copied pinned up and down stream operators
  */
-struct CopiedPinnedOperators {
+class CopiedPinnedOperators {
+
+  public:
+    /**
+     * @brief Create a CopiedPinnedOperators object
+     * @param pinnedUpStreamOperators: the original pinned up stream operators
+     * @param pinnedDownStreamOperators: the original pinned down stream operators
+     * @param operatorIdToOriginalOperatorMap: the operator id to the original operator map
+     * @return instance of CopiedPinnedOperators
+     */
+    static CopiedPinnedOperators create(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                        const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                        std::unordered_map<OperatorId, LogicalOperatorNodePtr>& operatorIdToOriginalOperatorMap);
+
     std::set<LogicalOperatorNodePtr> copiedPinnedUpStreamOperators;
     std::set<LogicalOperatorNodePtr> copiedPinnedDownStreamOperators;
+
+  private:
+    CopiedPinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 };
 }// namespace Optimizer
 }// namespace NES

@@ -158,7 +158,7 @@ class StopQueryRequest : public AbstractUniRequest {
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementPhase;
+    Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementAmendmentPhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     static constexpr uint8_t MAX_RETRIES_FOR_FAILURE = 1;
 };

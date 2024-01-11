@@ -97,14 +97,6 @@ class PlacementRemovalStrategy {
     ~PlacementRemovalStrategy();
 
   private:
-    /**
-     * @brief creates a copy of given query plan for performing operator placement
-     * @param pinnedUpStreamOperators : pinned upstream operators
-     * @param pinnedDownStreamOperators : pinned down stream operators
-     * @return pair representing set of copied upstream and downstream operators
-     */
-    CopiedPinnedOperators createCopyOfQueryPlan(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators

@@ -190,7 +190,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        auto queryPlacementPhase =
+        auto queryPlacementAmendmentPhase =
             Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
         auto queryDeploymentPhase =
             QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
@@ -326,7 +326,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         }
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        if (!queryPlacementPhase->execute(sharedQueryPlan)) {
+        if (!queryPlacementAmendmentPhase->execute(sharedQueryPlan)) {
             throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
                                                       "QueryProcessingService: Failed to perform query placement for "
                                                       "query plan with shared query id: "
