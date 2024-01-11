@@ -145,7 +145,7 @@ jobs:
           git push --force origin "$tag_name"
 
   package-debian-package:
-    needs: [create-tag, create-tag-tutorial]
+    needs: [create-tag]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
