@@ -68,7 +68,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                                                    : Network::Messages::ChannelType::DataChannel;
         //if retry times are set to 0, keep retrying indefinitely
         while (i < retryTimes || retryTimes == 0) {
-            //if the thread creater reqeusted to abort, retur nnullptr
+            //if the thread creater requested to abort, return nullptr
             if (abortConnection.has_value()
                 && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
                 NES_DEBUG("Aborting network channel connection process on caller request");
@@ -145,9 +145,10 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     return nullptr;
                 }
             }
-            NES_DEBUG("{}: Connection with server failed! Reconnecting attempt {} backoff time {}",
+            NES_DEBUG("{}: Connection with server failed! Reconnecting attempt {} of {} backoff time {}",
                       channelName,
                       i,
+                      retryTimes,
                       std::to_string(backOffTime.count()));
             std::this_thread::sleep_for(backOffTime);// TODO make this async
             backOffTime *= 2;
@@ -179,8 +180,8 @@ NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
 
 NetworkChannel::~NetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId); }
 
-void NetworkChannel::close(Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads) {
-    inherited::close(canSendEvent && !canSendData, terminationType, numSendingThreads);
+void NetworkChannel::close(Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads, uint64_t currentMessageSequenceNumber) {
+    inherited::close(canSendEvent && !canSendData, terminationType, numSendingThreads, currentMessageSequenceNumber);
 }
 
 NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,

@@ -135,13 +135,13 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
                         NES_DEBUG("NetworkStackTest: Error in registering DataChannel!");
                         completedProm.set_value(false);
                     } else {
-                        for (uint64_t i = 0; i < totalNumBuffer; ++i) {
+                        for (uint64_t sentBuffer = 0; sentBuffer < totalNumBuffer; ++sentBuffer) {
                             auto buffer = buffMgr->getBufferBlocking();
                             for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                                 buffer.getBuffer<uint64_t>()[j] = j;
                             }
                             buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
-                            senderChannel->sendBuffer(buffer, sizeof(uint64_t));
+                            senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBuffer + 1);
                         }
                         senderChannel->close(Runtime::QueryTerminationType::Graceful);
                         senderChannel.reset();

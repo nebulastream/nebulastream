@@ -245,13 +245,13 @@ template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 }// namespace detail
 
-void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& barrier, int index) {
+void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& barrier, int threadId) {
     using namespace Messages;
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
     try {
         dispatcherSocket.connect(dispatcherPipe);
         barrier->wait();
-        NES_DEBUG("Created Zmq Handler Thread #{} on {}: {}", index, hostname, this->currentPort);
+        NES_DEBUG("Created Zmq Handler Thread #{} on {}: {}", threadId, hostname, this->currentPort);
         while (keepRunning) {
             zmq::message_t identityEnvelope;
             zmq::message_t headerEnvelope;
@@ -264,6 +264,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                 // TODO handle error -- need to discuss how we handle errors on the node engine
                 NES_THROW_RUNTIME_ERROR("ZmqServer(" << this->hostname << ":" << this->currentPort << "):  Source is corrupted");
             }
+
             switch (msgHeader->getMsgType()) {
                 case MessageType::ClientAnnouncement: {
                     // if server receives announcement, that a client wants to send buffers
@@ -304,11 +305,12 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto* bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = identityEnvelope.data<NesPartition>();
 
-                    NES_TRACE("ZmqServer({}:{}):  DataBuffer received from origin={} and NesPartition={} with payload size {} "
-                              "with num children buffer {}",
+                    NES_TRACE("ZmqServer({}:{}):  DataBuffer received from origin={} and seqNumber={} and NesPartition={} "
+                              "with payload size {} with num children buffer {}",
                               this->hostname,
                               this->currentPort,
                               bufferHeader->originId,
+                              bufferHeader->sequenceNumber,
                               nesPartition->toString(),
                               bufferHeader->payloadSize,
                               bufferHeader->numOfChildren);
@@ -352,7 +354,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                         NES_ASSERT2_FMT(idx >= 0, "Invalid child index: " << idx);
                     }
 
-                    exchangeProtocol.onBuffer(*nesPartition, buffer);
+                    exchangeProtocol.onBuffer(*nesPartition, buffer, bufferHeader->messageSequenceNumber);
                     break;
                 }
                 case MessageType::EventBuffer: {
@@ -417,12 +419,12 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
             NES_DEBUG("ZmqServer({}:{}):  Handler #{}  closed on server{}: {}",
                       this->hostname,
                       this->currentPort,
-                      index,
+                      threadId,
                       hostname,
                       this->currentPort);
         } else {
             errorPromise.set_exception(std::current_exception());
-            NES_ERROR("ZmqServer({}:{}): event loop {} got {}", this->hostname, this->currentPort, index, err.what());
+            NES_ERROR("ZmqServer({}:{}): event loop {} got {}", this->hostname, this->currentPort, threadId, err.what());
             std::rethrow_exception(std::current_exception());
         }
     }

@@ -123,9 +123,10 @@ class ZmqServer {
 
     /**
      * @brief handler thread where threads are passed from the frontend loop
-     * @param the threadBarrier to enable synchronization
+     * @param barrier the threadBarrier to enable synchronization
+     * @param threadId the id of the thread running the handler event loop
      */
-    void messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& barrier, int index);
+    void messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& barrier, int threadId);
 
     const std::string hostname;
     /// this is the port from the configuration: can be 0

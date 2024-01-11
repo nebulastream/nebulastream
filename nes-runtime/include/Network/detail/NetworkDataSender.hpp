@@ -42,9 +42,10 @@ class NetworkDataSender : public BaseChannelType {
      * compute the payloadSize as tupleSizeInBytes*buffer.getNumberOfTuples()
      * @param the inputBuffer to send
      * @param the tupleSize represents the size in bytes of one tuple in the buffer
+     * @param the sequence number of this message
      * @return true if send was successful, else false
      */
-    bool sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize) {
+    bool sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize, uint64_t messageSequenceNumber) {
         auto numOfTuples = inputBuffer.getNumberOfTuples();
         auto originId = inputBuffer.getOriginId();
         auto watermark = inputBuffer.getWatermark();
@@ -56,7 +57,6 @@ class NetworkDataSender : public BaseChannelType {
         if (payloadSize == 0) {
             return true;
         }
-
         sendMessage<Messages::DataBufferMessage, kZmqSendMore>(this->zmqSocket,
                                                                payloadSize,
                                                                numOfTuples,
@@ -64,6 +64,7 @@ class NetworkDataSender : public BaseChannelType {
                                                                watermark,
                                                                creationTimestamp,
                                                                sequenceNumber,
+                                                               messageSequenceNumber,
                                                                numOfChildren);
 
         bool res = true;
@@ -79,6 +80,7 @@ class NetworkDataSender : public BaseChannelType {
                                                                            watermark,
                                                                            creationTimestamp,
                                                                            sequenceNumber,
+                                                                           messageSequenceNumber,
                                                                            0);
             auto const sentBytesOpt = this->zmqSocket.send(zmq::message_t(childBuffer.getBuffer(),
                                                                           childBuffer.getBufferSize(),

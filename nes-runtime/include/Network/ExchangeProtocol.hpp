@@ -14,8 +14,10 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
-
+#include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <Network/NetworkMessage.hpp>
+#include <folly/Synchronized.h>
+#include <map>
 #include <variant>
 
 namespace NES::Runtime {
@@ -39,6 +41,12 @@ class ExchangeProtocol {
                               std::shared_ptr<ExchangeProtocolListener> listener);
 
     /**
+     * @brief Copy-Constructor for ExchangeProtocol
+     * @param other
+     */
+    ExchangeProtocol(const ExchangeProtocol& other);
+
+    /**
      * @brief Reaction of the zmqServer after a ClientAnnounceMessage is received.
      * @param clientAnnounceMessage
      * @return if successful, return ServerReadyMessage
@@ -50,7 +58,7 @@ class ExchangeProtocol {
      * @param id of the buffer
      * @param buffer content
      */
-    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer);
+    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber);
 
     /**
      * @brief Reaction of the zmqServer after an error occurs.
@@ -86,6 +94,7 @@ class ExchangeProtocol {
   private:
     std::shared_ptr<PartitionManager> partitionManager{nullptr};
     std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
+    folly::Synchronized<std::unordered_map<NesPartition, Util::NonBlockingMonotonicSeqQueue<uint64_t>>> maxSeqNumberPerNesPartition;
 };
 
 }// namespace NES::Network
