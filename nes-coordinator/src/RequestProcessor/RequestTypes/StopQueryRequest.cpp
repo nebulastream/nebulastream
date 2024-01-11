@@ -65,7 +65,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
         NES_TRACE("Locks acquired. Create Phases");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        queryPlacementPhase =
+        queryPlacementAmendmentPhase =
             Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
         queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
         queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
@@ -108,7 +108,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         } else if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
             //Perform placement of updated shared query plan
             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-            bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
+            bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
             if (!placementSuccessful) {
                 throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
                                                           "QueryProcessingService: Failed to perform query placement for "

@@ -66,8 +66,8 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
                                                    const TopologyPtr& topology,
                                                    const TypeInferencePhasePtr& typeInferencePhase,
                                                    PlacementAmendmentMode placementAmendmentMode)
-    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode), serviceURL(serviceURL),
-      timeWeight(timeWeight) {}
+    : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
+      serviceURL(serviceURL), timeWeight(timeWeight) {}
 
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -93,15 +93,15 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQue
         }
 
         // 2. Create copy of the query plan
-        auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        auto copy =
+            CopiedPinnedOperators::create(pinnedUpStreamOperators, pinnedDownStreamOperators, operatorIdToOriginalOperatorMap);
 
         // 3. Parse the response of the external placement service
-        pinOperatorsBasedOnElegantService(sharedQueryId, copiedPinnedOperators.copiedPinnedDownStreamOperators, response);
+        pinOperatorsBasedOnElegantService(sharedQueryId, copy.copiedPinnedDownStreamOperators, response);
 
         // 4. Compute query sub plans
-        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId,
-                                                          copiedPinnedOperators.copiedPinnedUpStreamOperators,
-                                                          copiedPinnedOperators.copiedPinnedDownStreamOperators);
+        auto computedQuerySubPlans =
+            computeQuerySubPlans(sharedQueryId, copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 5. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);
@@ -144,8 +144,8 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
 
         if (!pinned) {
             throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                      "Unable to find operator with id " + std::to_string(operatorId)
-                                                          + " in the given list of operators.");
+                                                              "Unable to find operator with id " + std::to_string(operatorId)
+                                                                  + " in the given list of operators.");
         }
     }
 }

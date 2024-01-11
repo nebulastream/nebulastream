@@ -115,14 +115,6 @@ class BasePlacementAdditionStrategy {
                                            QuerySubPlanVersion querySubPlanVersion) = 0;
 
   protected:
-    /**
-     * @brief creates a copy of given query plan for performing operator placement
-     * @param pinnedUpStreamOperators : pinned upstream operators
-     * @param pinnedDownStreamOperators : pinned down stream operators
-     * @return pair representing set of copied upstream and downstream operators
-     */
-    CopiedPinnedOperators createCopyOfQueryPlan(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators
@@ -203,6 +195,7 @@ class BasePlacementAdditionStrategy {
     PathFinderPtr pathFinder;
     PlacementAmendmentMode placementAmendmentMode;
     std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
+    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
 
   private:
     /**
@@ -277,7 +270,6 @@ class BasePlacementAdditionStrategy {
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
     std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
-    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToCopiedOperatorMap;
 };
 }// namespace Optimizer

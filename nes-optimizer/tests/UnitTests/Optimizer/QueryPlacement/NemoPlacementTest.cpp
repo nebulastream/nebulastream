@@ -174,9 +174,9 @@ class NemoPlacementTest : public Testing::BaseUnitTest {
 
         // Execute the placement
         sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-        auto queryPlacementPhase =
+        auto queryPlacementAmendmentPhase =
             Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-        queryPlacementPhase->execute(sharedQueryPlan);
+        queryPlacementAmendmentPhase->execute(sharedQueryPlan);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {

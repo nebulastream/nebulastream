@@ -90,15 +90,16 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
             pinAllSinkOperators(pinnedDownStreamOperators);
 
             //4. Check if all operators are pinned
-            if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators)
-                || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
+            if (!containsOnlyPinnedOperators(pinnedDownStreamOperators)
+                || !containsOnlyPinnedOperators(pinnedUpstreamOperators)) {
                 throw Exceptions::QueryPlacementAdditionException(
                     sharedQueryId,
                     "QueryPlacementAmendmentPhase: Found operators without pinning.");
             }
 
             auto nextQuerySubPlanVersion = getNextQuerySubPlanVersion();
-            {
+
+            if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
                 auto placementRemovalStrategy =
                     PlacementRemovalStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
                 bool success = placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
@@ -109,9 +110,12 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
                     NES_ERROR("Unable to perform placement removal for the change log entry");
                     return false;
                 }
+            } else {
+                NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
+                            "TO_BE_REPLACED state.");
             }
 
-            {
+            if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
                 auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
                 auto placementAdditionStrategy = getStrategy(placementStrategy);
                 bool success = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
@@ -123,6 +127,9 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
                     NES_ERROR("Unable to perform placement addition for the change log entry");
                     return false;
                 }
+            } else {
+                NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
+                            "TO_BE_PLACED state.");
             }
         }
         //Update the change log's till processed timestamp and clear all entries before the timestamp
@@ -145,14 +152,14 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
         pinAllSinkOperators(pinnedDownStreamOperators);
 
         //4. Check if all operators are pinned
-        if (!checkIfAllArePinnedOperators(pinnedDownStreamOperators) || !checkIfAllArePinnedOperators(pinnedUpstreamOperators)) {
+        if (!containsOnlyPinnedOperators(pinnedDownStreamOperators) || !containsOnlyPinnedOperators(pinnedUpstreamOperators)) {
             throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
                                                               "QueryPlacementAmendmentPhase: Found operators without pinning.");
         }
 
         auto nextQuerySubPlanVersion = getNextQuerySubPlanVersion();
 
-        {
+        if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
             auto placementRemovalStrategy =
                 PlacementRemovalStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
 
@@ -165,9 +172,12 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
                 NES_ERROR("Unable to perform placement removal for the change log entry");
                 return false;
             }
+        } else {
+            NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
+                        "TO_BE_REPLACED state.");
         }
 
-        {
+        if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
             auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
             auto placementAdditionStrategy = getStrategy(placementStrategy);
             bool success = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
@@ -179,6 +189,9 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
                 NES_ERROR("Unable to perform query placement for the change log entry");
                 return false;
             }
+        } else {
+            NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
+                        "TO_BE_PLACED state.");
         }
     }
 
@@ -186,11 +199,26 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
     return true;
 }
 
-bool QueryPlacementAmendmentPhase::checkIfAllArePinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators) {
+bool QueryPlacementAmendmentPhase::containsOnlyPinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators) {
 
     //Find if one of the operator does not have PINNED_NODE_ID property
-    return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const OperatorNodePtr& pinnedOperator) {
+    return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const LogicalOperatorNodePtr& pinnedOperator) {
         return !pinnedOperator->hasProperty(PINNED_WORKER_ID);
+    });
+}
+
+bool QueryPlacementAmendmentPhase::containsOperatorsForPlacement(const std::set<LogicalOperatorNodePtr>& operatorsToCheck) {
+    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorNodePtr& operatorToCheck) {
+        return (operatorToCheck->getOperatorState() == OperatorState::TO_BE_PLACED
+                || operatorToCheck->getOperatorState() == OperatorState::PLACED);
+    });
+}
+
+bool QueryPlacementAmendmentPhase::containsOperatorsForRemoval(const std::set<LogicalOperatorNodePtr>& operatorsToCheck) {
+    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorNodePtr& operatorToCheck) {
+        return (operatorToCheck->getOperatorState() == OperatorState::TO_BE_REPLACED
+                || operatorToCheck->getOperatorState() == OperatorState::TO_BE_REMOVED
+                || operatorToCheck->getOperatorState() == OperatorState::PLACED);
     });
 }
 

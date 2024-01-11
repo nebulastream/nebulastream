@@ -15,13 +15,13 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 
 namespace NES {
 
@@ -41,7 +41,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     //Initialize hash-based signature
     hashBasedSignatures = (*sinkOperators.begin())->as<LogicalOperatorNode>()->getHashBasedSignature();
     //The query id
-    queryIds = {queryId};
+    runningQueryIds = {queryId};
     //Set the placement strategy used
     placementStrategy = queryPlan->getPlacementStrategy();
     //Initialize change log
@@ -226,7 +226,7 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
     NES_TRACE("Size of queryIdToSinkOperatorMap: {}", queryIdToSinkOperatorMap.size());
 
     //add the query id
-    queryIds.emplace_back(queryId);
+    runningQueryIds.emplace_back(queryId);
 }
 
 bool SharedQueryPlan::removeQuery(QueryId queryId) {
@@ -242,20 +242,18 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
     for (const auto& sinkOperator : sinkOperatorsToRemove) {
         //Remove sink operator and associated operators from query plan
 
-        auto upstreamOperators = removeOperator(sinkOperator);
+        auto upstreamOperators = markOperatorsToBeRemoved(sinkOperator);
         if (upstreamOperators.empty()) {
             NES_ERROR("SharedQueryPlan: unable to remove Root operator from the shared query plan {}", sharedQueryId);
             return false;
         }
-        queryPlan->removeAsRootOperator(sinkOperator);
 
         //add change log entry indicating the addition
         auto now =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
     }
-
-    queryIdToSinkOperatorMap.erase(queryId);
+    removeQueryIds.emplace_back(queryId);
     return true;
 }
 
@@ -282,15 +280,14 @@ SharedQueryId SharedQueryPlan::getId() const { return sharedQueryId; }
 void SharedQueryPlan::clear() {
     NES_DEBUG("SharedQueryPlan: clearing all metadata information.");
     queryIdToSinkOperatorMap.clear();
-    queryIds.clear();
+    runningQueryIds.clear();
 }
 
-std::vector<QueryId> SharedQueryPlan::getQueryIds() { return queryIds; }
+std::vector<QueryId> SharedQueryPlan::getQueryIds() { return runningQueryIds; }
 
 QueryPlanPtr SharedQueryPlan::getQueryPlan() { return queryPlan; }
 
-std::set<LogicalOperatorNodePtr> SharedQueryPlan::removeOperator(const LogicalOperatorNodePtr& operatorToRemove) {
-
+std::set<LogicalOperatorNodePtr> SharedQueryPlan::markOperatorsToBeRemoved(const NES::LogicalOperatorNodePtr& operatorToRemove) {
     //Collect all upstream operators till which removal of operators occurred
     std::set<LogicalOperatorNodePtr> upstreamOperatorsToReturn;
 
@@ -301,33 +298,60 @@ std::set<LogicalOperatorNodePtr> SharedQueryPlan::removeOperator(const LogicalOp
     auto upstreamOperators = operatorToRemove->getChildren();
 
     //If it is the most upstream operator then return this operator
-    if (!operatorToRemove->getChildren().empty()) {
+    if (upstreamOperators.empty()) {
         upstreamOperatorsToReturn.insert(operatorToRemove);
         return upstreamOperatorsToReturn;
     }
 
-    for (const auto& optr : upstreamOperators) {
-        //If the upstream operator is shared by multiple downstream operators then remove the operator to remove and add this operator
-        // to the operators to return.
-        auto upstreamOperator = optr->as<LogicalOperatorNode>();
-        if (upstreamOperator->getParents().size() > 1) {// If the upstream operator is connected to multiple downstream operator
-                                                        // then remove the downstream operator to remove and terminate recursion.
-            //Recursively call removal of this upstream operator
-            upstreamOperator->removeParent(operatorToRemove);
-            //add this upstream operator to operators to return
-            upstreamOperatorsToReturn.insert(upstreamOperator);
-        } else {// If the upstream operator is only connected to one downstream operator
-            // then remove the downstream operator and recursively call operator removal
-            // for this upstream operator.
-            //Remove the parent and call remove operator for children
-            upstreamOperator->removeParent(operatorToRemove);
-            //Recursively call removal of this upstream operator
-            auto lastUpstreamOperators = removeOperator(upstreamOperator);
-            //add returned operators to operators to return
-            upstreamOperatorsToReturn.insert(lastUpstreamOperators.begin(), lastUpstreamOperators.end());
+    for (const auto& upstreamOperator : upstreamOperators) {
+        auto connectedDownstream = upstreamOperator->getParents();
+
+        //If chas more than 1 downstream operators and not all downstream operators of this upstream operator is in to-be-removed state then add this operator
+        // to the upstream operators to return.
+        if (connectedDownstream.size() > 1) {
+            bool allInToBeRemoved =
+                std::any_of(connectedDownstream.begin(),
+                            connectedDownstream.end(),
+                            [](const NodePtr connectedDownStreamOperator) {
+                                return connectedDownStreamOperator->as_if<LogicalOperatorNode>()->getOperatorState()
+                                    == OperatorState::TO_BE_REMOVED;
+                            });
+
+            if (!allInToBeRemoved) {
+                //add this upstream operator to operators to return
+                upstreamOperatorsToReturn.insert(upstreamOperator->as<LogicalOperatorNode>());
+                //Skip remaining processing
+                continue;
+            }
         }
+
+        //Recursively call removal of this upstream operator
+        auto lastUpstreamOperators = markOperatorsToBeRemoved(upstreamOperator->as<LogicalOperatorNode>());
+        //add returned operators to operators to return
+        upstreamOperatorsToReturn.insert(lastUpstreamOperators.begin(), lastUpstreamOperators.end());
     }
     return upstreamOperatorsToReturn;
+}
+
+void SharedQueryPlan::removeOperator(const LogicalOperatorNodePtr& operatorToRemove) {
+
+    //Iterate over all child operator
+    auto upstreamOperators = operatorToRemove->getChildren();
+
+    //If it is the most upstream operator then return this operator
+    if (upstreamOperators.empty()) {
+        return;
+    }
+
+    //Remove all children
+    operatorToRemove->removeChildren();
+
+    for (const auto& upstreamOperator : upstreamOperators) {
+        //If the upstream operator is in the state REMOVED then recursively process its upstream operators.
+        if (upstreamOperator->as_if<LogicalOperatorNode>()->getOperatorState() == OperatorState::REMOVED) {
+            removeOperator(upstreamOperator->as<LogicalOperatorNode>());
+        }
+    }
 }
 
 ChangeLogEntries SharedQueryPlan::getChangeLogEntries(Timestamp timestamp) {

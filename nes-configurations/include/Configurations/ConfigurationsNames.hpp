@@ -76,7 +76,7 @@ const std::string STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG = "maxHashTableSiz
 const std::string JOIN_STRATEGY = "joinStrategy";
 
 //Optimizer Configurations
-const std::string PLACEMENT_AMENDER_MODE_CONFIG = "placementAmendmentMode";
+const std::string PLACEMENT_AMENDMENT_MODE_CONFIG = "placementAmendmentMode";
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
 const std::string ENABLE_QUERY_RECONFIGURATION = "enableQueryReconfiguration";

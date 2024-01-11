@@ -67,7 +67,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                coordinatorConfiguration,
                                                                                udfCatalog,
                                                                                globalExecutionPlan);
-    queryPlacementPhase =
+    queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
@@ -110,7 +110,7 @@ void RequestProcessorService::start() {
                             //3.2.1. Perform placement of new shared query plan
                             auto queryPlan = sharedQueryPlan->getQueryPlan();
                             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-                            bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
+                            bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
                             if (!placementSuccessful) {
                                 throw Exceptions::QueryPlacementAdditionException(
                                     sharedQueryId,
@@ -137,7 +137,7 @@ void RequestProcessorService::start() {
                             //3.3.2. Perform placement of updated shared query plan
                             auto queryPlan = sharedQueryPlan->getQueryPlan();
                             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-                            bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
+                            bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
                             if (!placementSuccessful) {
                                 throw Exceptions::QueryPlacementAdditionException(
                                     sharedQueryId,

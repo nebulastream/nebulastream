@@ -401,7 +401,7 @@ int main(int argc, const char* argv[]) {
                                                                                         globalExecutionPlan);
 
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto queryPlacementPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+            auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
                                                                               coordinatorConfiguration);
@@ -424,7 +424,7 @@ int main(int argc, const char* argv[]) {
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                bool placed = queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
+                bool placed = queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();

@@ -254,7 +254,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query plan
@@ -276,7 +276,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     auto queryId = sharedQueryPlan->getId();
 
     //Perform placement
-    queryPlacementPhase->execute(sharedQueryPlan);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
@@ -315,7 +315,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingWindowQueryWithILPStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query plan
@@ -340,7 +340,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingWindowQueryWithILPStrategy) {
     auto queryId = sharedQueryPlan->getId();
 
     //Perform placement
-    queryPlacementPhase->execute(sharedQueryPlan);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
@@ -393,7 +393,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingSlidingWindowQueryWithILPStrategy) 
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query plan
@@ -418,7 +418,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingSlidingWindowQueryWithILPStrategy) 
     auto queryId = sharedQueryPlan->getId();
 
     //Perform placement
-    queryPlacementPhase->execute(sharedQueryPlan);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
@@ -471,7 +471,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query to place
@@ -497,7 +497,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
     auto queryId = sharedQueryPlan->getId();
 
     //Perform placement
-    queryPlacementPhase->execute(sharedQueryPlan);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     //Assertion
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -537,7 +537,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     Query query = Query::from("car")
@@ -562,7 +562,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getId();
 
-    queryPlacementPhase->execute(sharedQueryPlan);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
@@ -664,9 +664,9 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrate
 
     //Place the shared query plan
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
-    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -712,7 +712,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrate
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
     NES_INFO("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
-    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -862,9 +862,9 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWi
 
     //Place the shared query plan
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
-    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -911,7 +911,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWi
     ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
 
     NES_INFO("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
-    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
     sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 
@@ -1070,9 +1070,9 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
 
     //Place the shared query plan
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
-    queryPlacementPhase->execute(sharedQueryPlansToDeploy[0]);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
     SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
 

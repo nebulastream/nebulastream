@@ -54,21 +54,19 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                     QuerySubPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
-        // 1. Find the path where operators need to be placed
-        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 1. Create copy of the query plan
+        auto copy =
+            CopiedPinnedOperators::create(pinnedUpStreamOperators, pinnedDownStreamOperators, operatorIdToOriginalOperatorMap);
 
-        // 2. Create copy of the query plan
-        auto copiedPinnedOperators = createCopyOfQueryPlan(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 2. Find the path where operators need to be placed
+        performPathSelection(copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 3. Pin all unpinned operators
-        performOperatorPlacement(sharedQueryId,
-                                 copiedPinnedOperators.copiedPinnedUpStreamOperators,
-                                 copiedPinnedOperators.copiedPinnedDownStreamOperators);
+        performOperatorPlacement(sharedQueryId, copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 4. Compute query sub plans
-        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId,
-                                                          copiedPinnedOperators.copiedPinnedUpStreamOperators,
-                                                          copiedPinnedOperators.copiedPinnedDownStreamOperators);
+        auto computedQuerySubPlans =
+            computeQuerySubPlans(sharedQueryId, copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 5. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);

@@ -500,16 +500,16 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
 
     ASSERT_EQ(changeLogEntries.size(), 1UL);
 
-    //assert that the sink operators have same up-stream operator
     auto rootOperatorsAfterStop = updatedSharedPlanAfterStop->getRootOperators();
-    EXPECT_TRUE(rootOperatorsAfterStop.size() == 1);
+    EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
+    //assert that the at least one sink operator is in the state TO_BE_REMOVED
+    EXPECT_TRUE(
+        std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorNodePtr operatorToCheck) {
+            return operatorToCheck->as_if<LogicalOperatorNode>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
+        }));
 
-    EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 1);
-
-    auto operatorsInQueryPlan2 = QueryPlanIterator(queryPlan2).snapshot();
-    auto operatorsInSharedPlanAfterStop = QueryPlanIterator(updatedSharedPlanAfterStop).snapshot();
-
-    EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
+    //assert that the sink operators have same up-stream operator
+    EXPECT_EQ(updatedSharedPlanAfterStop->getSourceOperators().size(), 1);
 }
 
 TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
@@ -607,14 +607,14 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
 
     NES_INFO("{}", updatedSharedQueryPlan1->toString());
 
-    //assert that the sink operators have same up-stream operator
     auto rootOperatorsAfterStop = updatedSharedPlanAfterStop->getRootOperators();
-    EXPECT_TRUE(rootOperatorsAfterStop.size() == 1);
+    EXPECT_EQ(rootOperatorsAfterStop.size(),2);
+    //assert that the at least one sink operator is in the state TO_BE_REMOVED
+    EXPECT_TRUE(
+        std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorNodePtr operatorToCheck) {
+            return operatorToCheck->as_if<LogicalOperatorNode>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
+        }));
 
+    //assert that the sink operators have same up-stream operator
     EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 1);
-
-    auto operatorsInQueryPlan2 = QueryPlanIterator(queryPlan2).snapshot();
-    auto operatorsInSharedPlanAfterStop = QueryPlanIterator(updatedSharedPlanAfterStop).snapshot();
-
-    EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
 }

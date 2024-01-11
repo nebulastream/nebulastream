@@ -172,9 +172,9 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getId();
-    auto queryPlacementPhase =
+    auto queryPlacementAmendmentPhase =
         Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-    queryPlacementPhase->execute(sharedQueryPlan);
+    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     NES_DEBUG("MlHeuristicPlacementTest: topology: \n{}", topology->toString());
     NES_DEBUG("MlHeuristicPlacementTest: query plan \n{}", globalExecutionPlan->getAsString());

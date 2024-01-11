@@ -85,7 +85,7 @@ class QueryPlacementAmendmentPhase {
                                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
-     * @brief Method takes input as a placement strategy name and input query plan and performs first query operator placement
+     * @brief Method takes input a shared query plan and performs first query operator placement
      * removal and then addition based on the selected query placement strategy
      * @param sharedQueryPlan : the input shared query plan
      * @return true is placement amendment successful.
@@ -110,7 +110,21 @@ class QueryPlacementAmendmentPhase {
      * @param pinnedOperators: operators to check
      * @return false if one of the operator is not pinned else true
      */
-    bool checkIfAllArePinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators);
+    bool containsOnlyPinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators);
+
+    /**
+     * @brief Check if in the provided set at least one operator is in the state To_Be_Placed or Placed
+     * @param operatorsToCheck the logical operator nodes
+     * @return true if at least one operator passes the condition
+     */
+    bool containsOperatorsForPlacement(const std::set<LogicalOperatorNodePtr>& operatorsToCheck);
+
+    /**
+     * @brief Check if in the provided set at least one operator is in the state To_Be_RePlaced, Placed, or To_Be_Removed
+     * @param operatorsToCheck the logical operator nodes
+     * @return true if at least one operator passes the condition
+     */
+    bool containsOperatorsForRemoval(const std::set<LogicalOperatorNodePtr>& operatorsToCheck);
 
     /**
      * @brief method returns different kind of placement strategies.
@@ -127,4 +141,4 @@ class QueryPlacementAmendmentPhase {
     PlacementAmendmentMode placementAmendmentMode;
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
