@@ -37,12 +37,12 @@ using namespace NES::Nautilus::IR::Operations;
 namespace NES::Nautilus::IR {
 
 void ValueScopingPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
-    if(ir->getAppliedPhases() == IRGraph::AppliedPhases::StructuredControlFlowPhase) {
+    if (ir->getAppliedPhases() == IRGraph::AppliedPhases::StructuredControlFlowPhase) {
         auto phaseContext = ValueScopingPhaseContext(std::move(ir));
         phaseContext.process();
     } else {
-        NES_ERROR("LoopDetectionPhase::applyLoopDetection: Could not apply LoopDetectionPhase. Requires IRGraph " <<
-                    "to have BrOnlyBlocksPhase applied, but applied phase was: " << ir->printAppliedPhases());
+        NES_ERROR("LoopDetectionPhase::applyLoopDetection: Could not apply LoopDetectionPhase. Requires IRGraph "
+                  << "to have BrOnlyBlocksPhase applied, but applied phase was: " << ir->printAppliedPhases());
     }
 };
 
@@ -52,7 +52,6 @@ void ValueScopingPhase::ValueScopingPhaseContext::process() {
     ir->setAppliedPhases(IRGraph::AppliedPhases::ValueScopingPhase);
     NES_DEBUG(ir->toString());
 }
-
 
 void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
     std::stack<IR::BasicBlockPtr> toVisitBlocks;
@@ -68,28 +67,28 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
         visitedBlocks.emplace(currentBlock.get());
         auto nextBlocks = currentBlock->getNextBlockInvocations();
         // We iterate over all of the operations of the currentBlock.
-        for(auto& operation : currentBlock->getOperations()) {
+        for (auto& operation : currentBlock->getOperations()) {
             // The current operation is a non-terminator- or return operation. We check whether the operation uses
-            // the currentBlock's arguments, and if so, we check whether we can replace the arguments, with their 
+            // the currentBlock's arguments, and if so, we check whether we can replace the arguments, with their
             // corresponding base operations.
-            if(operation != currentBlock->getTerminatorOp() || operation->getOperationType() == Operation::ReturnOp) {
+            if (operation != currentBlock->getTerminatorOp() || operation->getOperationType() == Operation::ReturnOp) {
                 size_t inputIndex = 0;
-                for(auto inputOp : operation->getInputs(operation)) {
-                    if(inputOp->getOperationType() == Operation::BasicBlockArgument) {
+                for (auto inputOp : operation->getInputs(operation)) {
+                    if (inputOp->getOperationType() == Operation::BasicBlockArgument) {
                         auto arg = std::static_pointer_cast<Operations::BasicBlockArgument>(inputOp);
-                        if(!arg->getIsMergeArg()) {
+                        if (!arg->getIsMergeArg()) {
                             //Todo changed -> could break
                             operation->setInput(operation, arg->getBaseOperationPtr(), inputIndex);
                         }
                     }
                     ++inputIndex;
                 }
-            // The current operation is a terminator operation (except for return). We iterate over the arguments of
-            // the terminator operation, and check whether the corresponding operations of the next block are 
-            // merge-arguments (more than one option for input). If not, we remove the arg. If the arg has more than
-            // one option for input, we check whether we need to forward the arg of the currentBlock, or whether we 
-            // forward the underlying base operation. In case of a non-argument-operation, we simply forward it.
-            // Also, we add the nextBlock(s) referenced by the terminator operation to the toVisitBlocks.
+                // The current operation is a terminator operation (except for return). We iterate over the arguments of
+                // the terminator operation, and check whether the corresponding operations of the next block are
+                // merge-arguments (more than one option for input). If not, we remove the arg. If the arg has more than
+                // one option for input, we check whether we need to forward the arg of the currentBlock, or whether we
+                // forward the underlying base operation. In case of a non-argument-operation, we simply forward it.
+                // Also, we add the nextBlock(s) referenced by the terminator operation to the toVisitBlocks.
             } else {
                 // Todo, for loop-header-blocks, we should always skip the first (loopBody) block.
                 // if(currentBlock->isLoopHeaderBlock()) {
@@ -98,20 +97,21 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
                 //     }
                 //     nextBlocks = {nextBlocks.at(1)};
                 // }
-                for(auto& nextBlockInvocation : nextBlocks) {
+                for (auto& nextBlockInvocation : nextBlocks) {
                     std::vector<OperationPtr> branchOps = nextBlockInvocation->getBranchOps();
                     nextBlockInvocation->clearBranchOps();
-                    for(size_t i = 0; i < std::min(branchOps.size(), nextBlockInvocation->getNextBlock()->getArguments().size()); ++i) {
+                    for (size_t i = 0; i < std::min(branchOps.size(), nextBlockInvocation->getNextBlock()->getArguments().size());
+                         ++i) {
                         // Todo Problem: we are not removing operations that should be removed
                         // -> occurs when branching to non-merge-block
-                        if(nextBlockInvocation->getNextBlock()->getArguments().at(i)->getIsMergeArg()) {
-                            if(branchOps.at(i)->getOperationType() == Operation::BasicBlockArgument) {
+                        if (nextBlockInvocation->getNextBlock()->getArguments().at(i)->getIsMergeArg()) {
+                            if (branchOps.at(i)->getOperationType() == Operation::BasicBlockArgument) {
                                 auto arg = std::static_pointer_cast<Operations::BasicBlockArgument>(branchOps.at(i));
-                                if(!arg->getIsMergeArg()) {
+                                if (!arg->getIsMergeArg()) {
                                     //Todo changed -> could break
                                     branchOps.at(i) = arg->getBaseOperationPtr();
                                     // branchOps.at(i) = arg->getBaseOps().at(0);
-                                } 
+                                }
                                 // else {
                                 //     branchOps.at(i) = arg;
                                 // }
@@ -119,51 +119,55 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
                             nextBlockInvocation->addArgument((branchOps.at(i)));
                         }
                     }
-                    if(currentBlock->isLoopHeaderBlock() && nextBlockInvocation == nextBlocks.at(0)) {
+                    if (currentBlock->isLoopHeaderBlock() && nextBlockInvocation == nextBlocks.at(0)) {
                         continue;
                     }
                     // Add nextBlock to toVisitBlocks, if this terminatorOp is the last yet unused terminatorOp leading
                     // to the nextBlock (loop-back-edges are not counted).
-                    // Reason: We cannot remove merge-block args before we traversed all non-loop-back terminator 
+                    // Reason: We cannot remove merge-block args before we traversed all non-loop-back terminator
                     // operations that point to the merge-block. Otherwise we cannot be sure which operations to remove
                     // from the terminator operations (e.g. branchOpArgs:5, nextBlockArgs: 3, which to remove? Could
                     // match, but unnecessarily complex).
-                    if(!(nextBlockInvocation->getNextBlock()->isMergeBlock())) {
-                        if(!visitedBlocks.contains(nextBlockInvocation->getNextBlock().get())) {
+                    if (!(nextBlockInvocation->getNextBlock()->isMergeBlock())) {
+                        if (!visitedBlocks.contains(nextBlockInvocation->getNextBlock().get())) {
                             toVisitBlocks.emplace(nextBlockInvocation->getNextBlock());
                         }
-                    } else { // nextBlock is merge block
+                    } else {// nextBlock is merge block
                         uint64_t numPredecessors = nextBlockInvocation->getNextBlock()->getPredecessors().size();
                         uint64_t numLoopBackEdges = nextBlockInvocation->getNextBlock()->getNumLoopBackEdges();
-                        if(mergeBlocks.contains(nextBlockInvocation->getNextBlock().get())) {
+                        if (mergeBlocks.contains(nextBlockInvocation->getNextBlock().get())) {
                             mergeBlocks[nextBlockInvocation->getNextBlock().get()]++;
                             uint64_t numPriorVisits = mergeBlocks[nextBlockInvocation->getNextBlock().get()];
-                            if((!(nextBlockInvocation->getNextBlock()->isLoopHeaderBlock()) && (numPriorVisits == (numPredecessors - numLoopBackEdges))) || 
-                                    (nextBlockInvocation->getNextBlock()->isLoopHeaderBlock() && numPriorVisits == numPredecessors)) {
+                            if ((!(nextBlockInvocation->getNextBlock()->isLoopHeaderBlock())
+                                 && (numPriorVisits == (numPredecessors - numLoopBackEdges)))
+                                || (nextBlockInvocation->getNextBlock()->isLoopHeaderBlock()
+                                    && numPriorVisits == numPredecessors)) {
                                 toVisitBlocks.emplace(nextBlockInvocation->getNextBlock());
-                            } else if(nextBlockInvocation->getNextBlock()->isLoopHeaderBlock() && (numPriorVisits == (numPredecessors - numLoopBackEdges))) {
+                            } else if (nextBlockInvocation->getNextBlock()->isLoopHeaderBlock()
+                                       && (numPriorVisits == (numPredecessors - numLoopBackEdges))) {
                                 // Loop-header-block is merge-block. All prior-to-loop-body-block-edges have been visited.
                                 // Add loop-body-block to toVisitBlocks.
                                 toVisitBlocks.emplace(nextBlockInvocation->getNextBlock()->getNextBlocks().first);
                             }
-                        } else { // New merge block encountered. Add block to merge-blocks.
+                        } else {// New merge block encountered. Add block to merge-blocks.
                             mergeBlocks.emplace(std::make_pair(nextBlockInvocation->getNextBlock().get(), 1));
                             // If the merge-block is a loop-block, but not an above-merge-block, add loopBodyBlock to toVisitBlocks.
-                            if(nextBlockInvocation->getNextBlock()->isLoopHeaderBlock() && (numPredecessors - numLoopBackEdges < 2)) {
-                                 toVisitBlocks.emplace(nextBlockInvocation->getNextBlock()->getNextBlocks().first);
+                            if (nextBlockInvocation->getNextBlock()->isLoopHeaderBlock()
+                                && (numPredecessors - numLoopBackEdges < 2)) {
+                                toVisitBlocks.emplace(nextBlockInvocation->getNextBlock()->getNextBlocks().first);
                             }
                         }
                     }
                 }
-            } 
+            }
         }
         // Only keep currentBlock arguments that have more than one base operation.
         // We have to remove currentBlock args, after passing all currentBlock operations, because the operations may
         // use arguments of the currentBlock that get removed in this step.
         auto previousArgs = currentBlock->getArguments();
         currentBlock->clearArguments();
-        for(auto& arg : previousArgs) {
-            if(arg->getIsMergeArg()) {
+        for (auto& arg : previousArgs) {
+            if (arg->getIsMergeArg()) {
                 //Todo try out if this breaks the loopInfoPhase
                 // if(!currentBlock->isLoopHeaderBlock()) {
                 //     arg->getBaseOps().clear();
@@ -173,6 +177,5 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
         }
     } while (!toVisitBlocks.empty());
 }
-
 
 }//namespace NES::Nautilus::IR

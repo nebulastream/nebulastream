@@ -62,4 +62,4 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     virtual void onVersionUpdate(Network::NetworkSourceDescriptor){};
 };
 }// namespace NES
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

@@ -68,4 +68,4 @@ class DefaultDataGenerator : public DataGenerator {
     uint64_t maxValue;
 };
 }// namespace NES::Benchmark::DataGeneration
-#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_DEFAULTDATAGENERATOR_HPP_
+#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_DEFAULTDATAGENERATOR_HPP_

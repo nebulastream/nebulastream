@@ -68,4 +68,4 @@ class TestSinkDescriptor : public SinkDescriptor {
 };
 }// namespace NES::TestUtils
 
-#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKDESCRIPTOR_HPP_
+#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKDESCRIPTOR_HPP_

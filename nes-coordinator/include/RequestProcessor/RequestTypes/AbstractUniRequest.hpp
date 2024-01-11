@@ -56,4 +56,4 @@ class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker 
     RequestId getResourceLockingId() override;
 };
 }// namespace NES::RequestProcessor
-#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTUNIREQUEST_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTUNIREQUEST_HPP_
