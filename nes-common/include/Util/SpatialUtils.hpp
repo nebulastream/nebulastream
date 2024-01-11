@@ -61,4 +61,4 @@ double haversineDistance(double lat1, double lng1, double lat2, double lng2);
 }// namespace SpatialUtils
 }// namespace NES
 
-#endif // NES_COMMON_INCLUDE_UTIL_SPATIALUTILS_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_SPATIALUTILS_HPP_

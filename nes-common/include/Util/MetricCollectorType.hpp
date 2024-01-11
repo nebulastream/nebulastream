@@ -31,4 +31,4 @@ enum class MetricCollectorType : uint8_t {
 
 }// namespace NES::Monitoring
 
-#endif // NES_COMMON_INCLUDE_UTIL_METRICCOLLECTORTYPE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_METRICCOLLECTORTYPE_HPP_

@@ -14,10 +14,10 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_
 
-#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <stack>
@@ -39,7 +39,7 @@ class ValueScopingPhase {
      */
     void apply(std::shared_ptr<IR::IRGraph> ir);
 
-    private:
+  private:
     struct IfOpCandidate {
         std::shared_ptr<IR::Operations::IfOperation> ifOp;
         bool isTrueBranch;
@@ -66,11 +66,12 @@ class ValueScopingPhase {
          *        arguments are only referenced by a single unique base operation.
          */
         void replaceArguments();
+
       private:
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_set<std::string> visitedBlocks;
     };
 };
 
-}// namespace NES::Nautilus::IR::ValueScopingPhase
-#endif // NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_
+}// namespace NES::Nautilus::IR
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_

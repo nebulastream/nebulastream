@@ -72,4 +72,4 @@ class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLa
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_

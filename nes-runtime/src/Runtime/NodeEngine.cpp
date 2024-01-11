@@ -27,9 +27,9 @@
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
-#include <QueryCompiler/QueryCompilationRequest.hpp> // request = QueryCompilation::QueryCompilationRequest::create(..)
-#include <QueryCompiler/QueryCompilationResult.hpp>  // result = queryCompiler->compileQuery(request);
-#include <QueryCompiler/QueryCompiler.hpp>           // member variable (QueryCompilation::QueryCompilerPtr queryCompiler)
+#include <QueryCompiler/QueryCompilationRequest.hpp>// request = QueryCompilation::QueryCompilationRequest::create(..)
+#include <QueryCompiler/QueryCompilationResult.hpp> // result = queryCompiler->compileQuery(request);
+#include <QueryCompiler/QueryCompiler.hpp>          // member variable (QueryCompilation::QueryCompilerPtr queryCompiler)
 
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>

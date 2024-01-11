@@ -42,4 +42,4 @@ const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
                                                     ResourceType::UdfCatalog};
 }// namespace NES::RequestProcessor
 
-#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_

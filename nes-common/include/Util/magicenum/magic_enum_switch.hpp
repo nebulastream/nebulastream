@@ -195,4 +195,4 @@ template<typename T>
 struct std::common_type<magic_enum::detail::nonesuch, T> : magic_enum::detail::identity<T> {};
 
 // clang-format on
-#endif // NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_SWITCH_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_SWITCH_HPP_

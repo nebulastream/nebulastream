@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Phases/ValueScopingPhase.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Phases/ValueScopingPhase.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -70,7 +70,7 @@ class ValueScopingPhaseTest : public testing::Test, public AbstractCompilationBa
         return enumerateIRForTests(ir);
     }
 
-      /**
+    /**
      * @brief lowerBound, upperBound, stepSize, loopEndBlockId
      */
     struct CountedLoopInfo {
@@ -80,7 +80,8 @@ class ValueScopingPhaseTest : public testing::Test, public AbstractCompilationBa
         std::string loopEndBlockId;
     };
     using countedLoopInfoPtr = std::unique_ptr<CountedLoopInfo>;
-    countedLoopInfoPtr createCorrectCountedLoopInfo(uint32_t lowerBound, uint32_t upperBound, uint32_t stepSize, std::string loopEndBlockId) {
+    countedLoopInfoPtr
+    createCorrectCountedLoopInfo(uint32_t lowerBound, uint32_t upperBound, uint32_t stepSize, std::string loopEndBlockId) {
         return std::make_unique<CountedLoopInfo>(CountedLoopInfo{lowerBound, upperBound, stepSize, loopEndBlockId});
     }
 
@@ -90,13 +91,16 @@ class ValueScopingPhaseTest : public testing::Test, public AbstractCompilationBa
         std::string correctMergeBlockId;
     };
     using CorrectBlockValuesPtr = std::unique_ptr<CorrectBlockValues>;
-    void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks, 
-            std::string correctBlockId, uint32_t correctNumberOfBackLinks, 
-            std::string correctMergeBlockId, countedLoopInfoPtr countedLoopInfo = nullptr) {
-                correctBlocks.emplace(std::pair{correctBlockId, 
-                    std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, std::move(countedLoopInfo), correctMergeBlockId})});
+    void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks,
+                            std::string correctBlockId,
+                            uint32_t correctNumberOfBackLinks,
+                            std::string correctMergeBlockId,
+                            countedLoopInfoPtr countedLoopInfo = nullptr) {
+        correctBlocks.emplace(
+            std::pair{correctBlockId,
+                      std::make_unique<CorrectBlockValues>(
+                          CorrectBlockValues{correctNumberOfBackLinks, std::move(countedLoopInfo), correctMergeBlockId})});
     }
-
 
     /**
      * @brief Takes a graph IR, enumerates all blocks depth-first, and returns a vector containing all blocks.
@@ -108,7 +112,7 @@ class ValueScopingPhaseTest : public testing::Test, public AbstractCompilationBa
         std::stack<IR::BasicBlockPtr> newBlocks;
         std::unordered_set<IR::BasicBlock*> visitedBlocks;
         std::vector<IR::BasicBlockPtr> dpsSortedIRGraph;
-    
+
         uint32_t currentId = 0;
         newBlocks.emplace(ir->getRootOperation()->getFunctionBasicBlock());
         do {
@@ -118,10 +122,10 @@ class ValueScopingPhaseTest : public testing::Test, public AbstractCompilationBa
             dpsSortedIRGraph.emplace_back(newBlocks.top());
             auto nextBlocks = newBlocks.top()->getNextBlocks();
             newBlocks.pop();
-            if(nextBlocks.second && !visitedBlocks.contains(nextBlocks.first.get())) {
+            if (nextBlocks.second && !visitedBlocks.contains(nextBlocks.first.get())) {
                 newBlocks.emplace(nextBlocks.second);
             }
-            if(nextBlocks.first && !visitedBlocks.contains(nextBlocks.first.get())) {
+            if (nextBlocks.first && !visitedBlocks.contains(nextBlocks.first.get())) {
                 newBlocks.emplace(nextBlocks.first);
             }
         } while (!newBlocks.empty());
@@ -134,96 +138,117 @@ class ValueScopingPhaseTest : public testing::Test, public AbstractCompilationBa
         bool loopInfoIsCorrect = true;
         bool backLinksAreCorrect = true;
         uint32_t numCheckedBlocks = 0;
-        for(auto currentBlock : dpsSortedBlocks) {
-            if(currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp) {
+        for (auto currentBlock : dpsSortedBlocks) {
+            if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp) {
                 // Check that the currentBlock is actually part of the solution set.
                 if (correctBlocks.contains(currentBlock->getIdentifier())) {
                     auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
                     // Check that the merge-block id is set correctly, if the if-operation has a merge-block.
                     auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
                     if (!correctMergeBlockId.empty()) {
-                        if(!ifOp->getMergeBlock()) {
-                            NES_ERROR("CurrentBlock: " << currentBlock->getIdentifier() << " did not contain a merge block" <<
-                                        " even though the solution suggest it has a merge-block with id: " << correctMergeBlockId);
+                        if (!ifOp->getMergeBlock()) {
+                            NES_ERROR("CurrentBlock: " << currentBlock->getIdentifier() << " did not contain a merge block"
+                                                       << " even though the solution suggest it has a merge-block with id: "
+                                                       << correctMergeBlockId);
                             mergeBlocksAreCorrect = false;
                         } else {
                             bool correctMergeBlock = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
                             mergeBlocksAreCorrect &= correctMergeBlock;
-                            if(!correctMergeBlock) {
+                            if (!correctMergeBlock) {
                                 NES_ERROR("\nMerge-Block mismatch for block "
-                                    << currentBlock->getIdentifier() << ": " << ifOp->getMergeBlock()->getIdentifier() << " instead of "
-                                    << correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
+                                          << currentBlock->getIdentifier() << ": " << ifOp->getMergeBlock()->getIdentifier()
+                                          << " instead of "
+                                          << correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId
+                                          << "(correct).");
                             }
                         }
                     } else {
                         bool noMergeBlockCorrectlySet = !ifOp->getMergeBlock();
                         mergeBlocksAreCorrect &= noMergeBlockCorrectlySet;
-                        if(!noMergeBlockCorrectlySet) {
-                            NES_ERROR("The current merge block: " << currentBlock->getIdentifier() 
-                            << " contains a merge-block with id: " << ifOp->getMergeBlock()->getIdentifier() << 
-                            ", even though it should not contain a merge-block.");
+                        if (!noMergeBlockCorrectlySet) {
+                            NES_ERROR("The current merge block: " << currentBlock->getIdentifier()
+                                                                  << " contains a merge-block with id: "
+                                                                  << ifOp->getMergeBlock()->getIdentifier()
+                                                                  << ", even though it should not contain a merge-block.");
                         }
                     }
                 } else {
                     mergeBlocksAreCorrect = false;
-                    NES_ERROR("CurrentBlock with id: " << currentBlock->getIdentifier() 
-                                << " was not part of solution set(correctBlocks), but it contains an if-operation.");
+                    NES_ERROR("CurrentBlock with id: "
+                              << currentBlock->getIdentifier()
+                              << " was not part of solution set(correctBlocks), but it contains an if-operation.");
                 }
                 ++numCheckedBlocks;
-            } else if(currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::LoopOp) {
-                    auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(currentBlock->getTerminatorOp());
-                    // Check loop operation for correctness.
-                    if(correctBlocks.contains(currentBlock->getIdentifier())) {
-                        if(correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo) {
-                            loopInfoIsCorrect = loopOp->getLoopInfo() != nullptr;
-                            if(!loopInfoIsCorrect) {
-                                NES_ERROR("Loop operation in block: " << currentBlock->getIdentifier() << " should -not- contain counted loop info.");
-                            } else {
-                                auto countedLoopInfo = std::static_pointer_cast<IR::Operations::CountedLoopInfo>(loopOp->getLoopInfo());
-                                loopInfoIsCorrect &= countedLoopInfo->lowerBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound;
-                                loopInfoIsCorrect &= countedLoopInfo->upperBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound;
-                                loopInfoIsCorrect &= countedLoopInfo->stepSize == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize;
-                                loopInfoIsCorrect &= loopOp->getLoopEndBlock().getNextBlock()->getIdentifier() == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId;
-                                if(!loopInfoIsCorrect) {
-                                    NES_ERROR("Loop info set incorrectly. Check values: " << 
-                                                "LowerBound: " << countedLoopInfo->lowerBound << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound <<
-                                                ", UpperBound: " << countedLoopInfo->upperBound << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound <<
-                                                ", StepSize: " << countedLoopInfo->stepSize << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize <<
-                                                ", LoopEndBlock: " << loopOp->getLoopEndBlock().getNextBlock()->getIdentifier() << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId
-                                                );
-                                }
-                            }
+            } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::LoopOp) {
+                auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(currentBlock->getTerminatorOp());
+                // Check loop operation for correctness.
+                if (correctBlocks.contains(currentBlock->getIdentifier())) {
+                    if (correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo) {
+                        loopInfoIsCorrect = loopOp->getLoopInfo() != nullptr;
+                        if (!loopInfoIsCorrect) {
+                            NES_ERROR("Loop operation in block: " << currentBlock->getIdentifier()
+                                                                  << " should -not- contain counted loop info.");
                         } else {
-                            bool loopIsDefaultLoop = (loopOp->getLoopType() == IR::Operations::LoopOperation::LoopType::DefaultLoop);
-                            loopInfoIsCorrect &= loopIsDefaultLoop;
-                            if(!loopIsDefaultLoop) {
-                                NES_ERROR("\n Loop operation in block: " << currentBlock->getIdentifier() << " should be default loop, but is not.");
+                            auto countedLoopInfo =
+                                std::static_pointer_cast<IR::Operations::CountedLoopInfo>(loopOp->getLoopInfo());
+                            loopInfoIsCorrect &= countedLoopInfo->lowerBound
+                                == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound;
+                            loopInfoIsCorrect &= countedLoopInfo->upperBound
+                                == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound;
+                            loopInfoIsCorrect &= countedLoopInfo->stepSize
+                                == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize;
+                            loopInfoIsCorrect &= loopOp->getLoopEndBlock().getNextBlock()->getIdentifier()
+                                == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId;
+                            if (!loopInfoIsCorrect) {
+                                NES_ERROR("Loop info set incorrectly. Check values: "
+                                          << "LowerBound: " << countedLoopInfo->lowerBound << " vs "
+                                          << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound
+                                          << ", UpperBound: " << countedLoopInfo->upperBound << " vs "
+                                          << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound
+                                          << ", StepSize: " << countedLoopInfo->stepSize << " vs "
+                                          << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize
+                                          << ", LoopEndBlock: " << loopOp->getLoopEndBlock().getNextBlock()->getIdentifier()
+                                          << " vs "
+                                          << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId);
                             }
-                        }
-                        // Check that the number of loop back edges is set correctly.
-                        backLinksAreCorrect &= currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
-                        if(!backLinksAreCorrect) {
-                            NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
-                            << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
                         }
                     } else {
-                        mergeBlocksAreCorrect = false;
-                        NES_ERROR("CurrentBlock with id: " << currentBlock->getIdentifier() 
-                                    << " was not part of solution set(correctBlocks), but it contains a loop-operation.");
+                        bool loopIsDefaultLoop = (loopOp->getLoopType() == IR::Operations::LoopOperation::LoopType::DefaultLoop);
+                        loopInfoIsCorrect &= loopIsDefaultLoop;
+                        if (!loopIsDefaultLoop) {
+                            NES_ERROR("\n Loop operation in block: " << currentBlock->getIdentifier()
+                                                                     << " should be default loop, but is not.");
+                        }
                     }
-                    ++numCheckedBlocks;
+                    // Check that the number of loop back edges is set correctly.
+                    backLinksAreCorrect &= currentBlock->getNumLoopBackEdges()
+                        == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
+                    if (!backLinksAreCorrect) {
+                        NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -"
+                                              << currentBlock->getNumLoopBackEdges() << "- backLinks instead of: -"
+                                              << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks
+                                              << "-.");
+                    }
                 } else {
-                    if (correctBlocks.contains(currentBlock->getIdentifier())) {
-                        mergeBlocksAreCorrect = false;
-                        NES_ERROR("CurrentBlock with id: " << currentBlock->getIdentifier() 
-                                    << " was part of solution set(correctBlocks), but it does not contain an if-operation.");
+                    mergeBlocksAreCorrect = false;
+                    NES_ERROR("CurrentBlock with id: "
+                              << currentBlock->getIdentifier()
+                              << " was not part of solution set(correctBlocks), but it contains a loop-operation.");
+                }
+                ++numCheckedBlocks;
+            } else {
+                if (correctBlocks.contains(currentBlock->getIdentifier())) {
+                    mergeBlocksAreCorrect = false;
+                    NES_ERROR("CurrentBlock with id: "
+                              << currentBlock->getIdentifier()
+                              << " was part of solution set(correctBlocks), but it does not contain an if-operation.");
                 }
             }
         }
         bool numCheckedBlocksMatchesNumCorrectBlocks = numCheckedBlocks == correctBlocks.size();
-        if(!numCheckedBlocksMatchesNumCorrectBlocks) {
-            NES_ERROR("The number of checked IR blocks " << numCheckedBlocks
-                        << " does not match the number of given 'correctBlocks': " << correctBlocks.size());
+        if (!numCheckedBlocksMatchesNumCorrectBlocks) {
+            NES_ERROR("The number of checked IR blocks "
+                      << numCheckedBlocks << " does not match the number of given 'correctBlocks': " << correctBlocks.size());
         }
         return mergeBlocksAreCorrect && loopInfoIsCorrect && backLinksAreCorrect;
     }
@@ -281,12 +306,13 @@ Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHe
     }
     return agg;
 }
-TEST_P(ValueScopingPhaseTest,  5_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader) {
+TEST_P(ValueScopingPhaseTest, 5_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     // createCorrectBlock(correctBlocks, "0", 0, "5");
     // createCorrectBlock(correctBlocks, "1", 1, "", createCorrectCountedLoopInfo(0, 10, 1, "7"));
     // createCorrectBlock(correctBlocks, "9", 0, "5");
-    auto dpsSortedBlocks = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
+    auto dpsSortedBlocks =
+        createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
     // ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
