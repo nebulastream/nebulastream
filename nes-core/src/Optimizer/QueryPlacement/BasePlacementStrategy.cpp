@@ -185,7 +185,7 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
     auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
     TopologyNodePtr currentTopologyNode;
     auto iter = selectedTopology.begin();
-    auto replicationLevel = 3;
+    auto replicationLevel = 5;
     while (topologyIterator != DepthFirstNodeIterator::end()) {
         // get the ExecutionNode for the current topology Node
         currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
