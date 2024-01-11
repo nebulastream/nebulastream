@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Util/Common.hpp>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::Network {
 
@@ -141,8 +141,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
 
     if (partitionManager->getConsumerRegistrationStatus(eosNesPartition) == PartitionRegistrationStatus::Registered) {
         NES_ASSERT2_FMT(!endOfStreamMessage.isEventChannel(),
-                        "Received EOS for data channel on event channel for consumer "
-                            << eosChannelId.toString());
+                        "Received EOS for data channel on event channel for consumer " << eosChannelId.toString());
 
         const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
         NES_TRACE("lastEOS {}", lastEOS);
@@ -175,14 +174,12 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       partitionManager->getSubpartitionConsumerDisconnectCount(eosNesPartition).value(),
                       expectedTotalConnectionsInPartitionManager);
         } else if (!partitionManager->startNewVersion(eosNesPartition)) {
-            partitionManager->getDataEmitter(eosNesPartition)
-                ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
+            partitionManager->getDataEmitter(eosNesPartition)->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
             protocolListener->onEndOfStream(endOfStreamMessage);
         }
     } else if (partitionManager->getProducerRegistrationStatus(eosNesPartition) == PartitionRegistrationStatus::Registered) {
         NES_ASSERT2_FMT(endOfStreamMessage.isEventChannel(),
-                        "Received EOS for event channel on data channel for producer "
-                            << eosChannelId.toString());
+                        "Received EOS for event channel on data channel for producer " << eosChannelId.toString());
         if (partitionManager->unregisterSubpartitionProducer(eosNesPartition)) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received from event channel {} but with no active subpartition",
                       eosChannelId.toString());
@@ -195,8 +192,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     } else {
         NES_ERROR("ExchangeProtocol: EndOfStream message received from {} however the partition is not registered on this worker",
                   eosChannelId.toString());
-        protocolListener->onServerError(
-            Messages::ErrorMessage(eosChannelId, Messages::ErrorType::UnknownPartitionError));
+        protocolListener->onServerError(Messages::ErrorMessage(eosChannelId, Messages::ErrorType::UnknownPartitionError));
     }
 }
 

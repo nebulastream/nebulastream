@@ -173,7 +173,6 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] uint16_t getMaxMessageSequenceNumber() const { return maxMessageSequenceNumber; }
 
-
   private:
     ChannelType channelType;
     Runtime::QueryTerminationType terminationType;

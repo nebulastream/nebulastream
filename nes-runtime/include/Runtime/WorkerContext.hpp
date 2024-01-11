@@ -183,7 +183,9 @@ class WorkerContext {
      * @param type the termination type
      * @param currentMessageSequenceNumber represents the total number of data buffer messages sent
      */
-    bool releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint16_t sendingThreadCount,
+    bool releaseNetworkChannel(NES::OperatorId id,
+                               Runtime::QueryTerminationType type,
+                               uint16_t sendingThreadCount,
                                uint64_t currentMessageSequenceNumber);
 
     /**

@@ -180,7 +180,9 @@ NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
 
 NetworkChannel::~NetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId); }
 
-void NetworkChannel::close(Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads, uint64_t currentMessageSequenceNumber) {
+void NetworkChannel::close(Runtime::QueryTerminationType terminationType,
+                           uint16_t numSendingThreads,
+                           uint64_t currentMessageSequenceNumber) {
     inherited::close(canSendEvent && !canSendData, terminationType, numSendingThreads, currentMessageSequenceNumber);
 }
 
