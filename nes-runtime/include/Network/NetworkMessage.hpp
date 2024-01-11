@@ -158,9 +158,10 @@ class EndOfStreamMessage : public ExchangeMessage {
     explicit EndOfStreamMessage(ChannelId channelId,
                                 ChannelType channelType,
                                 Runtime::QueryTerminationType terminationType,
-                                uint16_t numSendingThreads)
+                                uint16_t numSendingThreads,
+                                uint64_t maxMessageSequenceNumber)
         : ExchangeMessage(channelId), channelType(channelType), terminationType(terminationType),
-          numSendingThreads(numSendingThreads) {}
+          numSendingThreads(numSendingThreads), maxMessageSequenceNumber(maxMessageSequenceNumber) {}
 
     [[nodiscard]] Runtime::QueryTerminationType getQueryTerminationType() const { return terminationType; }
 
@@ -170,10 +171,14 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] uint16_t getNumberOfSendingThreads() const { return numSendingThreads; }
 
+    [[nodiscard]] uint16_t getMaxMessageSequenceNumber() const { return maxMessageSequenceNumber; }
+
+
   private:
     ChannelType channelType;
     Runtime::QueryTerminationType terminationType;
     uint16_t numSendingThreads;
+    uint64_t maxMessageSequenceNumber;
 };
 
 /**
@@ -233,9 +238,11 @@ class DataBufferMessage {
                                       uint64_t watermark,
                                       uint64_t creationTimestamp,
                                       uint64_t sequenceNumber,
+                                      uint64_t messageSequenceNumber,
                                       uint32_t numOfChildren = 0) noexcept
         : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark),
-          creationTimestamp(creationTimestamp), sequenceNumber(sequenceNumber), numOfChildren(numOfChildren) {}
+          creationTimestamp(creationTimestamp), sequenceNumber(sequenceNumber), messageSequenceNumber(messageSequenceNumber),
+          numOfChildren(numOfChildren) {}
 
     uint32_t const payloadSize;
     uint32_t const numOfRecords;
@@ -243,6 +250,7 @@ class DataBufferMessage {
     uint64_t const watermark;
     uint64_t const creationTimestamp;
     uint64_t const sequenceNumber;
+    uint64_t const messageSequenceNumber;
     uint32_t const numOfChildren;
 };
 

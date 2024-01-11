@@ -77,6 +77,12 @@ class NonBlockingMonotonicSeqQueue {
     NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) {}
     ~NonBlockingMonotonicSeqQueue() = default;
 
+    NonBlockingMonotonicSeqQueue& operator=(const NonBlockingMonotonicSeqQueue& other) {
+        head = other.head;
+        currentSeq = other.currentSeq.load();
+        return *this;
+    }
+
     /**
      * @brief Emplace a new element to the queue.
      * This method can be called concurrently.
@@ -104,7 +110,7 @@ class NonBlockingMonotonicSeqQueue {
      * This method is thread save, however it is not guaranteed that current value dose not change concurrently.
      * @return T value
      */
-    auto getCurrentValue() {
+    auto getCurrentValue() const {
         auto currentBlock = std::atomic_load(&head);
         // get the current sequence number and access the associated block
         auto currentSequenceNumber = currentSeq.load();
@@ -216,7 +222,7 @@ class NonBlockingMonotonicSeqQueue {
      * @param targetBlockIndex the target address
      * @return the found block, which contains the target block index.
      */
-    std::shared_ptr<Block> getTargetBlock(std::shared_ptr<Block> currentBlock, uint64_t targetBlockIndex) {
+    std::shared_ptr<Block> getTargetBlock(std::shared_ptr<Block> currentBlock, uint64_t targetBlockIndex) const {
         while (currentBlock->blockIndex < targetBlockIndex) {
             // append new block if the next block is a nullptr
             auto nextBlock = std::atomic_load(&currentBlock->next);

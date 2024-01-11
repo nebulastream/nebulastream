@@ -57,8 +57,10 @@ class BaseNetworkChannel {
      * Close the channel and send EndOfStream message to consumer
      * @param isEventOnly whether the channel is for events only
      * @param terminationType the type of termination, e.g., graceful
+     * @param currentMessageSequenceNumber represents the number of data buffer messages the network sink has sent
      */
-    void close(bool isEventOnly, Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads = 0);
+    void close(bool isEventOnly, Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads = 0,
+               uint64_t currentMessageSequenceNumber = 0);
 
   protected:
     const std::string socketAddr;

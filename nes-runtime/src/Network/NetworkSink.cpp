@@ -54,7 +54,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), version(version) {
+      messageSequenceNumber(0), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes),
+      version(version) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
 }
@@ -62,10 +63,12 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
 SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    NES_TRACE("context {} writing data at sink {} on node {}",
+    NES_DEBUG("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
               workerContext.getId(),
               getUniqueNetworkSinkDescriptorId(),
-              nodeEngine->getNodeId());
+              nodeEngine->getNodeId(),
+              inputBuffer.getOriginId(),
+              inputBuffer.getSequenceNumber());
 
     auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
 
@@ -88,8 +91,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     }
 
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
-    auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-    return success;
+    return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
 }
 
 void NetworkSink::preSetup() {
@@ -230,7 +232,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             networkManager->unregisterSubpartitionProducer(nesPartition);
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                                 terminationType,
-                                                                queryManager->getNumberOfWorkerThreads()),
+                                                                queryManager->getNumberOfWorkerThreads(),
+                                                                messageSequenceNumber),
                             "Cannot remove network channel " << nesPartition.toString());
             /* store a nullptr in place of the released channel, in case another write happens afterwards, that will prevent crashing and
             allow throwing an error instead */
@@ -331,7 +334,8 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
     //todo #4310: do release and storing of nullptr in one call
     workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                         Runtime::QueryTerminationType::Graceful,
-                                        queryManager->getNumberOfWorkerThreads());
+                                        queryManager->getNumberOfWorkerThreads(),
+                                        messageSequenceNumber);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
 }
 

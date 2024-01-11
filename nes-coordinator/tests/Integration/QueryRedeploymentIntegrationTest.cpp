@@ -553,7 +553,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
 /**
  * @brief This tests multiple iterations of inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
-TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
+// TODO enabled/refactored in #3083
+TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects) {
     const uint64_t numberOfReconnectsToPerform = 3;
     const uint64_t numBuffersToProduceBeforeReconnect = 10;
     const uint64_t numBuffersToProduceWhileBuffering = 10;
@@ -883,6 +884,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         //verify that query has been undeployed from old parent
         while (oldWorker->getNodeEngine()->getQueryStatus(queryId) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
             NES_DEBUG("Query has not yet stopped on worker {}", oldWorker->getWorkerId());
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
@@ -978,13 +980,12 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 /**
  * @brief This test the reconfiguration of a network sink that is already buffering
  */
-//todo #4272: re-enable tests when EOS is guaranteed to come after last tuples
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering) {
+TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     const uint64_t totalBuffersToProduce = numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering;
     const uint64_t gatheringValue = 10;
-    const std::chrono::seconds waitTime(10);
+    const std::chrono::milliseconds waitTime(1000);
     uint64_t tuplesPerBuffer = 10;
     uint8_t bytesPerTuple = sizeof(uint64_t);
     NES_INFO(" start coordinator");

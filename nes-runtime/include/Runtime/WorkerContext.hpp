@@ -181,8 +181,10 @@ class WorkerContext {
      * @brief removes a registered network channel with a termination type
      * @param id of the operator that we want to store the output channel
      * @param type the termination type
+     * @param currentMessageSequenceNumber represents the total number of data buffer messages sent
      */
-    bool releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint16_t sendingThreadCount);
+    bool releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint16_t sendingThreadCount,
+                               uint64_t currentMessageSequenceNumber);
 
     /**
      * @brief This stores a network channel for an operator

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/PartitionManager.hpp>
@@ -30,6 +31,16 @@ ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionMa
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
 }
 
+ExchangeProtocol::ExchangeProtocol(const ExchangeProtocol& other) {
+    partitionManager = other.partitionManager;
+    protocolListener = other.protocolListener;
+
+    auto maxSeqNumberPerNesPartitionLocked = maxSeqNumberPerNesPartition.rlock();
+    for (auto& [key, value] : (*maxSeqNumberPerNesPartitionLocked)) {
+        (*maxSeqNumberPerNesPartition.wlock())[key] = value;
+    }
+}
+
 std::variant<Messages::ServerReadyMessage, Messages::ErrorMessage>
 ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     using namespace Messages;
@@ -39,7 +50,14 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     NES_INFO("ExchangeProtocol: ClientAnnouncement received for {} {}",
              msg.getChannelId().toString(),
              (isDataChannel ? "Data" : "EventOnly"));
+
     auto nesPartition = msg.getChannelId().getNesPartition();
+    {
+        auto maxSeqNumberPerNesPartitionLocked = maxSeqNumberPerNesPartition.wlock();
+        if (!maxSeqNumberPerNesPartitionLocked->contains(nesPartition)) {
+            (*maxSeqNumberPerNesPartitionLocked)[nesPartition] = Util::NonBlockingMonotonicSeqQueue<uint64_t>();
+        }
+    }
 
     // check if identity is registered
     if (isDataChannel) {
@@ -89,8 +107,9 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     return Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError);
 }
 
-void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer) {
+void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber) {
     if (partitionManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Registered) {
+        (*maxSeqNumberPerNesPartition.wlock())[nesPartition].emplace(messageSequenceNumber, messageSequenceNumber);
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
     } else {
@@ -109,7 +128,7 @@ void ExchangeProtocol::onEvent(NesPartition nesPartition, Runtime::BaseEvent& ev
     } else if (partitionManager->getProducerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Registered) {
         protocolListener->onEvent(nesPartition, event);
         if (auto listener = partitionManager->getEventListener(nesPartition); listener != nullptr) {
-            listener->onEvent(event);//
+            listener->onEvent(event);
         }
     } else {
         NES_ERROR("DataBuffer for {} is not registered and was discarded!", nesPartition.toString());
@@ -117,54 +136,67 @@ void ExchangeProtocol::onEvent(NesPartition nesPartition, Runtime::BaseEvent& ev
 }
 
 void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage) {
-    NES_DEBUG("ExchangeProtocol: EndOfStream message received from {}", endOfStreamMessage.getChannelId().toString());
-    if (partitionManager->getConsumerRegistrationStatus(endOfStreamMessage.getChannelId().getNesPartition())
-        == PartitionRegistrationStatus::Registered) {
+    const auto& eosChannelId = endOfStreamMessage.getChannelId();
+    const auto& eosNesPartition = eosChannelId.getNesPartition();
+
+    if (partitionManager->getConsumerRegistrationStatus(eosNesPartition) == PartitionRegistrationStatus::Registered) {
         NES_ASSERT2_FMT(!endOfStreamMessage.isEventChannel(),
                         "Received EOS for data channel on event channel for consumer "
-                            << endOfStreamMessage.getChannelId().toString());
-        auto partition = endOfStreamMessage.getChannelId().getNesPartition();
+                            << eosChannelId.toString());
+
+        const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
+        NES_TRACE("lastEOS {}", lastEOS);
+        if (lastEOS) {
+            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
+            while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+            NES_DEBUG("Waited for all buffers for the last EOS!");
+
+            // Cleaning up and resetting for this partition, so that we can reuse the partition later on
+            (*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Util::NonBlockingMonotonicSeqQueue<uint64_t>();
+        }
+
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
         auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads();
-        if (!partitionManager->unregisterSubpartitionConsumer(partition)) {
+        if (!lastEOS) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} but there is still some active "
                       "subpartition: {}",
-                      endOfStreamMessage.getChannelId().toString(),
-                      *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
+                      eosChannelId.toString(),
+                      *partitionManager->getSubpartitionConsumerCounter(eosNesPartition));
             //todo #4313: count connects instead of disconnects and implement timeout
-        } else if (partitionManager->getSubpartitionConsumerDisconnectCount(partition).value()
+        } else if (partitionManager->getSubpartitionConsumerDisconnectCount(eosNesPartition).value()
                    < expectedTotalConnectionsInPartitionManager /*todo #4313: check timeout here*/) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total channel "
                       "disconnects for "
                       "subpartition: {} has not been reached: {}/{}",
-                      endOfStreamMessage.getChannelId().toString(),
-                      *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()),
-                      partitionManager->getSubpartitionConsumerDisconnectCount(partition).value(),
+                      eosChannelId.toString(),
+                      *partitionManager->getSubpartitionConsumerCounter(eosNesPartition),
+                      partitionManager->getSubpartitionConsumerDisconnectCount(eosNesPartition).value(),
                       expectedTotalConnectionsInPartitionManager);
-        } else if (!partitionManager->startNewVersion(partition)) {
-            partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
+        } else if (!partitionManager->startNewVersion(eosNesPartition)) {
+            partitionManager->getDataEmitter(eosNesPartition)
                 ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
             protocolListener->onEndOfStream(endOfStreamMessage);
         }
-    } else if (partitionManager->getProducerRegistrationStatus(endOfStreamMessage.getChannelId().getNesPartition())
-               == PartitionRegistrationStatus::Registered) {
+    } else if (partitionManager->getProducerRegistrationStatus(eosNesPartition) == PartitionRegistrationStatus::Registered) {
         NES_ASSERT2_FMT(endOfStreamMessage.isEventChannel(),
                         "Received EOS for event channel on data channel for producer "
-                            << endOfStreamMessage.getChannelId().toString());
-        if (partitionManager->unregisterSubpartitionProducer(endOfStreamMessage.getChannelId().getNesPartition())) {
+                            << eosChannelId.toString());
+        if (partitionManager->unregisterSubpartitionProducer(eosNesPartition)) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received from event channel {} but with no active subpartition",
-                      endOfStreamMessage.getChannelId().toString());
+                      eosChannelId.toString());
         } else {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received from event channel {} but there is still some active "
                       "subpartition: {}",
-                      endOfStreamMessage.getChannelId().toString(),
-                      *partitionManager->getSubpartitionProducerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
+                      eosChannelId.toString(),
+                      *partitionManager->getSubpartitionProducerCounter(eosNesPartition));
         }
     } else {
         NES_ERROR("ExchangeProtocol: EndOfStream message received from {} however the partition is not registered on this worker",
-                  endOfStreamMessage.getChannelId().toString());
+                  eosChannelId.toString());
         protocolListener->onServerError(
-            Messages::ErrorMessage(endOfStreamMessage.getChannelId(), Messages::ErrorType::UnknownPartitionError));
+            Messages::ErrorMessage(eosChannelId, Messages::ErrorType::UnknownPartitionError));
     }
 }
 

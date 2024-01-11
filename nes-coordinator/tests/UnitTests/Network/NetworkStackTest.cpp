@@ -191,7 +191,7 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
         auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
         auto netManager = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(exchangeProtocol), buffMgr);
     } catch (...) {
-        ASSERT_EQ(true, false);
+        FAIL();
     }
     ASSERT_EQ(true, true);
 }
@@ -246,7 +246,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
 
         t.join();
     } catch (...) {
-        ASSERT_EQ(true, false);
+        FAIL();
     }
     ASSERT_EQ(true, true);
 }
@@ -353,13 +353,14 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
             }
         }
         ASSERT_TRUE(queryManager->receivedCallback);
+
         senderChannel->close(Runtime::QueryTerminationType::Graceful);
         senderChannel.reset();
         netManagerSender->unregisterSubpartitionProducer(nesPartition);
 
         t.join();
     } catch (...) {
-        ASSERT_EQ(true, false);
+        FAIL();
     }
     ASSERT_EQ(true, true);
 }
@@ -416,7 +417,8 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
                                                                    Messages::ChannelType::DataChannel,
                                                                    Runtime::QueryTerminationType::Graceful,
-                                                                   numSendingThreads);
+                                                                   numSendingThreads,
+                                                                   0 /* is not used in this test */);
             exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
@@ -437,11 +439,19 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
 
             //registering with a different version number should fail (consumer count should not change)
-            auto newversionAnouncementMessage =
+            auto newVersionAnouncementMessage =
                 Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
-            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            exchangeProtocol.onClientAnnouncement(newVersionAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
         }
+
+        // Sending a single buffer
+        constexpr auto messageSequenceNumber = 1;
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto buffer = buffMgr->getBufferBlocking();
+        buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
+        buffer.setSequenceNumber(messageSequenceNumber);
+        exchangeProtocol.onBuffer(nesPartition, buffer, messageSequenceNumber);
 
         //closing channels
         for (uint64_t j = i; j <= numSendingThreads; ++j) {
@@ -450,15 +460,16 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
                                                                    Messages::ChannelType::DataChannel,
                                                                    Runtime::QueryTerminationType::Graceful,
-                                                                   numSendingThreads);
+                                                                   numSendingThreads,
+                                                                   messageSequenceNumber);
             exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
 
             //registering with a different version number should fail (consumer count should not change)
-            auto newversionAnouncementMessage =
+            auto newVersionAnouncementMessage =
                 Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
-            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            exchangeProtocol.onClientAnnouncement(newVersionAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
         }
 
@@ -526,6 +537,7 @@ TEST_F(NetworkStackTest, testVersionTransition) {
                                                                                             nextVersion);
         partMgrRecv->addNextVersion(*reconfiguredNetworkSourceDescriptor->as<NetworkSourceDescriptor>());
         uint64_t i = 1;
+
         //register and close one channel at a time
         for (; i <= numSendingThreads / 2; ++i) {
             ASSERT_EQ(receiveListener->numReceivedEoS, 0);
@@ -535,22 +547,23 @@ TEST_F(NetworkStackTest, testVersionTransition) {
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
 
             //registering with a different version number should fail (consumer count should not change)
-            auto newversionAnouncementMessage =
+            auto newVersionAnnouncementMessage =
                 Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
-            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            exchangeProtocol.onClientAnnouncement(newVersionAnnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
 
             auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
                                                                    Messages::ChannelType::DataChannel,
                                                                    Runtime::QueryTerminationType::Graceful,
-                                                                   numSendingThreads);
+                                                                   numSendingThreads,
+                                                                   0 /* as we have not send a buffer yet */);
             exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
 
             //registering with a different version number should fail (consumer count should not change)
-            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            exchangeProtocol.onClientAnnouncement(newVersionAnnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
         }
@@ -577,7 +590,8 @@ TEST_F(NetworkStackTest, testVersionTransition) {
             auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
                                                                    Messages::ChannelType::DataChannel,
                                                                    Runtime::QueryTerminationType::Graceful,
-                                                                   numSendingThreads);
+                                                                   numSendingThreads,
+                                                                   0 /* as we have not send a buffer yet */);
             exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
             if (j < numSendingThreads) {
@@ -592,9 +606,9 @@ TEST_F(NetworkStackTest, testVersionTransition) {
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 0);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
                 //registering with a different version number should work now
-                auto newversionAnouncementMessage =
+                auto newVersionAnouncementMessage =
                     Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
-                exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+                exchangeProtocol.onClientAnnouncement(newVersionAnouncementMessage);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 0);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
             }
@@ -607,7 +621,8 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
                                                                Messages::ChannelType::DataChannel,
                                                                Runtime::QueryTerminationType::Graceful,
-                                                               1);
+                                                               1,
+                                                               0 /* as we have not send a buffer yet */);
         exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
         ASSERT_EQ(receiveListener->numReceivedEoS, 1);
@@ -779,27 +794,124 @@ TEST_F(NetworkStackTest, testSendData) {
             completedProm.set_value(false);
         } else {
             // create testbuffer
+            constexpr auto sentBufferSequenceNumber = 1;
             auto buffer = buffMgr->getBufferBlocking();
             buffer.getBuffer<uint64_t>()[0] = 0;
             buffer.setNumberOfTuples(1);
-            senderChannel->sendBuffer(buffer, sizeof(uint64_t));
-            senderChannel->close(Runtime::QueryTerminationType::Graceful);
+            buffer.setSequenceNumber(1);
+            senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBufferSequenceNumber);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, 1);
             senderChannel.reset();
             netManager->unregisterSubpartitionProducer(nesPartition);
         }
 
         t.join();
     } catch (...) {
-        ASSERT_EQ(true, false);
+        FAIL();
     }
     ASSERT_EQ(bufferReceived, true);
     ASSERT_EQ(completed, true);
 }
 
+TEST_F(NetworkStackTest, testCorrectHandlingEOS) {
+    std::promise<bool> completedProm;
+
+    // With these parameters, we should have around 5 handling threads and 4 buffers.
+    // Therefore, we guarantee that an EOS is being processed together with a data buffer
+    constexpr uint64_t numNetworkReceivingThreads = 10;
+    uint64_t totalNumBuffer = 4;
+
+    std::atomic<std::uint64_t> bufferReceived = 0;
+    auto nesPartition = NesPartition(1, 22, 333, 444);
+    try {
+        class ExchangeListener : public ExchangeProtocolListener {
+
+          public:
+            std::promise<bool>& completedProm;
+            std::atomic<std::uint64_t>& bufferReceived;
+
+            ExchangeListener(std::atomic<std::uint64_t>& bufferReceived, std::promise<bool>& completedProm)
+                : completedProm(completedProm), bufferReceived(bufferReceived) {}
+
+            void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
+
+                ASSERT_TRUE(buffer.getBufferSize() == bufferSize);
+                (volatile void) id.getQueryId();
+                (volatile void) id.getOperatorId();
+                (volatile void) id.getPartitionId();
+                (volatile void) id.getSubpartitionId();
+                auto* bufferContent = buffer.getBuffer<uint64_t>();
+                for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                    ASSERT_EQ(bufferContent[j], j);
+                }
+                bufferReceived++;
+            }
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onChannelError(Messages::ErrorMessage) override {}
+        };
+
+        auto partMgr = std::make_shared<PartitionManager>();
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
+        auto netManager =
+            NetworkManager::create(0,
+                                   "127.0.0.1",
+                                   *freeDataPort,
+                                   ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
+                                   buffMgr,
+                                   -1 /*senderHighWatermark*/,
+                                   numNetworkReceivingThreads);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+        std::thread t([&netManager, &nesPartition, &completedProm, totalNumBuffer, nodeLocation] {
+            // register the incoming channel
+            netManager->registerSubpartitionConsumer(nesPartition, nodeLocation, std::make_shared<DataEmitterImpl>());
+            auto startTime = std::chrono::steady_clock::now().time_since_epoch();
+            EXPECT_TRUE(completedProm.get_future().get());
+            auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
+            auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
+            double bytes = totalNumBuffer * bufferSize;
+            double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
+            NES_DEBUG("Sent {} bytes :: throughput {}", bytes, throughput);
+            netManager->unregisterSubpartitionConsumer(nesPartition);
+        });
+
+        auto senderChannel =
+            netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
+
+        if (senderChannel == nullptr) {
+            NES_DEBUG("NetworkStackTest: Error in registering DataChannel!");
+            completedProm.set_value(false);
+        } else {
+            for (uint64_t i = 0; i < totalNumBuffer; ++i) {
+                auto buffer = buffMgr->getBufferBlocking();
+                for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                    buffer.getBuffer<uint64_t>()[j] = j;
+                }
+                buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
+                buffer.setSequenceNumber(i + 1);
+                senderChannel->sendBuffer(buffer, sizeof(uint64_t), i + 1);
+            }
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer);
+            senderChannel.reset();
+            netManager->unregisterSubpartitionProducer(nesPartition);
+        }
+        netManager->unregisterSubpartitionProducer(nesPartition);
+        t.join();
+    } catch (...) {
+        FAIL();
+    }
+    ASSERT_EQ(bufferReceived, totalNumBuffer);
+}
+
 TEST_F(NetworkStackTest, testMassiveSending) {
     std::promise<bool> completedProm;
 
-    uint64_t totalNumBuffer = 1000;
+    uint64_t totalNumBuffer = 1'000;
     std::atomic<std::uint64_t> bufferReceived = 0;
     auto nesPartition = NesPartition(1, 22, 333, 444);
     try {
@@ -870,16 +982,17 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                     buffer.getBuffer<uint64_t>()[j] = j;
                 }
                 buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
-                senderChannel->sendBuffer(buffer, sizeof(uint64_t));
+                buffer.setSequenceNumber(i + 1);
+                senderChannel->sendBuffer(buffer, sizeof(uint64_t), i + 1);
             }
-            senderChannel->close(Runtime::QueryTerminationType::Graceful);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer);
             senderChannel.reset();
             netManager->unregisterSubpartitionProducer(nesPartition);
         }
         netManager->unregisterSubpartitionProducer(nesPartition);
         t.join();
     } catch (...) {
-        ASSERT_EQ(true, false);
+        FAIL();
     }
     ASSERT_EQ(bufferReceived, totalNumBuffer);
 }
@@ -974,17 +1087,18 @@ TEST_F(NetworkStackTest, testMassiveSendingWithChildrenBuffer) {
                     content[j].logical = idx;
                 }
                 buffer.setNumberOfTuples(bufferSize / sizeof(Record));
+                buffer.setSequenceNumber(i + 1);
                 ASSERT_EQ(buffer.getNumberOfChildrenBuffer(), bufferSize / sizeof(Record));
-                senderChannel->sendBuffer(buffer, sizeof(Record));
+                senderChannel->sendBuffer(buffer, sizeof(Record), i + 1);
             }
-            senderChannel->close(Runtime::QueryTerminationType::Graceful);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer);
             senderChannel.reset();
             netManager->unregisterSubpartitionProducer(nesPartition);
         }
         netManager->unregisterSubpartitionProducer(nesPartition);
         t.join();
     } catch (...) {
-        ASSERT_EQ(true, false);
+        FAIL();
     }
     ASSERT_EQ(bufferReceived, totalNumBuffer);
 }
@@ -1052,14 +1166,14 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
         ASSERT_EQ(channelError.get_future().get(), true);
         netManager->unregisterSubpartitionProducer(NesPartition(1, 22, 333, 4445));
     } catch (...) {
-        ASSERT_EQ(true, false);
+        FAIL();
     }
     ASSERT_EQ(true, true);
 }
 
 TEST_F(NetworkStackTest, testMassiveMultiSending) {
     uint64_t totalNumBuffer = 1'000;
-    constexpr uint64_t numSendingThreads = 4;
+    constexpr uint64_t numSendingThreads = 16;
 
     // create a couple of NesPartitions
     auto sendingThreads = std::vector<std::thread>();
@@ -1069,9 +1183,10 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
 
     for (uint64_t i = 0ull; i < numSendingThreads; ++i) {
         nesPartitions.emplace_back(i, i + 10, i + 20, i + 30);
-        completedPromises.emplace_back(std::promise<bool>());
+        completedPromises.emplace_back();
         bufferCounter[i].store(0);
     }
+
     try {
         class ExchangeListenerImpl : public ExchangeProtocolListener {
           private:
@@ -1118,7 +1233,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             NodeLocation nodeLocation{0, "127.0.0.1", *freeDataPort};
             for (NesPartition p : nesPartitions) {
                 //add random latency
-                sleep(rand() % 3);
+                std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 300));
                 netManager->registerSubpartitionConsumer(p, nodeLocation, std::make_shared<DataEmitterImpl>());
             }
 
@@ -1145,16 +1260,17 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
                 } else {
                     std::mt19937 rnd;
                     std::uniform_int_distribution gen(5'000, 75'000);
-                    for (auto i = 0ULL; i < totalNumBuffer; ++i) {
+                    for (auto sentBuffers = 0ULL; sentBuffers < totalNumBuffer; ++sentBuffers) {
                         auto buffer = buffMgr->getBufferBlocking();
                         for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                             buffer.getBuffer<uint64_t>()[j] = j;
                         }
                         buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
-                        senderChannel->sendBuffer(buffer, sizeof(uint64_t));
+                        buffer.setSequenceNumber(sentBuffers +1);
+                        senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBuffers + 1);
                         usleep(gen(rnd));
                     }
-                    senderChannel->close(Runtime::QueryTerminationType::Graceful);
+                    senderChannel->close(Runtime::QueryTerminationType::Graceful, 0, totalNumBuffer);
                     senderChannel.reset();
                     netManager->unregisterSubpartitionProducer(nesPartition);
                 }
@@ -1169,7 +1285,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
 
         receivingThread.join();
     } catch (...) {
-        ASSERT_EQ(true, false);
+        FAIL();
     }
     for (uint64_t cnt : bufferCounter) {
         ASSERT_EQ(cnt, totalNumBuffer);

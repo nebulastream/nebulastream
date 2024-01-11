@@ -183,6 +183,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::optional<NetworkSinkDescriptor> nextSinkDescriptor;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
+    std::atomic<uint64_t> messageSequenceNumber;
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;

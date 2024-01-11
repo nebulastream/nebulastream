@@ -28,7 +28,8 @@ BaseNetworkChannel::BaseNetworkChannel(zmq::socket_t&& zmqSocket,
 
 void BaseNetworkChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR("{}", errorMsg.getErrorTypeAsString()); }
 
-void BaseNetworkChannel::close(bool isEventOnly, Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads) {
+void BaseNetworkChannel::close(bool isEventOnly, Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads,
+                               uint64_t currentMessageSequenceNumber) {
     if (isClosed) {
         return;
     }
@@ -37,14 +38,16 @@ void BaseNetworkChannel::close(bool isEventOnly, Runtime::QueryTerminationType t
                                                   channelId,
                                                   Messages::ChannelType::EventOnlyChannel,
                                                   terminationType,
-                                                  numSendingThreads);
+                                                  numSendingThreads,
+                                                  currentMessageSequenceNumber);
     } else {
         //todo #4313: pass number of threads on client announcement instead of on closing
         sendMessage<Messages::EndOfStreamMessage>(zmqSocket,
                                                   channelId,
                                                   Messages::ChannelType::DataChannel,
                                                   terminationType,
-                                                  numSendingThreads);
+                                                  numSendingThreads,
+                                                  currentMessageSequenceNumber);
     }
     zmqSocket.close();
     NES_DEBUG("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
