@@ -12,44 +12,41 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/Topology.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Optimizer/QueryRewrite/NemoJoinRule.hpp>
 #include <Optimizer/QueryRewrite/NemoWindowPinningRule.hpp>
-#include <Catalogs/Topology/Topology.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
 
 TopologySpecificQueryRewritePhasePtr
-TopologySpecificQueryRewritePhase::create(const NES::TopologyPtr& topology,
-                                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+TopologySpecificQueryRewritePhase::create(NES::TopologyPtr topology,
+                                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                           Configurations::OptimizerConfiguration optimizerConfiguration) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
         TopologySpecificQueryRewritePhase(topology, sourceCatalog, std::move(optimizerConfiguration)));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
-    const TopologyPtr& topology,
-    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+    TopologyPtr topology,
+    Catalogs::Source::SourceCatalogPtr sourceCatalog,
     Configurations::OptimizerConfiguration optimizerConfiguration)
-    : topology(topology) {
+    : topology(topology), optimizerConfiguration(optimizerConfiguration) {
     logicalSourceExpansionRule =
         LogicalSourceExpansionRule::create(sourceCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion);
-    if (optimizerConfiguration.enableNemoPlacement) {
-        distributedWindowRule = NemoWindowPinningRule::create(optimizerConfiguration, topology);
-    } else {
-        distributedWindowRule = DistributedWindowRule::create(optimizerConfiguration);
-    }
-
-    distributeJoinRule = DistributeJoinRule::create();
 }
 
 QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     queryPlan = logicalSourceExpansionRule->apply(queryPlan);
-    queryPlan = distributeJoinRule->apply(queryPlan);
-    return distributedWindowRule->apply(queryPlan);
+    if (optimizerConfiguration.enableNemoPlacement) {
+        auto nemoJoinRule = NemoJoinRule::create(optimizerConfiguration, topology);
+        queryPlan = nemoJoinRule->apply(queryPlan);
+    }
+    //queryPlan = distributeJoinRule->apply(queryPlan);
+    return queryPlan;
 }
 
 }// namespace NES::Optimizer

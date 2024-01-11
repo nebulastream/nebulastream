@@ -12,35 +12,28 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEJOINRULE_HPP_
-#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEJOINRULE_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOJOINRULE_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOJOINRULE_HPP_
 
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES {
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
-
-class WindowOperatorNode;
-using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
-
+class Topology;
+using TopologyPtr = std::shared_ptr<Topology>;
 }// namespace NES
 
 namespace NES::Optimizer {
-
-class DistributeJoinRule;
-using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
+class NemoJoinRule;
+using NemoJoinRulePtr = std::shared_ptr<NemoJoinRule>;
 
 /**
  * @brief This rule currently only set the right number of join input edges
  */
-class DistributeJoinRule : public BaseRewriteRule {
+class NemoJoinRule : public BaseRewriteRule {
   public:
-    static DistributeJoinRulePtr create();
-    virtual ~DistributeJoinRule() = default;
+    static NemoJoinRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
+    virtual ~NemoJoinRule() = default;
 
     /**
      * @brief Apply Logical source expansion rule on input query plan
@@ -50,7 +43,11 @@ class DistributeJoinRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
-    explicit DistributeJoinRule();
+    explicit NemoJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
+
+  private:
+    TopologyPtr topology;
+    Configurations::OptimizerConfiguration configuration;
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEJOINRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOJOINRULE_HPP_

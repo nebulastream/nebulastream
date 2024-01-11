@@ -44,8 +44,8 @@ using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule
 class DistributedWindowRule;
 using DistributeWindowRulePtr = std::shared_ptr<DistributedWindowRule>;
 
-class DistributeJoinRule;
-using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
+class NemoJoinRule;
+using NemoJoinRulePtr = std::shared_ptr<NemoJoinRule>;
 
 /**
  * @brief This phase is responsible for re-writing the query plan based on the topology information.
@@ -58,8 +58,8 @@ class TopologySpecificQueryRewritePhase {
      * @param optimizerConfiguration configuration of the optimizer
      * @return TopologySpecificQueryRewritePhasePtr
      */
-    static TopologySpecificQueryRewritePhasePtr create(const TopologyPtr& topology,
-                                                       const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+    static TopologySpecificQueryRewritePhasePtr create(TopologyPtr topology,
+                                                       Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                                        Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
@@ -70,13 +70,14 @@ class TopologySpecificQueryRewritePhase {
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
   private:
-    explicit TopologySpecificQueryRewritePhase(const TopologyPtr& topology,
-                                               const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+    explicit TopologySpecificQueryRewritePhase(TopologyPtr topology,
+                                               Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                                Configurations::OptimizerConfiguration optimizerConfiguration);
     TopologyPtr topology;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
+    Configurations::OptimizerConfiguration optimizerConfiguration;
     DistributeWindowRulePtr distributedWindowRule;
-    DistributeJoinRulePtr distributeJoinRule;
+    NemoJoinRulePtr distributeJoinRule;
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_

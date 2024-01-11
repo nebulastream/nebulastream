@@ -24,35 +24,26 @@ limitations under the License.
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Enums/PlacementAmenderMode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
@@ -188,12 +179,12 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
-    auto topology = setupTopology(3, 3, 2);
-    auto sourceCatalog = setupSourceCatalog({7, 9, 10});
+    auto topology = setupTopology(2, 3, 4);
+    auto sourceCatalog = setupSourceCatalog({2, 3, 4, 5});
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
-    //optimizerConfig.enableNemoPlacement = true;
+    optimizerConfig.enableNemoPlacement = true;
 
     //run the placement
     Query query = Query::from(sourceNameLeft)

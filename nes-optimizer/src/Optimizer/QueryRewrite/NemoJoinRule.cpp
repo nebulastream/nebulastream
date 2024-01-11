@@ -13,29 +13,35 @@
 */
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
+#include <Optimizer/QueryRewrite/NemoJoinRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 
 namespace NES::Optimizer {
 
-DistributeJoinRule::DistributeJoinRule() = default;
+NemoJoinRule::NemoJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology)
+    : topology(topology), configuration(configuration) {}
 
-DistributeJoinRulePtr DistributeJoinRule::create() { return std::make_shared<DistributeJoinRule>(DistributeJoinRule()); }
+NemoJoinRulePtr NemoJoinRule::create(Configurations::OptimizerConfiguration configuration, TopologyPtr topology) {
+    return std::make_shared<NemoJoinRule>(NemoJoinRule(configuration, topology));
+}
 
-QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
-    NES_INFO("DistributeJoinRule: Apply DistributeJoinRule.");
-    NES_DEBUG("DistributeJoinRule::apply: plan before replace\n{}", queryPlan->toString());
+QueryPlanPtr NemoJoinRule::apply(QueryPlanPtr queryPlan) {
+    NES_INFO("NemoJoinRule: Apply NemoJoinRule.");
+    NES_DEBUG("NemoJoinRule::apply: plan before replace\n{}", queryPlan->toString());
     auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
     if (!joinOps.empty()) {
-        NES_DEBUG("DistributeJoinRule::apply: found {} join operators", joinOps.size());
+        NES_DEBUG("NemoJoinRule::apply: found {} join operators", joinOps.size());
         for (auto& joinOp : joinOps) {
-            NES_DEBUG("DistributeJoinRule::apply: join operator {}", joinOp->toString());
+            NES_DEBUG("NemoJoinRule::apply: join operator {}", joinOp->toString());
             auto leftInputSchema = joinOp->getLeftInputSchema();
+            auto leftOps = joinOp->getLeftOperators();
+            auto rightOps = joinOp->getRightOperators();
+
             uint64_t edgesLeft = 0;
             uint64_t edgesRight = 0;
             auto children = joinOp->getChildren();
@@ -47,15 +53,15 @@ QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
                     edgesRight++;
                 }
             }
-            NES_DEBUG("DistributeJoinRule set edgesLeft={} edgesRight={}", edgesLeft, edgesRight);
+            NES_DEBUG("NemoJoinRule set edgesLeft={} edgesRight={}", edgesLeft, edgesRight);
             joinOp->getJoinDefinition()->setNumberOfInputEdgesLeft(edgesLeft);
             joinOp->getJoinDefinition()->setNumberOfInputEdgesRight(edgesRight);
         }
     } else {
-        NES_DEBUG("DistributeJoinRule::apply: no join operator in query");
+        NES_DEBUG("NemoJoinRule::apply: no join operator in query");
     }
 
-    NES_DEBUG("DistributeJoinRule::apply: plan after replace\n{}", queryPlan->toString());
+    NES_DEBUG("NemoJoinRule::apply: plan after replace\n{}", queryPlan->toString());
 
     return queryPlan;
 }
