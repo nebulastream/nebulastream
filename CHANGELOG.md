@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.19](https://github.com/nebulastream/nebulastream/tree/v0.6.19) (2024-01-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.18...v0.6.19)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove placements and undeploy incrementally [\#4429](https://github.com/nebulastream/nebulastream/issues/4429)
+
 ## [v0.6.18](https://github.com/nebulastream/nebulastream/tree/v0.6.18) (2024-01-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.17...v0.6.18)
