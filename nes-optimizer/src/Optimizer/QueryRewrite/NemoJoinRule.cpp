@@ -34,28 +34,34 @@ QueryPlanPtr NemoJoinRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("NemoJoinRule: Apply NemoJoinRule.");
     NES_DEBUG("NemoJoinRule::apply: plan before replace\n{}", queryPlan->toString());
     auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    int orId = 7623;
     if (!joinOps.empty()) {
         NES_DEBUG("NemoJoinRule::apply: found {} join operators", joinOps.size());
-        for (auto& joinOp : joinOps) {
+        for (const JoinLogicalOperatorNodePtr& joinOp : joinOps) {
             NES_DEBUG("NemoJoinRule::apply: join operator {}", joinOp->toString());
-            auto leftInputSchema = joinOp->getLeftInputSchema();
-            auto leftOps = joinOp->getLeftOperators();
-            auto rightOps = joinOp->getRightOperators();
+            std::vector<JoinLogicalOperatorNodePtr> newJoins;
+            auto parents = joinOp->getParents();
+            for (NodePtr parent : parents) {
+                parent->removeChildren();
+                auto leftOps = joinOp->getLeftOperators();
+                auto rightOps = joinOp->getRightOperators();
 
-            uint64_t edgesLeft = 0;
-            uint64_t edgesRight = 0;
-            auto children = joinOp->getChildren();
-            for (const auto& child : children) {
-                auto childOperator = child->as<OperatorNode>();
-                if (childOperator->getOutputSchema()->equals(leftInputSchema, false)) {
-                    edgesLeft++;
-                } else {
-                    edgesRight++;
+                for (auto leftOp : leftOps) {
+                    leftOp->removeAllParent();
+                }
+                for (auto rightOp : rightOps) {
+                    rightOp->removeAllParent();
+                }
+
+                for (auto leftOp : leftOps) {
+                    for (auto rightOp : rightOps) {
+                        auto newJoin = createJoinReplica(joinOp,
+                                                         std::vector<OperatorNodePtr>{leftOp},
+                                                         std::vector<OperatorNodePtr>{rightOp},
+                                                         std::vector<NodePtr>{parent});
+                    }
                 }
             }
-            NES_DEBUG("NemoJoinRule set edgesLeft={} edgesRight={}", edgesLeft, edgesRight);
-            joinOp->getJoinDefinition()->setNumberOfInputEdgesLeft(edgesLeft);
-            joinOp->getJoinDefinition()->setNumberOfInputEdgesRight(edgesRight);
         }
     } else {
         NES_DEBUG("NemoJoinRule::apply: no join operator in query");
@@ -64,6 +70,34 @@ QueryPlanPtr NemoJoinRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("NemoJoinRule::apply: plan after replace\n{}", queryPlan->toString());
 
     return queryPlan;
+}
+
+JoinLogicalOperatorNodePtr NemoJoinRule::createJoinReplica(JoinLogicalOperatorNodePtr joinOp,
+                                                           std::vector<OperatorNodePtr> leftOperators,
+                                                           std::vector<OperatorNodePtr> rightOperators,
+                                                           std::vector<NodePtr> parents) {
+    JoinLogicalOperatorNodePtr newJoin =
+        LogicalOperatorFactory::createJoinOperator(joinOp->getJoinDefinition())->as<JoinLogicalOperatorNode>();
+    newJoin->getJoinDefinition()->setNumberOfInputEdgesLeft(1);
+    newJoin->getJoinDefinition()->setNumberOfInputEdgesRight(1);
+    newJoin->setLeftInputOriginIds(joinOp->getLeftInputOriginIds());
+    newJoin->setRightInputOriginIds(joinOp->getRightInputOriginIds());
+    newJoin->setLeftInputSchema(joinOp->getLeftInputSchema());
+    newJoin->setRightInputSchema(joinOp->getRightInputSchema());
+    newJoin->setOutputSchema(joinOp->getOutputSchema());
+
+    for (auto leftOp : leftOperators) {
+        newJoin->addChild(leftOp);
+        leftOp->addParent(newJoin);
+    }
+    for (auto rightOp : rightOperators) {
+        newJoin->addChild(rightOp);
+        rightOp->addParent(newJoin);
+    }
+    for (auto parent : parents) {
+        parent->addChild(newJoin);
+    }
+    return newJoin;
 }
 
 }// namespace NES::Optimizer

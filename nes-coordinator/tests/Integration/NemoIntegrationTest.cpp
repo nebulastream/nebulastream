@@ -148,7 +148,7 @@ TEST_F(NemoIntegrationTest, testThreeLevelsTopologyTopDown) {
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     NES_DEBUG("NemoIntegrationTest: Executed with topology \n{}", topology->toString());
     NES_INFO("NemoIntegrationTest: Executed with plan \n{}", queryPlan->toString());
-    EXPECT_EQ(1, countOccurrences("Join", queryPlan->toString()));
+    EXPECT_EQ(4, countOccurrences("Join", queryPlan->toString()));
 }
 
 }// namespace NES
