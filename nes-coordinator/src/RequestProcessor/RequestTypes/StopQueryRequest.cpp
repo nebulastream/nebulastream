@@ -65,8 +65,10 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
         NES_TRACE("Locks acquired. Create Phases");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        queryPlacementAmendmentPhase =
-            Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+        queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                       topology,
+                                                                                       typeInferencePhase,
+                                                                                       coordinatorConfiguration);
         queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
         queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         NES_TRACE("Phases created. Stop request initialized.");
@@ -111,9 +113,9 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
             bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
             if (!placementSuccessful) {
                 throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                          "QueryProcessingService: Failed to perform query placement for "
-                                                          "query plan with shared query id: "
-                                                              + std::to_string(sharedQueryId));
+                                                                  "QueryProcessingService: Failed to perform query placement for "
+                                                                  "query plan with shared query id: "
+                                                                      + std::to_string(sharedQueryId));
             }
 
             //Perform deployment of re-placed shared query plan

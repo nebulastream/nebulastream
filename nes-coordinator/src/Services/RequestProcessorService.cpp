@@ -67,8 +67,10 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                coordinatorConfiguration,
                                                                                udfCatalog,
                                                                                globalExecutionPlan);
-    queryPlacementAmendmentPhase =
-        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                   topology,
+                                                                                   typeInferencePhase,
+                                                                                   coordinatorConfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
 }

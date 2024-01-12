@@ -88,8 +88,8 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                 case QueryState::MARKED_FOR_DEPLOYMENT: subQueryPlan->setQueryState(QueryState::DEPLOYED); break;
                 case QueryState::MARKED_FOR_REDEPLOYMENT: subQueryPlan->setQueryState(QueryState::REDEPLOYED); break;
                 case QueryState::MARKED_FOR_MIGRATION: subQueryPlan->setQueryState(QueryState::MIGRATING); break;
-                case QueryState::RUNNING: break; //do not modify anything for running plans
-                case QueryState::MIGRATION_COMPLETED: break; //do not modfify plans that have been stopped after migration
+                case QueryState::RUNNING: break;            //do not modify anything for running plans
+                case QueryState::MIGRATION_COMPLETED: break;//do not modfify plans that have been stopped after migration
                 default: NES_FATAL_ERROR("Unexpected query plan state");
             }
             //todo #4452: avoid looping over all query ids by changing the structure of the query catalog

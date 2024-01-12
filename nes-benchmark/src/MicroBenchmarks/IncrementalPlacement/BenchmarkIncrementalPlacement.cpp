@@ -402,9 +402,9 @@ int main(int argc, const char* argv[]) {
 
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
             auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                              topology,
-                                                                              typeInferencePhase,
-                                                                              coordinatorConfiguration);
+                                                                                                topology,
+                                                                                                typeInferencePhase,
+                                                                                                coordinatorConfiguration);
 
             //Perform steps to optimize queries
             for (uint64_t i = 0; i < numOfQueries; i++) {
