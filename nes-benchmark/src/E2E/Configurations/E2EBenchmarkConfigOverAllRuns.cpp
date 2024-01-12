@@ -63,7 +63,6 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfPreAllocatedBuffer = ConfigurationOption<uint32_t>::create("numberOfPreAllocatedBuffer", 1, "Pre-allocated buffer");
     outputFile = ConfigurationOption<std::string>::create("outputFile", "e2eBenchmarkRunner", "Filename of the output");
     benchmarkName = ConfigurationOption<std::string>::create("benchmarkName", "E2ERunner", "Name of the benchmark");
-    queries.emplace_back("", defaultCustomDelayInSeconds);
     inputType = ConfigurationOption<std::string>::create("inputType", "Auto", "If sources are shared");
     sourceSharing = ConfigurationOption<std::string>::create("sourceSharing", "off", "How to read the input data");
     dataProviderMode =

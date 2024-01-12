@@ -86,7 +86,7 @@ class E2ESingleRun {
     void submitQueries(QueryServicePtr queryService, QueryCatalogServicePtr queryCatalog);
 
     /**
-     * @brief starts all everything necessary for running the queries and measures for a single query
+     * @brief starts everything necessary for running the queries and measures for a single query
      */
     void runQueries();
 

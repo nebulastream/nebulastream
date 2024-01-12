@@ -255,7 +255,13 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to {}", configOverAllRuns.outputFile->getValue());
     std::stringstream resultOnConsole;
     auto schemaSizeInB = configOverAllRuns.getTotalSchemaSize();
-    std::string queryString = configOverAllRuns.queries[0].getQueryString();
+    std::string queryString;
+    for (auto query : configOverAllRuns.queries) {
+        queryString += query.getQueryString() + "/";
+    }
+    if (!queryString.empty()) {
+        queryString.pop_back();// Remove the trailing "/"
+    }
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
     std::stringstream outputCsvStream;
