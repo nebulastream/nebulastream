@@ -17,10 +17,17 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <vector>
 
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+class JoinLogicalOperatorNode;
+using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
+class OperatorNode;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Node;
+using NodePtr = std::shared_ptr<Node>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -44,6 +51,10 @@ class NemoJoinRule : public BaseRewriteRule {
 
   private:
     explicit NemoJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
+    static JoinLogicalOperatorNodePtr createJoinReplica(JoinLogicalOperatorNodePtr joinOperator,
+                                                 std::vector<OperatorNodePtr> leftOperators,
+                                                 std::vector<OperatorNodePtr> rightOperators,
+                                                 std::vector<NodePtr> parents);
 
   private:
     TopologyPtr topology;
