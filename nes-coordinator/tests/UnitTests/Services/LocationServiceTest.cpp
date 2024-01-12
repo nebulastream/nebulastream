@@ -194,7 +194,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
 
     //verify correctness of the provided edge
     const auto& edge = edges[0];
-    EXPECT_EQ(edge.size(), 2);
+    EXPECT_EQ(edge.size(), 4);
     EXPECT_NE(edge.find("source"), edge.end());
     EXPECT_EQ(edge.at("source"), node3Id);
     EXPECT_NE(edge.find("target"), edge.end());

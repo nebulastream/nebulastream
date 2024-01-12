@@ -229,6 +229,7 @@ class SharedQueryPlan {
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
+    //TODO: activate with #4483
     /**
      * @brief Recursively mark input and all its connected upstream operators for To-Be-Removed. The function terminates upon encountering
      * an upstream operator that is connected to another downstream operator and returns it as output.
@@ -238,9 +239,18 @@ class SharedQueryPlan {
     std::set<LogicalOperatorNodePtr> markOperatorsToBeRemoved(const LogicalOperatorNodePtr& connectedDownStreamOperator);
 
     /**
-     * @brief Recursively remove the input and all its subsequent upstream operators that are marked as Removed.
+     * @brief Recursively remove the operator and all its subsequent upstream operators. The function terminates upon encountering
+     * an upstream operator that is connected to another downstream operator and returns it as output.
+     * @param operatorToRemove : the operator to remove
+     * @return last upstream operators that are not removed
      */
-    void removeOperator(const LogicalOperatorNodePtr& operatorToRemove);
+    std::set<LogicalOperatorNodePtr> removeOperator(const LogicalOperatorNodePtr& operatorToRemove);
+
+    //TODO: activate with #4483
+//    /**
+//     * @brief Recursively remove the input and all its subsequent upstream operators that are marked as Removed.
+//     */
+//    void removeOperator(const LogicalOperatorNodePtr& operatorToRemove);
 
     /**
      * @brief Update the hash based signatures with new values

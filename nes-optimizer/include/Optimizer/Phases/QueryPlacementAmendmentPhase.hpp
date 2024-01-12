@@ -121,6 +121,7 @@ class QueryPlacementAmendmentPhase {
 
     /**
      * @brief Check if in the provided set at least one operator is in the state To_Be_RePlaced, Placed, or To_Be_Removed
+     * Note: TODO
      * @param operatorsToCheck the logical operator nodes
      * @return true if at least one operator passes the condition
      */
