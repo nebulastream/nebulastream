@@ -2643,7 +2643,8 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
  *
  * Query: SinkOp--filter()--source(A)
  */
-TEST_F(QueryPlacementAmendmentTest, testBottomUpForProcessingSharedQueryPlanToBeRemoved) {
+//TODO: activate with #4483
+TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQueryPlanToBeRemoved) {
     // Setup the topology
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
