@@ -26,9 +26,7 @@
 #include <folly/concurrency/UnboundedQueue.h>
 #endif
 
-namespace NES {
-
-namespace Runtime {
+namespace NES::Runtime {
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 class TupleBuffer;
@@ -103,8 +101,6 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
     mutable std::mutex mutex;
 };
 
-}// namespace Runtime
-
-}// namespace NES
+}// namespace NES::Runtime
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_

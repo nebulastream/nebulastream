@@ -15,9 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_
 
-namespace NES {
-
-namespace Runtime {
+namespace NES::Runtime {
 namespace detail {
 class MemorySegment;
 }
@@ -40,8 +38,6 @@ class BufferRecycler {
     virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer) = 0;
 };
 
-}// namespace Runtime
-
-}// namespace NES
+}// namespace NES::Runtime
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_

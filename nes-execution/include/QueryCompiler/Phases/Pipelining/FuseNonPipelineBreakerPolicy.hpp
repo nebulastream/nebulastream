@@ -14,8 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief This operator fusion policy fuses all non pipeline breakers (operators, which do not materialize data).
@@ -29,7 +29,6 @@ class FuseNonPipelineBreakerPolicy : public OperatorFusionPolicy {
     static OperatorFusionPolicyPtr create();
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_

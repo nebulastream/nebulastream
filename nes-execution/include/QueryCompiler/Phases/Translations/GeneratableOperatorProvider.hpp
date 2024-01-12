@@ -14,8 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_GENERATABLEOPERATORPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_GENERATABLEOPERATORPROVIDER_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 /**
  * @brief This is a general interface, which provides the functionality to replace a logical
  * operator with corresponding physical operators.
@@ -29,7 +29,6 @@ class GeneratableOperatorProvider {
      */
     virtual void lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) = 0;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_GENERATABLEOPERATORPROVIDER_HPP_

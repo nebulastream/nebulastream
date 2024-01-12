@@ -419,38 +419,33 @@ extern "C" uintptr_t _Unwind_GetIPInfo(_Unwind_Context *, int *);
 #ifdef BACKWARD_ATLEAST_CXX11
 #include <unordered_map>
 #include <utility> // for std::swap
-namespace backward {
-namespace details {
+
+namespace backward::details {
 template <typename K, typename V> struct hashtable {
   typedef std::unordered_map<K, V> type;
 };
 using std::move;
-} // namespace details
-} // namespace backward
+} // namespace backward::details
 #else // NOT BACKWARD_ATLEAST_CXX11
 #define nullptr NULL
 #define override
 #include <map>
-namespace backward {
-namespace details {
+namespace backward::details {
 template <typename K, typename V> struct hashtable {
   typedef std::map<K, V> type;
 };
 template <typename T> const T &move(const T &v) { return v; }
 template <typename T> T &move(T &v) { return v; }
-} // namespace details
-} // namespace backward
+} // namespace backward::details
 #endif // BACKWARD_ATLEAST_CXX11
 
-namespace backward {
-namespace details {
+namespace backward::details {
 #if defined(BACKWARD_SYSTEM_WINDOWS)
 const char kBackwardPathDelimiter[] = ";";
 #else
 const char kBackwardPathDelimiter[] = ":";
 #endif
-} // namespace details
-} // namespace backward
+} // namespace backward::details
 
 namespace backward {
 

@@ -18,8 +18,8 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 #include <vector>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
 * @brief Returns the next free pipeline id
@@ -170,8 +170,6 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     std::vector<uint64_t> operatorIds;
     Type pipelineType;
 };
-}// namespace QueryCompilation
-
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_

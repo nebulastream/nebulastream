@@ -42,8 +42,7 @@ class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
 }// namespace Configurations::Spatial::Mobility::Experimental
 
-namespace Spatial {
-namespace Mobility::Experimental {
+namespace Spatial::Mobility::Experimental {
 class ReconnectSchedulePredictor;
 using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 
@@ -239,8 +238,7 @@ class WorkerMobilityHandler {
     CoordinatorRPCCLientPtr coordinatorRpcClient;
 };
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
-}// namespace Mobility::Experimental
-}// namespace Spatial
+}// namespace Spatial::Mobility::Experimental
 }// namespace NES
 
 #endif// NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_

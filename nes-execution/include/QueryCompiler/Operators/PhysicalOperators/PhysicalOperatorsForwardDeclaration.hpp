@@ -42,9 +42,7 @@ using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescript
 
 }// namespace Windowing
 
-namespace QueryCompilation {
-
-namespace PhysicalOperators {
+namespace QueryCompilation::PhysicalOperators {
 
 class PhysicalOperator;
 using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
@@ -100,8 +98,7 @@ using PhysicalWatermarkAssignmentOperatorPtr = std::shared_ptr<PhysicalWatermark
 class PhysicalJoinSinkOperator;
 using PhysicalJoinSinkOperatorPtr = std::shared_ptr<PhysicalJoinSinkOperator>;
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
+}// namespace QueryCompilation::PhysicalOperators
 }// namespace NES
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORSFORWARDDECLARATION_HPP_

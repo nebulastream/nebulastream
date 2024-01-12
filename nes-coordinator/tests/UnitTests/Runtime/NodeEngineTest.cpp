@@ -747,12 +747,12 @@ namespace detail {
 void segkiller() { raise(SIGSEGV); }
 
 void assertKiller() {
-    class MockedNodeEngine : public Runtime::NodeEngine {
+    class MockedNodeEngine : public NodeEngine {
       public:
-        using Runtime::NodeEngine::NodeEngine;
+        using NodeEngine::NodeEngine;
 
         explicit MockedNodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
-                                  Runtime::HardwareManagerPtr hardwareManager,
+                                  HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,

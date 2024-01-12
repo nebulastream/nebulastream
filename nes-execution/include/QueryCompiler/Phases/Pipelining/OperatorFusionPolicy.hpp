@@ -14,8 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORFUSIONPOLICY_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORFUSIONPOLICY_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief Policy which determines if an particular operator can be fused with other operators in a pipeline.
@@ -31,6 +31,6 @@ class OperatorFusionPolicy {
      */
     virtual bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) = 0;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
+
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORFUSIONPOLICY_HPP_

@@ -19,10 +19,8 @@
 #include <memory_resource>
 #elif __has_include(<experimental/memory_resource>)
 #include <experimental/memory_resource>
-namespace std {
-namespace pmr {
+namespace std::pmr {
 using memory_resource = std::experimental::pmr::memory_resource;
-}
-}// namespace std
+}// namespace std::pmr
 #endif
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_

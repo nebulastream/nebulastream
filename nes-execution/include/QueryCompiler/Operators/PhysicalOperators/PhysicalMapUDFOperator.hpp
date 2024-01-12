@@ -23,8 +23,8 @@ class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 
 }// namespace Catalogs::UDF
-namespace QueryCompilation {
-namespace PhysicalOperators {
+
+namespace QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physical Map Udf operator.
@@ -86,8 +86,7 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
   protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
+}// namespace QueryCompilation::PhysicalOperators
 }// namespace NES
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPUDFOPERATOR_HPP_

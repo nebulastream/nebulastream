@@ -17,8 +17,7 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <vector>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief This phase lowers a query plan of logical operators into a query plan of physical operators.
@@ -33,6 +32,6 @@ class LowerLogicalToPhysicalOperators {
   private:
     PhysicalOperatorProviderPtr provider;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
+
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERLOGICALTOPHYSICALOPERATORS_HPP_

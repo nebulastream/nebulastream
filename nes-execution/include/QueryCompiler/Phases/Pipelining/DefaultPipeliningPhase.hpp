@@ -15,8 +15,8 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <map>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief The default pipelining phase,
@@ -67,7 +67,6 @@ class DefaultPipeliningPhase : public PipeliningPhase {
   private:
     OperatorFusionPolicyPtr operatorFusionPolicy;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_

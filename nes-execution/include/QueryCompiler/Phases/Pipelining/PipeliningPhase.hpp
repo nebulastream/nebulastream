@@ -14,8 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief Pipelining phase to transform a query plan into a plan of pipelines.
@@ -25,7 +25,6 @@ class PipeliningPhase {
     virtual PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) = 0;
     virtual ~PipeliningPhase() = default;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_

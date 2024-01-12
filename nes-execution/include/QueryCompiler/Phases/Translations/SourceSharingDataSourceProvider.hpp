@@ -18,8 +18,7 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief Provider to transform a source descriptor to executable DataSource.
@@ -47,7 +46,6 @@ class SourceSharingDataSourceProvider : public DefaultDataSourceProvider {
   protected:
     std::map<std::pair<std::string, std::string>, DataSourcePtr> sourceDescriptorToDataSourceMap;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_

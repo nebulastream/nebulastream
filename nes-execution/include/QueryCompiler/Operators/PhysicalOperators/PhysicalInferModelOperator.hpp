@@ -17,9 +17,7 @@
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physical InferModel operator.
@@ -57,8 +55,6 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
     const std::vector<ExpressionNodePtr> inputFields;
     const std::vector<ExpressionNodePtr> outputFields;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_

@@ -22,9 +22,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace NES {
-namespace Network {
-namespace Messages {
+namespace NES::Network::Messages {
 
 /**
  * @brief This magic number is written as first 64bits of every NES network message.
@@ -253,8 +251,6 @@ class DataBufferMessage {
     uint32_t const numOfChildren;
 };
 
-}// namespace Messages
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network::Messages
 
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_

@@ -21,8 +21,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <vector>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief This phase scans all pipelines and determines if the OutputBufferOptimizationLevel (level) requested by the user can be applied.
@@ -65,5 +64,5 @@ class BufferOptimizationPhase {
     bool isReadOnlyInput(OperatorPipelinePtr pipeline);
 };
 }// namespace QueryCompilation
-}// namespace NES
+
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_

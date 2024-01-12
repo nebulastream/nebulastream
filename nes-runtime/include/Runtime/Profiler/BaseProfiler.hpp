@@ -17,9 +17,7 @@
 
 #include <cstdint>
 
-namespace NES {
-namespace Runtime {
-namespace Profiler {
+namespace NES::Runtime::Profiler {
 /**
  * @brief This is base profiler class to implement own profiler (e.g., PAPI)
  */
@@ -38,8 +36,6 @@ class BaseProfiler {
      */
     virtual uint64_t stopSampling(std::size_t numItems) = 0;
 };
-}// namespace Profiler
-}// namespace Runtime
-}// namespace NES
+}// namespace NES::Runtime::Profiler
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_

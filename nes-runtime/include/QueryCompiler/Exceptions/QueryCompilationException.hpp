@@ -15,8 +15,8 @@
 #define NES_RUNTIME_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
 #include <Exceptions/RuntimeException.hpp>
 #include <stdexcept>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief Exception thrown by the query compiler.
@@ -27,7 +27,6 @@ class QueryCompilationException : public Exceptions::RuntimeException {
                                        std::source_location location = std::source_location::current());
 };
 
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_

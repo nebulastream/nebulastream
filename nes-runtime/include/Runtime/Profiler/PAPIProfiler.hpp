@@ -18,9 +18,8 @@
 #include <fstream>
 #include <memory>
 #include <vector>
-namespace NES {
-namespace Runtime {
-namespace Profiler {
+
+namespace NES::Runtime::Profiler {
 #ifdef ENABLE_PAPI_PROFILER
 /**
  * @brief This class samples hardware performance counters using PAPI
@@ -104,7 +103,6 @@ class PapiCpuProfiler : public BaseProfiler {
 
 using PapiCpuProfilerPtr = std::shared_ptr<PapiCpuProfiler>;
 #endif
-}// namespace Profiler
-}// namespace Runtime
-}// namespace NES
+}// namespace NES::Runtime::Profiler
+
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_

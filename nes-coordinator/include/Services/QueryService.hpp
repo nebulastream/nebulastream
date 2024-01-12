@@ -156,6 +156,6 @@ class QueryService {
     QueryParsingServicePtr queryParsingService;
 };
 
-};// namespace NES
+}// namespace NES
 
 #endif// NES_COORDINATOR_INCLUDE_SERVICES_QUERYSERVICE_HPP_

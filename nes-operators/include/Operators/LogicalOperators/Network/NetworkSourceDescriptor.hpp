@@ -20,8 +20,8 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <chrono>
 #include <string>
-namespace NES {
-namespace Network {
+
+namespace NES::Network {
 
 /**
  * @brief Descriptor defining properties used for creating physical zmq source inside the network stack
@@ -102,7 +102,6 @@ class NetworkSourceDescriptor : public SourceDescriptor {
 
 using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
 
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NETWORKSOURCEDESCRIPTOR_HPP_

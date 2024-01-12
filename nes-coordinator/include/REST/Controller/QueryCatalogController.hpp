@@ -44,8 +44,7 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
-namespace REST {
-namespace Controller {
+namespace REST::Controller {
 class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
   public:
@@ -196,8 +195,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     ErrorHandlerPtr errorHandler;
 };
 
-}//namespace Controller
-}// namespace REST
+}//namespace REST::Controller
 }// namespace NES
 
 #include OATPP_CODEGEN_END(ApiController)

@@ -38,9 +38,7 @@ class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
 
-namespace REST {
-
-namespace Controller {
+namespace REST::Controller {
 
 using namespace Catalogs::UDF;
 
@@ -180,8 +178,7 @@ class UDFCatalogController : public oatpp::web::server::api::ApiController {
     UDFCatalogPtr udfCatalog;
     ErrorHandlerPtr errorHandler;
 };
-}// namespace Controller
-}// namespace REST
+}// namespace REST::Controller
 }// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
 #endif// NES_COORDINATOR_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
