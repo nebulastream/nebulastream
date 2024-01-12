@@ -45,8 +45,7 @@ using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
-namespace REST {
-namespace Controller {
+namespace REST::Controller {
 class MonitoringController : public oatpp::web::server::api::ApiController {
 
   public:
@@ -168,8 +167,7 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
     Runtime::BufferManagerPtr bufferManager;
     ErrorHandlerPtr errorHandler;
 };
-}// namespace Controller
-}// namespace REST
+}// namespace REST::Controller
 }// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
 #endif// NES_COORDINATOR_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_

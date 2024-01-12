@@ -13,10 +13,8 @@
 */
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 PhysicalOperatorProvider::PhysicalOperatorProvider(QueryCompilerOptionsPtr options) : options(options) {}
 
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation

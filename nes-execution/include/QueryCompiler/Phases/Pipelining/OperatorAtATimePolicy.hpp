@@ -14,8 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief This policy permits operator fusion for all operators.
@@ -26,7 +26,6 @@ class OperatorAtATimePolicy : public OperatorFusionPolicy {
     static OperatorFusionPolicyPtr create();
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_

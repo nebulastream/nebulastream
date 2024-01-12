@@ -23,8 +23,7 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
-namespace NES {
-namespace Optimizer {
+namespace NES::Optimizer {
 
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
@@ -34,7 +33,6 @@ class QuerySignatureContext {
     virtual QuerySignaturePtr createQuerySignatureForOperator(const OperatorNodePtr& operatorNode) const = 0;
     virtual ~QuerySignatureContext() = default;
 };
-}// namespace Optimizer
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif // NES_OPERATORS_INCLUDE_UTIL_QUERYSIGNATURECONTEXT_HPP_

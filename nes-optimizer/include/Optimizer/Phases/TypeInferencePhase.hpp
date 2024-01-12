@@ -42,9 +42,7 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 }// namespace Catalogs
 
-}// namespace NES
-
-namespace NES::Optimizer {
+namespace Optimizer {
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
@@ -87,6 +85,7 @@ class TypeInferencePhase {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
-}// namespace NES::Optimizer
+}// namespace Optimizer
+}// namespace NES
 
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_

@@ -20,9 +20,7 @@
 
 #include OATPP_CODEGEN_BEGIN(DTO)
 
-namespace NES {
-namespace REST {
-namespace DTO {
+namespace NES::REST::DTO {
 
 class ErrorResponse : public oatpp::DTO {
 
@@ -38,9 +36,7 @@ class ErrorResponse : public oatpp::DTO {
     DTO_FIELD(String, message);
 };
 
-}// namespace DTO
-}// namespace REST
-}// namespace NES
+}// namespace NES::REST::DTO
 
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)

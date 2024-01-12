@@ -19,8 +19,7 @@
 #include <Util/Timer.hpp>
 #include <optional>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief Provides the query compilation results.
@@ -63,7 +62,6 @@ class QueryCompilationResult {
     std::optional<std::exception_ptr> exception;
     std::optional<Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock>> timer;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_

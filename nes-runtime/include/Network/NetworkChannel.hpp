@@ -22,8 +22,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <future>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 class ExchangeProtocol;
 
@@ -150,7 +149,6 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
                                              uint8_t retryTimes);
 };
 
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_

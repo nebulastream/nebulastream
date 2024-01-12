@@ -20,8 +20,8 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 #include <vector>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief Representation of a query plan, which consists of a set of OperatorPipelines.
@@ -90,8 +90,6 @@ class PipelineQueryPlan {
     const QuerySubPlanId querySubPlanId;
     std::vector<OperatorPipelinePtr> pipelines;
 };
-}// namespace QueryCompilation
-
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_

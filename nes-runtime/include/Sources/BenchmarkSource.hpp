@@ -22,11 +22,10 @@
 #include <Util/SourceMode.hpp>
 
 namespace NES {
-namespace Runtime {
-namespace detail {
+namespace detail::Runtime {
 class MemorySegment;
-}
-}// namespace Runtime
+}// namespace detail::Runtime
+
 /**
  * @brief Benchmark Source is a special source for benchmarking purposes only and stripes away all overhead
  * The memory area out of which buffers will be produced must be initialized beforehand and allocated as a shared_ptr

@@ -22,11 +22,9 @@
 #elif defined(__APPLE__)
 // TODO move non experimental when upgrading clang dep
 #include <experimental/memory_resource>
-namespace std {
-namespace pmr {
+namespace std::pmr {
 using memory_resource = std::experimental::pmr::memory_resource;
-}
-}// namespace std
+}// namespace std::pmr
 #endif
 
 namespace NES::Runtime {

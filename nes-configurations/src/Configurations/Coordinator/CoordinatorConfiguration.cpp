@@ -16,9 +16,7 @@
 #include <map>
 #include <string>
 
-namespace NES {
-
-namespace Configurations {
+namespace NES::Configurations {
 
 // The evaluation order is as follows:
 // 1. A worker option inside coordinator.yml.
@@ -62,6 +60,4 @@ CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, con
     return config;
 }
 
-}// namespace Configurations
-
-}// namespace NES
+}// namespace NES::Configurations

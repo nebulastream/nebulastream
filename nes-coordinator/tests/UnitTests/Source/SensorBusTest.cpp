@@ -20,11 +20,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
-using namespace NES;
-using namespace Sensors;
-
-namespace NES {
-namespace Sensors {
+namespace NES::Sensors {
 /**
  * Tests for sensor buses. We start with the I2C bus.
  *
@@ -122,5 +118,4 @@ TEST_F(SensorBusTest, dataMustBeSameReadAfterWrite) {
     memcpy(&timestampFromBus, data_buffer, sizeof(int));
     ASSERT_EQ(timestampFromBus, timeStamp);
 }
-}// namespace Sensors
-}// namespace NES
+}// namespace NES::Sensors

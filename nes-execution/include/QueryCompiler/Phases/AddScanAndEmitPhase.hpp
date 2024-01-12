@@ -15,8 +15,7 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITPHASE_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief Simple phase to add scan and emit operator to pipelines in necessary.
@@ -29,7 +28,6 @@ class AddScanAndEmitPhase {
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
     static OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
-}// namespace QueryCompilation
-};// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITPHASE_HPP_

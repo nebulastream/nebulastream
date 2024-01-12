@@ -20,8 +20,7 @@
 /**
  * @brief a collection of shared spatial utility functions
  */
-namespace NES {
-namespace SpatialUtils {
+namespace NES::SpatialUtils {
 
 // constants
 // mean earth radius defined by WGS84
@@ -58,7 +57,6 @@ double radiansToDegrees(double radians);
 */
 double haversineDistance(double lat1, double lng1, double lat2, double lng2);
 
-}// namespace SpatialUtils
-}// namespace NES
+}// namespace NES::SpatialUtils
 
 #endif// NES_COMMON_INCLUDE_UTIL_SPATIALUTILS_HPP_

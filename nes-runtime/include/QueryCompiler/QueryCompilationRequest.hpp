@@ -16,8 +16,7 @@
 
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief Represents a query compilation request.
@@ -80,7 +79,6 @@ class QueryCompilationRequest {
     bool optimize;
     bool dumpQueryPlans;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_

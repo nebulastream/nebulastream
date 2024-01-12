@@ -16,9 +16,7 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physical watermark assignment operator.
@@ -47,8 +45,6 @@ class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator {
   private:
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALWATERMARKASSIGNMENTOPERATOR_HPP_

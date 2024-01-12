@@ -19,9 +19,7 @@
 #include <Util/Mobility/LocationProviderType.hpp>
 #include <memory>
 
-namespace NES {
-
-namespace Configurations::Spatial::Mobility::Experimental {
+namespace NES::Configurations::Spatial::Mobility::Experimental {
 
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
@@ -163,6 +161,6 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                 &locationProviderSimulatedStartTime};
     }
 };
-}// namespace Configurations::Spatial::Mobility::Experimental
-}// namespace NES
+}// namespace NES::Configurations::Spatial::Mobility::Experimental
+
 #endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_

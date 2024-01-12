@@ -18,9 +18,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physical external operator. It receives a executable pipeline stage, which captures specific user defined logic.
@@ -57,8 +55,6 @@ class PhysicalExternalOperator : public PhysicalUnaryOperator, public AbstractEm
   private:
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEXTERNALOPERATOR_HPP_

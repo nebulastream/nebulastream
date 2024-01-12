@@ -15,8 +15,8 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief A executable operator, represents an executable version of one or more operators in a query plan.
@@ -56,7 +56,6 @@ class ExecutableOperator : public UnaryOperatorNode {
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_

@@ -22,8 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
-namespace NES {
-namespace Nautilus::IR {
+namespace NES::Nautilus::IR {
 
 NESIRDumpHandler::NESIRDumpHandler(std::ostream& out) : out(out) {}
 
@@ -124,5 +123,4 @@ void NESIRDumpHandler::dump(const std::shared_ptr<Operations::FunctionOperation>
     out << "}\n";
 }
 
-}// namespace Nautilus::IR
-}// namespace NES
+}// namespace NES::Nautilus::IR

@@ -18,8 +18,8 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <iterator>
 #include <stack>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief Iterator for pipeline query plans, which correctly handles multiple sources and sinks.
@@ -86,8 +86,6 @@ class PipelineQueryPlanIterator {
   private:
     PipelineQueryPlanPtr queryPlan;
 };
-}// namespace QueryCompilation
-
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLANITERATOR_HPP_

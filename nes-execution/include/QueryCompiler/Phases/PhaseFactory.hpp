@@ -14,9 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-namespace NES {
-namespace QueryCompilation {
-namespace Phases {
+
+namespace NES::QueryCompilation::Phases {
 
 /**
  * @brief An abstract factory, which allows the query compiler to create instances of particular phases,
@@ -61,8 +60,6 @@ class PhaseFactory {
     virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
-}// namespace Phases
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::Phases
 
 #endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_
