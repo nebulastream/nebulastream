@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.18](https://github.com/nebulastream/nebulastream/tree/v0.6.18) (2024-01-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.17...v0.6.18)
+
+**Implemented enhancements:**
+
+- \[TASK\] Concatenate namespaces [\#4412](https://github.com/nebulastream/nebulastream/issues/4412)
+
 ## [v0.6.17](https://github.com/nebulastream/nebulastream/tree/v0.6.17) (2024-01-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.16...v0.6.17)
