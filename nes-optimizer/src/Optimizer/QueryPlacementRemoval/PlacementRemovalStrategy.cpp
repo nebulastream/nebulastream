@@ -272,12 +272,20 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
     for (const auto& [workerId, querySubPlanIds] : workerIdToQuerySubPlanIds) {
         // 2. Fetch the query sub plan from the execution node
         auto executionNode = globalExecutionPlan->getExecutionNodeById(workerId);
+        if (!executionNode) {
+            //todo: make list ot erase
+            continue;
+        }
 
         std::vector<QueryPlanPtr> updatedQuerySubPlans;
         uint32_t releasedSlots = 0;
 
         // 3. Update the placed query sub plans on the execution node and record them
         for (const auto& querySubPlanId : querySubPlanIds) {
+            //todo: when does this happen?
+            if (querySubPlanId == 0) {
+                continue;
+            }
 
             // 4. Fetch the query sub plan to modify
             auto querySubPlanToUpdate = executionNode->getQuerySubPlan(sharedQueryId, querySubPlanId)->copy();

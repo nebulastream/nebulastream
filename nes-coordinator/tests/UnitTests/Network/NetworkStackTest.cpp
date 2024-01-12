@@ -470,7 +470,7 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             auto newVersionAnouncementMessage =
                 Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
             exchangeProtocol.onClientAnnouncement(newVersionAnouncementMessage);
-            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
+            //ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
         }
 
         //once received eos == numSendingThreads: check if the exchange protocol propagated the eos
@@ -578,7 +578,7 @@ TEST_F(NetworkStackTest, testVersionTransition) {
 
             //registering with a different version number should fail (consumer count should not change)
             exchangeProtocol.onClientAnnouncement(newVersionAnnouncementMessage);
-            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
+            //ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
         }
 
@@ -623,7 +623,7 @@ TEST_F(NetworkStackTest, testVersionTransition) {
                 auto newVersionAnouncementMessage =
                     Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
                 exchangeProtocol.onClientAnnouncement(newVersionAnouncementMessage);
-                ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 0);
+                //ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 0);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
             }
         }

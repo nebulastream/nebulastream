@@ -88,8 +88,8 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                 case QueryState::MARKED_FOR_DEPLOYMENT: subQueryPlan->setQueryState(QueryState::DEPLOYED); break;
                 case QueryState::MARKED_FOR_REDEPLOYMENT: subQueryPlan->setQueryState(QueryState::REDEPLOYED); break;
                 case QueryState::MARKED_FOR_MIGRATION: subQueryPlan->setQueryState(QueryState::MIGRATING); break;
-                case QueryState::RUNNING: break;            //do not modify anything for running plans
-                case QueryState::MIGRATION_COMPLETED: break;//do not modfify plans that have been stopped after migration
+                case QueryState::RUNNING: continue; //do not modify anything for running plans
+                case QueryState::MIGRATION_COMPLETED: continue; //do not modfify plans that have been stopped after migration
                 default: NES_FATAL_ERROR("Unexpected query plan state");
             }
             //todo #4452: avoid looping over all query ids by changing the structure of the query catalog
@@ -146,20 +146,21 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //todo: remove this if the numbers of execution nodes do not match
     //remove subplans from global query plan if they were stopped due to migration
-//    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
-//    for (const auto& node : executionNodes) {
-//        auto subPlans = node->getQuerySubPlans(sharedQueryId);
-//        for (const auto& querySubPlan : subPlans) {
-//            const auto subplanMetaData =
-//                queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
-//            auto subPlanStatus = subplanMetaData->getSubQueryStatus();
-//            if (subPlanStatus == QueryState::MIGRATING) {
-//                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlan->getQuerySubPlanId());
-//                auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(querySubPlan);
-//                node->getTopologyNode()->releaseSlots(resourceAmount);
-//            }
-//        }
-//    }
+    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
+    for (const auto& node : executionNodes) {
+        auto subPlans = node->getQuerySubPlans(sharedQueryId);
+        for (const auto& querySubPlan : subPlans) {
+            const auto subplanMetaData =
+                queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
+            auto subPlanStatus = subplanMetaData->getSubQueryStatus();
+            if (subPlanStatus == QueryState::MIGRATING) {
+                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlan->getQuerySubPlanId());
+
+                auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(querySubPlan);
+                node->getTopologyNode()->releaseSlots(resourceAmount);
+            }
+        }
+    }
 
     NES_DEBUG("QueryService: start query");
     startQuery(sharedQueryId, executionNodes);
