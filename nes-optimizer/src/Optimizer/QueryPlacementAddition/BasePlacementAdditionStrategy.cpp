@@ -764,6 +764,13 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                     auto matchingPlacedLeafOperator =
                                         placedQuerySubPlan->getOperatorWithId(pinnedLeafOperator->getId());
                                     if (matchingPlacedLeafOperator) {
+                                        //todo: copy properties from pinned leaf operator to matchingPlacedleafoperator
+                                        //todo: check if property exists
+                                        if (!pinnedLeafOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
+                                            NES_FATAL_ERROR("connected sys sub plan details not found");
+                                        }
+                                        auto connectedSysSubPlanDetails = pinnedLeafOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS);
+                                        matchingPlacedLeafOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS, connectedSysSubPlanDetails);
                                         // Add all newly computed pinned downstream operators to the matching placed leaf operator
                                         auto pinnedDownstreamOperators = pinnedLeafOperator->getParents();
                                         for (const auto& pinnedDownstreamOperator : pinnedDownstreamOperators) {
@@ -796,6 +803,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                                         querySubPlanVersion,
                                                         newNetworkSinkDescriptor->getNumberOfOrigins(),
                                                         existingNetworkSinkDescriptor->getUniqueId());
+                                                    //todo: transfer property also
                                                     existingNetworkSink->setSinkDescriptor(mergedNetworkSinkDescriptor);
                                                     computedQuerySubPlan->removeAsRootOperator(newOperatorNode->getId());
                                                     replacedOperator = true;

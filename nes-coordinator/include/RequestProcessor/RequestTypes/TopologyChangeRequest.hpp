@@ -44,7 +44,7 @@ class TopologyChangeRequest : public AbstractUniRequest {
                                                  std::vector<std::pair<WorkerId, WorkerId>> addedLinks,
                                                  uint8_t maxRetries);
 
-    TopologyChangeRequestPtr create(std::vector<std::pair<WorkerId, WorkerId>> removedLinks,
+    static TopologyChangeRequestPtr create(std::vector<std::pair<WorkerId, WorkerId>> removedLinks,
                                                            std::vector<std::pair<WorkerId, WorkerId>> addedLinks,
                                                            uint8_t maxRetries);
 

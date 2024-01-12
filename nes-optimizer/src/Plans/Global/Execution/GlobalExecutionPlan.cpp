@@ -89,6 +89,14 @@ bool GlobalExecutionPlan::removeExecutionNode(ExecutionNodeId id) {
         });
         if (found != rootNodes.end()) {
             rootNodes.erase(found);
+        } else {
+            auto nodeToRemove =  idToExecutionNodeMap.at(id);
+            for (const auto& parent : nodeToRemove->getParents()) {
+                parent->removeChild(nodeToRemove);
+            }
+            for (const auto& child : nodeToRemove->getChildren()) {
+                child->removeParent(nodeToRemove);
+            }
         }
         return idToExecutionNodeMap.erase(id) == 1;
     }

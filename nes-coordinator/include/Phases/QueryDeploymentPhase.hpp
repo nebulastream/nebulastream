@@ -50,6 +50,9 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
+
 /**
  * @brief The query deployment phase is responsible for deploying the query plan for a query to respective worker nodes.
  */
