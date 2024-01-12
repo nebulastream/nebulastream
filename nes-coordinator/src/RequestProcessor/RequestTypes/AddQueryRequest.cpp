@@ -190,8 +190,10 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        auto queryPlacementAmendmentPhase =
-            Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+        auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                            topology,
+                                                                                            typeInferencePhase,
+                                                                                            coordinatorConfiguration);
         auto queryDeploymentPhase =
             QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
         auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
@@ -328,9 +330,9 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         NES_DEBUG("Performing Operator placement for shared query plan");
         if (!queryPlacementAmendmentPhase->execute(sharedQueryPlan)) {
             throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                      "QueryProcessingService: Failed to perform query placement for "
-                                                      "query plan with shared query id: "
-                                                          + std::to_string(sharedQueryId));
+                                                              "QueryProcessingService: Failed to perform query placement for "
+                                                              "query plan with shared query id: "
+                                                                  + std::to_string(sharedQueryId));
         }
 
         //22. Perform deployment of re-placed shared query plan
