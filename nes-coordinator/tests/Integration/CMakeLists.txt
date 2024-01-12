@@ -121,8 +121,7 @@ add_nes_integration_test(test-harness-util-test "TestHarnessUtilTest.cpp")
 add_nes_integration_test(query-failure-test "QueryFailureTest.cpp")
 
 ### Query Redeployment Integration Test ###
-#TODO enabled with issue 3083
-#add_nes_integration_test(query-redeployment-integration-tests "QueryRedeploymentIntegrationTest.cpp")
+add_nes_integration_test(query-redeployment-integration-tests "QueryRedeploymentIntegrationTest.cpp")
 
 ### Location Integration Test ###
 # Enabled with issue #4270

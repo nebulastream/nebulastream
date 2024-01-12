@@ -37,9 +37,9 @@ limitations under the License.
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -115,16 +115,19 @@ TEST_F(FindQueryDeltaTest, testFindUpstreamNetworkSource) {
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
 
-//    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
-//                                                               queryCatalogService,
-//                                                               sourceCatalog,
-//                                                               globalQueryPlan,
-//                                                               context,
-//                                                               coordinatorConfig,
-//                                                               udfCatalog,
-//                                                               globalExecutionPlan);
+    //    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
+    //                                                               queryCatalogService,
+    //                                                               sourceCatalog,
+    //                                                               globalQueryPlan,
+    //                                                               context,
+    //                                                               coordinatorConfig,
+    //                                                               udfCatalog,
+    //                                                               globalExecutionPlan);
     uint8_t masRetrie = 1;
-    auto phase = std::make_shared<RequestProcessor::Experimental::TopologyChangeRequest>(masRetrie, topology, globalQueryPlan, globalExecutionPlan);
+    auto phase = std::make_shared<RequestProcessor::Experimental::TopologyChangeRequest>(masRetrie,
+                                                                                         topology,
+                                                                                         globalQueryPlan,
+                                                                                         globalExecutionPlan);
     //RequestProcessor::Experimental::TopologyChangeRequest request(masRetrie, topology, globalQueryPlan, globalExecutionPlan);
 
     auto sharedQueryId = 1;
@@ -331,8 +334,6 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
     globalExecutionPlan->getExecutionNodeById(1)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
 
-
-
     auto networkSinkId = getNextOperatorId();
     //sub plan on node 2
     subPlan = DecomposedQueryPlan::create(sharedQueryId, subPlanId);
@@ -491,7 +492,6 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
     globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
 
-
     networkSinkId = getNextOperatorId();
     //sub plan on node 7
     subPlan = DecomposedQueryPlan::create(sharedQueryId, subPlanId);
@@ -511,7 +511,6 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
     sinkLogicalOperatorNode->addChild(defaultSourceRight);
     globalExecutionPlan->getExecutionNodeById(8)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
-
 
     //additional operators on node 3
     //second network source on the right
@@ -555,10 +554,7 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
         startWorker,
         sharedQueryId);
     ASSERT_EQ(downstreamNonSystemOperator.first, startOperator);
-    auto upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    auto upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, startOperator);
     //network source
     startOperator = globalExecutionPlan->getExecutionNodeById(startWorker)->getAllDecomposedQueryPlans(sharedQueryId).front()->getSourceOperators().front();
@@ -567,10 +563,7 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
         startWorker,
         sharedQueryId);
     ASSERT_EQ(downstreamNonSystemOperator.first, fileSinkOperatorNode);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, unaryOperatorNode);
 
     //node 2
@@ -582,22 +575,13 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
         startWorker,
         sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, fileSinkOperatorNode);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, unaryOperatorNode);
     //filter
     startOperator = unaryOperatorNode;
-    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(downstreamNonSystemOperator.first, startOperator);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, startOperator);
     //network source
     startOperator = globalExecutionPlan->getExecutionNodeById(startWorker)->getAllDecomposedQueryPlans(sharedQueryId).front()->getSourceOperators().front();
@@ -606,10 +590,7 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
         startWorker,
         sharedQueryId);
     ASSERT_EQ(downstreamNonSystemOperator.first, unaryOperatorNode);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, binaryOperatorNode);
 
     //node3
@@ -621,67 +602,41 @@ TEST_F(FindQueryDeltaTest, testDifferentReachabilities) {
         startWorker,
         sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, unaryOperatorNode);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, binaryOperatorNode);
     //union
     startOperator = binaryOperatorNode;
-    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(downstreamNonSystemOperator.first, startOperator);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, startOperator);
     //left network source
     startOperator = leftsourceLogicalOperatorNode;
-    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(downstreamNonSystemOperator.first, binaryOperatorNode);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, defaultSourceLeft);
     //right network source
     startOperator = rightsourceLogicalOperatorNode;
-    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(downstreamNonSystemOperator.first, binaryOperatorNode);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, defaultSourceRight);
     //2nd right network source
     startOperator = secondRightsourceLogicalOperatorNode;
-    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    downstreamNonSystemOperator = phase->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(downstreamNonSystemOperator.first, binaryOperatorNode);
-    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(
-        startOperator,
-        startWorker,
-        sharedQueryId);
+    upstreamNonSystemOperator = phase->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId);
     ASSERT_EQ(upstreamNonSystemOperator.first, secondDefaultSourceRight);
 
-    auto [upstreamPinned, downStreamPinned] = phase->findAffectedTopologySubGraph(sharedQueryId, globalExecutionPlan->getExecutionNodeById(6), globalExecutionPlan->getExecutionNodeById(3));
+    auto [upstreamPinned, downStreamPinned] = phase->findAffectedTopologySubGraph(sharedQueryId,
+                                                                                  globalExecutionPlan->getExecutionNodeById(6),
+                                                                                  globalExecutionPlan->getExecutionNodeById(3));
     ASSERT_EQ(upstreamPinned.size(), 3);
     ASSERT_TRUE(upstreamPinned.contains(13));
     ASSERT_TRUE(upstreamPinned.contains(17));
     ASSERT_TRUE(upstreamPinned.contains(20));
     ASSERT_EQ(downStreamPinned.size(), 1);
     ASSERT_TRUE(downStreamPinned.contains(4));
-
 }
 }// namespace NES
