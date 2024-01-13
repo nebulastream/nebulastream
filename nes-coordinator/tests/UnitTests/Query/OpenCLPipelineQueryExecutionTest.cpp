@@ -44,6 +44,11 @@
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
 #include <utility>
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
 
 using namespace NES;
 using Runtime::TupleBuffer;
