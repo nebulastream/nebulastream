@@ -48,7 +48,7 @@ std::vector<QueryPlanPtr> ExecutionNode::getQuerySubPlans(SharedQueryId SharedQu
     return querySubPlans;
 }
 
-QueryPlanPtr ExecutionNode::getQuerySubPlan(SharedQueryId SharedQueryId, QuerySubPlanId querySubPlanId) {
+QueryPlanPtr ExecutionNode::getQuerySubPlan(SharedQueryId SharedQueryId, DecomposedQueryPlanId querySubPlanId) {
     if (hasQuerySubPlans(SharedQueryId)) {
         NES_DEBUG("ExecutionNode : Found query sub plan with id  {}", SharedQueryId);
         auto querySubPlanMap = mapOfSharedQueryToQuerySubPlans[SharedQueryId];
@@ -69,7 +69,7 @@ bool ExecutionNode::removeQuerySubPlans(SharedQueryId SharedQueryId) {
     return false;
 }
 
-bool ExecutionNode::removeQuerySubPlan(SharedQueryId SharedQueryId, QuerySubPlanId querySubPlanId) {
+bool ExecutionNode::removeQuerySubPlan(SharedQueryId SharedQueryId, DecomposedQueryPlanId querySubPlanId) {
 
     //Check if the map contains an entry for the shared query id
     if (mapOfSharedQueryToQuerySubPlans.contains(SharedQueryId)) {
@@ -147,10 +147,10 @@ uint32_t ExecutionNode::getOccupiedResourcesForSubPlan(const QueryPlanPtr& query
     return occupiedResources;
 }
 
-bool ExecutionNode::addNewQuerySubPlan(SharedQueryId SharedQueryId, const QueryPlanPtr& querySubPlan) {
-    NES_DEBUG("Adding a new sub query plan to the collection for the shared query plan with id {}", SharedQueryId);
-    QuerySubPlanId subQueryPlanId = querySubPlan->getQuerySubPlanId();
-    mapOfSharedQueryToQuerySubPlans[SharedQueryId][subQueryPlanId] = querySubPlan;
+bool ExecutionNode::registerNewPlan(SharedQueryId sharedQueryId, const QueryPlanPtr& querySubPlan) {
+    NES_DEBUG("Adding a new sub query plan to the collection for the shared query plan with id {}", sharedQueryId);
+    DecomposedQueryPlanId subQueryPlanId = querySubPlan->getQuerySubPlanId();
+    mapOfSharedQueryToQuerySubPlans[sharedQueryId][subQueryPlanId] = querySubPlan;
     return true;
 }
 

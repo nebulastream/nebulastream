@@ -138,7 +138,7 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
             workerIdsInBFS.emplace(pinnedWorkerId);
 
             // 8. Fetch the query sub plan id that hosts the operator and record the sub query plan id
-            auto subQueryPlanId = std::any_cast<QuerySubPlanId>(operatorToProcess->getProperty(PLACED_SUB_PLAN_ID));
+            auto subQueryPlanId = std::any_cast<DecomposedQueryPlanId>(operatorToProcess->getProperty(PLACED_SUB_PLAN_ID));
             if (workerIdToQuerySubPlanIds.contains(pinnedWorkerId)) {
                 auto subQueryPlanIds = workerIdToQuerySubPlanIds[pinnedWorkerId];
                 subQueryPlanIds.emplace(subQueryPlanId);

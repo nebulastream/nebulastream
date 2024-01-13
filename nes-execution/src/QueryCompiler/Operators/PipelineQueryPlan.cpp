@@ -19,11 +19,11 @@
 
 namespace NES::QueryCompilation {
 
-PipelineQueryPlanPtr PipelineQueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId) {
+PipelineQueryPlanPtr PipelineQueryPlan::create(QueryId queryId, DecomposedQueryPlanId querySubPlanId) {
     return std::make_shared<PipelineQueryPlan>(PipelineQueryPlan(queryId, querySubPlanId));
 }
 
-PipelineQueryPlan::PipelineQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId)
+PipelineQueryPlan::PipelineQueryPlan(QueryId queryId, DecomposedQueryPlanId querySubPlanId)
     : queryId(queryId), querySubPlanId(querySubPlanId){};
 
 void PipelineQueryPlan::addPipeline(const OperatorPipelinePtr& pipeline) { pipelines.emplace_back(pipeline); }
@@ -54,7 +54,7 @@ std::vector<OperatorPipelinePtr> const& PipelineQueryPlan::getPipelines() const 
 
 QueryId PipelineQueryPlan::getQueryId() const { return queryId; }
 
-QuerySubPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
 std::string PipelineQueryPlan::toString() const {
     std::ostringstream oss;

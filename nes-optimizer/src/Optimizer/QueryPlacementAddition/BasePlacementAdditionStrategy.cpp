@@ -788,7 +788,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+                        executionNode->registerNewPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
 
                     } else if (containPinnedDownstreamOperator) {
 
@@ -846,7 +846,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+                        executionNode->registerNewPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
                     } else {
                         NES_ERROR(
                             "A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
@@ -859,7 +859,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                     auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
                     updatedQuerySubPlan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
                     updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                    executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+                    executionNode->registerNewPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
                 }
             }
 
@@ -873,7 +873,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
             // 1.7. Update state and properties of all operators placed on the execution node
             placedQuerySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
             for (auto placedQuerySubPlan : placedQuerySubPlans) {
-                QuerySubPlanId querySubPlanId = placedQuerySubPlan->getQuerySubPlanId();
+                DecomposedQueryPlanId querySubPlanId = placedQuerySubPlan->getQuerySubPlanId();
                 auto allPlacedOperators = placedQuerySubPlan->getAllOperators();
                 for (const auto& placedOperator : allPlacedOperators) {
                     OperatorId operatorId = placedOperator->getId();

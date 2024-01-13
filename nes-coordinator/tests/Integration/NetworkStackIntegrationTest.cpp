@@ -117,7 +117,7 @@ class TestSink : public SinkMedium {
              const Runtime::BufferManagerPtr& bufferManager,
              uint32_t numOfProducers = 1,
              QueryId queryId = 0,
-             QuerySubPlanId querySubPlanId = 0)
+             DecomposedQueryPlanId querySubPlanId = 0)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, numOfProducers, queryId, querySubPlanId) {
         // nop
     }
@@ -176,14 +176,14 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
           public:
             virtual ~DummyQueryListener() {}
 
-            bool canTriggerEndOfStream(QueryId, QuerySubPlanId, OperatorId, Runtime::QueryTerminationType) override {
+            bool canTriggerEndOfStream(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
                 return true;
             }
-            bool notifySourceTermination(QueryId, QuerySubPlanId, OperatorId, Runtime::QueryTerminationType) override {
+            bool notifySourceTermination(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
                 return true;
             }
-            bool notifyQueryFailure(QueryId, QuerySubPlanId, std::string) override { return true; }
-            bool notifyQueryStatusChange(QueryId, QuerySubPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
+            bool notifyQueryFailure(QueryId, DecomposedQueryPlanId, std::string) override { return true; }
+            bool notifyQueryStatusChange(QueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
                 return true;
             }
             bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
@@ -761,7 +761,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
         explicit TestQueryListener(std::promise<bool>& queryCompleted) : queryCompleted(queryCompleted) {}
 
         bool notifyQueryStatusChange(QueryId id,
-                                     QuerySubPlanId planId,
+                                     DecomposedQueryPlanId planId,
                                      Runtime::Execution::ExecutableQueryPlanStatus status) override {
             queryCompleted.set_value(true);
             return DummyQueryListener::notifyQueryStatusChange(id, planId, status);
@@ -863,7 +863,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                const Runtime::BufferManagerPtr& bufferManager,
                                uint32_t numOfProducers = 1,
                                QueryId queryId = 0,
-                               QuerySubPlanId querySubPlanId = 0)
+                               DecomposedQueryPlanId querySubPlanId = 0)
             : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
                          nodeEngine,
                          numOfProducers,

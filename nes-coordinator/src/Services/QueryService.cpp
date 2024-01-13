@@ -192,7 +192,7 @@ bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
 }
 
 bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
-                                                    QuerySubPlanId querySubPlanId,
+                                                    DecomposedQueryPlanId querySubPlanId,
                                                     const std::string& failureReason) {
 
     if (!enableNewRequestExecutor) {

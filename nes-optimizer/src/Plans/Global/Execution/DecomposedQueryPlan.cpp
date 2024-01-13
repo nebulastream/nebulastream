@@ -12,20 +12,4 @@
     limitations under the License.
 */
 
-#ifndef NES_SYSPLANMETADATA_HPP
-#define NES_SYSPLANMETADATA_HPP
-
-#include <Identifiers.hpp>
-
-namespace NES::Optimizer {
-
-/**
- * @brief Struct to store sub plan id and worker id that stores a sys generated query plan
- */
-struct SysPlanMetaData {
-    DecomposedQueryPlanId querySubPlanId;
-    WorkerId workerId;
-};
-}// namespace NES::Optimizer
-
-#endif//NES_SYSPLANMETADATA_HPP
+#include <Plans/Global/Execution/DecomposedQueryPlan.hpp>

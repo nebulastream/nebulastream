@@ -67,7 +67,7 @@ class QueryCatalogService {
      * @param workerId : the topology node where the sub query plan is running
      * @param querySubPlanStatus : the state of the sub query
      */
-    void addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState querySubPlanStatus);
+    void addSubQueryMetaData(QueryId queryId, DecomposedQueryPlanId querySubPlanId, uint64_t workerId, QueryState querySubPlanStatus);
 
     /**
      * Reset all sub query plans added to the query
@@ -81,7 +81,7 @@ class QueryCatalogService {
      * @param querySubPlanId : the query sub plan id
      * @param querySubPlanStatus : the new sub query status
      */
-    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState querySubPlanStatus);
+    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId, QueryState querySubPlanStatus);
 
     /**
      * Get the entry from the query catalog for the input query id
@@ -124,7 +124,7 @@ class QueryCatalogService {
      * @param sharedQueryId: the query which need to be stopped
      * @return true if successful else false
      */
-    bool checkAndMarkForSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId, OperatorId operatorId);
+    bool checkAndMarkForSoftStop(SharedQueryId sharedQueryId, DecomposedQueryPlanId subPlanId, OperatorId operatorId);
 
     /**
      * check and mark the query for hard stop
@@ -173,7 +173,7 @@ class QueryCatalogService {
      * @throws QueryNotFoundException if no query with the supplied id exists
      * @throws InvalidQueryStateException if the query is in status MARKED_FOR_FAILURE, FAILED of STOPPED
      */
-    void checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
+    void checkAndMarkForFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId);
 
     /**
      * Indicate that a query sub plan will be stopped and the operators will be deployed somewhere else. This has to
@@ -183,7 +183,7 @@ class QueryCatalogService {
      * @param querySubPlanStatus : the new status
      * @return true if successful else false
      */
-    bool checkAndMarkForMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState querySubPlanStatus);
+    bool checkAndMarkForMigration(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId, QueryState querySubPlanStatus);
   private:
     /**
      * Handle soft stop for sub query plans
@@ -192,7 +192,7 @@ class QueryCatalogService {
      * @param querySubPlanStatus : the new status
      * @return true if successful else false
      */
-    bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState querySubPlanStatus);
+    bool handleSoftStop(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId, QueryState querySubPlanStatus);
 
 
     Catalogs::Query::QueryCatalogPtr queryCatalog;

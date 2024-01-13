@@ -548,7 +548,7 @@ bool CoordinatorRPCClient::sendErrors(uint64_t workerId, std::string errorMsg) {
     return false;
 }
 
-bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId, QuerySubPlanId subPlanId, OperatorId sourceId) {
+bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId, DecomposedQueryPlanId subPlanId, OperatorId sourceId) {
 
     //Build request
     RequestSoftStopMessage requestSoftStopMessage;
@@ -567,7 +567,7 @@ bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId, QuerySubPlan
 }
 
 bool CoordinatorRPCClient::notifySourceStopTriggered(QueryId queryId,
-                                                     QuerySubPlanId querySubPlanId,
+                                                     DecomposedQueryPlanId querySubPlanId,
                                                      OperatorId sourceId,
                                                      Runtime::QueryTerminationType queryTermination) {
     NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful, "Wrong termination requested");
@@ -588,7 +588,7 @@ bool CoordinatorRPCClient::notifySourceStopTriggered(QueryId queryId,
     return softStopTriggeredReply.success();
 }
 
-bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId) {
+bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, DecomposedQueryPlanId querySubPlanId) {
     //Build request
     SoftStopCompletionMessage softStopCompletionMessage;
     softStopCompletionMessage.set_queryid(queryId);

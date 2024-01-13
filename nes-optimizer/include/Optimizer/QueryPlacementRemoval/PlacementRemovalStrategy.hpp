@@ -147,7 +147,7 @@ class PlacementRemovalStrategy {
     std::set<WorkerId> workerIdsInBFS;
     std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
-    std::unordered_map<WorkerId, std::set<QuerySubPlanId>> workerIdToQuerySubPlanIds;
+    std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToQuerySubPlanIds;
     std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
     std::unordered_map<WorkerId, std::vector<QueryPlanPtr>> workerIdToUpdatedQuerySubPlans;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;

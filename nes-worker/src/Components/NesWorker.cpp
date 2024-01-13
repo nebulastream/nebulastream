@@ -515,7 +515,7 @@ bool NesWorker::waitForConnect() const {
 }
 
 bool NesWorker::notifyQueryStatusChange(QueryId queryId,
-                                        QuerySubPlanId subQueryId,
+                                        DecomposedQueryPlanId subQueryId,
                                         Runtime::Execution::ExecutableQueryPlanStatus newStatus) {
     NES_ASSERT(waitForConnect(), "cannot connect");
     NES_ASSERT2_FMT(newStatus != Runtime::Execution::ExecutableQueryPlanStatus::Stopped,
@@ -534,7 +534,7 @@ bool NesWorker::notifyQueryStatusChange(QueryId queryId,
 }
 
 bool NesWorker::canTriggerEndOfStream(QueryId queryId,
-                                      QuerySubPlanId subPlanId,
+                                      DecomposedQueryPlanId subPlanId,
                                       OperatorId sourceId,
                                       Runtime::QueryTerminationType terminationType) {
     NES_ASSERT(waitForConnect(), "cannot connect");
@@ -543,7 +543,7 @@ bool NesWorker::canTriggerEndOfStream(QueryId queryId,
 }
 
 bool NesWorker::notifySourceTermination(QueryId queryId,
-                                        QuerySubPlanId subPlanId,
+                                        DecomposedQueryPlanId subPlanId,
                                         OperatorId sourceId,
                                         Runtime::QueryTerminationType queryTermination) {
     NES_ASSERT(waitForConnect(), "cannot connect");

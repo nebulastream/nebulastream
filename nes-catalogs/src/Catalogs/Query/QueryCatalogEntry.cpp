@@ -84,12 +84,12 @@ std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() {
     return optimizationPhases;
 }
 
-bool QueryCatalogEntry::hasQuerySubPlanMetaData(QuerySubPlanId querySubPlanId) {
+bool QueryCatalogEntry::hasQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId) {
     std::unique_lock lock(mutex);
     return querySubPlanMetaDataMap.contains(querySubPlanId);
 }
 
-void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState) {
+void QueryCatalogEntry::addQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState) {
     std::unique_lock lock(mutex);
     if (querySubPlanMetaDataMap.find(querySubPlanId) != querySubPlanMetaDataMap.end()) {
         throw InvalidQueryException("Query catalog entry already contains the query sub plan id "
@@ -100,7 +100,7 @@ void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, u
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
 }
 
-QuerySubPlanMetaDataPtr QueryCatalogEntry::getQuerySubPlanMetaData(QuerySubPlanId querySubPlanId) {
+QuerySubPlanMetaDataPtr QueryCatalogEntry::getQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId) {
     std::unique_lock lock(mutex);
     if (querySubPlanMetaDataMap.find(querySubPlanId) == querySubPlanMetaDataMap.end()) {
         throw InvalidQueryException("Query catalog entry does not contains the input query sub pln Id "

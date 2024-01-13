@@ -30,7 +30,7 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                                Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                QueryId queryId,
-                               QuerySubPlanId querySubPlanId,
+                               DecomposedQueryPlanId querySubPlanId,
                                uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins),
       metricStore(metricStore), collectorType(collectorType) {

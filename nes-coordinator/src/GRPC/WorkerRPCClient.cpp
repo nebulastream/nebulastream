@@ -31,7 +31,7 @@ WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPC
 
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
-    QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::registerQuery address={} queryId={} querySubPlanId = {} ", address, queryId, querySubPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
@@ -64,7 +64,7 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
                                          const QueryPlanPtr& queryPlan,
                                          const CompletionQueuePtr& cq) {
     QueryId queryId = queryPlan->getQueryId();
-    QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::registerQueryAsync address={} queryId={} querySubPlanId = {}", address, queryId, querySubPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.

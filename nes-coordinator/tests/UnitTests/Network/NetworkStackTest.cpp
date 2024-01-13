@@ -100,7 +100,7 @@ class TestSink : public SinkMedium {
              const Runtime::BufferManagerPtr& bufferManager,
              uint32_t numOfProducers = 1,
              QueryId queryId = 0,
-             QuerySubPlanId querySubPlanId = 0)
+             DecomposedQueryPlanId querySubPlanId = 0)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, numOfProducers, queryId, querySubPlanId){};
 
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
@@ -278,11 +278,11 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
             ExecutionResult processNextTask(bool, Runtime::WorkerContext&) override { return ExecutionResult::Error; };
             void addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t) override{};
             void poisonWorkers() override{};
-            bool addReconfigurationMessage(QueryId, QuerySubPlanId, const Runtime::ReconfigurationMessage&, bool) override {
+            bool addReconfigurationMessage(QueryId, DecomposedQueryPlanId, const Runtime::ReconfigurationMessage&, bool) override {
                 receivedCallback = true;
                 return true;
             };
-            bool addReconfigurationMessage(QueryId, QuerySubPlanId, TupleBuffer&&, bool) override { return false; };
+            bool addReconfigurationMessage(QueryId, DecomposedQueryPlanId, TupleBuffer&&, bool) override { return false; };
 
             uint64_t getNumberOfTasksInWorkerQueues() const override { return 0; };
             bool startThreadPool(uint64_t) override { return false; };

@@ -18,11 +18,11 @@
 namespace NES {
 
 QuerySubPlanMetaDataPtr
-QuerySubPlanMetaData::create(QuerySubPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId) {
+QuerySubPlanMetaData::create(DecomposedQueryPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId) {
     return std::make_shared<QuerySubPlanMetaData>(querySubPlanId, subQueryStatus, workerId);
 }
 
-QuerySubPlanMetaData::QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, NES::QueryState subQueryStatus, uint64_t workerId)
+QuerySubPlanMetaData::QuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId, NES::QueryState subQueryStatus, uint64_t workerId)
     : querySubPlanId(querySubPlanId), subQueryStatus(subQueryStatus), workerId(workerId) {}
 
 void QuerySubPlanMetaData::updateStatus(QueryState queryStatus) {
@@ -35,7 +35,7 @@ void QuerySubPlanMetaData::updateMetaInformation(const std::string& metaInformat
 
 QueryState QuerySubPlanMetaData::getQuerySubPlanStatus() { return subQueryStatus; }
 
-QuerySubPlanId QuerySubPlanMetaData::getQuerySubPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId QuerySubPlanMetaData::getQuerySubPlanId() const { return querySubPlanId; }
 
 QueryState QuerySubPlanMetaData::getSubQueryStatus() const { return subQueryStatus; }
 

@@ -31,7 +31,7 @@ using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 class QuerySubPlanMetaData {
 
   public:
-    static QuerySubPlanMetaDataPtr create(QuerySubPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
+    static QuerySubPlanMetaDataPtr create(DecomposedQueryPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
 
     /**
      * Update the status of the qub query
@@ -51,7 +51,7 @@ class QuerySubPlanMetaData {
      */
     QueryState getQuerySubPlanStatus();
 
-    QuerySubPlanId getQuerySubPlanId() const;
+    DecomposedQueryPlanId getQuerySubPlanId() const;
 
     QueryState getSubQueryStatus() const;
 
@@ -62,13 +62,13 @@ class QuerySubPlanMetaData {
     /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;
 
-    QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
+    QuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
 
   private:
     /**
      * Id of the subquery plan
      */
-    QuerySubPlanId querySubPlanId;
+    DecomposedQueryPlanId querySubPlanId;
 
     /**
      * status of the sub query

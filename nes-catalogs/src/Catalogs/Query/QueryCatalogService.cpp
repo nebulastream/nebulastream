@@ -34,7 +34,8 @@ QueryCatalogService::createNewEntry(const std::string& queryString,
     return queryCatalog->createNewEntry(queryString, queryPlan, placementStrategyName);
 }
 
-bool QueryCatalogService::checkAndMarkForSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId, OperatorId operatorId) {
+bool QueryCatalogService::checkAndMarkForSoftStop(SharedQueryId sharedQueryId,
+                                                  DecomposedQueryPlanId subPlanId, OperatorId operatorId) {
     std::unique_lock lock(serviceMutex);
 
     NES_INFO("checkAndMarkForSoftStop sharedQueryId={} subQueryId={} source={}", sharedQueryId, subPlanId, operatorId);
@@ -85,7 +86,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
     return true;
 }
 
-void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId) {
+void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId) {
     std::unique_lock lock(serviceMutex);
 
     NES_INFO("checkAndMarkForFailure sharedQueryId={} subQueryId={}", sharedQueryId, querySubPlanId);
@@ -213,7 +214,7 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryState querySta
 }
 
 void QueryCatalogService::addSubQueryMetaData(QueryId queryId,
-                                              QuerySubPlanId querySubPlanId,
+                                              DecomposedQueryPlanId querySubPlanId,
                                               uint64_t workerId,
                                               QueryState querySubPlanStatus) {
     std::unique_lock lock(serviceMutex);
@@ -231,7 +232,7 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId,
 }
 
 bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
-                                         QuerySubPlanId querySubPlanId,
+                                         DecomposedQueryPlanId querySubPlanId,
                                          QueryState querySubPlanStatus) {
     std::unique_lock lock(serviceMutex);
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
@@ -340,7 +341,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
 }
 
 bool QueryCatalogService::checkAndMarkForMigration(SharedQueryId sharedQueryId,
-                                                   QuerySubPlanId querySubPlanId,
+                                                   DecomposedQueryPlanId querySubPlanId,
                                                    QueryState querySubPlanStatus) {
     std::unique_lock lock(serviceMutex);
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
@@ -382,7 +383,7 @@ bool QueryCatalogService::checkAndMarkForMigration(SharedQueryId sharedQueryId,
 }
 
 bool QueryCatalogService::updateQuerySubPlanStatus(SharedQueryId sharedQueryId,
-                                                   QuerySubPlanId querySubPlanId,
+                                                   DecomposedQueryPlanId querySubPlanId,
                                                    QueryState querySubPlanStatus) {
     std::unique_lock lock(serviceMutex);
 

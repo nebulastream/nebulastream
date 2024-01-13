@@ -2382,7 +2382,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
-    QuerySubPlanId subPlanIdToRemoveInNextIteration;
+    DecomposedQueryPlanId subPlanIdToRemoveInNextIteration;
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
     for (const auto& executionNode : executionNodes) {
@@ -2554,7 +2554,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
-    QuerySubPlanId subPlanIdToRemoveInNextIteration;
+    DecomposedQueryPlanId subPlanIdToRemoveInNextIteration;
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
     for (const auto& executionNode : executionNodes) {
@@ -2713,7 +2713,7 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQuer
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-    QuerySubPlanId subPlanIdToRemoveInNextIteration;
+    DecomposedQueryPlanId subPlanIdToRemoveInNextIteration;
     EXPECT_EQ(executionNodes.size(), 3UL);
 
     sharedQueryPlan->removeQuery(1);

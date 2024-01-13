@@ -34,7 +34,7 @@ struct VersionUpdate {
 NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
                          QueryId queryId,
-                         QuerySubPlanId querySubPlanId,
+                         DecomposedQueryPlanId querySubPlanId,
                          const NodeLocation& destination,
                          NesPartition nesPartition,
                          Runtime::NodeEnginePtr nodeEngine,

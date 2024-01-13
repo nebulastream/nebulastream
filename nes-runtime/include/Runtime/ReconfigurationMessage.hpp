@@ -44,7 +44,7 @@ class ReconfigurationMessage {
      * @param userdata extra information to use in this reconfiguration
      */
     explicit ReconfigurationMessage(const QueryId queryId,
-                                    const QuerySubPlanId parentPlanId,
+                                    const DecomposedQueryPlanId parentPlanId,
                                     ReconfigurationType type,
                                     ReconfigurablePtr instance = nullptr,
                                     std::any&& userdata = nullptr)
@@ -63,7 +63,7 @@ class ReconfigurationMessage {
      * @param blocking whether the reconfiguration must block for completion
      */
     explicit ReconfigurationMessage(const QueryId queryId,
-                                    const QuerySubPlanId parentPlanId,
+                                    const DecomposedQueryPlanId parentPlanId,
                                     ReconfigurationType type,
                                     uint64_t numThreads,
                                     ReconfigurablePtr instance,
@@ -127,7 +127,7 @@ class ReconfigurationMessage {
      * @brief get the target plan id
      * @return the plan id
      */
-    [[nodiscard]] QuerySubPlanId getParentPlanId() const { return parentPlanId; }
+    [[nodiscard]] DecomposedQueryPlanId getParentPlanId() const { return parentPlanId; }
 
     /**
      * @brief get the target instance to reconfigura
@@ -186,7 +186,7 @@ class ReconfigurationMessage {
     const QueryId queryId;
 
     /// owning plan id
-    const QuerySubPlanId parentPlanId;
+    const DecomposedQueryPlanId parentPlanId;
 
     /// custom data
     std::any userdata;

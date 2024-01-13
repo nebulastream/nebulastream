@@ -39,7 +39,7 @@ class FailQueryRequest : public AbstractUniRequest {
      * @param failedSubPlanId: The id of the subplan that caused the failure
      * @param maxRetries: Maximum number of retry attempts for the request
      */
-    FailQueryRequest(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries);
+    FailQueryRequest(NES::QueryId queryId, NES::DecomposedQueryPlanId failedSubPlanId, uint8_t maxRetries);
 
     /**
     * @brief creates a new FailQueryRequest object
@@ -48,7 +48,7 @@ class FailQueryRequest : public AbstractUniRequest {
     * @param maxRetries: Maximum number of retry attempts for the request
     * @return a smart pointer to the newly created object
     */
-    static FailQueryRequestPtr create(NES::QueryId queryId, NES::QuerySubPlanId failedSubPlanId, uint8_t maxRetries);
+    static FailQueryRequestPtr create(NES::QueryId queryId, NES::DecomposedQueryPlanId failedSubPlanId, uint8_t maxRetries);
 
   protected:
     /**
@@ -90,7 +90,7 @@ class FailQueryRequest : public AbstractUniRequest {
 
   private:
     QueryId queryId;
-    QuerySubPlanId querySubPlanId;
+    DecomposedQueryPlanId querySubPlanId;
     GlobalQueryPlanPtr globalQueryPlan;
     QueryCatalogServicePtr queryCatalogService;
     TopologyPtr topology;

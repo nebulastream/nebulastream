@@ -32,7 +32,7 @@ FileSink::FileSink(SinkFormatPtr format,
                    const std::string& filePath,
                    bool append,
                    QueryId queryId,
-                   QuerySubPlanId querySubPlanId,
+                   DecomposedQueryPlanId querySubPlanId,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins) {
     this->filePath = filePath;

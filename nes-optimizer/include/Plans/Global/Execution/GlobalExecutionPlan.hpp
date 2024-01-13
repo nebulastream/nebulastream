@@ -112,7 +112,7 @@ class GlobalExecutionPlan {
      * @param subPlanId the id of the subplan
      * @return true if the subplan was found and removed, false if it could not be found
      */
-    bool removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId, SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
+    bool removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId, SharedQueryId sharedQueryId, DecomposedQueryPlanId subPlanId);
 
   private:
     /**

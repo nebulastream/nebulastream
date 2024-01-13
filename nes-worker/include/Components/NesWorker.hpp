@@ -180,18 +180,19 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @param errorMsg to describe the reason of the failure
      * @return true if Notification was successful, false otherwise
      */
-    bool notifyQueryFailure(QueryId queryId, QuerySubPlanId subQueryId, std::string errorMsg) override;
+    bool notifyQueryFailure(QueryId queryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) override;
 
     bool notifySourceTermination(QueryId queryId,
-                                 QuerySubPlanId subPlanId,
+                                 DecomposedQueryPlanId subPlanId,
                                  OperatorId sourceId,
                                  Runtime::QueryTerminationType) override;
 
     bool
-    canTriggerEndOfStream(QueryId queryId, QuerySubPlanId subPlanId, OperatorId sourceId, Runtime::QueryTerminationType) override;
+    canTriggerEndOfStream(QueryId queryId,
+                               DecomposedQueryPlanId subPlanId, OperatorId sourceId, Runtime::QueryTerminationType) override;
 
     bool notifyQueryStatusChange(QueryId queryId,
-                                 QuerySubPlanId subQueryId,
+                                 DecomposedQueryPlanId subQueryId,
                                  Runtime::Execution::ExecutableQueryPlanStatus newStatus) override;
 
     /**
