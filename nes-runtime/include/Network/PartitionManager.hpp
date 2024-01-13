@@ -51,6 +51,7 @@ class PartitionManager {
          */
         explicit PartitionProducerEntry(NodeLocation&& receiverLocation);
 
+        PartitionProducerEntry(NodeLocation&& senderLocation, Runtime::RuntimeEventListenerPtr eventListener);
         /**
          * @return the refcnt of the partition
          */

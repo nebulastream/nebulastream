@@ -159,12 +159,12 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     ;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::UpdateVersion: {
-            workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
+            workerContext.releaseEventOnlyChannel(uniqueNetworkSourceIdentifier, terminationType);
             NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                       nesPartition.toString(),
                       Runtime::NesThread::getId());
             //there is not break here because the code for initialized is supposed to be executed after the old channel was released
-            //todo: register consumer here
+            break;
         }
         case Runtime::ReconfigurationType::Initialize: {
             // we need to check again because between the invocations of
@@ -186,7 +186,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                           Runtime::NesThread::getId());
                 return;// partition was deleted on the other side of the channel.. no point in waiting for a channel
             }
-            workerContext.storeEventOnlyChannel(nesPartition.getOperatorId(), std::move(channel));
+            workerContext.storeEventOnlyChannel(uniqueNetworkSourceIdentifier, std::move(channel));
             NES_DEBUG("NetworkSource: reconfigure() stored event-channel {} Thread {}",
                       nesPartition.toString(),
                       Runtime::NesThread::getId());
@@ -219,7 +219,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         }
     }
     if (isTermination) {
-        workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
+        workerContext.releaseEventOnlyChannel(uniqueNetworkSourceIdentifier, terminationType);
         NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
@@ -280,10 +280,12 @@ bool NetworkSource::startNewVersion() {
     if (!nextSourceDescriptor) {
         return false;
     }
+    networkManager->unregisterSubpartitionConsumer(nesPartition);
     auto newDescriptor = nextSourceDescriptor.value();
     version = newDescriptor.getVersion();
     sinkLocation = newDescriptor.getNodeLocation();
     nesPartition = newDescriptor.getNesPartition();
+    nextSourceDescriptor = std::nullopt;
     //bind the sink to the new partition
     bind();
     auto reconfMessage = Runtime::ReconfigurationMessage(-1,
