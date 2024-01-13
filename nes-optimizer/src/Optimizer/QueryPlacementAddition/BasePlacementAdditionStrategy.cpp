@@ -748,7 +748,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         std::set<DecomposedQueryPlanPtr> hostQuerySubPlans;
 
                         // Iterate over all pinned leaf operators and find a host placed query sub plan that hosts
-                        auto pinnedLeafOperators = computedQuerySubPlan->getLeafOperators();
+                        auto pinnedLeafOperators = computedQuerySubPlan->getAllOperators();
                         for (const auto& pinnedLeafOperator : pinnedLeafOperators) {
 
                             // If the pinned leaf operator is not of type logical source and was already placed.
@@ -767,7 +767,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                         //todo: copy properties from pinned leaf operator to matchingPlacedleafoperator
                                         //todo: check if property exists
                                         if (!pinnedLeafOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
-                                            NES_FATAL_ERROR("connected sys sub plan details not found");
+                                            NES_WARNING("connected sys sub plan details not found");
                                         }
                                         auto connectedSysSubPlanDetails = pinnedLeafOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS);
                                         matchingPlacedLeafOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS, connectedSysSubPlanDetails);
@@ -803,7 +803,6 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                                         querySubPlanVersion,
                                                         newNetworkSinkDescriptor->getNumberOfOrigins(),
                                                         existingNetworkSinkDescriptor->getUniqueId());
-                                                    //todo: transfer property also
                                                     existingNetworkSink->setSinkDescriptor(mergedNetworkSinkDescriptor);
                                                     computedQuerySubPlan->removeAsRootOperator(newOperatorNode->getId());
                                                     replacedOperator = true;
@@ -858,7 +857,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
 
                     } else if (containPinnedDownstreamOperator) {
 
-                        auto pinnedRootOperators = computedQuerySubPlan->getRootOperators();
+                        auto pinnedRootOperators = computedQuerySubPlan->getAllOperators();
                         std::set<DecomposedQueryPlanPtr> hostQuerySubPlans;
                         for (const auto& pinnedRootOperator : pinnedRootOperators) {
 

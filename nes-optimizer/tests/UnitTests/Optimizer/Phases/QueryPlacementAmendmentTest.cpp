@@ -2459,7 +2459,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
                 EXPECT_EQ(ops.size(), 1);
                 ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
-                ASSERT_EQ(ops[0]->getChildren().size(), 2);
+                ASSERT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
             } else if (executionNode->getId() == 1
                        && decomposedQueryPlan->getDecomposedQueryPlanId() == subPlanIdToRemoveInNextIteration) {
@@ -2476,7 +2476,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                           testQueryPlan->getRootOperators()[0]->getChildren()[0]->as<FilterLogicalOperatorNode>()->getId());
             } else if (executionNode->getId() == 2) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
-                EXPECT_EQ(ops.size(), 2);
+                EXPECT_EQ(ops.size(), 1);
                 auto sink = ops[0];
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto source = sink->getChildren()[0];
@@ -2628,7 +2628,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
                 EXPECT_EQ(ops.size(), 1);
                 EXPECT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
-                EXPECT_EQ(ops[0]->getChildren().size(), 2);
+                EXPECT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
             } else if (executionNode->getId() == 1
                        && decomposedQueryPlan->getDecomposedQueryPlanId() == planIdToRemoveInNextIteration) {
@@ -2642,7 +2642,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                 EXPECT_TRUE(sink->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
             } else if (executionNode->getId() == 2) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
-                EXPECT_EQ(ops.size(), 2);
+                EXPECT_EQ(ops.size(), 1);
                 auto sink = ops[0];
                 EXPECT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto filter = sink->getChildren()[0];
