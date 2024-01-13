@@ -68,6 +68,21 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
 endif()
 
 
+if (NES_USE_OPENCL)
+    find_package(OpenCL REQUIRED)
+    if (${OpenCL_FOUND})
+        MESSAGE(STATUS "Found OpenCL ${OpenCL_VERSION_STRING}")
+        MESSAGE(STATUS "OpenCL libraries: ${OpenCL_LIBRARIES}")
+        MESSAGE(STATUS "OpenCL includes: ${OpenCL_INCLUDE_DIRS}")
+        target_link_libraries(nes-execution PRIVATE ${OpenCL_LIBRARIES})
+        target_include_directories(nes-execution PRIVATE ${OpenCL_INCLUDE_DIRS})
+        target_compile_definitions(nes-execution PRIVATE ENABLE_OPENCL)
+    else ()
+        message(FATAL_ERROR "Could not find OpenCL")
+    endif ()
+endif (NES_USE_OPENCL)
+
+
 #Add the nes common and headers to cpack
 install(TARGETS nes-execution
         EXPORT NebulaStreamTargets

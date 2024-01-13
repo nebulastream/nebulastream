@@ -72,7 +72,7 @@ uint32_t OpenCLPipelineStage::setup(NES::Runtime::Execution::PipelineExecutionCo
     status = clBuildProgram(program, 1, &deviceId, nullptr, nullptr, nullptr);
     ASSERT_OPENCL_SUCCESS2(status, "Could not build OpenCL program");
     // TODO How to determine the kernel name?
-    kernel = clCreateKernel(program, "computeNesMap", &status);
+    kernel = clCreateKernel(program, "map", &status);
     ASSERT_OPENCL_SUCCESS2(status, "Could not create OpenCL kernel");
     return 0;
 }
@@ -112,8 +112,8 @@ ExecutionResult OpenCLPipelineStage::execute(NES::Runtime::TupleBuffer& inputTup
     ASSERT_OPENCL_SUCCESS(status, "Could not set OpenCL kernel parameter (inputTuples)");
     status = clSetKernelArg(kernel, 1, sizeof(cl_mem), &outputDeviceBuffer);
     ASSERT_OPENCL_SUCCESS(status, "Could not set OpenCL kernel parameter (resultTuples)");
-    status = clSetKernelArg(kernel, 2, sizeof(cl_ulong), &numberOfTuples);
-    ASSERT_OPENCL_SUCCESS(status, "Could not set OpenCL kernel parameter (numberOfTuples)");
+    // status = clSetKernelArg(kernel, 2, sizeof(cl_ulong), &numberOfTuples);
+    // ASSERT_OPENCL_SUCCESS(status, "Could not set OpenCL kernel parameter (numberOfTuples)");
 
     // Enqueue the kernel.
     // TODO Use kernel wait list.

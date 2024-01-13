@@ -108,9 +108,6 @@ class QueryDeploymentPhase {
     QueryCatalogServicePtr queryCatalogService;
     bool accelerateJavaUDFs;
     std::string accelerationServiceURL;
-
-    const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
-
     //OpenCL payload constants
     const std::string DEVICE_INFO_KEY = "deviceInfo";
 };

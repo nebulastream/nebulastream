@@ -59,6 +59,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
 option(NES_USE_JNI_OPENCV "Build with OpenCV over JNI support" OFF)
+option(NES_ELEGANT_USE_DUMMY_KERNEL "Request dummy kernel from ELEGANT acceleration service" OFF)
 
 # Plugins
 option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
@@ -121,6 +122,10 @@ set(NES_SPECIFIC_FLAGS)
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "-DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
+
+if (NES_ELEGANT_USE_DUMMY_KERNEL)
+    add_compile_definitions(USE_DUMMY_OPENCL_KERNEL)
+endif()
 
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")

@@ -11,16 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Components)
-add_subdirectory(Monitoring)
-add_subdirectory(GRPC)
-add_subdirectory(QueryValidation)
-add_subdirectory(Parsers)
-add_subdirectory(Phases)
-add_subdirectory(REST)
-add_subdirectory(Exceptions)
-add_subdirectory(Services)
-add_subdirectory(Util)
-add_subdirectory(WorkQueues)
-add_subdirectory(RequestProcessor)
-add_subdirectory(Elegant)
+add_source_files(nes-coordinator
+        ElegantAccelerationServiceClient.cpp
+)

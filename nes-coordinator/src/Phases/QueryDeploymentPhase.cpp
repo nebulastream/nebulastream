@@ -34,6 +34,8 @@
 #include <nlohmann/json.hpp>
 #include <utility>
 #include <cpp-base64/base64.h>
+#include <Elegant/ElegantAccelerationServiceClient.hpp>
+#include <Exceptions/ElegantServiceException.hpp>
 
 namespace NES {
 
@@ -202,64 +204,34 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId, const std::v
 }
 
 void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
-                                                    const ExecutionNodePtr& executionNode,
-                                                    const QueryPlanPtr& querySubPlan) const {//Elegant acceleration service call
-    //1. Fetch the OpenCL Operators
+                                                    [[maybe_unused]] const ExecutionNodePtr& executionNode,
+                                                    const QueryPlanPtr& querySubPlan) const {
     auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
-
-    //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {
 
-        const auto fileName = std::filesystem::path("../nes-coordinator/tests/TestData/computeNesMap.cl");
-        if (!exists(fileName)) {
-            NES_FATAL_ERROR("Could not find OpenCL file: {}", fileName.string());
+        // if (false) {
+        //     // load kernel from file system
+        //     const auto fileName = std::filesystem::path("../nes-coordinator/tests/TestData/computeNesMap.cl");
+        //     if (!exists(fileName)) {
+        //         NES_FATAL_ERROR("Could not find OpenCL file: {}", fileName.string());
+        //     }
+        //     std::ifstream openCLFile(fileName, std::fstream::in);
+        //     openCLFile.seekg(0, std::ios_base::end);
+        //     auto fileSize = openCLFile.tellg();
+        //     openCLFile.seekg(0, std::ios_base::beg);
+        //     std::vector<char> fileContents = std::vector<char>(fileSize);
+        //     openCLFile.read(fileContents.data(), fileContents.size());
+        //     openCLOperator->setOpenClCode(std::string(fileContents.data(), fileContents.size()));
+        //     continue;
+        // }
+
+        try {
+            ELEGANT::ElegantAccelerationServiceClient client{accelerationServiceURL};
+            auto openCLCode = client.retrieveOpenCLKernel();
+            openCLOperator->setOpenClCode(openCLCode);
+        } catch (ELEGANT::ElegantServiceException e) {
+            throw new QueryDeploymentException(sharedQueryId, e.what());
         }
-        std::ifstream openCLFile(fileName, std::fstream::in);
-        openCLFile.seekg(0, std::ios_base::end);
-        auto fileSize = openCLFile.tellg();
-        openCLFile.seekg(0, std::ios_base::beg);
-        std::vector<char> fileContents = std::vector<char>(fileSize);
-        openCLFile.read(fileContents.data(), fileContents.size());
-        openCLOperator->setOpenClCode(std::string(fileContents.data(), fileContents.size()));
-        if (true) {
-            continue;
-        }
-
-        //3. Fetch the topology node and compute the topology node payload
-        auto topologyNode = executionNode->getTopologyNode();
-        nlohmann::json payload;
-        payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<Runtime::OpenCLDeviceInfo>>(
-            topologyNode->getNodeProperty(Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
-
-        //4. Extract the Java UDF metadata
-        auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
-        payload["functionCode"] = javaDescriptor->getMethodName();
-
-        // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
-        jni::JavaByteCode javaByteCode = javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
-
-        //5. Prepare the multi-part message
-        cpr::Part part1 = {"jsonFile", to_string(payload)};
-        cpr::Part part2 = {"codeFile", base64_encode(reinterpret_cast<unsigned char const*>(javaByteCode.data()), javaByteCode.size())};
-        cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
-
-        //6. Make Acceleration Service Call
-        cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
-                                           cpr::Header{{"Content-Type", "multipart/form-data"}},
-                                           multipartPayload,
-                                           cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
-        if (response.status_code != 200) {
-            throw QueryDeploymentException(sharedQueryId,
-                                           "Error in call to Elegant acceleration service with code "
-                                               + std::to_string(response.status_code) + " and msg " + response.reason);
-        }
-
-        nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
-        //Fetch the acceleration Code
-        //FIXME: use the correct key
-        auto openCLCode = jsonResponse["AccelerationCode"];
-        //6. Set the Open CL code
-        openCLOperator->setOpenClCode(openCLCode);
     }
 }
 
