@@ -172,6 +172,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
                                                                                       limitOperator->getOutputSchema(),
                                                                                       limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
+#ifdef ENABLE_OPENCL
     } else if (operatorNode->instanceOf<OpenCLLogicalOperatorNode>()) {
         auto openClOperator = operatorNode->as<OpenCLLogicalOperatorNode>();
         auto pipelineStage =
@@ -183,6 +184,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
                                                                                     openClOperator->getOutputSchema(),
                                                                                     pipelineStage);
         operatorNode->replace(externalOperator);
+#endif
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }

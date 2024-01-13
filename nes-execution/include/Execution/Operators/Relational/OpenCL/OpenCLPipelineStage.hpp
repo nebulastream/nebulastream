@@ -18,6 +18,7 @@
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 
+#ifdef ENABLE_OPENCL
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
@@ -70,5 +71,6 @@ namespace NES::QueryCompilation {
 class OpenCLPipelineStage : public ExecutableOperator {};
 
 }// namespace NES::QueryCompilation
+#endif
 
 #endif//NES_EXECUTABLEOPENCLOPERATOR_H

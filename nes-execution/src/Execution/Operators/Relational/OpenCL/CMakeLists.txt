@@ -10,6 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
+add_source_files(nes-execution
         OpenCLPipelineStage.cpp
-        )
+)
