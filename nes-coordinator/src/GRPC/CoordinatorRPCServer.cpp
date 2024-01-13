@@ -97,6 +97,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
         NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
     deserializeOpenCLDeviceInfo(workerProperties[NES::Worker::Configuration::OPENCL_DEVICES],
                                 registrationRequest->opencldevices());
+    workerProperties[NES::Worker::Configuration::DEFAULT_OPENCL_DEVICE] = registrationRequest->defaultopencldevice();
 
     // check if an inactive worker with configWorkerId already exists
     // else assign an invalid worker id

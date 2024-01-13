@@ -342,6 +342,13 @@ bool NesWorker::connect() {
                                   i,
                                   registrationRequest.add_opencldevices());
     }
+    auto openCLDevice = workerConfig->defaultOpenCLDevice.getValue();
+    if (openCLDevice == -1) {
+        NES_DEBUG("Default OpenCL device not specified");
+    } else if (openCLDevice >= 0 && static_cast<size_t>(openCLDevice) >= nodeEngine->getOpenCLManager()->getDevices().size()) {
+        NES_WARNING("Unknown default OpenCL device: {}", workerConfig->defaultOpenCLDevice.getValue());
+    }
+    registrationRequest.set_defaultopencldevice(openCLDevice);
 
     if (locationProvider) {
         auto waypoint = registrationRequest.mutable_waypoint();

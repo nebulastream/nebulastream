@@ -52,6 +52,7 @@ uint32_t OpenCLPipelineStage::setup(NES::Runtime::Execution::PipelineExecutionCo
     // Retrieving the OpenCL device ID from a new OpenCLManager assumes that the order in which platforms and devices are
     // enumerated by the OpenCL runtime is stable.
     OpenCLManager openCLManager;
+    NES_ASSERT2_FMT(deviceIdIndex < openCLManager.getDevices().size(), "Unknown OpenCL device: " << deviceIdIndex);
     auto openCLDevice = openCLManager.getDevices()[deviceIdIndex];
     NES_DEBUG("Using OpenCL device: {}", openCLDevice.deviceInfo.deviceName);
     deviceId = openCLDevice.deviceId;

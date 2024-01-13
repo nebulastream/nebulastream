@@ -221,5 +221,8 @@ const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
 const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
+// OpenCL configuration
+const std::string DEFAULT_OPENCL_DEVICE = "defaultOpenCLDevice";
+
 }// namespace NES::Configurations
 #endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

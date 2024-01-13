@@ -286,6 +286,8 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC, false, "Let network sinks use a separate thread to establish a connection"};
 
+    IntOption defaultOpenCLDevice = {DEFAULT_OPENCL_DEVICE, -1, "Default OpenCL device"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&workerId,
@@ -322,6 +324,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
                 &configPath,
+                &defaultOpenCLDevice,
 #ifdef TFDEF
                 &isTensorflowSupported
 #endif

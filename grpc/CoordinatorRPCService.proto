@@ -99,6 +99,7 @@ message RegisterWorkerRequest {
   bool javaUDFSupported = 11;
   uint64 workerId = 12;
   repeated SerializedOpenCLDeviceInfo openCLDevices = 13;
+  int32 defaultopencldevice = 14;
 }
 
 message RegisterWorkerReply {

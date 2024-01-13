@@ -229,6 +229,13 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
             ELEGANT::ElegantAccelerationServiceClient client{accelerationServiceURL};
             auto openCLCode = client.retrieveOpenCLKernel();
             openCLOperator->setOpenClCode(openCLCode);
+            auto openCLDevice = std::any_cast<int32_t>(executionNode->getTopologyNode()->getNodeProperty(Worker::Configuration::DEFAULT_OPENCL_DEVICE));
+            if (openCLDevice != -1) {
+                NES_DEBUG("Using default OpenCL Device: {}", openCLDevice);
+                openCLOperator->setDeviceId(openCLDevice);
+            } else {
+                NES_DEBUG("Using OpenCL device specified by Planner");
+            }
         } catch (ELEGANT::ElegantServiceException e) {
             throw new QueryDeploymentException(sharedQueryId, e.what());
         }

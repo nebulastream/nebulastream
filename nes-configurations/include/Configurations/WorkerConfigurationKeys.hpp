@@ -23,6 +23,7 @@ const std::string JAVA_UDF_SUPPORT = "JAVA_UDF";
 const std::string MOBILITY_SUPPORT = "MOBILITY";
 const std::string SPATIAL_SUPPORT = "SPATIAL_TYPE";
 const std::string OPENCL_DEVICES = "OPENCL_DEVICES";
+const std::string DEFAULT_OPENCL_DEVICE = "DEFAULT_OPENCL_DEVICE";
 }// namespace NES::Worker::Configuration
 
 #endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKERCONFIGURATIONKEYS_HPP_
