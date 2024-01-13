@@ -24,7 +24,7 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      Runtime::NodeEnginePtr nodeEngine,
                      uint32_t numOfProducers,
                      QueryId queryId,
-                     QuerySubPlanId querySubPlanId,
+                     DecomposedQueryPlanId querySubPlanId,
                      std::ostream& pOutputStream,
                      uint64_t numberOfOrigins)
     : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins),

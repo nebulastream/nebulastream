@@ -29,7 +29,7 @@ using namespace std::chrono_literals;
 namespace NES::Runtime::Execution {
 ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
                                        QueryId queryId,
-                                       QuerySubPlanId querySubPlanId,
+                                       DecomposedQueryPlanId querySubPlanId,
                                        QueryManagerPtr queryManager,
                                        PipelineExecutionContextPtr pipelineExecutionContext,
                                        ExecutablePipelineStagePtr executablePipelineStage,
@@ -154,13 +154,13 @@ uint64_t ExecutablePipeline::getPipelineId() const { return pipelineId; }
 
 QueryId ExecutablePipeline::getQueryId() const { return queryId; }
 
-QuerySubPlanId ExecutablePipeline::getQuerySubPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId ExecutablePipeline::getQuerySubPlanId() const { return querySubPlanId; }
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
 ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
                                                  QueryId queryId,
-                                                 QuerySubPlanId querySubPlanId,
+                                                 DecomposedQueryPlanId querySubPlanId,
                                                  const QueryManagerPtr& queryManager,
                                                  const PipelineExecutionContextPtr& pipelineExecutionContext,
                                                  const ExecutablePipelineStagePtr& executablePipelineStage,

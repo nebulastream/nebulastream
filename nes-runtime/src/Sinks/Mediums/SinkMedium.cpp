@@ -26,14 +26,14 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        QueryId queryId,
-                       QuerySubPlanId querySubPlanId)
+                       DecomposedQueryPlanId querySubPlanId)
     : SinkMedium(sinkFormat, nodeEngine, numOfProducers, queryId, querySubPlanId, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        QueryId queryId,
-                       QuerySubPlanId querySubPlanId,
+                       DecomposedQueryPlanId querySubPlanId,
                        uint64_t numberOfOrigins)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
       querySubPlanId(querySubPlanId), numberOfOrigins(numberOfOrigins) {
@@ -58,7 +58,7 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
-QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 
 QueryId SinkMedium::getQueryId() const { return queryId; }
 

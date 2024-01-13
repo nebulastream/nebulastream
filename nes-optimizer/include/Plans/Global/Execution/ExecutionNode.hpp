@@ -27,8 +27,8 @@ namespace NES {
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
@@ -36,7 +36,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
-using PlacedQuerySubPlans = std::map<SharedQueryId, std::map<QuerySubPlanId, QueryPlanPtr>>;
+using PlacedPlans = std::map<SharedQueryId, std::map<DecomposedQueryPlanId, DecomposedQueryPlanPtr>>;
 
 /**
  * This class contains information about the physical node, a map of query sub plans that need to be executed
@@ -74,7 +74,7 @@ class ExecutionNode : public Node {
      * @param querySubPlan : the query sub plan
      * @return true if operation is successful
      */
-    bool addNewQuerySubPlan(SharedQueryId sharedQueryId, const QueryPlanPtr& querySubPlan);
+    bool registerNewPlan(SharedQueryId sharedQueryId, const QueryPlanPtr& querySubPlan);
 
     /**
      * Update an existing query sub plan
@@ -97,7 +97,7 @@ class ExecutionNode : public Node {
       * @param querySubPlanId: query sub plan id
       * @return placed query sub plan
       */
-    QueryPlanPtr getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
+    QueryPlanPtr getQuerySubPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId);
 
     /**
      * Remove existing query sub plans belonging to a shared query
@@ -112,13 +112,13 @@ class ExecutionNode : public Node {
      * @param querySubPlanId the id of the query sub plan to remove
      * @return true if operation succeeds
      */
-    bool removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
+    bool removeQuerySubPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId);
 
     /**
      * Get the map of all query sub plans
      * @return
      */
-    PlacedQuerySubPlans getAllQuerySubPlans();
+    PlacedPlans getAllQuerySubPlans();
 
     /**
      * Get the resources occupied by the query sub plans for the input query id.
@@ -162,8 +162,8 @@ class ExecutionNode : public Node {
     /**
      * a map of placed Query Sub Plans
      */
-    PlacedQuerySubPlans mapOfSharedQueryToQuerySubPlans;
+    PlacedPlans mapOfSharedQueryToQuerySubPlans;
 };
 }// namespace NES
 
-#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_

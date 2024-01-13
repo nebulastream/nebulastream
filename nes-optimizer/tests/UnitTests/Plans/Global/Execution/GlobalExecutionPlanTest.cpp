@@ -102,11 +102,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query = Query::from("truck").unionWith(subQuery).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
     plan->setQueryId(queryId);
     plan->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     plan->setQuerySubPlanId(querySubPlanId);
-    executionNode->addNewQuerySubPlan(queryId, plan);
+    executionNode->registerNewPlan(queryId, plan);
 
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
@@ -158,21 +158,21 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor1);
     auto plan1 = query1.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId);
     plan1->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
     plan1->setQuerySubPlanId(querySubPlanId1);
-    executionNode->addNewQuerySubPlan(queryId, plan1);
+    executionNode->registerNewPlan(queryId, plan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor2);
     auto plan2 = query2.getQueryPlan();
-    QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId);
     plan2->setQuerySubPlanId(querySubPlanId2);
     plan2->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->addNewQuerySubPlan(queryId, plan2);
+    executionNode->registerNewPlan(queryId, plan2);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -226,22 +226,22 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor1);
     auto plan1 = query1.getQueryPlan();
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
     plan1->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->addNewQuerySubPlan(queryId1, plan1);
+    executionNode->registerNewPlan(queryId1, plan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor2);
     auto plan2 = query2.getQueryPlan();
-    QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
     plan2->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->addNewQuerySubPlan(queryId2, plan2);
+    executionNode->registerNewPlan(queryId2, plan2);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -296,21 +296,21 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query11 = Query::from("default_logical").sink(printSinkDescriptor11);
     auto plan11 = query11.getQueryPlan();
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId11 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId11 = PlanIdGenerator::getNextQuerySubPlanId();
     plan11->setQueryId(queryId1);
     plan11->setQuerySubPlanId(querySubPlanId11);
     plan11->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->addNewQuerySubPlan(queryId1, plan11);
+    executionNode->registerNewPlan(queryId1, plan11);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor12 = PrintSinkDescriptor::create();
     auto query12 = Query::from("default_logical").sink(printSinkDescriptor12);
     auto plan12 = query12.getQueryPlan();
-    QuerySubPlanId querySubPlanId12 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId12 = PlanIdGenerator::getNextQuerySubPlanId();
     plan12->setQueryId(queryId1);
     plan12->setQuerySubPlanId(querySubPlanId12);
     plan12->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->addNewQuerySubPlan(queryId1, plan12);
+    executionNode->registerNewPlan(queryId1, plan12);
 
     //query sub plans for query 2
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
@@ -318,21 +318,21 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query21 = Query::from("default_logical").sink(printSinkDescriptor21);
     auto plan21 = query21.getQueryPlan();
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId21 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId21 = PlanIdGenerator::getNextQuerySubPlanId();
     plan21->setQueryId(queryId2);
     plan21->setQuerySubPlanId(querySubPlanId21);
     plan21->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->addNewQuerySubPlan(queryId2, plan21);
+    executionNode->registerNewPlan(queryId2, plan21);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor22 = PrintSinkDescriptor::create();
     auto query22 = Query::from("default_logical").sink(printSinkDescriptor22);
     auto plan22 = query22.getQueryPlan();
-    QuerySubPlanId querySubPlanId22 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId22 = PlanIdGenerator::getNextQuerySubPlanId();
     plan22->setQueryId(queryId2);
     plan22->setQuerySubPlanId(querySubPlanId22);
     plan22->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->addNewQuerySubPlan(queryId2, plan22);
+    executionNode->registerNewPlan(queryId2, plan22);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -408,11 +408,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
     plan1->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode1->addNewQuerySubPlan(queryId1, plan1);
+    executionNode1->registerNewPlan(queryId1, plan1);
 
     //create execution node
     uint64_t node2Id = 2;
@@ -427,11 +427,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
     plan2->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode2->addNewQuerySubPlan(queryId2, plan2);
+    executionNode2->registerNewPlan(queryId2, plan2);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
     globalExecutionPlan->addExecutionNode(executionNode2);
@@ -505,11 +505,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
     plan1->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode1->addNewQuerySubPlan(queryId1, plan1);
+    executionNode1->registerNewPlan(queryId1, plan1);
 
     //create execution node 2
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
@@ -519,11 +519,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
     plan2->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode2->addNewQuerySubPlan(queryId2, plan2);
+    executionNode2->registerNewPlan(queryId2, plan2);
 
     //create execution node 3
     const ExecutionNodePtr executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
@@ -533,11 +533,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query3 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan3 = query3.getQueryPlan();
     QueryId queryId3 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId3 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId3 = PlanIdGenerator::getNextQuerySubPlanId();
     plan3->setQueryId(queryId3);
     plan3->setQuerySubPlanId(querySubPlanId3);
     plan3->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode3->addNewQuerySubPlan(queryId3, plan3);
+    executionNode3->registerNewPlan(queryId3, plan3);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
     globalExecutionPlan->addExecutionNode(executionNode2);
@@ -551,11 +551,11 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query4 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan4 = query4.getQueryPlan();
     QueryId queryId4 = PlanIdGenerator::getNextQueryId();
-    QuerySubPlanId querySubPlanId4 = PlanIdGenerator::getNextQuerySubPlanId();
+    DecomposedQueryPlanId querySubPlanId4 = PlanIdGenerator::getNextQuerySubPlanId();
     plan4->setQueryId(queryId4);
     plan4->setQuerySubPlanId(querySubPlanId4);
     plan4->setQueryState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode4->addNewQuerySubPlan(queryId4, plan4);
+    executionNode4->registerNewPlan(queryId4, plan4);
 
     globalExecutionPlan->addExecutionNode(executionNode4);
 

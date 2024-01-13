@@ -36,7 +36,7 @@ class ZmqSink : public SinkMedium {
             uint16_t port,
             bool internal,
             QueryId queryId,
-            QuerySubPlanId querySubPlanId,
+            DecomposedQueryPlanId querySubPlanId,
             uint64_t numberOfOrigins = 1);
     ~ZmqSink() override;
 

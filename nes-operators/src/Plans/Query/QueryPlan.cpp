@@ -27,11 +27,11 @@
 
 namespace NES {
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators) {
+QueryPlanPtr QueryPlan::create(QueryId queryId, DecomposedQueryPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators) {
     return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, std::move(rootOperators)));
 }
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId) {
+QueryPlanPtr QueryPlan::create(QueryId queryId, DecomposedQueryPlanId querySubPlanId) {
     return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId));
 }
 
@@ -47,10 +47,10 @@ QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), 
     rootOperators.push_back(std::move(rootOperator));
 }
 
-QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators)
+QueryPlan::QueryPlan(QueryId queryId, DecomposedQueryPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators)
     : rootOperators(std::move(rootOperators)), queryId(queryId), querySubPlanId(querySubPlanId) {}
 
-QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId) : queryId(queryId), querySubPlanId(querySubPlanId) {}
+QueryPlan::QueryPlan(QueryId queryId, DecomposedQueryPlanId querySubPlanId) : queryId(queryId), querySubPlanId(querySubPlanId) {}
 
 std::set<OperatorNodePtr> QueryPlan::getAllOperators() {
 
@@ -193,9 +193,9 @@ void QueryPlan::addRootOperator(const OperatorNodePtr& newRootOperator) {
     }
 }
 
-QuerySubPlanId QueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId QueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
-void QueryPlan::setQuerySubPlanId(QuerySubPlanId querySubPlanId) { this->querySubPlanId = querySubPlanId; }
+void QueryPlan::setQuerySubPlanId(DecomposedQueryPlanId querySubPlanId) { this->querySubPlanId = querySubPlanId; }
 
 void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
     NES_DEBUG("QueryPlan: removing operator {} as root operator.", root->toString());

@@ -30,7 +30,7 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                      const std::string& brokers,
                      const std::string& topic,
                      QueryId queryId,
-                     QuerySubPlanId querySubPlanId,
+                     DecomposedQueryPlanId querySubPlanId,
                      const uint64_t kafkaProducerTimeout,
                      uint64_t numberOfOrigins)
     : SinkMedium(format, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins), brokers(brokers),

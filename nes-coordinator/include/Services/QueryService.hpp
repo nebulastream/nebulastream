@@ -135,7 +135,7 @@ class QueryService {
      * @returns: true if successful
      */
     bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
-                                          QuerySubPlanId querySubPlanId,
+                                          DecomposedQueryPlanId querySubPlanId,
                                           const std::string& failureReason);
 
   private:

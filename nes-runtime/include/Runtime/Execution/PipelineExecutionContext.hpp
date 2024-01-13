@@ -39,7 +39,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
     explicit PipelineExecutionContext(uint64_t pipelineId,
-                                      QuerySubPlanId queryId,
+                                      DecomposedQueryPlanId queryId,
                                       Runtime::BufferManagerPtr bufferProvider,
                                       size_t numberOfWorkerThreads,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
@@ -111,7 +111,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     /**
      * @brief Id of the local qep that owns the pipeline
      */
-    QuerySubPlanId queryId;
+    DecomposedQueryPlanId queryId;
 
     /**
      * @brief The emit function handler to react on an emitted tuple buffer.

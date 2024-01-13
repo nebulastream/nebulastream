@@ -50,7 +50,7 @@ class KafkaSink : public SinkMedium {
               const std::string& brokers,
               const std::string& topic,
               QueryId queryId,
-              QuerySubPlanId querySubPlanId,
+              DecomposedQueryPlanId querySubPlanId,
               const uint64_t kafkaProducerTimeout = 10 * 1000,
               uint64_t numberOfOrigins = 1);
 

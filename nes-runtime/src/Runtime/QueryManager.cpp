@@ -244,7 +244,7 @@ uint64_t AbstractQueryManager::getQueryId(uint64_t querySubPlanId) const {
     return -1;
 }
 
-Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(QuerySubPlanId id) {
+Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(DecomposedQueryPlanId id) {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(id);
     if (it != runningQEPs.end()) {
@@ -253,7 +253,7 @@ Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(QuerySub
     return Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
-Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(QuerySubPlanId id) const {
+Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(DecomposedQueryPlanId id) const {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(id);
     if (it != runningQEPs.end()) {
@@ -262,7 +262,7 @@ Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(Qu
     return nullptr;
 }
 
-QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(QuerySubPlanId qepId) {
+QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(DecomposedQueryPlanId qepId) {
     if (queryToStatisticsMap.contains(qepId)) {
         return queryToStatisticsMap.find(qepId);
     }

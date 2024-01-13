@@ -37,7 +37,7 @@ namespace detail {
 
 class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecutionContext {
   public:
-    explicit ReconfigurationPipelineExecutionContext(QuerySubPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
+    explicit ReconfigurationPipelineExecutionContext(DecomposedQueryPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
             -1,// this is a dummy pipelineID
             queryExecutionPlanId,
@@ -257,7 +257,7 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 
 void DynamicQueryManager::updateStatistics(const Task& task,
                                            QueryId queryId,
-                                           QuerySubPlanId querySubPlanId,
+                                           DecomposedQueryPlanId querySubPlanId,
                                            PipelineId pipelineId,
                                            WorkerContext& workerContext) {
     AbstractQueryManager::updateStatistics(task, queryId, querySubPlanId, pipelineId, workerContext);
@@ -273,7 +273,7 @@ void DynamicQueryManager::updateStatistics(const Task& task,
 
 void MultiQueueQueryManager::updateStatistics(const Task& task,
                                               QueryId queryId,
-                                              QuerySubPlanId querySubPlanId,
+                                              DecomposedQueryPlanId querySubPlanId,
                                               PipelineId pipelineId,
                                               WorkerContext& workerContext) {
     AbstractQueryManager::updateStatistics(task, queryId, querySubPlanId, pipelineId, workerContext);
@@ -288,7 +288,7 @@ void MultiQueueQueryManager::updateStatistics(const Task& task,
 
 void AbstractQueryManager::updateStatistics(const Task& task,
                                             QueryId queryId,
-                                            QuerySubPlanId querySubPlanId,
+                                            DecomposedQueryPlanId querySubPlanId,
                                             PipelineId pipelineId,
                                             WorkerContext& workerContext) {
     tempCounterTasksCompleted[workerContext.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
@@ -333,7 +333,7 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
         return;
     }
 
-    QuerySubPlanId querySubPlanId = -1;
+    DecomposedQueryPlanId querySubPlanId = -1;
     QueryId queryId = -1;
     PipelineId pipelineId = -1;
     auto executable = task.getExecutable();
@@ -352,7 +352,7 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
 }
 
 bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
-                                                       QuerySubPlanId queryExecutionPlanId,
+                                                       DecomposedQueryPlanId queryExecutionPlanId,
                                                        const ReconfigurationMessage& message,
                                                        bool blocking) {
     NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
@@ -368,7 +368,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
 }
 
 bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
-                                                    QuerySubPlanId queryExecutionPlanId,
+                                                    DecomposedQueryPlanId queryExecutionPlanId,
                                                     const ReconfigurationMessage& message,
                                                     bool blocking) {
     NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
@@ -384,7 +384,7 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
 }
 
 bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
-                                                    QuerySubPlanId queryExecutionPlanId,
+                                                    DecomposedQueryPlanId queryExecutionPlanId,
                                                     TupleBuffer&& buffer,
                                                     bool blocking) {
     std::unique_lock reconfLock(reconfigurationMutex);
@@ -421,7 +421,7 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
 }
 
 bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
-                                                       QuerySubPlanId queryExecutionPlanId,
+                                                       DecomposedQueryPlanId queryExecutionPlanId,
                                                        TupleBuffer&& buffer,
                                                        bool blocking) {
     std::unique_lock reconfLock(reconfigurationMutex);

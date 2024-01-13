@@ -94,7 +94,7 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
 void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipelineOrSink,
                                              const std::string& errorMessage) {
 
-    QuerySubPlanId planId = 0;
+    DecomposedQueryPlanId planId = 0;
     Execution::ExecutableQueryPlanPtr qepToFail;
     if (auto* pipe = std::get_if<Execution::ExecutablePipelinePtr>(&pipelineOrSink)) {
         planId = (*pipe)->getQuerySubPlanId();
@@ -141,7 +141,7 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
     }
 }
 
-void AbstractQueryManager::notifyPipelineCompletion(QuerySubPlanId subPlanId,
+void AbstractQueryManager::notifyPipelineCompletion(DecomposedQueryPlanId subPlanId,
                                                     Execution::ExecutablePipelinePtr pipeline,
                                                     QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
@@ -150,7 +150,7 @@ void AbstractQueryManager::notifyPipelineCompletion(QuerySubPlanId subPlanId,
     qep->notifyPipelineCompletion(pipeline, terminationType);
 }
 
-void AbstractQueryManager::notifySinkCompletion(QuerySubPlanId subPlanId,
+void AbstractQueryManager::notifySinkCompletion(DecomposedQueryPlanId subPlanId,
                                                 DataSinkPtr sink,
                                                 QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);

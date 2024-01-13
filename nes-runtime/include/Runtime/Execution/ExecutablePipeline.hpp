@@ -57,7 +57,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      */
     explicit ExecutablePipeline(uint64_t pipelineId,
                                 QueryId queryId,
-                                QuerySubPlanId qepId,
+                                DecomposedQueryPlanId qepId,
                                 QueryManagerPtr queryManager,
                                 PipelineExecutionContextPtr pipelineExecutionContext,
                                 ExecutablePipelineStagePtr executablePipelineStage,
@@ -78,7 +78,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      */
     static ExecutablePipelinePtr create(uint64_t pipelineId,
                                         QueryId queryId,
-                                        QuerySubPlanId querySubPlanId,
+                                        DecomposedQueryPlanId querySubPlanId,
                                         const QueryManagerPtr& queryManager,
                                         const PipelineExecutionContextPtr& pipelineExecutionContext,
                                         const ExecutablePipelineStagePtr& executablePipelineStage,
@@ -130,7 +130,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @brief Get query sub plan id.
      * @return QuerySubPlanId.
      */
-    QuerySubPlanId getQuerySubPlanId() const;
+    DecomposedQueryPlanId getQuerySubPlanId() const;
 
     /**
      * @brief Checks if this pipeline is running
@@ -190,7 +190,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
   private:
     const uint64_t pipelineId;
     const QueryId queryId;
-    const QuerySubPlanId querySubPlanId;
+    const DecomposedQueryPlanId querySubPlanId;
     QueryManagerPtr queryManager;
     ExecutablePipelineStagePtr executablePipelineStage;
     PipelineExecutionContextPtr pipelineContext;

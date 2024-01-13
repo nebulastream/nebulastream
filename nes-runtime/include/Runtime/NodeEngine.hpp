@@ -147,7 +147,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink on which to buffer data
      * @return bool indicating success
      */
-    bool bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId);
+    bool bufferData(DecomposedQueryPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief method to trigger the reconfiguration of a NetworkSink so that it points to a new downstream node.
@@ -161,7 +161,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool updateNetworkSink(uint64_t newNodeId,
                            const std::string& newHostname,
                            uint32_t newPort,
-                           QuerySubPlanId querySubPlanId,
+                           DecomposedQueryPlanId querySubPlanId,
                            uint64_t uniqueNetworkSinkDescriptorId);
 
     /**
@@ -274,7 +274,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param queryId query id
      * @return vector of subQueryIds
      */
-    std::vector<QuerySubPlanId> getSubQueryIds(uint64_t queryId);
+    std::vector<DecomposedQueryPlanId> getSubQueryIds(uint64_t queryId);
 
     /**
      * Getter for the metric store
@@ -323,7 +323,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool experimentalReconfigureNetworkSink(uint64_t newNodeId,
                                             const std::string& newHostname,
                                             uint32_t newPort,
-                                            QuerySubPlanId querySubPlanId,
+                                            DecomposedQueryPlanId querySubPlanId,
                                             uint64_t uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
                                             QuerySubPlanVersion version);
@@ -370,8 +370,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
-    std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
-    std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
+    std::map<QueryId, std::vector<DecomposedQueryPlanId>> queryIdToQuerySubPlanIds;
+    std::map<DecomposedQueryPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;

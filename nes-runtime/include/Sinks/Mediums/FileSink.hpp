@@ -42,7 +42,7 @@ class FileSink : public SinkMedium {
                       const std::string& filePath,
                       bool append,
                       QueryId queryId,
-                      QuerySubPlanId querySubPlanId,
+                      DecomposedQueryPlanId querySubPlanId,
                       uint64_t numberOfOrigins = 1);
 
     /**

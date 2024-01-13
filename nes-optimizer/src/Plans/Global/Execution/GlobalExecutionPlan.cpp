@@ -131,7 +131,7 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesByQueryId(Sh
 
 bool GlobalExecutionPlan::removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId,
                                                      SharedQueryId sharedQueryId,
-                                                     QuerySubPlanId subPlanId) {
+                                                     DecomposedQueryPlanId subPlanId) {
     auto nodeIterator = executionNodeIdToExecutionNodeMap.find(executionNodeId);
 
     //return false if no node with the given id could be found

@@ -181,7 +181,7 @@ class CoordinatorRPCClient {
      * @param queryId : the query id for which soft stop to be performed
      * @return true if coordinator marks the query for soft stop else false
      */
-    bool checkAndMarkForSoftStop(QueryId queryId, QuerySubPlanId subPlanId, OperatorId sourceId);
+    bool checkAndMarkForSoftStop(QueryId queryId, DecomposedQueryPlanId subPlanId, OperatorId sourceId);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is triggered or not
@@ -191,7 +191,7 @@ class CoordinatorRPCClient {
      * @return true if coordinator successfully recorded the information else false
      */
     bool notifySourceStopTriggered(QueryId queryId,
-                                   QuerySubPlanId querySubPlanId,
+                                   DecomposedQueryPlanId querySubPlanId,
                                    OperatorId sourceId,
                                    Runtime::QueryTerminationType queryTermination);
 
@@ -201,7 +201,7 @@ class CoordinatorRPCClient {
      * @param querySubPlanId: the query sub plan id
      * @return true if coordinator successfully recorded the information else false
      */
-    bool notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId);
+    bool notifySoftStopCompleted(QueryId queryId, DecomposedQueryPlanId querySubPlanId);
 
     /**
      * @brief this method is used by a mobile worker to inform the coordinator that location or time of the next expected reconnect

@@ -43,7 +43,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     explicit NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
                          QueryId queryId,
-                         QuerySubPlanId querySubPlanId,
+                         DecomposedQueryPlanId querySubPlanId,
                          NodeLocation const& destination,
                          NesPartition nesPartition,
                          Runtime::NodeEnginePtr nodeEngine,

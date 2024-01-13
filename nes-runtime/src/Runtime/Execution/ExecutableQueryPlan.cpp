@@ -27,7 +27,7 @@
 namespace NES::Runtime::Execution {
 
 ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
-                                         QuerySubPlanId querySubPlanId,
+                                         DecomposedQueryPlanId querySubPlanId,
                                          std::vector<DataSourcePtr>&& sources,
                                          std::vector<DataSinkPtr>&& sinks,
                                          std::vector<ExecutablePipelinePtr>&& pipelines,
@@ -42,7 +42,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
 }
 
 ExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
-                                                   QuerySubPlanId querySubPlanId,
+                                                   DecomposedQueryPlanId querySubPlanId,
                                                    std::vector<DataSourcePtr> sources,
                                                    std::vector<DataSinkPtr> sinks,
                                                    std::vector<ExecutablePipelinePtr> pipelines,
@@ -61,7 +61,7 @@ QueryId ExecutableQueryPlan::getQueryId() const { return queryId; }
 
 const std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getPipelines() const { return pipelines; }
 
-QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
 ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep {} {}", queryId, querySubPlanId);
