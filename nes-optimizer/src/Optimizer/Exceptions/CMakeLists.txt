@@ -15,6 +15,7 @@
 add_source_files(nes-optimizer
         GlobalQueryPlanUpdateException.cpp
         QueryPlacementAdditionException.cpp
+        QueryPlacementAmendmentException.cpp
         QueryPlacementRemovalException.cpp
         SharedQueryPlanNotFoundException.cpp
         OperatorNotFoundException.cpp

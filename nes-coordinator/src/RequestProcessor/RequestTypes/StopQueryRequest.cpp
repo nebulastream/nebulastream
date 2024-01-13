@@ -20,7 +20,7 @@
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAmendmentException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
@@ -97,9 +97,21 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
             throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
                                                      + std::to_string(queryId) + " in the global query plan");
         }
-        //remove single query from global query plan
+
+        // remove single query from global query plan
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-        //undeploy SQP
+
+        // remove placements and update the query sub plans
+        bool placementAmendmentSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+        if (!placementAmendmentSuccessful) {
+            throw Exceptions::QueryPlacementAmendmentException(
+                sharedQueryId,
+                "StopQueryRequest: Failed to perform query placement amendment for query plan with shared query id: "
+                    + std::to_string(sharedQueryId));
+        }
+
+        queryDeploymentPhase->execute(sharedQueryPlan);
+
         queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
         if (SharedQueryPlanStatus::STOPPED == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
@@ -153,9 +165,8 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
 
     try {
         std::rethrow_exception(exception);
-    } catch (Exceptions::QueryPlacementAdditionException& ex) {
-        failRequest.push_back(
-            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+    } catch (Exceptions::QueryPlacementAmendmentException& ex) {
+        failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
     } catch (QueryDeploymentException& ex) {
         //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
         //Happens if:
