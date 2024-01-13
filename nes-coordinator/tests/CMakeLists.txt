@@ -44,6 +44,10 @@ target_link_libraries(nes-coordinator-test-util PUBLIC cpr::cpr )
 find_package(oatpp REQUIRED)
 target_link_libraries(nes-coordinator-test-util PUBLIC oatpp::oatpp oatpp::oatpp-test)
 
+if (NES_USE_OPENCL)
+    target_link_libraries(nes-coordinator-test-util PUBLIC ${OpenCL_LIBRARIES})
+endif ()
+
 if (CODE_COVERAGE)
     target_code_coverage(nes-coordinator  AUTO)
 endif ()

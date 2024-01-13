@@ -124,7 +124,7 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
   public:
     uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
         // Get kernel source
-        auto kernelSourceFileName = std::string(TEST_DATA_DIRECTORY) + "computeNesMap.cl";
+        auto kernelSourceFileName = std::string(TEST_DATA_DIRECTORY) + "computeNesMap-old.cl";
         auto kernelSourceFile = std::ifstream(kernelSourceFileName);
         auto kernelSource = std::string(std::istreambuf_iterator<char>(kernelSourceFile), std::istreambuf_iterator<char>());
 
