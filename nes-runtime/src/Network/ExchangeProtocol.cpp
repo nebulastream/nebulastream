@@ -14,8 +14,8 @@
 
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
-#include <Network/PartitionManager.hpp>
 #include <Network/NetworkSource.hpp>
+#include <Network/PartitionManager.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Common.hpp>
 
@@ -67,12 +67,12 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             status == PartitionRegistrationStatus::Registered) {
 
             //check version
-//            if (partitionManager->getVersion(nesPartition) != msg.getVersion()) {
-//                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}",
-//                          msg.getVersion(),
-//                          partitionManager->getVersion(nesPartition));
-//                return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
-//            }
+            //            if (partitionManager->getVersion(nesPartition) != msg.getVersion()) {
+            //                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}",
+            //                          msg.getVersion(),
+            //                          partitionManager->getVersion(nesPartition));
+            //                return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
+            //            }
 
             // increment the counter
             partitionManager->pinSubpartitionConsumer(nesPartition);
@@ -92,6 +92,7 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             status == PartitionRegistrationStatus::Registered) {
             NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for EventChannel {} REGISTERED",
                       msg.getChannelId().toString());
+            //todo: reenable
             partitionManager->pinSubpartitionProducer(nesPartition);
             // send response back to the client based on the identity
             return Messages::ServerReadyMessage(msg.getChannelId());
@@ -149,6 +150,9 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         if (lastEOS) {
             const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
             while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
+                NES_DEBUG("Current message sequence number {} is less than expected max {} for partition {}",
+                          (*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue(),
+                          eosMessageMaxSeqNumber, eosNesPartition);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             NES_DEBUG("Waited for all buffers for the last EOS!");

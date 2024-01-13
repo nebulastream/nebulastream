@@ -223,6 +223,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                               Runtime::NesThread::getId());
                     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel));
                 } else {
+                    networkManager->unregisterSubpartitionProducer(nesPartition);
                     //do not release network channel in the next step because none was established
                     return;
                 }
@@ -257,6 +258,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             receiverLocation = versionUpdate.nodeLocation;
             nesPartition = versionUpdate.partition;
             version = versionUpdate.version;
+            messageSequenceNumber = 0;
 
             break;
         }

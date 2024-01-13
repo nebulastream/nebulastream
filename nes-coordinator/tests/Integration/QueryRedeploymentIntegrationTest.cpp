@@ -999,6 +999,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
     auto lastReconnectParent = reconnectParents.back();
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, lastReconnectParent));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk2));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, crd->getNesWorker()));
     cout << "stopping worker" << endl;
     bool retStopLastParent = lastReconnectParent->stop(false);
     ASSERT_TRUE(retStopLastParent);
@@ -1010,8 +1012,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         bool stopParent = parent->stop(false);
         ASSERT_TRUE(stopParent);
     }
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk2));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, crd->getNesWorker()));
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
