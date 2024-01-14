@@ -58,7 +58,7 @@ PlacementRemovalStrategy::~PlacementRemovalStrategy() {
 bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId sharedQueryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                                         QuerySubPlanVersion querySubPlanVersion) {
+                                                         DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
         NES_INFO("Placement removal strategy called for the shared query plan {}", sharedQueryId);
@@ -138,7 +138,7 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
             workerIdsInBFS.emplace(pinnedWorkerId);
 
             // 8. Fetch the query sub plan id that hosts the operator and record the sub query plan id
-            auto subQueryPlanId = std::any_cast<DecomposedQueryPlanId>(operatorToProcess->getProperty(PLACED_SUB_PLAN_ID));
+            auto subQueryPlanId = std::any_cast<DecomposedQueryPlanId>(operatorToProcess->getProperty(PLACED_DECOMPOSED_PLAN_ID));
             if (workerIdToQuerySubPlanIds.contains(pinnedWorkerId)) {
                 auto subQueryPlanIds = workerIdToQuerySubPlanIds[pinnedWorkerId];
                 subQueryPlanIds.emplace(subQueryPlanId);
@@ -362,7 +362,7 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
     }
 }
 
-bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, QuerySubPlanVersion querySubPlanVersion) {
+bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion) {
 
     NES_INFO("Releasing locks for all locked topology nodes {}.", sharedQueryId);
     for (const auto& workerId : workerIdsInBFS) {

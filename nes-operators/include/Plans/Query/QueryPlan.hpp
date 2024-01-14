@@ -46,19 +46,17 @@ class QueryPlan {
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
      * @param queryId :  the query id
-     * @param querySubPlanId : the query sub-plan id
      * @param rootOperators : vector of root Operators
      * @return a pointer to the query plan.
      */
-    static QueryPlanPtr create(QueryId queryId, DecomposedQueryPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+    static QueryPlanPtr create(QueryId queryId, std::vector<OperatorNodePtr> rootOperators);
 
     /**
      * @brief Creates a new query plan with a query id and a query sub plan id.
      * @param queryId :  the query id
-     * @param querySubPlanId : the query sub-plan id
      * @return a pointer to the query plan.
      */
-    static QueryPlanPtr create(QueryId queryId, DecomposedQueryPlanId querySubPlanId);
+    static QueryPlanPtr create(QueryId queryId);
 
     /**
      * @brief Creates a new query plan with a root operator.
@@ -72,12 +70,6 @@ class QueryPlan {
      * @return a pointer to the query plan
      */
     static QueryPlanPtr create();
-
-    /**
-     * @brief Get all operators in the query plan
-     * @return vector of operators
-     */
-    std::set<OperatorNodePtr> getAllOperators();
 
     /**
      * @brief Get all source operators
@@ -158,7 +150,7 @@ class QueryPlan {
 
     /**
     * @brief Get all the leaf operators in the query plan (leaf operator is the one without any child)
-     * Note: in certain stages the source operators might not be Leaf operators
+    * @note: in certain stages the source operators might not be Leaf operators
     * @return returns a vector of leaf operators
     */
     std::vector<OperatorNodePtr> getLeafOperators();
@@ -190,18 +182,6 @@ class QueryPlan {
      * @return query Id of the plan
      */
     [[nodiscard]] QueryId getQueryId() const;
-
-    /**
-     * @brief get query sub plan id
-     * @return return query sub plan id
-     */
-    DecomposedQueryPlanId getQuerySubPlanId() const;
-
-    /**
-     * @brief Set query sub plan id
-     * @param querySubPlanId : input query sub plan id
-     */
-    void setQuerySubPlanId(uint64_t querySubPlanId);
 
     /**
      * @brief Create copy of the query plan
@@ -246,25 +226,23 @@ class QueryPlan {
 
     /**
      * @brief Set state of the query plan
-     * @param queryState : new query plan state
+     * @param newState : new query plan state
      */
-    void setQueryState(QueryState queryState);
+    void setQueryState(QueryState newState);
 
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
      * @param queryId :  the query id
-     * @param querySubPlanId : the query sub-plan id
      * @param rootOperators : vector of root Operators
      */
-    QueryPlan(QueryId queryId, DecomposedQueryPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+    QueryPlan(QueryId queryId, std::vector<OperatorNodePtr> rootOperators);
 
     /**
      * @brief Creates a new query plan with a query id and a query sub plan id.
      * @param queryId :  the query id
-     * @param querySubPlanId : the query sub-plan id
      */
-    QueryPlan(QueryId queryId, DecomposedQueryPlanId querySubPlanId);
+    QueryPlan(QueryId queryId);
 
     /**
      * @brief initialize query plan with a root operator
@@ -289,7 +267,7 @@ class QueryPlan {
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
     std::string sourceConsumed;
-    QueryState queryState;
+    QueryState currentState;
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };

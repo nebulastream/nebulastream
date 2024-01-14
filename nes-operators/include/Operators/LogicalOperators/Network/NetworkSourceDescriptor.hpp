@@ -42,7 +42,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
                                       NodeLocation nodeLocation,
                                       std::chrono::milliseconds waitTime,
                                       uint32_t retryTimes,
-                                      QuerySubPlanVersion version);
+                                      DecomposedQueryPlanVersion version);
 
     /**
      * @brief equal method for the NetworkSourceDescriptor
@@ -91,13 +91,13 @@ class NetworkSourceDescriptor : public SourceDescriptor {
                                      NodeLocation nodeLocation,
                                      std::chrono::milliseconds waitTime,
                                      uint32_t retryTimes,
-                                     QuerySubPlanVersion version);
+                                     DecomposedQueryPlanVersion version);
 
     NesPartition nesPartition;
     NodeLocation nodeLocation;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
-    QuerySubPlanVersion version;
+    DecomposedQueryPlanVersion version;
 };
 
 using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;

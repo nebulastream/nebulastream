@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/Global/Execution/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
@@ -38,14 +39,46 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
 
 QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
 
-    // first we have to check if all source operators have a correct source descriptors
-    auto sources = queryPlan->getSourceOperators();
-
-    if (!sources.empty() && !sourceCatalog) {
+    if (!sourceCatalog) {
         NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
     }
+    // Fetch the source and sink operators.
+    auto sourceOperators = queryPlan->getSourceOperators();
+    auto sinkOperators = queryPlan->getSinkOperators();
 
-    for (const auto& source : sources) {
+    if (sourceOperators.empty() || sinkOperators.empty()) {
+        throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
+    }
+
+    performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators);
+    NES_DEBUG("TypeInferencePhase: we inferred all schemas");
+    return queryPlan;
+}
+
+DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan) {
+
+    if (!sourceCatalog) {
+        NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
+    }
+    // Fetch the source and sink operators.
+    auto sourceOperators = decomposedQueryPlan->getSourceOperators();
+    auto sinkOperators = decomposedQueryPlan->getSinkOperators();
+
+    if (sourceOperators.empty() || sinkOperators.empty()) {
+        throw TypeInferenceException(decomposedQueryPlan->getId(), "Found no source or sink operators");
+    }
+
+    performTypeInference(decomposedQueryPlan->getId(), sourceOperators, sinkOperators);
+    NES_DEBUG("TypeInferencePhase: we inferred all schemas");
+    return decomposedQueryPlan;
+}
+
+void TypeInferencePhase::performTypeInference(uint64_t planId,
+                                              std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
+                                              std::vector<SinkLogicalOperatorNodePtr> sinkOperators) {
+
+    // first we have to check if all source operators have a correct source descriptors
+    for (const auto& source : sourceOperators) {
         auto sourceDescriptor = source->getSourceDescriptor();
 
         // if the source descriptor has no schema set and is only a logical source we replace it with the correct
@@ -77,16 +110,12 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
 
     // now we have to infer the input and output schemas for the whole query.
     // to this end we call at each sink the infer method to propagate the schemata across the whole query.
-    auto sinks = queryPlan->getSinkOperators();
-    for (auto& sink : sinks) {
+    for (auto& sink : sinkOperators) {
         if (!sink->inferSchema()) {
             NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase.");
-            auto queryId = queryPlan->getQueryId();
-            throw TypeInferenceException(queryId, "TypeInferencePhase: Failed!");
+            throw TypeInferenceException(planId, "TypeInferencePhase: Failed!");
         }
     }
-    NES_DEBUG("TypeInferencePhase: we inferred all schemas");
-    return queryPlan;
 }
 
 }// namespace NES::Optimizer

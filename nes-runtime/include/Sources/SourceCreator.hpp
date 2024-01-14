@@ -353,7 +353,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   std::chrono::milliseconds waitTime,
                                   uint8_t retryTimes,
                                   const std::string& physicalSourceName,
-                                  QuerySubPlanVersion version,
+                                  DecomposedQueryPlanVersion version,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**

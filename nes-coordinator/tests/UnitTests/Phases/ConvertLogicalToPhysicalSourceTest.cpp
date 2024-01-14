@@ -119,7 +119,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingNetworkLogicalToPhysica
     SchemaPtr schema = Schema::create();
     Network::NesPartition nesPartition{1, 22, 33, 44};
     Network::NodeLocation nodeLocation(0, "*", 31337);
-    QuerySubPlanVersion version = 0;
+    DecomposedQueryPlanVersion version = 0;
     SourceDescriptorPtr sourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
                                                                                     nesPartition,
                                                                                     nodeLocation,

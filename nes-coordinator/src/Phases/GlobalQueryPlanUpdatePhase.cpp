@@ -345,7 +345,7 @@ void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(const SharedQueryI
                                                               const ExecutionNodePtr& upstreamExecutionNode,
                                                               std::set<OperatorId>& upstreamOperatorIds) const {
 
-    auto upstreamSubQueryPlans = upstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId);
+    auto upstreamSubQueryPlans = upstreamExecutionNode->getDecomposedQueryPlans(sharedQueryPlanId);
     for (const auto& upstreamSubQueryPlan : upstreamSubQueryPlans) {
         //1.1 Fetch all sink operators of the sub query plan to find the most upstream non-system generated operator.
         auto sinkOperators = upstreamSubQueryPlan->getSinkOperators();
@@ -377,7 +377,7 @@ void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(const SharedQuer
                                                                 const ExecutionNodePtr& downstreamExecutionNode,
                                                                 std::set<OperatorId>& downstreamOperatorIds) const {
 
-    auto downstreamSubQueryPlans = downstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId);
+    auto downstreamSubQueryPlans = downstreamExecutionNode->getDecomposedQueryPlans(sharedQueryPlanId);
     for (const auto& downstreamSubQueryPlan : downstreamSubQueryPlans) {
         //1.1 Fetch all source operators of the sub query plan to find the most downstream non-system generated operator.
         auto sourceOperators = downstreamSubQueryPlan->getSourceOperators();

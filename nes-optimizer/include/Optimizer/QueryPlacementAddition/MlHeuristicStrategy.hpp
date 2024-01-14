@@ -45,7 +45,7 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                   QuerySubPlanVersion querySubPlanVersion) override;
+                                   DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     /**
      * @brief creates an Object of this class through a static create function

@@ -89,7 +89,7 @@ class PlacementRemovalStrategy {
     bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                   QuerySubPlanVersion querySubPlanVersion);
+                                   DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
      * @brief Destructor releases all locks (if any acquired) for pessimistic mode
@@ -132,7 +132,7 @@ class PlacementRemovalStrategy {
      * @param querySubPlanVersion: the new version of the query sub plan
      * @return true if global execution plan gets updated successfully else false
      */
-    bool updateExecutionNodes(SharedQueryId sharedQueryId, QuerySubPlanVersion querySubPlanVersion);
+    bool updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,

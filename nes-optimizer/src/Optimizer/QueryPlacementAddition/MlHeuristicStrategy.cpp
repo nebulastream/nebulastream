@@ -51,7 +51,7 @@ MlHeuristicStrategy::MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExe
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                                    QuerySubPlanVersion querySubPlanVersion) {
+                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Create copy of the query plan

@@ -321,7 +321,7 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
 bool IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
                                               const std::set<LogicalOperatorNodePtr>& /*pinnedUpStreamNodes*/,
                                               const std::set<LogicalOperatorNodePtr>& /*pinnedDownStreamNodes*/,
-                                              QuerySubPlanVersion /*querySubPlanVersion*/) {
+                                              DecomposedQueryPlanVersion /*querySubPlanVersion*/) {
     NES_NOT_IMPLEMENTED();
 }
 

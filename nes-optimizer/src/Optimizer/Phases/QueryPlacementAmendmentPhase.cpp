@@ -36,7 +36,7 @@
 
 namespace NES::Optimizer {
 
-QuerySubPlanVersion getNextQuerySubPlanVersion() {
+DecomposedQueryPlanVersion getNextQuerySubPlanVersion() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }

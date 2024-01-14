@@ -109,7 +109,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
     Network::NodeLocation nodeLocation{1, "localhost", 31337};
     Network::NesPartition nesPartition{1, 22, 33, 44};
     auto retryTimes = 0;
-    QuerySubPlanVersion version = 1;
+    DecomposedQueryPlanVersion version = 1;
     auto numberOfOrigins = 1;
     OperatorId uniqueId = 1;
     SinkDescriptorPtr sinkDescriptor = Network::NetworkSinkDescriptor::create(nodeLocation,
