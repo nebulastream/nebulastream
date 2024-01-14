@@ -50,7 +50,9 @@ class NetworkManager {
                                     Network::ExchangeProtocol&& exchangeProtocol,
                                     const Runtime::BufferManagerPtr& bufferManager,
                                     int senderHighWatermark = -1,
-                                    uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+                                    uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS,
+                                    bool connectSinksAsync = false,
+                                    bool connectSourceEventChannelsAsync = false);
 
     /**
      * @brief Creates a new network manager object, which comprises of a zmq server and an exchange protocol
@@ -68,7 +70,9 @@ class NetworkManager {
                             ExchangeProtocol&& exchangeProtocol,
                             const Runtime::BufferManagerPtr& bufferManager,
                             int senderHighWatermark,
-                            uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+                            uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS,
+                            bool connectSinksAsync = false,
+                            bool connectSourceEventChannelsAsync = false);
 
     /**
      * @brief Destroy the network manager calling destroy()
@@ -202,12 +206,35 @@ class NetworkManager {
      */
     uint16_t getServerDataPort() const;
 
+    std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>>
+    registerSubpartitionEventProducerAsync(const NodeLocation& nodeLocation,
+                                           const NesPartition& nesPartition,
+                                           Runtime::BufferManagerPtr bufferManager,
+                                           std::chrono::milliseconds waitTime,
+                                           uint8_t retryTimes);
+
+    /**
+     * @brief retrieve the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish
+     * network channels
+     * @return the value of the connectSinkAsync flag
+     */
+    bool getConnectSinksAsync();
+
+    /**
+     * @brief retrieve the value of the connectSourceEventChannelsAsync flag which indicates if a separate thread should be used to establish
+     * event channels from sources to sinks
+     * @return the value of the connectSinkAsync flag
+     */
+    bool getConnectSourceEventChannelsAsync();
+
   private:
     NodeLocation nodeLocation;
     ZmqServerPtr server;
     ExchangeProtocol exchangeProtocol;
     PartitionManagerPtr partitionManager{nullptr};
     int senderHighWatermark;
+    const bool connectSinksAsync;
+    const bool connectSourceEventChannelsAsync;
 };
 
 }// namespace NES::Network

@@ -329,13 +329,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             QuerySubPlanVersion version);
 
     /**
-     * @brief retrieve the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish
-     * network channels
-     * @return the value of the connectSinkAsync flag
-     */
-    bool getConnectSinksAsync();
-
-    /**
      * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
      * connections from a new upstream sink. Reconfigured sinks will scheduled a pending change of the downstream source
      * to which they send their data.
@@ -364,8 +357,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerWorker,
-                        bool sourceSharing,
-                        bool connectSinksAsync = false);
+                        bool sourceSharing);
 
   private:
     WorkerId nodeId;
@@ -389,7 +381,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
-    bool connectSinksAsync;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

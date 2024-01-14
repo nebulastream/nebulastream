@@ -28,10 +28,13 @@ NetworkManager::NetworkManager(uint64_t nodeEngineId,
                                ExchangeProtocol&& exchangeProtocol,
                                const Runtime::BufferManagerPtr& bufferManager,
                                int senderHighWatermark,
-                               uint16_t numServerThread)
+                               uint16_t numServerThread,
+                               bool connectSinksAsync,
+                               bool connectSourceEventChannelsAsync)
     : nodeLocation(), server(std::make_unique<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)),
       exchangeProtocol(std::move(exchangeProtocol)), partitionManager(this->exchangeProtocol.getPartitionManager()),
-      senderHighWatermark(senderHighWatermark) {
+      senderHighWatermark(senderHighWatermark), connectSinksAsync(connectSinksAsync),
+      connectSourceEventChannelsAsync(connectSourceEventChannelsAsync) {
 
     if (bool const success = server->start(); success) {
         nodeLocation = NodeLocation(nodeEngineId, hostname, server->getServerPort());
@@ -49,14 +52,18 @@ NetworkManagerPtr NetworkManager::create(uint64_t nodeEngineId,
                                          Network::ExchangeProtocol&& exchangeProtocol,
                                          const Runtime::BufferManagerPtr& bufferManager,
                                          int senderHighWatermark,
-                                         uint16_t numServerThread) {
+                                         uint16_t numServerThread,
+                                         bool connectSinksAsync,
+                                         bool connectSourceEventChannelsAsync) {
     return std::make_shared<NetworkManager>(nodeEngineId,
                                             hostname,
                                             port,
                                             std::move(exchangeProtocol),
                                             bufferManager,
                                             senderHighWatermark,
-                                            numServerThread);
+                                            numServerThread,
+                                            connectSinksAsync,
+                                            connectSourceEventChannelsAsync);
 }
 
 void NetworkManager::destroy() { server->stop(); }
@@ -191,6 +198,52 @@ EventOnlyNetworkChannelPtr NetworkManager::registerSubpartitionEventProducer(con
                                            waitTime,
                                            retryTimes);
 }
+std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>>
+NetworkManager::registerSubpartitionEventProducerAsync(const NodeLocation& nodeLocation,
+                                                       const NesPartition& nesPartition,
+                                                       Runtime::BufferManagerPtr bufferManager,
+                                                       std::chrono::milliseconds waitTime,
+                                                       uint8_t retryTimes) {
+    NES_DEBUG("NetworkManager: Registering SubpartitionEvent Producer: {}", nesPartition.toString());
+    //create a promise that will be used to hand the channel back to the network sink that triggered its creation
+    std::promise<EventOnlyNetworkChannelPtr> promise;
+    auto future = promise.get_future();
+
+    //create a promise that is passed back to the caller an can be used to abort the connection process
+    std::promise<bool> abortConnectionPromise;
+    auto abortConnectionFuture = abortConnectionPromise.get_future();
+
+    //start thread
+    //todo #4309: instead of starting one thread per connection attempt, hand this work to a designated thread pool
+    std::thread thread([zmqContext = server->getContext(),
+                        nodeLocation,
+                        nesPartition,
+                        protocol = exchangeProtocol,
+                        bufferManager = std::move(bufferManager),
+                        highWaterMark = senderHighWatermark,
+                        waitTime,
+                        retryTimes,
+                        promise = std::move(promise),
+                        abortConnectionFuture = std::move(abortConnectionFuture)]() mutable {
+        //wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
+        auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
+        (void) std::move(future_optional);
+        auto channel = EventOnlyNetworkChannel::create(zmqContext,
+                                                       nodeLocation.createZmqURI(),
+                                                       nesPartition,
+                                                       protocol,
+                                                       std::move(bufferManager),
+                                                       highWaterMark,
+                                                       waitTime,
+                                                       retryTimes);//todo: insert stop future
+
+        //pass channel back to calling thread via promise
+        promise.set_value(std::move(channel));
+    });
+
+    thread.detach();
+    return {std::move(future), std::move(abortConnectionPromise)};
+}
 
 bool NetworkManager::registerSubpartitionEventConsumer(const NodeLocation& nodeLocation,
                                                        const NesPartition& nesPartition,
@@ -200,4 +253,8 @@ bool NetworkManager::registerSubpartitionEventConsumer(const NodeLocation& nodeL
     NES_DEBUG("NetworkManager: Registering Subpartition Event Consumer: {}", nesPartition.toString());
     return partitionManager->addSubpartitionEventListener(nesPartition, nodeLocation, eventListener);
 }
+
+bool NetworkManager::getConnectSinksAsync() { return connectSinksAsync; }
+
+bool NetworkManager::getConnectSourceEventChannelsAsync() { return connectSourceEventChannelsAsync; }
 }// namespace NES::Network

@@ -117,6 +117,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
+    coordinatorConfig->worker.connectSourceEventChannelsAsync.setValue(true);
 
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -134,6 +135,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(GetParam());
     wrkConf1->connectSinksAsync.setValue(true);
+    wrkConf1->connectSourceEventChannelsAsync.setValue(true);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
     std::atomic<uint64_t> bufferCount = 0;
@@ -298,6 +300,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
 //    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 //    wrkConf1->numWorkerThreads.setValue(GetParam());
 //    wrkConf1->connectSinksAsync.setValue(true);
+//    wrkConf1->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //
 //    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
@@ -316,6 +319,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
 //    wrkConf2->dataPort = *wrk2DataPort;
 //    wrkConf2->numWorkerThreads.setValue(GetParam());
 //    wrkConf2->connectSinksAsync.setValue(true);
+//    wrkConf2->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
 //    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
@@ -329,6 +333,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
 //    wrkConf3->dataPort = *wrk3DataPort;
 //    wrkConf3->numWorkerThreads.setValue(GetParam());
 //    wrkConf3->connectSinksAsync.setValue(true);
+//    wrkConf3->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
 //    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
@@ -619,6 +624,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     coordinatorConfig->restPort.setValue(*restPort);
     auto crdWorkerDataPort = getAvailablePort();
     coordinatorConfig->worker.dataPort = *crdWorkerDataPort;
+    coordinatorConfig->worker.connectSourceEventChannelsAsync.setValue(true);
 
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -637,6 +643,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(GetParam());
     wrkConf1->connectSinksAsync.setValue(true);
+    wrkConf1->connectSourceEventChannelsAsync.setValue(true);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
     wrkConf1->physicalSourceTypes.add(lambdaSourceType);
@@ -655,6 +662,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     wrkConf2->dataPort = *wrk2DataPort;
     wrkConf2->numWorkerThreads.setValue(GetParam());
     wrkConf2->connectSinksAsync.setValue(true);
+    wrkConf2->connectSourceEventChannelsAsync.setValue(true);
     wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
@@ -718,6 +726,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         wrkConf3->dataPort = *wrk3DataPort;
         wrkConf3->numWorkerThreads.setValue(GetParam());
         wrkConf3->connectSinksAsync.setValue(true);
+        wrkConf3->connectSourceEventChannelsAsync.setValue(true);
         wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
         NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
         bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1124,6 +1133,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 //    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 //    wrkConf1->numWorkerThreads.setValue(GetParam());
 //    wrkConf1->connectSinksAsync.setValue(true);
+//    wrkConf3->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //
 //    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
@@ -1142,6 +1152,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 //    wrkConf2->dataPort = *wrk2DataPort;
 //    wrkConf2->numWorkerThreads.setValue(GetParam());
 //    wrkConf2->connectSinksAsync.setValue(true);
+//    wrkConf2->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
 //    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1155,6 +1166,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 //    wrkConf3->dataPort = *wrk3DataPort;
 //    wrkConf3->numWorkerThreads.setValue(GetParam());
 //    wrkConf3->connectSinksAsync.setValue(true);
+//    wrkConf3->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
 //    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1470,6 +1482,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 //    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 //    wrkConf1->numWorkerThreads.setValue(GetParam());
 //    wrkConf1->connectSinksAsync.setValue(true);
+//    wrkConf1->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //
 //    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
@@ -1488,6 +1501,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 //    wrkConf2->dataPort = *wrk2DataPort;
 //    wrkConf2->numWorkerThreads.setValue(GetParam());
 //    wrkConf2->connectSinksAsync.setValue(true);
+//    wrkConf2->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
 //    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1501,6 +1515,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 //    wrkConf3->dataPort = *wrk3DataPort;
 //    wrkConf3->numWorkerThreads.setValue(GetParam());
 //    wrkConf3->connectSinksAsync.setValue(true);
+//    wrkConf3->connectSourceEventChannelsAsync.setValue(true);
 //    wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 //    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
 //    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
