@@ -57,10 +57,10 @@ class TopologyChangeRequest : public AbstractUniRequest {
                                              const std::shared_ptr<Optimizer::ExecutionNode>& upstreamExecutionNode,
                                              const std::shared_ptr<Optimizer::ExecutionNode>& downstreamExecutionNode);
 
-    std::pair<LogicalOperatorNodePtr, WorkerId> findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
+    LogicalOperatorNodePtr findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
                                                                                WorkerId downstreamWorkerId,
                                                                                SharedQueryId sharedQueryId);
-    std::pair<LogicalOperatorNodePtr, WorkerId> findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
+    LogicalOperatorNodePtr findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
                                                                                  WorkerId upstreamWorkerId,
                                                                                  SharedQueryId sharedQueryId);
     std::pair<std::set<OperatorId>, std::set<OperatorId>> findAffectedTopologySubGraph(const SharedQueryId& sharedQueryPlanId,
