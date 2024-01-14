@@ -286,6 +286,11 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC, false, "Let network sinks use a separate thread to establish a connection"};
 
+    /**
+     * @brief Let network sources use a separate thread to establish an event channel to their upstream sink
+     */
+    BoolOption connectSourceEventChannelsAsync = {CONNECT_SOURCE_EVENT_CHANNELS_ASYNC, false, "Let network sources use a separate thread to establish a the upstream event channel"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&workerId,
@@ -322,6 +327,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
                 &configPath,
+                &connectSinksAsync,
+                &connectSourceEventChannelsAsync,
 #ifdef TFDEF
                 &isTensorflowSupported
 #endif
