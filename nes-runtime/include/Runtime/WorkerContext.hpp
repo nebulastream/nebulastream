@@ -57,6 +57,9 @@ class WorkerContext {
         dataChannelFutures;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
+    /// reverse event channels that have not established a connection yet
+    std::unordered_map<NES::OperatorId, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>>
+        reverseEventChannelFutures;
     /// worker local buffer pool stored in tls
     static folly::ThreadLocalPtr<WorkerContextBufferProvider> localBufferPoolTLS;
     /// worker local buffer pool stored :: use this for fast access
@@ -266,6 +269,11 @@ class WorkerContext {
      * @return
      */
     [[maybe_unused]] bool doesNetworkChannelExist(OperatorId operatorId);
+
+    void storeEventChannelFutures(OperatorId id, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+    std::optional<Network::EventOnlyNetworkChannelPtr> getAsyncEventChannelConnectionResult(OperatorId operatorId);
+    Network::EventOnlyNetworkChannelPtr waitForAsyncConnectionEventChannel(OperatorId operatorId);
+    bool doesEventChannelExist(OperatorId operatorId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime

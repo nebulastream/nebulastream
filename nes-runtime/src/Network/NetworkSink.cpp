@@ -127,7 +127,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
             //check if the worker is configured to use async connecting
-            if (nodeEngine->getConnectSinksAsync()) {
+            if (networkManager->getConnectSinksAsync()) {
                 //async connecting is activated. Delegate connection process to another thread and start the future
                 auto reconf = Runtime::ReconfigurationMessage(sharedQueryId,
                                                               decomposedQueryPlanId,
