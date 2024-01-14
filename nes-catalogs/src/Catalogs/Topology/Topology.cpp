@@ -331,6 +331,68 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<WorkerI
     return mergeSubGraphs(startNodesOfGraph);
 }
 
+std::vector<WorkerId> Topology::findAllDownstreamNodes(const WorkerId& startNode,
+                                      std::set<WorkerId>& reachableDownstreamNodes,
+                                      std::vector<WorkerId> targetNodes) {
+
+    std::vector<WorkerId> found;
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.tryWLock();
+    if (!lockedWorkerIdToTopologyNodeMap) {
+        NES_WARNING("Unable to acquire write lock on the topology to process the find path between request");
+        return {};
+    }
+
+    auto readLockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[startNode].tryRLock();
+    if (!readLockedTopologyNode) {
+        NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
+                    startNode);
+        return {};
+    }
+
+    //bfs from start node in downstream direction
+    std::queue<WorkerId> queue;
+    queue.push((*readLockedTopologyNode)->getId());
+    while (!targetNodes.empty() && !queue.empty()) {
+        const auto currentNodeId = queue.front();
+        queue.pop();
+
+        //check if this node was visited before
+        if (reachableDownstreamNodes.contains(currentNodeId)) {
+            continue;
+        }
+
+        //record this node as reachable downstream of the start node
+        reachableDownstreamNodes.insert(currentNodeId);
+
+        //if this node is one of the target nodes, record that it was found and remove it from the list ofr target nodes
+        auto targetNodeIterator = std::find(targetNodes.begin(), targetNodes.end(), currentNodeId);
+        if (targetNodeIterator != targetNodes.end()) {
+            found.push_back(*targetNodeIterator);
+            targetNodes.erase(targetNodeIterator);
+        }
+
+        //if all target nodes were found, return them
+        if (targetNodes.empty()) {
+            return found;
+        }
+
+        //lock the topology node
+        auto lockedNode = (*lockedWorkerIdToTopologyNodeMap)[currentNodeId].tryRLock();
+        if (!lockedNode) {
+            NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
+                        currentNodeId);
+            return {};
+        }
+
+        //insert the parents of the locked node into the queue
+        for (const auto& parent : (*lockedNode)->getParents()) {
+            auto parentId = parent->as<TopologyNode>()->getId();
+            queue.push(parentId);
+        }
+    }
+    return found;
+}
+
 std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopologyNodeId, WorkerId destinationTopologyNodeId) {
 
     NES_DEBUG("Topology: Finding path between {} and {}", sourceTopologyNodeId, destinationTopologyNodeId);
