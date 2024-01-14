@@ -56,13 +56,6 @@ TopologyChangeRequest::TopologyChangeRequest(std::vector<std::pair<WorkerId, Wor
     NES_ASSERT(!(removedLinks.empty() && addedLinks.empty()), "Could not find any removed or added links");
 }
 
-//todo: for testing, remove
-TopologyChangeRequest::TopologyChangeRequest(uint8_t maxRetries,
-                                             TopologyPtr topology,
-                                             GlobalQueryPlanPtr globalQueryPlan,
-                                             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan)
-    : AbstractUniRequest({}, maxRetries), topology(topology), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan) {}
-
 std::vector<AbstractRequestPtr>
 TopologyChangeRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     topology = storageHandle->getTopologyHandle(requestId);
@@ -73,7 +66,7 @@ TopologyChangeRequest::executeRequestLogic(const StorageHandlerPtr& storageHandl
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
     queryCatalogService = storageHandle->getQueryCatalogServiceHandle(requestId);
 
-    //no function yer to process multiple removed links
+    //no function yet to process multiple removed links
     if (removedLinks.size() > 1) {
         NES_NOT_IMPLEMENTED();
     }
@@ -220,7 +213,7 @@ void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sh
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
 
     auto [upstreamOperatorIds, downstreamOperatorIds] =
-        findAffectedTopologySubGraph(sharedQueryPlanId, upstreamExecutionNode, downstreamExecutionNode);
+        findAffectedTopologySubGraph(sharedQueryPlan, upstreamExecutionNode, downstreamExecutionNode, topology, globalExecutionPlan);
     //4. Mark the operators for re-operator placement
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 
@@ -258,7 +251,8 @@ void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sh
 
 LogicalOperatorNodePtr TopologyChangeRequest::findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
                                                                              WorkerId downstreamWorkerId,
-                                                                             SharedQueryId sharedQueryId) {
+                                                                             SharedQueryId sharedQueryId,
+                                                                             const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
     //find the upstream non system generated operators of the sink
     std::queue<std::pair<LogicalOperatorNodePtr, WorkerId>> queue;
     queue.emplace(downstreamOperator, downstreamWorkerId);
@@ -291,7 +285,8 @@ LogicalOperatorNodePtr TopologyChangeRequest::findUpstreamNonSystemOperators(con
             auto networkSourceDescriptor =
                 std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
             if (networkSourceDescriptor) {
-                auto upstreamSinkAndWorker = findUpstreamNetworkSinkAndWorkerId(sharedQueryId, workerId, networkSourceDescriptor);
+                auto upstreamSinkAndWorker =
+                    findUpstreamNetworkSinkAndWorkerId(sharedQueryId, workerId, networkSourceDescriptor, globalExecutionPlan);
                 queue.push(upstreamSinkAndWorker);
                 continue;
             }
@@ -306,9 +301,11 @@ LogicalOperatorNodePtr TopologyChangeRequest::findUpstreamNonSystemOperators(con
     return {};
 }
 
-LogicalOperatorNodePtr TopologyChangeRequest::findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
-                                                                               WorkerId upstreamWorkerId,
-                                                                               SharedQueryId sharedQueryId) {
+LogicalOperatorNodePtr
+TopologyChangeRequest::findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
+                                                        WorkerId upstreamWorkerId,
+                                                        SharedQueryId sharedQueryId,
+                                                        const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
     //find the upstream non system generated operators of the sink
     std::queue<std::pair<LogicalOperatorNodePtr, WorkerId>> queue;
     queue.emplace(upstreamOperator, upstreamWorkerId);
@@ -329,7 +326,7 @@ LogicalOperatorNodePtr TopologyChangeRequest::findDownstreamNonSystemOperators(c
                 std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(sinkOperator->getSinkDescriptor());
             if (networkSinkDescriptor) {
                 auto downstreamSourceAndWorker =
-                    findDownstreamNetworkSourceAndWorkerId(sharedQueryId, workerId, networkSinkDescriptor);
+                    findDownstreamNetworkSourceAndWorkerId(sharedQueryId, workerId, networkSinkDescriptor, globalExecutionPlan);
                 queue.push(downstreamSourceAndWorker);
                 continue;
             }
@@ -358,18 +355,22 @@ LogicalOperatorNodePtr TopologyChangeRequest::findDownstreamNonSystemOperators(c
 }
 
 std::pair<std::set<OperatorId>, std::set<OperatorId>>
-TopologyChangeRequest::findAffectedTopologySubGraph(const SharedQueryId& sharedQueryPlanId,
-                                                         const Optimizer::ExecutionNodePtr& upstreamNode,
-                                                         const Optimizer::ExecutionNodePtr& downstreamNode) {
+TopologyChangeRequest::findAffectedTopologySubGraph(const SharedQueryPlanPtr& sharedQueryPlan,
+                                                    const Optimizer::ExecutionNodePtr& upstreamNode,
+                                                    const Optimizer::ExecutionNodePtr& downstreamNode,
+                                                    const TopologyPtr& topology,
+                                                    const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
+    auto sharedQueryPlanId = sharedQueryPlan->getId();
     //find the pairs of source and sink operators that were using the removed link
     auto upstreamDownstreamOperatorPairs = findNetworkOperatorsForLink(sharedQueryPlanId, upstreamNode, downstreamNode);
     for (auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         //replace the system generated operators with their non system up- or downstream operators
-        upstreamOperator = findUpstreamNonSystemOperators(upstreamOperator, upstreamNode->getId(), sharedQueryPlanId);
-        downstreamOperator = findDownstreamNonSystemOperators(downstreamOperator, downstreamNode->getId(), sharedQueryPlanId);
+        upstreamOperator =
+            findUpstreamNonSystemOperators(upstreamOperator, upstreamNode->getId(), sharedQueryPlanId, globalExecutionPlan);
+        downstreamOperator =
+            findDownstreamNonSystemOperators(downstreamOperator, downstreamNode->getId(), sharedQueryPlanId, globalExecutionPlan);
     }
 
-    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryPlanId);
     auto queryPlanForSharedQuery = sharedQueryPlan->getQueryPlan();
     std::set<OperatorId> upstreamPinned;
     std::set<OperatorId> downstreamPinned;
@@ -480,7 +481,8 @@ TopologyChangeRequest::findNetworkOperatorsForLink(const SharedQueryId& sharedQu
 std::pair<SinkLogicalOperatorNodePtr, WorkerId>
 TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& sharedQueryPlanId,
                                                           const WorkerId workerId,
-                                                          const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor) {
+                                                          const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor,
+                                                          const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
     auto childNodeId = networkSourceDescriptor->getNodeLocation().getNodeId();
     auto subPlans = globalExecutionPlan->getExecutionNodeById(childNodeId)->getAllDecomposedQueryPlans(sharedQueryPlanId);
     for (const auto& plan : subPlans) {
@@ -499,7 +501,8 @@ TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& s
 std::pair<SourceLogicalOperatorNodePtr, WorkerId>
 TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(const SharedQueryId& sharedQueryPlanId,
                                                               const WorkerId workerId,
-                                                              const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor) {
+                                                              const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor,
+                                                              const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
     auto parentNodeId = networkSinkDescriptor->getNodeLocation().getNodeId();
     auto subPlans = globalExecutionPlan->getExecutionNodeById(parentNodeId)->getAllDecomposedQueryPlans(sharedQueryPlanId);
     for (const auto& plan : subPlans) {
@@ -514,10 +517,10 @@ TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(const SharedQueryI
     }
     throw std::exception();
 }
-void TopologyChangeRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr& ) {}
-std::vector<AbstractRequestPtr> TopologyChangeRequest::rollBack(std::exception_ptr , const StorageHandlerPtr& ) {
+void TopologyChangeRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+std::vector<AbstractRequestPtr> TopologyChangeRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) {
     return std::vector<AbstractRequestPtr>();
 }
-void TopologyChangeRequest::postRollbackHandle(std::exception_ptr , const StorageHandlerPtr& ) {}
+void TopologyChangeRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 void TopologyChangeRequest::postExecution(const StorageHandlerPtr&) {}
 };// namespace NES::RequestProcessor::Experimental
