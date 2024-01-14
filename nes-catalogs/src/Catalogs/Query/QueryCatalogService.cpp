@@ -340,46 +340,6 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
     return true;
 }
 
-bool QueryCatalogService::checkAndMarkForMigration(SharedQueryId sharedQueryId,
-                                                   QueryState querySubPlanStatus) {
-    std::unique_lock lock(serviceMutex);
-    NES_DEBUG("QueryCatalogService: Updating the status to {} for shared query "
-              "plan with id {}",
-              std::string(magic_enum::enum_name(querySubPlanStatus)),
-              sharedQueryId);
-
-    //Fetch query catalog entries
-    auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
-    for (auto& queryCatalogEntry : queryCatalogEntries) {
-        auto queryId = queryCatalogEntry->getQueryId();
-
-        //Check if query is in correct status
-        auto currentQueryStatus = queryCatalogEntry->getQueryState();
-        if (currentQueryStatus != QueryState::DEPLOYED && currentQueryStatus != QueryState::RUNNING
-            && currentQueryStatus != QueryState::REGISTERED && currentQueryStatus != QueryState::OPTIMIZING
-            && currentQueryStatus != QueryState::MIGRATING) {
-            NES_WARNING("Found query in {} but received {} for query id {}",
-                        queryCatalogEntry->getQueryStatusAsString(),
-                        std::string(magic_enum::enum_name(querySubPlanStatus)),
-                        queryId);
-            //todo #4089: fix what to do when this occurs
-            NES_ASSERT(false,
-                       "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
-                                         << std::string(magic_enum::enum_name(querySubPlanStatus))
-                                         << " for query id " << queryId);
-        }
-
-        queryCatalogEntry->setQueryStatus(querySubPlanStatus);
-
-        //todo: remove this?
-//        if (queryCatalogEntry->hasQuerySubPlanMetaData(querySubPlanId)) {
-//            auto subplanData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
-//            subplanData->updateStatus(QueryState::MARKED_FOR_MIGRATION);
-//        }
-    }
-    return true;
-}
-
 bool QueryCatalogService::updateQuerySubPlanStatus(SharedQueryId sharedQueryId,
                                                    DecomposedQueryPlanId querySubPlanId,
                                                    QueryState querySubPlanStatus) {

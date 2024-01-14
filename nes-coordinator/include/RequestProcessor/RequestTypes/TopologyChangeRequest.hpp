@@ -57,29 +57,37 @@ class TopologyChangeRequest : public AbstractUniRequest {
                                              const std::shared_ptr<Optimizer::ExecutionNode>& upstreamExecutionNode,
                                              const std::shared_ptr<Optimizer::ExecutionNode>& downstreamExecutionNode);
 
-    LogicalOperatorNodePtr findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
-                                                                               WorkerId downstreamWorkerId,
-                                                                               SharedQueryId sharedQueryId);
-    LogicalOperatorNodePtr findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
-                                                                                 WorkerId upstreamWorkerId,
-                                                                                 SharedQueryId sharedQueryId);
-    std::pair<std::set<OperatorId>, std::set<OperatorId>> findAffectedTopologySubGraph(const SharedQueryId& sharedQueryPlanId,
-                                                                 const Optimizer::ExecutionNodePtr& upstreamNode,
-                                                                 const Optimizer::ExecutionNodePtr& downstreamNode);
+    static LogicalOperatorNodePtr findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
+                                                                 WorkerId downstreamWorkerId,
+                                                                 SharedQueryId sharedQueryId,
+                                                                 const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan);
+    static LogicalOperatorNodePtr findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
+                                                                   WorkerId upstreamWorkerId,
+                                                                   SharedQueryId sharedQueryId,
+                                                                   const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan);
+    static std::pair<std::set<OperatorId>, std::set<OperatorId>>
+    findAffectedTopologySubGraph(const SharedQueryPlanPtr& sharedQueryPlan,
+                                 const Optimizer::ExecutionNodePtr& upstreamNode,
+                                 const Optimizer::ExecutionNodePtr& downstreamNode,
+                                 const TopologyPtr& topology,
+                                 const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan);
 
-    std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
+    static std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
     findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
                                 const Optimizer::ExecutionNodePtr& upstreamNode,
                                 const Optimizer::ExecutionNodePtr& downstreamNode);
-    std::pair<SinkLogicalOperatorNodePtr, WorkerId>
+
+    static std::pair<SinkLogicalOperatorNodePtr, WorkerId>
     findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& sharedQueryPlanId,
                                        const WorkerId workerId,
-                                       const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor);
+                                       const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor,
+                                       const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan);
 
-    std::pair<SourceLogicalOperatorNodePtr, WorkerId> findDownstreamNetworkSourceAndWorkerId(
-        const SharedQueryId& sharedQueryPlanId,
-        const WorkerId workerId,
-        const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor);
+    static std::pair<SourceLogicalOperatorNodePtr, WorkerId>
+    findDownstreamNetworkSourceAndWorkerId(const SharedQueryId& sharedQueryPlanId,
+                                           const WorkerId workerId,
+                                           const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor,
+                                           const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan);
     void processRemoveTopologyNodeRequest(WorkerId removedNodeId);
 
     std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
