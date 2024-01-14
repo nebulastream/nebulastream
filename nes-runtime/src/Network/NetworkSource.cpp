@@ -37,7 +37,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              std::chrono::milliseconds waitTime,
                              uint8_t retryTimes,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                             QuerySubPlanVersion version,
+                             DecomposedQueryPlanVersion version,
                              const std::string& physicalSourceName)
 
     : DataSource(std::move(schema),
@@ -284,7 +284,7 @@ void NetworkSource::onVersionUpdate(NetworkSourceDescriptor newDescriptor) {
     queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
 }
 
-QuerySubPlanVersion NetworkSource::getVersion() const { return version; }
+DecomposedQueryPlanVersion NetworkSource::getVersion() const { return version; }
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);

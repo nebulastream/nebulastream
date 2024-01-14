@@ -57,7 +57,7 @@ class NetworkSource : public DataSource {
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                  QuerySubPlanVersion version,
+                  DecomposedQueryPlanVersion version,
                   const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**
@@ -147,7 +147,7 @@ class NetworkSource : public DataSource {
     * @brief Getter for the initial version.
     * @return The version this source was started with
     */
-    QuerySubPlanVersion getVersion() const override;
+    DecomposedQueryPlanVersion getVersion() const override;
 
     bool bind();
 
@@ -160,7 +160,7 @@ class NetworkSource : public DataSource {
     // for event channel
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    QuerySubPlanVersion version;
+    DecomposedQueryPlanVersion version;
 };
 
 }// namespace NES::Network

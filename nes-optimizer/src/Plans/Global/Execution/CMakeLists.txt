@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-optimizer
-        DecomposedQueryPlan.cpp
         ExecutionNode.cpp
         GlobalExecutionPlan.cpp
 )

@@ -259,7 +259,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         //25. clean up the data structure
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-        globalExecutionPlan->removeQuerySubPlans(queryId);
+        globalExecutionPlan->removeAllDecomposedQueryPlans(queryId);
 
         //26. Set query status as Explained
         queryCatalogService->updateQueryStatus(queryId, QueryState::EXPLAINED, "");

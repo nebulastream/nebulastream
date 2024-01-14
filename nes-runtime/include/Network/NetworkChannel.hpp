@@ -88,7 +88,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
                                     int highWaterMark,
                                     std::chrono::milliseconds waitTime,
                                     uint8_t retryTimes,
-                                    QuerySubPlanVersion version,
+                                    DecomposedQueryPlanVersion version,
                                     std::optional<std::future<bool>> abortConnection = std::nullopt);
 };
 

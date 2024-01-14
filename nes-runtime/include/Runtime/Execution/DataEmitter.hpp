@@ -51,7 +51,7 @@ class DataEmitter : public Runtime::RuntimeEventListener {
      */
     virtual void onEvent(Runtime::BaseEvent&) override {}
 
-    virtual QuerySubPlanVersion getVersion() const {
+    virtual DecomposedQueryPlanVersion getVersion() const {
         NES_WARNING("Trying to get version of a data emitter that does not carry version information, returning 0");
         return 0;
     };

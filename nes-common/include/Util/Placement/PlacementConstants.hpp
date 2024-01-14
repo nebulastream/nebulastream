@@ -20,8 +20,8 @@
 namespace NES::Optimizer {
 
 const std::string PINNED_WORKER_ID = "PINNED_WORKER_ID";// Property indicating the location where the operator is pinned
-const std::string PLACED_SUB_PLAN_ID =
-    "PLACED_SUB_PLAN_ID";                 // Property indicating the id of the sub plan that contains this operator
+const std::string PLACED_DECOMPOSED_PLAN_ID =
+    "PLACED_DECOMPOSED_PLAN_ID";                 // Property indicating the id of the decomposed plan that contains this operator
 const std::string PROCESSED = "PROCESSED";// Property indicating if operator was processed for placement
 const std::string CO_LOCATED_UPSTREAM_OPERATORS =
     "CO_LOCATED_UPSTREAM_OPERATORS";// Property indicating if operator was processed for placement

@@ -27,7 +27,6 @@ message SerializableQueryPlan{
   map<uint64, SerializableOperator> operatorMap = 1;
   repeated uint64 rootOperatorIds = 2;
   optional uint64 queryId = 3;
-  optional uint64 querySubPlanId = 4;
 }
 
 message SubmitQueryRequest {

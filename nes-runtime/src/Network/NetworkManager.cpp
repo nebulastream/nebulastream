@@ -98,7 +98,7 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                                                Runtime::BufferManagerPtr bufferManager,
                                                                std::chrono::milliseconds waitTime,
                                                                uint8_t retryTimes,
-                                                               QuerySubPlanVersion version) {
+                                                               DecomposedQueryPlanVersion version) {
     NES_DEBUG("NetworkManager: Registering SubpartitionProducer: {}", nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
     return NetworkChannel::create(server->getContext(),
@@ -120,7 +120,7 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
                                                   uint8_t retryTimes,
                                                   Runtime::ReconfigurationMessage reconfigurationMessage,
                                                   Runtime::QueryManagerPtr queryManager,
-                                                  QuerySubPlanVersion version) {
+                                                  DecomposedQueryPlanVersion version) {
     NES_DEBUG("NetworkManager: Asynchronously registering SubpartitionProducer: {}", nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
 

@@ -16,11 +16,12 @@
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBALEXECUTIONPLAN_HPP_
 
 #include <Identifiers.hpp>
+#include <folly/Synchronized.h>
 #include <map>
 #include <memory>
 #include <vector>
 
-namespace NES {
+namespace NES::Optimizer {
 
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
@@ -55,22 +56,14 @@ class GlobalExecutionPlan {
      * @param id: id of the execution node to be removed
      * @return true if operation succeeds
      */
-    //TODO: what should we do about its children? Also, a good location to release the occupied resources.
     bool removeExecutionNode(ExecutionNodeId id);
 
     /**
-     * Remove all the query sub plans for the input query
+     * Remove all the decomposed query plans for the input shared query plan id
      * @param sharedQueryId : the shared query id used for removing the input query
      * @return true if successful else false
      */
-    bool removeQuerySubPlans(SharedQueryId sharedQueryId);
-
-    /**
-     * Find is execution node exists.
-     * @param id: id of the execution node
-     * @return true if operation succeeds
-     */
-    bool checkIfExecutionNodeExists(ExecutionNodeId id);
+    bool removeAllDecomposedQueryPlans(SharedQueryId sharedQueryId);
 
     /**
      * Get the execution node
@@ -106,13 +99,15 @@ class GlobalExecutionPlan {
     std::map<uint64_t, uint32_t> getMapOfWorkerIdToOccupiedResource(QueryId sharedQueryId);
 
     /**
-     * @brief removes a query subplan if it exists at a specific node
-     * @param executionNodeId the id of the node hosting the subplans
-     * @param sharedQueryId the id of the shared query to which the subplan belongs
-     * @param subPlanId the id of the subplan
-     * @return true if the subplan was found and removed, false if it could not be found
+     * @brief removes a decomposed query plan if it exists at a specific node
+     * @param executionNodeId the id of the node hosting the decomposed query plan
+     * @param sharedQueryId the id of the shared query
+     * @param decomposedQueryPlanId the id of the decomposed query plan
+     * @return true if the decomposed was found and removed, false if it could not be found
      */
-    bool removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId, SharedQueryId sharedQueryId, DecomposedQueryPlanId subPlanId);
+    bool removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId,
+                                    SharedQueryId sharedQueryId,
+                                    DecomposedQueryPlanId decomposedQueryPlanId);
 
   private:
     /**
@@ -124,7 +119,7 @@ class GlobalExecutionPlan {
     /**
      * Index based on nodeId for faster access to the execution nodes
      */
-    std::map<ExecutionNodeId, ExecutionNodePtr> executionNodeIdToExecutionNodeMap;
+    std::map<ExecutionNodeId, ExecutionNodePtr> idToExecutionNodeMap;
 
     /**
      * Index based on shared query Id for faster access to the execution nodes
@@ -142,6 +137,6 @@ class GlobalExecutionPlan {
     std::vector<ExecutionNodePtr> rootNodes;
 };
 
-}// namespace NES
+}// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBALEXECUTIONPLAN_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBALEXECUTIONPLAN_HPP_

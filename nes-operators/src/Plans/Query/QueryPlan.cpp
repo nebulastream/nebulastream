@@ -27,13 +27,11 @@
 
 namespace NES {
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, DecomposedQueryPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators) {
-    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, std::move(rootOperators)));
+QueryPlanPtr QueryPlan::create(QueryId queryId, std::vector<OperatorNodePtr> rootOperators) {
+    return std::make_shared<QueryPlan>(QueryPlan(queryId, std::move(rootOperators)));
 }
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, DecomposedQueryPlanId querySubPlanId) {
-    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId));
-}
+QueryPlanPtr QueryPlan::create(QueryId queryId) { return std::make_shared<QueryPlan>(QueryPlan(queryId)); }
 
 QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
     return std::make_shared<QueryPlan>(QueryPlan(std::move(rootOperator)));
@@ -41,36 +39,16 @@ QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
 
 QueryPlanPtr QueryPlan::create() { return std::make_shared<QueryPlan>(QueryPlan()); }
 
-QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {}
+QueryPlan::QueryPlan() : queryId(INVALID_QUERY_ID) {}
 
-QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), querySubPlanId(INVALID_QUERY_SUB_PLAN_ID) {
+QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID) {
     rootOperators.push_back(std::move(rootOperator));
 }
 
-QueryPlan::QueryPlan(QueryId queryId, DecomposedQueryPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators)
-    : rootOperators(std::move(rootOperators)), queryId(queryId), querySubPlanId(querySubPlanId) {}
+QueryPlan::QueryPlan(QueryId queryId, std::vector<OperatorNodePtr> rootOperators)
+    : rootOperators(std::move(rootOperators)), queryId(queryId) {}
 
-QueryPlan::QueryPlan(QueryId queryId, DecomposedQueryPlanId querySubPlanId) : queryId(queryId), querySubPlanId(querySubPlanId) {}
-
-std::set<OperatorNodePtr> QueryPlan::getAllOperators() {
-
-    // Maintain a list of visited nodes as there are multiple root nodes
-    std::set<OperatorNodePtr> visitedOperators;
-    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
-    for (const auto& rootOperator : rootOperators) {
-        auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-        for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
-            auto visitingOp = (*itr)->as<OperatorNode>();
-            if (visitedOperators.contains(visitingOp)) {
-                // skip rest of the steps as the node found in already visited node list
-                continue;
-            }
-            NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
-            visitedOperators.insert(visitingOp);
-        }
-    }
-    return visitedOperators;
-}
+QueryPlan::QueryPlan(QueryId queryId) : queryId(queryId) {}
 
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
@@ -193,10 +171,6 @@ void QueryPlan::addRootOperator(const OperatorNodePtr& newRootOperator) {
     }
 }
 
-DecomposedQueryPlanId QueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
-
-void QueryPlan::setQuerySubPlanId(DecomposedQueryPlanId querySubPlanId) { this->querySubPlanId = querySubPlanId; }
-
 void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
     NES_DEBUG("QueryPlan: removing operator {} as root operator.", root->toString());
     auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](const OperatorNodePtr& rootOperator) {
@@ -268,12 +242,10 @@ QueryPlanPtr QueryPlan::copy() {
         duplicateRootOperators.push_back(operatorIdToOperatorMap[rootOperator->getId()]);
     }
     operatorIdToOperatorMap.clear();
-    auto newQueryPlan = QueryPlan::create(queryId, INVALID_QUERY_ID, duplicateRootOperators);
+    auto newQueryPlan = QueryPlan::create(queryId, duplicateRootOperators);
     newQueryPlan->setSourceConsumed(sourceConsumed);
     newQueryPlan->setPlacementStrategy(placementStrategy);
-    newQueryPlan->setQuerySubPlanId(querySubPlanId);
-    newQueryPlan->setQueryState(queryState);
-    newQueryPlan->version = version;
+    newQueryPlan->setQueryState(currentState);
     return newQueryPlan;
 }
 
@@ -356,12 +328,8 @@ QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& s
     return operatorsBetween;
 }
 
-QueryState QueryPlan::getQueryState() { return queryState; }
+QueryState QueryPlan::getQueryState() { return currentState; }
 
-void QueryPlan::setQueryState(QueryState queryState) { this->queryState = queryState; }
-
-void QueryPlan::setVersion(QuerySubPlanVersion newVersion) { version = newVersion; }
-
-QuerySubPlanVersion QueryPlan::getVersion() { return version; }
+void QueryPlan::setQueryState(QueryState newState) { currentState = newState; }
 
 }// namespace NES

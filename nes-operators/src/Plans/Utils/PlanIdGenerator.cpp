@@ -27,7 +27,7 @@ SharedQueryId PlanIdGenerator::getNextSharedQueryId() {
     return ++id;
 }
 
-uint64_t PlanIdGenerator::getNextQuerySubPlanId() {
+uint64_t PlanIdGenerator::getNextDecomposedQueryPlanId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }

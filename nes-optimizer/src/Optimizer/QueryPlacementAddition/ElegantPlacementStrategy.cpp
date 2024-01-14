@@ -72,7 +72,7 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                                         QuerySubPlanVersion querySubPlanVersion) {
+                                                         DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
         NES_ASSERT(serviceURL != EMPTY_STRING, "ELEGANT planner URL is not set in elegant.plannerServiceURL");

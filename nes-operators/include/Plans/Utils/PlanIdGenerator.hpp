@@ -35,7 +35,7 @@ class PlanIdGenerator {
      * @brief Returns the next free query Sub Plan Id
      * @return query sub plan id
      */
-    static DecomposedQueryPlanId getNextQuerySubPlanId();
+    static DecomposedQueryPlanId getNextDecomposedQueryPlanId();
 
     /**
      * @brief Returns the next free Query id

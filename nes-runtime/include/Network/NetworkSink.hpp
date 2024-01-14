@@ -51,7 +51,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
-                         QuerySubPlanVersion version);
+                         DecomposedQueryPlanVersion version);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -160,7 +160,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     void clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                              const NodeLocation& newNodeLocation,
                                              NesPartition newNesPartition,
-                                             QuerySubPlanVersion newVersion);
+                                             DecomposedQueryPlanVersion newVersion);
 
     /**
      * @brief write all data from the reconnect buffer to the currently active network channel
@@ -187,7 +187,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    QuerySubPlanVersion version;
+    DecomposedQueryPlanVersion version;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

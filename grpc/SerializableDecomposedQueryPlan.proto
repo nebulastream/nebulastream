@@ -12,4 +12,20 @@
     limitations under the License.
 */
 
-#include <Plans/Global/Execution/DecomposedQueryPlan.hpp>
+syntax = "proto3";
+import "google/protobuf/any.proto";
+import "SerializableOperator.proto";
+package NES;
+
+option java_package = "stream.nebula.protobuf";
+option java_multiple_files = true;
+
+/*
+The serializable wrapper definition for query plan
+ */
+message SerializableDecomposedQueryPlan{
+  map<uint64, SerializableOperator> operatorMap = 1;
+  repeated uint64 rootOperatorIds = 2;
+  optional uint64 decomposedQueryPlanId = 3;
+  optional uint64 sharedQueryPlanId = 4;
+}

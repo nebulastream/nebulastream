@@ -28,6 +28,9 @@ using NodePtr = std::shared_ptr<Node>;
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
+
 namespace Catalogs {
 
 namespace Source {
@@ -66,21 +69,35 @@ class TypeInferencePhase {
      * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
      * 2. Propagate the input and output schemas from source operators to the sink operators.
      * 3. If a operator contains expression, we infer the result stamp of this operators.
-     * @param QueryPlanPtr the query plan
+     * @param queryPlan the query plan
+     */
+    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+
+    /**
+     * @brief Performs type inference on the given decomposed query plan.
+     * This involves the following steps.
+     * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
+     * 2. Propagate the input and output schemas from source operators to the sink operators.
+     * 3. If a operator contains expression, we infer the result stamp of this operators.
+     * @param decomposedQueryPlan the decomposed query plan
+     */
+    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
+
+  private:
+    /**
+     * @brief Infer schema for all operators between given source and sink operators.
+     * @param planId: the id of the plan
+     * @param sourceOperators : the source operators
+     * @param sinkOperators : the sink operators
      * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
      * @return QueryPlanPtr
      * @throws TypeInferenceException if inferring the data types into the query failed
      * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
      */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+    void performTypeInference(uint64_t planId,
+                              std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
+                              std::vector<SinkLogicalOperatorNodePtr> sinkOperators);
 
-  private:
-    /**
-     * @brief creates the corresponding source descriptor from a given source name.
-     * @param logicalSourceName
-     * @return SourceDescriptorPtr
-     */
-    SourceDescriptorPtr createSourceDescriptor(std::string sourceName);
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
@@ -88,4 +105,4 @@ class TypeInferencePhase {
 }// namespace Optimizer
 }// namespace NES
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_

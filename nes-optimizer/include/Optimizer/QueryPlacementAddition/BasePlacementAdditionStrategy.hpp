@@ -31,12 +31,6 @@
 
 namespace NES {
 
-class ExecutionNode;
-using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
-
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
@@ -54,14 +48,14 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class LogicalOperatorNode;
 using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 namespace Catalogs::Source {
 class SourceCatalog;
@@ -70,6 +64,12 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 namespace Optimizer {
 
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class ExecutionNode;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
+
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
@@ -77,7 +77,7 @@ class BasePlacementAdditionStrategy;
 using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;
 
 using PlacementMatrix = std::vector<std::vector<bool>>;
-using ComputedSubQueryPlans = std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>;
+using ComputedDecomposedQueryPlans = std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>>;
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
@@ -112,10 +112,9 @@ class BasePlacementAdditionStrategy {
     virtual bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                           QuerySubPlanVersion querySubPlanVersion) = 0;
+                                           DecomposedQueryPlanVersion querySubPlanVersion) = 0;
 
   protected:
-
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators
      * @param upStreamPinnedOperators: the pinned upstream operators
@@ -131,15 +130,15 @@ class BasePlacementAdditionStrategy {
      * @param pinnedUpStreamOperators the upstream operators
      * @param pinnedDownStreamOperators the downstream operators
      */
-    ComputedSubQueryPlans computeQuerySubPlans(SharedQueryId sharedQueryId,
+    ComputedDecomposedQueryPlans computeQuerySubPlans(SharedQueryId sharedQueryId,
                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Add network source and sink operators
-     * @param computedSubQueryPlans: update the computed sub query plan by adding network source and sink operators
+     * @param computedDecomposedQueryPlans: update the computed sub query plan by adding network source and sink operators
      */
-    void addNetworkOperators(ComputedSubQueryPlans& computedSubQueryPlans);
+    void addNetworkOperators(ComputedDecomposedQueryPlans& computedDecomposedQueryPlans);
 
     /**
      * @brief Add the computed query sub plans tot he global execution plan
@@ -149,8 +148,8 @@ class BasePlacementAdditionStrategy {
      * @return true if global execution plan gets updated successfully else false
      */
     bool updateExecutionNodes(SharedQueryId sharedQueryId,
-                              ComputedSubQueryPlans& computedSubQueryPlans,
-                              QuerySubPlanVersion querySubPlanVersion);
+                              ComputedDecomposedQueryPlans& computedSubQueryPlans,
+                              DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
      * @brief Get Execution node for the input topology node

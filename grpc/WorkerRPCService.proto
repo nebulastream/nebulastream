@@ -13,7 +13,7 @@
 */
 
 syntax = "proto3";
-import "SerializableQueryPlan.proto";
+import "SerializableDecomposedQueryPlan.proto";
 import "WorkerLocation.proto";
 
 service WorkerRPCService {
@@ -44,7 +44,7 @@ service WorkerRPCService {
 }
 
 message DeployQueryRequest {
-  NES.SerializableQueryPlan queryPlan = 3;
+  NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
 }
 
 message DeployQueryReply {
@@ -60,7 +60,7 @@ message UndeployQueryReply {
 }
 
 message RegisterQueryRequest {
-  NES.SerializableQueryPlan queryPlan = 3;
+  NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
 
 }
 
@@ -69,7 +69,7 @@ message RegisterQueryReply {
 }
 
 message ReconfigureQueryRequest {
-  NES.SerializableQueryPlan queryPlan = 1;
+  NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
 }
 
 message ReconfigureQueryReply {

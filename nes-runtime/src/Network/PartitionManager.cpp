@@ -42,7 +42,7 @@ void PartitionManager::PartitionConsumerEntry::unpin() {
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
-QuerySubPlanVersion PartitionManager::PartitionConsumerEntry::getVersion() { return consumer->getVersion(); }
+DecomposedQueryPlanVersion PartitionManager::PartitionConsumerEntry::getVersion() { return consumer->getVersion(); }
 
 uint64_t PartitionManager::PartitionConsumerEntry::getDisconnectCount() const { return disconnectCount; }
 
@@ -156,7 +156,7 @@ bool PartitionManager::startNewVersion(NesPartition partition) {
     return false;
 }
 
-QuerySubPlanVersion PartitionManager::getVersion(NesPartition partition) {
+DecomposedQueryPlanVersion PartitionManager::getVersion(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
         return it->second.getVersion();

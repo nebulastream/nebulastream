@@ -59,7 +59,7 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
 bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                            QuerySubPlanVersion querySubPlanVersion) {
+                                            DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
         NES_INFO("Performing placement of the input query plan with id {}", sharedQueryId);
