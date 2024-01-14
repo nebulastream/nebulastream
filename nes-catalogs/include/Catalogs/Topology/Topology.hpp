@@ -20,6 +20,7 @@
 #include <any>
 #include <folly/Synchronized.h>
 #include <map>
+#include <set>
 #include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -317,6 +318,10 @@ class Topology {
      * @return string object representing topology information
      */
     std::string toString();
+
+    std::vector<WorkerId> findAllDownstreamNodes(const WorkerId& startNode,
+                                                           std::set<WorkerId>& reachableDownstreamNodes,
+                                                           std::vector<WorkerId> targetNodes);
 
   private:
     explicit Topology();
