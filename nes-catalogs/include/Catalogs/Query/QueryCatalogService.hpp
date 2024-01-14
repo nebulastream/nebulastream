@@ -175,15 +175,6 @@ class QueryCatalogService {
      */
     void checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
-    /**
-     * Indicate that a query sub plan will be stopped and the operators will be deployed somewhere else. This has to
-     * be called before entering the query deployment phase for a shared query that is to be redeployed.
-     * @param sharedQueryId: the query id
-     * @param querySubPlanId : query sub plan id
-     * @param querySubPlanStatus : the new status
-     * @return true if successful else false
-     */
-    bool checkAndMarkForMigration(SharedQueryId sharedQueryId, QueryState querySubPlanStatus);
   private:
     /**
      * Handle soft stop for sub query plans

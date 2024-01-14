@@ -319,6 +319,15 @@ class Topology {
      */
     std::string toString();
 
+    /**
+     * @brief starts a BFS at the node with the supplied id and traverses downstream until either no all downstream roots
+     * are reached or all of the supplied target nodes have been found
+     * @param startNode the starting point of the BFS
+     * @param reachableDownstreamNodes reference to a into which the ids of all visited nodes will be inserted
+     * @param targetNodes a list of node ids. Once all nodes in this list have been visited the function will return,
+     * even if there are further downstream nodes that have not been visited
+     * @return a vector containing all nodes the were both in the supplied target nodes and have been visited during the BFS
+     */
     std::vector<WorkerId> findAllDownstreamNodes(const WorkerId& startNode,
                                                            std::set<WorkerId>& reachableDownstreamNodes,
                                                            std::vector<WorkerId> targetNodes);

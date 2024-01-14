@@ -252,6 +252,22 @@ class BasePlacementAdditionStrategy {
                                           const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
 
   private:
+    /**
+     * @brief
+     * @param querySubPlanVersion
+     * @param computedQuerySubPlan
+     * @param matchingPlacedLeafOperator
+     * @param newOperator
+     * @return
+     */
+    static bool tryMergingSink(QuerySubPlanVersion querySubPlanVersion,
+                               const QueryPlanPtr& computedQuerySubPlan,
+                               const NodePtr& matchingPlacedLeafOperator,
+                               const NodePtr& newOperator) ;
+    static bool tryMergingSource(QuerySubPlanVersion querySubPlanVersion,
+                                 const NodePtr& pinnedRootOperator,
+                                 const NodePtr& matchingPinnedRootOperator,
+                                 const NodePtr& newOperator) ;
     //Number of retries to connect to downstream source operators
     static constexpr auto SINK_RETRIES = 100;
     //Time interval in which to retry
