@@ -183,7 +183,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                                                                  localBufferManager,
                                                                                  waitTime,
                                                                                  retryTimes);
-                workerContext.storeEventChannelFutures(this->operatorId, std::move(channelFuture));
+                workerContext.storeEventChannelFuture(this->operatorId, std::move(channelFuture));
                 break;
             } else {
                 auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
@@ -330,6 +330,9 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
             }
             workerContext.storeEventOnlyChannel(this->operatorId, std::move(senderChannelOptional.value()));
             senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+            if (!senderChannel) {
+                return;
+            }
         }
 
         senderChannel->sendEvent<Runtime::StartSourceEvent>();

@@ -42,6 +42,8 @@ class NetworkManager {
      * @param exchangeProtocol
      * @param senderHighWatermark
      * @param numServerThread
+     * @param connectSinksAsync if true, sinks will use a dedicated thread when attempting to establish a network channel
+     * @param connectSourceEventChannelsAsync if true, source will use a dedicated thread when attempting to establish an event channel
      * @return the shared_ptr object
      */
     static NetworkManagerPtr create(uint64_t nodeEngineId,
@@ -63,6 +65,8 @@ class NetworkManager {
      * @param bufferManager
      * @param senderHighWatermark
      * @param numServerThread
+     * @param connectSinksAsync if true, sinks will use a dedicated thread when attempting to establish a network channel
+     * @param connectSourceEventChannelsAsync if true, source will use a dedicated thread when attempting to establish an event channel
      */
     explicit NetworkManager(uint64_t nodeEngineId,
                             const std::string& hostname,
@@ -206,6 +210,20 @@ class NetworkManager {
      */
     uint16_t getServerDataPort() const;
 
+    /**
+     * @brief This method is called to asynchronously register an event produce. It returns a future
+     * that on completion will contain a pointer to the EventChannel if the connection to the destination server is successful, or
+     * nullptr otherwise
+     * @param nodeLocation is the destination
+     * @param nesPartition indicates the partition
+     * @param bufferManager a pointer the buffer manager
+     * @param waitTime time in seconds to wait until a retry is called
+     * @param retryTimes times to retry a connectio.
+     * @param version the version number which will be used by the receiver to determine if this channel will be accepted
+     * @return a pair consisting of a future containing the data network channel on completion and a promise that aborts the connection process when
+     * its value is set (abortion not yet implemented)
+     */
+    //todo #4490: implement aborting connection attempt if returend promise is set
     std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>>
     registerSubpartitionEventProducerAsync(const NodeLocation& nodeLocation,
                                            const NesPartition& nesPartition,

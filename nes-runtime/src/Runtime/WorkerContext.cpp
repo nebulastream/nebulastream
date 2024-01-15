@@ -77,8 +77,8 @@ void WorkerContext::storeNetworkChannelFuture(
     dataChannelFutures[id] = std::move(channelFuture);
 }
 
-void WorkerContext::storeEventChannelFutures(
-    NES::OperatorId id,
+void WorkerContext::storeEventChannelFuture(
+    OperatorId id,
     std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
     reverseEventChannelFutures[id] = std::move(channelFuture);
