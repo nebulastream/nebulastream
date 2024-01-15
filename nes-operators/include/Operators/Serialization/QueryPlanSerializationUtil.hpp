@@ -45,7 +45,19 @@ class QueryPlanSerializationUtil {
      * @return the pointer to the deserialized query plan
      */
     static QueryPlanPtr deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan);
+
+    /**
+     * @brief De-serialize a query state enum
+     * @param serializedQueryState a serialized query state
+     * @return the deserialized query state
+     */
     static NES::QueryState deserializeQueryState(NES::SerializableQueryState serializedQueryState);
+
+    /**
+     * @brief Serialize a query state enum
+     * @param queryState a query state
+     * @return the serialized query state
+     */
     static SerializableQueryState serializeQueryState(QueryState queryState);
 };
 }// namespace NES

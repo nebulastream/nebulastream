@@ -1,15 +1,15 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-    https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include <API/QueryAPI.hpp>
@@ -191,7 +191,7 @@ TEST_F(TopologyChangeRequestTest, testFindUpstreamNetworkSource) {
     ASSERT_EQ(downstreamSource, sourceOperatorNodeWrk1);
 }
 
-TEST_F(TopologyChangeRequestTest, testDifferentReachabilities) {
+TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
@@ -679,11 +679,11 @@ TEST_F(TopologyChangeRequestTest, testDifferentReachabilities) {
     auto sharedQueryPlan = SharedQueryPlan::create(innerSharedQueryPlan);
 
     auto [upstreamPinned, downStreamPinned] =
-        topologyChangeRequest->findAffectedTopologySubGraph(sharedQueryPlan,
-                                                            globalExecutionPlan->getExecutionNodeById(6),
-                                                            globalExecutionPlan->getExecutionNodeById(3),
-                                                            topology,
-                                                            globalExecutionPlan);
+        topologyChangeRequest->findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
+                                                                        globalExecutionPlan->getExecutionNodeById(6),
+                                                                        globalExecutionPlan->getExecutionNodeById(3),
+                                                                        topology,
+                                                                        globalExecutionPlan);
     ASSERT_EQ(upstreamPinned.size(), 3);
     ASSERT_TRUE(upstreamPinned.contains(13));
     ASSERT_TRUE(upstreamPinned.contains(17));

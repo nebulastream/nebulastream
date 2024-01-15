@@ -57,7 +57,7 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     };
 
     /**
-     * @brief reconfigure with sink to perform an update of its version
+     * @brief start a previously scheduled new version for this data emitter
      */
     virtual bool startNewVersion(){ return false; };
 };

@@ -33,7 +33,7 @@ namespace NES::Network {
 class NetworkSource : public DataSource {
 
   public:
-    /*
+    /**
      * @param SchemaPtr
      * @param bufferManager
      * @param queryManager
@@ -45,6 +45,7 @@ class NetworkSource : public DataSource {
      * @param retryTimes
      * @param successors
      * @param version The initial version number of this source when it starts
+     * @param uniqueNetworkSourceIdentifier system wide unique id that persists even if the partition of this source is changed
      * @param physicalSourceName
      */
     NetworkSource(SchemaPtr schema,
@@ -139,8 +140,9 @@ class NetworkSource : public DataSource {
     void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
 
     /**
-     * @brief Reconfigures this sink with ReconfigurationType::UpdateVersion causing it to close event channels to the old
+     * @brief Reconfigures this source with ReconfigurationType::UpdateVersion causing it to close event channels to the old
      * upstream sink and open channels to the new one
+     * @return true if a scheduled new version was found and applied, false otherwise
      */
     bool startNewVersion() override;
 
@@ -156,6 +158,11 @@ class NetworkSource : public DataSource {
      */
     OperatorId getUniqueId() const;
 
+    /**
+     * @brief set a new source descriptor to be applied once startNewVersion() is called
+     * @param networkSourceDescriptor the new descriptor
+     * @return true if the partition to be scheduled if different from the current one and the descriptor was scheduled.
+     */
     bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
 
     bool bind();
@@ -170,7 +177,7 @@ class NetworkSource : public DataSource {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     QuerySubPlanVersion version;
-    uint64_t uniqueNetworkSourceIdentifier;
+    const uint64_t uniqueNetworkSourceIdentifier;
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
 };
 

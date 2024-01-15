@@ -253,21 +253,32 @@ class BasePlacementAdditionStrategy {
 
   private:
     /**
-     * @brief
-     * @param querySubPlanVersion
-     * @param computedQuerySubPlan
-     * @param matchingPlacedLeafOperator
-     * @param newOperator
-     * @return
+     * @brief check if a computed sink operator corresponds to a placed sink that is to be reconfigured. If so,
+     * update the version, the receiver location and the partition of the placed sink
+     * @param querySubPlanVersion the version to apply to the reconfigured sink
+     * @param computedQuerySubPlan the sub plan containing the newly computed changed to be applied to the placed plans
+     * @param upstreamOperatorOfPlacedSinksToCheck the placed operator whose parents are to be checked if they can be
+     * merged with the new sink
+     * @param newOperator the new sink which is to be checked if ti can be merged with an existing sink
+     * @return true if merging was performed, false if no matching sink could be found
      */
     static bool tryMergingSink(QuerySubPlanVersion querySubPlanVersion,
                                const QueryPlanPtr& computedQuerySubPlan,
-                               const NodePtr& matchingPlacedLeafOperator,
+                               const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
                                const NodePtr& newOperator) ;
+
+    /**
+     * @brief chack if a computed source operator corresponds to a placed source that is to be reconfigured. If so,
+     * update the version and the sender location of the placed source
+     * @param querySubPlanVersion the version to apply to the reconfigured sink
+     * @param placedDownstreamOperator
+     * @param newOperator
+     * @return
+     */
     static bool tryMergingSource(QuerySubPlanVersion querySubPlanVersion,
-                                 const NodePtr& pinnedRootOperator,
-                                 const NodePtr& matchingPinnedRootOperator,
-                                 const NodePtr& newOperator) ;
+                                 const NodePtr& placedDownstreamOperator,
+                                 const NodePtr& newOperator);
+
     //Number of retries to connect to downstream source operators
     static constexpr auto SINK_RETRIES = 100;
     //Time interval in which to retry

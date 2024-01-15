@@ -129,7 +129,6 @@ QueryState QueryPlanSerializationUtil::deserializeQueryState(SerializableQuerySt
         case QUERY_STATE_MARKED_FOR_REDEPLOYMENT: return QueryState::MARKED_FOR_REDEPLOYMENT;
         case QUERY_STATE_MARKED_FOR_MIGRATION: return QueryState::MARKED_FOR_MIGRATION;
         case QUERY_STATE_REDEPLOYED: return QueryState::REDEPLOYED;
-            //todo: throw exception here
         case SerializableQueryState_INT_MIN_SENTINEL_DO_NOT_USE_: NES_FATAL_ERROR("unexpected value"); return QueryState::REGISTERED;
         case SerializableQueryState_INT_MAX_SENTINEL_DO_NOT_USE_: NES_FATAL_ERROR("unexpected value"); return QueryState::REGISTERED;
     }

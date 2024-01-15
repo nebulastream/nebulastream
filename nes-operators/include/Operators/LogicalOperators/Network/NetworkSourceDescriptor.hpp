@@ -35,6 +35,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @param nesPartition
      * @param nodeLocation
      * @param initialVersion the initial versio of the source
+     * @param uniqueNetworkSourceIdentifier a unique identifier for the source
      * @return instance of network source descriptor
      */
     static SourceDescriptorPtr create(SchemaPtr schema,

@@ -162,7 +162,7 @@ add_nes_unit_test(buffer-storage-tests "Runtime/BufferStorageTest.cpp")
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)
 
-### Global Query Plan Update Phase Tests ###
+### Topology Change Request Tests ###
 add_nes_unit_test(topology-change-request-tests "RequestProcessor/RequestTypes/TopologyChangeRequestTest.cpp" RequestProcessor/RequestTypes/TopologyChangeRequestTest.cpp)
 
 ### Kafka Tests ###
