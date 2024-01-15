@@ -21,11 +21,16 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  
     libdw-dev iproute2  \
     ifupdown  \
     openjdk-17-jre \
-    net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -y -qq  ./nes.deb ./opencv-libs.deb ./opencv-java.deb &&  rm nes.deb opencv-libs.deb opencv-java.deb
+    ocl-icd-libopencl1 \
+    opencl-headers \
+    clinfo \
+    net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -y -qq  ./nes.deb ./opencv-libs.deb ./opencv-java.deb &&  rm nes.deb opencv-libs.deb opencv-java.deb && mkdir -p /etc/OpenCL/vendors && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
 COPY ./docker/executableImage/entrypoint-nes-executable.sh /entrypoint.sh
 
 ENV coordinatorCLIConf="--coordinatorIp=127.0.0.1 --rpcPort=12346 --restIp=0.0.0.0 --restPort=8081 --logLevel=LOG_INFO"
 ENV workerCLIConf="--coordinatorPort=12346 --logLevel=LOG_INFO"
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 
 ENTRYPOINT ["/entrypoint.sh"]
