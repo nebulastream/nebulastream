@@ -117,12 +117,6 @@ TEST_F(TopologyChangeRequestTest, testFindUpstreamNetworkSource) {
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
 
-    uint8_t masRetries = 1;
-    auto phase = std::make_shared<RequestProcessor::Experimental::TopologyChangeRequest>(masRetries,
-                                                                                         topology,
-                                                                                         globalQueryPlan,
-                                                                                         globalExecutionPlan);
-
     auto sharedQueryId = 1;
     auto worker1Id = 1;
     topology->registerTopologyNode(worker1Id, "localhost", 123, 124, 1, {});
@@ -155,7 +149,7 @@ TEST_F(TopologyChangeRequestTest, testFindUpstreamNetworkSource) {
     auto sourceOperatorNodeWrk1 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk1, sourceId1);
     plan1->addRootOperator(sourceOperatorNodeWrk1);
     executionNode1->registerNewDecomposedQueryPlan(sharedQueryId, plan1);
-    ASSERT_THROW(phase->findUpstreamNetworkSinkAndWorkerId(
+    ASSERT_THROW(RequestProcessor::Experimental::TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(
                      sharedQueryId,
                      worker1Id,
                      std::static_pointer_cast<Network::NetworkSourceDescriptor>(networkSourceDescriptorWrk1),
@@ -176,7 +170,7 @@ TEST_F(TopologyChangeRequestTest, testFindUpstreamNetworkSource) {
 
     executionNode2->registerNewDecomposedQueryPlan(sharedQueryId, plan2);
 
-    auto [sinkOperator, id2] = phase->findUpstreamNetworkSinkAndWorkerId(
+    auto [sinkOperator, id2] = RequestProcessor::Experimental::TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(
         sharedQueryId,
         worker1Id,
         std::static_pointer_cast<Network::NetworkSourceDescriptor>(networkSourceDescriptorWrk1),
@@ -184,7 +178,7 @@ TEST_F(TopologyChangeRequestTest, testFindUpstreamNetworkSource) {
     ASSERT_EQ(sinkOperator, networkSinkOperatorNodeWrk2);
     ASSERT_EQ(id2, worker2Id);
 
-    auto [sourceOperator, id1] = phase->findDownstreamNetworkSourceAndWorkerId(
+    auto [sourceOperator, id1] = RequestProcessor::Experimental::TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(
         sharedQueryId,
         worker2Id,
         std::static_pointer_cast<Network::NetworkSinkDescriptor>(networkSinkDescriptor2),
@@ -192,7 +186,7 @@ TEST_F(TopologyChangeRequestTest, testFindUpstreamNetworkSource) {
     ASSERT_EQ(sourceOperator, sourceOperatorNodeWrk1);
     ASSERT_EQ(id1, worker1Id);
 
-    auto linkedSinkSourcePairs = phase->findNetworkOperatorsForLink(sharedQueryId, executionNode2, executionNode1);
+    auto linkedSinkSourcePairs = RequestProcessor::Experimental::TopologyChangeRequest::findNetworkOperatorsForLink(sharedQueryId, executionNode2, executionNode1);
     auto [upstreamSink, downstreamSource] = linkedSinkSourcePairs.front();
     ASSERT_EQ(upstreamSink, networkSinkOperatorNodeWrk2);
     ASSERT_EQ(downstreamSource, sourceOperatorNodeWrk1);

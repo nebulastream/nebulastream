@@ -142,8 +142,6 @@ class NetworkSource : public DataSource {
      * @brief Reconfigures this sink with ReconfigurationType::UpdateVersion causing it to close event channels to the old
      * upstream sink and open channels to the new one
      */
-    //void onVersionUpdate(NetworkSourceDescriptor newDescriptor) override;
-
     bool startNewVersion() override;
 
     /**
@@ -158,8 +156,7 @@ class NetworkSource : public DataSource {
      */
     OperatorId getUniqueId() const;
 
-
-    bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) override;
+    bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
 
     bool bind();
 

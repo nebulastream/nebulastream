@@ -273,8 +273,8 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
     for (const auto& [workerId, querySubPlanIds] : workerIdToDecomposedQueryPlanIds) {
         // 2. Fetch the query sub plan from the execution node
         auto executionNode = globalExecutionPlan->getExecutionNodeById(workerId);
+        //check if the sub plan is on a node that still exists in the system
         if (!executionNode) {
-            //todo: make list ot erase
             continue;
         }
 
@@ -283,8 +283,8 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
 
         // 3. Update the placed query sub plans on the execution node and record them
         for (const auto& querySubPlanId : querySubPlanIds) {
-            //todo: when does this happen?
-            if (querySubPlanId == 0) {
+            //check if the sub plan actually has a valid id. If not, it is a computed plan that will not be found among the execution nodes
+            if (querySubPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
                 continue;
             }
 
