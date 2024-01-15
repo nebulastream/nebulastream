@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.6.20](https://github.com/nebulastream/nebulastream/tree/v0.6.20) (2024-01-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19...v0.6.20)
+
+**Implemented enhancements:**
+
+- \[TASK\] Unittest for Schema [\#4487](https://github.com/nebulastream/nebulastream/issues/4487)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Unit Test for TestHarness Utils [\#3322](https://github.com/nebulastream/nebulastream/issues/3322)
+
+## [elegant-v0.6.19](https://github.com/nebulastream/nebulastream/tree/elegant-v0.6.19) (2024-01-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.19...elegant-v0.6.19)
+
 ## [v0.6.19](https://github.com/nebulastream/nebulastream/tree/v0.6.19) (2024-01-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.18...v0.6.19)
@@ -7,6 +23,10 @@
 **Implemented enhancements:**
 
 - \[TASK\] Remove placements and undeploy incrementally [\#4429](https://github.com/nebulastream/nebulastream/issues/4429)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix JAVA\_UDF\_UTILS\_JAR macro redefined [\#4478](https://github.com/nebulastream/nebulastream/issues/4478)
 
 ## [v0.6.18](https://github.com/nebulastream/nebulastream/tree/v0.6.18) (2024-01-12)
 
