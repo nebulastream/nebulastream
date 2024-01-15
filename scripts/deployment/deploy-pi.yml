@@ -1,0 +1,6 @@
+---
+# This Playbook deploys a NES cluster
+
+- hosts: pi_master
+  roles:
+    - role: pi-master

@@ -1,0 +1,7 @@
+---
+# This Playbook stops a NES cluster
+
+- hosts: pi_master
+  tasks:
+    - include_tasks: roles/pi-master/tasks/stop.yml
+

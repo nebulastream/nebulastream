@@ -10,6 +10,11 @@
     bind_port: "{{ default_coordinator_ports | difference(used_ports.stdout_lines | map('int') | list) | first | default(0) }}"
   failed_when: bind_port | int == 0
 
+- name: Start mosquitto
+  shell: |
+    nohup mosquitto 2>&1 &
+    echo $! > /home/ubuntu/dimitrios/mosquitto.pid
+
 - name: Start coordinator
   shell: |
     nohup numactl -N 0 -m 0 /home/ubuntu/git/nebulastream/build/{{ coord_bin_name }} --configPath=/tmp/coordinator.yaml > /home/ubuntu/dimitrios/{{ coord_bin_name }}.log 2>&1 & 
