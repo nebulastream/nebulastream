@@ -136,7 +136,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
             sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 
-        globalExecutionPlan = GlobalExecutionPlan::create();
+        globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 };
@@ -180,7 +180,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     NES_DEBUG("MlHeuristicPlacementTest: query plan \n{}", globalExecutionPlan->getAsString());
     NES_DEBUG("MlHeuristicPlacementTest: shared plan \n{}", sharedQueryPlan->getQueryPlan()->toString());
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     ASSERT_EQ(executionNodes.size(), 13U);
 
     // Index represents the id of the execution node

@@ -31,12 +31,12 @@ using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentP
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
-}// namespace NES::Optimizer
-
-namespace NES {
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
+}// namespace NES::Optimizer
+
+namespace NES {
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
@@ -149,7 +149,7 @@ class StopQueryRequest : public AbstractUniRequest {
 
   private:
     QueryId queryId;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;

@@ -88,14 +88,14 @@ bool NetworkSource::start() {
                                                                     return sink->getParentPlanId();
                                                                 },
                                                                 [](Execution::ExecutablePipelinePtr pipeline) {
-                                                                    return pipeline->getQuerySubPlanId();
+                                                                    return pipeline->getDecomposedQueryPlanId();
                                                                 }},
                                              successor);
             auto queryId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
-                                                             return sink->getQueryId();
+                                                             return sink->getSharedQueryId();
                                                          },
                                                          [](Execution::ExecutablePipelinePtr pipeline) {
-                                                             return pipeline->getQueryId();
+                                                             return pipeline->getSharedQueryId();
                                                          }},
                                       successor);
 

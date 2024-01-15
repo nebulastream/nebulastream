@@ -15,12 +15,13 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacementAddition/IFCOPStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <random>
 #include <utility>
@@ -42,7 +43,8 @@ IFCOPStrategy::IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              PlacementAmendmentMode placementAmendmentMode)
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
-bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
+// TODO: fix as part of #2486
+/*bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // initiate operatorIdToNodePlacementMap
     initiateWorkerIdToIndexMap();
 
@@ -86,7 +88,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     //    runTypeInferencePhase(queryPlan->getQueryId());
 
     return false;
-}
+}*/
 
 PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
 
@@ -196,7 +198,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
     return placementCandidate;
 }
 
-double IFCOPStrategy::getCost(const PlacementMatrix&, NES::QueryPlanPtr, double) {
+double IFCOPStrategy::getCost(const PlacementMatrix&, QueryPlanPtr, double) {
     double totalCost = 0.0;
 
     /*// compute over-utilization cost

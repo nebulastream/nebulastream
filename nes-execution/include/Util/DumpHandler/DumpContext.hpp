@@ -30,8 +30,8 @@ using DebugDumpHandlerPtr = std::shared_ptr<ConsoleDumpHandler>;
 class DumpContext;
 using DumpContextPtr = std::shared_ptr<DumpContext>;
 
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 namespace QueryCompilation {
 class PipelineQueryPlan;
@@ -62,16 +62,16 @@ class DumpContext {
     /**
     * @brief Dumps the passed query plan on all registered dump handlers.
     * @param defines the scope of this plan.
-    * @param queryPlan
+    * @param decomposedQueryPlan
     */
-    void dump(std::string const& scope, QueryPlanPtr const& queryPlan);
+    void dump(const std::string& scope, const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     /**
     * @brief Dumps the passed pipeline query plan on all registered dump handlers.
     * @param defines the scope of this plan.
-    * @param queryPlan
+    * @param pipelineQueryPlan
     */
-    void dump(std::string const& scope, QueryCompilation::PipelineQueryPlanPtr const& queryPlan);
+    void dump(const std::string& scope, const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan);
 
   private:
     std::string context;
@@ -80,4 +80,4 @@ class DumpContext {
 
 }// namespace NES
 
-#endif // NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_DUMPCONTEXT_HPP_
+#endif// NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_DUMPCONTEXT_HPP_

@@ -12,18 +12,24 @@
     limitations under the License.
 */
 
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
-QueryPlanIterator::QueryPlanIterator(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)){};
+PlanIterator::PlanIterator(QueryPlanPtr queryPlan) { rootOperators = queryPlan->getRootOperators(); };
 
-QueryPlanIterator::iterator QueryPlanIterator::begin() { return iterator(queryPlan); }
+PlanIterator::PlanIterator(DecomposedQueryPlanPtr decomposedQueryPlan) {
+    rootOperators = decomposedQueryPlan->getRootOperators();
+}
 
-QueryPlanIterator::iterator QueryPlanIterator::end() { return iterator(); }
+PlanIterator::iterator PlanIterator::begin() { return iterator(rootOperators); }
 
-std::vector<NodePtr> QueryPlanIterator::snapshot() {
+PlanIterator::iterator PlanIterator::end() { return iterator(); }
+
+std::vector<NodePtr> PlanIterator::snapshot() {
     std::vector<NodePtr> nodes;
     for (auto node : *this) {
         nodes.emplace_back(node);
@@ -31,25 +37,24 @@ std::vector<NodePtr> QueryPlanIterator::snapshot() {
     return nodes;
 }
 
-QueryPlanIterator::iterator::iterator(const QueryPlanPtr& current) {
-    auto rootOperators = current->getRootOperators();
+PlanIterator::iterator::iterator(const std::vector<OperatorNodePtr>& rootOperators) {
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--) {
         workStack.push(rootOperators[i]);
     }
 }
 
-QueryPlanIterator::iterator::iterator() = default;
+PlanIterator::iterator::iterator() = default;
 
-bool QueryPlanIterator::iterator::operator!=(const iterator& other) const {
+bool PlanIterator::iterator::operator!=(const iterator& other) const {
     if (workStack.empty() && other.workStack.empty()) {
         return false;
     };
     return true;
 };
 
-NodePtr QueryPlanIterator::iterator::operator*() { return workStack.empty() ? nullptr : workStack.top(); }
+NodePtr PlanIterator::iterator::operator*() { return workStack.empty() ? nullptr : workStack.top(); }
 
-QueryPlanIterator::iterator& QueryPlanIterator::iterator::operator++() {
+PlanIterator::iterator& PlanIterator::iterator::operator++() {
     if (workStack.empty()) {
         NES_DEBUG("Iterator: we reached the end of this iterator and will not do anything.");
     } else {

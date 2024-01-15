@@ -13,6 +13,7 @@
 */
 
 #include <BaseIntegrationTest.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -84,12 +85,16 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-        auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+        for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+            decomposedQueryPlan->addRootOperator(rootOperator);
+        }
+        auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
         // Emitting the input buffers
         auto dataSourceCount = 0_u64;
         for (const auto& inputBuffers : allInputBuffers) {
-            auto source = executionEngine->getDataSource(queryPlan, dataSourceCount);
+            auto source = executionEngine->getDataSource(plan, dataSourceCount);
             dataSourceCount++;
             for (auto buf : inputBuffers) {
                 source->emitBuffer(buf);
@@ -101,7 +106,7 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
 
         // Stopping query and waiting until the test sink has received the expected number of tuples
         NES_INFO("Stopping query now!!!");
-        EXPECT_TRUE(executionEngine->stopQuery(queryPlan, Runtime::QueryTerminationType::Graceful));
+        EXPECT_TRUE(executionEngine->stopQuery(plan, Runtime::QueryTerminationType::Graceful));
         testSink->waitTillCompleted(expectedNumberOfTuples);
 
         // Checking for correctness

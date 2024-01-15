@@ -262,10 +262,11 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus newStatus);
 
     /**
-    * @brief maps querySubId to query id
-    * @return query id
-    */
-    uint64_t getQueryId(uint64_t querySubPlanId) const;
+     * @brief get the shared query id mapped to the decomposed query plan id
+     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @return shared query id
+     */
+    SharedQueryId getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const;
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source

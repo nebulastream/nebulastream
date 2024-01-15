@@ -13,6 +13,7 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_
+
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <map>
 
@@ -32,7 +33,7 @@ class DefaultPipeliningPhase : public PipeliningPhase {
      */
     static PipeliningPhasePtr create(const OperatorFusionPolicyPtr& operatorFusionPolicy);
     explicit DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy);
-    PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+    PipelineQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan) override;
 
   protected:
     void process(const PipelineQueryPlanPtr& pipeline,

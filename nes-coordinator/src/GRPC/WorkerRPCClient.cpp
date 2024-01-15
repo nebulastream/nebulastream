@@ -18,8 +18,8 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -29,17 +29,20 @@ namespace NES {
 
 WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPCClient>(WorkerRPCClient()); }
 
-bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
-    QueryId queryId = queryPlan->getQueryId();
-    DecomposedQueryPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQuery address={} queryId={} querySubPlanId = {} ", address, queryId, querySubPlanId);
+bool WorkerRPCClient::registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+    SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
+    DecomposedQueryPlanId querySubPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+    NES_DEBUG("WorkerRPCClient::registerQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
+              address,
+              sharedQueryId,
+              querySubPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
 
     // serialize query plan.
-    auto serializedQueryPlan = request.mutable_queryplan();
-    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    auto serializedQueryPlan = request.mutable_decomposedqueryplan();
+    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializedQueryPlan);
 
     NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
     RegisterQueryReply reply;
@@ -61,24 +64,27 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
 }
 
 void WorkerRPCClient::registerQueryAsync(const std::string& address,
-                                         const QueryPlanPtr& queryPlan,
+                                         const DecomposedQueryPlanPtr& decomposedQueryPlan,
                                          const CompletionQueuePtr& cq) {
-    QueryId queryId = queryPlan->getQueryId();
-    DecomposedQueryPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQueryAsync address={} queryId={} querySubPlanId = {}", address, queryId, querySubPlanId);
+    SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
+    DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+    NES_DEBUG("WorkerRPCClient::registerQueryAsync address={} sharedQueryId={} decomposedQueryPlanId = {}",
+              address,
+              sharedQueryId,
+              decomposedQueryPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
     // serialize query plan.
-    auto serializableQueryPlan = request.mutable_queryplan();
-    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializableQueryPlan);
+    auto serializableQueryPlan = request.mutable_decomposedqueryplan();
+    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializableQueryPlan);
 
     NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 
     grpc::ChannelArguments args;
-    args.SetInt("test_key", querySubPlanId);
+    args.SetInt("test_key", decomposedQueryPlanId);
     std::shared_ptr<::grpc::Channel> channel = grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), args);
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
 
@@ -101,17 +107,20 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
 }
 
 //todo #4450: move this logic to deployQuery method
-bool WorkerRPCClient::reconfigureQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
-    auto queryId = queryPlan->getQueryId();
-    auto querySubPlanId = queryPlan->getQuerySubPlanId();
-    NES_DEBUG("WorkerRPCClient::reconfigureQuery address={} queryId={} querySubPlanId = {} ", address, queryId, querySubPlanId);
+bool WorkerRPCClient::reconfigureQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+    auto sharedQueryId = decomposedQueryPlan->getSharedQueryId();
+    auto decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+    NES_DEBUG("WorkerRPCClient::reconfigureQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
+              address,
+              sharedQueryId,
+              decomposedQueryPlanId);
 
     // wrap the query id and the query operators in the protobuf reconfigure query request object.
     ReconfigureQueryRequest request;
 
     // serialize query plan.
-    auto serializedQueryPlan = request.mutable_queryplan();
-    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    auto serializedQueryPlan = request.mutable_decomposedqueryplan();
+    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializedQueryPlan);
 
     NES_TRACE("WorkerRPCClient:reconfigureQuery -> {}", request.DebugString());
     ReconfigureQueryReply reply;

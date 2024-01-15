@@ -55,7 +55,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     explicit SinkMedium(SinkFormatPtr sinkFormat,
                         Runtime::NodeEnginePtr nodeEngine,
                         uint32_t numOfProducers,
-                        QueryId queryId,
+                        QueryId sharedQueryId,
                         DecomposedQueryPlanId querySubPlanId,
                         uint64_t numberOfOrigins);
 
@@ -81,9 +81,9 @@ class SinkMedium : public Runtime::Reconfigurable {
 
     /**
      * @brief get the id of the owning plan
-     * @return queryId
+     * @return sharedQueryId
      */
-    QueryId getQueryId() const;
+    SharedQueryId getSharedQueryId() const;
 
     /**
      * @brief get the suzbplan id of the owning plan
@@ -153,8 +153,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     Runtime::NodeEnginePtr nodeEngine;
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
-    QueryId queryId;
-    DecomposedQueryPlanId querySubPlanId;
+    SharedQueryId sharedQueryId;
+    DecomposedQueryPlanId decomposedQueryPlanId;
     uint64_t numberOfOrigins;
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};

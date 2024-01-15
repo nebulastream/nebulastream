@@ -26,7 +26,7 @@
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -91,7 +91,7 @@ TEST_F(QueryPlanIteratorTest, iterateFilterQueryPlan) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
@@ -119,7 +119,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp2, *queryPlanIter);
@@ -150,7 +150,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSourceQueryPlan) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
@@ -189,7 +189,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
@@ -234,7 +234,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkRemergeQueryPlan) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);

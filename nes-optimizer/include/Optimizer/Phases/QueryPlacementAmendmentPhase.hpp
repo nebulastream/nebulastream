@@ -41,9 +41,6 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class LogicalOperatorNode;
 using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -56,6 +53,9 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
+
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class BasePlacementAdditionStrategy;
 using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;

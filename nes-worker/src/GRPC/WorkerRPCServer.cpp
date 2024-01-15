@@ -18,8 +18,8 @@
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
@@ -39,13 +39,16 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
 }
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
-    auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
-    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: {} plan={}",
-              queryPlan->getQueryId(),
-              queryPlan->toString());
+    auto decomposedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
+        (SerializableDecomposedQueryPlan*) &request->decomposedqueryplan());
+    NES_DEBUG("WorkerRPCServer::RegisterQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
+              "{} plan={}",
+              decomposedQueryPlan->getSharedQueryId(),
+              decomposedQueryPlan->getDecomposedQueryPlanId(),
+              decomposedQueryPlan->toString());
     bool success = 0;
     try {
-        success = nodeEngine->registerQueryInNodeEngine(queryPlan);
+        success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: {}", error.what());
         success = false;
@@ -61,13 +64,16 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
 }
 
 Status WorkerRPCServer::ReconfigureQuery(ServerContext*, const ReconfigureQueryRequest* request, ReconfigureQueryReply* reply) {
-    auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
-    NES_DEBUG("WorkerRPCServer::ReconfigureQuery: got request for queryId: {} plan={}",
-              queryPlan->getQueryId(),
-              queryPlan->toString());
+    auto decomposedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
+        (SerializableDecomposedQueryPlan*) &request->decomposedqueryplan());
+    NES_DEBUG("WorkerRPCServer::ReconfigureQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
+              "{} plan={}",
+              decomposedQueryPlan->getSharedQueryId(),
+              decomposedQueryPlan->getDecomposedQueryPlanId(),
+              decomposedQueryPlan->toString());
 
     try {
-        if (nodeEngine->reconfigureSubPlan(queryPlan)) {
+        if (nodeEngine->reconfigureSubPlan(decomposedQueryPlan)) {
             NES_DEBUG("WorkerRPCServer::ReconfigureQuery: success");
             reply->set_success(true);
             return Status::OK;

@@ -356,7 +356,7 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(engine->stopQuery(qep->getQueryId()));
+    ASSERT_TRUE(engine->stopQuery(qep->getSharedQueryId()));
     ASSERT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "test.out");
@@ -394,7 +394,7 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
                       .build();
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(qep));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(qep));
     ASSERT_TRUE(engine->startQuery(testQueryId));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
@@ -449,8 +449,8 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     auto executionPlan2 =
         ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
 
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(executionPlan2));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
     ASSERT_TRUE(engine->startQuery(1));
     ASSERT_TRUE(engine->startQuery(2));
@@ -517,8 +517,8 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     auto executionPlan2 =
         ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
 
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(executionPlan2));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
     ASSERT_TRUE(engine->startQuery(1));
     ASSERT_TRUE(engine->startQuery(2));
@@ -592,8 +592,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                       engine->getQueryManager(),
                                                       engine->getBufferManager());
 
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(executionPlan2));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
     ASSERT_TRUE(engine->startQuery(1));
     ASSERT_TRUE(engine->startQuery(2));
@@ -677,8 +677,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     // auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source1->getSchema(), sch2);
     // builder2.addPipeline(pipeline2);
 
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(executionPlan2));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
+    ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
     ASSERT_TRUE(engine->startQuery(1));
     ASSERT_TRUE(engine->startQuery(2));

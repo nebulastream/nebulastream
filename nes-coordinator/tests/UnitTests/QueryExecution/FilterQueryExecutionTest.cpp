@@ -15,6 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
@@ -71,7 +72,11 @@ TEST_F(FilterQueryExecutionTest, filterQueryLessThan) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 6).sink(testSinkDescriptor);
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);
@@ -97,7 +102,11 @@ TEST_F(FilterQueryExecutionTest, filterQueryEquals) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("one") == 1).sink(testSinkDescriptor);
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);

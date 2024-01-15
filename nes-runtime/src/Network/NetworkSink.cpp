@@ -94,31 +94,32 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 }
 
 void NetworkSink::preSetup() {
-    NES_DEBUG("NetworkSink: method preSetup() called {} qep {}", nesPartition.toString(), querySubPlanId);
+    NES_DEBUG("NetworkSink: method preSetup() called {} qep {}", nesPartition.toString(), decomposedQueryPlanId);
     NES_ASSERT2_FMT(
         networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, inherited1::shared_from_this()),
         "Cannot register event listener " << nesPartition.toString());
 }
 
 void NetworkSink::setup() {
-    NES_DEBUG("NetworkSink: method setup() called {} qep {}", nesPartition.toString(), querySubPlanId);
-    auto reconf = Runtime::ReconfigurationMessage(queryId,
-                                                  querySubPlanId,
+    NES_DEBUG("NetworkSink: method setup() called {} qep {}", nesPartition.toString(), decomposedQueryPlanId);
+    auto reconf = Runtime::ReconfigurationMessage(sharedQueryId,
+                                                  decomposedQueryPlanId,
                                                   Runtime::ReconfigurationType::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
-    queryManager->addReconfigurationMessage(queryId, querySubPlanId, reconf, true);
+    queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, reconf, true);
 }
 
 void NetworkSink::shutdown() {
-    NES_DEBUG("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), queryId, querySubPlanId);
+    NES_DEBUG("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), sharedQueryId,
+              decomposedQueryPlanId);
     networkManager->unregisterSubpartitionProducer(nesPartition);
 }
 
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
-    NES_DEBUG("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), querySubPlanId);
+    NES_DEBUG("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), decomposedQueryPlanId);
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
@@ -126,8 +127,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             //check if the worker is configured to use async connecting
             if (nodeEngine->getConnectSinksAsync()) {
                 //async connecting is activated. Delegate connection process to another thread and start the future
-                auto reconf = Runtime::ReconfigurationMessage(queryId,
-                                                              querySubPlanId,
+                auto reconf = Runtime::ReconfigurationMessage(sharedQueryId,
+                                                              decomposedQueryPlanId,
                                                               Runtime::ReconfigurationType::ConnectionEstablished,
                                                               inherited0::shared_from_this(),
                                                               std::make_any<uint32_t>(numOfProducers));
@@ -245,7 +246,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 }
 
 void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
-    NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}", nesPartition.toString(), querySubPlanId);
+    NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}", nesPartition.toString(),
+              decomposedQueryPlanId);
     inherited0::postReconfigurationCallback(task);
 
     switch (task.getType()) {
@@ -268,7 +270,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
 
 void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     NES_DEBUG("NetworkSink::onEvent(event) called. uniqueNetworkSinkDescriptorId: {}", this->uniqueNetworkSinkDescriptorId);
-    auto qep = queryManager->getQueryExecutionPlan(querySubPlanId);
+    auto qep = queryManager->getQueryExecutionPlan(decomposedQueryPlanId);
     qep->onEvent(event);
 
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
@@ -296,11 +298,11 @@ void NetworkSink::configureNewSinkDescriptor(const NetworkSinkDescriptor& newNet
         networkManager->registerSubpartitionEventConsumer(newReceiverLocation, newPartition, inherited1::shared_from_this()),
         "Cannot register event listener " << nesPartition.toString());
     Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
-                                                                              querySubPlanId,
+                                                                              decomposedQueryPlanId,
                                                                               Runtime::ReconfigurationType::ConnectToNewReceiver,
                                                                               inherited0::shared_from_this(),
                                                                               newReceiverTuple);
-    queryManager->addReconfigurationMessage(nesPartition.getQueryId(), querySubPlanId, message, false);
+    queryManager->addReconfigurationMessage(nesPartition.getQueryId(), decomposedQueryPlanId, message, false);
 }
 
 void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
@@ -309,13 +311,13 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                                       DecomposedQueryPlanVersion newVersion) {
     NES_DEBUG("NetworkSink: method clearOldAndConnectToNewChannelAsync() called {} qep {}, by thread {}",
               nesPartition.toString(),
-              querySubPlanId,
+              decomposedQueryPlanId,
               Runtime::NesThread::getId());
 
     networkManager->unregisterSubpartitionProducer(nesPartition);
 
-    auto reconf = Runtime::ReconfigurationMessage(queryId,
-                                                  querySubPlanId,
+    auto reconf = Runtime::ReconfigurationMessage(sharedQueryId,
+                                                  decomposedQueryPlanId,
                                                   Runtime::ReconfigurationType::ConnectionEstablished,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));

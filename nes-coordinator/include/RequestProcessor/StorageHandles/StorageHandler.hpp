@@ -47,12 +47,14 @@ class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs::Source
 
+namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 using SourceCatalogHandle = ResourceHandle<Catalogs::Source::SourceCatalog>;
 using CoordinatorConfigurationHandle = ResourceHandle<Configurations::CoordinatorConfiguration>;
-using GlobalExecutionPlanHandle = ResourceHandle<GlobalExecutionPlan>;
+using GlobalExecutionPlanHandle = ResourceHandle<Optimizer::GlobalExecutionPlan>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;

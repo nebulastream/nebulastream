@@ -14,13 +14,10 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
@@ -92,7 +89,7 @@ std::string Util::toCSVString(const SchemaPtr& schema) {
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                             std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
-    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    auto queryPlanIterator = PlanIterator(queryPlan);
     size_t numOperators = queryPlanIterator.snapshot().size();
     ;
 

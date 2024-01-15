@@ -105,10 +105,10 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     void clearSuccessors();
 
     /**
-     * @brief Returns the query plan
-     * @return QueryPlanPtr
+     * @brief Returns the decomposed query plan
+     * @return DecomposedQueryPlanPtr
      */
-    QueryPlanPtr getQueryPlan();
+    DecomposedQueryPlanPtr getDecomposedQueryPlan();
 
     /**
      * @brief Returns the pipeline id
@@ -166,10 +166,10 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     uint64_t id;
     std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
-    QueryPlanPtr queryPlan;
+    DecomposedQueryPlanPtr decomposedQueryPlan;
     std::vector<uint64_t> operatorIds;
     Type pipelineType;
 };
 }// namespace NES::QueryCompilation
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_

@@ -16,7 +16,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -64,7 +64,7 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     ASSERT_TRUE(res);
 
     // Assert if the property are added correctly
-    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+    auto queryPlanIterator = PlanIterator(query.getQueryPlan()).begin();
 
     ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 1);
     ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf")), 1);
@@ -105,7 +105,7 @@ TEST_F(OperatorPropertiesTest, testAssignDifferentPropertyTypes) {
     ASSERT_TRUE(res);
 
     // Assert if the property are added correctly
-    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+    auto queryPlanIterator = PlanIterator(query.getQueryPlan()).begin();
 
     ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load_int")), 1);
     ASSERT_EQ(std::any_cast<double>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf_double")), 0.5);
@@ -223,7 +223,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
     bool res = Util::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_TRUE(res);
 
-    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+    auto queryPlanIterator = PlanIterator(query.getQueryPlan()).begin();
 
     // Assert the property values
     // source (main)

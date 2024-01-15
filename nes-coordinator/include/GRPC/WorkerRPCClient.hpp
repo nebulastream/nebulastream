@@ -45,8 +45,8 @@ class MonitoringPlan;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 }// namespace Monitoring
 
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
@@ -91,17 +91,18 @@ class WorkerRPCClient {
     /**
      * @brief register a query
      * @param address: address of node where query plan need to be registered
-     * @param query plan to register
+     * @param decomposedQueryPlan plan to register
      * @return true if succeeded, else false
      */
-    bool registerQuery(const std::string& address, const QueryPlanPtr& queryPlan);
+    bool registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     /**
      * @brief register a query asynchronously
      * @param address: address of node where query plan need to be registered
      * @param query plan to register
+     * @param cq the completion queue
      */
-    void registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq);
+    void registerQueryAsync(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan, const CompletionQueuePtr& cq);
 
     /**
      * @brief ungregisters a query
@@ -234,11 +235,11 @@ class WorkerRPCClient {
      * location and partition only get scheduled and will not take effect before startQuery is called again on the plan.
      * Source reconfigurations take effect immediately
      * @param address: the ip address of the node
-     * @param queryPlan: The query plan containing the updated source or sink information
+     * @param decomposedQueryPlan: The query plan containing the updated source or sink information
      * @return true if a plan with a matching id was found
      * @throws runtimeException if the remote procedure call returned an error status
      */
-    bool reconfigureQuery(const std::string& address, const QueryPlanPtr& queryPlan);
+    bool reconfigureQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
   private:
     WorkerRPCClient() = default;

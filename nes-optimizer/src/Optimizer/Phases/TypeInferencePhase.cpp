@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Global/Execution/DecomposedQueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
@@ -65,10 +65,10 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
     auto sinkOperators = decomposedQueryPlan->getSinkOperators();
 
     if (sourceOperators.empty() || sinkOperators.empty()) {
-        throw TypeInferenceException(decomposedQueryPlan->getId(), "Found no source or sink operators");
+        throw TypeInferenceException(decomposedQueryPlan->getDecomposedQueryPlanId(), "Found no source or sink operators");
     }
 
-    performTypeInference(decomposedQueryPlan->getId(), sourceOperators, sinkOperators);
+    performTypeInference(decomposedQueryPlan->getDecomposedQueryPlanId(), sourceOperators, sinkOperators);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
     return decomposedQueryPlan;
 }

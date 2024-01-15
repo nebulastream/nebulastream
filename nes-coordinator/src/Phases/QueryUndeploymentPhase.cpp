@@ -30,20 +30,20 @@
 
 namespace NES {
 
-QueryUndeploymentPhase::QueryUndeploymentPhase(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan)
+QueryUndeploymentPhase::QueryUndeploymentPhase(const TopologyPtr& topology, const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan)
     : topology(topology), globalExecutionPlan(globalExecutionPlan), workerRPCClient(WorkerRPCClient::create()) {
     NES_DEBUG("QueryUndeploymentPhase()");
 }
 
 QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(const TopologyPtr& topology,
-                                                         const GlobalExecutionPlanPtr& globalExecutionPlan) {
+                                                         const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
     return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(topology, globalExecutionPlan));
 }
 
 void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", sharedQueryId);
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
     if (executionNodes.empty()) {
         NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", sharedQueryId);
@@ -74,7 +74,7 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
 }
 
 void QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
-                                       const std::vector<ExecutionNodePtr>& executionNodes,
+                                       const std::vector<Optimizer::ExecutionNodePtr>& executionNodes,
                                        SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase:markQueryForStop queryId= {}", sharedQueryId);
     //NOTE: the uncommented lines below have to be activated for async calls
@@ -120,13 +120,13 @@ void QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
     }
 }
 
-void QueryUndeploymentPhase::undeployQuery(QueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes) {
+void QueryUndeploymentPhase::undeployQuery(QueryId sharedQueryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryUndeploymentPhase::undeployQuery queryId= {}", sharedQueryId);
 
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     std::map<CompletionQueuePtr, uint64_t> mapQueueToExecutionNodeId;
 
-    for (const ExecutionNodePtr& executionNode : executionNodes) {
+    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
         const auto& nesNode = executionNode->getTopologyNode();

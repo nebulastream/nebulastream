@@ -15,6 +15,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -80,7 +81,11 @@ class MultiThreadedTest : public Testing::BaseIntegrationTest,
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-        auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+        for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+            decomposedQueryPlan->addRootOperator(rootOperator);
+        }
+        auto queryPlan = executionEngine->submitQuery(decomposedQueryPlan);
 
         // Emitting the input buffers
         auto dataSourceCnt = 0_u64;

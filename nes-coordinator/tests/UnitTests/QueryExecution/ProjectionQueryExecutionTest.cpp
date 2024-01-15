@@ -15,6 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
@@ -76,7 +77,11 @@ TEST_F(ProjectionQueryExecutionTest, projectField) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);
@@ -105,7 +110,11 @@ TEST_F(ProjectionQueryExecutionTest, projectTwoFields) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);
@@ -133,5 +142,9 @@ TEST_F(ProjectionQueryExecutionTest, projectNonExistingFields) {
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("x")).sink(testSinkDescriptor);
-    ASSERT_ANY_THROW(executionEngine->submitQuery(query.getQueryPlan()));
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    ASSERT_ANY_THROW(executionEngine->submitQuery(decomposedQueryPlan));
 }

@@ -14,6 +14,7 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestQuery.hpp>
@@ -158,8 +159,12 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==-------------------------------------------------------==//
     //==-------- GENERATE INPUT DATA AND RUN THE QUERY --------==//
     //==-------------------------------------------------------==//
-    const auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
-    generateAndEmitInputBuffers(queryPlan,
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
+    generateAndEmitInputBuffers(plan,
                                 {producerSchema, producerSchema, consumerSchema},
                                 {solarPanelDataGenerator, windTurbineDataGenerator, consumersDataGenerator});
 
@@ -178,5 +183,5 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
         EXPECT_EQ(resultRecords.at(recordIdx).start, recordIdx * milliSecondsToHours);
     }
 
-    ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
 }

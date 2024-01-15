@@ -11,7 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Plans/Utils/QueryPlanIterator.hpp>
+
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -33,13 +34,16 @@ PipeliningPhasePtr DefaultPipeliningPhase::create(const OperatorFusionPolicyPtr&
     return std::make_shared<DefaultPipeliningPhase>(operatorFusionPolicy);
 }
 
-PipelineQueryPlanPtr DefaultPipeliningPhase::apply(QueryPlanPtr queryPlan) {
+PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomposedQueryPlan) {
 
     // splits the query plan of physical operators in pipelines
-    NES_DEBUG("Pipeline: query id: {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
+    NES_DEBUG("Pipeline: query id: {} - {}",
+              decomposedQueryPlan->getSharedQueryId(),
+              decomposedQueryPlan->getDecomposedQueryPlanId());
     std::map<OperatorNodePtr, OperatorPipelinePtr> pipelineOperatorMap;
-    auto pipelinePlan = PipelineQueryPlan::create(queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
-    for (const auto& sinkOperators : queryPlan->getRootOperators()) {
+    auto pipelinePlan =
+        PipelineQueryPlan::create(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId());
+    for (const auto& sinkOperators : decomposedQueryPlan->getRootOperators()) {
         // create a new pipeline for each sink
         auto pipeline = OperatorPipeline::createSinkPipeline();
         pipeline->prependOperator(sinkOperators->copy());

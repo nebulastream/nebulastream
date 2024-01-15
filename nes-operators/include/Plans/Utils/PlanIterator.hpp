@@ -15,11 +15,16 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
 
-#include <Plans/Query/QueryPlan.hpp>
 #include <iterator>
 #include <stack>
 
 namespace NES {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 /**
  * @brief Iterator for query plans, which correctly handles multiple sources and sinks.
@@ -42,12 +47,14 @@ namespace NES {
  * #5 - Source 1
  * #6 - Source 2
  */
-class QueryPlanIterator {
+class PlanIterator {
   public:
-    explicit QueryPlanIterator(QueryPlanPtr queryPlan);
+    explicit PlanIterator(QueryPlanPtr queryPlan);
+
+    explicit PlanIterator(DecomposedQueryPlanPtr decomposedQueryPlan);
 
     class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
-        friend class QueryPlanIterator;
+        friend class PlanIterator;
 
       public:
         /**
@@ -69,7 +76,7 @@ class QueryPlanIterator {
         NodePtr operator*();
 
       private:
-        explicit iterator(const QueryPlanPtr& current);
+        explicit iterator(const std::vector<OperatorNodePtr>& rootOperators);
         explicit iterator();
         std::stack<NodePtr> workStack;
     };
@@ -93,9 +100,9 @@ class QueryPlanIterator {
     std::vector<NodePtr> snapshot();
 
   private:
-    QueryPlanPtr queryPlan;
+    std::vector<OperatorNodePtr> rootOperators;
 };
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_

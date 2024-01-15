@@ -184,17 +184,6 @@ void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
     }
 }
 
-bool QueryPlan::replaceRootOperator(const OperatorNodePtr& oldRoot, const OperatorNodePtr& newRoot) {
-    for (auto& rootOperator : rootOperators) {
-        // compares the pointers and checks if we found the correct operator.
-        if (rootOperator == oldRoot) {
-            rootOperator = newRoot;
-            return true;
-        }
-    }
-    return false;
-}
-
 QueryPlanPtr QueryPlan::copy() {
     NES_INFO("QueryPlan: make copy of this query plan");
     // 1. We start by copying the root operators of this query plan to the queue of operators to be processed

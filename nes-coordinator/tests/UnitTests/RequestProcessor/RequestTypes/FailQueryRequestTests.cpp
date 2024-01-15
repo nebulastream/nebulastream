@@ -34,6 +34,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -68,7 +69,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         topology = Topology::create();
         globalQueryPlan = GlobalQueryPlan::create();
-        globalExecutionPlan = GlobalExecutionPlan::create();
+        globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         std::map<const Compiler::Language, std::shared_ptr<const Compiler::LanguageCompiler>> compilerMap = {
             {Compiler::Language::CPP, Compiler::CPPCompiler::create()}};
         auto jitCompiler = std::make_shared<Compiler::JITCompiler>(compilerMap, false);
@@ -144,7 +145,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
 
         //skip deployment
 
-        std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+        auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
         ASSERT_FALSE(executionNodes.empty());
 
         //Remove the old mapping of the shared query plan
@@ -161,11 +162,11 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         //Add sub query plan metadata in the catalog
         for (auto& executionNode : executionNodes) {
             auto workerId = executionNode->getId();
-            auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
-            for (auto& subQueryPlan : subQueryPlans) {
-                QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
+            auto allDecomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
+            for (auto& decomposedQueryPlan : allDecomposedQueryPlans) {
+                DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
                 for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                    queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, QueryState::RUNNING);
+                    queryCatalogService->addSubQueryMetaData(queryId, decomposedQueryPlanId, workerId, QueryState::RUNNING);
                 }
             }
         }
@@ -196,7 +197,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
     GlobalQueryPlanPtr globalQueryPlan;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     SourceCatalogServicePtr sourceCatalogService;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
@@ -217,7 +218,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
     deployQuery();
 
     auto workerRpcClient = WorkerRPCClient::create();
-    auto failQueryRequest = Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
+    auto failQueryRequest = Experimental::FailQueryRequest::create(queryId, INVALID_DECOMPOSED_QUERY_PLAN_ID, maxRetries);
     auto future = failQueryRequest->getFuture();
     failQueryRequest->setId(requestId);
     auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
@@ -263,7 +264,7 @@ TEST_F(FailQueryRequestTest, testInvalidQueryId) {
 
     const auto nonExistentId = queryId + 1;
     auto workerRpcClient = WorkerRPCClient::create();
-    auto failQueryRequest = Experimental::FailQueryRequest::create(nonExistentId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
+    auto failQueryRequest = Experimental::FailQueryRequest::create(nonExistentId, INVALID_DECOMPOSED_QUERY_PLAN_ID, maxRetries);
     failQueryRequest->setId(requestId);
     auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                  topology,
@@ -288,7 +289,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::STOPPED);
 
     auto workerRpcClient = WorkerRPCClient::create();
-    auto failQueryRequest = Experimental::FailQueryRequest::create(queryId, INVALID_QUERY_SUB_PLAN_ID, maxRetries);
+    auto failQueryRequest = Experimental::FailQueryRequest::create(queryId, INVALID_DECOMPOSED_QUERY_PLAN_ID, maxRetries);
     failQueryRequest->setId(requestId);
     auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                  topology,

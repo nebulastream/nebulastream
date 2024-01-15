@@ -39,8 +39,9 @@
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 #include <Util/Mobility/SpatialType.hpp>
@@ -526,8 +527,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     //assert that the sink operators have same up-stream operator
     EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 2);
 
-    auto operatorsInQueryPlan2 = QueryPlanIterator(queryPlan2).snapshot();
-    auto operatorsInSharedPlanAfterStop = QueryPlanIterator(updatedSharedPlanAfterStop).snapshot();
+    auto operatorsInQueryPlan2 = PlanIterator(queryPlan2).snapshot();
+    auto operatorsInSharedPlanAfterStop = PlanIterator(updatedSharedPlanAfterStop).snapshot();
 
     EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
 }
@@ -633,8 +634,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
     EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 2);
 
-    auto operatorsInQueryPlan2 = QueryPlanIterator(queryPlan2).snapshot();
-    auto operatorsInSharedPlanAfterStop = QueryPlanIterator(updatedSharedPlanAfterStop).snapshot();
+    auto operatorsInQueryPlan2 = PlanIterator(queryPlan2).snapshot();
+    auto operatorsInSharedPlanAfterStop = PlanIterator(updatedSharedPlanAfterStop).snapshot();
 
     EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
 }

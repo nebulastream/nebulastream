@@ -45,17 +45,17 @@ void DumpContext::dump(const NodePtr& node) {
     }
 }
 
-void DumpContext::dump(const std::string& scope, const QueryPlanPtr& queryPlan) {
+void DumpContext::dump(const std::string& scope, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     NES_DEBUG("Dump query plan - {} - {}", context, scope);
     for (auto& handler : dumpHandlers) {
-        handler->dump(context, scope, queryPlan);
+        handler->dump(context, scope, decomposedQueryPlan);
     }
 }
 
-void DumpContext::dump(const std::string& scope, const QueryCompilation::PipelineQueryPlanPtr& queryPlan) {
+void DumpContext::dump(const std::string& scope, const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan) {
     NES_DEBUG("Dump pipelined query plan - {} - {}", context, scope)
     for (auto& handler : dumpHandlers) {
-        handler->dump(context, scope, queryPlan);
+        handler->dump(context, scope, pipelineQueryPlan);
     }
 }
 

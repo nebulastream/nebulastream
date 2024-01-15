@@ -29,6 +29,7 @@
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -534,12 +535,14 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
         auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
-
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId++, i);
+        for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+            decomposedQueryPlan->addRootOperator(rootOperator);
+        }
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
         queryPlan->setQueryId(i);
-        queryPlan->setQuerySubPlanId(subPlanId++);
-        auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngineReceiver);
+        auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, nodeEngineReceiver);
         auto queryCompiler = TestUtils::createTestQueryCompiler();
         auto result = queryCompiler->compileQuery(request);
         auto builderReceiverQEP = result->getExecutableQueryPlan();
@@ -577,11 +580,13 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                          INITIAL_VERSION);
         auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
         auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
-
+        auto decomposedQueryPlan2 = DecomposedQueryPlan::create(subPlanId++, i);
+        for (const auto& rootOperator : query2.getQueryPlan()->getRootOperators()) {
+            decomposedQueryPlan2->addRootOperator(rootOperator);
+        }
         auto queryPlan2 = typeInferencePhase->execute(query2.getQueryPlan());
         queryPlan2->setQueryId(i);
-        queryPlan2->setQuerySubPlanId(subPlanId++);
-        auto request2 = QueryCompilation::QueryCompilationRequest::create(queryPlan2, nodeEngineSender);
+        auto request2 = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan2, nodeEngineSender);
         auto result2 = queryCompiler->compileQuery(request2);
         auto builderGeneratorQEP = result2->getExecutableQueryPlan();
         //        ASSERT_TRUE(nodeEngineSender->registerQueryInNodeEngine(builderGeneratorQEP));
@@ -590,7 +595,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         //        ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getQueryId()));
 
         auto func = [](auto engine, auto qep) {
-            return engine->registerQueryInNodeEngine(qep);
+            return engine->registerExecutableQueryPlan(qep);
         };
 
         auto f1 = std::async(std::launch::async, func, nodeEngineSender, builderGeneratorQEP);
@@ -598,8 +603,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
 
         ASSERT_TRUE(f1.get());
         ASSERT_TRUE(f2.get());
-        ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getQueryId()));
-        ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getQueryId()));
+        ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getSharedQueryId()));
+        ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getSharedQueryId()));
     }
 
     ASSERT_EQ(numQueries, finalSinks.size());
@@ -873,7 +878,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
         }
 
         bool writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef context) override {
-            auto parentPlan = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
+            auto parentPlan = nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlanId);
             for (auto& dataSources : parentPlan->getSources()) {
                 auto senderChannel = context.getEventOnlyNetworkChannel(dataSources->getOperatorId());
                 senderChannel->sendEvent<detail::TestEvent>(Runtime::EventType::kCustomEvent, 123);
@@ -890,12 +895,14 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
-
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(0, 0);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     queryPlan->setQueryId(0);
-    queryPlan->setQuerySubPlanId(0);
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngineReceiver);
+    auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, nodeEngineReceiver);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto builderReceiverQEP = result->getExecutableQueryPlan();
@@ -934,17 +941,19 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
-
+    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(1, 0);
+    for (const auto& rootOperator : query2.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan2->addRootOperator(rootOperator);
+    }
     auto queryPlan2 = typeInferencePhase->execute(query2.getQueryPlan());
     queryPlan2->setQueryId(0);
-    queryPlan2->setQuerySubPlanId(1);
-    auto request2 = QueryCompilation::QueryCompilationRequest::create(queryPlan2, nodeEngineSender);
+    auto request2 = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan2, nodeEngineSender);
     queryCompiler = TestUtils::createTestQueryCompiler();
     auto result2 = queryCompiler->compileQuery(request2);
     auto builderGeneratorQEP = result2->getExecutableQueryPlan();
 
     auto func = [](auto engine, auto qep) {
-        return engine->registerQueryInNodeEngine(qep);
+        return engine->registerExecutableQueryPlan(qep);
     };
 
     auto f1 = std::async(std::launch::async, func, nodeEngineSender, builderGeneratorQEP);
@@ -955,8 +964,8 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     auto future = networkSink->completed.get_future();
 
-    ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getQueryId()));
-    ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getQueryId()));
+    ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getSharedQueryId()));
+    ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getSharedQueryId()));
 
     ASSERT_TRUE(future.get());
 

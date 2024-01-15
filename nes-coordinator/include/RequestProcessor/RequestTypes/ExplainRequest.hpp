@@ -29,11 +29,11 @@ namespace NES {
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
+
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -93,6 +93,9 @@ using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentP
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
+
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 }// namespace Optimizer
 
 namespace RequestProcessor::Experimental {
@@ -179,11 +182,11 @@ class ExplainRequest : public AbstractUniRequest {
     /**
      * @brief Add opencl acceleration code to the query plan
      * @param accelerationServiceURL: acceleration service url
-     * @param queryPlan : the query plan
+     * @param decomposedQueryPlan : the query plan
      * @param topologyNode : the topology node
      */
     void addOpenCLAccelerationCode(const std::string& accelerationServiceURL,
-                                   const QueryPlanPtr& queryPlan,
+                                   const DecomposedQueryPlanPtr& decomposedQueryPlan,
                                    const TopologyNodePtr& topologyNode);
 
     /**
@@ -197,7 +200,7 @@ class ExplainRequest : public AbstractUniRequest {
      * @return json representing the global execution plan
      */
     nlohmann::json getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
-                                                        const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                        const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                         const TopologyPtr& topology,
                                                         bool accelerateJavaUDFs,
                                                         const std::string& accelerationServiceURL,

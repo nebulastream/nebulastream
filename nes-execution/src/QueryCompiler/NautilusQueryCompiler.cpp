@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
@@ -57,8 +57,8 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
     NES_INFO("Compile Query with Nautilus");
     try {
         Timer timer("NautilusQueryCompiler");
-        auto queryId = request->getQueryPlan()->getQueryId();
-        auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
+        auto queryId = request->getDecomposedQueryPlan()->getSharedQueryId();
+        auto subPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
         auto query = std::to_string(queryId) + "-" + std::to_string(subPlanId);
         // create new context for handling debug output
         auto dumpContext = DumpContext::create("QueryCompilation-" + query);
@@ -66,7 +66,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
 
         timer.start();
         NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
-        auto logicalQueryPlan = request->getQueryPlan();
+        auto logicalQueryPlan = request->getDecomposedQueryPlan();
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");
 

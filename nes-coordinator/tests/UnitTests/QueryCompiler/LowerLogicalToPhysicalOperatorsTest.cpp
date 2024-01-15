@@ -35,8 +35,9 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -168,13 +169,17 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterQuery) {
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
     NES_DEBUG("{}", queryPlan->toString());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -210,11 +215,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexFilterQuery) {
 
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
-
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -252,10 +260,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterMultiplexQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -292,10 +304,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterImplicitMultiplexQuer
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -341,10 +357,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleJoinQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -389,10 +409,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleBatchJoinQue
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -438,10 +462,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -503,10 +531,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -549,10 +581,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateWindowQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -584,10 +620,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -615,10 +655,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUDFQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -679,10 +723,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateProjectQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -711,10 +759,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateTwoSourceQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
@@ -743,10 +795,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSinkSourceQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
-    phase->apply(queryPlan);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto iterator = QueryPlanIterator(queryPlan).begin();
+    auto iterator = PlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;

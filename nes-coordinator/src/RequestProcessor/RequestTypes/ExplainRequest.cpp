@@ -51,12 +51,13 @@
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
@@ -272,8 +273,8 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
 void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
-    auto queryPlanIterator = QueryPlanIterator(queryPlan);
-    for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+    auto queryPlanIterator = PlanIterator(queryPlan);
+    for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         visitingOp->setId(NES::getNextOperatorId());
     }
@@ -281,7 +282,7 @@ void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
 
 nlohmann::json
 ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
-                                                     const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                     const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                      const TopologyPtr& topology,
                                                      bool accelerateJavaUDFs,
                                                      const std::string& accelerationServiceURL,
@@ -291,8 +292,8 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-    for (const ExecutionNodePtr& executionNode : executionNodes) {
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    for (const auto& executionNode : executionNodes) {
         nlohmann::json executionNodeMetaData{};
 
         executionNodeMetaData["nodeId"] = executionNode->getId();
@@ -300,28 +301,28 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
 
         // loop over all query sub plans inside the current executionNode
         nlohmann::json scheduledSubQueries{};
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
+        for (const auto& decomposedQueryPlan : executionNode->getAllDecomposedQueryPlans(sharedQueryId)) {
 
             // prepare json object to hold information on current query sub plan
             nlohmann::json currentQuerySubPlanMetaData{};
 
             // id of current query sub plan
-            currentQuerySubPlanMetaData["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
+            currentQuerySubPlanMetaData["querySubPlanId"] = decomposedQueryPlan->getDecomposedQueryPlanId();
 
             // add open cl acceleration code
             if (accelerateJavaUDFs) {
-                addOpenCLAccelerationCode(accelerationServiceURL, querySubPlan, topologyNode);
+                addOpenCLAccelerationCode(accelerationServiceURL, decomposedQueryPlan, topologyNode);
             }
 
             // add logical query plan to the json object
-            currentQuerySubPlanMetaData["logicalQuerySubPlan"] = querySubPlan->toString();
+            currentQuerySubPlanMetaData["logicalQuerySubPlan"] = decomposedQueryPlan->toString();
 
             // Generate Code Snippets for the sub query plan
-            auto updatedSubQueryPlan = sampleCodeGenerationPhase->execute(querySubPlan);
+            auto updatedSubQueryPlan = sampleCodeGenerationPhase->execute(decomposedQueryPlan);
             std::vector<std::string> generatedCodeSnippets;
             std::set<uint64_t> pipelineIds;
-            auto queryPlanIterator = QueryPlanIterator(updatedSubQueryPlan);
-            for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+            auto queryPlanIterator = PlanIterator(updatedSubQueryPlan);
+            for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<OperatorNode>();
                 if (visitingOp->hasProperty("PIPELINE_ID")) {
                     auto pipelineId = std::any_cast<uint64_t>(visitingOp->getProperty("PIPELINE_ID"));
@@ -348,16 +349,15 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
 }
 
 void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationServiceURL,
-                                               const QueryPlanPtr& queryPlan,
+                                               const DecomposedQueryPlanPtr& decomposedQueryPlan,
                                                const TopologyNodePtr& topologyNode) {
 
     //Elegant acceleration service call
     //1. Fetch the OpenCL Operators
-    auto openCLOperators = queryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+    auto openCLOperators = decomposedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
 
     //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {
-
         //3. Fetch the topology node and compute the topology node payload
         nlohmann::json payload;
         payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(
@@ -381,7 +381,7 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
                                            multipartPayload,
                                            cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {
-            throw QueryDeploymentException(queryPlan->getQueryId(),
+            throw QueryDeploymentException(decomposedQueryPlan->getDecomposedQueryPlanId(),
                                            "Error in call to Elegant acceleration service with code "
                                                + std::to_string(response.status_code) + " and msg " + response.reason);
         }

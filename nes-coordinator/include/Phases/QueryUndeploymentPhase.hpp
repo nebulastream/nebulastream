@@ -29,11 +29,13 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
+namespace Optimizer {
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 class QueryUndeploymentPhase;
 using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
@@ -49,7 +51,8 @@ class QueryUndeploymentPhase {
      * @param globalExecutionPlan : global execution plan
      * @return shared pointer to the instance of QueryUndeploymentPhase
      */
-    static QueryUndeploymentPhasePtr create(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan);
+    static QueryUndeploymentPhasePtr create(const TopologyPtr& topology,
+                                            const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan);
 
     /**
      * @brief method for stopping and undeploying the shared query with the given id
@@ -60,14 +63,14 @@ class QueryUndeploymentPhase {
     void execute(SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus);
 
   private:
-    explicit QueryUndeploymentPhase(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan);
+    explicit QueryUndeploymentPhase(const TopologyPtr& topology, const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan);
     /**
      * @brief method remove query from nodes
      * @param sharedQueryId : the id of the shared query plan
      * @param executionNodes execution nodes where query is deployed
      * @throws RPCQueryUndeploymentException: message, failedRpcExecutionNodeIds, RpcClientModes::Unregister
      */
-    void undeployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void undeployQuery(SharedQueryId sharedQueryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes);
 
     /**
      * @brief method to stop a query
@@ -77,11 +80,11 @@ class QueryUndeploymentPhase {
      * @throws RPCQueryUndeploymentException: message, failedRpcExecutionNodeIds, RpcClientModes::Stop
      */
     void stopQuery(SharedQueryId sharedQueryId,
-                   const std::vector<ExecutionNodePtr>& executionNodes,
+                   const std::vector<Optimizer::ExecutionNodePtr>& executionNodes,
                    SharedQueryPlanStatus sharedQueryPlanStatus);
 
     TopologyPtr topology;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     WorkerRPCClientPtr workerRPCClient;
 };
 }// namespace NES

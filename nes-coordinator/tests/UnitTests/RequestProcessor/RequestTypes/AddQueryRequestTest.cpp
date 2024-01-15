@@ -59,7 +59,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
     QueryCatalogServicePtr queryCatalogService;
     TopologyPtr topology;
     GlobalQueryPlanPtr globalQueryPlan;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     z3::ContextPtr z3Context;
 
@@ -89,7 +89,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
         globalQueryPlan = GlobalQueryPlan::create();
-        globalExecutionPlan = GlobalExecutionPlan::create();
+        globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         z3Context = std::make_shared<z3::context>();
     }

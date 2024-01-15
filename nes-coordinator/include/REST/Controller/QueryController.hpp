@@ -49,8 +49,10 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
 
+namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
@@ -67,7 +69,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     const QueryServicePtr& queryService,
                     const QueryCatalogServicePtr& queryCatalogService,
                     const GlobalQueryPlanPtr& globalQueryPlan,
-                    const GlobalExecutionPlanPtr& globalExecutionPlan,
+                    const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                     const std::string& completeRouterPrefix,
                     const ErrorHandlerPtr& errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(queryService),
@@ -83,7 +85,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                                                    const QueryServicePtr& queryService,
                                                    const QueryCatalogServicePtr& queryCatalogService,
                                                    const GlobalQueryPlanPtr& globalQueryPlan,
-                                                   const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                   const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    const std::string& routerPrefixAddition,
                                                    const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
@@ -319,7 +321,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             Status status = success
                 ? Status::CODE_202
                 : Status::
-                    CODE_400;//QueryController catches InvalidQueryStatus exception, but this is never thrown since it was commented out
+                      CODE_400;//QueryController catches InvalidQueryStatus exception, but this is never thrown since it was commented out
             nlohmann::json response;
             response["success"] = success;
             return createResponse(status, response.dump());
@@ -381,7 +383,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     ErrorHandlerPtr errorHandler;
 };
 }// namespace REST::Controller

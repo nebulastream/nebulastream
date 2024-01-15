@@ -22,6 +22,12 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
+
+class OriginIdAssignmentOperator;
+using OriginIdAssignmentOperatorPtr = std::shared_ptr<OriginIdAssignmentOperator>;
+
 namespace Optimizer {
 
 class OriginIdInferencePhase;
@@ -50,9 +56,18 @@ class OriginIdInferencePhase {
      */
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
+    /**
+     * @brief Apply the rule to the Query plan
+     * @param decomposedQueryPlan: The original query plan
+     * @return The updated query plan
+     */
+    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
+
   private:
     explicit OriginIdInferencePhase();
+
+    void performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<OperatorNodePtr> rootOperators);
 };
 }// namespace Optimizer
 }// namespace NES
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_

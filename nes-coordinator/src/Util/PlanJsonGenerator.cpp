@@ -28,6 +28,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanJsonGenerator.hpp>
 
@@ -133,22 +134,22 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
     }
 }
 
-nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId) {
+nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId) {
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    for (const ExecutionNodePtr& executionNode : executionNodes) {
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
         nlohmann::json currentExecutionNodeJsonValue{};
 
         currentExecutionNodeJsonValue["executionNodeId"] = executionNode->getId();
         currentExecutionNodeJsonValue["topologyNodeId"] = executionNode->getTopologyNode()->getId();
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] = executionNode->getTopologyNode()->getIpAddress();
 
-        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-        if (!querySubPlans.empty()) {
+        auto allDecomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+        if (!allDecomposedQueryPlans.empty()) {
             continue;
         }
 
@@ -157,16 +158,16 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPl
 
         std::vector<nlohmann::json> scheduledSubQueries;
         // loop over all query sub plans inside the current executionNode
-        for (const auto& querySubPlan : querySubPlans) {
+        for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
 
             // prepare json object to hold information on current query sub plan
             nlohmann::json currentQuerySubPlan{};
 
             // id of current query sub plan
-            currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
+            currentQuerySubPlan["querySubPlanId"] = decomposedQueryPlan->getDecomposedQueryPlanId();
 
             // add the string containing operator to the json object of current query sub plan
-            currentQuerySubPlan["querySubPlan"] = querySubPlan->toString();
+            currentQuerySubPlan["querySubPlan"] = decomposedQueryPlan->toString();
 
             scheduledSubQueries.push_back(currentQuerySubPlan);
         }

@@ -23,12 +23,6 @@
 
 namespace NES {
 
-class ExecutionNode;
-using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
-
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
@@ -47,6 +41,13 @@ class PathFinder;
 using PathFinderPtr = std::shared_ptr<PathFinder>;
 
 namespace Optimizer {
+
+class ExecutionNode;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
+
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
@@ -97,7 +98,6 @@ class PlacementRemovalStrategy {
     ~PlacementRemovalStrategy();
 
   private:
-
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators
      * @param upStreamPinnedOperators: the pinned upstream operators
@@ -147,9 +147,9 @@ class PlacementRemovalStrategy {
     std::set<WorkerId> workerIdsInBFS;
     std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
-    std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToQuerySubPlanIds;
+    std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToDecomposedQueryPlanIds;
     std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
-    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>> workerIdToUpdatedQuerySubPlans;
+    std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>> workerIdToUpdatedDecomposedQueryPlans;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
 
     //Max retires for path selection before failing the placement

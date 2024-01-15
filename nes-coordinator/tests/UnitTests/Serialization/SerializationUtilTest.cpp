@@ -701,14 +701,13 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     sink->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, 1, {sink});
+    auto queryPlan = QueryPlan::create(1, {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
@@ -724,14 +723,13 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationMultipleFilters) {
     filter3->addChild(filter2);
     sink->addChild(filter3);
 
-    auto queryPlan = QueryPlan::create(1, 1, {sink});
+    auto queryPlan = QueryPlan::create(1, {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
@@ -744,14 +742,13 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     sink->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, 1, {sink});
+    auto queryPlan = QueryPlan::create(1, {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
@@ -793,14 +790,13 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
     sink1->addChild(map);
     sink2->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, 1, {sink1, sink2});
+    auto queryPlan = QueryPlan::create(1, {sink1, sink2});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
 
     std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
     for (const auto& actualRootOperator : actualRootOperators) {
@@ -828,14 +824,13 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     sink1->addChild(map);
     sink2->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, 1, {sink1, sink2});
+    auto queryPlan = QueryPlan::create(1, {sink1, sink2});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
 
     std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
     for (const auto& actualRootOperator : actualRootOperators) {

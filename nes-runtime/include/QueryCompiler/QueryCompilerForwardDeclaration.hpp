@@ -80,8 +80,8 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class LogicalOperatorNode;
 using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;

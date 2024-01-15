@@ -1643,10 +1643,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
        testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 =
-        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
-                                                                                                     NES::API::Milliseconds(10),
-                                                                                                     NES::API::Milliseconds()));
+    Query subQuery1 = Query::from("truck").assignWatermark(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .unionWith(Query::from("truck").assignWatermark(

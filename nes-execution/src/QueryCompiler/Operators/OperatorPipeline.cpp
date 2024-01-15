@@ -11,7 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Plans/Query/QueryPlan.hpp>
+
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -29,7 +30,8 @@ uint64_t getNextPipelineId() {
 }
 
 OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
-    : id(pipelineId), queryPlan(QueryPlan::create()), pipelineType(pipelineType) {}
+    : id(pipelineId), decomposedQueryPlan(DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID)),
+      pipelineType(pipelineType) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(getNextPipelineId(), Type::OperatorPipelineType));
@@ -71,7 +73,7 @@ std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const {
     return predecessors;
 }
 
-bool OperatorPipeline::hasOperators() const { return !this->queryPlan->getRootOperators().empty(); }
+bool OperatorPipeline::hasOperators() const { return !this->decomposedQueryPlan->getRootOperators().empty(); }
 
 void OperatorPipeline::clearPredecessors() {
     for (const auto& pre : predecessorPipelines) {
@@ -114,12 +116,13 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     if (newRootOperator->hasProperty("LogicalOperatorId")) {
         operatorIds.push_back(std::any_cast<uint64_t>(newRootOperator->getProperty("LogicalOperatorId")));
     }
-    this->queryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
+    this->decomposedQueryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
 }
 
 uint64_t OperatorPipeline::getPipelineId() const { return id; }
 
-QueryPlanPtr OperatorPipeline::getQueryPlan() { return queryPlan; }
+DecomposedQueryPlanPtr OperatorPipeline::getDecomposedQueryPlan() { return decomposedQueryPlan; }
+
 const std::vector<uint64_t>& OperatorPipeline::getOperatorIds() const { return operatorIds; }
 
 std::string OperatorPipeline::toString() const {
@@ -143,7 +146,7 @@ std::string OperatorPipeline::toString() const {
     std::ostringstream oss;
     oss << "- Id: " << id << ", Type: " << magic_enum::enum_name(pipelineType) << ", Successors: " << successorsStr
         << ", Predecessors: " << predeccesorsStr << std::endl
-        << "- Queryplan: " << queryPlan->toString();
+        << "- Queryplan: " << decomposedQueryPlan->toString();
 
     return oss.str();
 }

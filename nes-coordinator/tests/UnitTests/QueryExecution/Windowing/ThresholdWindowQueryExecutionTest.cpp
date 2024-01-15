@@ -16,13 +16,11 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
-#include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <iostream>
-#include <utility>
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -87,7 +85,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSum) {
                      .apply(Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$Sum")))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
@@ -123,7 +125,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMax) {
                      .apply(Max(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$Max")))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
@@ -159,7 +165,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMin) {
                      .apply(Min(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$Min")))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
@@ -195,7 +205,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithAvg) {
                      .apply(Avg(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$Avg")))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
@@ -231,7 +245,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCount) {
                      .apply(Count()->as(Attribute("test$Count")))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
@@ -267,7 +285,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumFloat) {
                      .apply(Sum(Attribute("test$f2", BasicType::FLOAT32))->as(Attribute("test$Sum")))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
@@ -303,7 +325,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumInt32) {
                      .apply(Sum(Attribute("test$f2", BasicType::INT32))->as(Attribute("test$Sum")))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
@@ -339,7 +365,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumDouble) {
                      .apply(Sum(Attribute("test$f2", BasicType::FLOAT64))->as(Attribute("test$Sum")))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
@@ -380,7 +410,11 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCountAndS
             .apply(Count()->as(Attribute("test$Count")), Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$Sum")))
             .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);

@@ -75,13 +75,13 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+namespace Optimizer {
+
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
-
-namespace Optimizer {
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
@@ -134,7 +134,7 @@ class GlobalQueryPlanUpdatePhase {
                                                 const z3::ContextPtr& z3Context,
                                                 const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
                                                 const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                                const GlobalExecutionPlanPtr& globalExecutionPlan);
+                                                const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -222,8 +222,8 @@ class GlobalQueryPlanUpdatePhase {
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
     TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
-    Optimizer::QueryMergerPhasePtr queryMergerPhase;
-    Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
+    QueryMergerPhasePtr queryMergerPhase;
+    SignatureInferencePhasePtr signatureInferencePhase;
     OriginIdInferencePhasePtr originIdInferencePhase;
     MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
     SampleCodeGenerationPhasePtr sampleCodeGenerationPhase;

@@ -20,11 +20,11 @@ namespace NES::QueryCompilation {
 
 /**
  * @brief Represents a query compilation request.
- * The request encapsulates the query plan and addition properties.
+ * The request encapsulates the decomposed query plan and addition properties.
  */
 class QueryCompilationRequest {
   public:
-    static QueryCompilationRequestPtr create(QueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
+    static QueryCompilationRequestPtr create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine);
 
     /**
      * @brief Enable debugging for this query.
@@ -60,10 +60,10 @@ class QueryCompilationRequest {
     bool isDumpEnabled() const;
 
     /**
-     * @brief Gets the query plan of this request
-     * @return QueryPlanPtr
+     * @brief Gets the Decomposed query plan of this request
+     * @return DecomposedQueryPlanPtr
      */
-    QueryPlanPtr getQueryPlan();
+    DecomposedQueryPlanPtr getDecomposedQueryPlan();
 
     /**
      * @brief Gets the node engine
@@ -72,8 +72,8 @@ class QueryCompilationRequest {
     Runtime::NodeEnginePtr getNodeEngine();
 
   private:
-    QueryCompilationRequest(QueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
-    QueryPlanPtr queryPlan;
+    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
+    DecomposedQueryPlanPtr decomposedQueryPlan;
     Runtime::NodeEnginePtr nodeEngine;
     bool debug;
     bool optimize;

@@ -30,8 +30,10 @@ class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs::Source
 
+namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -53,7 +55,7 @@ namespace RequestProcessor {
 struct StorageDataStructures {
     StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                           TopologyPtr topology,
-                          GlobalExecutionPlanPtr globalExecutionPlan,
+                          Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                           QueryCatalogServicePtr queryCatalogService,
                           GlobalQueryPlanPtr globalQueryPlan,
                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
@@ -62,7 +64,7 @@ struct StorageDataStructures {
     TopologyPtr topology;
     QueryCatalogServicePtr queryCatalogService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };

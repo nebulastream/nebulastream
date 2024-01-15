@@ -81,7 +81,7 @@ std::string Task::toString() const {
     ss << "Task: id=" << id;
     if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
         ss << " execute pipelineId=" << (*executablePipeline)->getPipelineId()
-           << " qepParentId=" << (*executablePipeline)->getQuerySubPlanId();
+           << " qepParentId=" << (*executablePipeline)->getDecomposedQueryPlanId();
     } else if (std::holds_alternative<DataSinkPtr>(pipeline)) {
         ss << " execute data sink";
     }

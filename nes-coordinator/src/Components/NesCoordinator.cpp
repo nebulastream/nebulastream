@@ -80,7 +80,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     queryParsingService = QueryParsingService::create(jitCompiler);
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    globalExecutionPlan = GlobalExecutionPlan::create();
+    globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
@@ -369,6 +369,6 @@ TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { re
 
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 
-GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() const { return globalExecutionPlan; }
+Optimizer::GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() const { return globalExecutionPlan; }
 
 }// namespace NES

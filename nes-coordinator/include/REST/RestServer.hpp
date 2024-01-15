@@ -33,8 +33,10 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+namespace Optimizer{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}
 
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
@@ -94,7 +96,7 @@ class RestServer {
                QueryCatalogServicePtr queryCatalogService,
                SourceCatalogServicePtr sourceCatalogService,
                TopologyManagerServicePtr topologyManagerService,
-               GlobalExecutionPlanPtr globalExecutionPlan,
+               Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                QueryServicePtr queryService,
                MonitoringServicePtr monitoringService,
                QueryParsingServicePtr queryParsingService,
@@ -126,7 +128,7 @@ class RestServer {
     uint16_t port;
     NesCoordinatorWeakPtr coordinator;
     QueryCatalogServicePtr queryCatalogService;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     QueryServicePtr queryService;
     GlobalQueryPlanPtr globalQueryPlan;
     SourceCatalogServicePtr sourceCatalogService;

@@ -15,6 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
@@ -85,7 +86,11 @@ TEST_F(MergeQueryExecutionTest, mergeQuery) {
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5);
     auto mergedQuery = query2.unionWith(query1).project(Attribute("id")).sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(mergedQuery.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : mergedQuery.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto inputBuffer = executionEngine->getBuffer(schema);
     fillBuffer(inputBuffer);

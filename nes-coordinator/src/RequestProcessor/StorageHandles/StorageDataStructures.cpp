@@ -15,7 +15,7 @@
 namespace NES::RequestProcessor {
 StorageDataStructures::StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                                              TopologyPtr topology,
-                                             GlobalExecutionPlanPtr globalExecutionPlan,
+                                             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                                              QueryCatalogServicePtr queryCatalogService,
                                              GlobalQueryPlanPtr globalQueryPlan,
                                              Catalogs::Source::SourceCatalogPtr sourceCatalog,

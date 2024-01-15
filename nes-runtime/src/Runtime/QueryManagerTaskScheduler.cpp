@@ -333,22 +333,22 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
         return;
     }
 
-    DecomposedQueryPlanId querySubPlanId = -1;
-    QueryId queryId = -1;
+    DecomposedQueryPlanId decomposedQueryPlanId = -1;
+    QueryId sharedQueryId = -1;
     PipelineId pipelineId = -1;
     auto executable = task.getExecutable();
     if (auto* sink = std::get_if<DataSinkPtr>(&executable)) {
-        querySubPlanId = (*sink)->getParentPlanId();
-        queryId = (*sink)->getQueryId();
-        NES_TRACE("AbstractQueryManager::completedWork: task for sink querySubPlanId={}", querySubPlanId);
+        decomposedQueryPlanId = (*sink)->getParentPlanId();
+        sharedQueryId = (*sink)->getSharedQueryId();
+        NES_TRACE("AbstractQueryManager::completedWork: task for sink querySubPlanId={}", decomposedQueryPlanId);
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
-        querySubPlanId = (*executablePipeline)->getQuerySubPlanId();
-        queryId = (*executablePipeline)->getQueryId();
+        decomposedQueryPlanId = (*executablePipeline)->getDecomposedQueryPlanId();
+        sharedQueryId = (*executablePipeline)->getSharedQueryId();
         pipelineId = (*executablePipeline)->getPipelineId();
         NES_TRACE("AbstractQueryManager::completedWork: task for exec pipeline isreconfig={}",
                   (*executablePipeline)->isReconfiguration());
     }
-    updateStatistics(task, queryId, querySubPlanId, pipelineId, wtx);
+    updateStatistics(task, sharedQueryId, decomposedQueryPlanId, pipelineId, wtx);
 }
 
 bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,

@@ -32,18 +32,18 @@
 
 namespace NES::Runtime {
 bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
-    NES_DEBUG("AbstractQueryManager::registerQueryInNodeEngine: query {} subquery={}",
-              qep->getQueryId(),
-              qep->getQuerySubPlanId());
+    NES_DEBUG("AbstractQueryManager::registerExecutableQueryPlan: query {} subquery={}",
+              qep->getSharedQueryId(),
+              qep->getDecomposedQueryPlanId());
 
     NES_ASSERT2_FMT(queryManagerStatus.load() == QueryManagerStatus::Running,
-                    "AbstractQueryManager::registerQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
-                                                                                       << qep->getQueryId());
+                    "AbstractQueryManager::registerQuery: cannot accept new query id " << qep->getDecomposedQueryPlanId() << " "
+                                                                                       << qep->getSharedQueryId());
     {
         std::scoped_lock lock(queryMutex);
         // test if elements already exist
         NES_DEBUG("AbstractQueryManager: resolving sources for query  {}  with sources= {}",
-                  qep->getQueryId(),
+                  qep->getSharedQueryId(),
                   qep->getSources().size());
 
         for (const auto& source : qep->getSources()) {
@@ -62,19 +62,19 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     }
 
     NES_DEBUG("queryToStatisticsMap add for= {}  pair queryId= {}  subplanId= {}",
-              qep->getQuerySubPlanId(),
-              qep->getQueryId(),
-              qep->getQuerySubPlanId());
+              qep->getDecomposedQueryPlanId(),
+              qep->getSharedQueryId(),
+              qep->getDecomposedQueryPlanId());
 
     //TODO: This assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
-    queryToStatisticsMap.insert(qep->getQuerySubPlanId(),
-                                std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
+    queryToStatisticsMap.insert(qep->getDecomposedQueryPlanId(),
+                                std::make_shared<QueryStatistics>(qep->getSharedQueryId(), qep->getDecomposedQueryPlanId()));
 
     NES_ASSERT2_FMT(queryManagerStatus.load() == QueryManagerStatus::Running,
-                    "AbstractQueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
-                                                                                    << qep->getQueryId());
+                    "AbstractQueryManager::startQuery: cannot accept new query id " << qep->getDecomposedQueryPlanId() << " "
+                                                                                    << qep->getSharedQueryId());
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
-               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
+               "Invalid status for starting the QEP " << qep->getDecomposedQueryPlanId());
 
     // 1. start the qep and handlers, if any
     if (!qep->setup() || !qep->start()) {
@@ -160,7 +160,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
 
     {
         std::unique_lock lock(queryMutex);
-        runningQEPs.emplace(qep->getQuerySubPlanId(), qep);
+        runningQEPs.emplace(qep->getDecomposedQueryPlanId(), qep);
     }
 
     return true;
@@ -173,16 +173,16 @@ bool MultiQueueQueryManager::registerQuery(const Execution::ExecutableQueryPlanP
                     "AbstractQueryManager::registerQuery: not enough queues are free for numberOfQueues="
                         << numberOfQueues << " query cnt=" << queryToStatisticsMap.size());
     //currently we asume all queues have same number of threads so we can do this.
-    queryToTaskQueueIdMap[qep->getQueryId()] = currentTaskQueueId++;
-    NES_DEBUG("queryToTaskQueueIdMap add for= {}  queue= {}", qep->getQueryId(), currentTaskQueueId - 1);
+    queryToTaskQueueIdMap[qep->getSharedQueryId()] = currentTaskQueueId++;
+    NES_DEBUG("queryToTaskQueueIdMap add for= {}  queue= {}", qep->getSharedQueryId(), currentTaskQueueId - 1);
     return ret;
 }
 
 bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep) {
-    NES_DEBUG("AbstractQueryManager::startQuery: query id  {}   {}", qep->getQuerySubPlanId(), qep->getQueryId());
+    NES_DEBUG("AbstractQueryManager::startQuery: query id  {}   {}", qep->getDecomposedQueryPlanId(), qep->getSharedQueryId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == QueryManagerStatus::Running,
-                    "AbstractQueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
-                                                                                    << qep->getQueryId());
+                    "AbstractQueryManager::startQuery: cannot accept new query id " << qep->getDecomposedQueryPlanId() << " "
+                                                                                    << qep->getSharedQueryId());
     //    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
     //               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
@@ -211,8 +211,8 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     }
 
     // register start timestamp of query in statistics
-    if (queryToStatisticsMap.contains(qep->getQuerySubPlanId())) {
-        auto statistics = queryToStatisticsMap.find(qep->getQuerySubPlanId());
+    if (queryToStatisticsMap.contains(qep->getDecomposedQueryPlanId())) {
+        auto statistics = queryToStatisticsMap.find(qep->getDecomposedQueryPlanId());
         if (statistics->getTimestampQueryStart() == 0) {
             auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                            std::chrono::high_resolution_clock::now().time_since_epoch())
@@ -230,13 +230,13 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
 }
 
 bool AbstractQueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep) {
-    NES_DEBUG("AbstractQueryManager::deregisterAndUndeployQuery: query {}", qep->getQueryId());
+    NES_DEBUG("AbstractQueryManager::deregisterAndUndeployQuery: query {}", qep->getSharedQueryId());
     std::unique_lock lock(queryMutex);
     auto qepStatus = qep->getStatus();
     NES_ASSERT2_FMT(qepStatus == Execution::ExecutableQueryPlanStatus::Finished
                         || qepStatus == Execution::ExecutableQueryPlanStatus::ErrorState
                         || qepStatus == Execution::ExecutableQueryPlanStatus::Stopped,
-                    "Cannot deregisterQuery query " << qep->getQuerySubPlanId() << " as it is not stopped/failed");
+                    "Cannot deregisterQuery query " << qep->getDecomposedQueryPlanId() << " as it is not stopped/failed");
     for (auto const& source : qep->getSources()) {
         sourceToQEPMapping.erase(source->getOperatorId());
     }
@@ -251,12 +251,12 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
     bool overallResult = true;
     //we have to check for each query on this source if we can terminate and return a common answer
     for (auto qep : sourceToQEPMapping[source->getOperatorId()]) {
-        bool ret = queryStatusListener->canTriggerEndOfStream(qep->getQueryId(),
-                                                              qep->getQuerySubPlanId(),
+        bool ret = queryStatusListener->canTriggerEndOfStream(qep->getSharedQueryId(),
+                                                              qep->getDecomposedQueryPlanId(),
                                                               source->getOperatorId(),
                                                               terminationType);
         if (!ret) {
-            NES_ERROR("Query cannot trigger EOS for query manager for query ={}", qep->getQueryId());
+            NES_ERROR("Query cannot trigger EOS for query manager for query ={}", qep->getSharedQueryId());
             NES_THROW_RUNTIME_ERROR("cannot trigger EOS in canTriggerEndOfStream()");
         }
         overallResult &= ret;
@@ -266,7 +266,7 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
 
 bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     bool ret = true;
-    NES_DEBUG("AbstractQueryManager::failQuery: query= {}", qep->getQueryId());
+    NES_DEBUG("AbstractQueryManager::failQuery: query= {}", qep->getSharedQueryId());
     switch (qep->getStatus()) {
         case Execution::ExecutableQueryPlanStatus::ErrorState:
         case Execution::ExecutableQueryPlanStatus::Finished:
@@ -274,7 +274,7 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
             return true;
         }
         case Execution::ExecutableQueryPlanStatus::Invalid: {
-            NES_ASSERT2_FMT(false, "not supported yet " << qep->getQuerySubPlanId());
+            NES_ASSERT2_FMT(false, "not supported yet " << qep->getDecomposedQueryPlanId());
             break;
         }
         default: {
@@ -284,7 +284,7 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
     for (const auto& source : qep->getSources()) {
         NES_ASSERT2_FMT(source->fail(),
                         "Cannot fail source " << source->getOperatorId()
-                                              << " belonging to query plan=" << qep->getQuerySubPlanId());
+                                              << " belonging to query plan=" << qep->getDecomposedQueryPlanId());
     }
 
     auto terminationFuture = qep->getTerminationFuture();
@@ -292,7 +292,7 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
     switch (terminationStatus) {
         case std::future_status::ready: {
             if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Fail) {
-                NES_FATAL_ERROR("AbstractQueryManager: QEP {} could not be failed", qep->getQuerySubPlanId());
+                NES_FATAL_ERROR("AbstractQueryManager: QEP {} could not be failed", qep->getDecomposedQueryPlanId());
                 ret = false;
             }
             break;
@@ -300,38 +300,39 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
         case std::future_status::timeout:
         case std::future_status::deferred: {
             // TODO we need to fail the query now as it could not be stopped?
-            NES_ASSERT2_FMT(false, "Cannot stop query within deadline getQuerySubPlanId()=" << qep->getQuerySubPlanId());
+            NES_ASSERT2_FMT(false, "Cannot stop query within deadline getDecomposedQueryPlanId()=" << qep->getDecomposedQueryPlanId());
             break;
         }
     }
     if (ret) {
-        addReconfigurationMessage(qep->getQueryId(),
-                                  qep->getQuerySubPlanId(),
-                                  ReconfigurationMessage(qep->getQueryId(),
-                                                         qep->getQuerySubPlanId(),
+        addReconfigurationMessage(qep->getSharedQueryId(),
+                                  qep->getDecomposedQueryPlanId(),
+                                  ReconfigurationMessage(qep->getSharedQueryId(),
+                                                         qep->getDecomposedQueryPlanId(),
                                                          ReconfigurationType::Destroy,
                                                          inherited1::shared_from_this()),
                                   true);
     }
     NES_DEBUG("AbstractQueryManager::failQuery: query {} was {}",
-              qep->getQuerySubPlanId(),
+              qep->getDecomposedQueryPlanId(),
               (ret ? "successful" : " not successful"));
     return true;
 }
 
 bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runtime::QueryTerminationType type) {
-    NES_DEBUG("AbstractQueryManager::stopQuery: query sub-plan id  {}  type= {}", qep->getQuerySubPlanId(), type);
-    NES_ASSERT2_FMT(type != QueryTerminationType::Failure, "Requested stop with failure for query " << qep->getQuerySubPlanId());
+    NES_DEBUG("AbstractQueryManager::stopQuery: query sub-plan id  {}  type= {}", qep->getDecomposedQueryPlanId(), type);
+    NES_ASSERT2_FMT(type != QueryTerminationType::Failure, "Requested stop with failure for query " << qep->getDecomposedQueryPlanId());
     bool ret = true;
     switch (qep->getStatus()) {
         case Execution::ExecutableQueryPlanStatus::ErrorState:
         case Execution::ExecutableQueryPlanStatus::Finished:
         case Execution::ExecutableQueryPlanStatus::Stopped: {
-            NES_DEBUG("AbstractQueryManager::stopQuery: query sub-plan id  {}  is already stopped", qep->getQuerySubPlanId());
+            NES_DEBUG("AbstractQueryManager::stopQuery: query sub-plan id  {}  is already stopped",
+                      qep->getDecomposedQueryPlanId());
             return true;
         }
         case Execution::ExecutableQueryPlanStatus::Invalid: {
-            NES_ASSERT2_FMT(false, "not supported yet " << qep->getQuerySubPlanId());
+            NES_ASSERT2_FMT(false, "not supported yet " << qep->getDecomposedQueryPlanId());
             break;
         }
         default: {
@@ -365,7 +366,7 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
     switch (terminationStatus) {
         case std::future_status::ready: {
             if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Ok) {
-                NES_FATAL_ERROR("AbstractQueryManager: QEP {} could not be stopped", qep->getQuerySubPlanId());
+                NES_FATAL_ERROR("AbstractQueryManager: QEP {} could not be stopped", qep->getDecomposedQueryPlanId());
                 ret = false;
             }
             break;
@@ -373,21 +374,21 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
         case std::future_status::timeout:
         case std::future_status::deferred: {
             // TODO we need to fail the query now as it could not be stopped?
-            NES_ASSERT2_FMT(false, "Cannot stop query within deadline " << qep->getQuerySubPlanId());
+            NES_ASSERT2_FMT(false, "Cannot stop query within deadline " << qep->getDecomposedQueryPlanId());
             break;
         }
     }
     if (ret) {
-        addReconfigurationMessage(qep->getQueryId(),
-                                  qep->getQuerySubPlanId(),
-                                  ReconfigurationMessage(qep->getQueryId(),
-                                                         qep->getQuerySubPlanId(),
+        addReconfigurationMessage(qep->getSharedQueryId(),
+                                  qep->getDecomposedQueryPlanId(),
+                                  ReconfigurationMessage(qep->getSharedQueryId(),
+                                                         qep->getDecomposedQueryPlanId(),
                                                          ReconfigurationType::Destroy,
                                                          inherited1::shared_from_this()),
                                   true);
     }
     NES_DEBUG("AbstractQueryManager::stopQuery: query {} was {}",
-              qep->getQuerySubPlanId(),
+              qep->getDecomposedQueryPlanId(),
               (ret ? "successful" : " not successful"));
     return ret;
 }
@@ -407,34 +408,34 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source) {
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
-            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getQueryId(),
-                                                        executablePipeline->get()->getQuerySubPlanId(),
+            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                                        executablePipeline->get()->getDecomposedQueryPlanId(),
                                                         ReconfigurationType::SoftEndOfStream,
                                                         (*executablePipeline));
-            addReconfigurationMessage(executablePipeline->get()->getQueryId(),
-                                      executablePipeline->get()->getQuerySubPlanId(),
+            addReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                      executablePipeline->get()->getDecomposedQueryPlanId(),
                                       reconfMessage,
                                       false);
             NES_DEBUG("soft end-of-stream Exec Pipeline opId={} reconfType={} queryExecutionPlanId={} "
                       "threadPool->getNumberOfThreads()={} qep {}",
                       sourceId,
                       magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
-                      executablePipeline->get()->getQuerySubPlanId(),
+                      executablePipeline->get()->getDecomposedQueryPlanId(),
                       threadPool->getNumberOfThreads(),
-                      executablePipeline->get()->getQueryId());
+                      executablePipeline->get()->getSharedQueryId());
         } else if (auto* sink = std::get_if<DataSinkPtr>(&successor)) {
-            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getQueryId(),
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getSharedQueryId(),
                                                             sink->get()->getParentPlanId(),
                                                             ReconfigurationType::SoftEndOfStream,
                                                             (*sink));
-            addReconfigurationMessage(sink->get()->getQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
+            addReconfigurationMessage(sink->get()->getSharedQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
             NES_DEBUG(
                 "soft end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep{}",
                 sourceId,
                 magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
                 sink->get()->getParentPlanId(),
                 threadPool->getNumberOfThreads(),
-                sink->get()->getQueryId());
+                sink->get()->getSharedQueryId());
         }
     }
     return true;
@@ -448,32 +449,32 @@ bool AbstractQueryManager::addHardEndOfStream(DataSourcePtr source) {
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
-            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getQueryId(),
-                                                        executablePipeline->get()->getQuerySubPlanId(),
+            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                                        executablePipeline->get()->getDecomposedQueryPlanId(),
                                                         ReconfigurationType::HardEndOfStream,
                                                         (*executablePipeline));
-            addReconfigurationMessage(executablePipeline->get()->getQueryId(),
-                                      executablePipeline->get()->getQuerySubPlanId(),
+            addReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                      executablePipeline->get()->getDecomposedQueryPlanId(),
                                       reconfMessage,
                                       false);
             NES_DEBUG("hard end-of-stream Exec Op opId={} reconfType={} queryId={} querySubPlanId={} "
                       "threadPool->getNumberOfThreads()={}",
                       sourceId,
                       magic_enum::enum_name(ReconfigurationType::HardEndOfStream),
-                      executablePipeline->get()->getQueryId(),
-                      executablePipeline->get()->getQuerySubPlanId(),
+                      executablePipeline->get()->getSharedQueryId(),
+                      executablePipeline->get()->getDecomposedQueryPlanId(),
                       threadPool->getNumberOfThreads());
         } else if (auto* sink = std::get_if<DataSinkPtr>(&successor)) {
-            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getQueryId(),
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getSharedQueryId(),
                                                             sink->get()->getParentPlanId(),
                                                             ReconfigurationType::HardEndOfStream,
                                                             (*sink));
-            addReconfigurationMessage(sink->get()->getQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
+            addReconfigurationMessage(sink->get()->getSharedQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
             NES_DEBUG(
                 "hard end-of-stream Sink opId={} reconfType={} queryId={} querySubPlanId={} threadPool->getNumberOfThreads()={}",
                 sourceId,
                 magic_enum::enum_name(ReconfigurationType::HardEndOfStream),
-                sink->get()->getQueryId(),
+                sink->get()->getSharedQueryId(),
                 sink->get()->getParentPlanId(),
                 threadPool->getNumberOfThreads());
         }
@@ -490,12 +491,12 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
         // create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
-            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getQueryId(),
-                                                        executablePipeline->get()->getQuerySubPlanId(),
+            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                                        executablePipeline->get()->getDecomposedQueryPlanId(),
                                                         ReconfigurationType::FailEndOfStream,
                                                         (*executablePipeline));
-            addReconfigurationMessage(executablePipeline->get()->getQueryId(),
-                                      executablePipeline->get()->getQuerySubPlanId(),
+            addReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                      executablePipeline->get()->getDecomposedQueryPlanId(),
                                       reconfMessage,
                                       false);
 
@@ -503,23 +504,23 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
                       "threadPool->getNumberOfThreads()={} qep {}",
                       sourceId,
                       magic_enum::enum_name(ReconfigurationType::FailEndOfStream),
-                      executablePipeline->get()->getQuerySubPlanId(),
+                      executablePipeline->get()->getDecomposedQueryPlanId(),
                       threadPool->getNumberOfThreads(),
-                      executablePipeline->get()->getQueryId());
+                      executablePipeline->get()->getSharedQueryId());
 
         } else if (auto* sink = std::get_if<DataSinkPtr>(&successor)) {
-            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getQueryId(),
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getSharedQueryId(),
                                                             sink->get()->getParentPlanId(),
                                                             ReconfigurationType::FailEndOfStream,
                                                             (*sink));
-            addReconfigurationMessage(sink->get()->getQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
+            addReconfigurationMessage(sink->get()->getSharedQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
             NES_DEBUG("failure end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} "
                       "threadPool->getNumberOfThreads()={} qep {}",
                       sourceId,
                       magic_enum::enum_name(ReconfigurationType::FailEndOfStream),
                       sink->get()->getParentPlanId(),
                       threadPool->getNumberOfThreads(),
-                      sink->get()->getQueryId());
+                      sink->get()->getSharedQueryId());
         }
     }
     return true;
