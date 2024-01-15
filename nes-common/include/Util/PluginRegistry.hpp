@@ -34,7 +34,12 @@ class PluginRegistry {
     static inline std::list<std::unique_ptr<T>> items = std::list<std::unique_ptr<T>>();
 
   public:
+    /**
+     * @brief Returns the list of all plugins.
+     * @return std::list<std::unique_ptr<T>>
+     */
     static std::list<std::unique_ptr<T>>& getPlugins() { return items; }
+
     /** A static registration template. Use like such:
     *
     * Registry<PluginInterfaceType>::Add<PluginType> X;
@@ -80,7 +85,7 @@ class NamedPluginRegistry {
     }
 
     /**
-     * @brief Returns the list of all plugins.
+     * @brief Returns the list of all plugin names.
      * @return std::list<std::string>
      */
     static std::list<std::string>& getPluginNames() { return names; }
@@ -141,6 +146,12 @@ class PluginFactory {
 
   public:
     /**
+     * @brief Returns the map of all plugin providers.
+     * @return std::map<std::string, std::unique_ptr<Provider<T>>>
+     */
+    static std::map<std::string, std::unique_ptr<Provider<T>>>& getProviders() { return items; }
+
+    /**
      * @brief Returns a new instance of this plugin.
      * @param name
      * @return std::unique_ptr<T>
@@ -152,6 +163,7 @@ class PluginFactory {
         }
         return found->second->create();
     }
+
     /**
      * @brief Returns the list of all plugins.
      * @return std::list<std::string>

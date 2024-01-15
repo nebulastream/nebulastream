@@ -17,6 +17,14 @@
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableExpression.pb.h>
+
+class SerializableOperator;
+class SerializableOperator_MapDetails;
 
 namespace NES {
 
@@ -32,6 +40,22 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
     * @return FieldAssignmentExpressionNodePtr
     */
     FieldAssignmentExpressionNodePtr getMapExpression() const;
+
+    std::optional<SerializableOperator> serialize() const override {
+        SerializableOperator serializedOperator = SerializableOperator();
+        auto mapDetails = SerializableOperator_MapDetails();
+        ExpressionSerializationUtil::serializeExpression(this->getMapExpression(), mapDetails.mutable_expression());
+        serializedOperator.mutable_details()->PackFrom(mapDetails);
+        return serializedOperator;
+    }
+
+    static std::shared_ptr<MapLogicalOperatorNode> deserialize(SerializableOperator serializedOperator) {
+        auto details = serializedOperator.details();
+        auto serializedMapOperator = SerializableOperator_MapDetails();
+        details.UnpackTo(&serializedMapOperator);
+        auto fieldAssignmentExpression = ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.expression());
+        return std::make_shared<MapLogicalOperatorNode>(MapLogicalOperatorNode(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(), getNextOperatorId()));
+    }
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:
@@ -51,6 +75,8 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
   private:
     const FieldAssignmentExpressionNodePtr mapExpression;
 };
+
+static LogicalOperatorRegistry::Add<LogicalOperatorProvider<MapLogicalOperatorNode>> mapFunction("map");
 
 }// namespace NES
 

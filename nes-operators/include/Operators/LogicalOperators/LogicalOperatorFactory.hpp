@@ -19,8 +19,34 @@
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <SerializableOperator.pb.h>
+#include <Util/PluginRegistry.hpp>
+#include <optional>
 
 namespace NES {
+class AbstractLogicalOperatorProvider {
+  public:
+    /**
+     * @brief
+     * @return std::unique_ptr<LogicalOperatorNode>
+     */
+    virtual std::optional<std::shared_ptr<LogicalOperatorNode>> create(const SerializableOperator& serializableOperator) = 0;
+    virtual ~AbstractLogicalOperatorProvider() = default;
+};
+
+/**
+ * @brief
+ * @tparam T
+ */
+template<typename T>
+class LogicalOperatorProvider : public AbstractLogicalOperatorProvider {
+  public:
+    std::optional<std::shared_ptr<LogicalOperatorNode>> create(const SerializableOperator& serializableOperator) override {
+        return T::deserialize(serializableOperator);
+    };
+};
+
+using LogicalOperatorRegistry = Util::PluginFactory<AbstractLogicalOperatorProvider>;
 
 class LogicalOperatorFactory {
   public:

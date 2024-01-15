@@ -31,7 +31,7 @@
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <filesystem>
 
 namespace NES::Runtime::Execution {
 

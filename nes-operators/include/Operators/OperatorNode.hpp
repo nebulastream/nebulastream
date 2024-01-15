@@ -17,8 +17,11 @@
 
 #include <Identifiers.hpp>
 #include <Nodes/Node.hpp>
+#include <SerializableOperator.pb.h>
 #include <any>
+#include <optional>
 #include <unordered_map>
+class SerializableOperator;
 
 namespace NES {
 
@@ -196,6 +199,14 @@ class OperatorNode : public Node {
      * @return the string representation of the class
      */
     std::string toString() const override;
+
+    /**
+     * @brief serialize the operator
+     * @return the serialized operator
+     */
+    virtual std::optional<SerializableOperator> serialize() const {
+        return std::nullopt;
+    };
 
   protected:
     /**

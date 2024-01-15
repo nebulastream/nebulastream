@@ -82,6 +82,7 @@
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/PluginRegistry.hpp>
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -99,6 +100,13 @@ namespace NES {
 
 SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode, bool isClientOriginated) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator {}", operatorNode->toString());
+
+    // serialize
+    auto optional = operatorNode->serialize();
+    if (optional.has_value()) {
+        return optional.value();
+    }
+
     SerializableOperator serializedOperator = SerializableOperator();
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // serialize source operator
@@ -127,10 +135,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         NES_TRACE("OperatorSerializationUtil:: serialize to BroadcastLogicalOperatorNode");
         auto broadcastDetails = SerializableOperator_BroadcastDetails();
         serializedOperator.mutable_details()->PackFrom(broadcastDetails);
-
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-        // serialize map operator
-        serializeMapOperator(*operatorNode->as<MapLogicalOperatorNode>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
         // serialize infer model
@@ -240,7 +244,25 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     NES_TRACE("OperatorSerializationUtil:: de-serialize {}", serializedOperator.DebugString());
     auto details = serializedOperator.details();
     LogicalOperatorNodePtr operatorNode;
-    if (details.Is<SerializableOperator_SourceDetails>()) {
+
+    // Note: option 1
+    for (const auto& plugin : LogicalOperatorRegistry::getProviders()) {
+        auto factory = plugin.second->create();
+        auto node = factory->create(serializedOperator);
+        if (node.has_value()) {
+            return node.value();
+        }
+    }
+
+    // Note: option 2
+    // This would require that we have an identifier stored in the serialized operator. Not sure if type_url() prone for that.
+    if (LogicalOperatorRegistry::hasPlugin(serializedOperator.details().type_url())) {
+        // de-serialize operator using plugin
+        auto factory = LogicalOperatorRegistry::createPlugin(serializedOperator.details().type_url());
+        //operatorNode = factory->create(serializedOperator);
+        operatorNode = factory->create(serializedOperator).value();
+
+    } else if (details.Is<SerializableOperator_SourceDetails>()) {
         // de-serialize source operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to SourceLogicalOperator");
         auto serializedSourceDescriptor = SerializableOperator_SourceDetails();
@@ -282,13 +304,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedBroadcastDescriptor);
         // de-serialize broadcast descriptor
         operatorNode = LogicalOperatorFactory::createBroadcastOperator(getNextOperatorId());
-
-    } else if (details.Is<SerializableOperator_MapDetails>()) {
-        // de-serialize map operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");
-        auto serializedMapOperator = SerializableOperator_MapDetails();
-        details.UnpackTo(&serializedMapOperator);
-        operatorNode = deserializeMapOperator(serializedMapOperator);
 
     } else if (details.Is<SerializableOperator_InferModelDetails>()) {
         // de-serialize infer model operator
@@ -481,14 +496,6 @@ LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
     return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, getNextOperatorId());
-}
-
-void OperatorSerializationUtil::serializeMapOperator(const MapLogicalOperatorNode& mapOperator,
-                                                     SerializableOperator& serializedOperator) {
-    NES_TRACE("OperatorSerializationUtil:: serialize to MapLogicalOperatorNode");
-    auto mapDetails = SerializableOperator_MapDetails();
-    ExpressionSerializationUtil::serializeExpression(mapOperator.getMapExpression(), mapDetails.mutable_expression());
-    serializedOperator.mutable_details()->PackFrom(mapDetails);
 }
 
 LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails) {
