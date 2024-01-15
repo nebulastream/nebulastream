@@ -19,7 +19,6 @@
   shell: |
     nohup python3 e2e_latency.py 2>&1 &
     echo $! > /home/ubuntu/dimitrios/generator.pid
-  chdir: /home/ubuntu/dimitrios
 
 - name: Start coordinator
   shell: |
