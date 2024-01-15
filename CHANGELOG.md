@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.6.21](https://github.com/nebulastream/nebulastream/tree/v0.6.21) (2024-01-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.20...v0.6.21)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable aborting async network channel connection attempts [\#4229](https://github.com/nebulastream/nebulastream/issues/4229)
+- \[FEATURE\] Enable source/sink reconfiguration while query is running [\#4088](https://github.com/nebulastream/nebulastream/issues/4088)
+- \[TASK\] Group constructor parameters for storage handler in a struct which can be reused elsewhere [\#3956](https://github.com/nebulastream/nebulastream/issues/3956)
+
+### Miscellaneous Issues ✌️
+
+- \[BUG\] Support OpenCV in Java UDF [\#4461](https://github.com/nebulastream/nebulastream/issues/4461)
+
 ## [v0.6.20](https://github.com/nebulastream/nebulastream/tree/v0.6.20) (2024-01-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19...v0.6.20)
