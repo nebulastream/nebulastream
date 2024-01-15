@@ -64,17 +64,17 @@
   register: mosquitto_cat_result
 
 - name: Kill mosquitto
-  when: mosquitto_cat_result.stat.exists
+  when: mosquitto_stat_result.stat.exists
   shell: "kill -9 {{ mosquitto_cat_result.stdout }}"
   ignore_errors: true
 
-- name: Wait for monitoring process to completely die
-  when: mosquitto_cat_result.stat.exists
+- name: Wait for mosquitto to completely die
+  when: mosquitto_stat_result.stat.exists
   wait_for:
     path: "/proc/{{ mosquitto_cat_result.stdout }}/status"
     state: absent
 
-- name: Remove coordinator monitoring pid file
+- name: Remove mosquitto pid file
   file:
     path: "/home/ubuntu/dimitrios/mosquitto.pid"
     state: absent
