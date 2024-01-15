@@ -341,6 +341,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param version the version number of the source at its time of creation
  * @param successors the subsequent operators in the pipeline to which the data is pushed
+ * @param uniqueNetworkSourceId a unique identifier of the network source which does not change over its lifetime
  * @return a data source pointer
  */
 DataSourcePtr createNetworkSource(const SchemaPtr& schema,

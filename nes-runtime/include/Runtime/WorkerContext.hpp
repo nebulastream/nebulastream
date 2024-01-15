@@ -270,9 +270,35 @@ class WorkerContext {
      */
     [[maybe_unused]] bool doesNetworkChannelExist(OperatorId operatorId);
 
-    void storeEventChannelFutures(OperatorId id, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+    /**
+     * @brief store a future for an event channel that is in the process of connecting
+     * @param id the id of the operator which the channel belongs to
+     * @param channelFuture the future to be stored
+     */
+    void storeEventChannelFuture(OperatorId id, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+
+    /**
+     * @brief retrieves an asynchronously established event channel.
+     * @param operatorId id of the operator which will use the event channel
+     * @return an optional containing a event channel ptr:
+     * - nullopt if the operation has not yet completed
+     * - optional containing nullptr if the conneciton timed out
+     * - optional containing valid ptr if connection succeeded
+     */
     std::optional<Network::EventOnlyNetworkChannelPtr> getAsyncEventChannelConnectionResult(OperatorId operatorId);
+
+    /**
+     * @brief blocks until async connection of an event channel has succeeded or timed out
+     * @param operatorId id of the operator which will use the event channel
+     * @return a pointer to the event channel or nullptr if the connection timed out
+     */
     Network::EventOnlyNetworkChannelPtr waitForAsyncConnectionEventChannel(OperatorId operatorId);
+
+    /**
+     * @brief check if a network channel exists for the operator in question
+     * @param operatorId the unique identifier of the operator to which the channel belongs
+     * @return true if a channel was found
+     */
     bool doesEventChannelExist(OperatorId operatorId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;

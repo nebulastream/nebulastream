@@ -35,14 +35,14 @@
 #include <queue>
 namespace NES::RequestProcessor::Experimental {
 
-TopologyChangeRequestPtr TopologyChangeRequest::create(std::vector<std::pair<WorkerId, WorkerId>> removedLinks,
-                                                       std::vector<std::pair<WorkerId, WorkerId>> addedLinks,
+TopologyChangeRequestPtr TopologyChangeRequest::create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
+                                                       const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
                                                        uint8_t maxRetries) {
     return std::make_shared<TopologyChangeRequest>(removedLinks, addedLinks, maxRetries);
 }
 
-TopologyChangeRequest::TopologyChangeRequest(std::vector<std::pair<WorkerId, WorkerId>> removedLinks,
-                                             std::vector<std::pair<WorkerId, WorkerId>> addedLinks,
+TopologyChangeRequest::TopologyChangeRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
+                                             const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
                                              uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::Topology,
                           ResourceType::GlobalQueryPlan,
@@ -79,7 +79,7 @@ TopologyChangeRequest::executeRequestLogic(const StorageHandlerPtr& storageHandl
         topology->addTopologyNodeAsChild(addedDown, addedUp);
     }
 
-    //identigy operators to be replaced
+    //identify operators to be replaced
     auto [upstreamId, downstreamId] = removedLinks.front();
     processRemoveTopologyLinkRequest(upstreamId, downstreamId);
 
@@ -117,104 +117,91 @@ void TopologyChangeRequest::processRemoveTopologyLinkRequest(WorkerId upstreamNo
         return;
     }
 
-    //todo: replace
     //Iterate over each shared query plan id and identify the operators that need to be replaced
     for (auto impactedSharedQueryId : impactedSharedQueryIds) {
-        //todo: how do we turn this back again
-        //queryCatalogService->checkAndMarkForMigration(impactedSharedQueryId, QueryState::MIGRATING);
         markOperatorsForReOperatorPlacement(impactedSharedQueryId, upstreamExecutionNode, downstreamExecutionNode);
     }
 }
 
-//todo: do we need this?
-void TopologyChangeRequest::processRemoveTopologyNodeRequest(WorkerId removedNodeId) {
-
-    //1. If the removed execution nodes do not exist then remove skip rest of the operation
-    auto removedExecutionNode = globalExecutionPlan->getExecutionNodeById(removedNodeId);
-    if (!removedExecutionNode) {
-        NES_INFO("Removing node {} has no effect on the running queries as there are no queries "
-                 "placed on the node.",
-                 removedNodeId);
-        return;
-    }
-
-    //2. If the removed execution nodes does not have any shared query plan placed then skip rest of the operation
-    auto impactedSharedQueryIds = removedExecutionNode->getPlacedSharedQueryPlanIds();
-    if (impactedSharedQueryIds.empty()) {
-        NES_INFO("Removing node {} has no effect on the running queries as there are no queries placed "
-                 "on the node.",
-                 removedNodeId);
-        return;
-    }
-
-    //3. Get the topology node with removed node id
-    TopologyNodePtr removedTopologyNode = topology->getCopyOfTopologyNodeWithId(removedNodeId);
-
-    //4. Fetch upstream and downstream topology nodes connected via the removed topology node
-    auto downstreamTopologyNodes = removedTopologyNode->getParents();
-    auto upstreamTopologyNodes = removedTopologyNode->getChildren();
-
-    //5. If the topology node either do not have upstream or downstream node then fail the request
-    if (upstreamTopologyNodes.empty() || downstreamTopologyNodes.empty()) {
-        //FIXME: how to handle this case? If the node to remove has physical source then we may need to kill the
-        // whole query.
-        NES_NOT_IMPLEMENTED();
-    }
-
-    //todo: capy block and place function above
-    //6. Iterate over all upstream and downstream topology node pairs and try to mark operators for re-placement
-    for (auto const& upstreamTopologyNode : upstreamTopologyNodes) {
-        for (auto const& downstreamTopologyNode : downstreamTopologyNodes) {
-
-            //6.1. Iterate over impacted shared query plan ids to identify the shared query plans placed on the
-            // upstream and downstream execution nodes
-            for (auto const& impactedSharedQueryId : impactedSharedQueryIds) {
-
-                auto upstreamExecutionNode =
-                    globalExecutionPlan->getExecutionNodeById(upstreamTopologyNode->as<TopologyNode>()->getId());
-                auto downstreamExecutionNode =
-                    globalExecutionPlan->getExecutionNodeById(downstreamTopologyNode->as<TopologyNode>()->getId());
-
-                //6.2. If there exists no upstream or downstream execution nodes than skip rest of the operation
-                if (!upstreamExecutionNode || !downstreamExecutionNode) {
-                    continue;
-                }
-
-                //6.3. Only process the upstream and downstream execution node pairs when both have shared query plans
-                // with the impacted shared query id
-                if (upstreamExecutionNode->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)
-                    && downstreamExecutionNode->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)) {
-                    markOperatorsForReOperatorPlacement(impactedSharedQueryId, upstreamExecutionNode, downstreamExecutionNode);
-                }
-            }
-        }
-    }
-}
+//todo #4493: call from this when all links to and from a node are removed
+//void TopologyChangeRequest::processRemoveTopologyNodeRequest(WorkerId removedNodeId) {
+//
+//    //1. If the removed execution nodes do not exist then remove skip rest of the operation
+//    auto removedExecutionNode = globalExecutionPlan->getExecutionNodeById(removedNodeId);
+//    if (!removedExecutionNode) {
+//        NES_INFO("Removing node {} has no effect on the running queries as there are no queries "
+//                 "placed on the node.",
+//                 removedNodeId);
+//        return;
+//    }
+//
+//    //2. If the removed execution nodes does not have any shared query plan placed then skip rest of the operation
+//    auto impactedSharedQueryIds = removedExecutionNode->getPlacedSharedQueryPlanIds();
+//    if (impactedSharedQueryIds.empty()) {
+//        NES_INFO("Removing node {} has no effect on the running queries as there are no queries placed "
+//                 "on the node.",
+//                 removedNodeId);
+//        return;
+//    }
+//
+//    //3. Get the topology node with removed node id
+//    TopologyNodePtr removedTopologyNode = topology->getCopyOfTopologyNodeWithId(removedNodeId);
+//
+//    //4. Fetch upstream and downstream topology nodes connected via the removed topology node
+//    auto downstreamTopologyNodes = removedTopologyNode->getParents();
+//    auto upstreamTopologyNodes = removedTopologyNode->getChildren();
+//
+//    //5. If the topology node either do not have upstream or downstream node then fail the request
+//    if (upstreamTopologyNodes.empty() || downstreamTopologyNodes.empty()) {
+//        //FIXME: how to handle this case? If the node to remove has physical source then we may need to kill the
+//        // whole query.
+//        NES_NOT_IMPLEMENTED();
+//    }
+//
+//    //todo: capy block and place function above
+//    //6. Iterate over all upstream and downstream topology node pairs and try to mark operators for re-placement
+//    for (auto const& upstreamTopologyNode : upstreamTopologyNodes) {
+//        for (auto const& downstreamTopologyNode : downstreamTopologyNodes) {
+//
+//            //6.1. Iterate over impacted shared query plan ids to identify the shared query plans placed on the
+//            // upstream and downstream execution nodes
+//            for (auto const& impactedSharedQueryId : impactedSharedQueryIds) {
+//
+//                auto upstreamExecutionNode =
+//                    globalExecutionPlan->getExecutionNodeById(upstreamTopologyNode->as<TopologyNode>()->getId());
+//                auto downstreamExecutionNode =
+//                    globalExecutionPlan->getExecutionNodeById(downstreamTopologyNode->as<TopologyNode>()->getId());
+//
+//                //6.2. If there exists no upstream or downstream execution nodes than skip rest of the operation
+//                if (!upstreamExecutionNode || !downstreamExecutionNode) {
+//                    continue;
+//                }
+//
+//                //6.3. Only process the upstream and downstream execution node pairs when both have shared query plans
+//                // with the impacted shared query id
+//                if (upstreamExecutionNode->hasQuerySubPlans(impactedSharedQueryId)
+//                    && downstreamExecutionNode->hasQuerySubPlans(impactedSharedQueryId)) {
+//                    markOperatorsForReOperatorPlacement(impactedSharedQueryId, upstreamExecutionNode, downstreamExecutionNode);
+//                }
+//            }
+//        }
+//    }
+//}
 
 void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
-                                                                     const Optimizer::ExecutionNodePtr& upstreamExecutionNode,
-                                                                     const Optimizer::ExecutionNodePtr& downstreamExecutionNode) {
-
-    //    //1. Iterate over all upstream sub query plans and extract the operator id of most upstream non-system
-    //    // generated (anything except Network Sink or Source) operator.
-    //    std::set<OperatorId> upstreamOperatorIds;
-    //    getUpstreamPinnedOperatorIds(sharedQueryPlanId, upstreamExecutionNode, upstreamOperatorIds);
-    //
-    //    //2. Iterate over all sub query plans in the downstream execution node and extract the operator ids of most upstream non-system
-    //    // generated (anything except Network Sink or Source) operator.
-    //    std::set<OperatorId> downstreamOperatorIds;
-    //    getDownstreamPinnedOperatorIds(sharedQueryPlanId, downstreamExecutionNode, downstreamOperatorIds);
-
-    //Note to self - do we need to consider the possibility that a sub query plan that is placed on the given upstream node does not
-    // communicate with the given downstream node?
-
-    //3. Fetch the shared query plan
+                                                                const Optimizer::ExecutionNodePtr& upstreamExecutionNode,
+                                                                const Optimizer::ExecutionNodePtr& downstreamExecutionNode) {
+    //Fetch the shared query plan and update its status
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryPlanId);
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
 
-    auto [upstreamOperatorIds, downstreamOperatorIds] =
-        findAffectedTopologySubGraph(sharedQueryPlan, upstreamExecutionNode, downstreamExecutionNode, topology, globalExecutionPlan);
-    //4. Mark the operators for re-operator placement
+    //find the pinned operators for the changelog
+    auto [upstreamOperatorIds, downstreamOperatorIds] = findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
+                                                                                                 upstreamExecutionNode,
+                                                                                                 downstreamExecutionNode,
+                                                                                                 topology,
+                                                                                                 globalExecutionPlan);
+    //perform re-operator placement on the query plan
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 
     //ammendment phase
@@ -225,28 +212,11 @@ void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sh
                                                                           coordinatorConfiguration);
     amendmentPhase->execute(sharedQueryPlan);
 
-    //todo: set state to migrating?
-    //todo: do this for all the affected subplans? which of this is the amendment phase already doing?
-    //    crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
-    //    //todo: make sure the state on the query plan is set in the right phase
-    //    crd->getGlobalExecutionPlan()
-    //        ->getExecutionNodeById(oldWorker->getWorkerId())
-    //        ->getQuerySubPlans(sharedQueryId)
-    //        .front()
-    //        ->setQueryState(QueryState::MARKED_FOR_MIGRATION);
-
-    //todo: instead of the above we probably only need to set the entry itself as migrating
-
     //deployment phase
-    //todo: make member var
     auto queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
     queryDeploymentPhase->execute(sharedQueryPlan);
 
-    //todo: do we still have to modify the status here?
-
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
-
-    //todo: do we still need the workaround found in the processor service?
 }
 
 LogicalOperatorNodePtr TopologyChangeRequest::findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
@@ -287,7 +257,7 @@ LogicalOperatorNodePtr TopologyChangeRequest::findUpstreamNonSystemOperators(con
             if (networkSourceDescriptor) {
                 auto upstreamSinkAndWorker =
                     findUpstreamNetworkSinkAndWorkerId(sharedQueryId, workerId, networkSourceDescriptor, globalExecutionPlan);
-                queue.push(upstreamSinkAndWorker);
+                queue.emplace(upstreamSinkAndWorker);
                 continue;
             }
             return currentOperator->as<LogicalOperatorNode>();
@@ -296,7 +266,6 @@ LogicalOperatorNodePtr TopologyChangeRequest::findUpstreamNonSystemOperators(con
         //operator is not system generated, do not insert children into queue and record it as upstream user generated operator
         return currentOperator->as<LogicalOperatorNode>();
     }
-    //todo: throw a specific exception instead of failing assertion
     NES_ASSERT(false, "No upstream operator found for the operator with the id " << downstreamOperator->getId());
     return {};
 }
@@ -327,7 +296,7 @@ TopologyChangeRequest::findDownstreamNonSystemOperators(const LogicalOperatorNod
             if (networkSinkDescriptor) {
                 auto downstreamSourceAndWorker =
                     findDownstreamNetworkSourceAndWorkerId(sharedQueryId, workerId, networkSinkDescriptor, globalExecutionPlan);
-                queue.push(downstreamSourceAndWorker);
+                queue.emplace(downstreamSourceAndWorker);
                 continue;
             }
             return currentOperator->as<LogicalOperatorNode>();
@@ -349,13 +318,12 @@ TopologyChangeRequest::findDownstreamNonSystemOperators(const LogicalOperatorNod
         //operator is not system generated, do not insert children into queue and record it as upstream user generated operator
         return currentOperator->as<LogicalOperatorNode>();
     }
-    //todo: throw a specific exception instead of failing assertion
     NES_ASSERT(false, "No upstream operator found for the operator with the id " << upstreamOperator->getId());
     return {};
 }
 
 std::pair<std::set<OperatorId>, std::set<OperatorId>>
-TopologyChangeRequest::findAffectedTopologySubGraph(const SharedQueryPlanPtr& sharedQueryPlan,
+TopologyChangeRequest::findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPlan,
                                                     const Optimizer::ExecutionNodePtr& upstreamNode,
                                                     const Optimizer::ExecutionNodePtr& downstreamNode,
                                                     const TopologyPtr& topology,
@@ -480,7 +448,7 @@ TopologyChangeRequest::findNetworkOperatorsForLink(const SharedQueryId& sharedQu
 
 std::pair<SinkLogicalOperatorNodePtr, WorkerId>
 TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& sharedQueryPlanId,
-                                                          const WorkerId workerId,
+                                                          WorkerId sourceWorkerId,
                                                           const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor,
                                                           const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
     auto childNodeId = networkSourceDescriptor->getNodeLocation().getNodeId();
@@ -489,7 +457,7 @@ TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& s
         for (const auto& sinkOperator : plan->getSinkOperators()) {
             auto upstreamNetworkSinkDescriptor =
                 std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(sinkOperator->getSinkDescriptor());
-            if (upstreamNetworkSinkDescriptor && upstreamNetworkSinkDescriptor->getNodeLocation().getNodeId() == workerId
+            if (upstreamNetworkSinkDescriptor && upstreamNetworkSinkDescriptor->getNodeLocation().getNodeId() == sourceWorkerId
                 && upstreamNetworkSinkDescriptor->getNesPartition() == networkSourceDescriptor->getNesPartition()) {
                 return {sinkOperator, childNodeId};
             }
@@ -500,7 +468,7 @@ TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& s
 
 std::pair<SourceLogicalOperatorNodePtr, WorkerId>
 TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(const SharedQueryId& sharedQueryPlanId,
-                                                              const WorkerId workerId,
+                                                              WorkerId sinkWorkerId,
                                                               const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor,
                                                               const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
     auto parentNodeId = networkSinkDescriptor->getNodeLocation().getNodeId();
@@ -509,7 +477,7 @@ TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(const SharedQueryI
         for (const auto& sourceOperator : plan->getSourceOperators()) {
             auto downNetworkSourceDescriptor =
                 std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
-            if (downNetworkSourceDescriptor && downNetworkSourceDescriptor->getNodeLocation().getNodeId() == workerId
+            if (downNetworkSourceDescriptor && downNetworkSourceDescriptor->getNodeLocation().getNodeId() == sinkWorkerId
                 && downNetworkSourceDescriptor->getNesPartition() == networkSinkDescriptor->getNesPartition()) {
                 return {sourceOperator, parentNodeId};
             }
@@ -517,10 +485,15 @@ TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(const SharedQueryI
     }
     throw std::exception();
 }
+
+//todo #4494: implement all the following functions
 void TopologyChangeRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+
 std::vector<AbstractRequestPtr> TopologyChangeRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) {
-    return std::vector<AbstractRequestPtr>();
+    return {};
 }
+
 void TopologyChangeRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+
 void TopologyChangeRequest::postExecution(const StorageHandlerPtr&) {}
 };// namespace NES::RequestProcessor::Experimental
