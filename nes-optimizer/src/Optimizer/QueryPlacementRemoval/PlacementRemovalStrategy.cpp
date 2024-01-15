@@ -281,7 +281,7 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
         for (const auto& querySubPlanId : querySubPlanIds) {
 
             // 4. Fetch the copy of Decomposed query plan to modify
-            auto querySubPlanToUpdate = executionNode->getCopyOfDecomposedQueryPlan(sharedQueryId, querySubPlanId);
+            auto querySubPlanToUpdate = executionNode->getDecomposedQueryPlan(sharedQueryId, querySubPlanId);
 
             // 5. Check if plan is a sys generated query sub plan.
             // A Sys generated plan will contain only network source and sink operators.
@@ -400,7 +400,7 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             // the updated query sub plan or not
             for (const auto& updatedQuerySubPlan : updatedQuerySubPlans) {
                 auto querySubPlanId = updatedQuerySubPlan->getDecomposedQueryPlanId();
-                auto actualQuerySubPlan = executionNode->getCopyOfDecomposedQueryPlan(sharedQueryId, querySubPlanId);
+                auto actualQuerySubPlan = executionNode->getDecomposedQueryPlan(sharedQueryId, querySubPlanId);
 
                 // 4. Check is the updated and actual query sub plan has the same version number
                 uint32_t currentVersion = actualQuerySubPlan->getVersion();
