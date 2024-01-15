@@ -235,11 +235,11 @@ void AbstractQueryManager::destroy() {
     }
 }
 
-uint64_t AbstractQueryManager::getQueryId(uint64_t querySubPlanId) const {
+SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const {
     std::unique_lock lock(statisticsMutex);
-    auto iterator = runningQEPs.find(querySubPlanId);
+    auto iterator = runningQEPs.find(decomposedQueryPlanId);
     if (iterator != runningQEPs.end()) {
-        return iterator->second->getQueryId();
+        return iterator->second->getSharedQueryId();
     }
     return -1;
 }

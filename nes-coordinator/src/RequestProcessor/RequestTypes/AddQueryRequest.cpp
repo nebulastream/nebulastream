@@ -52,7 +52,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
@@ -349,8 +349,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
 
 void AddQueryRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
-    auto queryPlanIterator = QueryPlanIterator(queryPlan);
-    for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+    auto queryPlanIterator = PlanIterator(queryPlan);
+    for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         visitingOp->setId(NES::getNextOperatorId());
     }

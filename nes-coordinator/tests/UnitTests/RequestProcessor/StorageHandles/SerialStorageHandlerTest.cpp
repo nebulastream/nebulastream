@@ -38,7 +38,7 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     constexpr RequestId requestId = 1;
     //create access handle
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto globalExecutionPlan = GlobalExecutionPlan::create();
+    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);

@@ -37,7 +37,7 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -132,12 +132,12 @@ void LowerToExecutableQueryPlanPhase::processSource(
 
     if (!pipeline->isSourcePipeline()) {
         NES_ERROR("This is not a source pipeline.");
-        NES_ERROR("{}", pipeline->getQueryPlan()->toString());
+        NES_ERROR("{}", pipeline->getDecomposedQueryPlan()->toString());
         throw QueryCompilationException("This is not a source pipeline.");
     }
 
     //Convert logical source descriptor to actual source descriptor
-    auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
+    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>()) {
@@ -200,7 +200,7 @@ LowerToExecutableQueryPlanPhase::processSink(const OperatorPipelinePtr& pipeline
                                              std::vector<Runtime::Execution::ExecutablePipelinePtr>&,
                                              Runtime::NodeEnginePtr nodeEngine,
                                              const PipelineQueryPlanPtr& pipelineQueryPlan) {
-    auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
+    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
     auto numOfProducers = pipeline->getPredecessors().size();
     auto sink = sinkProvider->lower(sinkOperator->getId(),
@@ -222,7 +222,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
-    auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
+    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto executableOperator = rootOperator->as<ExecutableOperator>();
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;

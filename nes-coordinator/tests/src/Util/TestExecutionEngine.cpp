@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/NonRunnableDataSource.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSourceDescriptor.hpp>
@@ -84,14 +85,15 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
         });
 }
 
-std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> TestExecutionEngine::submitQuery(QueryPlanPtr queryPlan) {
+std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>
+TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan) {
     // pre submission optimization
-    queryPlan = typeInferencePhase->execute(queryPlan);
-    queryPlan = originIdInferencePhase->execute(queryPlan);
-    NES_ASSERT(nodeEngine->registerQueryInNodeEngine(queryPlan), "query plan could not be started.");
-    NES_ASSERT(nodeEngine->startQuery(queryPlan->getQueryId()), "query plan could not be started.");
+    decomposedQueryPlan = typeInferencePhase->execute(decomposedQueryPlan);
+    decomposedQueryPlan = originIdInferencePhase->execute(decomposedQueryPlan);
+    NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan), "query plan could not be started.");
+    NES_ASSERT(nodeEngine->startQuery(decomposedQueryPlan->getSharedQueryId()), "query plan could not be started.");
 
-    return nodeEngine->getQueryManager()->getQueryExecutionPlan(queryPlan->getQueryId());
+    return nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlan->getSharedQueryId());
 }
 
 std::shared_ptr<NonRunnableDataSource>

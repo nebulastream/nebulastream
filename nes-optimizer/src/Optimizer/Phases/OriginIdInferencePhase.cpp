@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Optimizer {
@@ -27,15 +28,27 @@ OriginIdInferencePhasePtr OriginIdInferencePhase::create() {
 }
 
 QueryPlanPtr OriginIdInferencePhase::execute(QueryPlanPtr queryPlan) {
+    performInference(queryPlan->getOperatorByType<OriginIdAssignmentOperator>(), queryPlan->getRootOperators());
+    return queryPlan;
+}
+
+DecomposedQueryPlanPtr OriginIdInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan) {
+    performInference(decomposedQueryPlan->getOperatorByType<OriginIdAssignmentOperator>(),
+                     decomposedQueryPlan->getRootOperators());
+    return decomposedQueryPlan;
+}
+
+void OriginIdInferencePhase::performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator,
+                                              std::vector<OperatorNodePtr> rootOperators) {
     // origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = 1;
     // set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
-    for (auto originIdAssignmentOperators : queryPlan->getOperatorByType<OriginIdAssignmentOperator>()) {
+    for (auto originIdAssignmentOperators : originIdAssignmentOperator) {
         originIdAssignmentOperators->setOriginId(originIdCounter++);
     }
 
     // propagate origin ids through the complete query plan
-    for (auto rootOperator : queryPlan->getRootOperators()) {
+    for (auto rootOperator : rootOperators) {
         if (auto logicalOperator = rootOperator->as_if<LogicalOperatorNode>()) {
             logicalOperator->inferInputOrigins();
         } else {
@@ -43,6 +56,5 @@ QueryPlanPtr OriginIdInferencePhase::execute(QueryPlanPtr queryPlan) {
                 "During OriginIdInferencePhase all root operators have to be LogicalOperatorNodes");
         }
     }
-    return queryPlan;
 }
 }// namespace NES::Optimizer

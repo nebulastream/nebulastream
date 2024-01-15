@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
@@ -37,8 +37,8 @@ PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQue
 }
 
 OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
-    auto queryPlan = pipeline->getQueryPlan();
-    auto pipelineRootOperators = queryPlan->getRootOperators();
+    auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
+    auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();
     if (pipelineRootOperators.size() != 1) {
         throw QueryCompilationException("A pipeline should only have one root operator");
     }

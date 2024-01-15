@@ -14,15 +14,15 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
+
 namespace NES::QueryCompilation {
 
 NautilusCompilationPhase::NautilusCompilationPhase(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
@@ -64,14 +64,14 @@ std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerO
 }
 
 OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline) {
-    auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
+    auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
     auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
     Nautilus::CompilationOptions options;
     auto identifier = fmt::format("NautilusCompilation-{}-{}-{}",
-                                  pipeline->getQueryPlan()->getQueryId(),
-                                  pipeline->getQueryPlan()->getQuerySubPlanId(),
+                                  pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
+                                  pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
                                   pipeline->getPipelineId());
     options.setIdentifier(identifier);
 
@@ -93,7 +93,7 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     // we replace the current pipeline operators with an executable operator.
     // this allows us to keep the pipeline structure.
     auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
-    pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
+    pipeline->getDecomposedQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
     return pipeline;
 }
 

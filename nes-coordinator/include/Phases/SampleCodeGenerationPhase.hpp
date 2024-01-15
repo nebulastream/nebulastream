@@ -22,6 +22,9 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
+
 namespace QueryCompilation {
 
 class QueryCompiler;
@@ -47,6 +50,13 @@ class SampleCodeGenerationPhase {
      * @return updated query plan
      */
     QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
+
+    /**
+     * @param Iterates over the query plan, compute the C++ code for each operator, and add the generated code to the operator property
+     * @param decomposedQueryPlan: the input query plan
+     * @return updated query plan
+     */
+    DecomposedQueryPlanPtr execute(const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
   private:
     SampleCodeGenerationPhase();

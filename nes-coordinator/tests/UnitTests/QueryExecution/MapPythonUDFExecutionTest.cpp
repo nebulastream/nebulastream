@@ -15,6 +15,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PythonUDFDescriptorBuilder.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -89,7 +90,11 @@ TEST_F(MapPythonUDFQueryExecutionTest, MapPythonUdf) {
     NES_DEBUG("Set up Descriptor");
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapUDF(pythonUDFDescriptor).sink(testSinkDescriptor);
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+    auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     NES_DEBUG("submitted query and got source");
     ASSERT_TRUE(!!source);

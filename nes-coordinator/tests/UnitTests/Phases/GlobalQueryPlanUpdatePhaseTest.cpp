@@ -132,7 +132,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::BaseUnitTest {
         sourceCatalog->addPhysicalSource("source2", sourceCatalogEntry2);
 
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        globalExecutionPlan = GlobalExecutionPlan::create();
+        globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     }
 
     z3::ContextPtr context;

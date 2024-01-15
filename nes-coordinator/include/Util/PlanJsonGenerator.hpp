@@ -26,8 +26,10 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
+namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 /**
  * @brief This is a utility class to convert different plans into JSON
@@ -43,7 +45,7 @@ class PlanJsonGenerator {
      * @param id of the query
      * @return a JSON object representing the execution plan
      */
-    static nlohmann::json getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan,
+    static nlohmann::json getExecutionPlanAsJson(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                  QueryId queryId = INVALID_QUERY_ID);
 
   private:

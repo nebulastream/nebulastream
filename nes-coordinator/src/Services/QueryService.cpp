@@ -25,7 +25,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
@@ -212,8 +212,8 @@ bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
 
 void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
-    auto queryPlanIterator = QueryPlanIterator(queryPlan);
-    for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+    auto queryPlanIterator = PlanIterator(queryPlan);
+    for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         visitingOp->setId(getNextOperatorId());
     }

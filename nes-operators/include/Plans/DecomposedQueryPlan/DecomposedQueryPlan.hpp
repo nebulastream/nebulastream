@@ -16,14 +16,23 @@
 #define NES_QUERYSUBPLAN_HPP
 
 #include <Identifiers.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace NES {
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class OperatorNode;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+
+class SourceLogicalOperatorNode;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+
+class SinkLogicalOperatorNode;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -56,7 +65,7 @@ class DecomposedQueryPlan {
      * @brief Add the operator as new root operator
      * @param newRootOperator : new root operator
      */
-    void addRootOperator(LogicalOperatorNodePtr newRootOperator);
+    void addRootOperator(OperatorNodePtr newRootOperator);
 
     /**
      * @brief Remove the operator with given id as the root
@@ -66,17 +75,30 @@ class DecomposedQueryPlan {
     bool removeAsRootOperator(OperatorId rootOperatorId);
 
     /**
+     * replaces a particular root operator with a new one.
+     * @param root
+     * @return true if operator was replaced.
+     */
+    bool replaceRootOperator(const OperatorNodePtr& oldRoot, const OperatorNodePtr& newRoot);
+
+    /**
+     * @brief Appends an operator to the query plan and make the new operator as root.
+     * @param operatorNode : new operator
+     */
+    void appendOperatorAsNewRoot(const OperatorNodePtr& operatorNode);
+
+    /**
      * @brief Get all root operators
      * @return vector of root operators
      */
-    std::vector<LogicalOperatorNodePtr> getRootOperators();
+    std::vector<OperatorNodePtr> getRootOperators();
 
     /**
      * @brief Get all the leaf operators in the query plan (leaf operator is the one without any child)
      * @note: in certain stages the source operators might not be Leaf operators
      * @return returns a vector of leaf operators
      */
-    std::vector<LogicalOperatorNodePtr> getLeafOperators();
+    std::vector<OperatorNodePtr> getLeafOperators();
 
     /**
      * @brief Return the id of the decomposed query plan
@@ -125,7 +147,7 @@ class DecomposedQueryPlan {
      * @param operatorId: the id of the operator
      * @return the shared pointer to the operator node
      */
-    LogicalOperatorNodePtr getOperatorWithId(OperatorId operatorId);
+    OperatorNodePtr getOperatorWithId(OperatorId operatorId);
 
     /**
      * @brief Check if the decomposed query plan contains an operator with input id
@@ -150,7 +172,7 @@ class DecomposedQueryPlan {
      * @brief Get all operators in the query plan
      * @return vector of operators
      */
-    std::set<LogicalOperatorNodePtr> getAllOperators();
+    std::set<OperatorNodePtr> getAllOperators();
 
     /**
      * @brief Create copy of the decomposed query plan
@@ -164,12 +186,39 @@ class DecomposedQueryPlan {
      */
     std::string toString() const;
 
+    /**
+     * @brief Get all the operators of a specific type
+     * @return returns a vector of operators
+     */
+    template<class T>
+    std::vector<std::shared_ptr<T>> getOperatorByType() {
+        // Find all the nodes in the query plan
+        std::vector<std::shared_ptr<T>> operators;
+        // Maintain a list of visited nodes as there are multiple root nodes
+        std::set<uint64_t> visitedOpIds;
+        for (const auto& rootOperator : rootOperators) {
+            auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
+            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
+                auto visitingOp = (*itr)->as<OperatorNode>();
+                if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                    // skip rest of the steps as the node found in already visited node list
+                    continue;
+                }
+                visitedOpIds.insert(visitingOp->getId());
+                if (visitingOp->instanceOf<T>()) {
+                    operators.push_back(visitingOp->as<T>());
+                }
+            }
+        }
+        return operators;
+    }
+
   private:
     DecomposedQueryPlanId decomposedQueryPlanId;
     SharedQueryId sharedQueryId;
     QueryState currentState;
     uint32_t currentVersion;
-    std::vector<LogicalOperatorNodePtr> rootOperators;
+    std::vector<OperatorNodePtr> rootOperators;
 };
 }// namespace NES
 

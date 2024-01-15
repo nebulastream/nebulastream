@@ -30,11 +30,13 @@ using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
+namespace Optimizer {
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 class QueryDeploymentPhase;
 using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
@@ -60,7 +62,7 @@ class QueryDeploymentPhase {
      * @param coordinatorConfiguration: coordinator configuration
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static QueryDeploymentPhasePtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+    static QueryDeploymentPhasePtr create(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                           const QueryCatalogServicePtr& queryCatalogService,
                                           const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 
@@ -72,7 +74,7 @@ class QueryDeploymentPhase {
     void execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
-    explicit QueryDeploymentPhase(const GlobalExecutionPlanPtr& globalExecutionPlan,
+    explicit QueryDeploymentPhase(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                   const QueryCatalogServicePtr& queryCatalogService,
                                   bool accelerateJavaUDFs,
                                   const std::string& accelerationServiceURL);
@@ -85,26 +87,26 @@ class QueryDeploymentPhase {
      * @throws QueryDeploymentException: Error in call to Elegant acceleration service with code
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
-    void deployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void deployQuery(SharedQueryId sharedQueryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes);
 
     /**
      * @brief method to start a already deployed query
      * @param queryId
      */
-    void startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void startQuery(QueryId queryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes);
 
     /**
      * @brief apply java UDF acceleration to a query sub plan
      * @param sharedQueryId the id of the shared query to which the query sub plan belongs
      * @param executionNode the execution node which hosts the query sub plan
-     * @param querySubPlan the query sub plan
+     * @param decomposedQueryPlan the query sub plan
      */
     void applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
-                                  const ExecutionNodePtr& executionNode,
-                                  const QueryPlanPtr& querySubPlan) const;
+                                  const Optimizer::ExecutionNodePtr& executionNode,
+                                  const DecomposedQueryPlanPtr& decomposedQueryPlan) const;
 
     WorkerRPCClientPtr workerRPCClient;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
     bool accelerateJavaUDFs;
     std::string accelerationServiceURL;

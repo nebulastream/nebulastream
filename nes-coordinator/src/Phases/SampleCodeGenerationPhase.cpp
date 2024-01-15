@@ -18,6 +18,7 @@
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
@@ -53,15 +54,15 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
         NES_INFO("Compile Query with Nautilus");
         try {
             Timer timer("DefaultQueryCompiler");
-            auto queryId = request->getQueryPlan()->getQueryId();
-            auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
-            auto query = std::to_string(queryId) + "-" + std::to_string(subPlanId);
+            auto sharedQueryId = request->getDecomposedQueryPlan()->getSharedQueryId();
+            auto getDecomposedQueryPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
+            auto query = std::to_string(sharedQueryId) + "-" + std::to_string(getDecomposedQueryPlanId);
             // create new context for handling debug output
             auto dumpContext = DumpContext::create("QueryCompilation-" + query);
 
             timer.start();
-            NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
-            auto inputPlan = request->getQueryPlan();
+            NES_DEBUG("compile query with id: {} subPlanId: {}", sharedQueryId, getDecomposedQueryPlanId);
+            auto inputPlan = request->getDecomposedQueryPlan();
             auto logicalQueryPlan = inputPlan->copy();
             dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
             timer.snapshot("LogicalQueryPlan");
@@ -87,9 +88,11 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
             timer.snapshot("AfterNautilusCompilationPhase");
 
             for (auto& pipeline : pipelinedQueryPlan->getPipelines()) {
-                if (pipeline->getQueryPlan()->getRootOperators()[0]->instanceOf<QueryCompilation::ExecutableOperator>()) {
+                if (pipeline->getDecomposedQueryPlan()
+                        ->getRootOperators()[0]
+                        ->instanceOf<QueryCompilation::ExecutableOperator>()) {
                     auto executableOperator =
-                        pipeline->getQueryPlan()->getRootOperators()[0]->as<QueryCompilation::ExecutableOperator>();
+                        pipeline->getDecomposedQueryPlan()->getRootOperators()[0]->as<QueryCompilation::ExecutableOperator>();
                     NES_DEBUG("executable pipeline id {}", pipeline->getPipelineId());
                     auto stage = executableOperator->getExecutablePipelineStage();
                     auto cStage = std::dynamic_pointer_cast<Runtime::Execution::CompiledExecutablePipelineStage>(stage);
@@ -134,7 +137,12 @@ SampleCodeGenerationPhasePtr SampleCodeGenerationPhase::create() {
 QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& queryPlan) {
     // use query compiler to generate operator code
     // we append a property to "code" some operators
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nullptr);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(queryPlan->getQueryId(), INVALID_SHARED_QUERY_ID);
+    for (const auto& rootOperator : queryPlan->getRootOperators()) {
+        decomposedQueryPlan->addRootOperator(rootOperator);
+    }
+
+    auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, nullptr);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     if (result->hasError()) {
@@ -142,4 +150,17 @@ QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& queryPlan) {
     }
     return queryPlan;
 }
+
+DecomposedQueryPlanPtr SampleCodeGenerationPhase::execute(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+    // use query compiler to generate operator code
+    // we append a property to "code" some operators
+    auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, nullptr);
+    request->enableDump();
+    auto result = queryCompiler->compileQuery(request);
+    if (result->hasError()) {
+        std::rethrow_exception(result->getError());
+    }
+    return decomposedQueryPlan;
+}
+
 }// namespace NES::Optimizer

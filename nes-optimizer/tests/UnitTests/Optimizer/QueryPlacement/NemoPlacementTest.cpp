@@ -44,7 +44,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <algorithm>
@@ -154,7 +154,7 @@ class NemoPlacementTest : public Testing::BaseUnitTest {
         queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
 
         // Prepare the placement
-        globalExecutionPlan = GlobalExecutionPlan::create();
+        globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
         // Execute optimization phases prior to placement
@@ -239,7 +239,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyNoMerge) {
     runNemoPlacement(optimizerConfig);
 
     auto sharedQueryId = sharedQueryPlan->getId();
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
     NES_DEBUG("NemoPlacementTest: shared plan {}\n", sharedQueryPlan->getQueryPlan()->toString());
@@ -270,7 +270,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyMerge) {
     runNemoPlacement(optimizerConfig);
 
     auto sharedQueryId = sharedQueryPlan->getId();
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
     NES_DEBUG("NemoPlacementTest: shared plan {}\n", sharedQueryPlan->getQueryPlan()->toString());
@@ -301,7 +301,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementThreeLevelsTopology) {
     runNemoPlacement(optimizerConfig);
 
     auto sharedQueryId = sharedQueryPlan->getId();
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
     NES_DEBUG("NemoPlacementTest: shared plan {}\n", sharedQueryPlan->getQueryPlan()->toString());
@@ -341,7 +341,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsSparseTopology) {
     runNemoPlacement(optimizerConfig);
 
     auto sharedQueryId = sharedQueryPlan->getId();
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
     NES_DEBUG("NemoPlacementTest: shared plan {}\n", sharedQueryPlan->getQueryPlan()->toString());
@@ -386,7 +386,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsDenseTopology) {
     runNemoPlacement(optimizerConfig);
 
     auto sharedQueryId = sharedQueryPlan->getId();
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     NES_DEBUG("NemoPlacementTest: topology: {}\n", topology->toString());
     NES_DEBUG("NemoPlacementTest: query plan {}\n", globalExecutionPlan->getAsString());
     NES_DEBUG("NemoPlacementTest: shared plan {}\n", sharedQueryPlan->getQueryPlan()->toString());

@@ -162,18 +162,18 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
     try {
         std::rethrow_exception(exception);
     } catch (Exceptions::QueryPlacementAdditionException& ex) {
-        failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+        failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
     } catch (QueryDeploymentException& ex) {
         //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
         //Happens if:
         //1. QueryDeploymentException The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF
         //2. QueryDeploymentException: Error in call to Elegant acceleration service with code
         //3. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
-        failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+        failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
     } catch (InvalidQueryException& ex) {
         //Happens if:
         //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
-        failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+        failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
     } catch (TypeInferenceException& ex) {
         queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
     } catch (Exceptions::QueryUndeploymentException& ex) {

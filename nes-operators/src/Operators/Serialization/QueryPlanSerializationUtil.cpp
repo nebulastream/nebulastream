@@ -18,7 +18,7 @@
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>
@@ -34,8 +34,8 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
 
     //Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableQueryPlan->mutable_operatormap();
-    auto bfsIterator = QueryPlanIterator(queryPlan);
-    for (auto itr = bfsIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+    auto bfsIterator = PlanIterator(queryPlan);
+    for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
             // skip rest of the steps as the operator is already serialized

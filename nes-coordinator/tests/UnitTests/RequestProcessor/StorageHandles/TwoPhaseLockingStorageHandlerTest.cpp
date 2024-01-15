@@ -37,7 +37,7 @@ class TwoPhaseLockingStorageHandlerTest : public Testing::BaseUnitTest {
 TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
     constexpr QueryId queryId1 = 1;
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto globalExecutionPlan = GlobalExecutionPlan::create();
+    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
@@ -65,7 +65,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
     constexpr QueryId queryId1 = 1;
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto topology = Topology::create();
-    auto globalExecutionPlan = GlobalExecutionPlan::create();
+    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -86,7 +86,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestDoubleLocking) {
     constexpr QueryId queryId1 = 1;
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto topology = Topology::create();
-    auto globalExecutionPlan = GlobalExecutionPlan::create();
+    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -111,7 +111,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     std::shared_ptr<std::thread> thread;
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto topology = Topology::create();
-    auto globalExecutionPlan = GlobalExecutionPlan::create();
+    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();
@@ -196,7 +196,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
     size_t lockHolder;
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto topology = Topology::create();
-    auto globalExecutionPlan = GlobalExecutionPlan::create();
+    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();

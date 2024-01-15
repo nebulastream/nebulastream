@@ -18,7 +18,7 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger/Logger.hpp>
@@ -29,13 +29,13 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     const DecomposedQueryPlanPtr& decomposedQueryPlan,
     SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan) {
     NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", decomposedQueryPlan->toString());
-    std::vector<LogicalOperatorNodePtr> rootOperators = decomposedQueryPlan->getRootOperators();
+    std::vector<OperatorNodePtr> rootOperators = decomposedQueryPlan->getRootOperators();
     NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     //Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableDecomposedQueryPlan->mutable_operatormap();
-    auto bfsIterator = QueryPlanIterator(decomposedQueryPlan);
-    for (auto itr = bfsIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+    auto bfsIterator = PlanIterator(decomposedQueryPlan);
+    for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
             // skip rest of the steps as the operator is already serialized

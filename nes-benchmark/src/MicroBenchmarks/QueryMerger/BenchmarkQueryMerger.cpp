@@ -28,7 +28,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -343,7 +343,7 @@ int main(int argc, const char* argv[]) {
         //Compute total number of operators in the query set
         uint64_t totalOperators = 0;
         for (auto queryObject : queryObjects) {
-            totalOperators = totalOperators + QueryPlanIterator(queryObject).snapshot().size();
+            totalOperators = totalOperators + PlanIterator(queryObject).snapshot().size();
         }
 
         // For the input query set run the experiments with different type of query merger rule
@@ -389,7 +389,7 @@ int main(int argc, const char* argv[]) {
                 auto allSQP = gqp->getAllSharedQueryPlans();
                 uint64_t mergedOperators = 0;
                 for (auto sqp : allSQP) {
-                    unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
+                    unsigned long planSize = PlanIterator(sqp->getQueryPlan()).snapshot().size();
                     mergedOperators = mergedOperators + planSize;
                 }
 

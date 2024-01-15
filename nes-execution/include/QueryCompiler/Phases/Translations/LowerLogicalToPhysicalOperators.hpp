@@ -27,11 +27,11 @@ class LowerLogicalToPhysicalOperators {
   public:
     explicit LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider);
     static LowerLogicalToPhysicalOperatorsPtr create(const PhysicalOperatorProviderPtr& provider);
-    QueryPlanPtr apply(QueryPlanPtr queryPlan);
+    DecomposedQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan);
 
   private:
     PhysicalOperatorProviderPtr provider;
 };
 }// namespace NES::QueryCompilation
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERLOGICALTOPHYSICALOPERATORS_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERLOGICALTOPHYSICALOPERATORS_HPP_

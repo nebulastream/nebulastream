@@ -16,10 +16,17 @@
 
 #include <Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
+#include <memory>
 
 namespace NES {
+
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
+
+namespace Optimizer {
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 namespace RequestProcessor::Experimental {
 class FailQueryRequest;
@@ -94,7 +101,7 @@ class FailQueryRequest : public AbstractUniRequest {
     GlobalQueryPlanPtr globalQueryPlan;
     QueryCatalogServicePtr queryCatalogService;
     TopologyPtr topology;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

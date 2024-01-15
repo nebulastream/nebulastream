@@ -84,15 +84,16 @@ class ExecutionNode : public Node {
      * @param sharedQueryId: the shared query id
      * @return vector containing copies of placed decomposed query plans
      */
-    std::vector<DecomposedQueryPlanPtr> getDecomposedQueryPlans(SharedQueryId sharedQueryId) const;
+    std::vector<DecomposedQueryPlanPtr> getAllDecomposedQueryPlans(SharedQueryId sharedQueryId) const;
 
     /**
       * @brief Get the decomposed query plan belonging to a given shared query id and has the provided decomposed query plan id
       * @param sharedQueryId: shared query id
       * @param decomposedQueryPlanId: decomposed query plan id
-      * @return shared pointer to the decomposed query plan
+      * @return the copy of the decomposed query plan
       */
-    DecomposedQueryPlanPtr getDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) const;
+    DecomposedQueryPlanPtr getCopyOfDecomposedQueryPlan(SharedQueryId sharedQueryId,
+                                                        DecomposedQueryPlanId decomposedQueryPlanId) const;
 
     /**
      * Remove existing decomposed query plans belonging to a shared query plan
@@ -100,6 +101,13 @@ class ExecutionNode : public Node {
      * @return true if operation succeeds
      */
     bool removeDecomposedQueryPlans(SharedQueryId sharedQueryId);
+
+    /**
+     * Check if there are registered decomposed query plans hosted on the execution node
+     * @param sharedQueryId: the shared query plans
+     * @return true if operation succeeds
+     */
+    bool hasRegisteredDecomposedQueryPlans(SharedQueryId sharedQueryId);
 
     /**
      * Remove a decomposed query plan belonging to a shared query plan with given decomposed query plan id
@@ -132,7 +140,7 @@ class ExecutionNode : public Node {
      * @param decomposedQueryPlan The decomposed query plan
      * @return the amount of resources
      */
-    uint32_t getOccupiedResourcesForDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    static uint32_t getOccupiedResourcesForDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     bool equal(NodePtr const& rhs) const override;
 

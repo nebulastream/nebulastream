@@ -24,25 +24,6 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
-namespace NES::Configurations {
-class CoordinatorConfiguration;
-using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace NES::Configurations
-
-namespace NES::Optimizer {
-class TypeInferencePhase;
-using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
-
-class QueryRewritePhase;
-using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
-
-class QueryPlacementAmendmentPhase;
-using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentPhase>;
-
-class GlobalQueryPlanUpdatePhase;
-using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
-}// namespace NES::Optimizer
-
 namespace NES {
 
 class GlobalQueryPlan;
@@ -57,9 +38,6 @@ using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
 class QueryUndeploymentPhase;
 using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
 
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
@@ -69,26 +47,45 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class RequestQueue;
 using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
-namespace Catalogs {
+namespace Optimizer {
 
-namespace Source {
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class TypeInferencePhase;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+class QueryRewritePhase;
+using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
+
+class QueryPlacementAmendmentPhase;
+using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentPhase>;
+
+class GlobalQueryPlanUpdatePhase;
+using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
+}// namespace Optimizer
+
+namespace Configurations {
+class CoordinatorConfiguration;
+using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+}// namespace Configurations
+
+namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+}// namespace Catalogs::Source
 
-namespace UDF {
+namespace Catalogs::UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
-
-}// namespace Catalogs
+}// namespace Catalogs::UDF
 
 /**
  * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queryIdAndCatalogEntryMapping requests.
  */
 class RequestProcessorService {
   public:
-    explicit RequestProcessorService(const GlobalExecutionPlanPtr& globalExecutionPlan,
+    explicit RequestProcessorService(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                      const TopologyPtr& topology,
                                      const QueryCatalogServicePtr& queryCatalogService,
                                      const GlobalQueryPlanPtr& globalQueryPlan,
@@ -125,7 +122,7 @@ class RequestProcessorService {
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     z3::ContextPtr z3Context;

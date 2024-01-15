@@ -390,7 +390,7 @@ int main(int argc, const char* argv[]) {
             Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
             QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
             auto globalQueryPlan = GlobalQueryPlan::create();
-            auto globalExecutionPlan = GlobalExecutionPlan::create();
+            auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
             auto globalQueryUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                                         queryCatalogService,
                                                                                         sourceCatalog,

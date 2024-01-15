@@ -19,9 +19,11 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -38,12 +40,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
+#include <Util/Mobility/SpatialType.hpp>
 #include <z3++.h>
 
 using namespace NES;
@@ -506,8 +506,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
 
     EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 1);
 
-    auto operatorsInQueryPlan2 = QueryPlanIterator(queryPlan2).snapshot();
-    auto operatorsInSharedPlanAfterStop = QueryPlanIterator(updatedSharedPlanAfterStop).snapshot();
+    auto operatorsInQueryPlan2 = PlanIterator(queryPlan2).snapshot();
+    auto operatorsInSharedPlanAfterStop = PlanIterator(updatedSharedPlanAfterStop).snapshot();
 
     EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
 }
@@ -613,8 +613,8 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
 
     EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 1);
 
-    auto operatorsInQueryPlan2 = QueryPlanIterator(queryPlan2).snapshot();
-    auto operatorsInSharedPlanAfterStop = QueryPlanIterator(updatedSharedPlanAfterStop).snapshot();
+    auto operatorsInQueryPlan2 = PlanIterator(queryPlan2).snapshot();
+    auto operatorsInSharedPlanAfterStop = PlanIterator(updatedSharedPlanAfterStop).snapshot();
 
     EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
 }

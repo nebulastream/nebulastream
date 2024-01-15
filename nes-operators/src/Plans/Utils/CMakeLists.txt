@@ -13,5 +13,5 @@
 
 add_source_files(nes-operators
         PlanIdGenerator.cpp
-        QueryPlanIterator.cpp
+        PlanIterator.cpp
 )

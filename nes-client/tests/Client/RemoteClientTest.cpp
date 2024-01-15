@@ -149,8 +149,6 @@ TEST_F(RemoteClientTest, SubmitQueryTest) {
     auto insertedQueryPlan = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getInputQueryPlan();
     // Expect that the query id is same as the one returned
     EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
-    //There should be no subquery plan set to the stored plan
-    EXPECT_TRUE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
     ASSERT_TRUE(stopQuery(queryId));
 }
 

@@ -67,10 +67,10 @@ class GlobalExecutionPlan {
 
     /**
      * Get the execution node
-     * @param id: id of the execution node
+     * @param executionNodeId: id of the execution node
      * @return true if operation succeeds
      */
-    ExecutionNodePtr getExecutionNodeById(ExecutionNodeId id);
+    ExecutionNodePtr getExecutionNodeById(ExecutionNodeId executionNodeId);
 
     /**
      * Return list of Execution Serialization used for placing operators of the input query Id
@@ -96,7 +96,7 @@ class GlobalExecutionPlan {
      * @param sharedQueryId : the id of the query
      * @return a map of topology node id to resources occupied
      */
-    std::map<uint64_t, uint32_t> getMapOfWorkerIdToOccupiedResource(QueryId sharedQueryId);
+    std::map<uint64_t, uint32_t> getMapOfWorkerIdToOccupiedResource(SharedQueryId sharedQueryId);
 
     /**
      * @brief removes a decomposed query plan if it exists at a specific node

@@ -35,8 +35,8 @@ namespace NES {
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
@@ -96,49 +96,47 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief undeploy stops and undeploy a query
-     * @param queryId to undeploy
+     * @param sharedQueryId to undeploy
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool undeployQuery(QueryId queryId);
+    [[nodiscard]] bool undeployQuery(SharedQueryId sharedQueryId);
 
     /**
      * @brief registers a query
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
-     * @brief registers a query
-     * @param queryId: id of the query sub plan to be registered
-     * @param queryExecutionId: query execution plan id
-     * @param operatorTree: query sub plan to register
+     * @brief registers a decomposed query plan
+     * @param decomposedQueryPlan: the decomposed query plan to be registered
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
+    [[nodiscard]] bool registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     /**
      * @brief ungregisters a query
-     * @param queryIdto unregister query
+     * @param sharedQueryId unregister query
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool unregisterQuery(QueryId queryId);
+    [[nodiscard]] bool unregisterQuery(SharedQueryId sharedQueryId);
 
     /**
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
-     * @param queryId to start
+     * @param sharedQueryId to start
      * @return bool indicating success
      */
-    [[nodiscard]] bool startQuery(QueryId queryId);
+    [[nodiscard]] bool startQuery(SharedQueryId sharedQueryId);
 
     /**
      * @brief method to stop a query
-     * @param queryId to stop
+     * @param sharedQueryId to stop
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
-    [[nodiscard]] bool stopQuery(QueryId queryId,
+    [[nodiscard]] bool stopQuery(SharedQueryId sharedQueryId,
                                  Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
@@ -203,14 +201,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @return return the status of a query
      */
-    Execution::ExecutableQueryPlanStatus getQueryStatus(QueryId queryId);
+    Execution::ExecutableQueryPlanStatus getQueryStatus(SharedQueryId sharedQueryId);
 
     /**
     * @brief method to return the query statistics
-    * @param id of the query
+    * @param sharedQueryId of the query
     * @return vector of queryStatistics
     */
-    std::vector<QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+    std::vector<QueryStatisticsPtr> getQueryStatistics(SharedQueryId sharedQueryId);
 
     /**
      * @brief method to return the query statistics
@@ -271,10 +269,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief finds sub query ids for a given query id
-     * @param queryId query id
+     * @param sharedQueryId query id
      * @return vector of subQueryIds
      */
-    std::vector<DecomposedQueryPlanId> getSubQueryIds(uint64_t queryId);
+    std::vector<DecomposedQueryPlanId> getDecomposedQueryIds(SharedQueryId sharedQueryId);
 
     /**
      * Getter for the metric store
@@ -339,12 +337,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
      * connections from a new upstream sink. Reconfigured sinks will scheduled a pending change of the downstream source
      * to which they send their data.
-     * @param reconfiguredQueryPlan A query plan containing source or sink descriptors which contain the updated
+     * @param reconfiguredDecomposedQueryPlan A query plan containing source or sink descriptors which contain the updated
      * sender/receiver date.
      * @return true if a running sub query with a matching id was found and reconfigured. False if the id of the supplied
      * plan did not match any running sub query
      */
-    bool reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan);
+    bool reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan);
 
   public:
     /**
@@ -370,8 +368,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
-    std::map<QueryId, std::vector<DecomposedQueryPlanId>> queryIdToQuerySubPlanIds;
-    std::map<DecomposedQueryPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
+    std::map<SharedQueryId, std::vector<DecomposedQueryPlanId>> sharedQueryIdToDecomposedQueryPlanIds;
+    std::map<DecomposedQueryPlanId, Execution::ExecutableQueryPlanPtr> deployedExecutableQueryPlans;
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;

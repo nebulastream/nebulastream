@@ -13,7 +13,7 @@
 */
 
 #include <Nodes/Node.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
@@ -68,8 +68,8 @@ void ConsoleDumpHandler::dump(const NodePtr node) { multilineDumpHelper(node, /*
 
 void ConsoleDumpHandler::multilineDump(NodePtr const& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
-void ConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr queryPlan) {
-    out << "Dumping pipelineQueryPlan: " << queryPlan->toString() << std::endl;
+void ConsoleDumpHandler::dump(std::string, std::string, DecomposedQueryPlanPtr decomposedQueryPlan) {
+    out << "Dumping pipelineQueryPlan: " << decomposedQueryPlan->toString() << std::endl;
 }
 
 void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) {

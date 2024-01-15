@@ -22,6 +22,7 @@
 #include <Optimizer/Exceptions/QueryPlacementRemovalException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementRemoval/PlacementRemovalStrategy.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -139,12 +140,12 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
 
             // 8. Fetch the query sub plan id that hosts the operator and record the sub query plan id
             auto subQueryPlanId = std::any_cast<DecomposedQueryPlanId>(operatorToProcess->getProperty(PLACED_DECOMPOSED_PLAN_ID));
-            if (workerIdToQuerySubPlanIds.contains(pinnedWorkerId)) {
-                auto subQueryPlanIds = workerIdToQuerySubPlanIds[pinnedWorkerId];
+            if (workerIdToDecomposedQueryPlanIds.contains(pinnedWorkerId)) {
+                auto subQueryPlanIds = workerIdToDecomposedQueryPlanIds[pinnedWorkerId];
                 subQueryPlanIds.emplace(subQueryPlanId);
-                workerIdToQuerySubPlanIds[pinnedWorkerId] = subQueryPlanIds;
+                workerIdToDecomposedQueryPlanIds[pinnedWorkerId] = subQueryPlanIds;
             } else {
-                workerIdToQuerySubPlanIds[pinnedWorkerId] = {subQueryPlanId};
+                workerIdToDecomposedQueryPlanIds[pinnedWorkerId] = {subQueryPlanId};
             }
 
             // 9. Record the operator id to be processed such that we can change its status later
@@ -184,12 +185,12 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                     std::any_cast<std::vector<SysPlanMetaData>>(operatorToProcess->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
                 for (const auto& sysPlanMetaData : sysPlansMetaData) {
                     workerIdsInBFS.emplace(sysPlanMetaData.workerId);
-                    if (workerIdToQuerySubPlanIds.contains(sysPlanMetaData.workerId)) {
-                        auto subQueryPlanIds = workerIdToQuerySubPlanIds[sysPlanMetaData.workerId];
+                    if (workerIdToDecomposedQueryPlanIds.contains(sysPlanMetaData.workerId)) {
+                        auto subQueryPlanIds = workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId];
                         subQueryPlanIds.emplace(sysPlanMetaData.querySubPlanId);
-                        workerIdToQuerySubPlanIds[sysPlanMetaData.workerId] = subQueryPlanIds;
+                        workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId] = subQueryPlanIds;
                     } else {
-                        workerIdToQuerySubPlanIds[sysPlanMetaData.workerId] = {sysPlanMetaData.querySubPlanId};
+                        workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId] = {sysPlanMetaData.querySubPlanId};
                     }
                 }
             }
@@ -269,18 +270,18 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
 
     NES_INFO("Update all query sub plans by removing the operators that are in the state To-Be-Removed or To-Be-RePlaced.");
     // 1. Iterate over the target query sub plans placed on different worker nodes to update them
-    for (const auto& [workerId, querySubPlanIds] : workerIdToQuerySubPlanIds) {
+    for (const auto& [workerId, querySubPlanIds] : workerIdToDecomposedQueryPlanIds) {
         // 2. Fetch the query sub plan from the execution node
         auto executionNode = globalExecutionPlan->getExecutionNodeById(workerId);
 
-        std::vector<QueryPlanPtr> updatedQuerySubPlans;
+        std::vector<DecomposedQueryPlanPtr> updatedDecomposedQueryPlans;
         uint32_t releasedSlots = 0;
 
         // 3. Update the placed query sub plans on the execution node and record them
         for (const auto& querySubPlanId : querySubPlanIds) {
 
-            // 4. Fetch the query sub plan to modify
-            auto querySubPlanToUpdate = executionNode->getQuerySubPlan(sharedQueryId, querySubPlanId)->copy();
+            // 4. Fetch the copy of Decomposed query plan to modify
+            auto querySubPlanToUpdate = executionNode->getCopyOfDecomposedQueryPlan(sharedQueryId, querySubPlanId);
 
             // 5. Check if plan is a sys generated query sub plan.
             // A Sys generated plan will contain only network source and sink operators.
@@ -298,8 +299,8 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
                                ->getSourceDescriptor()
                                ->instanceOf<Network::NetworkSourceDescriptor>()) {
                         // 6. Mark the plan for migration to flush the in network tuples
-                        querySubPlanToUpdate->setQueryState(QueryState::MARKED_FOR_MIGRATION);
-                        updatedQuerySubPlans.emplace_back(querySubPlanToUpdate);
+                        querySubPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
+                        updatedDecomposedQueryPlans.emplace_back(querySubPlanToUpdate);
                         continue;
                     }
                 }
@@ -308,7 +309,7 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
             // 7. Modify the query plan by removing the operators that are in to-be-Removed or in to-be-replaced state
             auto allOperators = querySubPlanToUpdate->getAllOperators();
             for (const auto& placedOperator : allOperators) {
-                auto operatorId = placedOperator->as_if<LogicalOperatorNode>()->getId();
+                auto operatorId = placedOperator->getId();
                 if (!operatorIdToOriginalOperatorMap.contains(operatorId)) {
                     NES_WARNING("Found the operator {} not in the submitted query plan.", placedOperator->toString());
                     continue;
@@ -324,7 +325,7 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
 
                     // 9. If the operator is of type sink then also remove it as the root operator of the query sub plan
                     if (placedOperator->instanceOf<SinkLogicalOperatorNode>()) {
-                        querySubPlanToUpdate->removeAsRootOperator(placedOperator);
+                        querySubPlanToUpdate->removeAsRootOperator(operatorId);
                     }
 
                     // 10. Check all upstream operators of the considered operator and if any of the operator is of type
@@ -334,7 +335,7 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
                             && placedDownStreamOperator->as_if<SinkLogicalOperatorNode>()
                                    ->getSinkDescriptor()
                                    ->instanceOf<Network::NetworkSinkDescriptor>()) {
-                            querySubPlanToUpdate->removeAsRootOperator(placedDownStreamOperator->as_if<LogicalOperatorNode>());
+                            querySubPlanToUpdate->removeAsRootOperator(placedDownStreamOperator->as_if<OperatorNode>()->getId());
                         }
                     }
 
@@ -347,17 +348,17 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
 
             // 12. Mark the plan for migration if the plan is empty else for re-deployment
             if (querySubPlanToUpdate->getRootOperators().empty()) {
-                querySubPlanToUpdate->setQueryState(QueryState::MARKED_FOR_MIGRATION);
+                querySubPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
             } else {
-                querySubPlanToUpdate->setQueryState(QueryState::MARKED_FOR_REDEPLOYMENT);
+                querySubPlanToUpdate->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
             }
 
             // 13. Add the updated query sub plan
-            updatedQuerySubPlans.emplace_back(querySubPlanToUpdate);
+            updatedDecomposedQueryPlans.emplace_back(querySubPlanToUpdate);
         }
 
         // 14. Store the updated query sub plans
-        workerIdToUpdatedQuerySubPlans[workerId] = updatedQuerySubPlans;
+        workerIdToUpdatedDecomposedQueryPlans[workerId] = updatedDecomposedQueryPlans;
         workerIdToReleasedSlotMap[workerId] = releasedSlots;
     }
 }
@@ -367,7 +368,7 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
     NES_INFO("Releasing locks for all locked topology nodes {}.", sharedQueryId);
     for (const auto& workerId : workerIdsInBFS) {
 
-        if (!workerIdToUpdatedQuerySubPlans.contains(workerId)) {
+        if (!workerIdToUpdatedDecomposedQueryPlans.contains(workerId)) {
             NES_WARNING("No plan to updated query sub plan on the worker {}. Skipping remainder of the processing.", workerId);
             continue;
         }
@@ -392,14 +393,14 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 return false;
             }
 
-            auto updatedQuerySubPlans = workerIdToUpdatedQuerySubPlans[workerId];
+            auto updatedQuerySubPlans = workerIdToUpdatedDecomposedQueryPlans[workerId];
             auto executionNode = globalExecutionPlan->getExecutionNodeById(workerId);
 
             // 3. Step2:: Perform validation by checking if the currently placed query sub plan has the same version as
             // the updated query sub plan or not
             for (const auto& updatedQuerySubPlan : updatedQuerySubPlans) {
-                auto querySubPlanId = updatedQuerySubPlan->getQuerySubPlanId();
-                auto actualQuerySubPlan = executionNode->getQuerySubPlan(sharedQueryId, querySubPlanId);
+                auto querySubPlanId = updatedQuerySubPlan->getDecomposedQueryPlanId();
+                auto actualQuerySubPlan = executionNode->getCopyOfDecomposedQueryPlan(sharedQueryId, querySubPlanId);
 
                 // 4. Check is the updated and actual query sub plan has the same version number
                 uint32_t currentVersion = actualQuerySubPlan->getVersion();
@@ -417,7 +418,7 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             }
 
             // 6. Save Update query sub plans and execution node
-            executionNode->updateQuerySubPlans(sharedQueryId, updatedQuerySubPlans);
+            executionNode->updateDecomposedQueryPlans(sharedQueryId, updatedQuerySubPlans);
             globalExecutionPlan->scheduleExecutionNode(executionNode);
 
             // 7. Update the status of all operators

@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
@@ -70,7 +71,7 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
     pipelineQueryPlan = phase->apply(pipelineQueryPlan);
 
-    auto pipelineRootOperator = pipelineQueryPlan->getSourcePipelines()[0]->getQueryPlan()->getRootOperators()[0];
+    auto pipelineRootOperator = pipelineQueryPlan->getSourcePipelines()[0]->getDecomposedQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSourceOperator);
     ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0U);
@@ -93,7 +94,7 @@ TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
     operatorPlan = phase->process(operatorPlan);
 
-    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
+    auto pipelineRootOperator = operatorPlan->getDecomposedQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSinkOperator);
     ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0U);
@@ -116,7 +117,7 @@ TEST_F(AddScanAndEmitPhaseTest, pipelineFilterQuery) {
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
     operatorPlan = phase->process(operatorPlan);
 
-    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
+    auto pipelineRootOperator = operatorPlan->getDecomposedQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalScanOperator);
     auto filter = pipelineRootOperator->getChildren()[0];

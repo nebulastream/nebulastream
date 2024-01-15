@@ -47,9 +47,6 @@ using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-
 class RestServer;
 using RestServerPtr = std::shared_ptr<RestServer>;
 
@@ -105,8 +102,12 @@ namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
-
 }// namespace Catalogs
+
+namespace Optimizer {
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
@@ -218,7 +219,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * getter for the global execution plan
      * @return
      */
-    GlobalExecutionPlanPtr getGlobalExecutionPlan() const;
+    Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlan() const;
 
     NesWorkerPtr getNesWorker();
 
@@ -240,7 +241,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
     CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;

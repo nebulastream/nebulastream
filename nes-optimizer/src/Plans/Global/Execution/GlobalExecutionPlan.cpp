@@ -21,14 +21,14 @@
 
 namespace NES::Optimizer {
 
-GlobalExecutionPlanPtr GlobalExecutionPlan::create() { return std::make_shared<GlobalExecutionPlan>(); }
+GlobalExecutionPlanPtr Optimizer::GlobalExecutionPlan::create() { return std::make_shared<GlobalExecutionPlan>(); }
 
-ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeById(ExecutionNodeId id) {
-    if (idToExecutionNodeMap.contains(id)) {
-        NES_DEBUG("Returning execution node with id  {}", id);
-        return idToExecutionNodeMap[id];
+ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeById(ExecutionNodeId executionNodeId) {
+    if (idToExecutionNodeMap.contains(executionNodeId)) {
+        NES_DEBUG("Returning execution node with id  {}", executionNodeId);
+        return idToExecutionNodeMap[executionNodeId];
     }
-    NES_WARNING("Execution node doesn't exists with the id {}", id);
+    NES_WARNING("Execution node doesn't exists with the id {}", executionNodeId);
     return nullptr;
 }
 
@@ -102,7 +102,7 @@ bool GlobalExecutionPlan::removeAllDecomposedQueryPlans(SharedQueryId sharedQuer
         return false;
     }
 
-    std::vector<ExecutionNodePtr> executionNodes = sharedQueryIdToExecutionNodeMap[sharedQueryId];
+    auto executionNodes = sharedQueryIdToExecutionNodeMap[sharedQueryId];
     NES_DEBUG("Found {} Execution node for shared query with id {}", executionNodes.size(), sharedQueryId);
     for (const auto& executionNode : executionNodes) {
         uint64_t executionNodeId = executionNode->getId();
@@ -149,7 +149,7 @@ bool GlobalExecutionPlan::removeQuerySubPlanFromNode(ExecutionNodeId executionNo
 
     /* Check if the node still hosts query sub plans belonging the shared query with the given id. If not, remove
      * the node from the vector of nodes associated with this shared query*/
-    if (executionNode->getDecomposedQueryPlans(sharedQueryId).empty()) {
+    if (executionNode->getAllDecomposedQueryPlans(sharedQueryId).empty()) {
         auto& mappedNodes = sharedQueryIdToExecutionNodeMap[sharedQueryId];
         if (mappedNodes.size() == 1) {
             /* if this was the only node associated with this shared query id, remove the entry for this shared query
@@ -201,7 +201,7 @@ void GlobalExecutionPlan::mapExecutionNodeToSharedQueryId(const ExecutionNodePtr
                       executionNode->getId());
             sharedQueryIdToExecutionNodeMap[sharedQueryId] = {executionNode};
         } else {
-            std::vector<ExecutionNodePtr> executionNodes = sharedQueryIdToExecutionNodeMap[sharedQueryId];
+            auto executionNodes = sharedQueryIdToExecutionNodeMap[sharedQueryId];
             auto found = std::find(executionNodes.begin(), executionNodes.end(), executionNode);
             if (found == executionNodes.end()) {
                 NES_DEBUG("Adding execution node {} to the query Id {}", executionNode->getId(), sharedQueryId);
@@ -219,7 +219,7 @@ void GlobalExecutionPlan::mapExecutionNodeToSharedQueryId(const ExecutionNodePtr
 std::map<WorkerId, uint32_t> GlobalExecutionPlan::getMapOfWorkerIdToOccupiedResource(SharedQueryId sharedQueryId) {
     NES_INFO("Get a map of occupied resources for the shared query {}", sharedQueryId);
     std::map<WorkerId, uint32_t> mapOfWorkerIdToOccupiedResources;
-    std::vector<ExecutionNodePtr> executionNodes = sharedQueryIdToExecutionNodeMap[sharedQueryId];
+    auto executionNodes = sharedQueryIdToExecutionNodeMap[sharedQueryId];
     NES_DEBUG("Found {} Execution node for the shared query with id {}", executionNodes.size(), sharedQueryId);
     for (auto& executionNode : executionNodes) {
         uint32_t occupiedResource = executionNode->getOccupiedResources(sharedQueryId);

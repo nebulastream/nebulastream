@@ -82,7 +82,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
   public:
     DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options);
     static PhysicalOperatorProviderPtr create(const QueryCompilerOptionsPtr& options);
-    void lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) override;
+    void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorNodePtr operatorNode) override;
     virtual ~DefaultPhysicalOperatorProvider() noexcept = default;
 
   protected:
@@ -105,96 +105,86 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
 
     /**
      * @brief Lowers a binary operator
-     * @param queryPlan current plan
      * @param operatorNode current operator
      */
-    void lowerBinaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerBinaryOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a unary operator
-    * @param queryPlan current plan
+    * @param decomposedQueryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerUnaryOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
     *        using a Multiplex operation that connects two sources with one sink. The two sources then form one stream 
     *        that continuously sends TupleBuffers to the sink. This means a query that only contains an Union operator 
     *        does not lead to code that is compiled and is entirely executed on the source/sink/TupleBuffer level.
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerUnionOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerUnionOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a project operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerProjectOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerProjectOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers an infer model operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerInferModelOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    void lowerInferModelOperator(LogicalOperatorNodePtr operatorNode);
 
     /**
     * @brief Lowers a map operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerMapOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a udf map operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerUDFMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerUDFMapOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a udf flat map operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerUDFFlatMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerUDFFlatMapOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a window operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerWindowOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerWindowOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a thread local window operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerTimeBasedWindowOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode);
+    void lowerTimeBasedWindowOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a watermark assignment operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerWatermarkAssignmentOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerWatermarkAssignmentOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a join operator
-    * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerJoinOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerJoinOperator(const LogicalOperatorNodePtr& operatorNode);
 
     /**
-    * @brief Lowers a join build operator
-    * @param queryPlan current plan
-    * @param operatorNode current operator
-    */
+     * @brief Get a join build input generator
+     * @param joinOperator join operator
+     * @param schema the operator schema
+     * @param children the upstream operators
+     */
     OperatorNodePtr getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
                                               SchemaPtr schema,
                                               std::vector<OperatorNodePtr> children);

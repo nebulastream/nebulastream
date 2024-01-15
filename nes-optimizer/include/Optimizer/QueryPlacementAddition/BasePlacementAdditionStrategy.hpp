@@ -93,14 +93,6 @@ class BasePlacementAdditionStrategy {
     virtual ~BasePlacementAdditionStrategy();
 
     /**
-     * Update Global Execution plan by placing the input query plan
-     * @param queryPlan: the query plan to place
-     * @return true if successful else false
-     * @throws QueryPlacementException
-     */
-    virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
-
-    /**
      * Update Global execution plan by placing operators including and between input pinned upstream and downstream operators
      * for the query with input id and input fault tolerance strategy
      * @param sharedQueryId: id of the shared query

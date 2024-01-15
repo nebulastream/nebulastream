@@ -27,8 +27,8 @@ using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 /**
  * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
@@ -53,9 +53,9 @@ class ConsoleDumpHandler {
      * @brief Dump a pipeline query plan with a specific context and scope.
      * @param context the context
      * @param scope the scope
-     * @param plan the query plan
+     * @param decomposedQueryPlan the decomposed query plan
      */
-    void dump(std::string context, std::string scope, QueryPlanPtr queryPlan);
+    void dump(std::string context, std::string scope, DecomposedQueryPlanPtr decomposedQueryPlan);
 
     /**
      * @brief Dump a pipeline query plan with a specific context and scope.
@@ -73,4 +73,4 @@ class ConsoleDumpHandler {
 
 }// namespace NES
 
-#endif // NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_
+#endif// NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_

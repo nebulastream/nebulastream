@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer {
@@ -39,7 +39,7 @@ QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) 
     }
 
     // iterate over all operators and set the output schema
-    auto iterator = QueryPlanIterator(queryPlan);
+    auto iterator = PlanIterator(queryPlan);
     for (auto node : iterator) {
         if (auto op = node->as_if<SourceLogicalOperatorNode>()) {
             op->getSourceDescriptor()->getSchema()->setLayoutType(layoutType);

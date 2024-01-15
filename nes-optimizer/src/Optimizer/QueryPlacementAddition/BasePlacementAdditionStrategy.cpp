@@ -46,8 +46,6 @@ BasePlacementAdditionStrategy::BasePlacementAdditionStrategy(const GlobalExecuti
     pathFinder = std::make_shared<PathFinder>((topology->getRootTopologyNodeId()));
 }
 
-bool BasePlacementAdditionStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
-
 void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
                                                          const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators) {
 
@@ -723,7 +721,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
             // 1.4. Fetch the execution node to update and placed query sub plans
             auto topologyNode = workerIdToTopologyNodeMap[workerNodeId];
             auto executionNode = getExecutionNode(topologyNode);
-            auto placedQuerySubPlans = executionNode->getDecomposedQueryPlans(sharedQueryId);
+            auto placedQuerySubPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
 
             // 1.5. Iterate over the placed query sub plans and update execution node
             auto computedQuerySubPlans = computedSubQueryPlans[workerNodeId];
@@ -878,7 +876,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
             globalExecutionPlan->addExecutionNode(executionNode);
 
             // 1.7. Update state and properties of all operators placed on the execution node
-            placedQuerySubPlans = executionNode->getDecomposedQueryPlans(sharedQueryId);
+            placedQuerySubPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
             for (auto placedQuerySubPlan : placedQuerySubPlans) {
                 DecomposedQueryPlanId decomposedQueryPlanId = placedQuerySubPlan->getDecomposedQueryPlanId();
                 auto allPlacedOperators = placedQuerySubPlan->getAllOperators();

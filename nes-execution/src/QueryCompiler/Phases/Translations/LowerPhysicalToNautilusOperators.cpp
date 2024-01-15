@@ -78,7 +78,8 @@
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
@@ -126,8 +127,8 @@ PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPt
 }
 
 OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr operatorPipeline, size_t bufferSize) {
-    auto queryPlan = operatorPipeline->getQueryPlan();
-    auto nodes = QueryPlanIterator(queryPlan).snapshot();
+    auto decomposedQueryPlan = operatorPipeline->getDecomposedQueryPlan();
+    auto nodes = PlanIterator(decomposedQueryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
@@ -137,11 +138,12 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
         parentOperator =
             lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
     }
-    for (auto& root : queryPlan->getRootOperators()) {
-        queryPlan->removeAsRootOperator(root);
+    const auto& rootOperators = decomposedQueryPlan->getRootOperators();
+    for (auto& root : rootOperators) {
+        decomposedQueryPlan->removeAsRootOperator(root->getId());
     }
     auto nautilusPipelineWrapper = NautilusPipelineOperator::create(pipeline, operatorHandlers);
-    queryPlan->addRootOperator(nautilusPipelineWrapper);
+    decomposedQueryPlan->addRootOperator(nautilusPipelineWrapper);
     return operatorPipeline;
 }
 

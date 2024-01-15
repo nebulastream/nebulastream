@@ -37,6 +37,7 @@
 #include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -54,7 +55,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
     const z3::ContextPtr& z3Context,
     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
     const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-    const GlobalExecutionPlanPtr& globalExecutionPlan)
+    const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan)
     : topology(topology), globalExecutionPlan(globalExecutionPlan), queryCatalogService(queryCatalogService),
       globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
 
@@ -308,8 +309,8 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
 
                 //6.3. Only process the upstream and downstream execution node pairs when both have shared query plans
                 // with the impacted shared query id
-                if (upstreamExecutionNode->hasQuerySubPlans(impactedSharedQueryId)
-                    && downstreamExecutionNode->hasQuerySubPlans(impactedSharedQueryId)) {
+                if (upstreamExecutionNode->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)
+                    && downstreamExecutionNode->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)) {
                     markOperatorsForReOperatorPlacement(impactedSharedQueryId, upstreamExecutionNode, downstreamExecutionNode);
                 }
             }
@@ -345,10 +346,10 @@ void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(const SharedQueryI
                                                               const ExecutionNodePtr& upstreamExecutionNode,
                                                               std::set<OperatorId>& upstreamOperatorIds) const {
 
-    auto upstreamSubQueryPlans = upstreamExecutionNode->getDecomposedQueryPlans(sharedQueryPlanId);
-    for (const auto& upstreamSubQueryPlan : upstreamSubQueryPlans) {
+    auto upstreamDecomposedQueryPlans = upstreamExecutionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
+    for (const auto& upstreamDecomposedQueryPlan : upstreamDecomposedQueryPlans) {
         //1.1 Fetch all sink operators of the sub query plan to find the most upstream non-system generated operator.
-        auto sinkOperators = upstreamSubQueryPlan->getSinkOperators();
+        auto sinkOperators = upstreamDecomposedQueryPlan->getSinkOperators();
         for (const auto& sinkOperator : sinkOperators) {
             //1.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
             auto children = sinkOperator->getChildren();
@@ -377,10 +378,10 @@ void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(const SharedQuer
                                                                 const ExecutionNodePtr& downstreamExecutionNode,
                                                                 std::set<OperatorId>& downstreamOperatorIds) const {
 
-    auto downstreamSubQueryPlans = downstreamExecutionNode->getDecomposedQueryPlans(sharedQueryPlanId);
-    for (const auto& downstreamSubQueryPlan : downstreamSubQueryPlans) {
+    auto downstreamDecomposedQueryPlans = downstreamExecutionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
+    for (const auto& downstreamDecomposedQueryPlan : downstreamDecomposedQueryPlans) {
         //1.1 Fetch all source operators of the sub query plan to find the most downstream non-system generated operator.
-        auto sourceOperators = downstreamSubQueryPlan->getSourceOperators();
+        auto sourceOperators = downstreamDecomposedQueryPlan->getSourceOperators();
         for (const SourceLogicalOperatorNodePtr& sourceOperator : sourceOperators) {
             //1.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
             auto parents = sourceOperator->getParents();

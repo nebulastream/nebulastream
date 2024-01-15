@@ -22,9 +22,9 @@ namespace NES::QueryCompilation {
  */
 class PipeliningPhase {
   public:
-    virtual PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) = 0;
+    virtual PipelineQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan) = 0;
     virtual ~PipeliningPhase() = default;
 };
 }// namespace NES::QueryCompilation
 
-#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_
+#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_
