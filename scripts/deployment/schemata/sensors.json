@@ -1,0 +1,4 @@
+{
+  "logicalSourceName": "sensors",
+  "schema": "Schema::create()->addField(createField(\"id\", BasicType::UINT64))->addField(createField(\"value\", BasicType::FLOAT64))->addField(createField(\"payload\", BasicType::FLOAT64))->addField(createField(\"timestamp\", BasicType::FLOAT64))"
+}
