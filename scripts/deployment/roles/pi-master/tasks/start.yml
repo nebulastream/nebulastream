@@ -15,6 +15,12 @@
     nohup mosquitto 2>&1 &
     echo $! > /home/ubuntu/dimitrios/mosquitto.pid
 
+- name: Start Python data generator
+  shell: |
+    nohup python3 e2e_latency.py 2>&1 &
+    echo $! > /home/ubuntu/dimitrios/generator.pid
+  chdir: /home/ubuntu/dimitrios
+
 - name: Start coordinator
   shell: |
     nohup /home/ubuntu/git/nebulastream/build/nes-core/{{ coord_bin_name }} --configPath=/tmp/coordinator.yaml > /home/ubuntu/dimitrios/{{ coord_bin_name }}.log 2>&1 & 
