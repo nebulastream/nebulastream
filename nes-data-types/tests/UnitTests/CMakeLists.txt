@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Google Testing Framework ----------------------------------------------------
-include(ExternalProject)
 
-add_subdirectory(UnitTests)
-
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
+### SchemaTest Test ###
+add_nes_unit_test(schema-tests "API/SchemaTest.cpp")
