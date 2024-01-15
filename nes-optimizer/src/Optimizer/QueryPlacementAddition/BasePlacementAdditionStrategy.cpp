@@ -559,8 +559,6 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                 }
 
                 auto originalCopiedOperator = operatorIdToCopiedOperatorMap[candidateOperator->getId()];
-                //todo: test this logic
-                //auto upstreamNonSystemOperatorId = candidateOperator->getId();
                 auto downStreamNonSystemOperatorId = candidateOperator->getId();
 
                 // 5. For each candidate operator not in the state "Placed" find the topology node hosting the immediate
@@ -570,7 +568,6 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                     // 6. Fetch the id of the topology node hosting the upstream operator to connect.
                     const auto& upstreamOperatorToConnect = upstreamOperator->as<LogicalOperatorNode>();
                     auto upstreamWorkerId = std::any_cast<WorkerId>(upstreamOperatorToConnect->getProperty(PINNED_WORKER_ID));
-                    //auto downStreamNonSystemOperatorId = upstreamOperatorToConnect->getId();
                     auto upstreamNonSystemOperatorId = upstreamOperatorToConnect->getId();
 
                     // 7. If both operators are co-located we do not need to add network source or sink
@@ -775,7 +772,6 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                         auto pinnedDownstreamOperators = computedOperator->getParents();
                                         for (const auto& pinnedDownstreamOperator : pinnedDownstreamOperators) {
                                             bool foundOperatorWithEqualId = false;
-                                            //turn araound up and downstream here
                                             for (const auto& placedParent : matchingPlacedLeafOperator->getParents()) {
                                                 if (placedParent->as<OperatorNode>()->getId()
                                                     == pinnedDownstreamOperator->as<OperatorNode>()->getId()) {
@@ -968,11 +964,11 @@ bool BasePlacementAdditionStrategy::tryMergingSource(DecomposedQueryPlanVersion 
                                                      const NodePtr& newOperator) {
 
     //check if the new operator is a network source
-    auto newSource = newOperator->as<SourceLogicalOperatorNode>();
+    auto newSource = newOperator->as_if<SourceLogicalOperatorNode>();
     if (!newSource) {
         return false;
     }
-    auto newNetworkSourceDescriptor = newSource->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>();
+    auto newNetworkSourceDescriptor = newSource->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
     if (!newNetworkSourceDescriptor) {
         return false;
     }
@@ -984,12 +980,12 @@ bool BasePlacementAdditionStrategy::tryMergingSource(DecomposedQueryPlanVersion 
     for (const auto& existingChild : matchingPinnedRootOperator->getChildren()) {
 
         //check if the placed operator is a network source
-        auto existingNetworkSource = existingChild->as<SourceLogicalOperatorNode>();
+        auto existingNetworkSource = existingChild->as_if<SourceLogicalOperatorNode>();
         if (!existingChild) {
             continue;
         }
         auto existingNetworkSourceDescriptor =
-            existingNetworkSource->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>();
+            existingNetworkSource->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
         if (!existingNetworkSourceDescriptor) {
             continue;
         }
@@ -1019,13 +1015,13 @@ bool BasePlacementAdditionStrategy::tryMergingSource(DecomposedQueryPlanVersion 
 bool BasePlacementAdditionStrategy::tryMergingSink(DecomposedQueryPlanVersion querySubPlanVersion,
                                                    const DecomposedQueryPlanPtr& computedQuerySubPlan,
                                                    const NodePtr& matchingPlacedLeafOperator,
-                                                   const NodePtr& newOperator) {//todo: pass logical operator nodes
+                                                   const NodePtr& newOperator) {
     //check if the new operator is a network sink
-    auto newSink = newOperator->as<SinkLogicalOperatorNode>();
+    auto newSink = newOperator->as_if<SinkLogicalOperatorNode>();
     if (!newSink) {
         return false;
     }
-    auto newNetworkSinkDescriptor = newSink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
+    auto newNetworkSinkDescriptor = newSink->getSinkDescriptor()->as_if<Network::NetworkSinkDescriptor>();
     if (!newNetworkSinkDescriptor) {
         return false;
     }
@@ -1037,11 +1033,11 @@ bool BasePlacementAdditionStrategy::tryMergingSink(DecomposedQueryPlanVersion qu
     for (const auto& existingParent : matchingPlacedLeafOperator->getParents()) {
 
         //check if the placed operator is a network sink
-        auto existingNetworkSink = existingParent->as<SinkLogicalOperatorNode>();
+        auto existingNetworkSink = existingParent->as_if<SinkLogicalOperatorNode>();
         if (!existingNetworkSink) {
             continue;
         }
-        auto existingNetworkSinkDescriptor = existingNetworkSink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
+        auto existingNetworkSinkDescriptor = existingNetworkSink->getSinkDescriptor()->as_if<Network::NetworkSinkDescriptor>();
         if (!existingNetworkSinkDescriptor) {
             continue;
         }

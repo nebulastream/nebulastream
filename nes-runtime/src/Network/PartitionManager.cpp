@@ -48,11 +48,6 @@ PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& 
     // nop
 }
 
-PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation, Runtime::RuntimeEventListenerPtr eventListener)
-    : partitionCounter(0), receiverLocation(std::move(senderLocation)), eventListener(std::move(eventListener)) {
-    // nop
-}
-
 uint64_t PartitionManager::PartitionProducerEntry::count() const { return partitionCounter; }
 
 void PartitionManager::PartitionProducerEntry::pin() { partitionCounter++; }
