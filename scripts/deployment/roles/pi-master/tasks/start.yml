@@ -17,7 +17,7 @@
 
 - name: Start Python data generator
   shell: |
-    nohup python3 e2e_latency.py 2>&1 &
+    nohup python3 e2e_latency.py > /home/ubuntu/dimitrios/generator.log &
     echo $! > /home/ubuntu/dimitrios/generator.pid
 
 - name: Start coordinator
