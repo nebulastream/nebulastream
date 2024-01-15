@@ -257,9 +257,7 @@ TEST_F(SchemaTest, getSourceNameQualifierTest) {
 }
 
 TEST_F(SchemaTest, copyTest) {
-    auto testSchema = Schema::create()
-                          ->addField("field1", BasicType::UINT8)
-                          ->addField("field2", BasicType::UINT16);
+    auto testSchema = Schema::create()->addField("field1", BasicType::UINT8)->addField("field2", BasicType::UINT16);
     auto testSchemaCopy = testSchema->copy();
 
     ASSERT_EQ(testSchema->getSchemaSizeInBytes(), testSchemaCopy->getSchemaSizeInBytes());
@@ -279,4 +277,4 @@ TEST_F(SchemaTest, updateSourceNameTest) {
     // TODO once #4355 is done, we can test updateSourceName(source1) here
 }
 
-} // namespace NES
+}// namespace NES
