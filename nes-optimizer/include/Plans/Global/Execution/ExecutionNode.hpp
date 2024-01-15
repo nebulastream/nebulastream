@@ -82,7 +82,7 @@ class ExecutionNode : public Node {
     /**
      * @brief Get decomposed query plans belonging to the given shared query Id
      * @param sharedQueryId: the shared query id
-     * @return vector containing copies of placed decomposed query plans
+     * @return vector containing placed decomposed query plans
      */
     std::vector<DecomposedQueryPlanPtr> getAllDecomposedQueryPlans(SharedQueryId sharedQueryId) const;
 
@@ -90,10 +90,9 @@ class ExecutionNode : public Node {
       * @brief Get the decomposed query plan belonging to a given shared query id and has the provided decomposed query plan id
       * @param sharedQueryId: shared query id
       * @param decomposedQueryPlanId: decomposed query plan id
-      * @return the copy of the decomposed query plan
+      * @return the decomposed query plan
       */
-    DecomposedQueryPlanPtr getCopyOfDecomposedQueryPlan(SharedQueryId sharedQueryId,
-                                                        DecomposedQueryPlanId decomposedQueryPlanId) const;
+    DecomposedQueryPlanPtr getDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) const;
 
     /**
      * Remove existing decomposed query plans belonging to a shared query plan

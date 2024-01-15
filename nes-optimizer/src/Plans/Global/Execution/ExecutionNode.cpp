@@ -63,7 +63,7 @@ std::vector<DecomposedQueryPlanPtr> ExecutionNode::getAllDecomposedQueryPlans(Sh
     return decomposedQueryPlans;
 }
 
-DecomposedQueryPlanPtr ExecutionNode::getCopyOfDecomposedQueryPlan(SharedQueryId sharedQueryId,
+DecomposedQueryPlanPtr ExecutionNode::getDecomposedQueryPlan(SharedQueryId sharedQueryId,
                                                                    DecomposedQueryPlanId decomposedQueryPlanId) const {
     if (mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId)) {
         NES_DEBUG("ExecutionNode : Found shared query plan with id  {}", sharedQueryId);
