@@ -49,12 +49,6 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
-namespace Network {
-class NetworkSourceDescriptor;
-using NetworkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
-class NetworkSinkDescriptor;
-using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
-}// namespace Network
 namespace Catalogs {
 
 namespace Source {
@@ -86,15 +80,6 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
-
-class TopologyNode;
-using TopologyNodePtr = std::shared_ptr<TopologyNode>;
-
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
-
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 
 namespace Optimizer {
 
@@ -159,31 +144,6 @@ class GlobalQueryPlanUpdatePhase {
      */
     GlobalQueryPlanPtr execute(const std::vector<NESRequestPtr>& nesRequests);
 
-    std::pair<SinkLogicalOperatorNodePtr, WorkerId>
-    findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& sharedQueryPlanId,
-                                       const WorkerId workerId,
-                                       const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor);
-
-    std::pair<std::set<OperatorId>, std::set<OperatorId>> findAffectedTopologySubGraph(const SharedQueryId& sharedQueryPlanId,
-                                 const ExecutionNodePtr& upstreamNode,
-                                 const ExecutionNodePtr& downstreamNode);
-
-    std::pair<SourceLogicalOperatorNodePtr, WorkerId>
-    findDownstreamNetworkSourceAndWorkerId(const SharedQueryId& sharedQueryPlanId,
-                                           const WorkerId workerId,
-                                           const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor);
-
-    static std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
-    findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
-                                                                                        const ExecutionNodePtr& upstreamNode,
-                                                                                        const ExecutionNodePtr& downstreamNode);
-
-    std::pair<LogicalOperatorNodePtr, WorkerId> findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
-                                                          WorkerId downstreamWorkerId,
-                                                          SharedQueryId sharedQueryId);
-    std::pair<LogicalOperatorNodePtr, WorkerId> findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
-                                                            WorkerId upstreamWorkerId,
-                                                            SharedQueryId sharedQueryId);
   private:
     explicit GlobalQueryPlanUpdatePhase(const TopologyPtr& topology,
                                         const QueryCatalogServicePtr& queryCatalogService,
@@ -211,50 +171,6 @@ class GlobalQueryPlanUpdatePhase {
      * @param stopQueryRequest: stop query request
      */
     void processStopQueryRequest(const StopQueryRequestPtr& stopQueryRequest);
-
-    /**
-     * @brief Process Remove Topology Link request
-     * @param removeTopologyLinkRequest: Remove Topology Link request
-     */
-    void processRemoveTopologyLinkRequest(const NES::Experimental::RemoveTopologyLinkRequestPtr& removeTopologyLinkRequest);
-
-    /**
-     * @brief Process Remove Topology Node request
-     * @param removeTopologyNodeRequest: Remove Topology Node request
-     */
-    void processRemoveTopologyNodeRequest(const NES::Experimental::RemoveTopologyNodeRequestPtr& removeTopologyNodeRequest);
-
-    /**
-     * @brief Mark operators of shared query plans that are placed between upstream and downstream execution nodes for re-operator placement.
-     * Note: If the upstream or downstream execution node consists only of system generated operators then successive execution
-     * nodes are explored till a logical operator is found.
-     * @param sharedQueryId: id of the shared query plan
-     * @param upstreamExecutionNode: the upstream execution node
-     * @param downstreamExecutionNode: the downstream execution node
-     */
-    void markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryId,
-                                             const ExecutionNodePtr& upstreamExecutionNode,
-                                             const ExecutionNodePtr& downstreamExecutionNode);
-
-    /**
-     * @brief
-     * @param sharedQueryPlanId
-     * @param downstreamExecutionNode
-     * @param downstreamOperatorIds
-     */
-    void getDownstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
-                                        const ExecutionNodePtr& downstreamExecutionNode,
-                                        std::set<OperatorId>& downstreamOperatorIds) const;
-
-    /**
-     * @brief
-     * @param sharedQueryPlanId
-     * @param upstreamExecutionNode
-     * @param upstreamOperatorIds
-     */
-    void getUpstreamPinnedOperatorIds(const SharedQueryId& sharedQueryPlanId,
-                                      const ExecutionNodePtr& upstreamExecutionNode,
-                                      std::set<OperatorId>& upstreamOperatorIds) const;
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;

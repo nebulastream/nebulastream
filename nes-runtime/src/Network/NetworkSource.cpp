@@ -167,7 +167,6 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                       nesPartition.toString(),
                       Runtime::NesThread::getId());
-            //there is not break here because the code for initialized is supposed to be executed after the old channel was released
             break;
         }
         case Runtime::ReconfigurationType::Initialize: {
@@ -233,7 +232,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     }
     if (isTermination) {
         if (!workerContext.doesEventChannelExist(this->operatorId)) {
-            //todo: handle timeout here
+            //todo #4490: allow aborting connection here
              auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
              if (channel) {
                  channel->close(terminationType);

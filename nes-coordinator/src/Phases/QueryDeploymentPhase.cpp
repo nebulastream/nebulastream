@@ -144,7 +144,6 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
-    //todo: remove this if the numbers of execution nodes do not match
     //remove subplans from global query plan if they were stopped due to migration
     auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
     for (const auto& node : executionNodes) {
@@ -155,7 +154,6 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             auto subPlanStatus = subplanMetaData->getSubQueryStatus();
             if (subPlanStatus == QueryState::MIGRATING) {
                 globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlan->getQuerySubPlanId());
-
                 auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(querySubPlan);
                 node->getTopologyNode()->releaseSlots(resourceAmount);
             }
@@ -208,8 +206,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId, const std::v
                     break;
                 }
                 case QueryState::REDEPLOYED: {
-                    //todo #4440: make non async function for this
-                    //workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
+                    //todo #4440: make non async call work for this
                     //workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
                     workerRPCClient->registerQuery(rpcAddress, querySubPlan);
                     break;

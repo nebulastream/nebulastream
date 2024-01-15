@@ -85,6 +85,11 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
         return std::const_pointer_cast<SourceType>(const_cast<const SourceDescriptor*>(this)->as<const SourceType>());
     }
 
+    template<class SourceType>
+    std::shared_ptr<SourceType> as_if() {
+        return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
+    }
+
     /**
      * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
      * @return logicalSourceName

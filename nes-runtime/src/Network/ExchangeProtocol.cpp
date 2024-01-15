@@ -66,14 +66,6 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
         if (auto status = partitionManager->getConsumerRegistrationStatus(nesPartition);
             status == PartitionRegistrationStatus::Registered) {
 
-            //check version
-            //            if (partitionManager->getVersion(nesPartition) != msg.getVersion()) {
-            //                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}",
-            //                          msg.getVersion(),
-            //                          partitionManager->getVersion(nesPartition));
-            //                return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
-            //            }
-
             // increment the counter
             partitionManager->pinSubpartitionConsumer(nesPartition);
             NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for DataChannel {} REGISTERED",
@@ -92,7 +84,6 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             status == PartitionRegistrationStatus::Registered) {
             NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for EventChannel {} REGISTERED",
                       msg.getChannelId().toString());
-            //todo: reenable
             partitionManager->pinSubpartitionProducer(nesPartition);
             // send response back to the client based on the identity
             return Messages::ServerReadyMessage(msg.getChannelId());
