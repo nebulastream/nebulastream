@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.23](https://github.com/nebulastream/nebulastream/tree/v0.6.23) (2024-01-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.22...v0.6.23)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add updateSourceQualifier to our Tests [\#4355](https://github.com/nebulastream/nebulastream/issues/4355)
+
 ## [v0.6.22](https://github.com/nebulastream/nebulastream/tree/v0.6.22) (2024-01-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.21...v0.6.22)
