@@ -30,6 +30,11 @@ namespace RequestProcessor::Experimental {
 class TopologyChangeRequest;
 using TopologyChangeRequestPtr = std::shared_ptr<TopologyChangeRequest>;
 
+struct TopologyChangeRequestResponse : AbstractRequestResponse {
+    explicit TopologyChangeRequestResponse(bool success) : success(success) {};
+    bool success;
+};
+
 class TopologyChangeRequest : public AbstractUniRequest {
   public:
     /**

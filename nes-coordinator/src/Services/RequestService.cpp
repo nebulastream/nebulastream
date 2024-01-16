@@ -33,6 +33,7 @@
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/TopologyChangeRequest.hpp>
 #include <Services/RequestService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -43,14 +44,14 @@
 namespace NES {
 
 RequestService::RequestService(bool enableNewRequestExecutor,
-                           Configurations::OptimizerConfiguration optimizerConfiguration,
-                           const QueryCatalogServicePtr& queryCatalogService,
-                           const RequestQueuePtr& queryRequestQueue,
-                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                           const QueryParsingServicePtr& queryParsingService,
-                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                           const RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
-                           const z3::ContextPtr& z3Context)
+                               Configurations::OptimizerConfiguration optimizerConfiguration,
+                               const QueryCatalogServicePtr& queryCatalogService,
+                               const RequestQueuePtr& queryRequestQueue,
+                               const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                               const QueryParsingServicePtr& queryParsingService,
+                               const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                               const RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
+                               const z3::ContextPtr& z3Context)
     : enableNewRequestExecutor(enableNewRequestExecutor), optimizerConfiguration(optimizerConfiguration),
       queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue), asyncRequestExecutor(asyncRequestExecutor),
       z3Context(z3Context), queryParsingService(queryParsingService) {
@@ -62,7 +63,7 @@ RequestService::RequestService(bool enableNewRequestExecutor,
 }
 
 QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& queryString,
-                                                      const Optimizer::PlacementStrategy placementStrategy) {
+                                                        const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
         NES_INFO("RequestService: Validating and registering the user query.");
@@ -108,8 +109,8 @@ QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& query
 }
 
 QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& queryString,
-                                                      const QueryPlanPtr& queryPlan,
-                                                      const Optimizer::PlacementStrategy placementStrategy) {
+                                                        const QueryPlanPtr& queryPlan,
+                                                        const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
         QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -152,7 +153,7 @@ QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& query
 }
 
 nlohmann::json RequestService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
-                                                                 const Optimizer::PlacementStrategy placementStrategy) {
+                                                                   const Optimizer::PlacementStrategy placementStrategy) {
 
     if (enableNewRequestExecutor) {
         auto explainRequest = RequestProcessor::Experimental::ExplainRequest::create(queryPlan, placementStrategy, 1, z3Context);
@@ -192,8 +193,8 @@ bool RequestService::validateAndQueueStopQueryRequest(QueryId queryId) {
 }
 
 bool RequestService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
-                                                    QuerySubPlanId querySubPlanId,
-                                                    const std::string& failureReason) {
+                                                      QuerySubPlanId querySubPlanId,
+                                                      const std::string& failureReason) {
 
     if (!enableNewRequestExecutor) {
         auto request = FailQueryRequest::create(sharedQueryId, failureReason);
@@ -217,6 +218,16 @@ void RequestService::assignOperatorIds(QueryPlanPtr queryPlan) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         visitingOp->setId(getNextOperatorId());
     }
+}
+
+bool RequestService::validateAndQueueTopologyChangeRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
+                                                           const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks) {
+    auto changeRequest =
+        RequestProcessor::Experimental::TopologyChangeRequest::create(removedLinks, addedLinks, RequestProcessor::DEFAULT_RETRIES);
+    auto future = changeRequest->getFuture();
+    asyncRequestExecutor->runAsync(changeRequest);
+    auto changeResponse = std::static_pointer_cast<RequestProcessor::Experimental::TopologyChangeRequestResponse>(future.get());
+    return changeResponse->success;
 }
 
 }// namespace NES

@@ -138,6 +138,9 @@ class RequestService {
                                           QuerySubPlanId querySubPlanId,
                                           const std::string& failureReason);
 
+    bool validateAndQueueTopologyChangeRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
+                                               const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks);
+
   private:
     /**
      * Assign unique operator ids to the incoming query plan from a client.

@@ -78,10 +78,14 @@ TopologyChangeRequest::executeRequestLogic(const NES::RequestProcessor::StorageH
         topology->addTopologyNodeAsChild(addedDown, addedUp);
     }
 
-    //identify operators to be replaced
-    auto [upstreamId, downstreamId] = removedLinks.front();
-    processRemoveTopologyLinkRequest(upstreamId, downstreamId);
+    //if a link was removed, chaeck if the query
+    if (!removedLinks.empty()) {
+        //identify operators to be replaced
+        auto [upstreamId, downstreamId] = removedLinks.front();
+        processRemoveTopologyLinkRequest(upstreamId, downstreamId);
+    }
 
+    responsePromise.set_value(std::make_shared<TopologyChangeRequestResponse>(true));
     return {};
 }
 
@@ -216,6 +220,7 @@ void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sh
     queryDeploymentPhase->execute(sharedQueryPlan);
 
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
+
 }
 
 LogicalOperatorNodePtr TopologyChangeRequest::findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
