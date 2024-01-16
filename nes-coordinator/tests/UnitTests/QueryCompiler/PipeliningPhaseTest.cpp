@@ -84,7 +84,8 @@ TEST_F(PipeliningPhaseTest, pipelineFilterQuery) {
     queryPlan->appendOperatorAsNewRoot(filter);
     queryPlan->appendOperatorAsNewRoot(sink);
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     NES_DEBUG("{}", queryPlan->toString());
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
@@ -124,7 +125,8 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -165,7 +167,8 @@ TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
     source2->addParent(multiplex);
 
     NES_DEBUG("{}", queryPlan->toString());
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -210,7 +213,8 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
     source2->addParent(multiplex);
     NES_DEBUG("{}", queryPlan->toString());
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -266,7 +270,8 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -327,7 +332,8 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -385,7 +391,8 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -432,7 +439,8 @@ TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -483,7 +491,8 @@ TEST_F(PipeliningPhaseTest, pipelineDemultiplex) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);

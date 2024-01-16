@@ -852,10 +852,16 @@ class DummyQueryListener : public AbstractQueryStatusListener {
   public:
     virtual ~DummyQueryListener() {}
 
-    bool canTriggerEndOfStream(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
-    bool notifySourceTermination(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
+    bool canTriggerEndOfStream(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+        return true;
+    }
+    bool notifySourceTermination(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+        return true;
+    }
     bool notifyQueryFailure(QueryId, DecomposedQueryPlanId, std::string) override { return true; }
-    bool notifyQueryStatusChange(QueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override { return true; }
+    bool notifyQueryStatusChange(QueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
+        return true;
+    }
     bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
 };
 

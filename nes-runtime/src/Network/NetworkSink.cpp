@@ -111,7 +111,9 @@ void NetworkSink::setup() {
 }
 
 void NetworkSink::shutdown() {
-    NES_DEBUG("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), sharedQueryId,
+    NES_DEBUG("NetworkSink: shutdown() called {} queryId {} qepsubplan {}",
+              nesPartition.toString(),
+              sharedQueryId,
               decomposedQueryPlanId);
     networkManager->unregisterSubpartitionProducer(nesPartition);
 }
@@ -246,7 +248,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 }
 
 void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
-    NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}", nesPartition.toString(),
+    NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}",
+              nesPartition.toString(),
               decomposedQueryPlanId);
     inherited0::postReconfigurationCallback(task);
 

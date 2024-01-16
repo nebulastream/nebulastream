@@ -88,7 +88,8 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
                               qepToFail->getDecomposedQueryPlanId(),
                               qepToFail->getDecomposedQueryPlanId());
                     queryStatusListener->notifyQueryFailure(qepToFail->getSharedQueryId(),
-                                                            qepToFail->getDecomposedQueryPlanId(), reason);
+                                                            qepToFail->getDecomposedQueryPlanId(),
+                                                            reason);
                     return qepToFail;
                 }
                 return nullptr;
@@ -125,7 +126,8 @@ void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipel
                           qepToFail->getDecomposedQueryPlanId(),
                           qepToFail->getDecomposedQueryPlanId());
                 queryStatusListener->notifyQueryFailure(qepToFail->getSharedQueryId(),
-                                                        qepToFail->getDecomposedQueryPlanId(), errorMessage);
+                                                        qepToFail->getDecomposedQueryPlanId(),
+                                                        errorMessage);
                 return qepToFail;
             }
             return nullptr;

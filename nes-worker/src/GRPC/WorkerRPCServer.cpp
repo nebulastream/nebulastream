@@ -66,11 +66,12 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
 Status WorkerRPCServer::ReconfigureQuery(ServerContext*, const ReconfigureQueryRequest* request, ReconfigureQueryReply* reply) {
     auto decomposedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
         (SerializableDecomposedQueryPlan*) &request->decomposedqueryplan());
-    NES_DEBUG("WorkerRPCServer::ReconfigureQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
-              "{} plan={}",
-              decomposedQueryPlan->getSharedQueryId(),
-              decomposedQueryPlan->getDecomposedQueryPlanId(),
-              decomposedQueryPlan->toString());
+    NES_DEBUG(
+        "WorkerRPCServer::ReconfigureQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
+        "{} plan={}",
+        decomposedQueryPlan->getSharedQueryId(),
+        decomposedQueryPlan->getDecomposedQueryPlanId(),
+        decomposedQueryPlan->toString());
 
     try {
         if (nodeEngine->reconfigureSubPlan(decomposedQueryPlan)) {

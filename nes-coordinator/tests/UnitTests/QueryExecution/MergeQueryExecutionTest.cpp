@@ -88,7 +88,9 @@ TEST_F(MergeQueryExecutionTest, mergeQuery) {
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5);
     auto mergedQuery = query2.unionWith(query1).project(Attribute("id")).sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, mergedQuery.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           mergedQuery.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto inputBuffer = executionEngine->getBuffer(schema);

@@ -25,10 +25,10 @@
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanJsonGenerator.hpp>
 
@@ -134,7 +134,8 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
     }
 }
 
-nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId) {
+nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                         QueryId queryId) {
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
     nlohmann::json executionPlanJson{};

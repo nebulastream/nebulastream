@@ -30,7 +30,8 @@
 
 namespace NES {
 
-QueryUndeploymentPhase::QueryUndeploymentPhase(const TopologyPtr& topology, const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan)
+QueryUndeploymentPhase::QueryUndeploymentPhase(const TopologyPtr& topology,
+                                               const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan)
     : topology(topology), globalExecutionPlan(globalExecutionPlan), workerRPCClient(WorkerRPCClient::create()) {
     NES_DEBUG("QueryUndeploymentPhase()");
 }
@@ -120,7 +121,8 @@ void QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
     }
 }
 
-void QueryUndeploymentPhase::undeployQuery(QueryId sharedQueryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes) {
+void QueryUndeploymentPhase::undeployQuery(QueryId sharedQueryId,
+                                           const std::vector<Optimizer::ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryUndeploymentPhase::undeployQuery queryId= {}", sharedQueryId);
 
     std::map<CompletionQueuePtr, uint64_t> completionQueues;

@@ -102,7 +102,9 @@ class WorkerRPCClient {
      * @param query plan to register
      * @param cq the completion queue
      */
-    void registerQueryAsync(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan, const CompletionQueuePtr& cq);
+    void registerQueryAsync(const std::string& address,
+                            const DecomposedQueryPlanPtr& decomposedQueryPlan,
+                            const CompletionQueuePtr& cq);
 
     /**
      * @brief ungregisters a query

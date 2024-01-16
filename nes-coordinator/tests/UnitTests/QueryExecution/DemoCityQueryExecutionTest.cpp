@@ -161,7 +161,8 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==-------------------------------------------------------==//
     //==-------- GENERATE INPUT DATA AND RUN THE QUERY --------==//
     //==-------------------------------------------------------==//
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     generateAndEmitInputBuffers(plan,
                                 {producerSchema, producerSchema, consumerSchema},

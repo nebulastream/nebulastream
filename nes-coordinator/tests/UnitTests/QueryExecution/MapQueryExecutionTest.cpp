@@ -203,7 +203,8 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
                     .sink(testSinkDescriptor);
     }
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE((bool) source);
