@@ -87,7 +87,8 @@ TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);

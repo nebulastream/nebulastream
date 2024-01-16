@@ -86,7 +86,9 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                               defaultSharedQueryId,
+                                                               query.getQueryPlan()->getRootOperators());
         auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
         // Emitting the input buffers

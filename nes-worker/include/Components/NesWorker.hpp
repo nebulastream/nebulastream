@@ -187,9 +187,10 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
                                  OperatorId sourceId,
                                  Runtime::QueryTerminationType) override;
 
-    bool
-    canTriggerEndOfStream(QueryId queryId,
-                               DecomposedQueryPlanId subPlanId, OperatorId sourceId, Runtime::QueryTerminationType) override;
+    bool canTriggerEndOfStream(QueryId queryId,
+                               DecomposedQueryPlanId subPlanId,
+                               OperatorId sourceId,
+                               Runtime::QueryTerminationType) override;
 
     bool notifyQueryStatusChange(QueryId queryId,
                                  DecomposedQueryPlanId subQueryId,

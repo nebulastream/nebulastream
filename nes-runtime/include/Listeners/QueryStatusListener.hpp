@@ -23,13 +23,15 @@ class AbstractQueryStatusListener {
   public:
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
-    virtual bool
-    canTriggerEndOfStream(QueryId queryId,
-                                       DecomposedQueryPlanId subPlanId, OperatorId sourceId, Runtime::QueryTerminationType) = 0;
+    virtual bool canTriggerEndOfStream(QueryId queryId,
+                                       DecomposedQueryPlanId subPlanId,
+                                       OperatorId sourceId,
+                                       Runtime::QueryTerminationType) = 0;
 
-    virtual bool
-    notifySourceTermination(QueryId queryId,
-                                         DecomposedQueryPlanId subPlanId, OperatorId sourceId, Runtime::QueryTerminationType) = 0;
+    virtual bool notifySourceTermination(QueryId queryId,
+                                         DecomposedQueryPlanId subPlanId,
+                                         OperatorId sourceId,
+                                         Runtime::QueryTerminationType) = 0;
 
     virtual bool notifyQueryFailure(QueryId queryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) = 0;
 

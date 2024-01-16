@@ -322,7 +322,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param sink the terminated sink
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
+    void
+    notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
 
   private:
     friend class ThreadPool;

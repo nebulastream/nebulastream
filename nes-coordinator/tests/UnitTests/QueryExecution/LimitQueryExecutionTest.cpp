@@ -70,7 +70,8 @@ TEST_F(LimitQueryExecutionTest, limitQuery) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).limit(expectedTuples).sink(testSinkDescriptor);
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);

@@ -92,7 +92,8 @@ TEST_F(MapPythonUDFQueryExecutionTest, MapPythonUdf) {
     NES_DEBUG("Set up Descriptor");
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapUDF(pythonUDFDescriptor).sink(testSinkDescriptor);
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     NES_DEBUG("submitted query and got source");

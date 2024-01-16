@@ -74,7 +74,9 @@ class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
     }
 
     Runtime::Execution::ExecutableQueryPlanPtr executeQuery(Query query) {
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                               defaultSharedQueryId,
+                                                               query.getQueryPlan()->getRootOperators());
         auto plan = executionEngine->submitQuery(decomposedQueryPlan);
         auto source = executionEngine->getDataSource(plan, 0);
         // create data for five windows

@@ -33,10 +33,10 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Optimizer{
+namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}
+}// namespace Optimizer
 
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;

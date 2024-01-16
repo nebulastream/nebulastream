@@ -38,7 +38,8 @@ FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
                          maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId) {}
 
-FailQueryRequestPtr FailQueryRequest::create(NES::QueryId queryId, NES::DecomposedQueryPlanId failedSubPlanId, uint8_t maxRetries) {
+FailQueryRequestPtr
+FailQueryRequest::create(NES::QueryId queryId, NES::DecomposedQueryPlanId failedSubPlanId, uint8_t maxRetries) {
     return std::make_shared<FailQueryRequest>(queryId, failedSubPlanId, maxRetries);
 }
 

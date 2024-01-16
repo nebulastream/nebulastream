@@ -278,7 +278,8 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
             ExecutionResult processNextTask(bool, Runtime::WorkerContext&) override { return ExecutionResult::Error; };
             void addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t) override{};
             void poisonWorkers() override{};
-            bool addReconfigurationMessage(QueryId, DecomposedQueryPlanId, const Runtime::ReconfigurationMessage&, bool) override {
+            bool
+            addReconfigurationMessage(QueryId, DecomposedQueryPlanId, const Runtime::ReconfigurationMessage&, bool) override {
                 receivedCallback = true;
                 return true;
             };

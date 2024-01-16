@@ -891,7 +891,8 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     queryPlan->setQueryId(0);

@@ -92,7 +92,8 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -135,7 +136,8 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
                      .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -187,7 +189,8 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
                      .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
-auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
