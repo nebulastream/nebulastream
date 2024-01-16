@@ -53,6 +53,8 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_DEBUG("FlatMapJavaUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
 constexpr auto numberOfRecords = 10;
@@ -92,7 +94,7 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
             .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).flatMapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }

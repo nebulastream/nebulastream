@@ -63,6 +63,8 @@ class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
 TEST_F(ProjectionQueryExecutionTest, projectField) {
@@ -77,7 +79,7 @@ TEST_F(ProjectionQueryExecutionTest, projectField) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }
@@ -110,7 +112,7 @@ TEST_F(ProjectionQueryExecutionTest, projectTwoFields) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }
@@ -142,7 +144,7 @@ TEST_F(ProjectionQueryExecutionTest, projectNonExistingFields) {
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("x")).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }

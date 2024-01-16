@@ -56,6 +56,8 @@ class LimitQueryExecutionTest : public Testing::BaseUnitTest {
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
 TEST_F(LimitQueryExecutionTest, limitQuery) {
@@ -68,7 +70,7 @@ TEST_F(LimitQueryExecutionTest, limitQuery) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).limit(expectedTuples).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }

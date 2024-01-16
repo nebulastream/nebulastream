@@ -308,21 +308,21 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     /**
      * @brief Notifies that a pipeline is done with its execution
-     * @param subPlanId the plan the pipeline belongs to
+     * @param decomposedQueryPlanId the plan the pipeline belongs to
      * @param pipeline the terminated pipeline
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifyPipelineCompletion(DecomposedQueryPlanId subPlanId,
+    void notifyPipelineCompletion(DecomposedQueryPlanId decomposedQueryPlanId,
                                   Execution::ExecutablePipelinePtr pipeline,
                                   QueryTerminationType terminationType);
 
     /**
      * @brief Notifies that a sink operator is done with its execution
-     * @param subPlanId the plan the sink belongs to
+     * @param decomposedQueryPlanId the plan the sink belongs to
      * @param sink the terminated sink
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifySinkCompletion(DecomposedQueryPlanId subPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
+    void notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
 
   private:
     friend class ThreadPool;

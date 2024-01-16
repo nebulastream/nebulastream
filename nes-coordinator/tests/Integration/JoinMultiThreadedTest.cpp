@@ -36,6 +36,8 @@ class JoinMultiThreadedTest
     const uint64_t numTuplesPerBuffer = 2;
     static constexpr auto dumpNone = QueryCompilation::DumpMode::NONE;
     static constexpr auto waitTillStoppingQuery = std::chrono::milliseconds(100);
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
@@ -86,7 +88,7 @@ class JoinMultiThreadedTest
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-        auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
         for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
             decomposedQueryPlan->addRootOperator(rootOperator);
         }

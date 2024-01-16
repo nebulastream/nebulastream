@@ -62,6 +62,8 @@ class MapQueryExecutionTest
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 
     // The following methods create the test data for the parameterized test.
     // The test data is a four-tuple which contains the nautilus compiler, the name of the test,
@@ -201,7 +203,7 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
                     .sink(testSinkDescriptor);
     }
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }

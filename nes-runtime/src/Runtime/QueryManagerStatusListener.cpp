@@ -151,21 +151,21 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
     }
 }
 
-void AbstractQueryManager::notifyPipelineCompletion(DecomposedQueryPlanId subPlanId,
+void AbstractQueryManager::notifyPipelineCompletion(DecomposedQueryPlanId decomposedQueryPlanId,
                                                     Execution::ExecutablePipelinePtr pipeline,
                                                     QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
-    auto& qep = runningQEPs[subPlanId];
+    auto& qep = runningQEPs[decomposedQueryPlanId];
     NES_ASSERT2_FMT(qep, "invalid query plan for pipeline " << pipeline->getPipelineId());
     qep->notifyPipelineCompletion(pipeline, terminationType);
 }
 
-void AbstractQueryManager::notifySinkCompletion(DecomposedQueryPlanId subPlanId,
+void AbstractQueryManager::notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId,
                                                 DataSinkPtr sink,
                                                 QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
-    auto& qep = runningQEPs[subPlanId];
-    NES_ASSERT2_FMT(qep, "invalid query plan " << subPlanId << " for sink " << sink->toString());
+    auto& qep = runningQEPs[decomposedQueryPlanId];
+    NES_ASSERT2_FMT(qep, "invalid decomposed query plan id " << decomposedQueryPlanId << " for sink " << sink->toString());
     qep->notifySinkCompletion(sink, terminationType);
 }
 }// namespace NES::Runtime

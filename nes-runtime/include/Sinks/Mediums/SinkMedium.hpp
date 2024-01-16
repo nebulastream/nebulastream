@@ -46,8 +46,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     explicit SinkMedium(SinkFormatPtr sinkFormat,
                         Runtime::NodeEnginePtr nodeEngine,
                         uint32_t numOfProducers,
-                        QueryId queryId,
-                        DecomposedQueryPlanId querySubPlanId);
+                        SharedQueryId sharedQueryId,
+                        DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief public constructor for data sink
@@ -55,8 +55,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     explicit SinkMedium(SinkFormatPtr sinkFormat,
                         Runtime::NodeEnginePtr nodeEngine,
                         uint32_t numOfProducers,
-                        QueryId sharedQueryId,
-                        DecomposedQueryPlanId querySubPlanId,
+                        SharedQueryId sharedQueryId,
+                        DecomposedQueryPlanId decomposedQueryPlanId,
                         uint64_t numberOfOrigins);
 
     /**

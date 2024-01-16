@@ -107,6 +107,8 @@ class NetworkStackIntegrationTest : public Testing::BaseIntegrationTest, public 
   protected:
     Testing::BorrowedPortPtr dataPort1;
     Testing::BorrowedPortPtr dataPort2;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
 class TestSink : public SinkMedium {
@@ -895,7 +897,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(0, 0);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }
