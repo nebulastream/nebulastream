@@ -7062,7 +7062,7 @@
 
 **Implemented enhancements:**
 
-- Allow QueryService to receive Query objects  [\#1830](https://github.com/nebulastream/nebulastream/issues/1830)
+- Allow RequestService to receive Query objects  [\#1830](https://github.com/nebulastream/nebulastream/issues/1830)
 
 ## [v0.0.394](https://github.com/nebulastream/nebulastream/tree/v0.0.394) (2021-05-03)
 
@@ -7305,7 +7305,7 @@
 
 ### Miscellaneous Issues ✌️
 
-- Remove Class variable QueryService from MaintenanceService [\#1680](https://github.com/nebulastream/nebulastream/issues/1680)
+- Remove Class variable RequestService from MaintenanceService [\#1680](https://github.com/nebulastream/nebulastream/issues/1680)
 - Map NodeId to QueryIds and stop/start the queries  [\#1626](https://github.com/nebulastream/nebulastream/issues/1626)
 
 ## [v0.0.371](https://github.com/nebulastream/nebulastream/tree/v0.0.371) (2021-04-06)

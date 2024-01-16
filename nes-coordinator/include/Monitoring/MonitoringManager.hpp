@@ -39,8 +39,8 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using QueryServicePtr = std::shared_ptr<RequestService>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;

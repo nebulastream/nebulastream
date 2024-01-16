@@ -26,8 +26,8 @@ using grpc::Status;
 
 namespace NES {
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using QueryServicePtr = std::shared_ptr<RequestService>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;

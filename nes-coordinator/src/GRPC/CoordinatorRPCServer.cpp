@@ -25,7 +25,7 @@
 #include <Runtime/OpenCLManager.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>

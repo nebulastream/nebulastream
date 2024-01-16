@@ -22,7 +22,7 @@
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <SerializableQueryPlan.pb.h>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <exception>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
@@ -46,8 +46,8 @@ using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using QueryServicePtr = std::shared_ptr<RequestService>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;

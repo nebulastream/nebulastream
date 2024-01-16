@@ -59,8 +59,8 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
 class RequestProcessorService;
 using QueryRequestProcessorServicePtr = std::shared_ptr<RequestProcessorService>;
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using QueryServicePtr = std::shared_ptr<RequestService>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;

@@ -21,7 +21,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 

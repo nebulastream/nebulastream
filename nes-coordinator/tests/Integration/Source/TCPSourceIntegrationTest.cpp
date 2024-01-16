@@ -25,7 +25,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/TCPSource.hpp>

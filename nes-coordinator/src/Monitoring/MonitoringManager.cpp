@@ -27,7 +27,7 @@
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryState.hpp>

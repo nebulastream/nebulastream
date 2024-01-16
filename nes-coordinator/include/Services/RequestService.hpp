@@ -38,8 +38,8 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using QueryServicePtr = std::shared_ptr<RequestService>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
@@ -68,12 +68,12 @@ using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 }// namespace RequestProcessor
 
 /**
- * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping.
+ * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping as well as modifying the topology
  */
-class QueryService {
+class RequestService {
 
   public:
-    explicit QueryService(bool enableNewRequestExecutor,
+    explicit RequestService(bool enableNewRequestExecutor,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
                           const QueryCatalogServicePtr& queryCatalogService,
                           const RequestQueuePtr& queryRequestQueue,
@@ -91,7 +91,7 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    QueryId validateAndQueueAddQueryRequest(const std::string& queryString, const Optimizer::PlacementStrategy placementStrategy);
+    QueryId validateAndQueueAddQueryRequest(const std::string& queryString, Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -102,7 +102,7 @@ class QueryService {
      */
     QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
                                             const QueryPlanPtr& queryPlan,
-                                            const Optimizer::PlacementStrategy placementStrategy);
+                                            Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -113,7 +113,7 @@ class QueryService {
      * @return query id
      */
     nlohmann::json validateAndQueueExplainQueryRequest(const QueryPlanPtr& queryPlan,
-                                                       const Optimizer::PlacementStrategy placementStrategy);
+                                                       Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.

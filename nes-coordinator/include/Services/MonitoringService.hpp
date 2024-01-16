@@ -30,8 +30,8 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using QueryServicePtr = std::shared_ptr<RequestService>;
 
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.

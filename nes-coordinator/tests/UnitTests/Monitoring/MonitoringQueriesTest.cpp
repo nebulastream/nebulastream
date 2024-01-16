@@ -39,7 +39,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Services/MonitoringService.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <cstdint>
 #include <memory>
 #include <regex>

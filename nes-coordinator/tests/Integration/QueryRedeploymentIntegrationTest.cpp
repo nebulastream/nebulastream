@@ -39,7 +39,7 @@
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/TestUtils.hpp>
 #include <atomic>
 #include <gtest/gtest.h>

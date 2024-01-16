@@ -160,7 +160,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
-    NES_DEBUG("QueryService: start query");
+    NES_DEBUG("RequestService: start query");
     startQuery(sharedQueryId, executionNodes);
 }
 
