@@ -16,6 +16,7 @@
     paths: /local-ssd/dimitrios-ldap/
     patterns: '*.json'
     use_regex: no
+    recurse: yes
   register: files_to_delete
 
 - name: Delete found JSON files
