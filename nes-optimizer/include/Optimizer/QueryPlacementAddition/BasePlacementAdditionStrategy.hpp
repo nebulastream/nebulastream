@@ -116,13 +116,13 @@ class BasePlacementAdditionStrategy {
                               const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
 
     /**
-     * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and compute query
-     * sub plans on the designated topology node
+     * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and compute
+     * decomposed query plans on the designated topology node
      * @param sharedQueryId the shared query plan id
      * @param pinnedUpStreamOperators the upstream operators
      * @param pinnedDownStreamOperators the downstream operators
      */
-    ComputedDecomposedQueryPlans computeQuerySubPlans(SharedQueryId sharedQueryId,
+    ComputedDecomposedQueryPlans computeDecomposedQueryPlans(SharedQueryId sharedQueryId,
                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 

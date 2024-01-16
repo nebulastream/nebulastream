@@ -66,7 +66,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
 
         // 4. Compute query sub plans
         auto computedQuerySubPlans =
-            computeQuerySubPlans(sharedQueryId, copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
+            computeDecomposedQueryPlans(sharedQueryId, copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 5. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);

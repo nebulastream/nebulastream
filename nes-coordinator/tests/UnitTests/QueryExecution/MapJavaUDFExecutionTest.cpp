@@ -96,10 +96,7 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
-    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
+auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);

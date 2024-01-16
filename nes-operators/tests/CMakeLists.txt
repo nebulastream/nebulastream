@@ -16,7 +16,7 @@
 include(ExternalProject)
 
 # QueryPlanIteratorTest
-add_nes_unit_test(query-plan-util-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
+add_nes_unit_test(plan-iterator-test "UnitTests/Plans/Util/PlanIteratorTest.cpp")
 ### Query Plan Tests ###
 add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 ### Query Plan Builder Tests ###

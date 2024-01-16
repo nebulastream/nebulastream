@@ -45,7 +45,7 @@ class SampleCodeGenerationPhase {
     static SampleCodeGenerationPhasePtr create();
 
     /**
-     * @param Iterates over the query plan, compute the C++ code for each operator, and add the generated code to the operator property
+     * @brief Iterates over the query plan, compute the C++ code for each operator, and add the generated code to the operator property
      * @param queryPlan: the input query plan
      * @return updated query plan
      */

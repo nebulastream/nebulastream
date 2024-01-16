@@ -318,10 +318,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
     ENDPOINT("DELETE", "/stop-query", stopQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
             bool success = queryService->validateAndQueueStopQueryRequest(queryId);
-            Status status = success
-                ? Status::CODE_202
-                : Status::
-                      CODE_400;//QueryController catches InvalidQueryStatus exception, but this is never thrown since it was commented out
+            Status status = success ? Status::CODE_202 : Status::CODE_400;//QueryController catches
+                // InvalidQueryStatus exception, but this is never thrown since it was commented out
             nlohmann::json response;
             response["success"] = success;
             return createResponse(status, response.dump());

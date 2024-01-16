@@ -57,9 +57,29 @@ class DecomposedQueryPlan {
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
      * @param decomposedQueryPlanId: the decomposed query plan id
-     * @param sharedQueryId: the shared query plan
+     * @param sharedQueryId: the shared query id
+     * @param rootOperators: the root operators
+     * @return instance of Decomposed query plan
+     */
+    static DecomposedQueryPlanPtr
+    create(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, std::vector<OperatorNodePtr> rootOperators);
+
+    /**
+     * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
+     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param sharedQueryId: the shared query id
      */
     explicit DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId);
+
+    /**
+     * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
+     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param sharedQueryId: the shared query id
+     * @param rootOperators: the root operators
+     */
+    explicit DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId,
+                                 SharedQueryId sharedQueryId,
+                                 std::vector<OperatorNodePtr> rootOperators);
 
     /**
      * @brief Add the operator as new root operator

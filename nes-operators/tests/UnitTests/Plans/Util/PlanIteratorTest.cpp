@@ -35,11 +35,11 @@ using namespace std;
 
 namespace NES {
 
-class QueryPlanIteratorTest : public Testing::BaseUnitTest {
+class PlanIteratorTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryPlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryPlanIteratorTest test class.");
+        NES::Logger::setupLogging("PlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup PlanIteratorTest test class.");
     }
 
     void SetUp() override {
@@ -84,7 +84,7 @@ class QueryPlanIteratorTest : public Testing::BaseUnitTest {
  * --- Sink 1 --- Filter --- Source 1
  *
  */
-TEST_F(QueryPlanIteratorTest, iterateFilterQueryPlan) {
+TEST_F(PlanIteratorTest, iterateFilterQueryPlan) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -109,7 +109,7 @@ TEST_F(QueryPlanIteratorTest, iterateFilterQueryPlan) {
  *            --- Sink 2 ---
  *
  */
-TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
+TEST_F(PlanIteratorTest, iterateMultiSinkQueryPlan) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
@@ -141,7 +141,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
  *                            --- Filter --- Source 2
  *
  */
-TEST_F(QueryPlanIteratorTest, iterateMultiSourceQueryPlan) {
+TEST_F(PlanIteratorTest, iterateMultiSourceQueryPlan) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -174,7 +174,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSourceQueryPlan) {
  *                                        --- Sink 3
  *
  */
-TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
+TEST_F(PlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp3);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
@@ -221,7 +221,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
  *
  *
  */
-TEST_F(QueryPlanIteratorTest, iterateMultiSinkRemergeQueryPlan) {
+TEST_F(PlanIteratorTest, iterateMultiSinkRemergeQueryPlan) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp3);
     queryPlan->appendOperatorAsNewRoot(filterOp2);

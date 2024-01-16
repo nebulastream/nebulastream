@@ -89,10 +89,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     DecomposedQueryPlanId decomposableQueryPlanId = serializableDecomposedQueryPlan->decomposedqueryplanid();
     SharedQueryId sharedQueryId = serializableDecomposedQueryPlan->sharedqueryplanid();
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId);
-    for (const auto& rootOperator : rootOperators) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, rootOperators);
     return decomposedQueryPlan;
 }
 
