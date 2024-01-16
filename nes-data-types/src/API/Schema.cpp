@@ -21,6 +21,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Common.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <utility>
@@ -342,6 +343,20 @@ SchemaPtr Schema::createFromSchemaType(const Configurations::SchemaTypePtr& sche
                          stringToFieldType(schemaFieldDetail.fieldType, schemaFieldDetail.variableLengthInBytes));
     };
     return schema;
+}
+
+SchemaPtr Schema::updateSourceName(const std::string& srcName) {
+    for (auto& field : fields) {
+        auto currName = Util::splitWithStringDelimiter<std::string>(field->getName(), ATTRIBUTE_NAME_SEPARATOR);
+        std::ostringstream newName;
+        newName << srcName;
+        if (srcName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
+            newName << ATTRIBUTE_NAME_SEPARATOR;
+        }
+        newName << currName.back();
+        field->setName(newName.str());
+    }
+    return copy();
 }
 
 }// namespace NES

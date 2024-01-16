@@ -36,6 +36,23 @@ class TestWaitingHelper {
     std::atomic<bool> testCompletionSet{false};
     static constexpr uint64_t WAIT_TIME_SETUP = 5;
 };
+
+/**
+ * @brief This class is used to generate source names that include an ascending counter.
+ */
+class TestSourceNameHelper {
+  public:
+    TestSourceNameHelper();
+
+    /**
+     * @brief Returns the string "source" concatenated with the source counter. The latter is then increased.
+     * @return std::string
+     */
+    std::string operator*();
+
+  private:
+    uint64_t srcCnt;
+};
 }// namespace detail
 
 class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, public detail::TestWaitingHelper {
@@ -48,6 +65,8 @@ class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, pub
     void TearDown() override;
     virtual void onFatalError(int signalNumber, std::string callstack) override;
     virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
+
+    detail::TestSourceNameHelper srcName;
 
   private:
     std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
