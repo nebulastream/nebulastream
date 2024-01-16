@@ -1,0 +1,7 @@
+---
+# This Playbook deploys a NES cluster
+
+- hosts: chameleon_workers
+  gather_facts: yes
+  tasks:
+    - include_tasks: roles/worker/tasks/deploy-chameleon.yml

@@ -1,0 +1,25 @@
+---
+# This Playbook runs monitoring tasks for a worker
+
+- name: Synchronize /data-ssd/dimitrios to /local-ssd/dimitrios-ldap on remote hosts
+  synchronize:
+    src: /data-ssd/dimitrios/
+    dest: /local-ssd/dimitrios-ldap/
+    mode: push
+    archive: yes
+    compress: yes
+    recursive: yes
+  delegate_to: localhost
+
+- name: Find and delete JSON files in destination folders
+  find:
+    paths: /local-ssd/dimitrios-ldap/
+    patterns: '*.json'
+    use_regex: no
+  register: files_to_delete
+
+- name: Delete found JSON files
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ files_to_delete.files }}"
