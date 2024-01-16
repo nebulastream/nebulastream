@@ -75,6 +75,8 @@ class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     std::shared_ptr<TestUtils::TestSinkDescriptor> testSinkDescriptor;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
 TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
@@ -159,7 +161,7 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==-------------------------------------------------------==//
     //==-------- GENERATE INPUT DATA AND RUN THE QUERY --------==//
     //==-------------------------------------------------------==//
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }

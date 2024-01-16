@@ -21,7 +21,6 @@
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <gmock/gmock-matchers.h>
-#include <ostream>
 
 namespace NES::Runtime::Execution {
 
@@ -32,6 +31,8 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
                                          std::tuple<QueryCompilation::StreamJoinStrategy, QueryCompilation::WindowingStrategy>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -85,7 +86,7 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-        auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
         for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
             decomposedQueryPlan->addRootOperator(rootOperator);
         }

@@ -24,18 +24,18 @@ namespace NES {
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
-                       QueryId queryId,
-                       DecomposedQueryPlanId querySubPlanId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, queryId, querySubPlanId, 1) {}
+                       SharedQueryId sharedQueryId,
+                       DecomposedQueryPlanId decomposedQueryPlanId)
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
-                       DecomposedQueryPlanId querySubPlanId,
+                       DecomposedQueryPlanId decomposedQueryPlanId,
                        uint64_t numberOfOrigins)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers),
-      sharedQueryId(sharedQueryId), decomposedQueryPlanId(querySubPlanId), numberOfOrigins(numberOfOrigins) {
+      sharedQueryId(sharedQueryId), decomposedQueryPlanId(decomposedQueryPlanId), numberOfOrigins(numberOfOrigins) {
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");

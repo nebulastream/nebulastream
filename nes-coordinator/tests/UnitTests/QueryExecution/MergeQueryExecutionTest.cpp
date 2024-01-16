@@ -63,6 +63,8 @@ class MergeQueryExecutionTest : public Testing::BaseUnitTest,
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
 // P1 = Source1 -> filter1
@@ -86,7 +88,7 @@ TEST_F(MergeQueryExecutionTest, mergeQuery) {
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5);
     auto mergedQuery = query2.unionWith(query1).project(Attribute("id")).sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : mergedQuery.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }

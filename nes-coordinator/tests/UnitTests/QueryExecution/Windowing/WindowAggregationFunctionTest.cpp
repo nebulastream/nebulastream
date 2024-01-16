@@ -62,6 +62,8 @@ class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
 
     SchemaPtr sourceSchema;
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 
     void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, uint64_t ts) {
         for (int64_t recordIndex = 0; recordIndex < (int64_t) recordsPerBuffer; recordIndex++) {
@@ -72,7 +74,7 @@ class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
     }
 
     Runtime::Execution::ExecutableQueryPlanPtr executeQuery(Query query) {
-        auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
         for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
             decomposedQueryPlan->addRootOperator(rootOperator);
         }

@@ -62,6 +62,8 @@ class KeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
+    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
+    static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
@@ -113,7 +115,7 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
                      .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(1, 1);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
     for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
         decomposedQueryPlan->addRootOperator(rootOperator);
     }
