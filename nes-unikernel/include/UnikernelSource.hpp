@@ -44,6 +44,9 @@ class UnikernelSourceImpl {
             UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
             source->start();
             source->runningRoutine();
+        } else {
+            //Test Source
+            UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
         }
     }
 
