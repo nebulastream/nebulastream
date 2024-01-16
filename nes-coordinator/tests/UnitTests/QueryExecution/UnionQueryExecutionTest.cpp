@@ -103,10 +103,7 @@ TEST_F(UnionQueryExecutionTest, unionOperatorWithFilterOnUnionResult) {
                       .unionWith(TestQuery::from(defaultSource))
                       .filter(Attribute("test$id") > 5)
                       .sink(defaultTestSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
-    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId,query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     // Generate input and run query.
@@ -135,10 +132,7 @@ TEST_F(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
     Query subQuery = TestQuery::from(defaultSource).filter(Attribute("test$id") > 3);
     Query query =
         TestQuery::from(defaultSource).filter(Attribute("test$id") > 7).unionWith(subQuery).sink(defaultTestSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
-    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     // Generate input and run query.
@@ -165,10 +159,7 @@ TEST_F(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
 
     // Define query plan.
     Query query = TestQuery::from(defaultSource).unionWith(TestQuery::from(defaultSource)).sink(defaultTestSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
-    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
+auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     // Generate input and run query.
@@ -201,10 +192,7 @@ TEST_F(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualPro
                       .unionWith(TestQuery::from(customSource)
                                      .project(Attribute("custom$id").as("test$id"), Attribute("custom$one").as("test$one")))
                       .sink(defaultTestSinkDescriptor);
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
-    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
+auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     // Generate input and run query.
@@ -235,10 +223,7 @@ TEST_F(UnionQueryExecutionTest, unionOperatorWithoutResults) {
                       .filter(Attribute("test$id") > 9)
                       .sink(defaultTestSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId);
-    for (const auto& rootOperator : query.getQueryPlan()->getRootOperators()) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
+auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     // Generate input and run query.

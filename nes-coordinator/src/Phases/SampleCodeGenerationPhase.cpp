@@ -137,11 +137,7 @@ SampleCodeGenerationPhasePtr SampleCodeGenerationPhase::create() {
 QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& queryPlan) {
     // use query compiler to generate operator code
     // we append a property to "code" some operators
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(queryPlan->getQueryId(), INVALID_SHARED_QUERY_ID);
-    for (const auto& rootOperator : queryPlan->getRootOperators()) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
-
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(queryPlan->getQueryId(), INVALID_SHARED_QUERY_ID, queryPlan->getRootOperators());
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, nullptr);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);

@@ -104,10 +104,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto plan = query.getQueryPlan();
     SharedQueryId sharedQueryId = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId);
-    for (const auto& rootOperator : plan->getRootOperators()) {
-        decomposedQueryPlan->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId,plan->getRootOperators());
     decomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
 
@@ -162,10 +159,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto plan1 = query1.getQueryPlan();
     SharedQueryId sharedQueryId = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId);
-    for (const auto& rootOperator : plan1->getRootOperators()) {
-        decomposedQueryPlan1->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan1);
 
@@ -174,10 +168,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor2);
     auto plan2 = query2.getQueryPlan();
     DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId);
-    for (const auto& rootOperator : plan2->getRootOperators()) {
-        decomposedQueryPlan2->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan2);
 
@@ -234,10 +225,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto plan1 = query1.getQueryPlan();
     SharedQueryId sharedQueryId1 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1);
-    for (const auto& rootOperator : plan1->getRootOperators()) {
-        decomposedQueryPlan1->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
 
@@ -247,10 +235,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto plan2 = query2.getQueryPlan();
     SharedQueryId sharedQueryId2 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2);
-    for (const auto& rootOperator : plan2->getRootOperators()) {
-        decomposedQueryPlan2->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
 
@@ -308,10 +293,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto plan11 = query11.getQueryPlan();
     SharedQueryId sharedQueryId1 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId11 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan11 = DecomposedQueryPlan::create(decomposedQueryPlanId11, sharedQueryId1);
-    for (const auto& rootOperator : plan11->getRootOperators()) {
-        decomposedQueryPlan11->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan11 = DecomposedQueryPlan::create(decomposedQueryPlanId11, sharedQueryId1, plan11->getRootOperators());
     decomposedQueryPlan11->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan11);
 
@@ -320,10 +302,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query12 = Query::from("default_logical").sink(printSinkDescriptor12);
     auto plan12 = query12.getQueryPlan();
     DecomposedQueryPlanId decomposedQueryPlanId12 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan12 = DecomposedQueryPlan::create(decomposedQueryPlanId12, sharedQueryId1);
-    for (const auto& rootOperator : plan12->getRootOperators()) {
-        decomposedQueryPlan12->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan12 = DecomposedQueryPlan::create(decomposedQueryPlanId12, sharedQueryId1, plan12->getRootOperators());
     decomposedQueryPlan12->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan12);
 
@@ -334,10 +313,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto plan21 = query21.getQueryPlan();
     SharedQueryId sharedQueryId2 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId21 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan21 = DecomposedQueryPlan::create(decomposedQueryPlanId21, sharedQueryId2);
-    for (const auto& rootOperator : plan21->getRootOperators()) {
-        decomposedQueryPlan21->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan21 = DecomposedQueryPlan::create(decomposedQueryPlanId21, sharedQueryId2, plan21->getRootOperators());
     decomposedQueryPlan21->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan21);
 
@@ -346,10 +322,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query22 = Query::from("default_logical").sink(printSinkDescriptor22);
     auto plan22 = query22.getQueryPlan();
     DecomposedQueryPlanId decomposedQueryPlanId22 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan22 = DecomposedQueryPlan::create(decomposedQueryPlanId22, sharedQueryId2);
-    for (const auto& rootOperator : plan22->getRootOperators()) {
-        decomposedQueryPlan22->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan22 = DecomposedQueryPlan::create(decomposedQueryPlanId22, sharedQueryId2, plan22->getRootOperators());
     decomposedQueryPlan22->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan22);
 
@@ -428,10 +401,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto plan1 = query1.getQueryPlan();
     SharedQueryId sharedQueryId1 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1);
-    for (const auto& rootOperator : plan1->getRootOperators()) {
-        decomposedQueryPlan1->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1,plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode1->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
 
@@ -449,10 +419,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto plan2 = query2.getQueryPlan();
     SharedQueryId sharedQueryId2 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2);
-    for (const auto& rootOperator : plan2->getRootOperators()) {
-        decomposedQueryPlan2->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode2->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
 
@@ -529,10 +496,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto plan1 = query1.getQueryPlan();
     SharedQueryId sharedQueryId1 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1);
-    for (const auto& rootOperator : plan1->getRootOperators()) {
-        decomposedQueryPlan1->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode1->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
 
@@ -545,10 +509,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto plan2 = query2.getQueryPlan();
     SharedQueryId sharedQueryId2 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2);
-    for (const auto& rootOperator : plan2->getRootOperators()) {
-        decomposedQueryPlan2->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode2->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
 
@@ -561,10 +522,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto plan3 = query3.getQueryPlan();
     SharedQueryId sharedQueryId3 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId3 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan3 = DecomposedQueryPlan::create(decomposedQueryPlanId3, sharedQueryId3);
-    for (const auto& rootOperator : plan3->getRootOperators()) {
-        decomposedQueryPlan3->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan3 = DecomposedQueryPlan::create(decomposedQueryPlanId3, sharedQueryId3, plan3->getRootOperators());
     decomposedQueryPlan3->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode3->registerNewDecomposedQueryPlan(sharedQueryId3, decomposedQueryPlan3);
 
@@ -581,10 +539,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto plan4 = query4.getQueryPlan();
     SharedQueryId sharedQueryId4 = PlanIdGenerator::getNextSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId4 = PlanIdGenerator::getNextDecomposedQueryPlanId();
-    auto decomposedQueryPlan4 = DecomposedQueryPlan::create(decomposedQueryPlanId4, sharedQueryId4);
-    for (const auto& rootOperator : plan4->getRootOperators()) {
-        decomposedQueryPlan4->addRootOperator(rootOperator);
-    }
+    auto decomposedQueryPlan4 = DecomposedQueryPlan::create(decomposedQueryPlanId4, sharedQueryId4, plan4->getRootOperators());
     decomposedQueryPlan4->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode4->registerNewDecomposedQueryPlan(sharedQueryId4, decomposedQueryPlan4);
 

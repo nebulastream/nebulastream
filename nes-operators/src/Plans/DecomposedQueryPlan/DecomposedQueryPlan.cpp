@@ -27,9 +27,21 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::create(DecomposedQueryPlanId decompo
     return std::make_shared<DecomposedQueryPlan>(decomposedQueryPlanId, sharedQueryId);
 }
 
+DecomposedQueryPlanPtr DecomposedQueryPlan::create(DecomposedQueryPlanId decomposedQueryPlanId,
+                                                   SharedQueryId sharedQueryId,
+                                                   std::vector<OperatorNodePtr> rootOperators) {
+    return std::make_shared<DecomposedQueryPlan>(decomposedQueryPlanId, sharedQueryId, rootOperators);
+}
+
 DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId)
     : decomposedQueryPlanId(decomposedQueryPlanId), sharedQueryId(sharedQueryId),
       currentState(QueryState::MARKED_FOR_DEPLOYMENT) {}
+
+DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId,
+                                         SharedQueryId sharedQueryId,
+                                         std::vector<OperatorNodePtr> rootOperators)
+    : decomposedQueryPlanId(decomposedQueryPlanId), sharedQueryId(sharedQueryId), currentState(QueryState::MARKED_FOR_DEPLOYMENT),
+      rootOperators(std::move(rootOperators)) {}
 
 void DecomposedQueryPlan::addRootOperator(OperatorNodePtr newRootOperator) { rootOperators.emplace_back(newRootOperator); }
 
@@ -238,10 +250,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() {
     operatorIdToOperatorMap.clear();
 
     // Create the duplicated decomposed query plan
-    auto newQueryPlan = DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId);
-    for (const auto& rootOperator : duplicateRootOperators) {
-        newQueryPlan->addRootOperator(rootOperator->as<LogicalOperatorNode>());
-    }
+    auto newQueryPlan = DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId, duplicateRootOperators);
     newQueryPlan->setState(currentState);
     newQueryPlan->setVersion(currentVersion);
     return newQueryPlan;

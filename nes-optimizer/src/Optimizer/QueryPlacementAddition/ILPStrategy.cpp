@@ -245,7 +245,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
 
         // 9. Compute query sub plans
         auto computedQuerySubPlans =
-            computeQuerySubPlans(sharedQueryId, copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
+            computeDecomposedQueryPlans(sharedQueryId, copy.copiedPinnedUpStreamOperators, copy.copiedPinnedDownStreamOperators);
 
         // 10. add network source and sink operators
         addNetworkOperators(computedQuerySubPlans);
