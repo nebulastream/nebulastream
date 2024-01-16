@@ -178,14 +178,17 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
     };
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$f1_left", BasicType::UINT64)
-                                ->addField("test1$f2_left", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("f1_left", BasicType::UINT64)
+                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$f1_right", BasicType::UINT64)
-                                 ->addField("test2$f2_right", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("f1_right", BasicType::UINT64)
+                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(20);
     const auto timestampFieldName = "timestamp";
     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
@@ -220,14 +223,17 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
     };
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value", BasicType::UINT64)
-                                ->addField("test1$id", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value", BasicType::UINT64)
+                                ->addField("id", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value", BasicType::UINT64)
-                                 ->addField("test2$id", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("value", BasicType::UINT64)
+                                 ->addField("id", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
@@ -261,14 +267,17 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInpu
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("value2", BasicType::UINT64)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
@@ -302,14 +311,17 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) 
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("value2", BasicType::UINT64)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
@@ -342,13 +354,16 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$win", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("win", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
@@ -382,14 +397,17 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("value2", BasicType::UINT64)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(1000);
     const auto windowSlide = Milliseconds(500);
     const auto timestampFieldName = "timestamp";
@@ -420,14 +438,17 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$value1", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$value2", BasicType::UINT64)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("value2", BasicType::UINT64)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(1000);
     const auto windowSlide = Milliseconds(250);
     const auto timestampFieldName = "timestamp";
@@ -461,13 +482,16 @@ TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$win", BasicType::UINT64)
-                                ->addField("test1$id1", BasicType::UINT64)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("win", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::UINT64)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(1000);
     const auto windowSlide = Milliseconds(500);
     const auto timestampFieldName = "timestamp";
@@ -502,12 +526,15 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$id1", BasicType::TEXT)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("id1", BasicType::TEXT)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::TEXT)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("id2", BasicType::TEXT)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
+
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
     const auto window = TumblingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize);
@@ -543,16 +570,18 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$f1_left", BasicType::INT64)
-                                ->addField("test1$f2_left", BasicType::INT64)
-                                ->addField("test1$timestamp", BasicType::INT64)
-                                ->addField("test1$fieldForSum1", BasicType::INT64);
+                                ->addField("f1_left", BasicType::INT64)
+                                ->addField("f2_left", BasicType::INT64)
+                                ->addField("timestamp", BasicType::INT64)
+                                ->addField("fieldForSum1", BasicType::INT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$f1_right", BasicType::INT64)
-                                 ->addField("test2$f2_right", BasicType::INT64)
-                                 ->addField("test2$timestamp", BasicType::INT64)
-                                 ->addField("test2$fieldForSum2", BasicType::INT64);
+                                 ->addField("f1_right", BasicType::INT64)
+                                 ->addField("f2_right", BasicType::INT64)
+                                 ->addField("timestamp", BasicType::INT64)
+                                 ->addField("fieldForSum2", BasicType::INT64)
+                                 ->updateSourceName(*srcName);
 
     const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1test2$start", BasicType::INT64)
@@ -568,6 +597,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
                                 ->addField("test2$end", BasicType::INT64)
                                 ->addField("test2$f2_right", BasicType::INT64)
                                 ->addField("test2$fieldForSum2", BasicType::INT64);
+
     const auto timestampFieldName = "timestamp";
     const auto windowSize = 10UL;
     TestUtils::CsvFileParams csvFileParams("stream_join_left_withSum.csv",

@@ -65,6 +65,14 @@ class Schema {
                                           MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
+     * @brief Prepends the srcName to the substring after the last occurrence of ATTRIBUTE_NAME_SEPARATOR
+     * in every field name of the schema.
+     * @param srcName
+     * @return SchemaPtr
+     */
+    SchemaPtr updateSourceName(const std::string& srcName);
+
+    /**
      * @brief Creates a copy of this schema.
      * @note The containing AttributeFields may still reference the same objects.
      * @return A copy of the Schema
