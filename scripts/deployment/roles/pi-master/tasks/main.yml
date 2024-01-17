@@ -18,3 +18,8 @@
   template:
     src: coordinator.yaml.j2
     dest: "/tmp/coordinator.yaml"
+
+- name: Copy and populate mosquitto template
+  template:
+    src: mosquitto.conf.j2
+    dest: "/tmp/mosquitto.conf"

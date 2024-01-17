@@ -12,7 +12,7 @@
 
 - name: Start mosquitto
   shell: |
-    nohup mosquitto 2>&1 &
+    nohup mosquitto -c /tmp/mosquitto.conf 2>&1 &
     echo $! > /home/ubuntu/dimitrios/mosquitto.pid
 
 - name: Start Python data generator
