@@ -49,15 +49,16 @@
 #include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/TopologyChangeRequest.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+#include <Util/IncrementalPlacementUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
@@ -128,7 +129,6 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                   udfCatalog);
 
     auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
-
 
     uint8_t maxRetries = 1;
     RequestProcessor::Experimental::TopologyChangeRequestPtr topologyChangeRequest;
@@ -224,7 +224,6 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
 
     std::cout << topology->toString() << std::endl;
 
-
     auto innerSharedQueryPlan = QueryPlan::create();
 
     subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
@@ -238,14 +237,18 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
     auto nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, 0, 0);
     auto networkSinkHostWorkerId = 2;
     auto uniqueId = 1;
-    networkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
-                                                                       nesPartition,
-                                                                       Network::NodeLocation(networkSinkHostWorkerId, workerAddress, dataPort),
-                                                                       WAIT_TIME,
-                                                                       EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version, uniqueId);
+    networkSourceDescriptor =
+        Network::NetworkSourceDescriptor::create(schema,
+                                                 nesPartition,
+                                                 Network::NodeLocation(networkSinkHostWorkerId, workerAddress, dataPort),
+                                                 WAIT_TIME,
+                                                 EVENT_CHANNEL_RETRY_TIMES,
+                                                 version,
+                                                 uniqueId);
     uniqueId++;
     sourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
+    sourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{1});
+    sourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
     fileSinkOperatorNode->addChild(sourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(1)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
@@ -261,6 +264,8 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
                                                                    networkSinkId);
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
+    sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{1});
+    sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
     subPlan->addRootOperator(sinkLogicalOperatorNode);
     auto unaryOperatorId = getNextOperatorId();
     unaryOperatorNode = LogicalOperatorFactory::createFilterOperator(pred1, unaryOperatorId);
@@ -276,21 +281,29 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                        Network::NodeLocation(3, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version, uniqueId);
+                                                                       version,
+                                                                       uniqueId);
     uniqueId++;
     sourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
+    sourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
+    sourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     unaryOperatorNode->addChild(sourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(2)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
 
     //test link
-    auto linkedSinkSourcePairs = topologyChangeRequest->findNetworkOperatorsForLink(sharedQueryId,
-                                                                                    globalExecutionPlan->getExecutionNodeById(2),
-                                                                                    globalExecutionPlan->getExecutionNodeById(1));
+    auto linkedSinkSourcePairs = Experimental::findNetworkOperatorsForLink(sharedQueryId,
+                                                                           globalExecutionPlan->getExecutionNodeById(2),
+                                                                           globalExecutionPlan->getExecutionNodeById(1));
     ASSERT_EQ(linkedSinkSourcePairs.size(), 1);
     auto [upstreamSink, downstreamSource] = linkedSinkSourcePairs.front();
     ASSERT_EQ(upstreamSink, sinkLogicalOperatorNode);
-    ASSERT_EQ(downstreamSource, globalExecutionPlan->getExecutionNodeById(1)->getAllDecomposedQueryPlans(sharedQueryId).front()->getSourceOperators().front());
+    ASSERT_EQ(downstreamSource,
+              globalExecutionPlan->getExecutionNodeById(1)
+                  ->getAllDecomposedQueryPlans(sharedQueryId)
+                  .front()
+                  ->getSourceOperators()
+                  .front());
 
     networkSinkId = getNextOperatorId();
     //sub plan on node 3
@@ -303,6 +316,8 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
                                                                    networkSinkId);
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
+    sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
+    sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     subPlan->addRootOperator(sinkLogicalOperatorNode);
     auto binaryOperatorId = getNextOperatorId();
     binaryOperatorNode = LogicalOperatorFactory::createUnionOperator(binaryOperatorId);
@@ -319,9 +334,12 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                        Network::NodeLocation(6, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version, uniqueId);
+                                                                       version,
+                                                                       uniqueId);
     uniqueId++;
     auto leftsourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
+    leftsourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    leftsourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
     binaryOperatorNode->addChild(leftsourceLogicalOperatorNode);
     //network source right
     networkSourceId = getNextOperatorId();
@@ -331,9 +349,12 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                        Network::NodeLocation(6, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version, uniqueId);
+                                                                       version,
+                                                                       uniqueId);
     uniqueId++;
     auto rightsourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
+    rightsourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    rightsourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
     binaryOperatorNode->addChild(rightsourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(3)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
@@ -341,14 +362,17 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
     networkSinkId = getNextOperatorId();
     //first sub plan on node 6
     subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
-    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(3, workerAddress, dataPort),
-                                                                   leftsourceLogicalOperatorNode->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition(),
-                                                                   WAIT_TIME,
-                                                                   DATA_CHANNEL_RETRY_TIMES,
-                                                                   version,
-                                                                   DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+        Network::NodeLocation(3, workerAddress, dataPort),
+        leftsourceLogicalOperatorNode->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition(),
+        WAIT_TIME,
+        DATA_CHANNEL_RETRY_TIMES,
+        version,
+        DEFAULT_NUMBER_OF_ORIGINS,
+        networkSinkId);
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
+    sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
     subPlan->addRootOperator(sinkLogicalOperatorNode);
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, 0, 0);
@@ -357,9 +381,12 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                        Network::NodeLocation(7, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version, uniqueId);
+                                                                       version,
+                                                                       uniqueId);
     uniqueId++;
     sourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
+    sourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    sourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
     sinkLogicalOperatorNode->addChild(sourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
@@ -375,6 +402,8 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
                                                                    networkSinkId);
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
+    sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
     subPlan->addRootOperator(sinkLogicalOperatorNode);
     auto defaultSourceIdLeft = getNextOperatorId();
     auto csvSourceType = CSVSourceType::create("physicalName", "logicalName");
@@ -391,14 +420,17 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
     networkSinkId = getNextOperatorId();
     //second sub plan on node 6
     subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
-    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(3, workerAddress, dataPort),
-                                                                   rightsourceLogicalOperatorNode->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition(),
-                                                                   WAIT_TIME,
-                                                                   DATA_CHANNEL_RETRY_TIMES,
-                                                                   version,
-                                                                   DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+        Network::NodeLocation(3, workerAddress, dataPort),
+        rightsourceLogicalOperatorNode->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition(),
+        WAIT_TIME,
+        DATA_CHANNEL_RETRY_TIMES,
+        version,
+        DEFAULT_NUMBER_OF_ORIGINS,
+        networkSinkId);
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
+    sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
     subPlan->addRootOperator(sinkLogicalOperatorNode);
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, 0, 0);
@@ -407,15 +439,18 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                        Network::NodeLocation(8, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version, uniqueId);
+                                                                       version,
+                                                                       uniqueId);
     uniqueId++;
     sourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
+    sourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    sourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
     sinkLogicalOperatorNode->addChild(sourceLogicalOperatorNode);
     globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
-    //sub plan on node 7
+    //sub plan on node 8
     subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(6, workerAddress, dataPort),
                                                                    nesPartition,
@@ -425,6 +460,8 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
                                                                    networkSinkId);
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
+    sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
     subPlan->addRootOperator(sinkLogicalOperatorNode);
     auto defaultSourceIdRight = getNextOperatorId();
     auto defaultSourceRight = std::make_shared<SourceLogicalOperatorNode>(defaultSourcedescriptor, defaultSourceIdRight);
@@ -445,12 +482,14 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                        Network::NodeLocation(9, workerAddress, dataPort),
                                                                        WAIT_TIME,
                                                                        EVENT_CHANNEL_RETRY_TIMES,
-                                                                       version, uniqueId);
+                                                                       version,
+                                                                       uniqueId);
     uniqueId++;
-    auto secondRightsourceLogicalOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
+    auto secondRightsourceLogicalOperatorNode =
+        std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSourceId);
+    secondRightsourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
+    secondRightsourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{20});
     binaryOperatorNode->addChild(secondRightsourceLogicalOperatorNode);
-
-
 
     networkSinkId = getNextOperatorId();
     //sub plan on node 8
@@ -463,6 +502,8 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                    DEFAULT_NUMBER_OF_ORIGINS,
                                                                    networkSinkId);
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
+    sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, 7);
+    sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, 20);
     subPlan->addRootOperator(sinkLogicalOperatorNode);
     auto secondDefaultSourceIdRight = getNextOperatorId();
     auto secondDefaultSourceRight =
@@ -474,125 +515,13 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
     globalExecutionPlan->getExecutionNodeById(9)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
     subPlanId++;
 
-    //checks
-    //node 1
-    auto startWorker = 1;
-    //file sink
-    LogicalOperatorNodePtr startOperator = globalExecutionPlan->getExecutionNodeById(startWorker)
-                                               ->getAllDecomposedQueryPlans(sharedQueryId)
-                                               .front()
-                                               ->getSinkOperators()
-                                               .front();
-    auto downstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(downstreamNonSystemOperator, startOperator);
-    auto upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, startOperator);
-    //network source
-    startOperator = globalExecutionPlan->getExecutionNodeById(startWorker)
-                        ->getAllDecomposedQueryPlans(sharedQueryId)
-                        .front()
-                        ->getSourceOperators()
-                        .front();
-    downstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(downstreamNonSystemOperator, fileSinkOperatorNode);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, unaryOperatorNode);
-
-    //node 2
-    startWorker = 2;
-    //network sink
-    startOperator = globalExecutionPlan->getExecutionNodeById(startWorker)
-                        ->getAllDecomposedQueryPlans(sharedQueryId)
-                        .front()
-                        ->getSinkOperators()
-                        .front();
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, fileSinkOperatorNode);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, unaryOperatorNode);
-    //filter
-    startOperator = unaryOperatorNode;
-    downstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(downstreamNonSystemOperator, startOperator);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, startOperator);
-    //network source
-    startOperator = globalExecutionPlan->getExecutionNodeById(startWorker)
-                        ->getAllDecomposedQueryPlans(sharedQueryId)
-                        .front()
-                        ->getSourceOperators()
-                        .front();
-    downstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(downstreamNonSystemOperator, unaryOperatorNode);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, binaryOperatorNode);
-
-    //node3
-    startWorker = 3;
-    //network sink
-    startOperator = globalExecutionPlan->getExecutionNodeById(startWorker)
-                        ->getAllDecomposedQueryPlans(sharedQueryId)
-                        .front()
-                        ->getSinkOperators()
-                        .front();
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, unaryOperatorNode);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, binaryOperatorNode);
-    //union
-    startOperator = binaryOperatorNode;
-    downstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(downstreamNonSystemOperator, startOperator);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, startOperator);
-    //left network source
-    startOperator = leftsourceLogicalOperatorNode;
-    downstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(downstreamNonSystemOperator, binaryOperatorNode);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, defaultSourceLeft);
-    //right network source
-    startOperator = rightsourceLogicalOperatorNode;
-    downstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(downstreamNonSystemOperator, binaryOperatorNode);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, defaultSourceRight);
-    //2nd right network source
-    startOperator = secondRightsourceLogicalOperatorNode;
-    downstreamNonSystemOperator =
-        topologyChangeRequest->findDownstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(downstreamNonSystemOperator, binaryOperatorNode);
-    upstreamNonSystemOperator =
-        topologyChangeRequest->findUpstreamNonSystemOperators(startOperator, startWorker, sharedQueryId, globalExecutionPlan);
-    ASSERT_EQ(upstreamNonSystemOperator, secondDefaultSourceRight);
-
-
     auto sharedQueryPlan = SharedQueryPlan::create(innerSharedQueryPlan);
 
     auto [upstreamPinned, downStreamPinned] =
-        topologyChangeRequest->findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
-                                                                        globalExecutionPlan->getExecutionNodeById(6),
-                                                                        globalExecutionPlan->getExecutionNodeById(3),
-                                                                        topology,
-                                                                        globalExecutionPlan);
+        Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
+                                                               globalExecutionPlan->getExecutionNodeById(6),
+                                                               globalExecutionPlan->getExecutionNodeById(3),
+                                                               topology);
     ASSERT_EQ(upstreamPinned.size(), 3);
     ASSERT_TRUE(upstreamPinned.contains(13));
     ASSERT_TRUE(upstreamPinned.contains(17));
