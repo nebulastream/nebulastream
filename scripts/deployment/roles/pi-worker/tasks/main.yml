@@ -24,10 +24,10 @@
 
 - name: Copy smartgrid data file
   copy:
-    src: smartgrid.csv.j2
+    src: worker/files/smartgrid.csv.j2
     dest: /tmp/smartgrid.csv
 
 - name: Copy KTM data file
   copy:
-    src: ktm.csv.j2
+    src: worker/files/ktm.csv.j2
     dest: /tmp/ktm.csv
