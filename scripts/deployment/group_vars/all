@@ -56,3 +56,9 @@ worker_iface: ibs2
 
 # Pi master default IP
 default_pi_master_ip: 192.168.2.30
+
+# Pi Worker cores
+pi_worker_cores: "1,2,3"
+
+# Pi dool cores
+pi_worker_dool_cores: "0"

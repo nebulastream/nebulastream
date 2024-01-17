@@ -19,7 +19,7 @@ dataPort: {{ default_worker_ports[1] }}
 ### Physical source configuration
 ###
 physicalSources:
-        - logicalSourceName: ktm
+        - logicalSourceName: sensors
           physicalSourceName: ktm_{{ local_worker_ip }}
           type: CSV_SOURCE
           configuration:

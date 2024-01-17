@@ -4,3 +4,7 @@
 - hosts: pi_master
   roles:
     - role: pi-master
+
+- hosts: pi_worker
+  roles:
+    - role: pi-worker
