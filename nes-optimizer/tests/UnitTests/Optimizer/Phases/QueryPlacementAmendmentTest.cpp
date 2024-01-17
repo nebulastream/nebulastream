@@ -31,6 +31,7 @@
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -2393,6 +2394,10 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
 
     std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
+    Network::NesPartition sourcePartitionNode0beforeReplacement(0, 0, 0, 0);
+    Network::NesPartition sinkPartitionNode1BeforeReplacement(0, 0, 0, 0);
+    Network::NesPartition sourcePartitionNode1beforeReplacement(0, 0, 0, 0);
+    Network::NesPartition sinkPartitionNode2BeforeReplacement(0, 0, 0, 0);
     DecomposedQueryPlanId subPlanIdToRemoveInNextIteration;
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
@@ -2406,19 +2411,39 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                 ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                 ASSERT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                sourcePartitionNode0beforeReplacement = ops[0]
+                                                            ->getChildren()[0]
+                                                            ->as<SourceLogicalOperatorNode>()
+                                                            ->getSourceDescriptor()
+                                                            ->as<Network::NetworkSourceDescriptor>()
+                                                            ->getNesPartition();
             } else if (executionNode->getId() == 1) {
                 auto sink = ops[0];
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
+                sinkPartitionNode1BeforeReplacement = sink->as<SinkLogicalOperatorNode>()
+                                                          ->getSinkDescriptor()
+                                                          ->as<Network::NetworkSinkDescriptor>()
+                                                          ->getNesPartition();
                 auto filter = sink->getChildren()[0];
                 ASSERT_TRUE(filter->instanceOf<FilterLogicalOperatorNode>());
                 ASSERT_EQ(filter->as<FilterLogicalOperatorNode>()->getId(),
                           testQueryPlan->getRootOperators()[0]->getChildren()[0]->as<FilterLogicalOperatorNode>()->getId());
+                ASSERT_EQ(filter->getChildren().size(), 1);
+
+                sourcePartitionNode1beforeReplacement = filter->getChildren()[0]
+                                                            ->as<SourceLogicalOperatorNode>()
+                                                            ->getSourceDescriptor()
+                                                            ->as<Network::NetworkSourceDescriptor>()->getNesPartition();
                 subPlanIdToRemoveInNextIteration = decomposedQueryPlan->getDecomposedQueryPlanId();
             } else if (executionNode->getId() == 2) {
                 auto sink = ops[0];
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
+                sinkPartitionNode2BeforeReplacement = sink->as<SinkLogicalOperatorNode>()
+                    ->getSinkDescriptor()
+                    ->as<Network::NetworkSinkDescriptor>()
+                    ->getNesPartition();
                 auto source = sink->getChildren()[0];
                 ASSERT_TRUE(source->instanceOf<SourceLogicalOperatorNode>());
                 ASSERT_EQ(source->as<SourceLogicalOperatorNode>()->getId(),
@@ -2432,6 +2457,8 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
         }
     }
 
+    ASSERT_EQ(sinkPartitionNode1BeforeReplacement, sourcePartitionNode0beforeReplacement);
+    ASSERT_EQ(sinkPartitionNode2BeforeReplacement, sourcePartitionNode1beforeReplacement);
     const QueryPlanPtr& queryPlan = sharedQueryPlan->getQueryPlan();
 
     auto sourceOperators = queryPlan->getSourceOperators();
@@ -2449,6 +2476,10 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
     sharedQueryPlan->performReOperatorPlacement(sourceOperatorIds, sinkOperatorIds);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
+    Network::NesPartition sourcePartitionNode0afterReplacement(0, 0, 0, 0);
+    Network::NesPartition sinkPartitionNode1afterReplacement(0, 0, 0, 0);
+    Network::NesPartition sourcePartitionNode1afterReplacement(0, 0, 0, 0);
+    Network::NesPartition sinkPartitionNode2afterReplacement(0, 0, 0, 0);
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
     for (const auto& executionNode : executionNodes) {
@@ -2461,6 +2492,12 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                 ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                 ASSERT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                sourcePartitionNode0afterReplacement = ops[0]
+                    ->getChildren()[0]
+                    ->as<SourceLogicalOperatorNode>()
+                    ->getSourceDescriptor()
+                    ->as<Network::NetworkSourceDescriptor>()
+                    ->getNesPartition();
             } else if (executionNode->getId() == 1
                        && decomposedQueryPlan->getDecomposedQueryPlanId() == subPlanIdToRemoveInNextIteration) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
@@ -2469,15 +2506,27 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 EXPECT_EQ(ops.size(), 1);
                 auto sink = ops[0];
+                sinkPartitionNode1afterReplacement = sink->as<SinkLogicalOperatorNode>()
+                    ->getSinkDescriptor()
+                    ->as<Network::NetworkSinkDescriptor>()
+                    ->getNesPartition();
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto filter = sink->getChildren()[0];
                 ASSERT_TRUE(filter->instanceOf<FilterLogicalOperatorNode>());
                 ASSERT_EQ(filter->as<FilterLogicalOperatorNode>()->getId(),
                           testQueryPlan->getRootOperators()[0]->getChildren()[0]->as<FilterLogicalOperatorNode>()->getId());
+                sourcePartitionNode1afterReplacement = filter->getChildren()[0]
+                    ->as<SourceLogicalOperatorNode>()
+                    ->getSourceDescriptor()
+                    ->as<Network::NetworkSourceDescriptor>()->getNesPartition();
             } else if (executionNode->getId() == 2) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
                 EXPECT_EQ(ops.size(), 1);
                 auto sink = ops[0];
+                sinkPartitionNode2afterReplacement = sink->as<SinkLogicalOperatorNode>()
+                    ->getSinkDescriptor()
+                    ->as<Network::NetworkSinkDescriptor>()
+                    ->getNesPartition();
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto source = sink->getChildren()[0];
                 ASSERT_TRUE(source->instanceOf<SourceLogicalOperatorNode>());
@@ -2491,6 +2540,12 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
             NES_INFO("Sub Plan: {}", decomposedQueryPlan->toString());
         }
     }
+    ASSERT_EQ(sinkPartitionNode1afterReplacement, sourcePartitionNode0afterReplacement);
+    ASSERT_EQ(sinkPartitionNode2afterReplacement, sourcePartitionNode1afterReplacement);
+
+    //check that the descriptors have actually been updated
+    ASSERT_NE(sinkPartitionNode1afterReplacement, sinkPartitionNode1BeforeReplacement);
+    ASSERT_NE(sinkPartitionNode2afterReplacement, sinkPartitionNode2BeforeReplacement);
 }
 
 /**
@@ -2569,6 +2624,10 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
 
     std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
+    Network::NesPartition sourcePartitionNode0beforeReplacement(0, 0, 0, 0);
+    Network::NesPartition sinkPartitionNode1BeforeReplacement(0, 0, 0, 0);
+    Network::NesPartition sourcePartitionNode1beforeReplacement(0, 0, 0, 0);
+    Network::NesPartition sinkPartitionNode2BeforeReplacement(0, 0, 0, 0);
     DecomposedQueryPlanId planIdToRemoveInNextIteration;
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
@@ -2581,17 +2640,35 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                 EXPECT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                 EXPECT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                sourcePartitionNode0beforeReplacement = ops[0]
+                    ->getChildren()[0]
+                    ->as<SourceLogicalOperatorNode>()
+                    ->getSourceDescriptor()
+                    ->as<Network::NetworkSourceDescriptor>()
+                    ->getNesPartition();
             } else if (executionNode->getId() == 1) {
                 auto sink = ops[0];
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 EXPECT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
+                sinkPartitionNode1BeforeReplacement = sink->as<SinkLogicalOperatorNode>()
+                    ->getSinkDescriptor()
+                    ->as<Network::NetworkSinkDescriptor>()
+                    ->getNesPartition();
                 auto source = sink->getChildren()[0];
                 EXPECT_TRUE(source->instanceOf<SourceLogicalOperatorNode>());
+                sourcePartitionNode1beforeReplacement = source
+                    ->as<SourceLogicalOperatorNode>()
+                    ->getSourceDescriptor()
+                    ->as<Network::NetworkSourceDescriptor>()->getNesPartition();
                 planIdToRemoveInNextIteration = decomposedQueryPlan->getDecomposedQueryPlanId();
             } else if (executionNode->getId() == 2) {
                 auto sink = ops[0];
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 EXPECT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
+                sinkPartitionNode2BeforeReplacement = sink->as<SinkLogicalOperatorNode>()
+                    ->getSinkDescriptor()
+                    ->as<Network::NetworkSinkDescriptor>()
+                    ->getNesPartition();
                 auto source = sink->getChildren()[0];
                 EXPECT_TRUE(source->instanceOf<FilterLogicalOperatorNode>());
                 EXPECT_EQ(source->as<FilterLogicalOperatorNode>()->getId(),
@@ -2600,6 +2677,9 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
             NES_INFO("Sub Plan: {}", decomposedQueryPlan->toString());
         }
     }
+
+    ASSERT_EQ(sinkPartitionNode1BeforeReplacement, sourcePartitionNode0beforeReplacement);
+    ASSERT_EQ(sinkPartitionNode2BeforeReplacement, sourcePartitionNode1beforeReplacement);
 
     const QueryPlanPtr& queryPlan = sharedQueryPlan->getQueryPlan();
 
@@ -2618,6 +2698,10 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
     sharedQueryPlan->performReOperatorPlacement(sourceOperatorIds, sinkOperatorIds);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
+    Network::NesPartition sourcePartitionNode0afterReplacement(0, 0, 0, 0);
+    Network::NesPartition sinkPartitionNode1afterReplacement(0, 0, 0, 0);
+    Network::NesPartition sourcePartitionNode1afterReplacement(0, 0, 0, 0);
+    Network::NesPartition sinkPartitionNode2afterReplacement(0, 0, 0, 0);
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
     for (const auto& executionNode : executionNodes) {
@@ -2630,6 +2714,12 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                 EXPECT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                 EXPECT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                sourcePartitionNode0afterReplacement = ops[0]
+                    ->getChildren()[0]
+                    ->as<SourceLogicalOperatorNode>()
+                    ->getSourceDescriptor()
+                    ->as<Network::NetworkSourceDescriptor>()
+                    ->getNesPartition();
             } else if (executionNode->getId() == 1
                        && decomposedQueryPlan->getDecomposedQueryPlanId() == planIdToRemoveInNextIteration) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
@@ -2638,13 +2728,25 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                 EXPECT_EQ(ops.size(), 1);
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 auto sink = ops[0];
+                sinkPartitionNode1afterReplacement = sink->as<SinkLogicalOperatorNode>()
+                    ->getSinkDescriptor()
+                    ->as<Network::NetworkSinkDescriptor>()
+                    ->getNesPartition();
                 EXPECT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 EXPECT_TRUE(sink->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                sourcePartitionNode1afterReplacement = sink->getChildren()[0]
+                    ->as<SourceLogicalOperatorNode>()
+                    ->getSourceDescriptor()
+                    ->as<Network::NetworkSourceDescriptor>()->getNesPartition();
             } else if (executionNode->getId() == 2) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
                 EXPECT_EQ(ops.size(), 1);
                 auto sink = ops[0];
                 EXPECT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
+                sinkPartitionNode2afterReplacement = sink->as<SinkLogicalOperatorNode>()
+                    ->getSinkDescriptor()
+                    ->as<Network::NetworkSinkDescriptor>()
+                    ->getNesPartition();
                 auto filter = sink->getChildren()[0];
                 EXPECT_TRUE(filter->instanceOf<FilterLogicalOperatorNode>());
                 EXPECT_EQ(filter->as<FilterLogicalOperatorNode>()->getId(),
@@ -2653,6 +2755,12 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
             NES_INFO("Sub Plan: {}", decomposedQueryPlan->toString());
         }
     }
+    ASSERT_EQ(sinkPartitionNode1afterReplacement, sourcePartitionNode0afterReplacement);
+    ASSERT_EQ(sinkPartitionNode2afterReplacement, sourcePartitionNode1afterReplacement);
+
+    //check that the descriptors have actually been updated
+    ASSERT_NE(sinkPartitionNode1afterReplacement, sinkPartitionNode1BeforeReplacement);
+    ASSERT_NE(sinkPartitionNode2afterReplacement, sinkPartitionNode2BeforeReplacement);
 }
 
 /**

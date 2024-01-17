@@ -55,6 +55,9 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
+class SinkLogicalOperatorNode;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
@@ -124,8 +127,8 @@ class BasePlacementAdditionStrategy {
      * @param pinnedDownStreamOperators the downstream operators
      */
     ComputedDecomposedQueryPlans computeDecomposedQueryPlans(SharedQueryId sharedQueryId,
-                                               const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                               const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+                                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Add network source and sink operators
@@ -250,25 +253,25 @@ class BasePlacementAdditionStrategy {
      * @param computedQuerySubPlan the sub plan containing the newly computed changed to be applied to the placed plans
      * @param upstreamOperatorOfPlacedSinksToCheck the placed operator whose parents are to be checked if they can be
      * merged with the new sink
-     * @param newOperator the new sink which is to be checked if ti can be merged with an existing sink
+     * @param newNetworkSinkOperator the new sink which is to be checked if ti can be merged with an existing sink
      * @return true if merging was performed, false if no matching sink could be found
      */
-    static bool tryMergingSink(DecomposedQueryPlanVersion querySubPlanVersion,
-                               const DecomposedQueryPlanPtr& computedQuerySubPlan,
-                               const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
-                               const NodePtr& newOperator) ;
+    bool tryMergingNetworkSink(DecomposedQueryPlanVersion querySubPlanVersion,
+                        const DecomposedQueryPlanPtr& computedQuerySubPlan,
+                        const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
+                        const SinkLogicalOperatorNodePtr& newNetworkSinkOperator);
 
     /**
      * @brief chack if a computed source operator corresponds to a placed source that is to be reconfigured. If so,
      * update the version and the sender location of the placed source
      * @param querySubPlanVersion the version to apply to the reconfigured sink
      * @param placedDownstreamOperator
-     * @param newOperator
+     * @param newNetworkSourceOperator
      * @return
      */
-    static bool tryMergingSource(DecomposedQueryPlanVersion querySubPlanVersion,
-                                 const NodePtr& placedDownstreamOperator,
-                                 const NodePtr& newOperator);
+    bool tryMergingNetworkSource(DecomposedQueryPlanVersion querySubPlanVersion,
+                          const NodePtr& placedDownstreamOperator,
+                          const SourceLogicalOperatorNodePtr& newNetworkSourceOperator);
 
     //Number of retries to connect to downstream source operators
     static constexpr auto SINK_RETRIES = 100;

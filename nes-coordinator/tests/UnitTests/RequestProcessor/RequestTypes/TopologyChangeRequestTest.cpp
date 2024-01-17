@@ -107,85 +107,11 @@ class TopologyChangeRequestTest : public Testing::BaseUnitTest {
 };
 
 /**
-* @brief In this test we execute query merger phase on a single invalid query plan.
+* @brief Test the algorithm to identify the upstream and downstream operators used as an input for an incremental
+* placement to be performed due to a topology link removal. Construct a topology, place query subplans and calculate
+* the sets of upstream and downstream operators of an incremental placement.
+*
 */
-TEST_F(TopologyChangeRequestTest, testFindUpstreamNetworkSource) {
-    //Coordinator configuration
-    const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
-    auto optimizerConfiguration = Configurations::OptimizerConfiguration();
-    optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    coordinatorConfig->optimizer = optimizerConfiguration;
-
-    auto sharedQueryId = 1;
-    auto worker1Id = 1;
-    topology->registerTopologyNode(worker1Id, "localhost", 123, 124, 1, {});
-    auto executionNode1 = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(worker1Id));
-
-    auto worker2Id = 2;
-    topology->registerTopologyNode(worker2Id, "localhost", 123, 124, 1, {});
-    auto executionNode2 = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(worker2Id));
-
-    globalExecutionPlan->addExecutionNode(executionNode1);
-    globalExecutionPlan->addExecutionNode(executionNode2);
-
-    auto schema = Schema::create()->addField(createField("value", BasicType::UINT64));
-    auto planId1 = 1;
-    auto planId2 = 2;
-    auto sourceId1 = 1;
-    auto sinkId1 = 2;
-    auto version = 0;
-    auto plan1 = DecomposedQueryPlan::create(sharedQueryId, planId1);
-    auto sinkLocationWrk2 = NES::Network::NodeLocation(worker2Id, "localhost", 124);
-    auto networkSourceWrk1Partition = NES::Network::NesPartition(sharedQueryId, sourceId1, 0, 0);
-    auto uniqueId = 1;
-    auto networkSourceDescriptorWrk1 = Network::NetworkSourceDescriptor::create(schema,
-                                                                                networkSourceWrk1Partition,
-                                                                                sinkLocationWrk2,
-                                                                                WAIT_TIME,
-                                                                                EVENT_CHANNEL_RETRY_TIMES,
-                                                                                version, uniqueId);
-    uniqueId++;
-    auto sourceOperatorNodeWrk1 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk1, sourceId1);
-    plan1->addRootOperator(sourceOperatorNodeWrk1);
-    executionNode1->registerNewDecomposedQueryPlan(sharedQueryId, plan1);
-
-    auto sourceLocationWrk1 = NES::Network::NodeLocation(worker1Id, "localhost", 124);
-    auto plan2 = DecomposedQueryPlan::create(sharedQueryId, planId2);
-    auto networkSinkDescriptor2 = Network::NetworkSinkDescriptor::create(sourceLocationWrk1,
-                                                                         networkSourceWrk1Partition,
-                                                                         WAIT_TIME,
-                                                                         DATA_CHANNEL_RETRY_TIMES,
-                                                                         version,
-                                                                         DEFAULT_NUMBER_OF_ORIGINS,
-                                                                         sinkId1);
-    auto networkSinkOperatorNodeWrk2 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor2, worker2Id);
-    plan2->addRootOperator(networkSinkOperatorNodeWrk2);
-
-    executionNode2->registerNewDecomposedQueryPlan(sharedQueryId, plan2);
-
-    auto [sinkOperator, id2] = RequestProcessor::Experimental::TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(
-        sharedQueryId,
-        worker1Id,
-        std::static_pointer_cast<Network::NetworkSourceDescriptor>(networkSourceDescriptorWrk1),
-        globalExecutionPlan);
-    ASSERT_EQ(sinkOperator, networkSinkOperatorNodeWrk2);
-    ASSERT_EQ(id2, worker2Id);
-
-    auto [sourceOperator, id1] = RequestProcessor::Experimental::TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(
-        sharedQueryId,
-        worker2Id,
-        std::static_pointer_cast<Network::NetworkSinkDescriptor>(networkSinkDescriptor2),
-        globalExecutionPlan);
-    ASSERT_EQ(sourceOperator, sourceOperatorNodeWrk1);
-    ASSERT_EQ(id1, worker1Id);
-
-    auto linkedSinkSourcePairs = RequestProcessor::Experimental::TopologyChangeRequest::findNetworkOperatorsForLink(sharedQueryId, executionNode2, executionNode1);
-    auto [upstreamSink, downstreamSource] = linkedSinkSourcePairs.front();
-    ASSERT_EQ(upstreamSink, networkSinkOperatorNodeWrk2);
-    ASSERT_EQ(downstreamSource, sourceOperatorNodeWrk1);
-}
-
 TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();

@@ -20,11 +20,11 @@
 #include <any>
 #include <folly/Synchronized.h>
 #include <map>
-#include <set>
 #include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <set>
 #include <vector>
 
 namespace NES {
@@ -326,11 +326,12 @@ class Topology {
      * @param reachableDownstreamNodes reference to a into which the ids of all visited nodes will be inserted
      * @param targetNodes a list of node ids. Once all nodes in this list have been visited the function will return,
      * even if there are further downstream nodes that have not been visited
-     * @return a vector containing all nodes the were both in the supplied target nodes and have been visited during the BFS
+     * @return true if all needed locks could be acquired, false if the iteration was aborted because a node could not
+     * be locked
      */
-    std::vector<WorkerId> findAllDownstreamNodes(const WorkerId& startNode,
-                                                           std::set<WorkerId>& reachableDownstreamNodes,
-                                                           std::vector<WorkerId> targetNodes);
+    bool findAllDownstreamNodes(const WorkerId& startNode,
+                                std::set<WorkerId>& reachableDownstreamNodes,
+                                std::vector<WorkerId> targetNodes);
 
   private:
     explicit Topology();
@@ -386,4 +387,4 @@ class Topology {
     static constexpr int BASE_MULTIPLIER = 10000;
 };
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

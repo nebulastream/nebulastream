@@ -289,7 +289,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Let network sources use a separate thread to establish an event channel to their upstream sink
      */
-    BoolOption connectSourceEventChannelsAsync = {CONNECT_SOURCE_EVENT_CHANNELS_ASYNC, false, "Let network sources use a separate thread to establish a the upstream event channel"};
+    BoolOption connectSourceEventChannelsAsync = {CONNECT_SOURCE_ASYNC, false, "Let network sources use a separate thread to establish a the upstream event channel"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

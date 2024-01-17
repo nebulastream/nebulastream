@@ -87,16 +87,16 @@ bool GlobalExecutionPlan::removeExecutionNode(ExecutionNodeId id) {
         auto found = std::find_if(rootNodes.begin(), rootNodes.end(), [id](const ExecutionNodePtr& rootNode) {
             return rootNode->getId() == id;
         });
+        auto nodeToRemove =  idToExecutionNodeMap.at(id);
+        for (const auto& parent : nodeToRemove->getParents()) {
+            parent->removeChild(nodeToRemove);
+        }
+        for (const auto& child : nodeToRemove->getChildren()) {
+            child->removeParent(nodeToRemove);
+        }
         if (found != rootNodes.end()) {
             rootNodes.erase(found);
         } else {
-            auto nodeToRemove =  idToExecutionNodeMap.at(id);
-            for (const auto& parent : nodeToRemove->getParents()) {
-                parent->removeChild(nodeToRemove);
-            }
-            for (const auto& child : nodeToRemove->getChildren()) {
-                child->removeParent(nodeToRemove);
-            }
         }
         return idToExecutionNodeMap.erase(id) == 1;
     }
