@@ -34,34 +34,23 @@ QueryPlanPtr NemoJoinRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("NemoJoinRule: Apply NemoJoinRule.");
     NES_DEBUG("NemoJoinRule::apply: plan before replace\n{}", queryPlan->toString());
     auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-    int orId = 7623;
     if (!joinOps.empty()) {
         NES_DEBUG("NemoJoinRule::apply: found {} join operators", joinOps.size());
         for (const JoinLogicalOperatorNodePtr& joinOp : joinOps) {
             NES_DEBUG("NemoJoinRule::apply: join operator {}", joinOp->toString());
-            std::vector<JoinLogicalOperatorNodePtr> newJoins;
             auto parents = joinOp->getParents();
-            for (NodePtr parent : parents) {
-                parent->removeChildren();
-                auto leftOps = joinOp->getLeftOperators();
-                auto rightOps = joinOp->getRightOperators();
-
-                for (auto leftOp : leftOps) {
-                    leftOp->removeAllParent();
-                }
+            auto leftOps = joinOp->getLeftOperators();
+            auto rightOps = joinOp->getRightOperators();
+            for (auto leftOp : leftOps) {
                 for (auto rightOp : rightOps) {
-                    rightOp->removeAllParent();
-                }
-
-                for (auto leftOp : leftOps) {
-                    for (auto rightOp : rightOps) {
-                        auto newJoin = createJoinReplica(joinOp,
-                                                         std::vector<OperatorNodePtr>{leftOp},
-                                                         std::vector<OperatorNodePtr>{rightOp},
-                                                         std::vector<NodePtr>{parent});
-                    }
+                    auto newJoin = createJoinReplica(joinOp,
+                                                     std::vector<OperatorNodePtr>{leftOp},
+                                                     std::vector<OperatorNodePtr>{rightOp},
+                                                     parents);
                 }
             }
+            joinOp->removeAllParent();
+            joinOp->removeChildren();
         }
     } else {
         NES_DEBUG("NemoJoinRule::apply: no join operator in query");
