@@ -21,8 +21,3 @@
   template:
     src: worker.yaml.j2
     dest: "/tmp/worker-conf.yaml"
-
-- name: Copy KTM data file
-  copy:
-    src: ktm.csv.j2
-    dest: /tmp/ktm.csv
