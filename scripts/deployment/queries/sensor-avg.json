@@ -1,0 +1,4 @@
+{
+  "userQuery": "Query::from(\"sensors\").sink(NullOutputSinkDescriptor::create());",
+  "placement": "BottomUp"
+}
