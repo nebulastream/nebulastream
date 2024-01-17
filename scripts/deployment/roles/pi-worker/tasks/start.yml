@@ -19,7 +19,7 @@
 
 - name: Start Worker
   shell: |
-    nohup /home/ubuntu/git/nebulastream/build/{{ worker_bin_name }} --configPath=/tmp/worker-conf.yaml > /home/ubuntu/dimitrios/{{ worker_bin_name }}.log 2>&1 & 
+    nohup /home/ubuntu/git/nebulastream/build/nes-core/{{ worker_bin_name }} --configPath=/tmp/worker-conf.yaml > /home/ubuntu/dimitrios/{{ worker_bin_name }}.log 2>&1 & 
     echo $! > /home/ubuntu/dimitrios/{{ worker_bin_name }}.pid
 
 - name: Read PID from file
