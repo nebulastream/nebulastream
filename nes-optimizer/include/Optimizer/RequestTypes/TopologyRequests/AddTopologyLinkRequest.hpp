@@ -32,7 +32,7 @@ class AddTopologyLinkRequest : public Request {
      * @brief Creates an instance of add topology link request
      * @param upstreamNodeId: the identifier of upstream topology node
      * @param downstreamNodeId: the identifier of downstream topology node
-     * @return a shared pointer to the TopologyChangeRequest
+     * @return a shared pointer to the AddTopologyLinkRequest
      */
     static AddTopologyLinkRequestPtr create(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
 

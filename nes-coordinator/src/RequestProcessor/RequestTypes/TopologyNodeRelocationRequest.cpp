@@ -26,7 +26,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <RequestProcessor/RequestTypes/TopologyChangeRequest.hpp>
+#include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -34,13 +34,14 @@
 
 namespace NES::RequestProcessor::Experimental {
 
-TopologyChangeRequestPtr TopologyChangeRequest::create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
+TopologyNodeRelocationRequestPtr
+TopologyNodeRelocationRequest::create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
                                                        const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
                                                        uint8_t maxRetries) {
-    return std::make_shared<TopologyChangeRequest>(removedLinks, addedLinks, maxRetries);
+    return std::make_shared<TopologyNodeRelocationRequest>(removedLinks, addedLinks, maxRetries);
 }
 
-TopologyChangeRequest::TopologyChangeRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
+TopologyNodeRelocationRequest::TopologyNodeRelocationRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
                                              const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
                                              uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::Topology,
@@ -55,8 +56,7 @@ TopologyChangeRequest::TopologyChangeRequest(const std::vector<std::pair<WorkerI
     NES_ASSERT(!(removedLinks.empty() && addedLinks.empty()), "Could not find any removed or added links");
 }
 
-std::vector<AbstractRequestPtr>
-TopologyChangeRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
+std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     topology = storageHandle->getTopologyHandle(requestId);
     globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
     globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
@@ -85,7 +85,7 @@ TopologyChangeRequest::executeRequestLogic(const StorageHandlerPtr& storageHandl
     return {};
 }
 
-void TopologyChangeRequest::processRemoveTopologyLinkRequest(WorkerId upstreamNodeId, WorkerId downstreamNodeId) {
+void TopologyNodeRelocationRequest::processRemoveTopologyLinkRequest(WorkerId upstreamNodeId, WorkerId downstreamNodeId) {
     auto upstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(upstreamNodeId);
     auto downstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(downstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
@@ -123,7 +123,7 @@ void TopologyChangeRequest::processRemoveTopologyLinkRequest(WorkerId upstreamNo
 }
 
 //todo #4493: call from this when all links to and from a node are removed
-//void TopologyChangeRequest::processRemoveTopologyNodeRequest(WorkerId removedNodeId) {
+//void TopologyNodeRelocationRequest::processRemoveTopologyNodeRequest(WorkerId removedNodeId) {
 //
 //    //1. If the removed execution nodes do not exist then remove skip rest of the operation
 //    auto removedExecutionNode = globalExecutionPlan->getExecutionNodeById(removedNodeId);
@@ -187,7 +187,7 @@ void TopologyChangeRequest::processRemoveTopologyLinkRequest(WorkerId upstreamNo
 //    }
 //}
 
-void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
+void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
                                                                 const Optimizer::ExecutionNodePtr& upstreamExecutionNode,
                                                                 const Optimizer::ExecutionNodePtr& downstreamExecutionNode) {
     //Fetch the shared query plan and update its status
@@ -219,13 +219,13 @@ void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sh
 
 
 //todo #4494: implement all the following functions
-void TopologyChangeRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+void TopologyNodeRelocationRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 
-std::vector<AbstractRequestPtr> TopologyChangeRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) {
+std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) {
     return {};
 }
 
-void TopologyChangeRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+void TopologyNodeRelocationRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 
-void TopologyChangeRequest::postExecution(const StorageHandlerPtr&) {}
+void TopologyNodeRelocationRequest::postExecution(const StorageHandlerPtr&) {}
 };// namespace NES::RequestProcessor::Experimental

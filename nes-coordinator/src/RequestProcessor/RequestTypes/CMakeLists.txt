@@ -22,5 +22,5 @@ add_source_files(nes-coordinator
         StorageResourceLocker.cpp
         AbstractUniRequest.cpp
         SubRequestFuture.cpp
-        TopologyChangeRequest.cpp
+        TopologyNodeRelocationRequest.cpp
         )

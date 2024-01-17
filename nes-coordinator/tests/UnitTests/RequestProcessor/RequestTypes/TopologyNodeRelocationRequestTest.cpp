@@ -26,28 +26,14 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
-#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
-#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -55,12 +41,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <RequestProcessor/RequestTypes/TopologyChangeRequest.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
@@ -72,7 +56,7 @@ uint32_t DATA_CHANNEL_RETRY_TIMES = 1;
 uint64_t DEFAULT_NUMBER_OF_ORIGINS = 1;
 namespace NES {
 
-class TopologyChangeRequestTest : public Testing::BaseUnitTest {
+class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
@@ -83,8 +67,8 @@ class TopologyChangeRequestTest : public Testing::BaseUnitTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TopologyChangeRequestTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TopologyChangeRequestTest test case.");
+        NES::Logger::setupLogging("TopologyNodeRelocationRequestTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup TopologyNodeRelocationRequestTest test case.");
     }
 
     /* Will be called before a  test is executed. */
@@ -113,7 +97,7 @@ class TopologyChangeRequestTest : public Testing::BaseUnitTest {
 * the sets of upstream and downstream operators of an incremental placement.
 *
 */
-TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
+TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDownstream) {
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
@@ -129,11 +113,6 @@ TEST_F(TopologyChangeRequestTest, testFindingIncrementalUpstreamAndDownstream) {
                                                                   udfCatalog);
 
     auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
-
-    uint8_t maxRetries = 1;
-    RequestProcessor::Experimental::TopologyChangeRequestPtr topologyChangeRequest;
-    topologyChangeRequest =
-        RequestProcessor::Experimental::TopologyChangeRequest::create({{8888, 9999}}, {{7777, 6666}}, maxRetries);
 
     auto schema = Schema::create()->addField(createField("value", BasicType::UINT64));
     WorkerId workerIdCounter = 1;

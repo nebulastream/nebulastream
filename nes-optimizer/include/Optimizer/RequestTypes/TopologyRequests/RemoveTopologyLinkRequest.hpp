@@ -31,7 +31,7 @@ class RemoveTopologyLinkRequest : public Request {
      * @brief Creates an instance of remove topology link request
      * @param downstreamNodeId: the identifier of downstream topology node
      * @param upstreamNodeId: the identifier of upstream topology node
-     * @return a shared pointer to the TopologyChangeRequest
+     * @return a shared pointer to the RemoveTopologyLinkRequest
      */
     static RemoveTopologyLinkRequestPtr create(WorkerId downstreamNodeId, WorkerId upstreamNodeId);
 

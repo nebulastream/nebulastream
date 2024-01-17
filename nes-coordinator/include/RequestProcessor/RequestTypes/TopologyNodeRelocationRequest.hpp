@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_TOPOLOGYCHANGEREQUEST_HPP
-#define NES_TOPOLOGYCHANGEREQUEST_HPP
+#ifndef NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
+#define NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 
@@ -30,10 +30,10 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 }
 
 namespace RequestProcessor::Experimental {
-class TopologyChangeRequest;
-using TopologyChangeRequestPtr = std::shared_ptr<TopologyChangeRequest>;
+class TopologyNodeRelocationRequest;
+using TopologyNodeRelocationRequestPtr = std::shared_ptr<TopologyNodeRelocationRequest>;
 
-class TopologyChangeRequest : public AbstractUniRequest {
+class TopologyNodeRelocationRequest : public AbstractUniRequest {
   public:
     /**
      * @brief Constructor
@@ -41,7 +41,7 @@ class TopologyChangeRequest : public AbstractUniRequest {
      * @param addedLinks a list of links to be added represented as pairs in the format {upstreamId, downstreamId}
      * @param maxRetries the maximum amount of times this request should be retried in case of failure
      */
-    TopologyChangeRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
+    TopologyNodeRelocationRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
                           const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
                           uint8_t maxRetries);
 
@@ -52,7 +52,7 @@ class TopologyChangeRequest : public AbstractUniRequest {
      * @param maxRetries the maximum amount of times this request should be retried in case of failure
      * @return a pointer the the newly created request
      */
-    static TopologyChangeRequestPtr create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
+    static TopologyNodeRelocationRequestPtr create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
                                            const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
                                            uint8_t maxRetries);
 
@@ -130,4 +130,4 @@ class TopologyChangeRequest : public AbstractUniRequest {
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES
-#endif//NES_TOPOLOGYCHANGEREQUEST_HPP
+#endif//NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
