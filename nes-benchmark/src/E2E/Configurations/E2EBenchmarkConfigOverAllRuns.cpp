@@ -165,7 +165,9 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     } else if (!yamlConfig["querySet"].IsNone() && yamlConfig["querySet"].Size() > 0) {
         Yaml::Node queriesNode = yamlConfig["querySet"];
         for (size_t i = 0; i < queriesNode.Size(); i++) {
-            configOverAllRuns.queries.push_back({queriesNode[i]["query"].As<std::string>(), queriesNode[i]["customDelayInSeconds"].IsNone() ? 0 : queriesNode[i]["customDelayInSeconds"].As<uint32_t>()});
+            configOverAllRuns.queries.push_back(
+                {queriesNode[i]["query"].As<std::string>(),
+                 queriesNode[i]["customDelayInSeconds"].IsNone() ? 0 : queriesNode[i]["customDelayInSeconds"].As<uint32_t>()});
         }
     } else {
         NES_THROW_RUNTIME_ERROR("No query or queries defined!");
