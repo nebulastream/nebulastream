@@ -132,7 +132,7 @@ void E2ESingleRun::createSources() {
 
 void E2ESingleRun::submitQueries(QueryServicePtr queryService, QueryCatalogServicePtr queryCatalog) {
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
-        for (const auto &query : configOverAllRuns.queries) {
+        for (const auto& query : configOverAllRuns.queries) {
 
             // If custom delay is set introduce a delay before submitting
             std::this_thread::sleep_for(std::chrono::seconds(query.getCustomDelayInSeconds()));
