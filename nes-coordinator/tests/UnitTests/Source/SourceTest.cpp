@@ -182,8 +182,8 @@ class MockDataSource : public DataSource {
                      gatheringMode,
                      "defaultPhysicalStreamName",
                      executableSuccessors){
-            // nop
-        };
+              // nop
+          };
 
     static auto create(const SchemaPtr& schema,
                        Runtime::BufferManagerPtr bufferManager,
@@ -477,16 +477,16 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, DataSinkPtr sink)
         : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
-            queryManager->getBufferManager(),
-            queryManager->getNumberOfWorkerThreads(),
-            [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
-                sink->writeData(buffer, worker);
-            },
-            [sink](Runtime::TupleBuffer&) {
-            },
-            std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
+              -1,// mock pipeline id
+              0, // mock query id
+              queryManager->getBufferManager(),
+              queryManager->getNumberOfWorkerThreads(),
+              [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
+                  sink->writeData(buffer, worker);
+              },
+              [sink](Runtime::TupleBuffer&) {
+              },
+              std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
 };
 
 class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineStage {
@@ -787,7 +787,8 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
     mDataSource.runningRoutine();
 }
 
-TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
+// Disabled: ADAPTIVE is not currently supported
+TEST_F(SourceTest, DISABLED_testDataSourceRunningRoutineKalmanFilter) {
     MockDataSource mDataSource(this->schema,
                                this->nodeEngine->getBufferManager(),
                                this->nodeEngine->getQueryManager(),
@@ -831,7 +832,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -879,7 +880,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -893,7 +894,9 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
+// Disabled: ADAPTIVE is not currently supported
+/*
+TEST_F(SourceTest, DISABLED_testDataSourceKFRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -925,7 +928,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -938,8 +941,10 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
     mDataSource.reset();
-}
+} */
 
+// Disabled: ADAPTIVE is not currently supported
+/*
 TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
@@ -971,7 +976,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     auto oldInterval = mDataSource->gatheringInterval;
@@ -986,55 +991,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     EXPECT_FALSE(mDataSource->running);
     EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
-}
-
-TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroInitialInterval) {
-    // create executable stage
-    auto executableStage = std::make_shared<MockedExecutablePipeline>();
-    // create sink
-    auto sink =
-        createCSVFileSink(this->schema, this->queryId, this->queryId, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
-    // get mocked pipeline to add to source
-    auto pipeline = this->createExecutablePipeline(executableStage, sink);
-    // mock query manager for passing addEndOfStream
-    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema,
-                                                           this->nodeEngine->getBufferManager(),
-                                                           this->nodeEngine->getQueryManager(),
-                                                           this->operatorId,
-                                                           this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::ADAPTIVE_MODE,
-                                                           {pipeline});
-    mDataSource->numberOfBuffersToProduce = 1;
-    mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
-    mDataSource->setGatheringInterval(std::chrono::milliseconds{1000});
-    auto fakeBuf = mDataSource->getRecyclableBuffer();
-    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
-    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
-    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
-    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
-    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
-                                                                         this->queryId,
-                                                                         {mDataSource},
-                                                                         {sink},
-                                                                         {pipeline},
-                                                                         this->nodeEngine->getQueryManager(),
-                                                                         this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
-    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
-    ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    auto oldInterval = mDataSource->gatheringInterval;
-    EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
-        mDataSource->running = false;
-        return;
-    }));
-    mDataSource->runningRoutine();
-    EXPECT_NE(oldInterval.count(), mDataSource->gatheringInterval.count());
-    EXPECT_FALSE(mDataSource->running);
-    EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
-    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
-}
+} */
 
 TEST_F(SourceTest, testDataSourceOpen) {
     DataSourceProxy mDataSource(this->schema,
