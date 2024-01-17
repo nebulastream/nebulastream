@@ -5,3 +5,7 @@
   tasks:
     - include_tasks: roles/pi-master/tasks/stop.yml
 
+- hosts: pi_worker
+  tasks:
+    - include_tasks: roles/pi-worker/tasks/stop.yml
+
