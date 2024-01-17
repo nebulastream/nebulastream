@@ -23,8 +23,8 @@ physicalSources:
           physicalSourceName: sensors_{{ local_worker_ip }}
           type: MQTT_SOURCE
           configuration:
-              url: ws://{{ default_pi_master_ip }}:1883
-              clientId: admin_qrs
+              url: ws://{{ default_pi_master_ip }}:8080
+              clientId: sensors_{{ local_worker_ip }}
               inputFormat: CSV
               topic: benchmark
               userName: admin
