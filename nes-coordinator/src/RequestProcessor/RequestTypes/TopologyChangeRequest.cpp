@@ -15,24 +15,23 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/TopologyChangeRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
+#include <Util/IncrementalPlacementUtils.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Placement/PlacementConstants.hpp>
 #include <queue>
+
 namespace NES::RequestProcessor::Experimental {
 
 TopologyChangeRequestPtr TopologyChangeRequest::create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
@@ -196,11 +195,10 @@ void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sh
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
 
     //find the pinned operators for the changelog
-    auto [upstreamOperatorIds, downstreamOperatorIds] = findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
+    auto [upstreamOperatorIds, downstreamOperatorIds] = NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
                                                                                                  upstreamExecutionNode,
                                                                                                  downstreamExecutionNode,
-                                                                                                 topology,
-                                                                                                 globalExecutionPlan);
+                                                                                                 topology);
     //perform re-operator placement on the query plan
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 
@@ -219,273 +217,6 @@ void TopologyChangeRequest::markOperatorsForReOperatorPlacement(SharedQueryId sh
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
 }
 
-LogicalOperatorNodePtr TopologyChangeRequest::findUpstreamNonSystemOperators(const LogicalOperatorNodePtr& downstreamOperator,
-                                                                             WorkerId downstreamWorkerId,
-                                                                             SharedQueryId sharedQueryId,
-                                                                             const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
-    //find the upstream non system generated operators of the sink
-    std::queue<std::pair<LogicalOperatorNodePtr, WorkerId>> queue;
-    queue.emplace(downstreamOperator, downstreamWorkerId);
-    std::set<OperatorId> visited;
-    std::vector<LogicalOperatorNodePtr> upstreamAffectedOperators;
-
-    while (!queue.empty()) {
-        const auto& [currentOperator, workerId] = queue.front();
-        queue.pop();
-        auto currentId = currentOperator->getId();
-        if (visited.contains(currentId)) {
-            continue;
-        }
-        visited.insert(currentId);
-        auto sinkOperator = currentOperator->as_if<SinkLogicalOperatorNode>();
-        if (sinkOperator) {
-            auto networkSinkDescriptor =
-                std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(sinkOperator->getSinkDescriptor());
-            if (networkSinkDescriptor) {
-                for (const auto& child : currentOperator->getChildren()) {
-                    queue.emplace(child->as<LogicalOperatorNode>(), workerId);
-                }
-                continue;
-            }
-            return currentOperator->as<LogicalOperatorNode>();
-        }
-
-        auto sourceOperator = currentOperator->as_if<SourceLogicalOperatorNode>();
-        if (sourceOperator) {
-            auto networkSourceDescriptor =
-                std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
-            if (networkSourceDescriptor) {
-                auto upstreamSinkAndWorker =
-                    findUpstreamNetworkSinkAndWorkerId(sharedQueryId, workerId, networkSourceDescriptor, globalExecutionPlan);
-                queue.emplace(upstreamSinkAndWorker);
-                continue;
-            }
-            return currentOperator->as<LogicalOperatorNode>();
-        }
-
-        //operator is not system generated, do not insert children into queue and record it as upstream user generated operator
-        return currentOperator->as<LogicalOperatorNode>();
-    }
-    NES_ASSERT(false, "No upstream operator found for the operator with the id " << downstreamOperator->getId());
-    return {};
-}
-
-LogicalOperatorNodePtr
-TopologyChangeRequest::findDownstreamNonSystemOperators(const LogicalOperatorNodePtr& upstreamOperator,
-                                                        WorkerId upstreamWorkerId,
-                                                        SharedQueryId sharedQueryId,
-                                                        const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
-    //find the upstream non system generated operators of the sink
-    std::queue<std::pair<LogicalOperatorNodePtr, WorkerId>> queue;
-    queue.emplace(upstreamOperator, upstreamWorkerId);
-    std::set<OperatorId> visited;
-    std::vector<LogicalOperatorNodePtr> upstreamAffectedOperators;
-
-    while (!queue.empty()) {
-        const auto& [currentOperator, workerId] = queue.front();
-        queue.pop();
-        auto currentId = currentOperator->getId();
-        if (visited.contains(currentId)) {
-            continue;
-        }
-        visited.insert(currentId);
-        auto sinkOperator = currentOperator->as_if<SinkLogicalOperatorNode>();
-        if (sinkOperator) {
-            auto networkSinkDescriptor =
-                std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(sinkOperator->getSinkDescriptor());
-            if (networkSinkDescriptor) {
-                auto downstreamSourceAndWorker =
-                    findDownstreamNetworkSourceAndWorkerId(sharedQueryId, workerId, networkSinkDescriptor, globalExecutionPlan);
-                queue.emplace(downstreamSourceAndWorker);
-                continue;
-            }
-            return currentOperator->as<LogicalOperatorNode>();
-        }
-
-        auto sourceOperator = currentOperator->as_if<SourceLogicalOperatorNode>();
-        if (sourceOperator) {
-            auto networkSourceDescriptor =
-                std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
-            if (networkSourceDescriptor) {
-                for (const auto& parent : currentOperator->getParents()) {
-                    queue.emplace(parent->as<LogicalOperatorNode>(), workerId);
-                }
-                continue;
-            }
-            return currentOperator->as<LogicalOperatorNode>();
-        }
-
-        //operator is not system generated, do not insert children into queue and record it as upstream user generated operator
-        return currentOperator->as<LogicalOperatorNode>();
-    }
-    NES_ASSERT(false, "No upstream operator found for the operator with the id " << upstreamOperator->getId());
-    return {};
-}
-
-std::pair<std::set<OperatorId>, std::set<OperatorId>>
-TopologyChangeRequest::findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPlan,
-                                                    const Optimizer::ExecutionNodePtr& upstreamNode,
-                                                    const Optimizer::ExecutionNodePtr& downstreamNode,
-                                                    const TopologyPtr& topology,
-                                                    const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
-    auto sharedQueryPlanId = sharedQueryPlan->getId();
-    //find the pairs of source and sink operators that were using the removed link
-    auto upstreamDownstreamOperatorPairs = findNetworkOperatorsForLink(sharedQueryPlanId, upstreamNode, downstreamNode);
-    for (auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
-        //replace the system generated operators with their non system up- or downstream operators
-        upstreamOperator =
-            findUpstreamNonSystemOperators(upstreamOperator, upstreamNode->getId(), sharedQueryPlanId, globalExecutionPlan);
-        downstreamOperator =
-            findDownstreamNonSystemOperators(downstreamOperator, downstreamNode->getId(), sharedQueryPlanId, globalExecutionPlan);
-    }
-
-    auto queryPlanForSharedQuery = sharedQueryPlan->getQueryPlan();
-    std::set<OperatorId> upstreamPinned;
-    std::set<OperatorId> downstreamPinned;
-    std::set<OperatorId> toRemove;
-
-    for (const auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
-        const auto upstreamSharedQueryOperater = queryPlanForSharedQuery->getOperatorWithId(upstreamOperator->getId());
-        const auto upstreamWorkerId =
-            std::any_cast<OperatorId>(upstreamSharedQueryOperater->getProperty(Optimizer::PINNED_WORKER_ID));
-        const auto downstreamSharedQueryOperator = queryPlanForSharedQuery->getOperatorWithId(downstreamOperator->getId());
-        const auto downstreamWorkerId =
-            std::any_cast<OperatorId>(downstreamSharedQueryOperator->getProperty(Optimizer::PINNED_WORKER_ID));
-
-        //assuming that we can always pin this operator will hold as long as only leave nodes are changing their parent
-        //in case a node with children changes its parent, this method might not discover some possible paths because it ignores the children
-        //to handle that case, a new reachable set needs to be calculated from the children in case the first one fails
-        upstreamPinned.insert(upstreamOperator->getId());
-
-        //find all toplogy nodes that are reachable from the pinned upstream operator node
-        std::set<WorkerId> reachable;
-        //todo:
-        topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
-
-        //check if the old downstream was found, then only forward operators need to be inserted between the old up and downstream
-        if (reachable.contains(downstreamWorkerId)) {
-            //only one target node as been supplied, so the vector of found targets can contain one item at most
-            downstreamPinned.insert(downstreamOperator->getId());
-        } else {
-            //because the old downstream was not found (list of found target nodes is empty), another path has to be found
-
-            //at this point all reachable downstream nodes in the new topology are found for a specific operator
-            //now find the closest downstream operator hosted on one of these reachable nodes
-            std::queue<LogicalOperatorNodePtr> queryPlanBFSQueue;
-            std::set<OperatorId> visitedOperators;
-
-            //populate queue with the non system parents of the upstream operator
-            auto startOperatorInSharedQueryPlan = queryPlanForSharedQuery->getOperatorWithId(upstreamOperator->getId());
-            for (const auto& parent : startOperatorInSharedQueryPlan->getParents()) {
-                queryPlanBFSQueue.push(parent->as<LogicalOperatorNode>());
-            }
-
-            while (!queryPlanBFSQueue.empty()) {
-                const auto currentOperator = queryPlanBFSQueue.front();
-                queryPlanBFSQueue.pop();
-                if (visitedOperators.contains(currentOperator->getId())) {
-                    continue;
-                }
-                const auto currentWorkerId = std::any_cast<OperatorId>(currentOperator->getProperty(Optimizer::PINNED_WORKER_ID));
-                visitedOperators.insert(currentOperator->getId());
-                upstreamPinned.erase(currentOperator->getId());
-                if (reachable.contains(currentWorkerId)) {
-                    downstreamPinned.insert(currentOperator->getId());
-                } else {
-                    //if the operator is reachable from another one of its upstream operators but not from this one,
-                    //we need to remove it from the pinned set and keep looking for a further downstream operator
-                    //which is reachable by this node as well and pin that one.
-                    downstreamPinned.erase(currentOperator->getId());
-                    for (const auto& parent : currentOperator->getParents()) {
-                        queryPlanBFSQueue.push(parent->as<LogicalOperatorNode>());
-                    }
-                    toRemove.insert(currentOperator->getId());
-                    for (const auto& child : currentOperator->getChildren()) {
-                        auto nonSystemChild = child->as<LogicalOperatorNode>();
-                        if (!toRemove.contains(nonSystemChild->getId())) {
-                            upstreamPinned.insert(nonSystemChild->getId());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return {upstreamPinned, downstreamPinned};
-}
-
-std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
-TopologyChangeRequest::findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
-                                                        const Optimizer::ExecutionNodePtr& upstreamNode,
-                                                        const Optimizer::ExecutionNodePtr& downstreamNode) {
-    const auto& upstreamSubPlans = upstreamNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-    std::unordered_map<Network::NesPartition, LogicalOperatorNodePtr> upstreamSinkMap;
-    auto downstreamWorkerId = downstreamNode->getId();
-    for (const auto& subPlan : upstreamSubPlans) {
-        for (const auto& sinkOperator : subPlan->getSinkOperators()) {
-            auto upstreamNetworkSinkDescriptor =
-                std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(sinkOperator->getSinkDescriptor());
-            if (upstreamNetworkSinkDescriptor
-                && upstreamNetworkSinkDescriptor->getNodeLocation().getNodeId() == downstreamWorkerId) {
-                upstreamSinkMap.insert({upstreamNetworkSinkDescriptor->getNesPartition(), sinkOperator});
-            }
-        }
-    }
-
-    const auto& downstreamSubPlans = downstreamNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-    auto upstreamWorkerId = upstreamNode->getId();
-    std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>> pairs;
-    for (const auto& subPlan : downstreamSubPlans) {
-        for (const auto& sourceOperator : subPlan->getSourceOperators()) {
-            auto downNetworkSourceDescriptor =
-                std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
-            if (downNetworkSourceDescriptor && downNetworkSourceDescriptor->getNodeLocation().getNodeId() == upstreamWorkerId) {
-                pairs.emplace_back(upstreamSinkMap.at(downNetworkSourceDescriptor->getNesPartition()), sourceOperator);
-            }
-        }
-    }
-    return pairs;
-}
-
-std::pair<SinkLogicalOperatorNodePtr, WorkerId>
-TopologyChangeRequest::findUpstreamNetworkSinkAndWorkerId(const SharedQueryId& sharedQueryPlanId,
-                                                          WorkerId sourceWorkerId,
-                                                          const Network::NetworkSourceDescriptorPtr& networkSourceDescriptor,
-                                                          const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
-    auto childNodeId = networkSourceDescriptor->getNodeLocation().getNodeId();
-    auto subPlans = globalExecutionPlan->getExecutionNodeById(childNodeId)->getAllDecomposedQueryPlans(sharedQueryPlanId);
-    for (const auto& plan : subPlans) {
-        for (const auto& sinkOperator : plan->getSinkOperators()) {
-            auto upstreamNetworkSinkDescriptor =
-                std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(sinkOperator->getSinkDescriptor());
-            if (upstreamNetworkSinkDescriptor && upstreamNetworkSinkDescriptor->getNodeLocation().getNodeId() == sourceWorkerId
-                && upstreamNetworkSinkDescriptor->getNesPartition() == networkSourceDescriptor->getNesPartition()) {
-                return {sinkOperator, childNodeId};
-            }
-        }
-    }
-    throw std::exception();
-}
-
-std::pair<SourceLogicalOperatorNodePtr, WorkerId>
-TopologyChangeRequest::findDownstreamNetworkSourceAndWorkerId(const SharedQueryId& sharedQueryPlanId,
-                                                              WorkerId sinkWorkerId,
-                                                              const Network::NetworkSinkDescriptorPtr& networkSinkDescriptor,
-                                                              const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan) {
-    auto parentNodeId = networkSinkDescriptor->getNodeLocation().getNodeId();
-    auto subPlans = globalExecutionPlan->getExecutionNodeById(parentNodeId)->getAllDecomposedQueryPlans(sharedQueryPlanId);
-    for (const auto& plan : subPlans) {
-        for (const auto& sourceOperator : plan->getSourceOperators()) {
-            auto downNetworkSourceDescriptor =
-                std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
-            if (downNetworkSourceDescriptor && downNetworkSourceDescriptor->getNodeLocation().getNodeId() == sinkWorkerId
-                && downNetworkSourceDescriptor->getNesPartition() == networkSinkDescriptor->getNesPartition()) {
-                return {sourceOperator, parentNodeId};
-            }
-        }
-    }
-    throw std::exception();
-}
 
 //todo #4494: implement all the following functions
 void TopologyChangeRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}

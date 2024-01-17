@@ -687,6 +687,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             } else {
                                 computedDecomposedQueryPlans[currentWorkerId] = {newDecomposedQueryPlan};
                             }
+                            networkSourceOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
+                            networkSourceOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
                         }
                     }
 

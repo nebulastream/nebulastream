@@ -13,4 +13,5 @@
 
 add_source_files(nes-coordinator
         PlanJsonGenerator.cpp
+        IncrementalPlacementUtils.cpp
 )
