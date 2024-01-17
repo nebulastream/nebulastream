@@ -162,8 +162,8 @@ add_nes_unit_test(buffer-storage-tests "Runtime/BufferStorageTest.cpp")
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)
 
-### Topology Change Request Tests ###
-add_nes_unit_test(topology-change-request-tests "RequestProcessor/RequestTypes/TopologyChangeRequestTest.cpp" RequestProcessor/RequestTypes/TopologyChangeRequestTest.cpp)
+### Topology Node Relocation Request Tests ###
+add_nes_unit_test(topology-node-relocation-request-tests "RequestProcessor/RequestTypes/TopologyNodeRelocationRequestTest.cpp" RequestProcessor/RequestTypes/TopologyNodeRelocationRequestTest.cpp)
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)

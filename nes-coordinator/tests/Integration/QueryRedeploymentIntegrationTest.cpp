@@ -29,12 +29,12 @@
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <RequestProcessor/RequestTypes/TopologyChangeRequest.hpp>
+#include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
@@ -397,7 +397,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         std::vector<std::pair<WorkerId, WorkerId>> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
         auto maxRetries = 1;
         auto topologyChangeRequest =
-            RequestProcessor::Experimental::TopologyChangeRequest::create(removedLinks, addedLinks, maxRetries);
+            RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks, addedLinks, maxRetries);
         topologyChangeRequest->executeRequestLogic(storageHandler);
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
