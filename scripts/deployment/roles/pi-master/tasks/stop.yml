@@ -1,106 +1,38 @@
 ---
 # This task kills the coordinator and its monitoring
 
-- name: Check if coordinator monitoring pid file exists
-  stat:
-    path: "/home/ubuntu/dimitrios/{{ dool_name }}.pid"
-  register: mon_stat_result
+- name: Find PIDs of dool
+  shell: pgrep -f {{ dool_name }}
+  register: dool_pids
 
-- name: Get coordinator monitoring pid
-  when: mon_stat_result.stat.exists
-  shell: "cat /home/ubuntu/dimitrios/{{ dool_name }}.pid"
-  register: mon_cat_result
+- name: Kill PIDs
+  shell: kill -9 {{ item }}
+  loop: "{{ dool_pids.stdout_lines }}"
+  when: dool_pids.stdout != ""
 
-- name: Kill coordinator monitoring
-  when: mon_stat_result.stat.exists
-  shell: "kill -9 {{ mon_cat_result.stdout }}"
-  ignore_errors: true
+- name: Find PIDs of coordinator
+  shell: pgrep -f {{ coord_bin_name }}
+  register: coord_pids
 
-- name: Wait for monitoring process to completely die
-  when: mon_stat_result.stat.exists
-  wait_for:
-    path: "/proc/{{ mon_cat_result.stdout }}/status"
-    state: absent
+- name: Kill PIDs
+  shell: kill -9 {{ item }}
+  loop: "{{ coord_pids.stdout_lines }}"
+  when: coord_pids.stdout != ""
 
-- name: Remove coordinator monitoring pid file
-  file:
-    path: "/home/ubuntu/dimitrios/{{ dool_name }}.pid"
-    state: absent
+- name: Find PIDs of generator
+  shell: pgrep -f e2e_latency
+  register: generator_pids
 
-- name: Check coordinator pid file exists
-  stat:
-    path: "/home/ubuntu/dimitrios/{{ coord_bin_name }}.pid"
-  register: stat_result
+- name: Kill PIDs
+  shell: kill -9 {{ item }}
+  loop: "{{ generator_pids.stdout_lines }}"
+  when: generator_pids.stdout != ""
 
-- name: Get coordinator pid
-  when: stat_result.stat.exists
-  shell: "cat /home/ubuntu/dimitrios/{{ coord_bin_name }}.pid"
-  register: cat_result
+- name: Find PIDs of mosquitto
+  shell: pgrep -f mosquitto
+  register: mosquitto_pids
 
-- name: Kill coordinator process
-  when: stat_result.stat.exists
-  shell: "kill -9 {{ cat_result.stdout }}"
-  ignore_errors: true
-
-- name: Wait for coordinator to completely die
-  when: stat_result.stat.exists
-  wait_for:
-    path: "/proc/{{ cat_result.stdout }}/status"
-    state: absent
-
-- name: Remove coordinator pid file
-  file:
-    path: "/home/ubuntu/dimitrios/{{ coord_bin_name }}.pid"
-    state: absent
-
-- name: Check if mosquitto exists
-  stat:
-    path: "/home/ubuntu/dimitrios/mosquitto.pid"
-  register: mosquitto_stat_result
-
-- name: Get mosquitto pid
-  when: mosquitto_stat_result.stat.exists
-  shell: "cat /home/ubuntu/dimitrios/mosquitto.pid"
-  register: mosquitto_cat_result
-
-- name: Kill mosquitto
-  when: mosquitto_stat_result.stat.exists
-  shell: "kill -9 {{ mosquitto_cat_result.stdout }}"
-  ignore_errors: true
-
-- name: Wait for mosquitto to completely die
-  when: mosquitto_stat_result.stat.exists
-  wait_for:
-    path: "/proc/{{ mosquitto_cat_result.stdout }}/status"
-    state: absent
-
-- name: Remove mosquitto pid file
-  file:
-    path: "/home/ubuntu/dimitrios/mosquitto.pid"
-    state: absent
-
-- name: Check if generator exists
-  stat:
-    path: "/home/ubuntu/dimitrios/generator.pid"
-  register: generator_stat_result
-
-- name: Get generator pid
-  when: generator_stat_result.stat.exists
-  shell: "cat /home/ubuntu/dimitrios/generator.pid"
-  register: generator_cat_result
-
-- name: Kill generator
-  when: generator_stat_result.stat.exists
-  shell: "kill -9 {{ generator_cat_result.stdout }}"
-  ignore_errors: true
-
-- name: Wait for generator to completely die
-  when: generator_stat_result.stat.exists
-  wait_for:
-    path: "/proc/{{ generator_cat_result.stdout }}/status"
-    state: absent
-
-- name: Remove generator pid file
-  file:
-    path: "/home/ubuntu/dimitrios/generator.pid"
-    state: absent
+- name: Kill PIDs
+  shell: kill -9 {{ item }}
+  loop: "{{ mosquitto_pids.stdout_lines }}"
+  when: mosquitto_pids.stdout != ""
