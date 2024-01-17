@@ -9,6 +9,7 @@
   shell: kill -9 {{ item }}
   loop: "{{ dool_pids.stdout_lines }}"
   when: dool_pids.stdout != ""
+  ignore_errors: true
 
 - name: Find PIDs of worker
   shell: pgrep -f {{ worker_bin_name }}
@@ -18,3 +19,4 @@
   shell: kill -9 {{ item }}
   loop: "{{ worker_pids.stdout_lines }}"
   when: worker_pids.stdout != ""
+  ignore_errors: true

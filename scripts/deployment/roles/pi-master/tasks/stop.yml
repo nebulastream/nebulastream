@@ -9,6 +9,7 @@
   shell: kill -9 {{ item }}
   loop: "{{ dool_pids.stdout_lines }}"
   when: dool_pids.stdout != ""
+  ignore_errors: true
 
 - name: Find PIDs of coordinator
   shell: pgrep -f {{ coord_bin_name }}
@@ -18,6 +19,7 @@
   shell: kill -9 {{ item }}
   loop: "{{ coord_pids.stdout_lines }}"
   when: coord_pids.stdout != ""
+  ignore_errors: true
 
 - name: Find PIDs of generator
   shell: pgrep -f e2e_latency
@@ -27,6 +29,7 @@
   shell: kill -9 {{ item }}
   loop: "{{ generator_pids.stdout_lines }}"
   when: generator_pids.stdout != ""
+  ignore_errors: true
 
 - name: Find PIDs of mosquitto
   shell: pgrep -f mosquitto
@@ -36,3 +39,4 @@
   shell: kill -9 {{ item }}
   loop: "{{ mosquitto_pids.stdout_lines }}"
   when: mosquitto_pids.stdout != ""
+  ignore_errors: true
