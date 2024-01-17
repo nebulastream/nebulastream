@@ -34,6 +34,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestUtils.hpp>
+#include <netinet/in.h>
 
 #ifndef OPERATORID
 #define OPERATORID 1
@@ -53,7 +54,7 @@
 #endif
 
 #ifndef INPUTFORMAT
-#define INPUTFORMAT SourceDescriptor::InputFormat::JSON
+#define INPUTFORMAT InputFormat::JSON
 #endif
 
 namespace NES {
@@ -68,9 +69,8 @@ class TCPSourceTest : public Testing::BaseIntegrationTest {
 
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
-        NES_DEBUG("TCPSOURCETEST::SetUp() MQTTSourceTest cases set up.");
+        NES_DEBUG("TCPSOURCETEST::SetUp() TCPSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
-        tcpSourceType = TCPSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -98,147 +98,190 @@ class TCPSourceTest : public Testing::BaseIntegrationTest {
 };
 
 /**
- * Tests basic set up of MQTT source
+ * Test TCPSource Construction via PhysicalSourceFactory from YAML
  */
-TEST_F(TCPSourceTest, TCPSourceInit) {
+TEST_F(TCPSourceTest, TCPSourceUserSpecifiedTupleSizePrint) {
 
-    auto mqttSource = createTCPSource(test_schema,
-                                      bufferManager,
-                                      queryManager,
-                                      tcpSourceType,
-                                      OPERATORID,
-                                      ORIGINID,
-                                      NUMSOURCELOCALBUFFERS,
-                                      SUCCESSORS);
+    Yaml::Node sourceConfiguration;
+    std::string yaml = R"(
+logicalSourceName: tcpsource
+physicalSourceName: tcpsource_1
+type: TCP_SOURCE
+configuration:
+    socketDomain: AF_INET
+    socketType: SOCK_STREAM
+    socketPort: 9080
+    socketHost: 192.168.1.2
+    inputFormat: CSV
+    socketBufferSize: 100
+    decideMessageSize: USER_SPECIFIED_BUFFER_SIZE
+    flushIntervalMS: 10
+    )";
+    Yaml::Parse(sourceConfiguration, yaml);
 
-    SUCCEED();
+    auto sourceType = PhysicalSourceTypeFactory::createFromYaml(sourceConfiguration);
+    auto tcpSourceType = std::dynamic_pointer_cast<TCPSourceType>(sourceType);
+    ASSERT_NE(tcpSourceType, nullptr);
+
+    ASSERT_EQ(tcpSourceType->getSocketDomain()->getValue(), AF_INET);
+    ASSERT_EQ(tcpSourceType->getSocketType()->getValue(), SOCK_STREAM);
+    ASSERT_EQ(tcpSourceType->getSocketPort()->getValue(), 9080);
+    ASSERT_EQ(tcpSourceType->getSocketHost()->getValue(), "192.168.1.2");
+    ASSERT_EQ(tcpSourceType->getInputFormat()->getValue(), InputFormat::CSV);
+    ASSERT_EQ(tcpSourceType->getDecideMessageSize()->getValue(), TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE);
+    ASSERT_EQ(tcpSourceType->getSocketBufferSize()->getValue(), 100);
+    ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 10);
+
+    auto tcpSource = createTCPSource(test_schema,
+                                     bufferManager,
+                                     queryManager,
+                                     tcpSourceType,
+                                     OPERATORID,
+                                     ORIGINID,
+                                     NUMSOURCELOCALBUFFERS,
+                                     "tcp-source",
+                                     SUCCESSORS);
+
+    std::string expected =
+        R"(TCPSOURCE(SCHEMA(var:INTEGER(32 bits)), TCPSourceType => {
+socketHost: 192.168.1.2
+socketPort: 9080
+socketDomain: 2
+socketType: 1
+flushIntervalMS: 10
+inputFormat: CSV
+decideMessageSize: USER_SPECIFIED_BUFFER_SIZE
+tupleSeparator:)";
+    std::string expected_part_2 = " \n";
+    std::string expected_part_3 = R"(
+socketBufferSize: 100
+bytesUsedForSocketBufferSizeTransfer: 0
+})";
+    EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 }
 
 /**
- * Test if schema, MQTT server address, clientId, user, and topic are the same
+ * Test TCPSource Construction via PhysicalSourceFactory from YAML
  */
-TEST_F(TCPSourceTest, TCPSourcePrint) {
-    tcpSourceType->setUrl("tcp://127.0.0.1:1883");
-    tcpSourceType->setCleanSession(false);
-    tcpSourceType->setClientId("nes-mqtt-test-client");
-    tcpSourceType->setUserName("rfRqLGZRChg8eS30PEeR");
-    tcpSourceType->setTopic("v1/devices/me/telemetry");
-    tcpSourceType->setQos(1);
+TEST_F(TCPSourceTest, TCPSourceTupleSeparatorPrint) {
 
-    auto mqttSource = createTCPSource(test_schema,
-                                      bufferManager,
-                                      queryManager,
-                                      tcpSourceType,
-                                      OPERATORID,
-                                      ORIGINID,
-                                      NUMSOURCELOCALBUFFERS,
-                                      SUCCESSORS,
-                                      INPUTFORMAT);
+    Yaml::Node sourceConfiguration;
+    std::string yaml = R"(
+logicalSourceName: tcpsource
+physicalSourceName: tcpsource_1
+type: TCP_SOURCE
+configuration:
+    socketDomain: AF_INET
+    socketType: SOCK_STREAM
+    socketPort: 9090
+    socketHost: 127.0.0.1
+    inputFormat: JSON
+    decideMessageSize: TUPLE_SEPARATOR
+    #defaults to tupleSeparator: '\n'
+    flushIntervalMS: 10
+    )";
+    Yaml::Parse(sourceConfiguration, yaml);
 
-    std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
-                           "CLIENTID=nes-mqtt-test-client, "
-                           "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
-                           "DATATYPE=0, QOS=1, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=-1. ";
+    auto sourceType = PhysicalSourceTypeFactory::createFromYaml(sourceConfiguration);
+    auto tcpSourceType = std::dynamic_pointer_cast<TCPSourceType>(sourceType);
+    ASSERT_NE(tcpSourceType, nullptr);
 
-    EXPECT_EQ(mqttSource->toString(), expected);
+    ASSERT_EQ(tcpSourceType->getSocketDomain()->getValue(), AF_INET);
+    ASSERT_EQ(tcpSourceType->getSocketType()->getValue(), SOCK_STREAM);
+    ASSERT_EQ(tcpSourceType->getSocketPort()->getValue(), 9090);
+    ASSERT_EQ(tcpSourceType->getSocketHost()->getValue(), "127.0.0.1");
+    ASSERT_EQ(tcpSourceType->getInputFormat()->getValue(), INPUTFORMAT);
+    ASSERT_EQ(tcpSourceType->getTupleSeparator()->getValue(), '\n');
+    ASSERT_EQ(tcpSourceType->getDecideMessageSize()->getValue(), TCPDecideMessageSize::TUPLE_SEPARATOR);
+    ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 10);
 
-    NES_DEBUG("{}", mqttSource->toString());
+    auto tcpSource = createTCPSource(test_schema,
+                                     bufferManager,
+                                     queryManager,
+                                     tcpSourceType,
+                                     OPERATORID,
+                                     ORIGINID,
+                                     NUMSOURCELOCALBUFFERS,
+                                     "tcp-source",
+                                     SUCCESSORS);
 
-    SUCCEED();
+    std::string expected =
+        R"(TCPSOURCE(SCHEMA(var:INTEGER(32 bits)), TCPSourceType => {
+socketHost: 127.0.0.1
+socketPort: 9090
+socketDomain: 2
+socketType: 1
+flushIntervalMS: 10
+inputFormat: JSON
+decideMessageSize: TUPLE_SEPARATOR
+tupleSeparator:)";
+    std::string expected_part_2 = " \n";
+    std::string expected_part_3 = R"(
+socketBufferSize: 0
+bytesUsedForSocketBufferSizeTransfer: 0
+})";
+    EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 }
-
 /**
- * Tests if obtained value is valid.
+ * Test TCPSource Construction via PhysicalSourceFactory from YAML
  */
-TEST_F(TCPSourceTest, DISABLED_TCPSourceValue) {
+TEST_F(TCPSourceTest, TCPSourceBufferSizeFromSocketPrint) {
 
-    auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
-    auto mqttSource = createTCPSource(test_schema,
-                                      bufferManager,
-                                      queryManager,
-                                      tcpSourceType,
-                                      OPERATORID,
-                                      ORIGINID,
-                                      NUMSOURCELOCALBUFFERS,
-                                      SUCCESSORS,
-                                      INPUTFORMAT);
-    auto tuple_buffer = mqttSource->receiveData();
-    EXPECT_TRUE(tuple_buffer.has_value());
-    uint64_t value = 0;
-    auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
-    value = *tuple;
-    uint64_t expected = 43;
-    NES_DEBUG("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: {}. Received value is: {}",
-              expected,
-              value);
-    EXPECT_EQ(value, expected);
+    Yaml::Node sourceConfiguration;
+    std::string yaml = R"(
+logicalSourceName: tcpsource
+physicalSourceName: tcpsource_1
+type: TCP_SOURCE
+configuration:
+    socketDomain: AF_INET
+    socketType: SOCK_STREAM
+    socketPort: 9090
+    socketHost: 127.0.0.1
+    inputFormat: JSON
+    decideMessageSize: BUFFER_SIZE_FROM_SOCKET
+    bytesUsedForSocketBufferSizeTransfer: 8
+    flushIntervalMS: 100
+    )";
+    Yaml::Parse(sourceConfiguration, yaml);
+
+    auto sourceType = PhysicalSourceTypeFactory::createFromYaml(sourceConfiguration);
+    auto tcpSourceType = std::dynamic_pointer_cast<TCPSourceType>(sourceType);
+    ASSERT_NE(tcpSourceType, nullptr);
+
+    ASSERT_EQ(tcpSourceType->getSocketDomain()->getValue(), AF_INET);
+    ASSERT_EQ(tcpSourceType->getSocketType()->getValue(), SOCK_STREAM);
+    ASSERT_EQ(tcpSourceType->getSocketPort()->getValue(), 9090);
+    ASSERT_EQ(tcpSourceType->getSocketHost()->getValue(), "127.0.0.1");
+    ASSERT_EQ(tcpSourceType->getInputFormat()->getValue(), INPUTFORMAT);
+    ASSERT_EQ(tcpSourceType->getDecideMessageSize()->getValue(), TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET);
+    ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 100);
+
+    auto tcpSource = createTCPSource(test_schema,
+                                     bufferManager,
+                                     queryManager,
+                                     tcpSourceType,
+                                     OPERATORID,
+                                     ORIGINID,
+                                     NUMSOURCELOCALBUFFERS,
+                                     "tcp-source",
+                                     SUCCESSORS);
+
+    std::string expected =
+        R"(TCPSOURCE(SCHEMA(var:INTEGER(32 bits)), TCPSourceType => {
+socketHost: 127.0.0.1
+socketPort: 9090
+socketDomain: 2
+socketType: 1
+flushIntervalMS: 100
+inputFormat: JSON
+decideMessageSize: BUFFER_SIZE_FROM_SOCKET
+tupleSeparator:)";
+    std::string expected_part_2 = " \n";
+    std::string expected_part_3 = R"(
+socketBufferSize: 0
+bytesUsedForSocketBufferSizeTransfer: 8
+})";
+    EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 }
 
-// Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
-TEST_F(TCPSourceTest, DISABLED_testDeployOneWorkerWithTCPSourceConfig) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    wrkConf->coordinatorPort = *rpcCoordinatorPort;
-
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    //register logical source qnv
-    std::string source =
-        R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
-                            ->addField(createField("hospitalId", BasicType::UINT64))
-                            ->addField(createField("stationId", BasicType::UINT64))
-                            ->addField(createField("patientId", BasicType::UINT64))
-                            ->addField(createField("time", BasicType::UINT64))
-                            ->addField(createField("healthStatus", BasicType::UINT8))
-                            ->addField(createField("healthStatusDuration", BasicType::UINT32))
-                            ->addField(createField("recovered", BasicType::BOOLEAN))
-                            ->addField(createField("dead", BasicType::BOOLEAN));)";
-    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->coordinatorPort = port;
-    tcpSourceType->setUrl("ws://127.0.0.1:9002");
-    tcpSourceType->setClientId("testClients");
-    tcpSourceType->setUserName("testUser");
-    tcpSourceType->setTopic("demoCityHospital_1");
-    tcpSourceType->setQos(2);
-    tcpSourceType->setCleanSession(true);
-    tcpSourceType->setFlushIntervalMS(2000);
-    auto physicalSource = PhysicalSource::create("stream", "test_stream", tcpSourceType);
-    wrkConf->physicalSources.add(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
-
-    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalog();
-
-    std::string outputFilePath = getTestResourceFolder() / "test.out";
-    NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = requestHandlerService->validateAndQueueAddRequest(query, "BottomUp");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    sleep(2);
-    NES_INFO("QueryDeploymentTest: Remove query");
-    requestHandlerService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
-}
 }// namespace NES

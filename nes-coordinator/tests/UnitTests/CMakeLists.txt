@@ -179,3 +179,5 @@ endif (NES_USE_OPC)
 if (NES_USE_MQTT)
     add_nes_unit_test(mqtt-sink-tests "Sink/MQTTSinkTest.cpp")
 endif (NES_USE_MQTT)
+
+add_subdirectory(Source)

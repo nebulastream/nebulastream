@@ -6,6 +6,9 @@ add_nes_unit_test(zmq-tests
         "CircularBufferTest.cpp")
 
 
+add_nes_unit_test(tcp-source-tests
+        "TCPSourceTest.cpp"
+)
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
     add_nes_unit_test(kafka-source-tests "KafkaSourceTest.cpp")
