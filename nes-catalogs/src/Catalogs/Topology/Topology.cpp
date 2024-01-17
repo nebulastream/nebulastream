@@ -331,7 +331,7 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<WorkerI
     return mergeSubGraphs(startNodesOfGraph);
 }
 
-std::vector<WorkerId> Topology::findAllDownstreamNodes(const WorkerId& startNode,
+bool Topology::findAllDownstreamNodes(const WorkerId& startNode,
                                       std::set<WorkerId>& reachableDownstreamNodes,
                                       std::vector<WorkerId> targetNodes) {
 
@@ -339,14 +339,14 @@ std::vector<WorkerId> Topology::findAllDownstreamNodes(const WorkerId& startNode
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.tryWLock();
     if (!lockedWorkerIdToTopologyNodeMap) {
         NES_WARNING("Unable to acquire write lock on the topology to process the find path between request");
-        return {};
+        return false;
     }
 
     auto readLockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[startNode].tryRLock();
     if (!readLockedTopologyNode) {
         NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
                     startNode);
-        return {};
+        return false;
     }
 
     //bfs from start node in downstream direction
@@ -373,7 +373,7 @@ std::vector<WorkerId> Topology::findAllDownstreamNodes(const WorkerId& startNode
 
         //if all target nodes were found, return them
         if (targetNodes.empty()) {
-            return found;
+            return true;
         }
 
         //lock the topology node
@@ -381,7 +381,7 @@ std::vector<WorkerId> Topology::findAllDownstreamNodes(const WorkerId& startNode
         if (!lockedNode) {
             NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
                         currentNodeId);
-            return {};
+            return false;
         }
 
         //insert the parents of the locked node into the queue
@@ -390,7 +390,7 @@ std::vector<WorkerId> Topology::findAllDownstreamNodes(const WorkerId& startNode
             queue.push(parentId);
         }
     }
-    return found;
+    return true;
 }
 
 std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopologyNodeId, WorkerId destinationTopologyNodeId) {

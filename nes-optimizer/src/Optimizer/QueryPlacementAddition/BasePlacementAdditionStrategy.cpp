@@ -621,8 +621,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 
                             // 14. Find the upstream operator to connect in the matched query sub plan
                             //set properties on new sink
-                            networkSinkOperator->addProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID, upstreamNonSystemOperatorId);
-                            networkSinkOperator->addProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID, downStreamNonSystemOperatorId);
+                            networkSinkOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
+                            networkSinkOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
                             operatorToConnectInMatchedPlan =
                                 querySubPlanWithUpstreamOperator->getOperatorWithId(upstreamOperatorToConnect->getId());
                             operatorToConnectInMatchedPlan->addParent(networkSinkOperator);
@@ -633,8 +633,13 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             // 12. Add a network source operator to the leaf operator.
 
                             // 13. Record information about the query plan and worker id
+                            DecomposedQueryPlanId decomposedPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+                            if (candidateOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
+                                decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(candidateOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                            }
+
                             connectedSysSubPlanDetails.emplace_back(
-                                SysPlanMetaData(decomposedQueryPlan->getDecomposedQueryPlanId(), currentWorkerId));
+                                SysPlanMetaData(decomposedPlanId, currentWorkerId));
                             // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
@@ -643,8 +648,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             candidateOperator->addChild(networkSourceOperator);
 
                             //set properties on new source
-                            networkSourceOperator->addProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID, upstreamNonSystemOperatorId);
-                            networkSourceOperator->addProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID, downStreamNonSystemOperatorId);
+                            networkSourceOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
+                            networkSourceOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
                             break;
                         } else {
                             // 12. Compute a network source sink plan.
@@ -761,17 +766,21 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                     auto matchingPlacedLeafOperator =
                                         placedQuerySubPlan->getOperatorWithId(computedOperator->getId());
                                     if (matchingPlacedLeafOperator) {
-                                        if (!computedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
+                                        if (computedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
+                                            auto connectedSysSubPlanDetails =
+                                                computedOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS);
+                                            matchingPlacedLeafOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
+                                                                                    connectedSysSubPlanDetails);
+                                        } else {
                                             NES_WARNING("connected sys sub plan details not found");
                                         }
-                                        auto connectedSysSubPlanDetails =
-                                            computedOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS);
-                                        matchingPlacedLeafOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
-                                                                                connectedSysSubPlanDetails);
                                         // Add all newly computed pinned downstream operators to the matching placed leaf operator
                                         auto pinnedDownstreamOperators = computedOperator->getParents();
                                         for (const auto& pinnedDownstreamOperator : pinnedDownstreamOperators) {
                                             bool foundOperatorWithEqualId = false;
+
+                                            //if the operator matches a placed operator that was not system generated,
+                                            //do not replace anything and leave the placed operator where it is
                                             for (const auto& placedParent : matchingPlacedLeafOperator->getParents()) {
                                                 if (placedParent->as<OperatorNode>()->getId()
                                                     == pinnedDownstreamOperator->as<OperatorNode>()->getId()) {
@@ -782,10 +791,15 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                             if (foundOperatorWithEqualId) {
                                                 continue;
                                             }
-                                            bool mergedOperator = tryMergingSink(querySubPlanVersion,
-                                                                                 computedQuerySubPlan,
-                                                                                 matchingPlacedLeafOperator,
-                                                                                 pinnedDownstreamOperator);
+
+                                            bool mergedOperator = false;
+                                            if (pinnedDownstreamOperator->instanceOf<SinkLogicalOperatorNode>()) {
+                                                mergedOperator = tryMergingNetworkSink(
+                                                    querySubPlanVersion,
+                                                    computedQuerySubPlan,
+                                                    matchingPlacedLeafOperator,
+                                                    pinnedDownstreamOperator->as<SinkLogicalOperatorNode>());
+                                            }
                                             if (!mergedOperator) {
                                                 pinnedDownstreamOperator->removeChild(computedOperator);
                                                 pinnedDownstreamOperator->addChild(matchingPlacedLeafOperator);
@@ -854,6 +868,9 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                         // Add all newly computed downstream operators to matching placed leaf operator
                                         for (const auto& upstreamOperator : computedOperator->getChildren()) {
                                             bool foundOperatorWithEqualId = false;
+
+                                            //if the operator matches a placed operator that was not system generated,
+                                            //do not replace anything and leave the placed operator where it is
                                             for (const auto& placedChild : matchingPinnedRootOperator->getChildren()) {
                                                 if (placedChild->as<OperatorNode>()->getId()
                                                     == upstreamOperator->as<OperatorNode>()->getId()) {
@@ -864,9 +881,14 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                             if (foundOperatorWithEqualId) {
                                                 continue;
                                             }
-                                            bool mergedSource = tryMergingSource(querySubPlanVersion,
-                                                                                 matchingPinnedRootOperator,
-                                                                                 upstreamOperator);
+
+                                            bool mergedSource = false;
+                                            if (upstreamOperator->instanceOf<SourceLogicalOperatorNode>()) {
+                                                mergedSource =
+                                                    tryMergingNetworkSource(querySubPlanVersion,
+                                                                            matchingPinnedRootOperator,
+                                                                            upstreamOperator->as<SourceLogicalOperatorNode>());
+                                            }
                                             if (!mergedSource) {
                                                 matchingPinnedRootOperator->addChild(upstreamOperator);
                                             }
@@ -957,42 +979,40 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
     }
     return true;
 }
-bool BasePlacementAdditionStrategy::tryMergingSource(DecomposedQueryPlanVersion querySubPlanVersion,
+
+bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanVersion querySubPlanVersion,
                                                      const NodePtr& placedDownstreamOperator,
-                                                     const NodePtr& newOperator) {
+                                                     const SourceLogicalOperatorNodePtr& newNetworkSourceOperator) {
 
-    //check if the new operator is a network source
-    auto newSource = newOperator->as_if<SourceLogicalOperatorNode>();
-    if (!newSource) {
+    //check if the new source is a network source
+    auto newSourceDescriptor = newNetworkSourceOperator->getSourceDescriptor();
+    if (!newSourceDescriptor) {
         return false;
     }
-    auto newNetworkSourceDescriptor = newSource->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
-    if (!newNetworkSourceDescriptor) {
-        return false;
-    }
+    auto newNetworkSourceDescriptor = newSourceDescriptor->as<Network::NetworkSourceDescriptor>();
 
-    NES_ASSERT(newSource->hasProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID),
-               "Network source does not have the UPSTREAM_NON_SYSTEM_OPERATOR_ID property set");
+    NES_ASSERT(newNetworkSourceOperator->hasProperty(UPSTREAM_LOGICAL_OPERATOR_ID),
+               "Network source does not have the UPSTREAM_LOGICAL_OPERATOR_ID property set");
 
     bool replacedOperator = false;
     for (const auto& existingChild : placedDownstreamOperator->getChildren()) {
 
         //check if the placed operator is a network source
-        auto existingNetworkSource = existingChild->as_if<SourceLogicalOperatorNode>();
-        if (!existingChild) {
+        if (!existingChild->instanceOf<SourceLogicalOperatorNode>()) {
             continue;
         }
-        auto existingNetworkSourceDescriptor =
-            existingNetworkSource->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
-        if (!existingNetworkSourceDescriptor) {
+        auto existingSource = existingChild->as<SourceLogicalOperatorNode>();
+        auto existingSourceDescriptor = existingSource->getSourceDescriptor();
+        if (!existingSourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
             continue;
         }
+        auto existingNetworkSourceDescriptor = existingSourceDescriptor->as<Network::NetworkSourceDescriptor>();
 
-        NES_ASSERT(existingNetworkSource->hasProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID),
-                   "Network source does not have the UPSTREAM_NON_SYSTEM_OPERATOR_ID property set");
+        NES_ASSERT(existingSource->hasProperty(UPSTREAM_LOGICAL_OPERATOR_ID),
+                   "Network source does not have the UPSTREAM_LOGICAL_OPERATOR_ID property set");
 
-        if (std::any_cast<OperatorId>(existingNetworkSource->getProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID))
-            == std::any_cast<OperatorId>(newSource->getProperty(UPSTREAM_NON_SYSTEM_OPERATOR_ID))) {
+        if (std::any_cast<OperatorId>(existingSource->getProperty(UPSTREAM_LOGICAL_OPERATOR_ID))
+            == std::any_cast<OperatorId>(newNetworkSourceOperator->getProperty(UPSTREAM_LOGICAL_OPERATOR_ID))) {
             auto mergedNetworkSourceDescriptor = Network::NetworkSourceDescriptor::create(
                 newNetworkSourceDescriptor->getSchema(),
                 newNetworkSourceDescriptor->getNesPartition(),
@@ -1001,9 +1021,9 @@ bool BasePlacementAdditionStrategy::tryMergingSource(DecomposedQueryPlanVersion 
                 SOURCE_RETRIES,
                 querySubPlanVersion,
                 existingNetworkSourceDescriptor->getUniqueId());
-            existingNetworkSource->setSourceDescriptor(mergedNetworkSourceDescriptor);
-            auto computedParent = newSource->getParents().front();
-            computedParent->removeChild(newSource);
+            existingSource->setSourceDescriptor(mergedNetworkSourceDescriptor);
+            auto computedParent = newNetworkSourceOperator->getParents().front();
+            computedParent->removeChild(newNetworkSourceOperator);
             replacedOperator = true;
             break;
         }
@@ -1011,42 +1031,40 @@ bool BasePlacementAdditionStrategy::tryMergingSource(DecomposedQueryPlanVersion 
     return replacedOperator;
 }
 
-bool BasePlacementAdditionStrategy::tryMergingSink(DecomposedQueryPlanVersion querySubPlanVersion,
+bool BasePlacementAdditionStrategy::tryMergingNetworkSink(DecomposedQueryPlanVersion querySubPlanVersion,
                                                    const DecomposedQueryPlanPtr & computedQuerySubPlan,
                                                    const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
-                                                   const NodePtr& newOperator) {
-    //check if the new operator is a network sink
-    auto newSink = newOperator->as_if<SinkLogicalOperatorNode>();
-    if (!newSink) {
+                                                   const SinkLogicalOperatorNodePtr& newNetworkSinkOperator) {
+    //check if the new sink is a network sink
+    auto newSinkDescriptor = newNetworkSinkOperator->getSinkDescriptor();
+    if (!newSinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
         return false;
     }
-    auto newNetworkSinkDescriptor = newSink->getSinkDescriptor()->as_if<Network::NetworkSinkDescriptor>();
-    if (!newNetworkSinkDescriptor) {
-        return false;
-    }
+    auto newNetworkSinkDescriptor = newSinkDescriptor->as<Network::NetworkSinkDescriptor>();
 
-    NES_ASSERT(newSink->hasProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID),
-               "Network sink does not have the DOWNSTREAM_NON_SYSTEM_OPERATOR_ID property set");
+    NES_ASSERT(newNetworkSinkOperator->hasProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID),
+               "Network sink does not have the DOWNSTREAM_LOGICAL_OPERATOR_ID property set");
 
     bool replacedOperator = false;
     for (const auto& existingParent : upstreamOperatorOfPlacedSinksToCheck->getParents()) {
 
         //check if the placed operator is a network sink
-        auto existingNetworkSink = existingParent->as_if<SinkLogicalOperatorNode>();
-        if (!existingNetworkSink) {
+        if (!existingParent->instanceOf<SinkLogicalOperatorNode>()) {
             continue;
         }
-        auto existingNetworkSinkDescriptor = existingNetworkSink->getSinkDescriptor()->as_if<Network::NetworkSinkDescriptor>();
-        if (!existingNetworkSinkDescriptor) {
+        auto existingSink = existingParent->as<SinkLogicalOperatorNode>();
+        auto existingSinkDescriptor = existingSink->getSinkDescriptor();
+        if (!existingSinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
             continue;
         }
+        auto existingNetworkSinkDescriptor = existingSinkDescriptor->as<Network::NetworkSinkDescriptor>();
 
-        NES_ASSERT(existingNetworkSink->hasProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID),
-                   "Network sink does not have the DOWNSTREAM_NON_SYSTEM_OPERATOR_ID property set");
+        NES_ASSERT(existingSink->hasProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID),
+                   "Network sink does not have the DOWNSTREAM_LOGICAL_OPERATOR_ID property set");
 
         //check if the new sink corresponds to a pleced sink that needs to be reconfigured
-        if (std::any_cast<OperatorId>(existingNetworkSink->getProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID))
-            == std::any_cast<OperatorId>(newSink->getProperty(DOWNSTREAM_NON_SYSTEM_OPERATOR_ID))) {
+        if (std::any_cast<OperatorId>(existingSink->getProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID))
+            == std::any_cast<OperatorId>(newNetworkSinkOperator->getProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID))) {
             auto mergedNetworkSinkDescriptor =
                 Network::NetworkSinkDescriptor::create(newNetworkSinkDescriptor->getNodeLocation(),
                                                        newNetworkSinkDescriptor->getNesPartition(),
@@ -1055,8 +1073,8 @@ bool BasePlacementAdditionStrategy::tryMergingSink(DecomposedQueryPlanVersion qu
                                                        querySubPlanVersion,
                                                        newNetworkSinkDescriptor->getNumberOfOrigins(),
                                                        existingNetworkSinkDescriptor->getUniqueId());
-            existingNetworkSink->setSinkDescriptor(mergedNetworkSinkDescriptor);
-            computedQuerySubPlan->removeAsRootOperator(newSink->getId());
+            existingSink->setSinkDescriptor(mergedNetworkSinkDescriptor);
+            computedQuerySubPlan->removeAsRootOperator(newNetworkSinkOperator->getId());
             replacedOperator = true;
             break;
         }

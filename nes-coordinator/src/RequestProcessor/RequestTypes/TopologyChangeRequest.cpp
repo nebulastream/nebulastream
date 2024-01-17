@@ -359,10 +359,11 @@ TopologyChangeRequest::findUpstreamAndDownstreamPinnedOperators(const SharedQuer
 
         //find all toplogy nodes that are reachable from the pinned upstream operator node
         std::set<WorkerId> reachable;
-        auto foundTargetNodes = topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
+        //todo:
+        topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
 
         //check if the old downstream was found, then only forward operators need to be inserted between the old up and downstream
-        if (!foundTargetNodes.empty()) {
+        if (reachable.contains(downstreamWorkerId)) {
             //only one target node as been supplied, so the vector of found targets can contain one item at most
             downstreamPinned.insert(downstreamOperator->getId());
         } else {

@@ -273,21 +273,12 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
     for (const auto& [workerId, querySubPlanIds] : workerIdToDecomposedQueryPlanIds) {
         // 2. Fetch the query sub plan from the execution node
         auto executionNode = globalExecutionPlan->getExecutionNodeById(workerId);
-        //check if the sub plan is on a node that still exists in the system
-        if (!executionNode) {
-            continue;
-        }
 
         std::vector<DecomposedQueryPlanPtr> updatedDecomposedQueryPlans;
         uint32_t releasedSlots = 0;
 
         // 3. Update the placed query sub plans on the execution node and record them
         for (const auto& querySubPlanId : querySubPlanIds) {
-            //check if the sub plan actually has a valid id. If not, it is a computed plan that will not be found among the execution nodes
-            if (querySubPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
-                continue;
-            }
-
             // 4. Fetch the copy of Decomposed query plan to modify
             auto querySubPlanToUpdate = executionNode->getDecomposedQueryPlan(sharedQueryId, querySubPlanId);
 
