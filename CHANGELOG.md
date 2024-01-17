@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.24](https://github.com/nebulastream/nebulastream/tree/v0.6.24) (2024-01-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.23...v0.6.24)
+
+**Implemented enhancements:**
+
+- \[TASK\] Allow running multiple different queries at once in nes-benchmarking [\#4292](https://github.com/nebulastream/nebulastream/issues/4292)
+
 ## [v0.6.23](https://github.com/nebulastream/nebulastream/tree/v0.6.23) (2024-01-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.22...v0.6.23)
@@ -5518,15 +5526,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
-
-## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
 
 ## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+
+## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
 
 #### Complex Event Processing
 
