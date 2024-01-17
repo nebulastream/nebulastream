@@ -7,7 +7,7 @@
       uri:
         url: "http://{{ default_pi_master_ip}}:{{ default_coordinator_ports[0] }}/v1/nes/query/execute-query"
         method: POST
-        src: queries/ktm-star.json
+        src: queries/sensor-avg.json
         status_code: 202
         headers:
           content-type: application/json
