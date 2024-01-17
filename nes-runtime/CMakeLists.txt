@@ -68,7 +68,13 @@ target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 
 
 # Add Private Dependencies
-target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ})
+if (NES_ENABLES_TESTS AND NOT (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"))
+    # this allows to mock read calls
+    target_compile_definitions(nes-runtime PRIVATE WRAP_READ_CALL)
+    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ} "-Wl,--wrap,read")
+else ()
+    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ})
+endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
