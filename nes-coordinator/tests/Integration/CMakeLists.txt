@@ -99,8 +99,8 @@ add_nes_integration_test(update-topology-remote-test "UpdateTopologyRemoteTest.c
 # NetworkStackIntegrationTest
 add_nes_integration_test(network-stack-integration-test "NetworkStackIntegrationTest.cpp")
 
-# NemoIntegrationTest
-add_nes_integration_test(nemo-integration-test "NemoIntegrationTest.cpp")
+# NemoJoinIntegrationTest
+add_nes_integration_test(nemo-integration-test "NemoJoinIntegrationTest.cpp")
 
 ###  Source Integration tests ###
 add_nes_integration_test(source-integration-tests

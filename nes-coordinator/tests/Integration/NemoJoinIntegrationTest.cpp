@@ -34,15 +34,15 @@ static const std::string sourceNameRight = "log_right";
  * @brief Test the NEMO placement on different topologies to check if shared nodes contain the window operator based on the configs
  * of setDistributedWindowChildThreshold and setDistributedWindowCombinerThreshold.
  */
-class NemoIntegrationTest : public Testing::BaseIntegrationTest {
+class NemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     BufferManagerPtr bufferManager;
     QueryCompilation::StreamJoinStrategy joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
     QueryCompilation::WindowingStrategy windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
 
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("NemoIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup NemoIntegrationTest test class.");
+        NES::Logger::setupLogging("NemoJoinIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup NemoJoinIntegrationTest test class.");
     }
 
     void SetUp() override {
@@ -111,11 +111,11 @@ class NemoIntegrationTest : public Testing::BaseIntegrationTest {
                                                              std::string(TEST_DATA_DIRECTORY) + "KeyedWindows/window_"
                                                                  + std::to_string(cnt++) + ".csv");
                         testHarness.attachWorkerWithCSVSourceToWorkerWithId(csvSource, parent);
-                        NES_DEBUG("NemoIntegrationTest: Adding CSV source:{} for node:{}", sourceName, nodeId);
+                        NES_DEBUG("NemoJoinIntegrationTest: Adding CSV source:{} for node:{}", sourceName, nodeId);
                         continue;
                     }
                     testHarness.attachWorkerToWorkerWithId(parent);
-                    NES_DEBUG("NemoIntegrationTest: Adding worker to worker with ID:{}", parent);
+                    NES_DEBUG("NemoJoinIntegrationTest: Adding worker to worker with ID:{}", parent);
                 }
             }
             parents = newParents;
@@ -125,12 +125,10 @@ class NemoIntegrationTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(NemoIntegrationTest, testThreeLevelsTopologyTopDown) {
+TEST_F(NemoJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
     uint64_t expectedTuples = 54;
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config) {
         config->optimizer.enableNemoPlacement.setValue(true);
-        //config->optimizer.distributedWindowChildThreshold = 0;
-        //config->optimizer.distributedWindowCombinerThreshold = 0;
     };
     Query query = Query::from(sourceNameLeft)
                       .joinWith(Query::from(sourceNameRight))
@@ -141,13 +139,13 @@ TEST_F(NemoIntegrationTest, testThreeLevelsTopologyTopDown) {
     auto testHarness = createTestHarness(query, crdFunctor, 2, 2, 4);
     auto actualOutput = testHarness.runQuery(expectedTuples).getOutput();
     auto outputString = actualOutput[0].toString(testHarness.getOutputSchema(), true);
-    NES_DEBUG("NemoIntegrationTest: Output\n{}", outputString);
+    NES_DEBUG("NemoJoinIntegrationTest: Output\n{}", outputString);
     EXPECT_EQ(TestUtils::countTuples(actualOutput), expectedTuples);
 
     TopologyPtr topology = testHarness.getTopology();
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
-    NES_DEBUG("NemoIntegrationTest: Executed with topology \n{}", topology->toString());
-    NES_INFO("NemoIntegrationTest: Executed with plan \n{}", queryPlan->toString());
+    NES_DEBUG("NemoJoinIntegrationTest: Executed with topology \n{}", topology->toString());
+    NES_INFO("NemoJoinIntegrationTest: Executed with plan \n{}", queryPlan->toString());
     EXPECT_EQ(4, countOccurrences("Join", queryPlan->toString()));
 }
 

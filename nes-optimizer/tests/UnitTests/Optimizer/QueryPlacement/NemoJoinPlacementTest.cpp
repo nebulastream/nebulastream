@@ -28,17 +28,19 @@ limitations under the License.
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -46,12 +48,14 @@ limitations under the License.
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+
 #include <gtest/gtest.h>
 #include <z3++.h>
 
 using namespace NES;
 using namespace z3;
 using namespace Configurations;
+using namespace Optimizer;
 
 static const std::string sourceNameLeft = "log_left";
 static const std::string sourceNameRight = "log_right";
@@ -144,11 +148,11 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
         return sourceCatalog;
     }
 
-    std::vector<ExecutionNodePtr> runNemoPlacement(const Query& query,
-                                                   const TopologyPtr& topology,
-                                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                   const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                                   OptimizerConfiguration optimizerConfig) const {
+    static std::tuple<uint64_t, GlobalExecutionPlanPtr> runNemoPlacement(const Query& query,
+                                                                         const TopologyPtr& topology,
+                                                                         const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                                         OptimizerConfiguration optimizerConfig) {
+        std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto testQueryPlan = query.getQueryPlan();
         testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
 
@@ -171,17 +175,50 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
         // Execute the placement
         auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
         auto sharedQueryId = sharedQueryPlan->getId();
-        auto queryPlacementPhase =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+        auto queryPlacementPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                   topology,
+                                                                                   typeInferencePhase,
+                                                                                   coordinatorConfiguration);
         queryPlacementPhase->execute(sharedQueryPlan);
-        return globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+        return {sharedQueryId, globalExecutionPlan};
+    }
+
+    template<typename T>
+    static void verifyChildrenOfType(std::vector<DecomposedQueryPlanPtr>& querySubPlans,
+                                     uint64_t expectedSubPlanSize = 1,
+                                     uint64_t expectedRootOperators = 1) {
+        ASSERT_EQ(querySubPlans.size(), expectedSubPlanSize);
+        for (auto& querySubPlan : querySubPlans) {
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), expectedRootOperators);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            auto children = actualRootOperator->getChildren();
+            for (const auto& child : children) {
+                ASSERT_TRUE(child->instanceOf<T>());
+            }
+        }
+    }
+
+    template<typename T>
+    static void verifySourceOperators(std::vector<DecomposedQueryPlanPtr>& querySubPlans,
+                                      uint64_t expectedSubPlanSize,
+                                      uint64_t expectedSourceOperatorSize) {
+        ASSERT_EQ(querySubPlans.size(), expectedSubPlanSize);
+        auto querySubPlan = querySubPlans[0];
+        std::vector<SourceLogicalOperatorNodePtr> sourceOperators = querySubPlan->getSourceOperators();
+        ASSERT_EQ(sourceOperators.size(), expectedSourceOperatorSize);
+        for (const auto& sourceOperator : sourceOperators) {
+            EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
+            auto sourceDescriptor = sourceOperator->as_if<SourceLogicalOperatorNode>()->getSourceDescriptor();
+            ASSERT_TRUE(sourceDescriptor->instanceOf<T>());
+        }
     }
 };
 
 TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
     auto topology = setupTopology(2, 3, 4);
     auto sourceCatalog = setupSourceCatalog({2, 3, 4, 5});
-    std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.enableNemoPlacement = true;
@@ -194,5 +231,20 @@ TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
 
-    auto executionNodes = runNemoPlacement(query, topology, sourceCatalog, udfCatalog, optimizerConfig);
+    auto outputTuple = runNemoPlacement(query, topology, sourceCatalog, optimizerConfig);
+    auto queryId = std::get<0>(outputTuple);
+    auto executionPlan = std::get<1>(outputTuple);
+    auto executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
+    EXPECT_EQ(executionNodes.size(), 5);
+
+    for (const auto& executionNode : executionNodes) {
+        std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+        if (executionNode->getId() == 1u) {
+            verifyChildrenOfType<JoinLogicalOperatorNode>(querySubPlans, 1, 1);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 8);
+        } else {
+            verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans, 1, 2);
+            verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
+        }
+    }
 }
