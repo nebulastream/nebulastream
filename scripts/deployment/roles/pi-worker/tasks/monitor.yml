@@ -1,6 +1,10 @@
 ---
 # This Playbook runs monitoring tasks for a worker
 
+- name: Get IP address from template
+  set_fact:
+    local_worker_ip: "{{ lookup('template', 'get_ip.j2') | trim }}"
+
 - name: Remove older log
   file:
     path: "/home/ubuntu/dimitrios/worker_{{ local_worker_ip }}-sysStat.csv"
