@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Util/Timer.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -151,6 +152,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      */
     jni::jmethodID getUDFMethodId() const;
 
+    Timer<>& getJniTimer();
+
     /**
      * @brief Find a class inside the custom class loader associated with the UDF.
      * @param className The name of the class in Java notation.
@@ -193,7 +196,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     jni::jobject classLoader;
     jni::jmethodID injectClassMethod;
     jni::jmethodID loadClassMethod;
-
+    Timer<> jniTimer{"Java UDF execution (JNI calls)"};
+    Timer<> operatorTimer{"Java UDF execution (operator)"};
 };
 
 }// namespace NES::Runtime::Execution::Operators

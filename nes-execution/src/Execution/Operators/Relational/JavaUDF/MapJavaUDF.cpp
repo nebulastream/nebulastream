@@ -42,6 +42,20 @@ void* executeMapUdf(void* state, void* instance, void* pojoObjectPtr) {
     return udfResult;
 }
 
+void* startTimer(void *state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
+    handler->getJniTimer().start();
+    return nullptr;
+}
+
+void* pauseTimer(void *state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    auto handler = static_cast<JavaUDFOperatorHandler*>(state);
+    handler->getJniTimer().pause();
+    return nullptr;
+}
+
 MapJavaUDF::MapJavaUDF(uint64_t operatorHandlerIndex, SchemaPtr operatorInputSchema, SchemaPtr operatorOutputSchema)
     : AbstractJavaUDFOperator(operatorHandlerIndex, std::move(operatorInputSchema), std::move(operatorOutputSchema)) {}
 
@@ -54,6 +68,8 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto state = (LocalUDFState*) ctx.getLocalState(this);
     auto handler = state->handler;
 
+    FunctionCall<>("startTimer", startTimer, handler);
+
     // Convert the input record to the input field of UDF input object
     auto inputPojoPtr = createInputPojo(record, handler);
 
@@ -63,6 +79,8 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
 
     auto resultRecord = extractRecordFromPojo(handler, outputPojoPtr);
     FunctionCall<>("freeObject", freeObject, outputPojoPtr);
+
+    FunctionCall<>("pauseTimer", pauseTimer, handler);
 
     // Trigger execution of next operator
     child->execute(ctx, resultRecord);
