@@ -1,5 +1,13 @@
 # Changelog
 
+## [elegant-v0.6.19-java-arrow](https://github.com/nebulastream/nebulastream/tree/elegant-v0.6.19-java-arrow) (2024-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-java...elegant-v0.6.19-java-arrow)
+
+## [elegant-v0.6.19-java](https://github.com/nebulastream/nebulastream/tree/elegant-v0.6.19-java) (2024-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.24...elegant-v0.6.19-java)
+
 ## [v0.6.24](https://github.com/nebulastream/nebulastream/tree/v0.6.24) (2024-01-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.23...v0.6.24)
@@ -5526,15 +5534,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
-
-## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
 
 ## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+
+## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
 
 #### Complex Event Processing
 
