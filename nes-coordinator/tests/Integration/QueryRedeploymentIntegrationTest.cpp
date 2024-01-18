@@ -386,12 +386,12 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         int noOfRunningPlans = 0;
 
         RequestProcessor::StorageDataStructures storageDataStructures(coordinatorConfig,
-                                                                                    topology,
-                                                                                    crd->getGlobalExecutionPlan(),
-                                                                                    crd->getQueryCatalogService(),
-                                                                                    crd->getGlobalQueryPlan(),
-                                                                                    crd->getSourceCatalog(),
-                                                                                    crd->getUDFCatalog());
+                                                                      topology,
+                                                                      crd->getGlobalExecutionPlan(),
+                                                                      crd->getQueryCatalogService(),
+                                                                      crd->getGlobalQueryPlan(),
+                                                                      crd->getSourceCatalog(),
+                                                                      crd->getUDFCatalog());
         auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
         std::vector<std::pair<WorkerId, WorkerId>> removedLinks = {{wrk1->getWorkerId(), oldWorker->getWorkerId()}};
         std::vector<std::pair<WorkerId, WorkerId>> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};

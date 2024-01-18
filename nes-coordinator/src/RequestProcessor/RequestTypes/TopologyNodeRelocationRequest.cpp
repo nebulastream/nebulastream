@@ -36,14 +36,14 @@ namespace NES::RequestProcessor::Experimental {
 
 TopologyNodeRelocationRequestPtr
 TopologyNodeRelocationRequest::create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
-                                                       const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
-                                                       uint8_t maxRetries) {
+                                      const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
+                                      uint8_t maxRetries) {
     return std::make_shared<TopologyNodeRelocationRequest>(removedLinks, addedLinks, maxRetries);
 }
 
 TopologyNodeRelocationRequest::TopologyNodeRelocationRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
-                                             const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
-                                             uint8_t maxRetries)
+                                                             const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
+                                                             uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::Topology,
                           ResourceType::GlobalQueryPlan,
                           ResourceType::GlobalExecutionPlan,
@@ -187,18 +187,20 @@ void TopologyNodeRelocationRequest::processRemoveTopologyLinkRequest(WorkerId up
 //    }
 //}
 
-void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
-                                                                const Optimizer::ExecutionNodePtr& upstreamExecutionNode,
-                                                                const Optimizer::ExecutionNodePtr& downstreamExecutionNode) {
+void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
+    SharedQueryId sharedQueryPlanId,
+    const Optimizer::ExecutionNodePtr& upstreamExecutionNode,
+    const Optimizer::ExecutionNodePtr& downstreamExecutionNode) {
     //Fetch the shared query plan and update its status
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryPlanId);
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
 
     //find the pinned operators for the changelog
-    auto [upstreamOperatorIds, downstreamOperatorIds] = NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
-                                                                                                 upstreamExecutionNode,
-                                                                                                 downstreamExecutionNode,
-                                                                                                 topology);
+    auto [upstreamOperatorIds, downstreamOperatorIds] =
+        NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
+                                                                    upstreamExecutionNode,
+                                                                    downstreamExecutionNode,
+                                                                    topology);
     //perform re-operator placement on the query plan
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 
@@ -216,7 +218,6 @@ void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(SharedQu
 
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
 }
-
 
 //todo #4494: implement all the following functions
 void TopologyNodeRelocationRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}

@@ -35,9 +35,7 @@ uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partit
 
 void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; }
 
-void PartitionManager::PartitionConsumerEntry::unpin() {
-    partitionCounter--;
-}
+void PartitionManager::PartitionConsumerEntry::unpin() { partitionCounter--; }
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 

@@ -59,7 +59,7 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     /**
      * @brief start a previously scheduled new version for this data emitter
      */
-    virtual bool startNewVersion(){ return false; };
+    virtual bool startNewVersion() { return false; };
 };
 }// namespace NES
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

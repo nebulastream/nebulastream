@@ -160,8 +160,9 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     switch (task.getType()) {
         case Runtime::ReconfigurationType::UpdateVersion: {
             if (!networkManager->getConnectSourceEventChannelsAsync()) {
-                NES_THROW_RUNTIME_ERROR("Attempt to reconfigure a network source but asynchronous connecting of event channels is not "
-                                "activated. To use source reconfiguration allow asynchronous connecting in the the configuration");
+                NES_THROW_RUNTIME_ERROR(
+                    "Attempt to reconfigure a network source but asynchronous connecting of event channels is not "
+                    "activated. To use source reconfiguration allow asynchronous connecting in the the configuration");
             }
             workerContext.releaseEventOnlyChannel(uniqueNetworkSourceIdentifier, terminationType);
             NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
@@ -179,10 +180,10 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
 
             if (networkManager->getConnectSourceEventChannelsAsync()) {
                 auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
-                                                                                 nesPartition,
-                                                                                 localBufferManager,
-                                                                                 waitTime,
-                                                                                 retryTimes);
+                                                                                            nesPartition,
+                                                                                            localBufferManager,
+                                                                                            waitTime,
+                                                                                            retryTimes);
                 workerContext.storeEventChannelFuture(this->operatorId, std::move(channelFuture));
                 break;
             } else {
@@ -233,11 +234,11 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     if (isTermination) {
         if (!workerContext.doesEventChannelExist(this->operatorId)) {
             //todo #4490: allow aborting connection here
-             auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
-             if (channel) {
-                 channel->close(terminationType);
-             }
-             return;
+            auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
+            if (channel) {
+                channel->close(terminationType);
+            }
+            return;
         }
         workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
         NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
@@ -325,7 +326,9 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
         if (!senderChannel) {
             auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(this->operatorId);
             if (!senderChannelOptional) {
-                NES_DEBUG("NetworkSource::onEvent(event, wrkContext) operatorId: {}: could not send event because event channel has not been established yet", this->operatorId);
+                NES_DEBUG("NetworkSource::onEvent(event, wrkContext) operatorId: {}: could not send event because event channel "
+                          "has not been established yet",
+                          this->operatorId);
                 return;
             }
             workerContext.storeEventOnlyChannel(this->operatorId, std::move(senderChannelOptional.value()));

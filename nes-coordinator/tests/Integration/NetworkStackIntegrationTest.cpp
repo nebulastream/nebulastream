@@ -821,7 +821,8 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                                    NSOURCE_RETRY_WAIT,
                                                    NSOURCE_RETRIES,
                                                    successors,
-                                                   0, uniqueId);
+                                                   0,
+                                                   uniqueId);
         });
 
     class TestSourceEvent : public GeneratorSource {
