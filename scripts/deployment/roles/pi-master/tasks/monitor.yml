@@ -3,7 +3,7 @@
 
 - name: Remove older log
   file:
-    path: /home/ubuntu/dimitrios/{{ ansible_hostname }}-sysStat.csv
+    path: "/home/ubuntu/dimitrios/{{ coord_bin_name }}-sysStat.csv"
     state: absent
 
 - name: Start dool monitoring
@@ -12,4 +12,4 @@
 
 - name: Coordinator monitoring log is created
   wait_for:
-    path: "/home/ubuntu/dimitrios/{{ ansible_hostname }}-sysStat.csv"
+    path: "/home/ubuntu/dimitrios/{{ coord_bin_name }}-sysStat.csv"
