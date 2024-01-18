@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Topology/Prediction/Edge.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Catalogs/Topology/Prediction/TopologyTimeline.hpp>
 #include <Catalogs/Topology/Topology.hpp>
@@ -24,7 +24,6 @@
 #include <gtest/gtest.h>
 
 namespace NES {
-using Experimental::TopologyPrediction::Edge;
 using Experimental::TopologyPrediction::TopologyTimeline;
 class TopologyTimelineTest : public Testing::BaseIntegrationTest {
   public:

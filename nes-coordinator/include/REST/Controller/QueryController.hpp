@@ -22,7 +22,7 @@
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <SerializableQueryPlan.pb.h>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <exception>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
@@ -46,8 +46,8 @@ using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using RequestServicePtr = std::shared_ptr<RequestService>;
 
 namespace Optimizer {
 class GlobalExecutionPlan;
@@ -66,7 +66,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      */
     QueryController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                    const QueryServicePtr& queryService,
+                    const RequestServicePtr& queryService,
                     const QueryCatalogServicePtr& queryCatalogService,
                     const GlobalQueryPlanPtr& globalQueryPlan,
                     const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -82,7 +82,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<QueryController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                   const QueryServicePtr& queryService,
+                                                   const RequestServicePtr& queryService,
                                                    const QueryCatalogServicePtr& queryCatalogService,
                                                    const GlobalQueryPlanPtr& globalQueryPlan,
                                                    const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -378,7 +378,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     const std::string DEFAULT_PLACEMENT_STRATEGY_TYPE = "NONE";
 
-    QueryServicePtr queryService;
+    RequestServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;

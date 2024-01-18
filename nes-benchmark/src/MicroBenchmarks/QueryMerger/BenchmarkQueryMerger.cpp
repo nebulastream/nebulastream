@@ -30,7 +30,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>
@@ -354,7 +354,7 @@ int main(int argc, const char* argv[]) {
 
                 //Setup coordinator for the experiment
                 setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum], batchSizes[configNum]);
-                NES::QueryServicePtr queryService = coordinator->getQueryService();
+                NES::RequestServicePtr queryService = coordinator->getQueryService();
                 auto queryCatalogService = coordinator->getQueryCatalogService();
                 auto globalQueryPlan = coordinator->getGlobalQueryPlan();
                 //Sleep for fixed time before starting the experiments

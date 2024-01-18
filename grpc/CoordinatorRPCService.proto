@@ -44,6 +44,9 @@ service CoordinatorRPCService {
   // sends a replace parent request to the coordinator
   rpc ReplaceParent (ReplaceParentRequest) returns (ReplaceParentReply) {}
 
+  // sends a toology node relocation request to the coordinator
+  rpc RelocateTopologyNode (NodeRelocationRequest) returns (NodeRelocationReply) {}
+
   // get a list of a nodes parents
   rpc GetParents (GetParentsRequest) returns (GetParentsReply) {}
 
@@ -287,4 +290,18 @@ message GetParentsRequest{
 
 message GetParentsReply {
   repeated uint64 parentIds = 1;
+}
+
+message NodeRelocationRequest {
+  repeated TopologyLink removedLinks = 1;
+  repeated TopologyLink addedLinks = 2;
+}
+
+message NodeRelocationReply {
+  bool success = 1;
+}
+
+message TopologyLink {
+  uint64 upstream = 1;
+  uint64 downstream = 2;
 }

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
@@ -24,6 +23,7 @@
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/S2Utilities.hpp>
 #include <Util/Mobility/Waypoint.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <utility>
 
 #ifdef S2DEF
@@ -192,9 +192,12 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(
 
 bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconnectionRoutine(uint64_t& currentParentId,
                                                                                              uint64_t newParentId) {
-    //todo #4283: trigger reconnecting of sinks
+    //todo #4283: trigger buffering of sinks before reoconnect happens
 
-    bool success = coordinatorRpcClient->replaceParent(currentParentId, newParentId);
+    auto workerId = nodeEngine->getNodeId();
+    TopologyLinkInformation removedLink(workerId, currentParentId);
+    TopologyLinkInformation addedLink(workerId, currentParentId);
+    bool success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink});
     if (success) {
         //update locally saved information about parent
         currentParentId = newParentId;

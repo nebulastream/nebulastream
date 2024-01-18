@@ -45,7 +45,7 @@
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -120,7 +120,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
     bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();
-    queryService = std::make_shared<QueryService>(enableNewRequestExecutor,
+    queryService = std::make_shared<RequestService>(enableNewRequestExecutor,
                                                   this->coordinatorConfiguration->optimizer,
                                                   queryCatalogService,
                                                   queryRequestQueue,
@@ -349,7 +349,7 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 
-QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
+RequestServicePtr NesCoordinator::getQueryService() { return queryService; }
 
 QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
 

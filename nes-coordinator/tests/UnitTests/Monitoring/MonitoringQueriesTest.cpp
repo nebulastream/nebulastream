@@ -39,7 +39,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Services/MonitoringService.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <cstdint>
 #include <memory>
 #include <regex>
@@ -128,7 +128,7 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
             workers.emplace_back(wrk);
         }
 
-        QueryServicePtr queryService = crd->getQueryService();
+        RequestServicePtr queryService = crd->getQueryService();
         QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
 
         NES_INFO("MonitoringQueriesTest: Submit query");

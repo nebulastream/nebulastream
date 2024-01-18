@@ -11,19 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Catalogs/Topology/Prediction/Edge.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <sstream>
-namespace NES::Experimental::TopologyPrediction {
-std::string Edge::toString() const {
+namespace NES {
+std::string TopologyLinkInformation::toString() const {
     std::stringstream ss;
     ss << upstreamTopologyNode << "->" << downstreamTopologyNode;
     return ss.str();
 }
 
-Edge::Edge(WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode)
+TopologyLinkInformation::TopologyLinkInformation(WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode)
     : upstreamTopologyNode(upstreamTopologyNode), downstreamTopologyNode(downstreamTopologyNode){};
 
-bool Edge::operator==(const Edge& other) const {
+bool TopologyLinkInformation::operator==(const TopologyLinkInformation& other) const {
     return this->downstreamTopologyNode == other.downstreamTopologyNode
         && this->upstreamTopologyNode == other.upstreamTopologyNode;
 }

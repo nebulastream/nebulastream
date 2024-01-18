@@ -15,6 +15,7 @@
 #define NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 
 namespace NES {
 
@@ -31,6 +32,11 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 namespace RequestProcessor::Experimental {
 class TopologyNodeRelocationRequest;
+
+struct TopologyNodeRelocationRequestResponse : AbstractRequestResponse {
+    explicit TopologyNodeRelocationRequestResponse(bool success) : success(success){};
+    bool success;
+};
 using TopologyNodeRelocationRequestPtr = std::shared_ptr<TopologyNodeRelocationRequest>;
 
 class TopologyNodeRelocationRequest : public AbstractUniRequest {
@@ -41,8 +47,8 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * @param addedLinks a list of links to be added represented as pairs in the format {upstreamId, downstreamId}
      * @param maxRetries the maximum amount of times this request should be retried in case of failure
      */
-    TopologyNodeRelocationRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
-                                  const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
+    TopologyNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
+                                  const std::vector<TopologyLinkInformation>& addedLinks,
                                   uint8_t maxRetries);
 
     /**
@@ -52,8 +58,8 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * @param maxRetries the maximum amount of times this request should be retried in case of failure
      * @return a pointer the the newly created request
      */
-    static TopologyNodeRelocationRequestPtr create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
-                                                   const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
+    static TopologyNodeRelocationRequestPtr create(const std::vector<TopologyLinkInformation>& removedLinks,
+                                                   const std::vector<TopologyLinkInformation>& addedLinks,
                                                    uint8_t maxRetries);
 
     /**
@@ -110,18 +116,12 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      */
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 
-    /**
-     * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
-     * @param storageHandle: The storage access handle used by the request
-     */
-    void postExecution(const StorageHandlerPtr& storageHandle) override;
-
   private:
     TopologyPtr topology;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    std::vector<std::pair<WorkerId, WorkerId>> removedLinks;
-    std::vector<std::pair<WorkerId, WorkerId>> addedLinks;
+    std::vector<TopologyLinkInformation> removedLinks;
+    std::vector<TopologyLinkInformation> addedLinks;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;

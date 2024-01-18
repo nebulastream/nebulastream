@@ -24,7 +24,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
@@ -269,7 +269,7 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
             "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
     }
 
-    QueryServicePtr queryService = nesCoordinator->getQueryService();
+    RequestServicePtr queryService = nesCoordinator->getQueryService();
     QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
 
     // local fs

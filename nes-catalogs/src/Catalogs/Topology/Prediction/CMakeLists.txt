@@ -15,5 +15,4 @@ add_source_files(nes-catalogs
         TopologyTimeline.cpp
         TopologyChangeLog.cpp
         TopologyDelta.cpp
-        Edge.cpp
         )

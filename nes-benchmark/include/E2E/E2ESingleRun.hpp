@@ -83,7 +83,7 @@ class E2ESingleRun {
      * @param queryService The query service to use
      * @param queryCatalog The query catalog to use
      */
-    void submitQueries(QueryServicePtr queryService, QueryCatalogServicePtr queryCatalog);
+    void submitQueries(RequestServicePtr queryService, QueryCatalogServicePtr queryCatalog);
 
     /**
      * @brief starts everything necessary for running the queries and measures for a single query

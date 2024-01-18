@@ -39,8 +39,8 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using RequestServicePtr = std::shared_ptr<RequestService>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
@@ -67,7 +67,7 @@ class MonitoringManager {
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
     MonitoringManager(TopologyPtr topology,
-                      QueryServicePtr queryService,
+                      RequestServicePtr queryService,
                       QueryCatalogServicePtr catalogService,
                       MetricStorePtr metricStore,
                       bool enableMonitoring);
@@ -78,7 +78,7 @@ class MonitoringManager {
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
     MonitoringManager(TopologyPtr topology,
-                      QueryServicePtr queryService,
+                      RequestServicePtr queryService,
                       QueryCatalogServicePtr catalogService,
                       bool enableMonitoring);
 
@@ -88,7 +88,7 @@ class MonitoringManager {
      * @param queryService: the query service
      * @param queryCatalogService: the query catalog service
      */
-    MonitoringManager(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr queryCatalogService);
+    MonitoringManager(TopologyPtr topology, RequestServicePtr queryService, QueryCatalogServicePtr queryCatalogService);
     MonitoringManager(const MonitoringManager&) = default;
     MonitoringManager(MonitoringManager&&) = default;
     //  -- Assignment --
@@ -210,7 +210,7 @@ class MonitoringManager {
     bool enableMonitoring;
     std::set<MetricCollectorType> monitoringCollectors;
     std::set<std::string> logicalMonitoringSources;
-    NES::QueryServicePtr queryService;
+    NES::RequestServicePtr queryService;
     NES::QueryCatalogServicePtr catalogService;
 };
 

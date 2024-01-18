@@ -130,7 +130,7 @@ void E2ESingleRun::createSources() {
     NES_INFO("Created sources and the accommodating data generation and data providing!");
 }
 
-void E2ESingleRun::submitQueries(QueryServicePtr queryService, QueryCatalogServicePtr queryCatalog) {
+void E2ESingleRun::submitQueries(RequestServicePtr queryService, QueryCatalogServicePtr queryCatalog) {
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
         for (const auto& query : configOverAllRuns.queries) {
 

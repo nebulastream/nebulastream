@@ -56,8 +56,8 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
 class RequestProcessorService;
 using QueryRequestProcessorServicePtr = std::shared_ptr<RequestProcessorService>;
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using RequestServicePtr = std::shared_ptr<RequestService>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
@@ -159,7 +159,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief Get the instance of query service
      * @return Query service pointer
      */
-    QueryServicePtr getQueryService();
+    RequestServicePtr getQueryService();
 
     /**
      * @brief Get instance of query catalog
@@ -250,7 +250,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::shared_ptr<std::thread> restThread;
     std::atomic<bool> isRunning{false};
     QueryRequestProcessorServicePtr queryRequestProcessorService;
-    QueryServicePtr queryService;
+    RequestServicePtr queryService;
     MonitoringServicePtr monitoringService;
     QueryParsingServicePtr queryParsingService;
     RequestQueuePtr queryRequestQueue;
