@@ -16,6 +16,7 @@
 #define NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULEPREDICTOR_HPP_
 
 #include <Util/Mobility/ReconnectPoint.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <deque>
 #include <memory>
@@ -148,7 +149,7 @@ class ReconnectSchedulePredictor {
     //prediction data
     std::optional<S2Polyline> trajectoryLine;
     std::deque<DataTypes::Experimental::Waypoint> locationBuffer;
-    std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> reconnectPoints;
+    std::vector<ReconnectPoint> reconnectPoints;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
     size_t stepsSinceLastLocationSave;
