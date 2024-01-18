@@ -38,8 +38,8 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using RequestServicePtr = std::shared_ptr<RequestService>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
@@ -49,6 +49,8 @@ using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
+
+class TopologyLinkInformation;
 
 namespace Catalogs {
 namespace Source {
@@ -68,20 +70,21 @@ using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 }// namespace RequestProcessor
 
 /**
- * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping.
+ * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping,
+ * as well as modifying the topology.
  */
-class QueryService {
+class RequestService {
 
   public:
-    explicit QueryService(bool enableNewRequestExecutor,
-                          Configurations::OptimizerConfiguration optimizerConfiguration,
-                          const QueryCatalogServicePtr& queryCatalogService,
-                          const RequestQueuePtr& queryRequestQueue,
-                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                          const QueryParsingServicePtr& queryParsingService,
-                          const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                          const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
-                          const z3::ContextPtr& z3Context);
+    explicit RequestService(bool enableNewRequestExecutor,
+                            Configurations::OptimizerConfiguration optimizerConfiguration,
+                            const QueryCatalogServicePtr& queryCatalogService,
+                            const RequestQueuePtr& queryRequestQueue,
+                            const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                            const QueryParsingServicePtr& queryParsingService,
+                            const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                            const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
+                            const z3::ContextPtr& z3Context);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -137,6 +140,16 @@ class QueryService {
     bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
                                           DecomposedQueryPlanId querySubPlanId,
                                           const std::string& failureReason);
+
+    /**
+     * @brief modify the topology by removing and adding links and then rerun an incremental placement for queries that were
+     * sending data over one of the removed links
+     * @param removedLinks a list of topology links to remove
+     * @param addedLinks a list or topology links to add
+     * @return true on success
+     */
+    bool validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
+                                               const std::vector<TopologyLinkInformation>& addedLinks);
 
   private:
     /**

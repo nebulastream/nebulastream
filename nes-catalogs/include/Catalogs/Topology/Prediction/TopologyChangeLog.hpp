@@ -19,10 +19,12 @@
 #include <vector>
 
 namespace NES {
+
 using WorkerId = uint64_t;
+class TopologyLinkInformation;
+
 namespace Experimental::TopologyPrediction {
 class TopologyDelta;
-class Edge;
 /**
      * This class represents a list of changes (added or removed links) which are expected to happen to the topology within a
      * certain time frame. Predictions can be added or removed from a changelog in the form of TopologyDeltas.
@@ -84,8 +86,7 @@ class TopologyChangeLog {
          * @param map the mop from which values are to be removed
          * @param edges the list of links to remove from the map
          */
-    static void removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map,
-                                   const std::vector<Edge>& edges);
+    static void removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map, const std::vector<TopologyLinkInformation>& edges);
 
     /**
          * @brief Helper function that adds the elements in the vectors contained in newMap to the vectors found under the same key in additionTarget, but
@@ -106,4 +107,4 @@ class TopologyChangeLog {
 };
 }// namespace Experimental::TopologyPrediction
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_

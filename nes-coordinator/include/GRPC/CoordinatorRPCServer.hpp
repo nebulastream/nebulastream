@@ -26,8 +26,8 @@ using grpc::Status;
 
 namespace NES {
 
-class QueryService;
-using QueryServicePtr = std::shared_ptr<QueryService>;
+class RequestService;
+using RequestServicePtr = std::shared_ptr<RequestService>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
@@ -66,7 +66,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param monitoringService : the instance of monitoring service
      * @param coordinatorHealthCheckService : coordinator health check service
      */
-    explicit CoordinatorRPCServer(QueryServicePtr queryService,
+    explicit CoordinatorRPCServer(RequestServicePtr queryService,
                                   TopologyManagerServicePtr topologyManagerService,
                                   SourceCatalogServicePtr sourceCatalogService,
                                   QueryCatalogServicePtr queryCatalogService,
@@ -250,8 +250,17 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     Status GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) override;
 
+    /**
+     * @brief modify the topology by removing and adding links and then rerun an incremental placement for queries that were
+     * sending data over one of the removed links
+     * @param request contains a list of topology links to remvoe and a list of topology links to add
+     * @param reply contains a boolean which is set to true if the operation succeeded
+     * @return OK on success, CANCELLED otherwise
+     */
+    Status RelocateTopologyNode(ServerContext*, const NodeRelocationRequest* request, NodeRelocationReply* reply) override;
+
   private:
-    QueryServicePtr queryService;
+    RequestServicePtr requestService;
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
     QueryCatalogServicePtr queryCatalogService;

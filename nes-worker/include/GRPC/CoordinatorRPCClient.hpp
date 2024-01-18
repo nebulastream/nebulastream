@@ -23,6 +23,9 @@
 #include <optional>
 #include <string>
 
+namespace NES {
+class TopologyLinkInformation;
+}
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -227,6 +230,16 @@ class CoordinatorRPCClient {
      * @return a vector containing the ids of all of the nodes parents
      */
     std::vector<WorkerId> getParents(WorkerId workerId);
+
+    /**
+     * @brief modify the topology by removing and adding links and then rerun an incremental placement for queries that were
+     * sending data over one of the removed links
+     * @param removedTopologyLinks a list of topology links to remove
+     * @param addedTopologyLinks a list or topology links to add
+     * @return true on success
+     */
+    bool relocateTopologyNode(std::vector<TopologyLinkInformation> removedTopologyLinks,
+                              std::vector<TopologyLinkInformation> addedTopologyLinks);
 
   private:
     uint64_t workerId;

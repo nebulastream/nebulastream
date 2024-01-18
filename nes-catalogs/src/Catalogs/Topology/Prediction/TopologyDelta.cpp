@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Catalogs/Topology/Prediction/Edge.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <sstream>
 #include <utility>
 
 namespace NES::Experimental::TopologyPrediction {
-TopologyDelta::TopologyDelta(std::vector<Edge> added, std::vector<Edge> removed)
+TopologyDelta::TopologyDelta(std::vector<TopologyLinkInformation> added, std::vector<TopologyLinkInformation> removed)
     : added(std::move(added)), removed(std::move(removed)) {}
 
 std::string TopologyDelta::toString() const {
@@ -34,7 +34,7 @@ std::string TopologyDelta::toString() const {
     return deltaString.str();
 }
 
-std::string TopologyDelta::edgeListToString(const std::vector<Edge>& edges) {
+std::string TopologyDelta::edgeListToString(const std::vector<TopologyLinkInformation>& edges) {
     std::stringstream deltaString;
 
     if (edges.empty()) {
@@ -55,7 +55,7 @@ std::string TopologyDelta::edgeListToString(const std::vector<Edge>& edges) {
     return deltaString.str();
 }
 
-const std::vector<Edge>& TopologyDelta::getAdded() const { return added; }
+const std::vector<TopologyLinkInformation>& TopologyDelta::getAdded() const { return added; }
 
-const std::vector<Edge>& TopologyDelta::getRemoved() const { return removed; }
+const std::vector<TopologyLinkInformation>& TopologyDelta::getRemoved() const { return removed; }
 }// namespace NES::Experimental::TopologyPrediction

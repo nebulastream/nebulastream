@@ -12,11 +12,10 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Topology/Prediction/Edge.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <gtest/gtest.h>
 namespace NES {
-using Experimental::TopologyPrediction::Edge;
 using Experimental::TopologyPrediction::TopologyDelta;
 
 class TopologyDeltaTest : public Testing::BaseIntegrationTest {
@@ -35,8 +34,8 @@ TEST_F(TopologyDeltaTest, testToString) {
 }
 
 TEST_F(TopologyDeltaTest, testGetEdges) {
-    std::vector<Edge> added = {{1, 2}, {1, 3}, {5, 3}};
-    std::vector<Edge> removed = {{2, 3}, {1, 5}};
+    std::vector<TopologyLinkInformation> added = {{1, 2}, {1, 3}, {5, 3}};
+    std::vector<TopologyLinkInformation> removed = {{2, 3}, {1, 5}};
     TopologyDelta delta(added, removed);
     EXPECT_EQ(delta.getAdded(), added);
     EXPECT_EQ(delta.getRemoved(), removed);

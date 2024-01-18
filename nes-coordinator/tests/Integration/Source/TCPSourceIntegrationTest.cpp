@@ -25,7 +25,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/TCPSource.hpp>
@@ -660,7 +660,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -848,7 +848,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -942,7 +942,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query

@@ -12,13 +12,12 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Topology/Prediction/Edge.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
-using Experimental::TopologyPrediction::Edge;
 using Experimental::TopologyPrediction::TopologyChangeLog;
 using Experimental::TopologyPrediction::TopologyDelta;
 

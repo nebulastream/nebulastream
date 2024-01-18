@@ -18,7 +18,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Exceptions/InvalidArgumentException.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
@@ -33,7 +32,8 @@
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
-#include <Services/QueryService.hpp>
+#include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
@@ -42,7 +42,7 @@
 
 namespace NES {
 
-QueryService::QueryService(bool enableNewRequestExecutor,
+RequestService::RequestService(bool enableNewRequestExecutor,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
                            const QueryCatalogServicePtr& queryCatalogService,
                            const RequestQueuePtr& queryRequestQueue,
@@ -61,7 +61,7 @@ QueryService::QueryService(bool enableNewRequestExecutor,
                                                                          optimizerConfiguration.performAdvanceSemanticValidation);
 }
 
-QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
+QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                       const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
@@ -107,7 +107,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
     }
 }
 
-QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
+QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                       const QueryPlanPtr& queryPlan,
                                                       const Optimizer::PlacementStrategy placementStrategy) {
 
@@ -151,7 +151,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
     }
 }
 
-nlohmann::json QueryService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
+nlohmann::json RequestService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
                                                                  const Optimizer::PlacementStrategy placementStrategy) {
 
     if (enableNewRequestExecutor) {
@@ -164,7 +164,7 @@ nlohmann::json QueryService::validateAndQueueExplainQueryRequest(const NES::Quer
     }
 }
 
-bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
+bool RequestService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
     if (!enableNewRequestExecutor) {
         //Check and mark query for hard stop
@@ -191,7 +191,7 @@ bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
     }
 }
 
-bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
+bool RequestService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
                                                     DecomposedQueryPlanId querySubPlanId,
                                                     const std::string& failureReason) {
 
@@ -210,7 +210,7 @@ bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
     }
 }
 
-void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {
+void RequestService::assignOperatorIds(QueryPlanPtr queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
     auto queryPlanIterator = PlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
@@ -219,4 +219,14 @@ void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {
     }
 }
 
+bool RequestService::validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
+                                                           const std::vector<TopologyLinkInformation>& addedLinks) {
+    auto changeRequest = RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks,
+                                                                                       addedLinks,
+                                                                                       RequestProcessor::DEFAULT_RETRIES);
+    auto future = changeRequest->getFuture();
+    asyncRequestExecutor->runAsync(changeRequest);
+    auto changeResponse = std::static_pointer_cast<RequestProcessor::Experimental::TopologyNodeRelocationRequestResponse>(future.get());
+    return changeResponse->success;
+}
 }// namespace NES

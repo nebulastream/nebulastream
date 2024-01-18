@@ -18,7 +18,7 @@
 #include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/MetricValidator.hpp>
@@ -232,7 +232,7 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
     std::string outputFilePath = getTestResourceFolder() / "testTimestampCsvSink.out";
     remove(outputFilePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query

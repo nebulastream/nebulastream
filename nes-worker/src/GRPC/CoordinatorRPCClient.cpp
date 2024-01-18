@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/TopologyLinkInformation.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -667,5 +668,25 @@ std::vector<WorkerId> CoordinatorRPCClient::getParents(WorkerId workerId) {
         parentWorkerIds.push_back(parentId);
     }
     return parentWorkerIds;
+}
+
+bool CoordinatorRPCClient::relocateTopologyNode(std::vector<TopologyLinkInformation> removedTopologyLinks,
+                                                std::vector<TopologyLinkInformation> addedTopologyLinks) {
+    ClientContext context;
+    NodeRelocationRequest request;
+    NodeRelocationReply reply;
+
+    for (const auto& removedLink : removedTopologyLinks) {
+        auto removed = request.add_removedlinks();
+        removed->set_upstream(removedLink.upstreamTopologyNode);
+        removed->set_downstream(removedLink.downstreamTopologyNode);
+    }
+    for (const auto& addedLink : addedTopologyLinks) {
+        auto added = request.add_addedlinks();
+        added->set_upstream(addedLink.upstreamTopologyNode);
+        added->set_downstream(addedLink.downstreamTopologyNode);
+    }
+    coordinatorStub->RelocateTopologyNode(&context, request, &reply);
+    return reply.success();
 }
 }// namespace NES

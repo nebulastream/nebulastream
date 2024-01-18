@@ -337,7 +337,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     std::string outputFilePath2 = getTestResourceFolder() / "testOutput2.out";
     remove(outputFilePath2.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("testSourceSharing: Submit query");
@@ -513,7 +513,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("testSourceSharing: Submit query");
@@ -767,7 +767,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
@@ -826,7 +826,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
@@ -884,7 +884,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
@@ -977,7 +977,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
@@ -1030,7 +1030,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
@@ -1145,7 +1145,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
@@ -1235,7 +1235,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
@@ -1308,7 +1308,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
@@ -1486,7 +1486,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
@@ -1930,7 +1930,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -2085,7 +2085,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("QueryDeploymentTest: Submit query");

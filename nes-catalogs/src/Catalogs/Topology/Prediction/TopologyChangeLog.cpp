@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Catalogs/Topology/Prediction/Edge.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -97,7 +97,7 @@ void TopologyChangeLog::erase(const TopologyDelta& delta) {
 }
 
 void TopologyChangeLog::removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map,
-                                           const std::vector<Edge>& edges) {
+                                           const std::vector<TopologyLinkInformation>& edges) {
     for (auto edge : edges) {
         auto& children = map[edge.downstreamTopologyNode];
         auto iterator = std::find(children.begin(), children.end(), edge.upstreamTopologyNode);

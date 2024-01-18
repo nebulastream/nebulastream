@@ -18,13 +18,12 @@
 
 namespace NES {
 using WorkerId = uint64_t;
-namespace Experimental::TopologyPrediction {
 /**
  * @brief this class represents a topology edge between 2 nodes
  */
-class Edge {
+class TopologyLinkInformation {
   public:
-    Edge(WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode);
+    TopologyLinkInformation(WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode);
 
     /**
      * @brief get a string representation of this edge
@@ -37,11 +36,10 @@ class Edge {
      * @param other the edge to compare this edge with
      * @return true if the edges are equal
      */
-    bool operator==(const Edge& other) const;
+    bool operator==(const TopologyLinkInformation& other) const;
 
     WorkerId upstreamTopologyNode;
     WorkerId downstreamTopologyNode;
 };
-}// namespace Experimental::TopologyPrediction
 }// namespace NES
 #endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_EDGE_HPP_

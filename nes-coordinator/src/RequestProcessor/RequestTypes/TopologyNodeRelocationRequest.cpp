@@ -13,19 +13,16 @@
 */
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
@@ -35,14 +32,14 @@
 namespace NES::RequestProcessor::Experimental {
 
 TopologyNodeRelocationRequestPtr
-TopologyNodeRelocationRequest::create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
-                                      const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
-                                      uint8_t maxRetries) {
+TopologyNodeRelocationRequest::create(const std::vector<TopologyLinkInformation>& removedLinks,
+                                                                       const std::vector<TopologyLinkInformation>& addedLinks,
+                                                                       uint8_t maxRetries) {
     return std::make_shared<TopologyNodeRelocationRequest>(removedLinks, addedLinks, maxRetries);
 }
 
-TopologyNodeRelocationRequest::TopologyNodeRelocationRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
-                                                             const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
+TopologyNodeRelocationRequest::TopologyNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
+                                                             const std::vector<TopologyLinkInformation>& addedLinks,
                                                              uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::Topology,
                           ResourceType::GlobalQueryPlan,
@@ -78,10 +75,13 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
         topology->addTopologyNodeAsChild(addedDown, addedUp);
     }
 
-    //identify operators to be replaced
-    auto [upstreamId, downstreamId] = removedLinks.front();
-    processRemoveTopologyLinkRequest(upstreamId, downstreamId);
+    if (!removedLinks.empty()) {
+        //identify operators to be replaced
+        auto [upstreamId, downstreamId] = removedLinks.front();
+        processRemoveTopologyLinkRequest(upstreamId, downstreamId);
+    }
 
+    responsePromise.set_value(std::make_shared<TopologyNodeRelocationRequestResponse>(true));
     return {};
 }
 
@@ -228,5 +228,4 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::rollBack(std::exc
 
 void TopologyNodeRelocationRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 
-void TopologyNodeRelocationRequest::postExecution(const StorageHandlerPtr&) {}
 };// namespace NES::RequestProcessor::Experimental

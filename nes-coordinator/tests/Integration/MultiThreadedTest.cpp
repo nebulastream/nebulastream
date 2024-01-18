@@ -17,7 +17,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>

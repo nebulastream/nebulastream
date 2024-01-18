@@ -24,7 +24,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Identifiers.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -69,7 +69,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryFailureTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
@@ -116,7 +116,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryFailureTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
@@ -198,7 +198,7 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryFailureTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";

@@ -18,7 +18,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
@@ -100,7 +100,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     std::string outputFilePath = "ktm-results.csv";
     remove(outputFilePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("KTMDeploymentTest: Submit query");

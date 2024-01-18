@@ -43,7 +43,7 @@ class GeoLocation;
 }
 
 namespace Mobility::Experimental {
-class ReconnectPoint;
+struct ReconnectPoint;
 }
 
 }// namespace Spatial

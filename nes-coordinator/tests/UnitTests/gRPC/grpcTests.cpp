@@ -23,7 +23,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -78,7 +78,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     EXPECT_TRUE(retStart);
     NES_INFO("GrpcNotifyQueryFailureTest: Worker started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";

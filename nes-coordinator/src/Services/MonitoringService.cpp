@@ -26,11 +26,11 @@
 #include <utility>
 
 namespace NES {
-MonitoringService::MonitoringService(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr catalogService)
+MonitoringService::MonitoringService(TopologyPtr topology, RequestServicePtr queryService, QueryCatalogServicePtr catalogService)
     : MonitoringService(topology, queryService, catalogService, true) {}
 
 MonitoringService::MonitoringService(TopologyPtr topology,
-                                     QueryServicePtr queryService,
+                                     RequestServicePtr queryService,
                                      QueryCatalogServicePtr catalogService,
                                      bool enable)
     : topology(topology), enableMonitoring(enable) {

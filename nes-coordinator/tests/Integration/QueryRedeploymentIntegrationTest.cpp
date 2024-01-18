@@ -20,6 +20,8 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <GRPC/CoordinatorRPCClient.hpp>
+#include <Mobility/WorkerMobilityHandler.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
@@ -40,7 +42,7 @@
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/TestUtils.hpp>
 #include <atomic>
 #include <gtest/gtest.h>
@@ -393,12 +395,12 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
                                                                       crd->getSourceCatalog(),
                                                                       crd->getUDFCatalog());
         auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
-        std::vector<std::pair<WorkerId, WorkerId>> removedLinks = {{wrk1->getWorkerId(), oldWorker->getWorkerId()}};
-        std::vector<std::pair<WorkerId, WorkerId>> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
-        auto maxRetries = 1;
-        auto topologyChangeRequest =
-            RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks, addedLinks, maxRetries);
-        topologyChangeRequest->executeRequestLogic(storageHandler);
+        std::vector<TopologyLinkInformation> removedLinks = {{wrk1->getWorkerId(), oldWorker->getWorkerId()}};
+        std::vector<TopologyLinkInformation> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
+        std::string coordinatorAddress =
+            coordinatorConfig->coordinatorIp.getValue() + ":" + std::to_string(*rpcCoordinatorPort);
+        auto coordinatorRPCClient = CoordinatorRPCClient(coordinatorAddress);
+        coordinatorRPCClient.relocateTopologyNode(removedLinks, addedLinks);
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
         waitForFinalCount = false;
@@ -412,6 +414,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto start_timestamp = std::chrono::system_clock::now();
         while (wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition)
                == Network::PartitionRegistrationStatus::Registered) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
             NES_DEBUG("Partition {} has not yet been unregistered", currentWrk1TargetPartition);
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();

@@ -20,7 +20,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -63,7 +63,7 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("RenameTest: Submit query");
@@ -133,7 +133,7 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjectionMapTestProjection) {
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     auto outputFile = getTestResourceFolder() / "test.out";
@@ -208,7 +208,7 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     auto outputFile = getTestResourceFolder() / "test.out";
@@ -281,7 +281,7 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -380,7 +380,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("RenameTest: Submit query");

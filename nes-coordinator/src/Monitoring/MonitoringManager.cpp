@@ -27,7 +27,7 @@
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryState.hpp>
@@ -37,18 +37,18 @@
 
 namespace NES::Monitoring {
 MonitoringManager::MonitoringManager(TopologyPtr topology,
-                                     QueryServicePtr queryService,
+                                     RequestServicePtr queryService,
                                      QueryCatalogServicePtr queryCatalogService)
     : MonitoringManager(std::move(topology), std::move(queryService), std::move(queryCatalogService), true) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
-                                     QueryServicePtr queryService,
+                                     RequestServicePtr queryService,
                                      QueryCatalogServicePtr catalogService,
                                      bool enableMonitoring)
     : MonitoringManager(topology, queryService, catalogService, std::make_shared<LatestEntriesMetricStore>(), enableMonitoring) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
-                                     QueryServicePtr queryService,
+                                     RequestServicePtr queryService,
                                      QueryCatalogServicePtr catalogService,
                                      MetricStorePtr metricStore,
                                      bool enableMonitoring)

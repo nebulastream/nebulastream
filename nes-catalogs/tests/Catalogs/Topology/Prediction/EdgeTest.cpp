@@ -13,11 +13,10 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Topology/Prediction/Edge.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
-using Experimental::TopologyPrediction::Edge;
 
 class EdgeTest : public Testing::BaseIntegrationTest {
   public:
@@ -25,14 +24,14 @@ class EdgeTest : public Testing::BaseIntegrationTest {
 };
 
 TEST_F(EdgeTest, testToString) {
-    Edge edge(1, 2);
+    TopologyLinkInformation edge(1, 2);
     ASSERT_EQ(edge.toString(), "1->2");
 }
 
 TEST_F(EdgeTest, testEquality) {
-    Edge edge(1, 2);
-    Edge edge2(2, 1);
-    Edge edge3(1, 2);
+    TopologyLinkInformation edge(1, 2);
+    TopologyLinkInformation edge2(2, 1);
+    TopologyLinkInformation edge3(1, 2);
     ASSERT_EQ(edge, edge3);
     ASSERT_NE(edge, edge2);
     ASSERT_NE(edge3, edge2);

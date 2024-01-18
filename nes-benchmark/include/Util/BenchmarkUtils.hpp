@@ -18,7 +18,7 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Identifiers.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Common.hpp>
 
 #include <chrono>
