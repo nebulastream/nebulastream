@@ -3,7 +3,7 @@
 
 - name: Get IP address from template
   set_fact:
-    local_worker_ip: "{{ lookup('template', 'find-ip.j2') | trim }}"
+    local_worker_ip: "{{ lookup('template', 'roles/pi-worker/templates/find-ip.j2') | trim }}"
 
 - name: Remove older log
   file:
