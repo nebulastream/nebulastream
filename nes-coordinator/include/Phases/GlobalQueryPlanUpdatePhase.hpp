@@ -75,7 +75,6 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -109,7 +108,6 @@ using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 
 class MemoryLayoutSelectionPhase;
 using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase>;
-
 
 /**
  * @brief This class is responsible for accepting a batch of query requests and then updating the Global Query Plan accordingly.

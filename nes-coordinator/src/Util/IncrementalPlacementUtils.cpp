@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/IncrementalPlacementUtils.hpp>
-#include <Util/Placement/PlacementConstants.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/IncrementalPlacementUtils.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
 #include <any>
 
 namespace NES::Experimental {

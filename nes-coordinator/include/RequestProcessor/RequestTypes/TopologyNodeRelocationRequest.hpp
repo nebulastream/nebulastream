@@ -27,7 +27,7 @@ using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
-}
+}// namespace Optimizer
 
 namespace RequestProcessor::Experimental {
 class TopologyNodeRelocationRequest;
@@ -42,8 +42,8 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * @param maxRetries the maximum amount of times this request should be retried in case of failure
      */
     TopologyNodeRelocationRequest(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
-                          const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
-                          uint8_t maxRetries);
+                                  const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
+                                  uint8_t maxRetries);
 
     /**
      * @brief Create a new topology change request
@@ -53,8 +53,8 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * @return a pointer the the newly created request
      */
     static TopologyNodeRelocationRequestPtr create(const std::vector<std::pair<WorkerId, WorkerId>>& removedLinks,
-                                           const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
-                                           uint8_t maxRetries);
+                                                   const std::vector<std::pair<WorkerId, WorkerId>>& addedLinks,
+                                                   uint8_t maxRetries);
 
     /**
      * @brief Executes the request logic.
@@ -62,8 +62,7 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr>
-    executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
 
     /**
      * @brief identify the operators affected by a topology change, run an incremental placement and deploy the changes

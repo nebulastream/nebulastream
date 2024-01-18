@@ -275,7 +275,8 @@ class WorkerContext {
      * @param id the id of the operator which the channel belongs to
      * @param channelFuture the future to be stored
      */
-    void storeEventChannelFuture(OperatorId id, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture);
+    void storeEventChannelFuture(OperatorId id,
+                                 std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>&& channelFuture);
 
     /**
      * @brief retrieves an asynchronously established event channel.

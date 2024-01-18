@@ -50,7 +50,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     try {
         //check if the plan is reconfigured
         if (decomposedQueryPlan->getState() == QueryState::REDEPLOYED) {
-            success =  nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
+            success = nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
         } else {
             success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
         }

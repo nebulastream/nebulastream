@@ -355,7 +355,8 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   uint8_t retryTimes,
                                   const std::string& physicalSourceName,
                                   DecomposedQueryPlanVersion version,
-                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors, OperatorId uniqueNetworkSourceId);
+                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                                  OperatorId uniqueNetworkSourceId);
 
 /**
  * @brief function to create a monitoring source

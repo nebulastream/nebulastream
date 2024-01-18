@@ -143,7 +143,8 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
             while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
                 NES_DEBUG("Current message sequence number {} is less than expected max {} for partition {}",
                           (*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue(),
-                          eosMessageMaxSeqNumber, eosNesPartition);
+                          eosMessageMaxSeqNumber,
+                          eosNesPartition);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             NES_DEBUG("Waited for all buffers for the last EOS!");

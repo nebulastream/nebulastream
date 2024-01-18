@@ -45,9 +45,13 @@ GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const Reque
     return {&*globalQueryPlan, UnlockDeleter()};
 }
 
-Catalogs::Source::SourceCatalogPtr SerialStorageHandler::getSourceCatalogHandle(const RequestId) { return {&*sourceCatalog, UnlockDeleter()}; }
+Catalogs::Source::SourceCatalogPtr SerialStorageHandler::getSourceCatalogHandle(const RequestId) {
+    return {&*sourceCatalog, UnlockDeleter()};
+}
 
-Catalogs::UDF::UDFCatalogPtr SerialStorageHandler::getUDFCatalogHandle(const RequestId) { return {&*udfCatalog, UnlockDeleter()}; }
+Catalogs::UDF::UDFCatalogPtr SerialStorageHandler::getUDFCatalogHandle(const RequestId) {
+    return {&*udfCatalog, UnlockDeleter()};
+}
 
 Configurations::CoordinatorConfigurationPtr SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
     return {&*coordinatorConfiguration, UnlockDeleter()};
