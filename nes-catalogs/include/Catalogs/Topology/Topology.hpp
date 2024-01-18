@@ -371,7 +371,7 @@ class Topology {
     static std::vector<TopologyNodePtr> mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes);
 
     /**
-     * @brief Find if searched node is in the parent list of the test node or its parents parent list
+     * @brief Find if searched nodes are the parent or grand parents of the input test node
      * @param testNode: the test node
      * @param searchedNodes: the searched node
      * @param uniqueNodes: map of all unique worker id to topology nodes observed during the iteration

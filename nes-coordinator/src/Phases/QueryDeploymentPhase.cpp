@@ -58,7 +58,8 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     auto sharedQueryId = sharedQueryPlan->getId();
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
     if (executionNodes.empty()) {
         NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", sharedQueryId);
         throw Exceptions::ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query "

@@ -68,7 +68,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     //create execution node
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
-    const auto executionNode = Optimizer::ExecutionNode::createExecutionNode(topologyNode);
+    const auto executionNode = Optimizer::ExecutionNode::create(topologyNode);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -95,7 +95,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     //create execution node
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
-    const auto executionNode = Optimizer::ExecutionNode::createExecutionNode(topologyNode);
+    const auto executionNode = Optimizer::ExecutionNode::create(topologyNode);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -106,7 +106,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId,plan->getRootOperators());
     decomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
 
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
@@ -151,7 +151,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     //create execution node
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
-    const auto& executionNode = Optimizer::ExecutionNode::createExecutionNode(topologyNode);
+    const auto& executionNode = Optimizer::ExecutionNode::create(topologyNode);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor1 = PrintSinkDescriptor::create();
@@ -161,7 +161,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan1);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
@@ -170,7 +170,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan2);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan2);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -217,7 +217,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     //create execution node
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
-    const auto& executionNode = Optimizer::ExecutionNode::createExecutionNode(topologyNode);
+    const auto& executionNode = Optimizer::ExecutionNode::create(topologyNode);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor1 = PrintSinkDescriptor::create();
@@ -227,7 +227,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
@@ -237,7 +237,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -284,7 +284,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     //create execution node
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
-    const auto& executionNode = Optimizer::ExecutionNode::createExecutionNode(topologyNode);
+    const auto& executionNode = Optimizer::ExecutionNode::create(topologyNode);
 
     //query sub plans for query 1
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
@@ -295,7 +295,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId11 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan11 = DecomposedQueryPlan::create(decomposedQueryPlanId11, sharedQueryId1, plan11->getRootOperators());
     decomposedQueryPlan11->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan11);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan11);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor12 = PrintSinkDescriptor::create();
@@ -304,7 +304,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId12 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan12 = DecomposedQueryPlan::create(decomposedQueryPlanId12, sharedQueryId1, plan12->getRootOperators());
     decomposedQueryPlan12->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan12);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan12);
 
     //query sub plans for query 2
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
@@ -315,7 +315,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId21 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan21 = DecomposedQueryPlan::create(decomposedQueryPlanId21, sharedQueryId2, plan21->getRootOperators());
     decomposedQueryPlan21->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan21);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan21);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor22 = PrintSinkDescriptor::create();
@@ -324,7 +324,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     DecomposedQueryPlanId decomposedQueryPlanId22 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan22 = DecomposedQueryPlan::create(decomposedQueryPlanId22, sharedQueryId2, plan22->getRootOperators());
     decomposedQueryPlan22->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan22);
+    executionNode->registerDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan22);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -392,7 +392,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     //create execution node
     uint64_t node1Id = 1;
     TopologyNodePtr topologyNode1 = TopologyNode::create(node1Id, "localhost", 3200, 3300, 10, properties);
-    auto executionNode1 = Optimizer::ExecutionNode::createExecutionNode(topologyNode1);
+    auto executionNode1 = Optimizer::ExecutionNode::create(topologyNode1);
 
     //Add sub plan
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
@@ -403,12 +403,12 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1,plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode1->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
+    executionNode1->registerDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
 
     //create execution node
     uint64_t node2Id = 2;
     TopologyNodePtr topologyNode2 = TopologyNode::create(node2Id, "localhost", 3200, 3300, 10, properties);
-    auto executionNode2 = Optimizer::ExecutionNode::createExecutionNode(topologyNode2);
+    auto executionNode2 = Optimizer::ExecutionNode::create(topologyNode2);
 
     //Add parent child relationship among topology nodes
     topologyNode1->addChild(topologyNode2);
@@ -421,7 +421,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode2->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
+    executionNode2->registerDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
     globalExecutionPlan->addExecutionNode(executionNode2);
@@ -487,7 +487,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     topologyNode3->addChild(topologyNode4);
 
     //create execution node 1
-    const auto executionNode1 = Optimizer::ExecutionNode::createExecutionNode(topologyNode1);
+    const auto executionNode1 = Optimizer::ExecutionNode::create(topologyNode1);
 
     //Add sub plan
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
@@ -498,10 +498,10 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan1 = DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode1->registerNewDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
+    executionNode1->registerDecomposedQueryPlan(sharedQueryId1, decomposedQueryPlan1);
 
     //create execution node 2
-    const auto executionNode2 = Optimizer::ExecutionNode::createExecutionNode(topologyNode2);
+    const auto executionNode2 = Optimizer::ExecutionNode::create(topologyNode2);
 
     //Add sub plan
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
@@ -511,10 +511,10 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan2 = DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode2->registerNewDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
+    executionNode2->registerDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
 
     //create execution node 3
-    const auto executionNode3 = Optimizer::ExecutionNode::createExecutionNode(topologyNode3);
+    const auto executionNode3 = Optimizer::ExecutionNode::create(topologyNode3);
 
     //Add sub plan
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
@@ -524,14 +524,14 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     DecomposedQueryPlanId decomposedQueryPlanId3 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan3 = DecomposedQueryPlan::create(decomposedQueryPlanId3, sharedQueryId3, plan3->getRootOperators());
     decomposedQueryPlan3->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode3->registerNewDecomposedQueryPlan(sharedQueryId3, decomposedQueryPlan3);
+    executionNode3->registerDecomposedQueryPlan(sharedQueryId3, decomposedQueryPlan3);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
     globalExecutionPlan->addExecutionNode(executionNode2);
     globalExecutionPlan->addExecutionNode(executionNode3);
 
     //create execution node 4
-    const auto executionNode4 = Optimizer::ExecutionNode::createExecutionNode(topologyNode4);
+    const auto executionNode4 = Optimizer::ExecutionNode::create(topologyNode4);
 
     //Add sub plan
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the global query plan");
@@ -541,7 +541,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     DecomposedQueryPlanId decomposedQueryPlanId4 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan4 = DecomposedQueryPlan::create(decomposedQueryPlanId4, sharedQueryId4, plan4->getRootOperators());
     decomposedQueryPlan4->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-    executionNode4->registerNewDecomposedQueryPlan(sharedQueryId4, decomposedQueryPlan4);
+    executionNode4->registerDecomposedQueryPlan(sharedQueryId4, decomposedQueryPlan4);
 
     globalExecutionPlan->addExecutionNode(executionNode4);
 

@@ -44,7 +44,8 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(const TopologyPtr& topo
 void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", sharedQueryId);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     if (executionNodes.empty()) {
         NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", sharedQueryId);

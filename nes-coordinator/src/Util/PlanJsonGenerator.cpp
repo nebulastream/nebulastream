@@ -141,7 +141,7 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const Optimizer::Global
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};
 
-    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
     for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
         nlohmann::json currentExecutionNodeJsonValue{};
 

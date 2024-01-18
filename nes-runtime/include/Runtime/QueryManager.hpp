@@ -507,13 +507,13 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param queryId: the local QEP to reconfigure
-     * @param queryExecutionPlanId: the local szb QEP to reconfigure
+     * @param sharedQueryId: the local QEP to reconfigure
+     * @param decomposedQueryPlanId: the local szb QEP to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QueryId queryId,
-                                   DecomposedQueryPlanId queryExecutionPlanId,
+    bool addReconfigurationMessage(QueryId sharedQueryId,
+                                   DecomposedQueryPlanId decomposedQueryPlanId,
                                    TupleBuffer&& buffer,
                                    bool blocking = false) override;
 
@@ -522,12 +522,12 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param queryId: the local QEP to reconfigure
+     * @param sharedQueryId: the local QEP to reconfigure
      * @param queryExecutionPlanId: the local sub QEP to reconfigure
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QueryId queryId,
+    bool addReconfigurationMessage(QueryId sharedQueryId,
                                    DecomposedQueryPlanId queryExecutionPlanId,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false) override;

@@ -845,8 +845,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         updatedQuerySubPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->registerNewDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(),
-                                                                      updatedQuerySubPlan);
+                        executionNode->registerDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(), updatedQuerySubPlan);
 
                     } else if (containPinnedDownstreamOperator) {
 
@@ -928,8 +927,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         updatedQuerySubPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->registerNewDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(),
-                                                                      updatedQuerySubPlan);
+                        executionNode->registerDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(), updatedQuerySubPlan);
                     } else {
                         NES_ERROR(
                             "A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
@@ -942,7 +940,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                     auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
                     updatedQuerySubPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                     updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                    executionNode->registerNewDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(), updatedQuerySubPlan);
+                    executionNode->registerDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(), updatedQuerySubPlan);
                 }
             }
 
@@ -1085,12 +1083,12 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSink(DecomposedQueryPlanVer
 
 ExecutionNodePtr BasePlacementAdditionStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
 
-    ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getExecutionNodeById(candidateTopologyNode->getId());
+    ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getLockedExecutionNode(candidateTopologyNode->getId());
     if (candidateExecutionNode) {
         NES_TRACE("node {} was already used by other deployment", candidateTopologyNode->toString());
     } else {
         NES_TRACE("create new execution node with id: {}", candidateTopologyNode->getId());
-        candidateExecutionNode = ExecutionNode::createExecutionNode(candidateTopologyNode);
+        candidateExecutionNode = ExecutionNode::create(candidateTopologyNode);
     }
     return candidateExecutionNode;
 }

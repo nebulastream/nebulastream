@@ -172,7 +172,8 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithBottomUpStrategy) {
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
@@ -260,7 +261,8 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithTopDownStrategy) {
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
@@ -334,7 +336,8 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithMultipleSinkOperatorsWit
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
@@ -412,7 +415,8 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithMultipleSinkAndOnlySourc
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
@@ -492,7 +496,8 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithMultipleSinkOperatorsWit
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3UL);
@@ -595,7 +600,8 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
     queryPlacementAmendmentPhase->execute(updatedSharedQMToDeploy[0]);
 
     SharedQueryId sharedQueryId = planToDeploy->getQueryId();
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
     ASSERT_EQ(executionNodes.size(), 3UL);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
@@ -732,7 +738,8 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
 
     queryPlacementAmendmentPhase->execute(updatedSharedQMToDeploy[0]);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
     ASSERT_EQ(executionNodes.size(), 3UL);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
@@ -794,7 +801,8 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithMultipleSinkAndOnlySourc
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3UL);
@@ -916,7 +924,8 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testIFCOPPlacement) {
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     EXPECT_EQ(executionNodes.size(), 3UL);
     // check if map is placed two times
@@ -1054,7 +1063,8 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testIFCOPPlacementOnBranchedTopolog
     NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString={}", globalExecutionPlan->getAsString());
 
     SharedQueryId sharedQueryId = sharedQueryPlan->getId();
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     EXPECT_EQ(executionNodes.size(), 5UL);
     // check if map is placed two times
@@ -1197,7 +1207,8 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementOfSelfJoinQuery) {
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
     NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString={}", globalExecutionPlan->getAsString());
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     EXPECT_EQ(executionNodes.size(), 3UL);
 
@@ -1316,7 +1327,8 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementOfSelfJoinQuery) {
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     EXPECT_EQ(executionNodes.size(), 3UL);
 
@@ -1425,7 +1437,8 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementWthTightResourcesConstra
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
@@ -1541,7 +1554,8 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
@@ -1680,7 +1694,8 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     auto sink = testQueryPlan->getSinkOperators()[0]->as<SinkLogicalOperatorNode>();
     auto join = sink->getChildren()[0]->as<JoinLogicalOperatorNode>();
@@ -1799,7 +1814,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingPessimis
     // Check the execution plan for both shared query plans
     for (uint16_t i = 0; i < numOfQueries; i++) {
         std::vector<Optimizer::ExecutionNodePtr> executionNodes =
-            globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[i]->getId());
+            globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlans[i]->getId());
 
         //Assertion
         ASSERT_EQ(executionNodes.size(), 3u);
@@ -1900,7 +1915,8 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingPessimis
     // Check the execution plan for both shared query plans
     for (uint16_t i = 0; i < numOfQueries; i++) {
         SharedQueryId sharedQueryId = sharedQueryPlans[i]->getId();
-        std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+        std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+            globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
         ASSERT_EQ(executionNodes.size(), 3u);
         for (const auto& executionNode : executionNodes) {
@@ -2002,7 +2018,8 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingOptimist
     // Check the execution plan for both shared query plans
     for (uint16_t i = 0; i < numOfQueries; i++) {
         SharedQueryId sharedQueryId = sharedQueryPlans[i]->getId();
-        std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+        std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+            globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
         ASSERT_EQ(executionNodes.size(), 3u);
         for (const auto& executionNode : executionNodes) {
@@ -2104,7 +2121,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingOptimist
     // Check the execution plan for both shared query plans
     for (uint16_t i = 0; i < numOfQueries; i++) {
         std::vector<Optimizer::ExecutionNodePtr> executionNodes =
-            globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[i]->getId());
+            globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlans[i]->getId());
 
         //Assertion
         ASSERT_EQ(executionNodes.size(), 3u);
@@ -2219,12 +2236,12 @@ TEST_F(QueryPlacementAmendmentTest,
     // Check the execution plan for failed shared query plans
     //Assertion
     std::vector<Optimizer::ExecutionNodePtr> executionNodes =
-        globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[0]->getId());
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlans[0]->getId());
     ASSERT_EQ(executionNodes.size(), 0u);
 
     // Check the execution plan for success shared query plans
     //Assertion
-    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[1]->getId());
+    executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlans[1]->getId());
     ASSERT_EQ(executionNodes.size(), 3u);
 }
 
@@ -2309,12 +2326,12 @@ TEST_F(QueryPlacementAmendmentTest,
     // Check the execution plan for failed shared query plans
     //Assertion
     std::vector<Optimizer::ExecutionNodePtr> executionNodes =
-        globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[0]->getId());
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlans[0]->getId());
     ASSERT_EQ(executionNodes.size(), 0u);
 
     // Check the execution plan for success shared query plans
     //Assertion
-    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[1]->getId());
+    executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlans[1]->getId());
     ASSERT_EQ(executionNodes.size(), 3u);
 }
 
@@ -2392,7 +2409,8 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     Network::NesPartition sourcePartitionNode0beforeReplacement(0, 0, 0, 0);
     Network::NesPartition sinkPartitionNode1BeforeReplacement(0, 0, 0, 0);
@@ -2622,7 +2640,8 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     Network::NesPartition sourcePartitionNode0beforeReplacement(0, 0, 0, 0);
     Network::NesPartition sinkPartitionNode1BeforeReplacement(0, 0, 0, 0);
@@ -2838,7 +2857,8 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQuer
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
+        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
     DecomposedQueryPlanId subPlanIdToRemoveInNextIteration;
     EXPECT_EQ(executionNodes.size(), 3UL);
 
