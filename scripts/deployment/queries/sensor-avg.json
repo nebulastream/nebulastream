@@ -1,4 +1,4 @@
 {
-  "userQuery": "Query::from(\"sensors\").sink(NullOutputSinkDescriptor::create());",
+  "userQuery": "Query::from(\"sensors\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Seconds(15))).apply(Avg(Attribute(\"value\"))->as(Attribute(\"avg_val\")).sink(NullOutputSinkDescriptor::create());",
   "placement": "BottomUp"
 }
