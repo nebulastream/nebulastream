@@ -17,7 +17,12 @@
     update: no
     clone: yes
 
-- name: Copy and populate configuration templates in tmp
+- name: Copy and populate configuration template
   template:
     src: worker.yaml.j2
     dest: "/tmp/worker-conf.yaml"
+
+- name: Copy and populate Chameleon template
+  template:
+    src: worker-chameleon.yaml.j2
+    dest: "/tmp/worker-conf-chameleon.yaml"
