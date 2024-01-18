@@ -4,3 +4,8 @@
 - hosts: pi_master
   tasks:
     - include_tasks: roles/pi-master/tasks/monitor.yml
+
+- hosts: pi_worker
+  gather_facts: yes
+  tasks:
+    - include_tasks: roles/pi-worker/tasks/monitor.yml
