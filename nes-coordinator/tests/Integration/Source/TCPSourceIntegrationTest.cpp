@@ -284,7 +284,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    auto queryService = crd->getQueryService();
+    auto queryService = crd->getRequestService();
     auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -378,7 +378,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    auto queryService = crd->getQueryService();
+    auto queryService = crd->getRequestService();
     auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -472,7 +472,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    auto queryService = crd->getQueryService();
+    auto queryService = crd->getRequestService();
     auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -566,7 +566,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    auto queryService = crd->getQueryService();
+    auto queryService = crd->getRequestService();
     auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -660,7 +660,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -754,7 +754,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    auto queryService = crd->getQueryService();
+    auto queryService = crd->getRequestService();
     auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -848,7 +848,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -942,7 +942,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query

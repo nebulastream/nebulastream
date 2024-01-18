@@ -51,7 +51,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -159,7 +159,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -269,7 +269,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 

@@ -257,7 +257,7 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
 };
 
 SchemaPtr TestHarness::getOutputSchema() {
-    auto queryService = nesCoordinator->getQueryService();
+    auto queryService = nesCoordinator->getRequestService();
     auto queryCatalogService = nesCoordinator->getQueryCatalogService();
     return queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->getSinkOperators()[0]->getOutputSchema();
 }
@@ -269,7 +269,7 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
             "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
     }
 
-    RequestServicePtr queryService = nesCoordinator->getQueryService();
+    RequestServicePtr queryService = nesCoordinator->getRequestService();
     QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
 
     // local fs

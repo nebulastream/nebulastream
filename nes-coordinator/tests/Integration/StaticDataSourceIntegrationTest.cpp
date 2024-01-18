@@ -21,7 +21,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
@@ -173,7 +173,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     ASSERT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
@@ -280,7 +280,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -353,7 +353,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
@@ -430,7 +430,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     ASSERT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
@@ -501,7 +501,7 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("static_integers_only_0", schema_integers_0);
@@ -572,7 +572,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     ASSERT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
@@ -666,7 +666,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -1237,7 +1237,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -1319,7 +1319,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -1406,7 +1406,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -1487,7 +1487,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -1576,7 +1576,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     EXPECT_TRUE(retStartRemote);
     NES_INFO("StaticDataSourceIntegrationTest: Remote worker started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -1665,7 +1665,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -1814,7 +1814,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             EXPECT_NE(port, 0UL);
             NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
-            QueryServicePtr queryService = crd->getQueryService();
+            RequestServicePtr queryService = crd->getRequestService();
             QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
             auto sourceCatalog = crd->getSourceCatalog();
 

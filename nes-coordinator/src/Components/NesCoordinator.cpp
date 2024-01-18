@@ -349,7 +349,7 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 
-RequestServicePtr NesCoordinator::getQueryService() { return queryService; }
+RequestServicePtr NesCoordinator::getRequestService() { return queryService; }
 
 QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
 

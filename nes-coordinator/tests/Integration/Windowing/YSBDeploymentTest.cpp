@@ -149,7 +149,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
     EXPECT_TRUE(retStart1);
     NES_INFO("YSBDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "ysb.out";

@@ -232,7 +232,7 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
     std::string outputFilePath = getTestResourceFolder() / "testTimestampCsvSink.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query

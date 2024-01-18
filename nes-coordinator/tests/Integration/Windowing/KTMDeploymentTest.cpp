@@ -100,7 +100,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     std::string outputFilePath = "ktm-results.csv";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("KTMDeploymentTest: Submit query");

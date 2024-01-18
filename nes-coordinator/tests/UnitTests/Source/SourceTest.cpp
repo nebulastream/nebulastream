@@ -37,7 +37,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/RequestService.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
@@ -1915,7 +1915,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     string query =
         R"(Query::from("input1").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    NES::QueryServicePtr queryService = crd->getQueryService();
+    NES::RequestServicePtr queryService = crd->getRequestService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 

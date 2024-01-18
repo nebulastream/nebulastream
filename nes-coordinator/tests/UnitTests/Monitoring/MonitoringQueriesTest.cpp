@@ -128,7 +128,7 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
             workers.emplace_back(wrk);
         }
 
-        RequestServicePtr queryService = crd->getQueryService();
+        RequestServicePtr queryService = crd->getRequestService();
         QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
 
         NES_INFO("MonitoringQueriesTest: Submit query");
