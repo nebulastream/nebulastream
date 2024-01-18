@@ -89,6 +89,18 @@ class TopologyNode : public Node {
     uint16_t getAvailableResources() const;
 
     /**
+     * @brief Get total available resources
+     * @return total resources
+     */
+    uint16_t getTotalResources() const;
+
+    /**
+     * @brief Get occupied resources
+     * @return occupied resources
+     */
+    uint16_t getOccupiedResources() const;
+
+    /**
      * @brief method to reduce the cpu capacity of the node
      * @param uint64_t of the value that has to be subtracted
      * @return 

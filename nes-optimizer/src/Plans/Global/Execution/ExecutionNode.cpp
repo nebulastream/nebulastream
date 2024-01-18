@@ -28,12 +28,18 @@
 
 namespace NES::Optimizer {
 
-ExecutionNode::ExecutionNode(const TopologyNodePtr& physicalNode) : id(physicalNode->getId()), topologyNode(physicalNode) {}
+ExecutionNodePtr ExecutionNode::create(ExecutionNodeId executionNodeId) {
+    return std::make_shared<ExecutionNode>(executionNodeId);
+}
 
-bool ExecutionNode::registerNewDecomposedQueryPlan(SharedQueryId sharedQueryId,
-                                                   const DecomposedQueryPlanPtr& decomposedQueryPlan) {
-    NES_DEBUG("Adding a new sub query plan to the collection for the shared query plan with id {}", sharedQueryId);
-    DecomposedQueryPlanId decomposedQueryId = decomposedQueryPlan->getDecomposedQueryPlanId();
+ExecutionNode::ExecutionNode(ExecutionNodeId executionNodeId) : executionNodeId(executionNodeId) {}
+
+bool ExecutionNode::registerDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+    auto sharedQueryId = decomposedQueryPlan->getSharedQueryId();
+    auto decomposedQueryId = decomposedQueryPlan->getDecomposedQueryPlanId();
+    NES_DEBUG("Adding a new decomposed query plan with id {} to the collection for the shared query plan with id {}",
+              decomposedQueryId,
+              sharedQueryId);
     mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId][decomposedQueryId] = decomposedQueryPlan;
     return true;
 }
@@ -64,7 +70,7 @@ std::vector<DecomposedQueryPlanPtr> ExecutionNode::getAllDecomposedQueryPlans(Sh
 }
 
 DecomposedQueryPlanPtr ExecutionNode::getDecomposedQueryPlan(SharedQueryId sharedQueryId,
-                                                                   DecomposedQueryPlanId decomposedQueryPlanId) const {
+                                                             DecomposedQueryPlanId decomposedQueryPlanId) const {
     if (mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId)) {
         NES_DEBUG("ExecutionNode : Found shared query plan with id  {}", sharedQueryId);
         auto decomposedQueryPlanMap = mapOfSharedQueryToDecomposedQueryPlans.at(sharedQueryId);
@@ -72,6 +78,7 @@ DecomposedQueryPlanPtr ExecutionNode::getDecomposedQueryPlan(SharedQueryId share
             return decomposedQueryPlanMap[decomposedQueryPlanId];
         }
         NES_WARNING("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryPlanId);
+        return nullptr;
     }
     NES_WARNING("ExecutionNode: Unable to find shared query plan with id {}", sharedQueryId);
     return nullptr;
@@ -171,10 +178,6 @@ uint32_t ExecutionNode::getOccupiedResourcesForDecomposedQueryPlan(const Decompo
 std::string ExecutionNode::toString() const {
     return "ExecutionNode(id:" + std::to_string(id) + ", ip:" + topologyNode->getIpAddress()
         + ", topologyId:" + std::to_string(topologyNode->getId()) + ")";
-}
-
-ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode) {
-    return std::make_shared<ExecutionNode>(ExecutionNode(physicalNode));
 }
 
 uint64_t ExecutionNode::getId() const { return id; }

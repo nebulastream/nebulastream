@@ -292,7 +292,7 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};
 
-    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
     for (const auto& executionNode : executionNodes) {
         nlohmann::json executionNodeMetaData{};
 

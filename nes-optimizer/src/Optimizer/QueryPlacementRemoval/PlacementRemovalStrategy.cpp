@@ -270,19 +270,18 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
 
     NES_INFO("Update all query sub plans by removing the operators that are in the state To-Be-Removed or To-Be-RePlaced.");
     // 1. Iterate over the target query sub plans placed on different worker nodes to update them
-    for (const auto& [workerId, querySubPlanIds] : workerIdToDecomposedQueryPlanIds) {
-        // 2. Fetch the query sub plan from the execution node
-        auto executionNode = globalExecutionPlan->getExecutionNodeById(workerId);
+    for (const auto& [workerId, decomposedQueryPlanIds] : workerIdToDecomposedQueryPlanIds) {
 
         std::vector<DecomposedQueryPlanPtr> updatedDecomposedQueryPlans;
         uint32_t releasedSlots = 0;
+        // 2. Update the placed query sub plans on the execution node and record them
+        for (const auto& decomposedQueryPlanId : decomposedQueryPlanIds) {
 
-        // 3. Update the placed query sub plans on the execution node and record them
-        for (const auto& querySubPlanId : querySubPlanIds) {
-            // 4. Fetch the copy of Decomposed query plan to modify
-            auto querySubPlanToUpdate = executionNode->getDecomposedQueryPlan(sharedQueryId, querySubPlanId);
+            // 3. Fetch the copy of Decomposed query plan to modify
+            auto querySubPlanToUpdate =
+                globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryPlanId);
 
-            // 5. Check if plan is a sys generated query sub plan.
+            // 4. Check if plan is a sys generated query sub plan.
             // A Sys generated plan will contain only network source and sink operators.
             if (querySubPlanToUpdate->getRootOperators().size() == 1) {
                 auto rootOperator = querySubPlanToUpdate->getRootOperators()[0];
@@ -387,28 +386,35 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             // 2. Step1:: Perform validation by checking if we can release the resources the operator placement algorithm reserved
             // for placing the operators.
             auto releasedSlots = workerIdToReleasedSlotMap[workerId];
-            if (!lockedTopologyNode->operator*()->releaseSlots(releasedSlots)) {
-                NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerId);
+            auto totalResources = lockedTopologyNode->operator*()->getTotalResources();
+            auto occupiedResources = lockedTopologyNode->operator*()->getOccupiedResources();
+            bool nodeValidationPassed = (releasedSlots <= occupiedResources && releasedSlots <= totalResources);
+            if (!nodeValidationPassed) {
+                NES_ERROR("Unable to release resources on the topology node {} to successfully remove operators.", workerId);
                 return false;
             }
 
-            auto updatedQuerySubPlans = workerIdToUpdatedDecomposedQueryPlans[workerId];
-            auto executionNode = globalExecutionPlan->getExecutionNodeById(workerId);
+            // Lock the execution node.
+            // Wait till lock acquired on the execution node.
+            ExecutionNodeWLock executionNode;
+            while (!(executionNode = globalExecutionPlan->getLockedExecutionNode(workerId))) {
+                std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
+            }
 
             // 3. Step2:: Perform validation by checking if the currently placed query sub plan has the same version as
             // the updated query sub plan or not
+            auto updatedQuerySubPlans = workerIdToUpdatedDecomposedQueryPlans[workerId];
             for (const auto& updatedQuerySubPlan : updatedQuerySubPlans) {
-                auto querySubPlanId = updatedQuerySubPlan->getDecomposedQueryPlanId();
-                auto actualQuerySubPlan = executionNode->getDecomposedQueryPlan(sharedQueryId, querySubPlanId);
+                auto decomposedQueryPlanId = updatedQuerySubPlan->getDecomposedQueryPlanId();
+                auto actualQuerySubPlan =
+                    executionNode->operator*()->getDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
 
                 // 4. Check is the updated and actual query sub plan has the same version number
-                uint32_t currentVersion = actualQuerySubPlan->getVersion();
-                uint32_t readVersion = updatedQuerySubPlan->getVersion();
-                if (currentVersion != readVersion) {
+                if (actualQuerySubPlan->getVersion() != updatedQuerySubPlan->getVersion()) {
                     NES_ERROR("Query sub plan with id {} got updated. Current version {} Read version {}",
-                              querySubPlanId,
-                              currentVersion,
-                              readVersion);
+                              decomposedQueryPlanId,
+                              actualQuerySubPlan->getVersion(),
+                              updatedQuerySubPlan->getVersion());
                     return false;
                 }
 
@@ -416,9 +422,9 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 updatedQuerySubPlan->setVersion(querySubPlanVersion);
             }
 
-            // 6. Save Update query sub plans and execution node
-            executionNode->updateDecomposedQueryPlans(sharedQueryId, updatedQuerySubPlans);
-            globalExecutionPlan->scheduleExecutionNode(executionNode);
+            // 6. Save Update query sub plans and release the occupied resources
+            lockedTopologyNode->operator*()->releaseSlots(releasedSlots);
+            executionNode->operator*()->updateDecomposedQueryPlans(sharedQueryId, updatedQuerySubPlans);
 
             // 7. Update the status of all operators
             auto updatedOperatorIds = workerIdToOperatorIdMap[workerId];

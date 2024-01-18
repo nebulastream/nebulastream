@@ -14,8 +14,8 @@
 
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/QueryConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QueryConsoleDumpHandler.hpp>
 #include <iostream>
 
 namespace NES {
@@ -64,7 +64,7 @@ void QueryConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t de
 
 void QueryConsoleDumpHandler::dump(const NodePtr node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
-void QueryConsoleDumpHandler::multilineDump(NodePtr const& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
+void QueryConsoleDumpHandler::multilineDump(const NodePtr& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
 void QueryConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr queryPlan) {
     out << "Dumping queryPlan: " << queryPlan->toString() << std::endl;

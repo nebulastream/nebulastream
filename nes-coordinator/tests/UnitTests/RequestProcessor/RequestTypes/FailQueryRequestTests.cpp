@@ -145,7 +145,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
 
         //skip deployment
 
-        auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+        auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
         ASSERT_FALSE(executionNodes.empty());
 
         //Remove the old mapping of the shared query plan

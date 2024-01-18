@@ -50,12 +50,20 @@ uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
 uint16_t TopologyNode::getAvailableResources() const { return totalSlots - occupiedSlots; }
 
+uint16_t TopologyNode::getTotalResources() const { return totalSlots; }
+
+uint16_t TopologyNode::getOccupiedResources() const { return occupiedSlots; }
+
 bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodeProperties[NES::Worker::Properties::MAINTENANCE]); };
 
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
 bool TopologyNode::releaseSlots(uint16_t freedSlots) {
-    NES_DEBUG("Releasing slots {} on topology node {}. Currently occupied {} of {}", freedSlots, workerId, occupiedSlots, totalSlots);
+    NES_DEBUG("Releasing slots {} on topology node {}. Currently occupied {} of {}",
+              freedSlots,
+              workerId,
+              occupiedSlots,
+              totalSlots);
     NES_ASSERT(freedSlots <= totalSlots, "Amount of slots to free can't be more than actual resources");
     NES_ASSERT(freedSlots <= occupiedSlots, "Amount of slots to free can't be more than actual consumed resources");
     occupiedSlots = occupiedSlots - freedSlots;
@@ -63,7 +71,11 @@ bool TopologyNode::releaseSlots(uint16_t freedSlots) {
 }
 
 bool TopologyNode::occupySlots(uint16_t occupySlots) {
-    NES_DEBUG("Reducing slots {} on topology node {}. Currently occupied {} of {}", occupySlots, workerId, occupiedSlots, totalSlots);
+    NES_DEBUG("Reducing slots {} on topology node {}. Currently occupied {} of {}",
+              occupySlots,
+              workerId,
+              occupiedSlots,
+              totalSlots);
     NES_ASSERT(occupySlots <= (totalSlots - occupiedSlots),
                "Amount of resources to be used should not be more than available resources.");
     occupiedSlots = occupiedSlots + occupySlots;

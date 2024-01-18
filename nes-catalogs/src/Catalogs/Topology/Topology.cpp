@@ -554,7 +554,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
 
     if (found != searchedNodes.end()) {
         NES_DEBUG("Topology: found the destination node");
-        if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
+        if (!uniqueNodes.contains(testNode->getId())) {
             NES_TRACE("Topology: Insert the information about the test node in the unique node map");
             const TopologyNodePtr copyOfTestNode = testNode->copy();
             uniqueNodes[testNode->getId()] = copyOfTestNode;
