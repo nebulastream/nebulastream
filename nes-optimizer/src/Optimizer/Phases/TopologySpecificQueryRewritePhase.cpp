@@ -17,7 +17,6 @@
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/NemoJoinRule.hpp>
-#include <Optimizer/QueryRewrite/NemoWindowPinningRule.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -45,7 +44,6 @@ QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) 
         auto nemoJoinRule = NemoJoinRule::create(optimizerConfiguration, topology);
         queryPlan = nemoJoinRule->apply(queryPlan);
     }
-    //queryPlan = distributeJoinRule->apply(queryPlan);
     return queryPlan;
 }
 

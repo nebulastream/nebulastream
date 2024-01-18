@@ -51,10 +51,6 @@ class NemoJoinRule : public BaseRewriteRule {
 
   private:
     explicit NemoJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
-    static JoinLogicalOperatorNodePtr createJoinReplica(JoinLogicalOperatorNodePtr joinOperator,
-                                                 std::vector<OperatorNodePtr> leftOperators,
-                                                 std::vector<OperatorNodePtr> rightOperators,
-                                                 std::vector<NodePtr> parents);
 
   private:
     TopologyPtr topology;

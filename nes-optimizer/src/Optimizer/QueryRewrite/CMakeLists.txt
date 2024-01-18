@@ -21,7 +21,6 @@ add_source_files(nes-optimizer
         FilterSplitUpRule.cpp
         LogicalSourceExpansionRule.cpp
         MapUDFsToOpenCLOperatorsRule.cpp
-        NemoWindowPinningRule.cpp
         PredicateReorderingRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
         RedundancyEliminationRule.cpp
