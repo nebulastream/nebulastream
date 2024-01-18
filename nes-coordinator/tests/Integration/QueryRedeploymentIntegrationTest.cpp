@@ -173,7 +173,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     ASSERT_TRUE(retStart1);
     ASSERT_TRUE(waitForNodes(5, 2, topology));
 
-    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+    QueryId queryId = crd->getRequestService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
 
@@ -310,7 +310,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     wrk1->replaceParent(crd->getNesWorker()->getWorkerId(), wrk2->getWorkerId());
 
     //start query
-    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+    QueryId queryId = crd->getRequestService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
     auto networkSinkWrk3Id = 31;

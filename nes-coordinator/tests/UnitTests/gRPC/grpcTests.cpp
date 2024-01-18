@@ -78,7 +78,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     EXPECT_TRUE(retStart);
     NES_INFO("GrpcNotifyQueryFailureTest: Worker started successfully");
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";

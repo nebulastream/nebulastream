@@ -79,7 +79,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     ASSERT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -130,7 +130,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     ASSERT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -184,7 +184,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     std::string outputFilePath = getTestResourceFolder() / "testMultipleOutputBufferFromDefaultSourceWriteFile.txt";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -285,7 +285,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
         getTestResourceFolder() / "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -394,7 +394,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     ASSERT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -460,7 +460,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     std::string outputFilePath = getTestResourceFolder() / "testMultipleOutputBufferFromCSVSourceWriteTest.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -539,7 +539,7 @@ TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
     std::string outputFilePath = getTestResourceFolder() / "testTimestampCsvSink.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getQueryService();
+    RequestServicePtr queryService = crd->getRequestService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query

@@ -354,7 +354,7 @@ int main(int argc, const char* argv[]) {
 
                 //Setup coordinator for the experiment
                 setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum], batchSizes[configNum]);
-                NES::RequestServicePtr queryService = coordinator->getQueryService();
+                NES::RequestServicePtr queryService = coordinator->getRequestService();
                 auto queryCatalogService = coordinator->getQueryCatalogService();
                 auto globalQueryPlan = coordinator->getGlobalQueryPlan();
                 //Sleep for fixed time before starting the experiments

@@ -156,7 +156,7 @@ void E2ESingleRun::runQueries() {
     auto rpcPort = coordinator->startCoordinator(/* blocking */ false);
     NES_INFO("Started nesCoordinator at {}", rpcPort);
 
-    auto queryService = coordinator->getQueryService();
+    auto queryService = coordinator->getRequestService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     submitQueries(queryService, queryCatalog);
@@ -198,7 +198,7 @@ void E2ESingleRun::runQueries() {
 
 void E2ESingleRun::stopQueries() {
     NES_INFO("Stopping the queries...");
-    auto queryService = coordinator->getQueryService();
+    auto queryService = coordinator->getRequestService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     for (auto id : submittedIds) {

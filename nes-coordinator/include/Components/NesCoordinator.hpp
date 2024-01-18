@@ -159,7 +159,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief Get the instance of query service
      * @return Query service pointer
      */
-    RequestServicePtr getQueryService();
+    RequestServicePtr getRequestService();
 
     /**
      * @brief Get instance of query catalog

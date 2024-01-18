@@ -112,7 +112,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                      .sink(NullOutputSinkDescriptor::create());
 
-    NES::RequestServicePtr queryService = crd->getQueryService();
+    NES::RequestServicePtr queryService = crd->getRequestService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                  query.getQueryPlan(),
@@ -198,7 +198,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
 
     auto query2 = Query::from("input2").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());
 
-    NES::RequestServicePtr queryService = crd->getQueryService();
+    NES::RequestServicePtr queryService = crd->getRequestService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId1 = queryService->validateAndQueueAddQueryRequest(query1.getQueryPlan()->toString(),
                                                                   query1.getQueryPlan(),
@@ -282,7 +282,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
 
     auto query = Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());
 
-    NES::RequestServicePtr queryService = crd->getQueryService();
+    NES::RequestServicePtr queryService = crd->getRequestService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                  query.getQueryPlan(),
