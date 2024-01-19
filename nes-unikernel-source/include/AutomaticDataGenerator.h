@@ -22,7 +22,7 @@
 
 class FieldDataGenerator {
   public:
-    virtual void generate(NES::Runtime::MemoryLayouts::DynamicField&) = 0;
+    virtual void generate(NES::Runtime::MemoryLayouts::DynamicField&, NES::Runtime::TupleBuffer&) = 0;
     virtual ~FieldDataGenerator() = default;
 };
 
@@ -34,7 +34,9 @@ class IncreasingSequence final : public FieldDataGenerator {
     T current = 0;
 
   public:
-    void generate(NES::Runtime::MemoryLayouts::DynamicField& field) override { field.write<T>(current++); }
+    void generate(NES::Runtime::MemoryLayouts::DynamicField& field, NES::Runtime::TupleBuffer&) override {
+        field.write<T>(current++);
+    }
 };
 
 template<IsInteger T>
@@ -43,7 +45,45 @@ class ConstantSequence final : public FieldDataGenerator {
 
   public:
     explicit ConstantSequence(T value) : value(value) {}
-    void generate(NES::Runtime::MemoryLayouts::DynamicField& field) override { field.write<T>(value); }
+    void generate(NES::Runtime::MemoryLayouts::DynamicField& field, NES::Runtime::TupleBuffer&) override {
+        field.write<T>(value);
+    }
+};
+
+class RandomText final : public FieldDataGenerator {
+    size_t min_length;
+    size_t max_length;
+
+    std::random_device rd;
+    std::mt19937 gen;
+
+  public:
+    RandomText(size_t min_length, size_t max_length) : min_length(min_length), max_length(max_length) {}
+
+    void generate(NES::Runtime::MemoryLayouts::DynamicField& field, NES::Runtime::TupleBuffer& buffer) override {
+        const double rand = (static_cast<double>(gen()) / static_cast<double>(RAND_MAX));
+        const size_t diff = max_length - min_length;
+        size_t length = min_length + static_cast<size_t>(rand * static_cast<double>(diff));
+
+        auto textBuffer = new char[sizeof(uint32_t) + length];
+        for (size_t i = 0; i < length; i++) {
+            const double rand = (static_cast<double>(gen()) / static_cast<double>(RAND_MAX));
+            const char diff = 'Z' - 'a';
+            char character = 'a' + static_cast<char>(rand * static_cast<double>(diff));
+            textBuffer[i + sizeof(uint32_t)] = character;
+        }
+
+        auto child = NES::Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(textBuffer),
+                                                           sizeof(uint32_t) + length,
+                                                           [](auto seg, auto) {
+                                                               delete seg->getPointer();
+                                                               delete seg;
+                                                           });
+        *child.getBuffer<uint32_t>() = length;
+
+        const auto childBufferIndex = buffer.storeChildBuffer(child);
+        field.write(childBufferIndex);
+    }
 };
 
 template<typename T>
@@ -56,7 +96,7 @@ class RandomValues final : public FieldDataGenerator {
   public:
     RandomValues(T min, T max) : rd(), gen(rd()), min(min), max(max) {}
 
-    void generate(NES::Runtime::MemoryLayouts::DynamicField& field) override {
+    void generate(NES::Runtime::MemoryLayouts::DynamicField& field, NES::Runtime::TupleBuffer&) override {
         T value = (static_cast<T>(gen()) / static_cast<T>(RAND_MAX));
         T diff = max - min;
         T value_in_range = min + (value * diff);

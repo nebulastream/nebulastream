@@ -34,7 +34,7 @@ std::vector<NES::Runtime::TupleBuffer> AutomaticDataGenerator::createData(size_t
             auto currentTuple = dynamicBuffer[currentRecord];
             for (auto& field : schema->fields) {
                 auto dynamicField = currentTuple[field->getName()];
-                generators.at(field->getName())->generate(dynamicField);
+                generators.at(field->getName())->generate(dynamicField, buffer);
             }
             tuples_in_buffer++;
         }
@@ -99,7 +99,10 @@ std::unique_ptr<AutomaticDataGenerator> AutomaticDataGenerator::create(NES::Sche
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::CHAR:
-                case NES::BasicPhysicalType::NativeType::TEXT:
+                case NES::BasicPhysicalType::NativeType::TEXT: {
+                    generators[attr->getName()] = std::make_unique<RandomText>(1, 100);
+                    break;
+                }
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: NES_THROW_RUNTIME_ERROR("Not Implemented");
             }
