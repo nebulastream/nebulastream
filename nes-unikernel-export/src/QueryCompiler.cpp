@@ -89,6 +89,7 @@ getSources(std::vector<NES::QueryCompilation::OperatorPipelinePtr> pipelines, NE
         auto noOpSource = std::dynamic_pointer_cast<NES::NoOpPhysicalSourceType>(physicalSourceType);
         sourceMap[pipeline->getPipelineId()] =
             NES::NoOpSourceDescriptor::create(source->getInputSchema(),
+                                                noOpSource->getSchemaType(),
                                               source->getSourceDescriptor()->getLogicalSourceName(),
                                               noOpSource->getTCP(),
                                               source->getOriginId(),

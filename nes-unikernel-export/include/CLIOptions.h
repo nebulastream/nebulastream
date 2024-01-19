@@ -1,11 +1,13 @@
 #ifndef NES_CLIOPTIONS_H
 #define NES_CLIOPTIONS_H
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <YAMLModel.h>
 #include <boost/lexical_cast/try_lexical_convert.hpp>
 #include <boost/outcome.hpp>
 #include <optional>
 #include <string>
+#include <variant>
 #include <yaml-cpp/yaml.h>
 
 namespace NES {
@@ -273,6 +275,10 @@ class Options {
     [[nodiscard]] bool useKafka() const;
     [[nodiscard]] size_t getBufferSize() const;
     std::string getOutputPathForFile(const std::string& file);
+    void createSource(std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog,
+                      std::vector<NES::PhysicalSourceTypePtr> physicalSources,
+                      NES::TopologyNodePtr worker,
+                      const ExportSourceConfiguration& source);
     std::tuple<NES::TopologyPtr, NES::Catalogs::Source::SourceCatalogPtr, std::vector<NES::PhysicalSourceTypePtr>>
     getTopologyAndSources();
     [[nodiscard]] ExportKafkaConfiguration getKafkaConfiguration() const;

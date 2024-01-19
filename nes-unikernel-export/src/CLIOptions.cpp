@@ -12,6 +12,8 @@
      limitations under the License.
 */
 
+#include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
+#include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <API/Schema.hpp>
 #include <CLIOptions.h>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -31,7 +33,21 @@ std::string Options::getQueryString() { return configuration.query; }
 bool Options::useKafka() const { return configuration.topology.sink.kafka.has_value(); }
 ExportKafkaConfiguration Options::getKafkaConfiguration() const { return configuration.topology.sink.kafka.value(); }
 
+NES::SchemaPtr getBenchmarkSchema(SchemaType type) {
+    switch (type) {
+        case NEXMARK_BID: return std::make_unique<NES::Benchmark::DataGeneration::NEBitDataGenerator>()->getSchema();
+        case NEXMARK_PERSON: NES_NOT_IMPLEMENTED();
+        case NEXMARK_AUCTION:
+            return std::make_unique<NES::Benchmark::DataGeneration::NEAuctionDataGenerator>()->getSchema();
+            break;
+        default: NES_NOT_IMPLEMENTED();
+    }
+}
+
 NES::SchemaPtr parseSchema(const SchemaConfiguration& schemaConfig) {
+    if (schemaConfig.type != MANUAL) {
+        return getBenchmarkSchema(schemaConfig.type);
+    }
     auto schema = NES::Schema::create();
     for (const auto& field : schemaConfig.fields) {
         auto type = magic_enum::enum_cast<NES::BasicType>(field.type);
@@ -41,6 +57,19 @@ NES::SchemaPtr parseSchema(const SchemaConfiguration& schemaConfig) {
     return schema;
 }
 
+void Options::createSource(std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog,
+                           std::vector<NES::PhysicalSourceTypePtr> physicalSources,
+                           NES::TopologyNodePtr worker,
+                           const ExportSourceConfiguration& source) {
+    sourceCatalog->addLogicalSource(source.name, parseSchema(source.schema));
+    auto logicalSource = sourceCatalog->getLogicalSource(source.name);
+    auto physicalSourceType =
+        std::make_shared<NES::NoOpPhysicalSourceType>(source.name, source.name, source.schema.type, source.tcp);
+    auto physicalSource = NES::PhysicalSource::create(physicalSourceType);
+    sourceCatalog->addPhysicalSource(source.name,
+                                     NES::Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, worker));
+    physicalSources.push_back(physicalSourceType);
+}
 std::tuple<NES::TopologyPtr, NES::Catalogs::Source::SourceCatalogPtr, std::vector<NES::PhysicalSourceTypePtr>>
 Options::getTopologyAndSources() {
     auto sourceCatalog = std::make_shared<NES::Catalogs::Source::SourceCatalog>();
@@ -72,14 +101,7 @@ Options::getTopologyAndSources() {
                                                 workerConfiguration.node.resources,
                                                 {{NES::Worker::Properties::MAINTENANCE, false}});
         for (const auto& source : workerConfiguration.sources) {
-            sourceCatalog->addLogicalSource(source.name, parseSchema(source.schema));
-            auto logicalSource = sourceCatalog->getLogicalSource(source.name);
-            auto physicalSourceType = std::make_shared<NES::NoOpPhysicalSourceType>(source.name, source.name, source.tcp);
-            auto physicalSource = NES::PhysicalSource::create(physicalSourceType);
-            sourceCatalog->addPhysicalSource(
-                source.name,
-                NES::Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, worker));
-            physicalSources.push_back(physicalSourceType);
+            createSource(sourceCatalog, physicalSources, worker, source);
         }
 
         nodes[i + 2] = std::move(worker);
