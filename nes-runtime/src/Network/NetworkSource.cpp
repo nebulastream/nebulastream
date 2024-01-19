@@ -155,8 +155,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     NES_DEBUG("NetworkSource: reconfigure() called {}", nesPartition.toString());
     NES::DataSource::reconfigure(task, workerContext);
     bool isTermination = false;
-    Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Failure;
-    ;
+    auto terminationType = Runtime::QueryTerminationType::Failure;
+
     switch (task.getType()) {
         case Runtime::ReconfigurationType::UpdateVersion: {
             if (!networkManager->getConnectSourceEventChannelsAsync()) {
@@ -173,8 +173,9 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         case Runtime::ReconfigurationType::Initialize: {
             // we need to check again because between the invocations of
             // NetworkSource::start() and NetworkSource::reconfigure() the query might have
-            // been stopped for some reasons
+            // been stopped for some reason
             if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Deleted) {
+                NES_WARNING("NetworkManager shows the partition {} to be deleted, but now we should init it here, so we simply return!", nesPartition.toString());
                 return;
             }
 
@@ -193,10 +194,10 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                                                                  waitTime,
                                                                                  retryTimes);
                 if (channel == nullptr) {
-                    NES_DEBUG("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
+                    NES_WARNING("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
                               nesPartition.toString(),
                               Runtime::NesThread::getId());
-                    return;// partition was deleted on the other side of the channel.. no point in waiting for a channel
+                    return;// partition was deleted on the other side of the channel... no point in waiting for a channel
                 }
                 workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
                 NES_DEBUG("NetworkSource: reconfigure() stored event-channel {} Thread {}",
