@@ -13,6 +13,7 @@
 
 add_source_files(nes-runtime
         CountMin.cpp
+        Interval.cpp
         Statistic.cpp
         StatisticCollectorStorage.cpp
         ReservoirSample.cpp)

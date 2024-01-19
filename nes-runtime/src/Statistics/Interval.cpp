@@ -12,26 +12,17 @@
     limitations under the License.
 */
 
-#include <cmath>
-#include <vector>
-
-#include <Statistics/CountMin.hpp>
+#include <Statistics/Interval.hpp>
 
 namespace NES::Experimental::Statistics {
 
-double CountMin::calcError(const uint64_t width) { return 1.0 / (double) width; }
-
-double CountMin::calcProbability(const uint64_t depth) { return exp(-1.0 * (double) depth); }
-
-const std::vector<std::vector<uint64_t>>& CountMin::getData() const { return data; }
-
-void CountMin::increment(uint64_t row, uint64_t column) {
-    data[row][column] += 1;
+bool Interval::operator==(const NES::Experimental::Statistics::Interval& interval) const {
+    return startTime == interval.getStartTime() && endTime == interval.getEndTime();
 }
 
-uint64_t CountMin::getWidth() const { return width; }
+Interval::Interval(const uint64_t startTime, const uint64_t endTime) : startTime(startTime), endTime(endTime) {}
 
-double CountMin::getError() const { return error; }
+uint64_t Interval::getStartTime() const { return startTime; }
 
-double CountMin::getProbability() const { return probability; }
-}
+uint64_t Interval::getEndTime() const { return endTime; }
+}// namespace NES::Experimental::Statistics

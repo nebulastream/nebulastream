@@ -43,7 +43,8 @@ class H3HashTest : public Testing::BaseUnitTest {
 
         for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row) {
             for (auto keyBit = 0UL; keyBit < numberOfBitsInKey; ++keyBit) {
-                allH3Seeds[row].emplace_back(distribution(gen));
+                auto value = distribution(gen);
+                allH3Seeds[row].emplace_back(value);
             }
         }
         allH3Hashes.clear();

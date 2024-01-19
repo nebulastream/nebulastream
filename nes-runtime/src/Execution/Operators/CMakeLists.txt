@@ -19,4 +19,5 @@ add_source_files(nes-runtime
 
 add_subdirectory(Relational)
 add_subdirectory(ThresholdWindow)
+add_subdirectory(Statistics)
 add_subdirectory(Streaming)

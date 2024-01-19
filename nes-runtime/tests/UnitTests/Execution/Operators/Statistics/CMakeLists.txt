@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,10 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Relational)
-add_subdirectory(ThresholdWindow)
-add_subdirectory(Statistics)
-add_subdirectory(Streaming)
-
-add_nes_runtime_test(runtime-scan-operator-test "ScanOperatorTest.cpp")
-add_nes_runtime_test(runtime-emit-operator-test "EmitOperatorTest.cpp")
+add_nes_runtime_test(runtime-synopsis-operator-test "SynopsisOperatorTest.cpp")

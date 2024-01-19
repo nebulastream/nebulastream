@@ -22,7 +22,8 @@
 namespace NES::Experimental::Statistics {
 
 /**
- * @brief
+ * @brief this class stores the 2D array of a CountMin sketches,
+ * its meta data and provides the functionalities associated with Count-Min Sketches
  */
 class CountMin : public Statistic {
   public:
@@ -49,6 +50,13 @@ class CountMin : public Statistic {
      * @return the probability
      */
     double calcProbability(uint64_t depth);
+
+    /**
+     * @brief receives a depth and a width and increments the counter in that location
+     * @param row the row where the counter is increased by 1
+     * @param column the column where the counter is increased by 1
+     */
+    void increment(uint64_t row, uint64_t column);
 
     /**
      * @return returns the width of the Count-Min Sketch
