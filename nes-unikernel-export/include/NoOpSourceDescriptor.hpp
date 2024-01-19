@@ -22,12 +22,14 @@ namespace NES {
 class NoOpSourceDescriptor : public SourceDescriptor {
   public:
     NoOpSourceDescriptor(SchemaPtr schema,
+                         SchemaType schemaType,
                          std::string logicalSourceName,
                          std::optional<TCPSourceConfiguration> tcp,
                          NES::OriginId originId,
                          NES::OperatorId operatorId);
 
     static SourceDescriptorPtr create(SchemaPtr schemaPtr,
+                                      SchemaType schemaType,
                                       std::string logicalSourceName,
                                       std::optional<TCPSourceConfiguration>,
                                       OriginId originId,
@@ -45,8 +47,10 @@ class NoOpSourceDescriptor : public SourceDescriptor {
     [[nodiscard]] NES::OperatorId getOperatorId() const { return operatorId; }
 
     [[nodiscard]] std::optional<TCPSourceConfiguration> getTcp() const { return tcp; }
+    [[nodiscard]] SchemaType getSchemaType() const { return schemaType; }
 
   private:
+    SchemaType schemaType;
     std::optional<TCPSourceConfiguration> tcp;
     NES::OriginId originId;
     NES::OperatorId operatorId;

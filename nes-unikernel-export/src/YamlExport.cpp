@@ -55,7 +55,7 @@ void YamlExport::setQueryPlan(NES::QueryPlanPtr queryPlan,
             SourceEndpointConfiguration source;
             auto sourceNode = findNodeByOperator(sourceOp, gep).value();
             if (sourceOp->getSourceDescriptor()->instanceOf<NES::Network::NetworkSourceDescriptor>()) {
-                source.schema = sourceOp->getOutputSchema();
+                source.schema = SchemaConfiguration(MANUAL, sourceOp->getOutputSchema());
                 source.subQueryID = sourceNode->getQuerySubPlans(1)[0]->getQuerySubPlanId();
                 source.nodeId = sourceNode->getTopologyNode()->getId();
                 source.ip = sourceNode->getTopologyNode()->getIpAddress();
@@ -68,7 +68,7 @@ void YamlExport::setQueryPlan(NES::QueryPlanPtr queryPlan,
                 auto sourceType = physicalSource->getPhysicalSource()->getPhysicalSourceType();
                 auto noOpSourceType = std::dynamic_pointer_cast<NES::NoOpPhysicalSourceType>(sourceType);
 
-                source.schema = sourceOp->getOutputSchema();
+                source.schema = SchemaConfiguration(noOpSourceType->getSchemaType(), sourceOp->getOutputSchema());
                 source.ip = noOpSourceType->getTCP()->ip;
                 source.port = noOpSourceType->getTCP()->port;
                 source.type = TcpSource;
@@ -98,7 +98,10 @@ void YamlExport::setQueryPlan(NES::QueryPlanPtr queryPlan,
 }
 
 WorkerTCPSourceConfiguration buildTCPSource(const NES::NoOpSourceDescriptor& desc) {
-    return WorkerTCPSourceConfiguration{desc.getTcp()->ip, desc.getTcp()->port, desc.getOriginId(), desc.getSchema()};
+    return WorkerTCPSourceConfiguration{desc.getTcp()->ip,
+                                        desc.getTcp()->port,
+                                        desc.getOriginId(),
+                                        SchemaConfiguration(MANUAL, desc.getSchema())};
 }
 
 WorkerLinkConfiguration buildWorkerLink(NES::Network::NetworkSourceDescriptorPtr desc) {
@@ -180,8 +183,9 @@ void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const 
         std::optional<WorkerLinkConfiguration> workerLink = std::nullopt;
         if (exportToKafka.has_value() && networkSinkDescriptor->getNodeLocation().getNodeId() == SINK_NODE) {
             type = WorkerDownStreamLinkConfigurationType::kafka;
-            kafkaSinkConfig.emplace(
-                KafkaSinkConfiguration{sink[0]->getOutputSchema(), exportToKafka->broker, exportToKafka->topic});
+            kafkaSinkConfig.emplace(KafkaSinkConfiguration{SchemaConfiguration(MANUAL, sink[0]->getOutputSchema()),
+                                                           exportToKafka->broker,
+                                                           exportToKafka->topic});
         } else {
             type = WorkerDownStreamLinkConfigurationType::node;
             workerLink.emplace(WorkerLinkConfiguration{

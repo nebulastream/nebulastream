@@ -72,6 +72,16 @@ add_executable(NesUnikernelExporter src/main.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/NoOpNodeEngine.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/NoOpQueryManager.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/NoOpWorkerContext.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/DataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/Nextmark/NEAuctionDataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/Nextmark/NEBitDataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/ZipfianDataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/YSBDataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/DefaultDataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/LightSaber/ClusterMonitoringDataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/LightSaber/LinearRoadDataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/LightSaber/SmartGridDataGenerator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/src/DataGeneration/LightSaber/ManufacturingEquipmentDataGenerator.cpp
 )
 
 
@@ -80,6 +90,7 @@ target_include_directories(NesUnikernelExporter PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-catalogs/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-compiler/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-optimizer/include>
@@ -89,6 +100,7 @@ target_include_directories(NesUnikernelExporter PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
 )
 
+target_compile_definitions(NesUnikernelExporter PRIVATE BENCHMARK_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/benchmark-data/")
 find_package(yaml-cpp REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=unused-parameter -Wno-error=unused-private-field -DUNIKERNEL_EXPORT=1 -std=c++20")
 

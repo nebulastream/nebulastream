@@ -24,23 +24,26 @@ bool NES::NoOpSourceDescriptor::equal(const NES::SourceDescriptorPtr& other) con
 }
 
 NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::copy() {
-    return std::make_shared<NoOpSourceDescriptor>(schema, getLogicalSourceName(), tcp, originId, operatorId);
+    return std::make_shared<NoOpSourceDescriptor>(schema, schemaType, getLogicalSourceName(), tcp, originId, operatorId);
 }
 
 NES::NoOpSourceDescriptor::NoOpSourceDescriptor(SchemaPtr schema,
+                                                SchemaType schemaType,
                                                 std::string logicalSourceName,
                                                 std::optional<TCPSourceConfiguration> tcp,
                                                 NES::OriginId originId,
                                                 NES::OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), std::move(logicalSourceName)), tcp(std::move(tcp)), originId(originId),
-      operatorId(operatorId) {}
+    : SourceDescriptor(std::move(schema), std::move(logicalSourceName)), schemaType(schemaType), tcp(std::move(tcp)),
+      originId(originId), operatorId(operatorId) {}
 
 NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::create(NES::SchemaPtr schemaPtr,
+                                                           SchemaType schemaType,
                                                            std::string logicalSourceName,
                                                            std::optional<TCPSourceConfiguration> tcp,
                                                            OriginId originId,
                                                            OperatorId operatorId) {
     return std::make_shared<NoOpSourceDescriptor>(std::move(schemaPtr),
+                                                  schemaType,
                                                   std::move(logicalSourceName),
                                                   std::move(tcp),
                                                   originId,
