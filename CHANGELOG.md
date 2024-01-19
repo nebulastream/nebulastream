@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.27](https://github.com/nebulastream/nebulastream/tree/v0.6.27) (2024-01-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.26...v0.6.27)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Test case `TestHarnessUtilTest.testHarnesWithHiearchyInTopology` fails very often [\#4359](https://github.com/nebulastream/nebulastream/issues/4359)
+
 ## [v0.6.26](https://github.com/nebulastream/nebulastream/tree/v0.6.26) (2024-01-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.25...v0.6.26)
