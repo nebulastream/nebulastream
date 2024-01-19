@@ -49,10 +49,16 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     bool success = 0;
     try {
         //check if the plan is reconfigured
-        if (decomposedQueryPlan->getState() == QueryState::REDEPLOYED) {
-            success = nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
-        } else {
-            success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
+        switch (decomposedQueryPlan->getState()) {
+            case QueryState::REDEPLOYED: {
+                success = nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
+                break;
+            }
+            case QueryState::DEPLOYED: {
+                success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
+                break;
+            }
+            default: NES_ASSERT(false, "Cannot register query in another state than DEPLOYED or REDEPLOYED");
         }
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: {}", error.what());

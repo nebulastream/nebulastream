@@ -138,6 +138,9 @@ class NetworkSource : public DataSource {
      * @param terminationType
      */
     void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
+    void onDrainMessage();
+    bool hasReceivedDrainMessage();
+    void markAsMigrated();
 
     /**
      * @brief Reconfigures this source with ReconfigurationType::UpdateVersion causing it to close event channels to the old
@@ -150,7 +153,7 @@ class NetworkSource : public DataSource {
     * @brief Getter for the initial version.
     * @return The version this source was started with
     */
-    DecomposedQueryPlanVersion getVersion() const override;
+    DecomposedQueryPlanVersion getVersion() override;
 
     /**
      * @brief getter for the network sinks unique id
@@ -179,6 +182,9 @@ class NetworkSource : public DataSource {
     DecomposedQueryPlanVersion version;
     const uint64_t uniqueNetworkSourceIdentifier;
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
+    bool receivedDrainMessage = false;
+    bool migrated = false;
+    std::mutex versionMutex;
 };
 
 }// namespace NES::Network

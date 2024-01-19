@@ -299,28 +299,57 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
-bool NetworkSource::startNewVersion() {
-    NES_DEBUG("Updating version for network source {}", nesPartition);
-    if (!nextSourceDescriptor) {
-        return false;
-    }
-    networkManager->unregisterSubpartitionConsumer(nesPartition);
-    auto newDescriptor = nextSourceDescriptor.value();
-    version = newDescriptor.getVersion();
-    sinkLocation = newDescriptor.getNodeLocation();
-    nesPartition = newDescriptor.getNesPartition();
-    nextSourceDescriptor = std::nullopt;
-    //bind the sink to the new partition
-    bind();
-    auto reconfMessage = Runtime::ReconfigurationMessage(-1,
-                                                         -1,
-                                                         Runtime::ReconfigurationType::UpdateVersion,
-                                                         Runtime::Reconfigurable::shared_from_this());
-    queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
-    return true;
+void NetworkSource::onDrainMessage() {
+    NES_ASSERT(!receivedDrainMessage, "Received more than one drain message");
+    std::unique_lock lock(versionMutex);
+    receivedDrainMessage = true;
+    startNewVersion();
 }
 
-DecomposedQueryPlanVersion NetworkSource::getVersion() const { return version; }
+bool NetworkSource::hasReceivedDrainMessage() {
+    std::unique_lock lock(versionMutex);
+    return receivedDrainMessage;
+}
+
+void NetworkSource::markAsMigrated() {
+    std::unique_lock lock(versionMutex);
+    migrated = true;
+    if (receivedDrainMessage) {
+        startNewVersion();
+    }
+}
+
+bool NetworkSource::startNewVersion() {
+    NES_DEBUG("Updating version for network source {}", nesPartition);
+    std::unique_lock lock(versionMutex);
+    if (nextSourceDescriptor) {
+        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
+        networkManager->unregisterSubpartitionConsumer(nesPartition);
+        auto newDescriptor = nextSourceDescriptor.value();
+        version = newDescriptor.getVersion();
+        sinkLocation = newDescriptor.getNodeLocation();
+        nesPartition = newDescriptor.getNesPartition();
+        nextSourceDescriptor = std::nullopt;
+        receivedDrainMessage = false;
+        //bind the sink to the new partition
+        bind();
+        auto reconfMessage = Runtime::ReconfigurationMessage(-1,
+                                                             -1,
+                                                             Runtime::ReconfigurationType::UpdateVersion,
+                                                             Runtime::Reconfigurable::shared_from_this());
+        queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+        return true;
+    }
+    if (migrated) {
+        onEndOfStream(Runtime::QueryTerminationType::Graceful);
+    }
+    return false;
+}
+
+DecomposedQueryPlanVersion NetworkSource::getVersion() {
+    std::unique_lock lock(versionMutex);
+    return version;
+}
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);
@@ -329,7 +358,8 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
         if (!senderChannel) {
             auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(this->operatorId);
             if (!senderChannelOptional) {
-                NES_DEBUG("NetworkSource::onEvent(event, wrkContext) operatorId: {}: could not send event because event channel "
+                NES_DEBUG("NetworkSource::onEvent(event, wrkContext) operatorId: {}: could not send event because event "
+                          "channel "
                           "has not been established yet",
                           this->operatorId);
                 return;
@@ -348,8 +378,12 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
 OperatorId NetworkSource::getUniqueId() const { return uniqueNetworkSourceIdentifier; }
 
 bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
+    std::unique_lock lock(versionMutex);
     if (nesPartition != networkSourceDescriptor.getNesPartition()) {
         nextSourceDescriptor = networkSourceDescriptor;
+        if (receivedDrainMessage) {
+            startNewVersion();
+        }
         return true;
     }
     return false;
