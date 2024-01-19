@@ -1,5 +1,6 @@
 #include <AutomaticDataGenerator.h>
 #include <CSVDataGenerator.h>
+#include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkChannel.hpp>
@@ -15,23 +16,68 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <YAMLModel.h>
 #include <boost/asio.hpp>
+#include <execution>
+#include <algorithm>
 #include <memory>
+#include <span>
 #include <string>
 
 using namespace std::literals::chrono_literals;
+class APrioriDataGenerator {
+    std::vector<std::vector<uint8_t>> data_chunks;
+    NES::Runtime::BufferManagerPtr bufferManager;
+    NES::Benchmark::DataGeneration::DataGeneratorPtr generatorImpl;
+    NES::SinkFormatPtr format;
+
+  public:
+    APrioriDataGenerator(const Options& options) {
+        bufferManager = std::make_shared<NES::Runtime::BufferManager>(options.bufferSize);
+        bufferManager->createFixedSizeBufferPool(32);
+        switch (options.generator) {
+            case NEXMARK_BID: generatorImpl = std::make_unique<NES::Benchmark::DataGeneration::NEBitDataGenerator>(); break;
+            case NEXMARK_AUCTION:
+                generatorImpl = std::make_unique<NES::Benchmark::DataGeneration::NEAuctionDataGenerator>();
+                break;
+            case NEXMARK_PERSON: NES_NOT_IMPLEMENTED(); break;
+            case MANUAL: generatorImpl = AutomaticDataGenerator::create(options.schema);
+            default: NES_NOT_IMPLEMENTED();
+        }
+
+        generatorImpl->setBufferManager(bufferManager);
+
+        switch (options.format) {
+            case NES::FormatTypes::CSV_FORMAT:
+                format = std::make_unique<NES::CsvFormat>(generatorImpl->getSchema(), bufferManager);
+                break;
+            case NES::FormatTypes::JSON_FORMAT:
+                format = std::make_unique<NES::CsvFormat>(generatorImpl->getSchema(), bufferManager);
+                break;
+            default: NES_NOT_IMPLEMENTED();
+        }
+    }
+
+    void generate(size_t numberOfBuffers) {
+        data_chunks.resize(numberOfBuffers);
+        std::for_each(std::execution::par_unseq, data_chunks.begin(), data_chunks.end(), [this](auto& v) {
+            auto buffer = generatorImpl->createData(1, bufferManager->getBufferSize());
+            auto tupleData = format->getFormattedBuffer(buffer[0]);
+            std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
+        });
+        NES_DEBUG("Generated {} buffers", numberOfBuffers);
+    }
+
+    std::span<const uint8_t> get_chunk(size_t chunk_index) {
+        if (chunk_index >= data_chunks.size())
+            return {};
+        return {data_chunks[chunk_index].data(), data_chunks[chunk_index].size()};
+    }
+};
 
 class TcpServer {
   public:
-    TcpServer(boost::asio::io_service& ioService, const Options& option)
-        : acceptor(ioService, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), option.port)) {
-        bufferManager = std::make_shared<NES::Runtime::BufferManager>(8192);
-        bufferManager->createFixedSizeBufferPool(128);
-        generator = AutomaticDataGenerator::create(option.schema);
-        generator->setBufferManager(bufferManager);
-        delay = std::chrono::milliseconds(option.delayInMS);
-        format = std::make_unique<NES::CsvFormat>(option.schema, bufferManager);
-        auto buffer = generator->createData(1, 8192);
-        randomTuple = format->getFormattedBuffer(buffer[0]);
+    TcpServer(boost::asio::io_service& ioService, const Options& option, std::unique_ptr<APrioriDataGenerator> generator)
+        : acceptor(ioService, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), option.port)), delay(option.delayInMS),
+          dataGenerator(std::move(generator)) {
         startAccept();
     }
 
@@ -43,7 +89,7 @@ class TcpServer {
                 std::stringstream ss;
                 ss << newConnection->remote_endpoint();
                 NES_INFO("Accepted connection from {}", ss.str());
-                startSend(newConnection);
+                startSend(newConnection, 0);
                 startAccept();// Accept the next connection
             } else {
                 NES_ERROR("Error Accepting connection: {}", error.message());
@@ -51,28 +97,30 @@ class TcpServer {
         });
     }
 
-    void startSend(std::shared_ptr<boost::asio::ip::tcp::socket> socket) {
-        boost::asio::async_write(*socket,
-                                 boost::asio::buffer(randomTuple.c_str(), randomTuple.size()),
-                                 [this, socket](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
-                                     if (!error) {
-                                         if (delay > 0ms) {
-                                             std::this_thread::sleep_for(delay);
-                                         }
-                                         startSend(socket);// Continue sending random tuples
-                                     } else {
-                                         std::cerr << "Error sending data: " << error.message() << std::endl;
-                                         socket->close();
-                                     }
-                                 });
+    void startSend(std::shared_ptr<boost::asio::ip::tcp::socket> socket, size_t chunk_index) {
+        const auto chunk = dataGenerator->get_chunk(chunk_index);
+        if (chunk.empty()) {
+            return;
+        }
+        boost::asio::async_write(
+            *socket,
+            boost::asio::buffer(chunk.data(), chunk.size()),
+            [this, socket, chunk_index](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
+                if (!error) {
+                    if (delay > 0ms) {
+                        std::this_thread::sleep_for(delay);
+                    }
+                    startSend(socket, chunk_index + 1);// Continue sending random tuples
+                } else {
+                    std::cerr << "Error sending data: " << error.message() << std::endl;
+                    socket->close();
+                }
+            });
     }
 
-    NES::Runtime::BufferManagerPtr bufferManager;
-    std::unique_ptr<AutomaticDataGenerator> generator;
-    std::unique_ptr<NES::CsvFormat> format;
     boost::asio::ip::tcp::acceptor acceptor;
     std::chrono::milliseconds delay;
-    std::string randomTuple;
+    std::unique_ptr<APrioriDataGenerator> dataGenerator;
 };
 
 class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListener {
@@ -154,10 +202,10 @@ int runNetworkSource(Options options) {
     return 0;
 }
 
-int runTcpSource(const Options& options) {
+int runTcpSource(const Options& options, std::unique_ptr<APrioriDataGenerator> generator) {
     using namespace NES::Runtime;
     boost::asio::io_service ioService;
-    TcpServer server(ioService, options);
+    TcpServer server(ioService, options, std::move(generator));
     ioService.run();
     return 0;
 }
@@ -170,12 +218,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     auto options = optionsResult.assume_value();
+    auto dataGenerator = std::make_unique<APrioriDataGenerator>(options);
+    dataGenerator->generate(options.numberOfBuffers);
 
     if (options.type == NetworkSource) {
         NES_INFO("Running Network Source");
         return runNetworkSource(options);
     } else if (options.type == TcpSource) {
         NES_INFO("Running TCP Source");
-        return runTcpSource(options);
+        return runTcpSource(options, std::move(dataGenerator));
     }
 }
