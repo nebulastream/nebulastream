@@ -115,8 +115,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                 query.getQueryPlan(),
-                                                                 Optimizer::PlacementStrategy::BottomUp);
+                                                                          query.getQueryPlan(),
+                                                                          Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
@@ -201,12 +201,12 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan()->toString(),
-                                                                  query1.getQueryPlan(),
-                                                                  Optimizer::PlacementStrategy::BottomUp);
+                                                                           query1.getQueryPlan(),
+                                                                           Optimizer::PlacementStrategy::BottomUp);
 
     auto queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan()->toString(),
-                                                                  query2.getQueryPlan(),
-                                                                  Optimizer::PlacementStrategy::BottomUp);
+                                                                           query2.getQueryPlan(),
+                                                                           Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
     if (!ret) {
@@ -285,8 +285,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                 query.getQueryPlan(),
-                                                                 Optimizer::PlacementStrategy::BottomUp);
+                                                                          query.getQueryPlan(),
+                                                                          Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {

@@ -43,14 +43,14 @@
 namespace NES {
 
 RequestHandlerService::RequestHandlerService(bool enableNewRequestExecutor,
-                           Configurations::OptimizerConfiguration optimizerConfiguration,
-                           const QueryCatalogServicePtr& queryCatalogService,
-                           const RequestQueuePtr& queryRequestQueue,
-                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                           const QueryParsingServicePtr& queryParsingService,
-                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                           const RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
-                           const z3::ContextPtr& z3Context)
+                                             Configurations::OptimizerConfiguration optimizerConfiguration,
+                                             const QueryCatalogServicePtr& queryCatalogService,
+                                             const RequestQueuePtr& queryRequestQueue,
+                                             const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                             const QueryParsingServicePtr& queryParsingService,
+                                             const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                             const RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
+                                             const z3::ContextPtr& z3Context)
     : enableNewRequestExecutor(enableNewRequestExecutor), optimizerConfiguration(optimizerConfiguration),
       queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue), asyncRequestExecutor(asyncRequestExecutor),
       z3Context(z3Context), queryParsingService(queryParsingService) {
@@ -62,7 +62,7 @@ RequestHandlerService::RequestHandlerService(bool enableNewRequestExecutor,
 }
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
-                                                      const Optimizer::PlacementStrategy placementStrategy) {
+                                                               const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
         NES_INFO("RequestHandlerService: Validating and registering the user query.");
@@ -108,8 +108,8 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
 }
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
-                                                      const QueryPlanPtr& queryPlan,
-                                                      const Optimizer::PlacementStrategy placementStrategy) {
+                                                               const QueryPlanPtr& queryPlan,
+                                                               const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
         QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -152,7 +152,7 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
 }
 
 nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
-                                                                 const Optimizer::PlacementStrategy placementStrategy) {
+                                                                          const Optimizer::PlacementStrategy placementStrategy) {
 
     if (enableNewRequestExecutor) {
         auto explainRequest = RequestProcessor::Experimental::ExplainRequest::create(queryPlan, placementStrategy, 1, z3Context);
@@ -192,8 +192,8 @@ bool RequestHandlerService::validateAndQueueStopQueryRequest(QueryId queryId) {
 }
 
 bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
-                                                    DecomposedQueryPlanId querySubPlanId,
-                                                    const std::string& failureReason) {
+                                                             DecomposedQueryPlanId querySubPlanId,
+                                                             const std::string& failureReason) {
 
     if (!enableNewRequestExecutor) {
         auto request = FailQueryRequest::create(sharedQueryId, failureReason);
@@ -220,13 +220,14 @@ void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
 }
 
 bool RequestHandlerService::validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                                           const std::vector<TopologyLinkInformation>& addedLinks) {
+                                                                  const std::vector<TopologyLinkInformation>& addedLinks) {
     auto changeRequest = RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks,
-                                                                                       addedLinks,
-                                                                                       RequestProcessor::DEFAULT_RETRIES);
+                                                                                               addedLinks,
+                                                                                               RequestProcessor::DEFAULT_RETRIES);
     auto future = changeRequest->getFuture();
     asyncRequestExecutor->runAsync(changeRequest);
-    auto changeResponse = std::static_pointer_cast<RequestProcessor::Experimental::TopologyNodeRelocationRequestResponse>(future.get());
+    auto changeResponse =
+        std::static_pointer_cast<RequestProcessor::Experimental::TopologyNodeRelocationRequestResponse>(future.get());
     return changeResponse->success;
 }
 }// namespace NES

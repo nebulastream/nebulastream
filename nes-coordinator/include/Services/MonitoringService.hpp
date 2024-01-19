@@ -38,7 +38,9 @@ using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
  */
 class MonitoringService {
   public:
-    MonitoringService(TopologyPtr topology, RequestHandlerServicePtr requestHandlerService, QueryCatalogServicePtr catalogService);
+    MonitoringService(TopologyPtr topology,
+                      RequestHandlerServicePtr requestHandlerService,
+                      QueryCatalogServicePtr catalogService);
     MonitoringService(TopologyPtr topology,
                       RequestHandlerServicePtr requestHandlerService,
                       QueryCatalogServicePtr catalogService,

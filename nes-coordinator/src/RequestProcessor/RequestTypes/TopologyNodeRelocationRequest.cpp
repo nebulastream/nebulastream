@@ -13,7 +13,6 @@
 */
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
@@ -27,12 +26,12 @@
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <queue>
 
 namespace NES::RequestProcessor::Experimental {
 
-TopologyNodeRelocationRequestPtr
-TopologyNodeRelocationRequest::create(const std::vector<TopologyLinkInformation>& removedLinks,
+TopologyNodeRelocationRequestPtr TopologyNodeRelocationRequest::create(const std::vector<TopologyLinkInformation>& removedLinks,
                                                                        const std::vector<TopologyLinkInformation>& addedLinks,
                                                                        uint8_t maxRetries) {
     return std::make_shared<TopologyNodeRelocationRequest>(removedLinks, addedLinks, maxRetries);

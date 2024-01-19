@@ -45,7 +45,11 @@ MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      RequestHandlerServicePtr requestHandlerService,
                                      QueryCatalogServicePtr catalogService,
                                      bool enableMonitoring)
-    : MonitoringManager(topology, requestHandlerService, catalogService, std::make_shared<LatestEntriesMetricStore>(), enableMonitoring) {}
+    : MonitoringManager(topology,
+                        requestHandlerService,
+                        catalogService,
+                        std::make_shared<LatestEntriesMetricStore>(),
+                        enableMonitoring) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      RequestHandlerServicePtr requestHandlerService,
