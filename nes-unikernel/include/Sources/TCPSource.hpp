@@ -63,7 +63,7 @@ class TCPSource : public DataSource<TCPConfig> {
                     return std::nullopt;
                 }
                 fillBuffer(schemaBuffer);
-            } while (schemaBuffer.getSize() == 0);
+            } while (schemaBuffer.getBuffer().getNumberOfTuples() == 0);
         } catch (const std::exception& e) {
             NES_ERROR("TCPSource<Schema>::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
             throw e;
@@ -123,10 +123,10 @@ class TCPSource : public DataSource<TCPConfig> {
                               strerror(errno));
                     circularBuffer.returnMemoryForWrite(bufferReservation, 0);
                     return false;
-                } else if (bufferSizeReceived != 0) {
-                    NES_TRACE("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
-                    circularBuffer.returnMemoryForWrite(bufferReservation, bufferSizeReceived);
                 }
+
+                NES_TRACE("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
+                circularBuffer.returnMemoryForWrite(bufferReservation, bufferSizeReceived);
 
                 //if size of received data is not 0 (no data received), push received data to circular buffer
             }
