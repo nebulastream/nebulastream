@@ -17,6 +17,7 @@
 #include <DataTypes/PhysicalDataTypes.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <span>
 namespace NES::Unikernel {
 template<typename Schema, size_t BufferSize>
 class SchemaBuffer {
@@ -34,7 +35,7 @@ class SchemaBuffer {
         NES_ASSERT(offset + Schema::TupleSize <= BufferSize, "Out of Bound Write");
 
         auto tupleMemory = std::span(buffer.getBuffer() + offset, Schema::TupleSize);
-        Schema::writeTupleAtBufferAddress(tupleMemory, tuple);
+        Schema::writeTupleAtBufferAddress(tupleMemory, tuple, buffer);
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
     }
 
@@ -44,7 +45,7 @@ class SchemaBuffer {
         // No Overflow
         NES_ASSERT(offset + Schema::TupleSize <= BufferSize, "Out of Bound Read");
 
-        auto tupleMemory = std::span(buffer.getBuffer() + offset, Schema::TupleSize);
+        auto tupleMemory = std::span(buffer.getBuffer() + offset, Schema::TupleSize, buffer);
         return Schema::readTupleAtBufferAddress(tupleMemory);
     }
 
@@ -66,8 +67,8 @@ class SchemaBuffer {
 
 template<typename T>
 struct Field {
-    static void write(std::span<uint8_t>, const T::ctype&);
-    static T::ctype read(std::span<uint8_t>);
+    static void write(std::span<uint8_t>, const T::ctype&, NES::Runtime::TupleBuffer&);
+    static T::ctype read(std::span<uint8_t>, NES::Runtime::TupleBuffer&);
     static constexpr size_t size = T::size;
     using ctype = T::ctype;
 };
@@ -97,49 +98,65 @@ struct Schema {
     using TupleType = std::tuple<typename T::ctype...>;
     static constexpr size_t TupleSize = (T::size + ...);
 
-    static void writeTupleAtBufferAddress(std::span<uint8_t> memoryLocation, TupleType tuple) {
+    static void writeTupleAtBufferAddress(std::span<uint8_t> memoryLocation, TupleType tuple, NES::Runtime::TupleBuffer& tb) {
         std::apply(
-            [memoryLocation](auto&&... field) {
+            [memoryLocation, &tb](auto&&... field) {
                 size_t i = 0;
-                (T::write(memoryLocation.subspan(_array[i++], T::size), field), ...);
+                (T::write(memoryLocation.subspan(_array[i++], T::size), field, tb), ...);
             },
             tuple);
     }
 
-    static TupleType readTupleAtBufferAddress(std::span<uint8_t> memoryLocation) {
+    static TupleType readTupleAtBufferAddress(std::span<uint8_t> memoryLocation, NES::Runtime::TupleBuffer& tb) {
         size_t i = 0;
-        return std::make_tuple((T::read(memoryLocation.subspan(_array[i++], T::size)))...);
+        return std::make_tuple((T::read(memoryLocation.subspan(_array[i++], T::size), tb))...);
     }
 };
 
 template<typename T>
-inline void Field<T>::write(std::span<uint8_t> memory, const T::ctype& value) {
+inline void Field<T>::write(std::span<uint8_t> memory, const T::ctype& value, NES::Runtime::TupleBuffer&) {
     NES_ASSERT(memory.size() == T::size, "Memory size does not match");
-    NES_ASSERT(reinterpret_cast<std::uintptr_t>(memory.data()) % alignof(typename T::ctype) == 0, "Bad Alignment");
-
-    *reinterpret_cast<T::ctype*>(memory.data()) = value;
+    std::memcpy(memory.data(), &value, sizeof(T));
 }
 
 template<typename T>
-inline T::ctype Field<T>::read(std::span<uint8_t> memory) {
+inline T::ctype Field<T>::read(std::span<uint8_t> memory, NES::Runtime::TupleBuffer&) {
     NES_ASSERT(memory.size() == T::size, "Memory size does not match");
-    NES_ASSERT(reinterpret_cast<std::uintptr_t>(memory.data()) % alignof(typename T::ctype) == 0, "Bad Alignment");
-    return *reinterpret_cast<T::ctype*>(memory.data());
+    T value;
+    std::memcpy(&value, memory.data(), sizeof(T));
+    return value;
 }
 
-//template<>
-//inline void Field<TEXT>::write(std::span<uint8_t> memory, const std::string&) {
-//    static_assert("Not Implemented");
-//    NES_ASSERT(memory.size() == TEXT::size, "Memory size does not match");
-//    NES_ASSERT(reinterpret_cast<std::uintptr_t>(memory.data()) % alignof(uint32_t) == 0, "Bad Alignment");
-//}
-//
-//template<>
-//std::string Field<TEXT>::read(std::span<uint8_t> memory) {
-//    static_assert("Not Implemented");
-//    NES_ASSERT(memory.size() == TEXT::size, "Memory size does not match");
-//    NES_ASSERT(reinterpret_cast<std::uintptr_t>(memory.data()) % alignof(uint32_t) == 0, "Bad Alignment");
-//    return "";
-//}
+template<>
+inline void Field<TEXT>::write(std::span<uint8_t> memory, const std::string& value, NES::Runtime::TupleBuffer& tb) {
+    static_assert("Not Implemented");
+    NES_ASSERT(memory.size() == TEXT::size, "Memory size does not match");
+
+    //allocate child buffer
+    auto textBuffer = new uint8_t[sizeof(uint32_t) + value.size()];
+    std::memcpy(textBuffer + sizeof(uint32_t), value.c_str(), value.size());
+    auto childBuffer = NES::Runtime::TupleBuffer::wrapMemory(textBuffer, sizeof(uint32_t) + value.size(), [](auto segment, auto) {
+        delete segment->getPointer();
+        delete segment;
+    });
+    *childBuffer.getBuffer<uint32_t>() = value.size();
+
+    auto childBufferIndex = tb.storeChildBuffer(childBuffer);
+    std::memcpy(memory.data(), &childBufferIndex, sizeof(childBufferIndex));
+}
+
+template<>
+std::string Field<TEXT>::read(std::span<uint8_t> memory, NES::Runtime::TupleBuffer& tb) {
+    static_assert("Not Implemented");
+    NES_ASSERT(memory.size() == TEXT::size, "Memory size does not match");
+
+    int32_t childBufferIndex = 0;
+    std::memcpy(&childBufferIndex, memory.data(), sizeof(childBufferIndex));
+
+    auto childBuffer = tb.loadChildBuffer(childBufferIndex);
+    auto textSize = *childBuffer.getBuffer<uint32_t>();
+
+    return {childBuffer.getBuffer<char>() + sizeof(textSize), textSize};
+}
 };    // namespace NES::Unikernel
 #endif//NES_SCHEMABUFFER_HPP
