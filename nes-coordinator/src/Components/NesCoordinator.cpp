@@ -121,18 +121,19 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
     bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();
     requestHandlerService = std::make_shared<RequestHandlerService>(enableNewRequestExecutor,
-                                                  this->coordinatorConfiguration->optimizer,
-                                                  queryCatalogService,
-                                                  queryRequestQueue,
-                                                  sourceCatalog,
-                                                  queryParsingService,
-                                                  udfCatalog,
-                                                  asyncRequestExecutor,
-                                                  z3Context);
+                                                                    this->coordinatorConfiguration->optimizer,
+                                                                    queryCatalogService,
+                                                                    queryRequestQueue,
+                                                                    sourceCatalog,
+                                                                    queryParsingService,
+                                                                    udfCatalog,
+                                                                    asyncRequestExecutor,
+                                                                    z3Context);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
-    monitoringService = std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalogService, enableMonitoring);
+    monitoringService =
+        std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalogService, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 }
 

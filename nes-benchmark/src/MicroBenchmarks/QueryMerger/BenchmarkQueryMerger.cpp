@@ -368,8 +368,8 @@ int main(int argc, const char* argv[]) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1];
                     queryPlan->setQueryId(i);
                     requestHandlerService->validateAndQueueAddQueryRequest(queries[i - 1],
-                                                                  queryPlan,
-                                                                  Optimizer::PlacementStrategy::TopDown);
+                                                                           queryPlan,
+                                                                           Optimizer::PlacementStrategy::TopDown);
                 }
 
                 //Fetch the last query for the query catalog

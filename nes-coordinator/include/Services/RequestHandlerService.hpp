@@ -77,14 +77,14 @@ class RequestHandlerService {
 
   public:
     explicit RequestHandlerService(bool enableNewRequestExecutor,
-                            Configurations::OptimizerConfiguration optimizerConfiguration,
-                            const QueryCatalogServicePtr& queryCatalogService,
-                            const RequestQueuePtr& queryRequestQueue,
-                            const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                            const QueryParsingServicePtr& queryParsingService,
-                            const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                            const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
-                            const z3::ContextPtr& z3Context);
+                                   Configurations::OptimizerConfiguration optimizerConfiguration,
+                                   const QueryCatalogServicePtr& queryCatalogService,
+                                   const RequestQueuePtr& queryRequestQueue,
+                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                   const QueryParsingServicePtr& queryParsingService,
+                                   const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                   const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
+                                   const z3::ContextPtr& z3Context);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

@@ -138,8 +138,8 @@ void E2ESingleRun::submitQueries(RequestHandlerServicePtr requestHandlerService,
             std::this_thread::sleep_for(std::chrono::seconds(query.getCustomDelayInSeconds()));
 
             NES_INFO("E2EBase: Submitting query = {}", query.getQueryString());
-            auto queryId =
-                requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryString(), Optimizer::PlacementStrategy::BottomUp);
+            auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryString(),
+                                                                                  Optimizer::PlacementStrategy::BottomUp);
             submittedIds.push_back(queryId);
 
             if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {

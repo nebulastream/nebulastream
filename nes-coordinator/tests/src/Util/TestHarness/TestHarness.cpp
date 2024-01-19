@@ -280,8 +280,9 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     queryId = INVALID_QUERY_ID;
 
     auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), placementStrategy);
+    queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+                                                                     query.getQueryPlan(),
+                                                                     placementStrategy);
 
     // Now run the query
     if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {

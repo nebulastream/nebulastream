@@ -88,7 +88,9 @@ class MonitoringManager {
      * @param requestHandlerService: the query service
      * @param queryCatalogService: the query catalog service
      */
-    MonitoringManager(TopologyPtr topology, RequestHandlerServicePtr requestHandlerService, QueryCatalogServicePtr queryCatalogService);
+    MonitoringManager(TopologyPtr topology,
+                      RequestHandlerServicePtr requestHandlerService,
+                      QueryCatalogServicePtr queryCatalogService);
     MonitoringManager(const MonitoringManager&) = default;
     MonitoringManager(MonitoringManager&&) = default;
     //  -- Assignment --

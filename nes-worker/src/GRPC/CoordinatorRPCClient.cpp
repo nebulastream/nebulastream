@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Util/TopologyLinkInformation.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -22,6 +21,7 @@
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/Waypoint.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <filesystem>
 #include <fstream>
 #include <string>

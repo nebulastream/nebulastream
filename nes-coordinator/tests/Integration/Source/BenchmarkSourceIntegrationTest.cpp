@@ -108,8 +108,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                    query.getQueryPlan(),
-                                                                    Optimizer::PlacementStrategy::BottomUp);
+                                                                             query.getQueryPlan(),
+                                                                             Optimizer::PlacementStrategy::BottomUp);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -216,8 +216,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                    query.getQueryPlan(),
-                                                                    Optimizer::PlacementStrategy::BottomUp);
+                                                                             query.getQueryPlan(),
+                                                                             Optimizer::PlacementStrategy::BottomUp);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -326,8 +326,8 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                    query.getQueryPlan(),
-                                                                    Optimizer::PlacementStrategy::BottomUp);
+                                                                             query.getQueryPlan(),
+                                                                             Optimizer::PlacementStrategy::BottomUp);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
