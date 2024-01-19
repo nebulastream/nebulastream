@@ -51,14 +51,14 @@ class WorkerContext {
     /// object reference counters
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
-    std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
+    std::unordered_map<OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::optional<std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>>
+    std::unordered_map<OperatorId, std::optional<std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>>
         dataChannelFutures;
     /// event only channels that send events upstream
-    std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
+    std::unordered_map<OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// reverse event channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>>
+    std::unordered_map<OperatorId, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>>
         reverseEventChannelFutures;
     /// worker local buffer pool stored in tls
     static folly::ThreadLocalPtr<WorkerContextBufferProvider> localBufferPoolTLS;
@@ -67,7 +67,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
-    std::unordered_map<uint64_t, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+    std::unordered_map<uint64_t, std::queue<TupleBuffer>> reconnectBufferStorage;
 
   public:
     explicit WorkerContext(uint32_t workerId,

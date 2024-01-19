@@ -217,10 +217,11 @@ bool WorkerContext::isAsyncConnectionInProgress(OperatorId operatorId) {
 bool WorkerContext::doNotTryConnectingDataChannel(OperatorId operatorId) {
     if (dataChannelFutures.contains(operatorId)) {
         NES_DEBUG("Cannot set the data channel for operator {}, to buffer without trying to connect, because a connection "
-                  "attempt is still ongoing");
+                  "attempt is still ongoing", operatorId);
         return false;
     }
     dataChannelFutures.insert({operatorId, std::nullopt});
+    return true;
 }
 
 Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId operatorId) {
@@ -236,6 +237,7 @@ LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; 
 Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId operatorId) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
     if (!iteratorOperatorId->second.has_value()) {
+        dataChannelFutures.erase(iteratorOperatorId);
         return nullptr;
     }
     auto& [futureReference, promiseReference] = iteratorOperatorId->second.value();
@@ -258,6 +260,7 @@ Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventCh
 void WorkerContext::abortConnectionProcess(NES::OperatorId operatorId) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
     if (!iteratorOperatorId->second.has_value()) {
+        dataChannelFutures.erase(iteratorOperatorId);
         return;
     }
     auto& [future, promise] = iteratorOperatorId->second.value();

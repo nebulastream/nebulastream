@@ -29,6 +29,8 @@ enum class ReconfigurationType : uint8_t {
     HardEndOfStream,
     /// forceful stop of a query with a failure
     FailEndOfStream,
+    /// Indicate to a network sink do disconnect the current connection and buffer all outgoing tuples
+    BufferOutGoingTuples,
     /// start the process of connecting to a new network source
     ConnectToNewReceiver,
     /// indicate successful establishment of a network connection

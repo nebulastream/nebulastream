@@ -294,6 +294,7 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId, Runtime::QueryTerminatio
                 }
             }
             case QueryTerminationType::Invalid: NES_NOT_IMPLEMENTED();
+            case QueryTerminationType::Drain: NES_NOT_IMPLEMENTED();
         }
         return true;
     }
@@ -657,6 +658,33 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
                   uniqueNetworkSinkDescriptorId);
         return false;
     }
+}
+
+bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId) {
+    std::unique_lock lock(engineMutex);
+    auto deployedPlanIterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId->getDecomposedQueryPlanId());
+
+    //if not running sub query plan with the given id exists, return false
+    if (deployedPlanIterator == deployedExecutableQueryPlans.end()) {
+        return false;
+    }
+    auto deployedPlan = deployedPlanIterator->second;
+    // iterate over all network sources and apply the reconfigurations
+    for (auto& source : deployedPlan->getSources()) {
+        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
+        if (networkSource != nullptr) {
+            for (auto& reconfiguredSource : decomposedQueryPlanId->getSourceOperators()) {
+                auto reconfiguredNetworkSourceDescriptor =
+                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
+                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
+                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
+                    //try starting the new version. I
+                    networkSource->markAsMigrated();
+                }
+            }
+        }
+    }
+    return true;
 }
 
 bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan) {

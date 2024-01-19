@@ -76,6 +76,7 @@ message UnregisterQueryReply {
 
 message StartQueryRequest {
   uint64 queryId = 1;
+  NES.SerializableQueryState state = 2;
 }
 
 message StartQueryReply {
