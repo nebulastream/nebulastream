@@ -175,7 +175,9 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             // NetworkSource::start() and NetworkSource::reconfigure() the query might have
             // been stopped for some reason
             if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Deleted) {
-                NES_WARNING("NetworkManager shows the partition {} to be deleted, but now we should init it here, so we simply return!", nesPartition.toString());
+                NES_WARNING(
+                    "NetworkManager shows the partition {} to be deleted, but now we should init it here, so we simply return!",
+                    nesPartition.toString());
                 return;
             }
 
@@ -195,8 +197,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                                                                  retryTimes);
                 if (channel == nullptr) {
                     NES_WARNING("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
-                              nesPartition.toString(),
-                              Runtime::NesThread::getId());
+                                nesPartition.toString(),
+                                Runtime::NesThread::getId());
                     return;// partition was deleted on the other side of the channel... no point in waiting for a channel
                 }
                 workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
