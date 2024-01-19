@@ -11,16 +11,21 @@
 #    bind_port: "{{ default_worker_ports | difference(used_ports.stdout_lines | map('int') | list) | first | default(0) }}"
 #  failed_when: bind_port | int == 0
 
+- name: Start mosquitto
+  shell: |
+    nohup numactl -N 1 -m 1 mosquitto -c /tmp/mosquitto.conf 2>&1 &
+    echo $! > echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/mosquitto.pid
+
+- name: Start Python data generator
+  shell: |
+    nohup numactl -N 1 -m 1 python3 /home/{{ ansible_user_id | regex_replace(' ') }}/e2e_latency.py > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/generator.log &
+    echo $! > echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/generator.pid
+
 - name: Start Worker (numa-controlled)
   shell: |
     sleep {{ last_octet }}
-    nohup numactl -N 0 -m 0 /home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }} --configPath=/tmp/worker-conf.yaml > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.log 2>&1 &
+    nohup numactl -N 0 -m 0 taskset -c {{ worker_cores }} /home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }} --configPath=/tmp/worker-conf.yaml > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.log 2>&1 &
     echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.pid
-
-#- name: Start Worker
-#  shell: |
-#    nohup /home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }} --configPath=/tmp/worker-conf.yaml > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.log 2>&1 &
-#    echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.pid
 
 - name: Read PID from file
   slurp:
@@ -54,3 +59,7 @@
   debug:
     msg: "Log file not found"
   when: stat_result.stat.exists == False
+
+- name: Start dool monitoring
+  shell: |
+    nohup numactl -N 1 -m 1 {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}/{{ dool_name }} -tTcm -C {{ worker_cores }} --net -N {{ worker_iface }} --output {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv > /dev/null 2>&1 &

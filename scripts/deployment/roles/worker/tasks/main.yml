@@ -22,12 +22,17 @@
     src: worker.yaml.j2
     dest: "/tmp/worker-conf.yaml"
 
-- name: Copy smartgrid data file
-  copy:
-    src: smartgrid.csv.j2
-    dest: /tmp/smartgrid.csv
+- name: Copy and populate mosquitto template
+  template:
+    src: mosquitto.conf.j2
+    dest: "/tmp/mosquitto.conf"
 
-- name: Copy KTM data file
+- name: Copy binaries directory to remote
   copy:
-    src: ktm.csv.j2
-    dest: /tmp/ktm.csv
+    src: ./binaries/
+    dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/"
+    recursive: yes
+
+- name: Install requirements
+  pip:
+    requirements: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/requirements.txt"
