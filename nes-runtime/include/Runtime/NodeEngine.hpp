@@ -325,6 +325,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             uint64_t uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
                                             DecomposedQueryPlanVersion version);
+    bool bufferOutgoingTuples(WorkerId receivingWorkerId);
+    bool markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting

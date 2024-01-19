@@ -44,12 +44,12 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t numberOfOrigins,
                          DecomposedQueryPlanVersion version)
     : SinkMedium(
-        std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
-        nodeEngine,
-        numOfProducers,
-        queryId,
-        querySubPlanId,
-        numberOfOrigins),
+          std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
+          nodeEngine,
+          numOfProducers,
+          queryId,
+          querySubPlanId,
+          numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
@@ -175,6 +175,18 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
+        case Runtime::ReconfigurationType::BufferOutGoingTuples: {
+            if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
+                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
+            }
+            workerContext.doNotTryConnectingDataChannel(getUniqueNetworkSinkDescriptorId());
+            //todo: drain type
+            workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
+                                                Runtime::QueryTerminationType::Drain,
+                                                queryManager->getNumberOfWorkerThreads(),
+                                                messageSequenceNumber);
+            break;
+        }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
             //retrieve information about which source to connect to
             auto versionUpdate = task.getUserData<VersionUpdate>();
@@ -189,7 +201,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
             }
 
-            //todo: pass version here
             clearOldAndConnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition, newVersion);
             break;
         }
@@ -339,7 +350,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
     workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
     //todo #4310: do release and storing of nullptr in one call
     workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
-                                        Runtime::QueryTerminationType::Graceful,
+                                        Runtime::QueryTerminationType::Drain,
                                         queryManager->getNumberOfWorkerThreads(),
                                         messageSequenceNumber);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
@@ -406,5 +417,16 @@ bool NetworkSink::applyNextSinkDescriptor() {
     }
     configureNewSinkDescriptor(nextSinkDescriptor.value());
     return true;
+}
+bool NetworkSink::startBuffering() {
+    Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
+                                                                              decomposedQueryPlanId,
+                                                                              Runtime::ReconfigurationType::BufferOutGoingTuples,
+                                                                              inherited0::shared_from_this());
+    return queryManager->addReconfigurationMessage(nesPartition.getQueryId(), decomposedQueryPlanId, message, false);
+}
+
+WorkerId NetworkSink::getReceiverId() {
+    return receiverLocation.getNodeId();
 }
 }// namespace NES::Network

@@ -303,6 +303,7 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId, Runtime::QueryTerminatio
                 }
             }
             case QueryTerminationType::Invalid: NES_NOT_IMPLEMENTED();
+            case QueryTerminationType::Drain: NES_NOT_IMPLEMENTED();
         }
         return true;
     }
@@ -668,6 +669,45 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
     }
 }
 
+bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId) {
+    bool reconfiguredSink = false;
+    for (const auto& executableQueryPlan : deployedExecutableQueryPlans) {
+        for (auto& sink : executableQueryPlan.second->getSinks()) {
+            auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+            if (networkSink != nullptr) {
+                if (networkSink->getReceiverId() == receivingWorkerId) {
+                    networkSink->startBuffering();
+                    reconfiguredSink = true;
+                }
+            }
+        }
+    }
+    return reconfiguredSink;
+}
+
+bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId) {
+    std::unique_lock lock(engineMutex);
+    auto deployedPlanIterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId);
+
+    //if not running sub query plan with the given id exists, return false
+    if (deployedPlanIterator == deployedExecutableQueryPlans.end()) {
+        return false;
+    }
+
+    auto deployedPlan = deployedPlanIterator->second;
+    // iterate over all network sources and apply the reconfigurations
+    for (auto& source : deployedPlan->getSources()) {
+        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
+        if (networkSource != nullptr) {
+            networkSource->markAsMigrated();
+        } else {
+            //Migrating non network sources not supported
+            NES_NOT_IMPLEMENTED();
+        }
+    }
+    return true;
+}
+
 bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan) {
     std::unique_lock lock(engineMutex);
     auto deployedPlanIterator = deployedExecutableQueryPlans.find(reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
@@ -688,6 +728,7 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
                 if (reconfiguredNetworkSink
                     && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
+                    //todo: check expected version
                     networkSink->scheduleNewDescriptor(*reconfiguredNetworkSink);
                 }
             }

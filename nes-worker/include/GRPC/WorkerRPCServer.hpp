@@ -56,6 +56,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
 
+    Status MigrateQuery(ServerContext* context, const MigrateQueryRequest* request, MigrateQueryReply* reply) override;
+
     Status
     RegisterMonitoringPlan(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) override;
 

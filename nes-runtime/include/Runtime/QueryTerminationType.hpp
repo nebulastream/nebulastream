@@ -21,7 +21,7 @@
 
 namespace NES::Runtime {
 
-enum class QueryTerminationType : uint8_t { Graceful = 0, HardStop, Failure, Invalid };
+enum class QueryTerminationType : uint8_t { Graceful = 0, HardStop, Failure, Drain, Invalid };
 
 template<typename O = std::ostream>
 static O& operator<<(O& os, const QueryTerminationType& type) {

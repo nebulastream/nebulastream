@@ -145,6 +145,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool applyNextSinkDescriptor();
 
+    bool startBuffering();
+    WorkerId getReceiverId();
+
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
