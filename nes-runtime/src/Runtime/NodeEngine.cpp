@@ -142,7 +142,16 @@ bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPla
             (*found).second.push_back(decomposedQueryPlanId);
             NES_DEBUG("Runtime: register of QEP  {}  added", decomposedQueryPlanId);
         }
+        /* We have to unlock here, as we do not want to hold the lock for the queryManager->registerQuery().
+         * Otherwise, it can lead to the case, that we still hold the lock but another query wants to register itself on
+         * this Node(1) and connect to Node(2). On Node(2), the queries are doing the reverse and thus, each query is
+         * waiting on the other query to start all network sources and sinks. Leading to a deadlock!
+         */
+        lock.unlock();
+
         if (queryManager->registerQuery(queryExecutionPlan)) {
+            // Here we have to lock again, as we are accessing deployedQEPs
+            lock.lock();
             deployedExecutableQueryPlans[decomposedQueryPlanId] = queryExecutionPlan;
             NES_DEBUG("Runtime: register of subqep  {}  succeeded", decomposedQueryPlanId);
             return true;

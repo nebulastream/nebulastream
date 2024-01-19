@@ -387,36 +387,35 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
                                                     DecomposedQueryPlanId queryExecutionPlanId,
                                                     TupleBuffer&& buffer,
                                                     bool blocking) {
-    std::unique_lock reconfLock(reconfigurationMutex);
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
-    NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
-              queryExecutionPlanId,
-              blocking,
-              magic_enum::enum_name(task->getType()));
-    NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
-    auto pipelineContext =
-        std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
-    auto reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
-    auto pipeline = Execution::ExecutablePipeline::create(-1,
-                                                          queryId,
-                                                          queryExecutionPlanId,
-                                                          inherited0::shared_from_this(),
-                                                          pipelineContext,
-                                                          reconfigurationExecutable,
-                                                          1,
-                                                          std::vector<Execution::SuccessorExecutablePipeline>(),
-                                                          true);
+    {
+        std::unique_lock reconfLock(reconfigurationMutex);
+        NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
+                  queryExecutionPlanId,
+                  blocking,
+                  magic_enum::enum_name(task->getType()));
+        NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
+        auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId,
+                                                                                                 inherited0::shared_from_this());
+        auto reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
+        auto pipeline = Execution::ExecutablePipeline::create(-1,
+                                                              queryId,
+                                                              queryExecutionPlanId,
+                                                              inherited0::shared_from_this(),
+                                                              pipelineContext,
+                                                              reconfigurationExecutable,
+                                                              1,
+                                                              std::vector<Execution::SuccessorExecutablePipeline>(),
+                                                              true);
 
-    for (uint64_t threadId = 0; threadId < threadPool->getNumberOfThreads(); threadId++) {
-        taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
+        for (uint64_t threadId = 0; threadId < threadPool->getNumberOfThreads(); threadId++) {
+            taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
+        }
     }
-
-    reconfLock.unlock();
     if (blocking) {
         task->postWait();
         task->postReconfiguration();
     }
-    //    }
     return true;
 }
 

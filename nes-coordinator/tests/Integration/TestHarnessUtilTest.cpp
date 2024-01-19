@@ -393,7 +393,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
 /*
  * Testing testHarness utility for a query with map operator
  */
-TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
+TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
     struct Car {
         uint32_t key;
         uint32_t value;

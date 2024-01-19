@@ -180,8 +180,9 @@ bool Topology::removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId child
         return false;
     }
 
-    auto lockedParentTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[parentWorkerId].wlock();
-    auto lockedChildTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[childWorkerId].wlock();
+    auto [lockedParentTopologyNode, lockedChildTopologyNode] =
+        folly::acquireLocked((*lockedWorkerIdToTopologyNodeMap)[parentWorkerId],
+                             (*lockedWorkerIdToTopologyNodeMap)[childWorkerId]);
 
     //Remove associated link property if exists
     (*lockedParentTopologyNode)->removeLinkProperty(childWorkerId);
@@ -213,9 +214,9 @@ bool Topology::addLinkProperty(NES::WorkerId parentWorkerId,
         return false;
     }
 
-    //Check if the parent child relationship exists
-    auto lockedParentTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[parentWorkerId].wlock();
-    auto lockedChildTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[childWorkerId].wlock();
+    auto [lockedParentTopologyNode, lockedChildTopologyNode] =
+        folly::acquireLocked((*lockedWorkerIdToTopologyNodeMap)[parentWorkerId],
+                             (*lockedWorkerIdToTopologyNodeMap)[childWorkerId]);
 
     if (!(*lockedParentTopologyNode)->containAsChild((*lockedChildTopologyNode))) {
         NES_WARNING("No link exists between parent and child topology node.", parentWorkerId, childWorkerId);

@@ -35,6 +35,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 #include <Services/RequestHandlerService.hpp>
@@ -50,7 +51,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    NES::Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
@@ -211,7 +212,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
                                                      totalQuerySubPlansOnNode12,
                                                      totalQuerySubPlansOnNode13};
     for (const auto& executionNode : executionNodes) {
-        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+        auto querySubPlans = executionNode->getAllDecomposedQueryPlans(queryId);
         NES_INFO("Worker Id {} ", executionNode->getId());
         EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->getId() - 1]);
         auto querySubPlan = querySubPlans[0];
