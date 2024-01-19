@@ -120,10 +120,32 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        downstream.subpartitionId,
                        schema,
                        source.delayInMS.value_or(0),
-                       source.type};
+                       8192,
+                       NES::FormatTypes::CSV_FORMAT,
+                       source.type,
+                       NEXMARK_BID,
+                       source.numberOfBuffers.value_or(32)};
     } else if (source.type == TcpSource) {
-
-        return Options{0, 0, 0, 0, 0, source.ip, source.port, "", 0, 0, 0, 0, 0, schema, source.delayInMS.value_or(0), source.type};
+        return Options{0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       source.ip,
+                       source.port,
+                       "",
+                       0,
+                       0,
+                       0,
+                       0,
+                       0,
+                       schema,
+                       source.delayInMS.value_or(0),
+                       8192,
+                       NES::FormatTypes::CSV_FORMAT,
+                       source.type,
+                       source.schema.type,
+                       source.numberOfBuffers.value_or(32)};
     } else {
         NES_NOT_IMPLEMENTED();
     }
