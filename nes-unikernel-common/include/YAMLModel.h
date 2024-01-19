@@ -19,7 +19,9 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Text.hpp>
 #include <Identifiers.hpp>
+#include <Sinks/Formats/FormatType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <queue>
@@ -91,15 +93,21 @@ static NES::BasicType toBasicType(NES::DataTypePtr dt) {
             }
         }
     }
+    if (auto text = NES::DataType::as<NES::Text>(dt); text) {
+        return NES::BasicType::TEXT;
+    }
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
+enum SchemaType { NEXMARK_BID, NEXMARK_PERSON, NEXMARK_AUCTION, MANUAL };
 struct SchemaConfiguration {
+    SchemaType type = MANUAL;
     std::vector<SchemaField> fields;
 
     SchemaConfiguration() = default;
 
-    SchemaConfiguration(const NES::SchemaPtr& newSchema) {
+    explicit SchemaConfiguration(SchemaType type, const NES::SchemaPtr& newSchema) {
+        this->type = type;
         for (const auto& field : newSchema->fields) {
             fields.emplace_back(field->getName(), std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
         }
@@ -111,12 +119,26 @@ template<>
 struct convert<SchemaConfiguration> {
     static Node encode(const SchemaConfiguration& rhs) {
         Node node;
-        UNIKERNEL_MODEL_YAML_ENCODE(fields);
+        node["type"] = std::string(magic_enum::enum_name(rhs.type));
+        if (rhs.type == MANUAL) {
+            UNIKERNEL_MODEL_YAML_ENCODE(fields);
+        }
         return node;
     };
 
     static Node decode(const Node& node, SchemaConfiguration& rhs) {
-        UNIKERNEL_MODEL_YAML_DECODE(fields);
+        rhs.type = MANUAL;
+        if (node["type"]) {
+            auto opt = magic_enum::enum_cast<SchemaType>(node["type"].as<std::string>());
+            NES_ASSERT(opt.has_value(), "Unknown SchemaType");
+            rhs.type = opt.value();
+            rhs.fields.clear();
+        }
+
+        if (rhs.type == MANUAL) {
+            UNIKERNEL_MODEL_YAML_DECODE(fields);
+        }
+
         return node;
     };
 };
@@ -131,6 +153,7 @@ struct SinkEndpointConfiguration {
     uint32_t port;
     NES::NodeId nodeId;
     NES::OperatorId operatorId;
+    std::optional<bool> print;
 };
 
 namespace YAML {
@@ -144,6 +167,7 @@ struct convert<SinkEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(operatorId);
         UNIKERNEL_MODEL_YAML_ENCODE(nodeId);
         UNIKERNEL_MODEL_YAML_ENCODE(subQueryID);
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(print);
 
         return node;
     };
@@ -155,6 +179,7 @@ struct convert<SinkEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(operatorId);
         UNIKERNEL_MODEL_YAML_DECODE(nodeId);
         UNIKERNEL_MODEL_YAML_DECODE(subQueryID);
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(print);
 
         return node;
     };
@@ -164,6 +189,7 @@ struct convert<SinkEndpointConfiguration> {
 struct SourceEndpointConfiguration {
     NES::QuerySubPlanId subQueryID;
     SchemaConfiguration schema;
+    std::optional<size_t> numberOfBuffers;
     std::string ip;
     uint32_t port;
     NES::NodeId nodeId;
@@ -181,6 +207,7 @@ struct convert<SourceEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(ip);
         UNIKERNEL_MODEL_YAML_ENCODE(port);
         UNIKERNEL_MODEL_YAML_ENCODE_OPT(delayInMS);
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(numberOfBuffers);
         node["type"] = std::string(magic_enum::enum_name(rhs.type));
 
         if (rhs.type == NetworkSource) {
@@ -197,6 +224,7 @@ struct convert<SourceEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(schema);
         UNIKERNEL_MODEL_YAML_DECODE(port);
         UNIKERNEL_MODEL_YAML_DECODE_OPT(delayInMS);
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(numberOfBuffers);
         rhs.type = magic_enum::enum_cast<SourceType>(node["type"].as<std::string>()).value();
 
         if (rhs.type == NetworkSource) {
@@ -495,6 +523,7 @@ struct Configuration {
     SinkEndpointConfiguration sink;
     std::vector<WorkerConfiguration> workers;
     QueryConfiguration query;
+    NES::FormatTypes format;
 };
 
 namespace YAML {
@@ -505,6 +534,13 @@ struct convert<Configuration> {
         UNIKERNEL_MODEL_YAML_DECODE(sink);
         UNIKERNEL_MODEL_YAML_DECODE(query);
         UNIKERNEL_MODEL_YAML_DECODE(workers);
+
+        rhs.format = NES::FormatTypes::CSV_FORMAT;
+        if (node["format"]) {
+            auto opt = magic_enum::enum_cast<NES::FormatTypes>(node["format"].as<std::string>());
+            NES_ASSERT(opt.has_value(), "Format is invalid");
+            rhs.format = *opt;
+        }
         return node;
     };
 
@@ -514,6 +550,7 @@ struct convert<Configuration> {
         UNIKERNEL_MODEL_YAML_ENCODE(sink);
         UNIKERNEL_MODEL_YAML_ENCODE(query);
         UNIKERNEL_MODEL_YAML_ENCODE(workers);
+        node["fomat"] = std::string(magic_enum::enum_name(rhs.format));
         return node;
     };
 };
