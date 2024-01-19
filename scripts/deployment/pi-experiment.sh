@@ -25,6 +25,8 @@ sleep 60
 # Send query to coordinator
 echo "Sending query on coordinator..."
 ansible-playbook pi-avg-query.yml
+
+echo "Sleeping for 5 mins..."
 sleep 300
 
 # Send query to coordinator
