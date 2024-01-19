@@ -189,7 +189,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
             }
 
-            //todo: pass version here
             clearOldAndConnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition, newVersion);
             break;
         }
