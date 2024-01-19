@@ -62,12 +62,24 @@ int main(int argc, char* argv[]) {
 
     auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
     boost::iostreams::stream<NES::Logger::LogSink> os(NES_LOG_OS(NES::LogLevel::LOG_INFO));
-    NES::DataSinkPtr statisticSink =
-        std::make_shared<NES::StatisticsMedium>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
-                                                1,
-                                                options.subQueryId,
-                                                options.queryId,
-                                                5s);
+
+    NES::DataSinkPtr statisticSink;
+    if (!options.print) {
+        NES_INFO("Using Throughput Sink");
+        statisticSink =
+            std::make_shared<NES::StatisticsMedium>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
+                                                    1,
+                                                    options.subQueryId,
+                                                    options.queryId,
+                                                    5s);
+    } else {
+        NES_INFO("Using Printing Sink");
+        statisticSink = std::make_shared<NES::PrintSink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
+                                                         1,
+                                                         options.subQueryId,
+                                                         options.queryId,
+                                                         os);
+    }
     std::vector<NES::DataSinkPtr> pipelines{statisticSink};
     auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema,
                                                                 buffer_manager,

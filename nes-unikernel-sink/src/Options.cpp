@@ -58,7 +58,8 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                    worker.nodeId,
                    upstream.partitionId,
                    upstream.subpartitionId,
-                   schema};
+                   schema,
+                   configuration.sink.print.value_or(false)};
 }
 
 std::pair<WorkerConfiguration, WorkerLinkConfiguration>
