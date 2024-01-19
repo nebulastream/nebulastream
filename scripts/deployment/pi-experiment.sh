@@ -18,9 +18,9 @@ run_experiment() {
         exit 1
     fi
 
-    # Sleep for a minute
-    echo "Sleeping for 6 seconds..."
-    sleep 6
+    # Sleep for half a minute
+    echo "Sleeping for half a min..."
+    sleep 30
 
     # Send query to coordinator
     echo "Sending query on coordinator..."
