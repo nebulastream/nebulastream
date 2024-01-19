@@ -19,6 +19,7 @@
 #include <Util/QueryState.hpp>
 #include <Util/QueryStateHistory.hpp>
 #include <memory>
+#include <atomic>
 
 namespace NES {
 
@@ -73,7 +74,7 @@ class QuerySubPlanMetaData {
     /**
      * status of the sub query
      */
-    QueryState subQueryStatus;
+    std::atomic<QueryState> subQueryStatus;
 
     /** @brief Stores a history of QueryState updates with their timestamp in milliseconds. */
     QueryStateHistory history;
@@ -90,4 +91,4 @@ class QuerySubPlanMetaData {
 };
 }// namespace NES
 
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
