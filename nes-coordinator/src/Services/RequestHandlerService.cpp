@@ -33,7 +33,7 @@
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
@@ -42,7 +42,7 @@
 
 namespace NES {
 
-RequestService::RequestService(bool enableNewRequestExecutor,
+RequestHandlerService::RequestHandlerService(bool enableNewRequestExecutor,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
                            const QueryCatalogServicePtr& queryCatalogService,
                            const RequestQueuePtr& queryRequestQueue,
@@ -54,22 +54,22 @@ RequestService::RequestService(bool enableNewRequestExecutor,
     : enableNewRequestExecutor(enableNewRequestExecutor), optimizerConfiguration(optimizerConfiguration),
       queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue), asyncRequestExecutor(asyncRequestExecutor),
       z3Context(z3Context), queryParsingService(queryParsingService) {
-    NES_DEBUG("RequestService()");
+    NES_DEBUG("RequestHandlerService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(this->queryParsingService);
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog,
                                                                          udfCatalog,
                                                                          optimizerConfiguration.performAdvanceSemanticValidation);
 }
 
-QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& queryString,
+QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                       const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
-        NES_INFO("RequestService: Validating and registering the user query.");
+        NES_INFO("RequestHandlerService: Validating and registering the user query.");
         QueryId queryId = PlanIdGenerator::getNextQueryId();
         try {
             // Checking the syntactic validity and compiling the query string to an object
-            NES_INFO("RequestService: check validation of a query.");
+            NES_INFO("RequestHandlerService: check validation of a query.");
             QueryPlanPtr queryPlan = syntacticQueryValidation->validate(queryString);
 
             queryPlan->setQueryId(queryId);
@@ -86,14 +86,14 @@ QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& query
                 return queryId;
             }
         } catch (const InvalidQueryException& exc) {
-            NES_ERROR("RequestService: {}", std::string(exc.what()));
+            NES_ERROR("RequestHandlerService: {}", std::string(exc.what()));
             auto emptyQueryPlan = QueryPlan::create();
             emptyQueryPlan->setQueryId(queryId);
             queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategy);
             queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
             throw exc;
         }
-        throw Exceptions::RuntimeException("RequestService: unable to create query catalog entry");
+        throw Exceptions::RuntimeException("RequestHandlerService: unable to create query catalog entry");
     } else {
 
         auto addRequest = RequestProcessor::AddQueryRequest::create(queryString,
@@ -107,7 +107,7 @@ QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& query
     }
 }
 
-QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& queryString,
+QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                       const QueryPlanPtr& queryPlan,
                                                       const Optimizer::PlacementStrategy placementStrategy) {
 
@@ -134,14 +134,14 @@ QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& query
                 return queryId;
             }
         } catch (const InvalidQueryException& exc) {
-            NES_ERROR("RequestService: {}", std::string(exc.what()));
+            NES_ERROR("RequestHandlerService: {}", std::string(exc.what()));
             auto emptyQueryPlan = QueryPlan::create();
             emptyQueryPlan->setQueryId(queryId);
             queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategy);
             queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
             throw exc;
         }
-        throw Exceptions::RuntimeException("RequestService: unable to create query catalog entry");
+        throw Exceptions::RuntimeException("RequestHandlerService: unable to create query catalog entry");
     } else {
         auto addRequest =
             RequestProcessor::AddQueryRequest::create(queryPlan, placementStrategy, RequestProcessor::DEFAULT_RETRIES, z3Context);
@@ -151,7 +151,7 @@ QueryId RequestService::validateAndQueueAddQueryRequest(const std::string& query
     }
 }
 
-nlohmann::json RequestService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
+nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
                                                                  const Optimizer::PlacementStrategy placementStrategy) {
 
     if (enableNewRequestExecutor) {
@@ -164,7 +164,7 @@ nlohmann::json RequestService::validateAndQueueExplainQueryRequest(const NES::Qu
     }
 }
 
-bool RequestService::validateAndQueueStopQueryRequest(QueryId queryId) {
+bool RequestHandlerService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
     if (!enableNewRequestExecutor) {
         //Check and mark query for hard stop
@@ -191,7 +191,7 @@ bool RequestService::validateAndQueueStopQueryRequest(QueryId queryId) {
     }
 }
 
-bool RequestService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
+bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
                                                     DecomposedQueryPlanId querySubPlanId,
                                                     const std::string& failureReason) {
 
@@ -210,7 +210,7 @@ bool RequestService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryI
     }
 }
 
-void RequestService::assignOperatorIds(QueryPlanPtr queryPlan) {
+void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
     auto queryPlanIterator = PlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
@@ -219,7 +219,7 @@ void RequestService::assignOperatorIds(QueryPlanPtr queryPlan) {
     }
 }
 
-bool RequestService::validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
+bool RequestHandlerService::validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
                                                            const std::vector<TopologyLinkInformation>& addedLinks) {
     auto changeRequest = RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks,
                                                                                        addedLinks,

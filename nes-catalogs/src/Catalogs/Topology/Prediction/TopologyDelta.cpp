@@ -24,30 +24,30 @@ std::string TopologyDelta::toString() const {
     std::stringstream deltaString;
 
     deltaString << "added: {";
-    deltaString << edgeListToString(added);
+    deltaString << topologyLinkInformationListToString(added);
     deltaString << "}, ";
 
     deltaString << "removed: {";
-    deltaString << edgeListToString(removed);
+    deltaString << topologyLinkInformationListToString(removed);
     deltaString << "}";
 
     return deltaString.str();
 }
 
-std::string TopologyDelta::edgeListToString(const std::vector<TopologyLinkInformation>& edges) {
+std::string TopologyDelta::topologyLinkInformationListToString(const std::vector<TopologyLinkInformation>& topologyLinks) {
     std::stringstream deltaString;
 
-    if (edges.empty()) {
+    if (topologyLinks.empty()) {
         return "";
     }
 
     //add first item to string
-    auto addedIter = edges.cbegin();
+    auto addedIter = topologyLinks.cbegin();
     deltaString << addedIter->toString();
     ++addedIter;
 
     //add comma separated additional items
-    for (; addedIter != edges.cend(); ++addedIter) {
+    for (; addedIter != topologyLinks.cend(); ++addedIter) {
         deltaString << ", ";
         deltaString << addedIter->toString();
     }

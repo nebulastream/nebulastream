@@ -72,21 +72,21 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog&) {
             auto removedChildren = changeLog.getRemovedChildren(nodeId);
             for (auto& originalChild : originalNode->getChildren()) {
                 auto childId = originalChild->as<TopologyNode>()->getId();
-                //check if the edge is listed as removed in the changelog
+                //check if the link is listed as removed in the changelog
                 if (std::find(removedChildren.begin(), removedChildren.end(), childId) == removedChildren.end()) {
-                    //if the edge is not marked as removed in the changelog, add a copy of the child to the new topology
+                    //if the link is not marked as removed in the changelog, add a copy of the child to the new topology
                     auto copiedChild = copiedTopology->findWorkerWithId(childId);
                     if (!copiedChild) {
                         copiedChild = originalChild->as<TopologyNode>()->copy();
                         queue.push(copiedChild);
                     }
-                    NES_DEBUG("adding edge based on copy from {} to {}", nodeId, childId);
+                    NES_DEBUG("adding link based on copy from {} to {}", nodeId, childId);
                     copiedTopology->addNewTopologyNodeAsChild(copiedNode, copiedChild);
                 }
             }
         } else {
 #ifndef NDEBUG
-            //if no original node exists, no removed edges should exist
+            //if no original node exists, no removed link hould exist
             if (!changeLog.getRemovedChildren(nodeId).empty()) {
                 throw std::exception();
             }
@@ -112,7 +112,7 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog&) {
                 //queue the newly created node to be iterated over
                 queue.push(childNode);
             }
-            NES_DEBUG("adding edge based on prediction from {} to {}", nodeId, childNode->getId());
+            NES_DEBUG("adding link based on prediction from {} to {}", nodeId, childNode->getId());
             //add a link between parent and child
             copiedTopology->addNewTopologyNodeAsChild(copiedNode, childNode);
         }

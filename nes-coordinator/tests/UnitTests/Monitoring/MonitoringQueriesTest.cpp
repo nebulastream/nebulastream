@@ -39,7 +39,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Services/MonitoringService.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <cstdint>
 #include <memory>
 #include <regex>
@@ -128,12 +128,12 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
             workers.emplace_back(wrk);
         }
 
-        RequestServicePtr queryService = crd->getRequestService();
+        RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
         QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
 
         NES_INFO("MonitoringQueriesTest: Submit query");
         auto query = createQueryString("logTestMetricStream", metricCollectorStr);
-        QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+        QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
         GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -143,7 +143,7 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
         NES_DEBUG("MonitoringQueriesTest: Remove query");
-        ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
+        ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
         NES_DEBUG("MonitoringQueriesTest: Stop query");
         ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 

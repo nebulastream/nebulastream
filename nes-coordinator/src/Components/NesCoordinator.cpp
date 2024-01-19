@@ -45,7 +45,7 @@
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -120,7 +120,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
     bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();
-    queryService = std::make_shared<RequestService>(enableNewRequestExecutor,
+    requestHandlerService = std::make_shared<RequestHandlerService>(enableNewRequestExecutor,
                                                   this->coordinatorConfiguration->optimizer,
                                                   queryCatalogService,
                                                   queryRequestQueue,
@@ -132,7 +132,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
-    monitoringService = std::make_shared<MonitoringService>(topology, queryService, queryCatalogService, enableMonitoring);
+    monitoringService = std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalogService, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 }
 
@@ -215,7 +215,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               sourceCatalogService,
                                               topologyManagerService,
                                               globalExecutionPlan,
-                                              queryService,
+                                              requestHandlerService,
                                               monitoringService,
                                               queryParsingService,
                                               globalQueryPlan,
@@ -315,7 +315,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     NES_ASSERT(sourceCatalogService, "null sourceCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
 
-    CoordinatorRPCServer service(queryService,
+    CoordinatorRPCServer service(requestHandlerService,
                                  topologyManagerService,
                                  sourceCatalogService,
                                  queryCatalogService,
@@ -349,7 +349,7 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 
-RequestServicePtr NesCoordinator::getRequestService() { return queryService; }
+RequestHandlerServicePtr NesCoordinator::getRequestHandlerService() { return requestHandlerService; }
 
 QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
 

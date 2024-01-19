@@ -26,8 +26,8 @@ using grpc::Status;
 
 namespace NES {
 
-class RequestService;
-using RequestServicePtr = std::shared_ptr<RequestService>;
+class RequestHandlerService;
+using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
@@ -59,14 +59,14 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
     /**
      * @brief Create coordinator RPC server
-     * @param queryService: the instance of Query Service
+     * @param requestHandlerService: the instance of Query Service
      * @param topologyManagerService : the instance of the topologyManagerService
      * @param sourceCatalogService : the instance of the steam catalog service
      * @param queryCatalogService : the instance of monitoring service
      * @param monitoringService : the instance of monitoring service
      * @param coordinatorHealthCheckService : coordinator health check service
      */
-    explicit CoordinatorRPCServer(RequestServicePtr queryService,
+    explicit CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
                                   TopologyManagerServicePtr topologyManagerService,
                                   SourceCatalogServicePtr sourceCatalogService,
                                   QueryCatalogServicePtr queryCatalogService,
@@ -260,7 +260,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Status RelocateTopologyNode(ServerContext*, const NodeRelocationRequest* request, NodeRelocationReply* reply) override;
 
   private:
-    RequestServicePtr requestService;
+    RequestHandlerServicePtr requestHandlerService;
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
     QueryCatalogServicePtr queryCatalogService;

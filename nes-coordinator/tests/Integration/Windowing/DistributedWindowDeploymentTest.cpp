@@ -30,7 +30,7 @@
 #include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
@@ -210,7 +210,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedTumblingWindowQu
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("DistributedWindowDeploymentTest: Submit query");
@@ -220,7 +220,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedTumblingWindowQu
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), "BottomUp");
+    QueryId queryId = requestHandlerService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -383,7 +383,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
     EXPECT_TRUE(retStart2);
     NES_INFO("DistributedWindowDeploymentTest: Worker2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
@@ -397,7 +397,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), "BottomUp");
+    QueryId queryId = requestHandlerService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -473,7 +473,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedWindowIngestionT
     EXPECT_TRUE(retStart2);
     NES_INFO("DistributedWindowDeploymentTest: Worker 2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -486,7 +486,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedWindowIngestionT
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), "BottomUp");
+    QueryId queryId = requestHandlerService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -549,7 +549,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeI
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -562,7 +562,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeI
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), "BottomUp");
+    QueryId queryId = requestHandlerService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -840,7 +840,7 @@ TEST_F(DistributedWindowDeploymentTest, testYSBWindow) {
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "ysb.out";
@@ -850,14 +850,14 @@ TEST_F(DistributedWindowDeploymentTest, testYSBWindow) {
                    "FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(1, outputFilePath));
 
-    // queryService->validateAndQueueStopQueryRequest(queryId);
+    // requestHandlerService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     //here we can only check if the file exists and has some content
@@ -904,7 +904,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -915,7 +915,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -933,7 +933,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("DistributedWindowDeploymentTest: Remove query");
-    // queryService->validateAndQueueStopQueryRequest(queryId);
+    // requestHandlerService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("DistributedWindowDeploymentTest: Stop worker 1");
@@ -979,7 +979,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithT
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -990,7 +990,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithT
                    "Minutes(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1077,7 +1077,7 @@ TEST_F(DistributedWindowDeploymentTest, testDeployDistributedTumblingWindowQuery
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("DistributedWindowDeploymentTest: Submit query");
@@ -1087,7 +1087,7 @@ TEST_F(DistributedWindowDeploymentTest, testDeployDistributedTumblingWindowQuery
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
@@ -1102,7 +1102,7 @@ TEST_F(DistributedWindowDeploymentTest, testDeployDistributedTumblingWindowQuery
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("DistributedWindowDeploymentTest: Remove query");
-    // queryService->validateAndQueueStopQueryRequest(queryId);
+    // requestHandlerService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("DistributedWindowDeploymentTest: Stop worker 1");
@@ -1176,7 +1176,7 @@ TEST_F(DistributedWindowDeploymentTest, testDeployDistributedTumblingWindowQuery
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("DistributedWindowDeploymentTest: Submit query");
@@ -1186,7 +1186,7 @@ TEST_F(DistributedWindowDeploymentTest, testDeployDistributedTumblingWindowQuery
                    "Minutes(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
@@ -1272,7 +1272,7 @@ TEST_F(DistributedWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWin
     EXPECT_TRUE(retStart2);
     NES_INFO("DistributedWindowDeploymentTest: Worker 2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
@@ -1284,7 +1284,7 @@ TEST_F(DistributedWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWin
                    ".apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1366,7 +1366,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindow
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
@@ -1377,7 +1377,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralNonKeyTumblingWindow
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1446,7 +1446,7 @@ TEST_F(DistributedWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime)
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
@@ -1457,7 +1457,7 @@ TEST_F(DistributedWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime)
                    ".apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1478,7 +1478,7 @@ TEST_F(DistributedWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime)
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("DistributedWindowDeploymentTest: Remove query");
-    // queryService->validateAndQueueStopQueryRequest(queryId);
+    // requestHandlerService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("DistributedWindowDeploymentTest: Stop worker 1");
@@ -1544,7 +1544,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
     EXPECT_TRUE(retStart2);
     NES_INFO("DistributedWindowDeploymentTest: Worker 2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
@@ -1555,7 +1555,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1574,7 +1574,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("DistributedWindowDeploymentTest: Remove query");
-    //  queryService->validateAndQueueStopQueryRequest(queryId);
+    //  requestHandlerService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("DistributedWindowDeploymentTest: Stop worker 1");
@@ -1646,7 +1646,7 @@ TEST_F(DistributedWindowDeploymentTest, testDistributedNonKeySlidingWindowEventT
     EXPECT_TRUE(retStart2);
     NES_INFO("DistributedWindowDeploymentTest: Worker 2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
@@ -1658,7 +1658,7 @@ TEST_F(DistributedWindowDeploymentTest, testDistributedNonKeySlidingWindowEventT
                    ".apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1725,7 +1725,7 @@ TEST_F(DistributedWindowDeploymentTest, testCentralWindowIngestionTimeIngestionT
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -1736,7 +1736,7 @@ TEST_F(DistributedWindowDeploymentTest, testCentralWindowIngestionTimeIngestionT
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1791,7 +1791,7 @@ TEST_F(DistributedWindowDeploymentTest, testDistributedWindowIngestionTime) {
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -1802,7 +1802,7 @@ TEST_F(DistributedWindowDeploymentTest, testDistributedWindowIngestionTime) {
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1860,7 +1860,7 @@ TEST_F(DistributedWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestion
     EXPECT_TRUE(retStart1);
     NES_INFO("DistributedWindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
@@ -1871,7 +1871,7 @@ TEST_F(DistributedWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestion
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1946,7 +1946,7 @@ TEST_F(DistributedWindowDeploymentTest, testDistributedNonKeyTumblingWindowInges
     EXPECT_TRUE(retStart2);
     NES_INFO("DistributedWindowDeploymentTest: Worker 2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
@@ -1957,7 +1957,7 @@ TEST_F(DistributedWindowDeploymentTest, testDistributedNonKeyTumblingWindowInges
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -2088,7 +2088,7 @@ TEST_F(DistributedWindowDeploymentTest,
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("DistributedWindowDeploymentTest: Submit query");
@@ -2096,7 +2096,7 @@ TEST_F(DistributedWindowDeploymentTest,
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -2244,7 +2244,7 @@ TEST_F(DistributedWindowDeploymentTest,
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("DistributedWindowDeploymentTest: Submit query");
@@ -2254,7 +2254,7 @@ TEST_F(DistributedWindowDeploymentTest,
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -2715,7 +2715,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testLongWindow) {
 
     std::string outputFilePath = getTestResourceFolder() / "source.out";
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     auto schema = Schema::create()
@@ -2729,7 +2729,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testLongWindow) {
                    "FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

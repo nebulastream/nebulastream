@@ -130,7 +130,7 @@ void E2ESingleRun::createSources() {
     NES_INFO("Created sources and the accommodating data generation and data providing!");
 }
 
-void E2ESingleRun::submitQueries(RequestServicePtr queryService, QueryCatalogServicePtr queryCatalog) {
+void E2ESingleRun::submitQueries(RequestHandlerServicePtr requestHandlerService, QueryCatalogServicePtr queryCatalog) {
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
         for (const auto& query : configOverAllRuns.queries) {
 
@@ -139,7 +139,7 @@ void E2ESingleRun::submitQueries(RequestServicePtr queryService, QueryCatalogSer
 
             NES_INFO("E2EBase: Submitting query = {}", query.getQueryString());
             auto queryId =
-                queryService->validateAndQueueAddQueryRequest(query.getQueryString(), Optimizer::PlacementStrategy::BottomUp);
+                requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryString(), Optimizer::PlacementStrategy::BottomUp);
             submittedIds.push_back(queryId);
 
             if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {
@@ -156,10 +156,10 @@ void E2ESingleRun::runQueries() {
     auto rpcPort = coordinator->startCoordinator(/* blocking */ false);
     NES_INFO("Started nesCoordinator at {}", rpcPort);
 
-    auto queryService = coordinator->getRequestService();
+    auto requestHandlerService = coordinator->getRequestHandlerService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
-    submitQueries(queryService, queryCatalog);
+    submitQueries(requestHandlerService, queryCatalog);
 
     NES_DEBUG("Starting the data providers...");
     for (auto& dataProvider : allDataProviders) {
@@ -198,12 +198,12 @@ void E2ESingleRun::runQueries() {
 
 void E2ESingleRun::stopQueries() {
     NES_INFO("Stopping the queries...");
-    auto queryService = coordinator->getRequestService();
+    auto requestHandlerService = coordinator->getRequestHandlerService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     for (auto id : submittedIds) {
         // Sending a stop request to the coordinator with a timeout of 30 seconds
-        queryService->validateAndQueueStopQueryRequest(id);
+        requestHandlerService->validateAndQueueStopQueryRequest(id);
 
         if (!waitForQueryToStop(id, queryCatalog, defaultStartQueryTimeout)) {
             NES_THROW_RUNTIME_ERROR("E2EBase: Could not stop query with id = " << id);

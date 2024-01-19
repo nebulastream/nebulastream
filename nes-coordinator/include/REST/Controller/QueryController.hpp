@@ -22,7 +22,7 @@
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <SerializableQueryPlan.pb.h>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <exception>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
@@ -46,8 +46,8 @@ using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class RequestService;
-using RequestServicePtr = std::shared_ptr<RequestService>;
+class RequestHandlerService;
+using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
 namespace Optimizer {
 class GlobalExecutionPlan;
@@ -66,13 +66,13 @@ class QueryController : public oatpp::web::server::api::ApiController {
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      */
     QueryController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                    const RequestServicePtr& queryService,
+                    const RequestHandlerServicePtr& requestHandlerService,
                     const QueryCatalogServicePtr& queryCatalogService,
                     const GlobalQueryPlanPtr& globalQueryPlan,
                     const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                     const std::string& completeRouterPrefix,
                     const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(queryService),
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), requestHandlerService(requestHandlerService),
           queryCatalogService(queryCatalogService), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
           errorHandler(errorHandler) {}
 
@@ -82,7 +82,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<QueryController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                   const RequestServicePtr& queryService,
+                                                   const RequestHandlerServicePtr& requestHandlerService,
                                                    const QueryCatalogServicePtr& queryCatalogService,
                                                    const GlobalQueryPlanPtr& globalQueryPlan,
                                                    const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -90,7 +90,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                                                    const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<QueryController>(objectMapper,
-                                                 queryService,
+                                                 requestHandlerService,
                                                  queryCatalogService,
                                                  globalQueryPlan,
                                                  globalExecutionPlan,
@@ -207,7 +207,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
                       userQuery,
                       placementStrategyString);
-            QueryId queryId = queryService->validateAndQueueAddQueryRequest(userQuery, placement);
+            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement);
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
@@ -255,7 +255,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
             std::string* queryString = protobufMessage->mutable_querystring();
             auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            QueryId queryId = queryService->validateAndQueueAddQueryRequest(*queryString, queryPlan, placementStrategy);
+            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(*queryString, queryPlan, placementStrategy);
 
             //Prepare the response
             nlohmann::json response;
@@ -299,7 +299,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
 
             auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            nlohmann::json response = queryService->validateAndQueueExplainQueryRequest(queryPlan, placementStrategy);
+            nlohmann::json response = requestHandlerService->validateAndQueueExplainQueryRequest(queryPlan, placementStrategy);
 
             return createResponse(Status::CODE_202, response.dump());
         } catch (nlohmann::json::exception& e) {
@@ -317,7 +317,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("DELETE", "/stop-query", stopQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
-            bool success = queryService->validateAndQueueStopQueryRequest(queryId);
+            bool success = requestHandlerService->validateAndQueueStopQueryRequest(queryId);
             Status status = success ? Status::CODE_202 : Status::CODE_400;//QueryController catches
                 // InvalidQueryStatus exception, but this is never thrown since it was commented out
             nlohmann::json response;
@@ -378,7 +378,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     const std::string DEFAULT_PLACEMENT_STRATEGY_TYPE = "NONE";
 
-    RequestServicePtr queryService;
+    RequestHandlerServicePtr requestHandlerService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;

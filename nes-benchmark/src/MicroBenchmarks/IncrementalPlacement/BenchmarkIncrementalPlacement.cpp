@@ -39,7 +39,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>

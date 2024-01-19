@@ -80,10 +80,10 @@ class E2ESingleRun {
     void createSources();
     /**
      * @brief Submits all queries to the coordinator
-     * @param queryService The query service to use
+     * @param requestHandlerService The query service to use
      * @param queryCatalog The query catalog to use
      */
-    void submitQueries(RequestServicePtr queryService, QueryCatalogServicePtr queryCatalog);
+    void submitQueries(RequestHandlerServicePtr requestHandlerService, QueryCatalogServicePtr queryCatalog);
 
     /**
      * @brief starts everything necessary for running the queries and measures for a single query

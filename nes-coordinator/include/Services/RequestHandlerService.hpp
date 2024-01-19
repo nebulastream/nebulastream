@@ -38,8 +38,8 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class RequestService;
-using RequestServicePtr = std::shared_ptr<RequestService>;
+class RequestHandlerService;
+using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
@@ -73,10 +73,10 @@ using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping,
  * as well as modifying the topology.
  */
-class RequestService {
+class RequestHandlerService {
 
   public:
-    explicit RequestService(bool enableNewRequestExecutor,
+    explicit RequestHandlerService(bool enableNewRequestExecutor,
                             Configurations::OptimizerConfiguration optimizerConfiguration,
                             const QueryCatalogServicePtr& queryCatalogService,
                             const RequestQueuePtr& queryRequestQueue,
