@@ -1,5 +1,23 @@
 # Changelog
 
+## [v0.6.26](https://github.com/nebulastream/nebulastream/tree/v0.6.26) (2024-01-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.25...v0.6.26)
+
+**Implemented enhancements:**
+
+- \[TASK\] Allow creating Topology change request via RPC to coordinator [\#4496](https://github.com/nebulastream/nebulastream/issues/4496)
+- \[TASK\] Move calls for adding next source version from partition manager to network source [\#4449](https://github.com/nebulastream/nebulastream/issues/4449)
+- \[TASK\] Enable asynchronous registering of event channels [\#4441](https://github.com/nebulastream/nebulastream/issues/4441)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Implement TopologyReconfigurationPhase [\#3083](https://github.com/nebulastream/nebulastream/issues/3083)
+
+## [v0.6.25](https://github.com/nebulastream/nebulastream/tree/v0.6.25) (2024-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-java-arrow...v0.6.25)
+
 ## [elegant-v0.6.19-java-arrow](https://github.com/nebulastream/nebulastream/tree/elegant-v0.6.19-java-arrow) (2024-01-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-java...elegant-v0.6.19-java-arrow)
@@ -5534,15 +5552,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
-
-## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
 
 ## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+
+## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
 
 #### Complex Event Processing
 
