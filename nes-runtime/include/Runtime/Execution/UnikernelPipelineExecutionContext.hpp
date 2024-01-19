@@ -9,6 +9,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <UnikernelStage.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <iomanip>
 #include <utility>
 
 namespace NES::Runtime::Execution {
