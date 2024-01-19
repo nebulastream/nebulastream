@@ -124,7 +124,7 @@ class ExecutionNode : public Node {
      * @brief Get identifier of all shared query plans placed on the execution node
      * @return set of shared query plan ids
      */
-    std::set<SharedQueryId> getPlacedSharedQueryPlanIds();
+    std::set<SharedQueryId> getPlacedSharedQueryPlanIds() const;
 
     bool equal(NodePtr const& rhs) const override;
 

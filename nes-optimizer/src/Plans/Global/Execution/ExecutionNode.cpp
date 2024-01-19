@@ -49,8 +49,9 @@ void ExecutionNode::updateDecomposedQueryPlans(NES::SharedQueryId sharedQueryId,
     NES_DEBUG("ExecutionNode: Updating the decomposed query plan with id :{} to the collection of query sub plans",
               sharedQueryId);
     for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
+        auto copiedDecomposedPlan = decomposedQueryPlan->copy();
         mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId][decomposedQueryPlan->getDecomposedQueryPlanId()] =
-            decomposedQueryPlan->copy();
+            copiedDecomposedPlan;
     }
     NES_DEBUG("ExecutionNode: Updated the decomposed query plan with id : {} to the collection of query sub plans",
               sharedQueryId);
@@ -64,8 +65,9 @@ std::vector<DecomposedQueryPlanPtr> ExecutionNode::getAllDecomposedQueryPlans(Sh
         for (const auto& [decomposedQueryPlanId, decomposedQueryPlan] : decomposedQueryPlanMap) {
             decomposedQueryPlans.emplace_back(decomposedQueryPlan);
         }
+        return decomposedQueryPlans;
     }
-    NES_WARNING("ExecutionNode : Unable to find shared query plan with id {}", sharedQueryId);
+    NES_ERROR("ExecutionNode : Unable to find shared query plan with id {}", sharedQueryId);
     return decomposedQueryPlans;
 }
 
@@ -77,10 +79,10 @@ DecomposedQueryPlanPtr ExecutionNode::getDecomposedQueryPlan(SharedQueryId share
         if (decomposedQueryPlanMap.contains(decomposedQueryPlanId)) {
             return decomposedQueryPlanMap[decomposedQueryPlanId];
         }
-        NES_WARNING("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryPlanId);
+        NES_ERROR("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryPlanId);
         return nullptr;
     }
-    NES_WARNING("ExecutionNode: Unable to find shared query plan with id {}", sharedQueryId);
+    NES_ERROR("ExecutionNode: Unable to find shared query plan with id {}", sharedQueryId);
     return nullptr;
 }
 
@@ -214,7 +216,7 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
     return lines;
 }
 
-std::set<SharedQueryId> ExecutionNode::getPlacedSharedQueryPlanIds() {
+std::set<SharedQueryId> ExecutionNode::getPlacedSharedQueryPlanIds() const {
 
     //iterate over all placed plans to fetch the shared query plan ids
     std::set<SharedQueryId> sharedQueryIds;

@@ -56,13 +56,15 @@ class GlobalExecutionPlan {
      * Note: the operation is successful only if the given decomposed plan version matches the stored decomposed query
      * plan version.
      * @param executionNodeId: the id of the execution node
-     * @param sharedQueryId
-     * @param expectedVersion
-     * @param newDecomposedQueryPlanState
-     * @return
+     * @param sharedQueryId: the shared query id
+     * @param decomposedQueryPlanId: the decomposed query id
+     * @param expectedVersion: the expected version
+     * @param newDecomposedQueryPlanState: the new state
+     * @return true if successful else false
      */
     bool updateDecomposedQueryPlanState(ExecutionNodeId executionNodeId,
                                         SharedQueryId sharedQueryId,
+                                        DecomposedQueryPlanId decomposedQueryPlanId,
                                         DecomposedQueryPlanVersion expectedVersion,
                                         QueryState newDecomposedQueryPlanState);
 
@@ -71,7 +73,7 @@ class GlobalExecutionPlan {
      * @param executionNodeId: the execution node id
      * @return vector of shared query ids
      */
-    std::vector<SharedQueryId> getHostedSharedQueryIds(ExecutionNodeId executionNodeId);
+    std::set<SharedQueryId> getPlacedSharedQueryIds(ExecutionNodeId executionNodeId) const;
 
     /**
      * @brief Get the copy of the decomposed query plan with the given id
