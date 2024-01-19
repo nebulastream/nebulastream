@@ -24,6 +24,7 @@ std::span<char> CircularBuffer::reserveDataForWrite() {
     return segment;
 }
 void CircularBuffer::returnMemoryForWrite(std::span<char> segment, size_t bytes_written) {
+    NES_ASSERT(segment.size() >= bytes_written, "Overflow");
     auto bytes_returned = segment.size() - bytes_written;
     NES_TRACE("Return: Returning {} bytes\n", bytes_returned);
     return_write(bytes_returned);
