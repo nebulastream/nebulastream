@@ -53,7 +53,7 @@ class WorkerContext {
     /// data channels that send data downstream
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>
+    std::unordered_map<NES::OperatorId, std::optional<std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>>
         dataChannelFutures;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
@@ -235,6 +235,7 @@ class WorkerContext {
      * @return true if a connection is currently being established
      */
     bool isAsyncConnectionInProgress(OperatorId operatorId);
+    bool doNotTryConnectingDataChannel(OperatorId operatorId);
 
     /**
      * @brief retrieve a registered output channel
