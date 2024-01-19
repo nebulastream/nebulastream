@@ -5,15 +5,15 @@
   set_fact:
     local_worker_ip: "{{ lookup('template', 'roles/pi-worker/templates/find-ip.j2') | trim }}"
 
-- name: Remove older log
-  file:
-    path: "/home/ubuntu/dimitrios/worker_{{ local_worker_ip }}-sysStat.csv"
-    state: absent
+- name: Set datetime fact
+  set_fact:
+    current_datetime: "{{ ansible_date_time.year }}{{ ansible_date_time.month }}{{ ansible_date_time.day }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}{{ ansible_date_time.second }}"
+
 
 - name: Start dool monitoring
   shell: |
-    nohup taskset -c 0 /home/ubuntu/git/{{ dool_name }}/{{ dool_name }} -tTcm -C 1,2,3 --output /home/ubuntu/dimitrios/worker_{{ local_worker_ip }}-sysStat.csv > /dev/null 2>&1 &
+    nohup taskset -c 0 /home/ubuntu/git/{{ dool_name }}/{{ dool_name }} -tTcm -C 1,2,3 --output /home/ubuntu/dimitrios/worker_{{ local_worker_ip }}_{{ current_datetime }}-sysStat.csv > /dev/null 2>&1 &
 
 - name: Worker monitoring log is created
   wait_for:
-    path: "/home/ubuntu/dimitrios/worker_{{ local_worker_ip }}-sysStat.csv"
+    path: "/home/ubuntu/dimitrios/worker_{{ local_worker_ip }}_{{ current_datetime }}-sysStat.csv"
