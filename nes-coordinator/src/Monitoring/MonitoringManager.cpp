@@ -27,7 +27,7 @@
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryState.hpp>
@@ -37,24 +37,24 @@
 
 namespace NES::Monitoring {
 MonitoringManager::MonitoringManager(TopologyPtr topology,
-                                     RequestServicePtr queryService,
+                                     RequestHandlerServicePtr requestHandlerService,
                                      QueryCatalogServicePtr queryCatalogService)
-    : MonitoringManager(std::move(topology), std::move(queryService), std::move(queryCatalogService), true) {}
+    : MonitoringManager(std::move(topology), std::move(requestHandlerService), std::move(queryCatalogService), true) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
-                                     RequestServicePtr queryService,
+                                     RequestHandlerServicePtr requestHandlerService,
                                      QueryCatalogServicePtr catalogService,
                                      bool enableMonitoring)
-    : MonitoringManager(topology, queryService, catalogService, std::make_shared<LatestEntriesMetricStore>(), enableMonitoring) {}
+    : MonitoringManager(topology, requestHandlerService, catalogService, std::make_shared<LatestEntriesMetricStore>(), enableMonitoring) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
-                                     RequestServicePtr queryService,
+                                     RequestHandlerServicePtr requestHandlerService,
                                      QueryCatalogServicePtr catalogService,
                                      MetricStorePtr metricStore,
                                      bool enableMonitoring)
     : metricStore(metricStore), workerClient(WorkerRPCClient::create()), topology(topology), enableMonitoring(enableMonitoring),
       monitoringCollectors(MonitoringPlan::defaultCollectors()) {
-    this->queryService = queryService;
+    this->requestHandlerService = requestHandlerService;
     this->catalogService = catalogService;
     NES_DEBUG("MonitoringManager: Init with monitoring= {} , storage= {} ",
               enableMonitoring,
@@ -212,7 +212,7 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
 
         // create new monitoring query
         NES_INFO("MonitoringManager: Creating query for {}", monitoringStream);
-        queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+        queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
         if ((sync && waitForQueryToStart(queryId, std::chrono::seconds(60))) || (!sync)) {
             NES_INFO("MonitoringManager: Successfully started query {}::{}", queryId, monitoringStream);
             deployedMonitoringQueries.insert({monitoringStream, queryId});
@@ -254,7 +254,7 @@ bool MonitoringManager::stopRunningMonitoringQuery(std::string streamName, bool 
         auto queryId = deployedMonitoringQueries[streamName];
 
         NES_INFO("MonitoringManager: Stopping query {} for {}", queryId, metricType);
-        if (queryService->validateAndQueueStopQueryRequest(queryId)) {
+        if (requestHandlerService->validateAndQueueStopQueryRequest(queryId)) {
             if ((sync && checkStoppedOrTimeout(queryId, std::chrono::seconds(60))) || (!sync)) {
                 NES_INFO("MonitoringManager: Query {}::{} terminated", queryId, metricType);
             } else {

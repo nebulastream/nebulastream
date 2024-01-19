@@ -18,7 +18,7 @@
 #include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/MetricValidator.hpp>
@@ -232,7 +232,7 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
     std::string outputFilePath = getTestResourceFolder() / "testTimestampCsvSink.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
@@ -243,7 +243,7 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
                      .sink(FileSinkDescriptor::create(outputFilePath, true));
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -264,7 +264,7 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
     EXPECT_EQ(countOccurrences("timestamp", content), 1);
 
     NES_INFO("ContinuousSourceTest: Remove query");
-    queryService->validateAndQueueStopQueryRequest(queryId);
+    requestHandlerService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("ContinuousSourceTest: Stop worker 1");

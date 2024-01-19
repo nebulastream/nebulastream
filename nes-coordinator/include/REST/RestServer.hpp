@@ -38,8 +38,8 @@ class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 }// namespace Optimizer
 
-class RequestService;
-using RequestServicePtr = std::shared_ptr<RequestService>;
+class RequestHandlerService;
+using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
@@ -82,7 +82,7 @@ class RestServer {
      * @param sourceCatalogService
      * @param topologyManagerService
      * @param globalExecutionPlan
-     * @param queryService
+     * @param requestHandlerService
      * @param monitoringService
      * @param queryParsingService
      * @param globalQueryPlan
@@ -97,7 +97,7 @@ class RestServer {
                SourceCatalogServicePtr sourceCatalogService,
                TopologyManagerServicePtr topologyManagerService,
                Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-               RequestServicePtr queryService,
+               RequestHandlerServicePtr requestHandlerService,
                MonitoringServicePtr monitoringService,
                QueryParsingServicePtr queryParsingService,
                GlobalQueryPlanPtr globalQueryPlan,
@@ -129,7 +129,7 @@ class RestServer {
     NesCoordinatorWeakPtr coordinator;
     QueryCatalogServicePtr queryCatalogService;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    RequestServicePtr queryService;
+    RequestHandlerServicePtr requestHandlerService;
     GlobalQueryPlanPtr globalQueryPlan;
     SourceCatalogServicePtr sourceCatalogService;
     TopologyManagerServicePtr topologyManagerService;

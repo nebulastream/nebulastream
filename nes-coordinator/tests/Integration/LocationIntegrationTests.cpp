@@ -35,7 +35,7 @@
 #include <Mobility/WorkerMobilityHandler.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/S2Utilities.hpp>
@@ -1183,7 +1183,7 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithReconnecting) {
     ASSERT_TRUE(retStart1);
     ASSERT_TRUE(waitForNodes(5, 62, topology));
 
-    QueryId queryId = crd->getRequestService()->validateAndQueueAddQueryRequest(
+    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
 

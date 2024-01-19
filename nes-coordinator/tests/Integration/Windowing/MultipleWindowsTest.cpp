@@ -21,7 +21,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
@@ -73,7 +73,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -88,7 +88,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -160,7 +160,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -175,7 +175,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -242,7 +242,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
@@ -259,7 +259,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
         ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -341,7 +341,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
@@ -356,7 +356,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -424,7 +424,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -440,7 +440,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -522,7 +522,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -536,7 +536,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -612,7 +612,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     std::string outputFilePath = getTestResourceFolder() / "testOutput.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_DEBUG("MultipleWindowsTest: Submit query");
@@ -629,7 +629,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -763,7 +763,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("MultipleWindowsTest: Submit query");
@@ -774,7 +774,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -920,7 +920,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("MultipleWindowsTest: Submit query");
@@ -933,7 +933,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

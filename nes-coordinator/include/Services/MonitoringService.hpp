@@ -30,17 +30,17 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class RequestService;
-using RequestServicePtr = std::shared_ptr<RequestService>;
+class RequestHandlerService;
+using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
  */
 class MonitoringService {
   public:
-    MonitoringService(TopologyPtr topology, RequestServicePtr queryService, QueryCatalogServicePtr catalogService);
+    MonitoringService(TopologyPtr topology, RequestHandlerServicePtr requestHandlerService, QueryCatalogServicePtr catalogService);
     MonitoringService(TopologyPtr topology,
-                      RequestServicePtr queryService,
+                      RequestHandlerServicePtr requestHandlerService,
                       QueryCatalogServicePtr catalogService,
                       bool enableMonitoring);
 

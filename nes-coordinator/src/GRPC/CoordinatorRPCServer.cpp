@@ -14,7 +14,6 @@
 
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Util/TopologyLinkInformation.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -26,10 +25,11 @@
 #include <Runtime/OpenCLManager.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <utility>
 
 using namespace NES;
@@ -64,14 +64,14 @@ void deserializeOpenCLDeviceInfo(std::any& property,
     property = devices;
 }
 
-CoordinatorRPCServer::CoordinatorRPCServer(RequestServicePtr queryService,
+CoordinatorRPCServer::CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
                                            TopologyManagerServicePtr topologyManagerService,
                                            SourceCatalogServicePtr sourceCatalogService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            QueryParsingServicePtr queryParsingService,
                                            CoordinatorHealthCheckServicePtr coordinatorHealthCheckService)
-    : requestService(std::move(queryService)), topologyManagerService(std::move(topologyManagerService)),
+    : requestHandlerService(std::move(requestHandlerService)), topologyManagerService(std::move(topologyManagerService)),
       sourceCatalogService(std::move(sourceCatalogService)), queryCatalogService(std::move(queryCatalogService)),
       monitoringManager(std::move(monitoringManager)), queryParsingService(std::move(queryParsingService)),
       coordinatorHealthCheckService(std::move(coordinatorHealthCheckService)){};
@@ -317,7 +317,7 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         auto subQueryPlanId = request->subqueryid();
 
         //Send one failure request for the shared query plan
-        if (!requestService->validateAndQueueFailQueryRequest(sharedQueryId, subQueryPlanId, request->errormsg())) {
+        if (!requestHandlerService->validateAndQueueFailQueryRequest(sharedQueryId, subQueryPlanId, request->errormsg())) {
             NES_ERROR("Failed to create Query Failure request for shared query plan {}", sharedQueryId);
             return Status::CANCELLED;
         }
@@ -483,7 +483,7 @@ CoordinatorRPCServer::RelocateTopologyNode(ServerContext*, const NodeRelocationR
     for (const auto& addedTopologyLink : request->addedlinks()) {
         addedLinks.push_back(TopologyLinkInformation(addedTopologyLink.upstream(), addedTopologyLink.downstream()));
     }
-    auto success = requestService->validateAndQueueNodeRelocationRequest(removedLinks, addedLinks);
+    auto success = requestHandlerService->validateAndQueueNodeRelocationRequest(removedLinks, addedLinks);
     reply->set_success(success);
     if (success) {
         return Status::OK;

@@ -37,10 +37,10 @@ void TopologyChangeLog::updateChangelog(const std::unordered_map<WorkerId, std::
 
             //if compiled with debug configuration, check for duplicates
 #ifndef NDEBUG
-            //if the edge to be added is also added as part of another changelog, this means our data is corrupted
+            //if the link to be added is also added as part of another changelog, this means our data is corrupted
             if (std::find(additionTargetChildren.begin(), additionTargetChildren.end(), childToAdd)
                 != additionTargetChildren.end()) {
-                NES_ERROR("Duplicate edge {}->{} found in topology changelog", childToAdd, parentToAdd);
+                NES_ERROR("Duplicate link {}->{} found in topology changelog", childToAdd, parentToAdd);
             }
 #endif
             additionTargetChildren.push_back(childToAdd);
@@ -56,12 +56,12 @@ void TopologyChangeLog::updateChangelog(const std::unordered_map<WorkerId, std::
 }
 
 void TopologyChangeLog::add(const TopologyChangeLog& newChangeLog) {
-    /* add added edges from the addedChangelog to the list of added edges at this object unless they already exist in the list of
-     * removed edges at this object. In case the added edge exists in the list of removed edges at this object, remove it from the list.
+    /* add added linkss from the addedChangelog to the list of added linkss at this object unless they already exist in the list of
+     * removed links at this object. In case the added link exists in the list of removed links at this object, remove it from the list.
      */
     updateChangelog(newChangeLog.addedLinks, this->addedLinks, this->removedLinks);
-    /* add removed edges from the addedChangelog to the list of removed edges at this object unless they already exist in the list of
-     * added edges at this object. In case the removed edge exists in the list of added edges at this object, remove it from the list.
+    /* add removed links from the addedChangelog to the list of removed links at this object unless they already exist in the list of
+     * added links at this object. In case the removed link exists in the list of added links at this object, remove it from the list.
      */
     updateChangelog(newChangeLog.removedLinks, this->removedLinks, this->addedLinks);
 }
@@ -97,17 +97,17 @@ void TopologyChangeLog::erase(const TopologyDelta& delta) {
 }
 
 void TopologyChangeLog::removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map,
-                                           const std::vector<TopologyLinkInformation>& edges) {
-    for (auto edge : edges) {
-        auto& children = map[edge.downstreamTopologyNode];
-        auto iterator = std::find(children.begin(), children.end(), edge.upstreamTopologyNode);
+                                           const std::vector<TopologyLinkInformation>& linksToRemove) {
+    for (auto link : linksToRemove) {
+        auto& children = map[link.downstreamTopologyNode];
+        auto iterator = std::find(children.begin(), children.end(), link.upstreamTopologyNode);
         if (iterator != children.end()) {
             children.erase(iterator);
         } else if (!children.empty()) {
-            NES_THROW_RUNTIME_ERROR("Trying to remove edge " + edge.toString() + " which does not exist in the changelog");
+            NES_THROW_RUNTIME_ERROR("Trying to remove link " + link.toString() + " which does not exist in the changelog");
         }
         if (children.empty()) {
-            map.erase(edge.downstreamTopologyNode);
+            map.erase(link.downstreamTopologyNode);
         }
     }
 }

@@ -22,7 +22,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -92,12 +92,12 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     ASSERT_TRUE(retStart1);
     NES_INFO("ArrowIntegrationTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     // register query
     auto query = Query::from("arrow_data").sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                     query.getQueryPlan(),
                                                                     Optimizer::PlacementStrategy::BottomUp);
 

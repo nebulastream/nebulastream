@@ -19,7 +19,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
@@ -149,7 +149,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
     EXPECT_TRUE(retStart1);
     NES_INFO("YSBDeploymentTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "ysb.out";
@@ -161,7 +161,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
                      .apply(Sum(Attribute("user_id")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                     query.getQueryPlan(),
                                                                     Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place

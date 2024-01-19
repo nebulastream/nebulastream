@@ -30,7 +30,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>
@@ -354,7 +354,7 @@ int main(int argc, const char* argv[]) {
 
                 //Setup coordinator for the experiment
                 setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum], batchSizes[configNum]);
-                NES::RequestServicePtr queryService = coordinator->getRequestService();
+                NES::RequestHandlerServicePtr requestHandlerService = coordinator->getRequestHandlerService();
                 auto queryCatalogService = coordinator->getQueryCatalogService();
                 auto globalQueryPlan = coordinator->getGlobalQueryPlan();
                 //Sleep for fixed time before starting the experiments
@@ -367,7 +367,7 @@ int main(int argc, const char* argv[]) {
                 for (uint64_t i = 1; i <= numOfQueries; i++) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1];
                     queryPlan->setQueryId(i);
-                    queryService->validateAndQueueAddQueryRequest(queries[i - 1],
+                    requestHandlerService->validateAndQueueAddQueryRequest(queries[i - 1],
                                                                   queryPlan,
                                                                   Optimizer::PlacementStrategy::TopDown);
                 }

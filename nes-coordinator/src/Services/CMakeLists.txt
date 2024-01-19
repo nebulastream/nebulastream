@@ -13,7 +13,7 @@
 
 add_source_files(nes-coordinator
         MonitoringService.cpp
-        RequestService.cpp
+        RequestHandlerService.cpp
         RequestProcessorService.cpp
         QueryParsingService.cpp
         CoordinatortHealthCheckService.cpp

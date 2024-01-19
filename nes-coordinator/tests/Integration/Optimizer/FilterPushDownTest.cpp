@@ -21,7 +21,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>

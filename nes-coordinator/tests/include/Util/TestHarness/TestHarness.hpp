@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Core.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>

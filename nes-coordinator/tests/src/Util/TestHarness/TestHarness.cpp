@@ -24,7 +24,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
@@ -257,7 +257,7 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
 };
 
 SchemaPtr TestHarness::getOutputSchema() {
-    auto queryService = nesCoordinator->getRequestService();
+    auto requestHandlerService = nesCoordinator->getRequestHandlerService();
     auto queryCatalogService = nesCoordinator->getQueryCatalogService();
     return queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->getSinkOperators()[0]->getOutputSchema();
 }
@@ -269,7 +269,7 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
             "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
     }
 
-    RequestServicePtr queryService = nesCoordinator->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = nesCoordinator->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
 
     // local fs
@@ -281,7 +281,7 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
 
     auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     queryId =
-        queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), placementStrategy);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), placementStrategy);
 
     // Now run the query
     if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {

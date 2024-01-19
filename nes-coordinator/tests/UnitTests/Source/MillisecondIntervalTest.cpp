@@ -24,7 +24,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -289,14 +289,14 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     EXPECT_TRUE(retStart1);
     NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
     std::string queryString =
         R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

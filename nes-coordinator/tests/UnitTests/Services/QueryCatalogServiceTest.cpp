@@ -135,13 +135,13 @@ TEST_F(QueryCatalogServiceTest, testPrintQuery) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-    QueryCatalogServicePtr queryServiceCatalog = std::make_shared<QueryCatalogService>(queryCatalog);
+    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
-    auto catalogEntry = queryServiceCatalog->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
+    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryServiceCatalog->getAllQueryCatalogEntries();
+    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalogService->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
 }
 

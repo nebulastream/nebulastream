@@ -18,7 +18,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
@@ -100,7 +100,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     std::string outputFilePath = "ktm-results.csv";
     remove(outputFilePath.c_str());
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("KTMDeploymentTest: Submit query");
@@ -112,7 +112,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
                             Count()->as(Attribute("count_value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                     query.getQueryPlan(),
                                                                     Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

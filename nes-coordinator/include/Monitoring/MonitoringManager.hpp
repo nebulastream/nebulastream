@@ -39,8 +39,8 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
-class RequestService;
-using RequestServicePtr = std::shared_ptr<RequestService>;
+class RequestHandlerService;
+using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
@@ -67,7 +67,7 @@ class MonitoringManager {
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
     MonitoringManager(TopologyPtr topology,
-                      RequestServicePtr queryService,
+                      RequestHandlerServicePtr requestHandlerService,
                       QueryCatalogServicePtr catalogService,
                       MetricStorePtr metricStore,
                       bool enableMonitoring);
@@ -78,17 +78,17 @@ class MonitoringManager {
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
     MonitoringManager(TopologyPtr topology,
-                      RequestServicePtr queryService,
+                      RequestHandlerServicePtr requestHandlerService,
                       QueryCatalogServicePtr catalogService,
                       bool enableMonitoring);
 
     /**
      * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
      * @param topology the topology
-     * @param queryService: the query service
+     * @param requestHandlerService: the query service
      * @param queryCatalogService: the query catalog service
      */
-    MonitoringManager(TopologyPtr topology, RequestServicePtr queryService, QueryCatalogServicePtr queryCatalogService);
+    MonitoringManager(TopologyPtr topology, RequestHandlerServicePtr requestHandlerService, QueryCatalogServicePtr queryCatalogService);
     MonitoringManager(const MonitoringManager&) = default;
     MonitoringManager(MonitoringManager&&) = default;
     //  -- Assignment --
@@ -210,7 +210,7 @@ class MonitoringManager {
     bool enableMonitoring;
     std::set<MetricCollectorType> monitoringCollectors;
     std::set<std::string> logicalMonitoringSources;
-    NES::RequestServicePtr queryService;
+    NES::RequestHandlerServicePtr requestHandlerService;
     NES::QueryCatalogServicePtr catalogService;
 };
 

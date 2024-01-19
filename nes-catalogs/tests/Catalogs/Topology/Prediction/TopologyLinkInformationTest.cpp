@@ -18,22 +18,22 @@
 
 namespace NES {
 
-class EdgeTest : public Testing::BaseIntegrationTest {
+class TopologyLinkInformationTest : public Testing::BaseIntegrationTest {
   public:
-    static void SetUpTestCase() { NES::Logger::setupLogging("EdgeTest.log", NES::LogLevel::LOG_DEBUG); }
+    static void SetUpTestCase() { NES::Logger::setupLogging("TopologyLinkInformationTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
-TEST_F(EdgeTest, testToString) {
-    TopologyLinkInformation edge(1, 2);
-    ASSERT_EQ(edge.toString(), "1->2");
+TEST_F(TopologyLinkInformationTest, testToString) {
+    TopologyLinkInformation link(1, 2);
+    ASSERT_EQ(link.toString(), "1->2");
 }
 
-TEST_F(EdgeTest, testEquality) {
-    TopologyLinkInformation edge(1, 2);
-    TopologyLinkInformation edge2(2, 1);
-    TopologyLinkInformation edge3(1, 2);
-    ASSERT_EQ(edge, edge3);
-    ASSERT_NE(edge, edge2);
-    ASSERT_NE(edge3, edge2);
+TEST_F(TopologyLinkInformationTest, testEquality) {
+    TopologyLinkInformation link(1, 2);
+    TopologyLinkInformation link2(2, 1);
+    TopologyLinkInformation link3(1, 2);
+    ASSERT_EQ(link, link3);
+    ASSERT_NE(link, link2);
+    ASSERT_NE(link3, link2);
 }
 }// namespace NES

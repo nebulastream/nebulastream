@@ -24,7 +24,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -51,7 +51,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -107,7 +107,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                     query.getQueryPlan(),
                                                                     Optimizer::PlacementStrategy::BottomUp);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
@@ -117,7 +117,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("BenchmarkSourceIntegrationTest: Remove query");
-    //ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
+    //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -159,7 +159,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -215,7 +215,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                     query.getQueryPlan(),
                                                                     Optimizer::PlacementStrategy::BottomUp);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
@@ -224,7 +224,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("BenchmarkSourceIntegrationTest: Remove query");
-    //ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
+    //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -269,7 +269,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
-    RequestServicePtr queryService = crd->getRequestService();
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
@@ -325,7 +325,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                     query.getQueryPlan(),
                                                                     Optimizer::PlacementStrategy::BottomUp);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
@@ -334,7 +334,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("BenchmarkSourceIntegrationTest: Remove query");
-    //ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
+    //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());

@@ -37,7 +37,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
@@ -1915,9 +1915,9 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     string query =
         R"(Query::from("input1").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    NES::RequestServicePtr queryService = crd->getRequestService();
+    NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
     auto queryCatalog = crd->getQueryCatalogService();
-    auto queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
+    auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
@@ -1995,7 +1995,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES_DEBUG("start={} stop={}", start, stop);
 
     NES_INFO("SourceTest: Remove query");
-    queryService->validateAndQueueStopQueryRequest(queryId);
+    requestHandlerService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("E2EBase: Stop worker 1");

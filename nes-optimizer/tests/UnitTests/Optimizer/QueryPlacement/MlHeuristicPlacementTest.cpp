@@ -37,7 +37,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <z3++.h>

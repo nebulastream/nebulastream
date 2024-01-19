@@ -21,7 +21,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Services/RequestService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
@@ -309,7 +309,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    auto queryService = crd->getRequestService();
+    auto requestHandlerService = crd->getRequestHandlerService();
     auto queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
@@ -321,7 +321,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                     query.getQueryPlan(),
                                                                     Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
