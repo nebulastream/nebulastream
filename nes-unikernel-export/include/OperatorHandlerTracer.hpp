@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <any>
+#include <variant>
 #include <cstdint>
 #include <ranges>
 #include <string>
