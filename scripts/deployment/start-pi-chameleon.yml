@@ -7,4 +7,4 @@
 
 - hosts: pi_worker
   tasks:
-    - include_tasks: roles/pi-worker/tasks/start.yml
+    - include_tasks: roles/pi-worker/tasks/start-chameleon.yml
