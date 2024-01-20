@@ -184,7 +184,7 @@ class NetworkSource : public DataSource {
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
     bool receivedDrainMessage = false;
     bool migrated = false;
-    std::mutex versionMutex;
+    std::recursive_mutex versionMutex;
 };
 
 }// namespace NES::Network
