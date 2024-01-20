@@ -325,6 +325,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             uint64_t uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
                                             DecomposedQueryPlanVersion version);
+    bool bufferOutgoingTuples(WorkerId receivingWorkerId);
     bool markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**

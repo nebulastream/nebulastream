@@ -197,6 +197,7 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconne
     auto workerId = nodeEngine->getNodeId();
     TopologyLinkInformation removedLink(workerId, currentParentId);
     TopologyLinkInformation addedLink(workerId, currentParentId);
+    nodeEngine->bufferOutgoingTuples(currentParentId);
     //todo: make this return the new version number and assign it to the sink
     bool success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink});
     if (success) {

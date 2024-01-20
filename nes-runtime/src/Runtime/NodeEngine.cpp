@@ -660,6 +660,22 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
     }
 }
 
+bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId) {
+    bool reconfiguredSink = false;
+    for (const auto& executableQueryPlan : deployedExecutableQueryPlans) {
+        for (auto& sink : executableQueryPlan.second->getSinks()) {
+            auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+            if (networkSink != nullptr) {
+                if (networkSink->getReceiverId() == receivingWorkerId) {
+                    networkSink->startBuffering();
+                    reconfiguredSink = true;
+                }
+            }
+        }
+    }
+    return reconfiguredSink;
+}
+
 bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId) {
     std::unique_lock lock(engineMutex);
     auto deployedPlanIterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId);
