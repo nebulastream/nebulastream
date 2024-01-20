@@ -316,12 +316,13 @@ void NetworkSource::markAsMigrated() {
     std::unique_lock lock(versionMutex);
     migrated = true;
     bool startVersion = true;
-    if (!receivedDrainMessage) {
-        //todo: if no channel has connected yet, remove partition and set start new version to true
-        //todo: this requires atomic compare and exchange on the partition count
-        //startVersion =
-    }
-    if (startVersion) {
+    // if (!receivedDrainMessage) {
+    //     //todo: if no channel has connected yet, remove partition and set start new version to true
+    //     //todo: this requires atomic compare and exchange on the partition count
+    //     //startVersion =
+    // }
+    // if (startVersion) {
+    if (receivedDrainMessage) {
         startNewVersion();
     }
 }
@@ -348,6 +349,8 @@ bool NetworkSource::startNewVersion() {
         return true;
     }
     if (migrated) {
+        receivedDrainMessage = false;
+        migrated = false;
         onEndOfStream(Runtime::QueryTerminationType::Graceful);
     }
     return false;

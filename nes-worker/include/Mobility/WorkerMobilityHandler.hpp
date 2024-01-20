@@ -88,6 +88,19 @@ class WorkerMobilityHandler {
      */
     bool stop();
 
+    //todo: change testing and make this private
+    /**
+     * @brief Buffer outgoing data, perform reconnect and unbuffer data once reconnect succeeded
+     * @param oldParent : the mobile workers old parent
+     * @param newParent : the mobile workers new parent
+     * @param currentParentWorkerIds : a list of the ids of this workers current parents
+     * @param currentParentLocations : a list of this workers parents locations if they are known
+     * @param neighbourWorkerIdToLocationMap : a map on the ids of other workers nodes in the vicinity of this worker,
+     *  which contains each workers location.
+     * @return true if the reconnect was successful
+     */
+    bool triggerReconnectionRoutine(uint64_t& currentParentId, uint64_t newParentId);
+
   private:
     /**
      * @brief check if the device has moved further than the defined threshold from the last position that was communicated to the coordinator
@@ -110,18 +123,6 @@ class WorkerMobilityHandler {
     bool
     sendNextPredictedReconnect(const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& scheduledReconnects,
                                const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& removedReconnects);
-
-    /**
-     * @brief Buffer outgoing data, perform reconnect and unbuffer data once reconnect succeeded
-     * @param oldParent : the mobile workers old parent
-     * @param newParent : the mobile workers new parent
-     * @param currentParentWorkerIds : a list of the ids of this workers current parents
-     * @param currentParentLocations : a list of this workers parents locations if they are known
-     * @param neighbourWorkerIdToLocationMap : a map on the ids of other workers nodes in the vicinity of this worker,
-     *  which contains each workers location.
-     * @return true if the reconnect was successful
-     */
-    bool triggerReconnectionRoutine(uint64_t& currentParentId, uint64_t newParentId);
 
     /**
      * @brief Method to get all field nodes within a certain range around a geographical point

@@ -418,4 +418,15 @@ bool NetworkSink::applyNextSinkDescriptor() {
     configureNewSinkDescriptor(nextSinkDescriptor.value());
     return true;
 }
+bool NetworkSink::startBuffering() {
+    Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
+                                                                              decomposedQueryPlanId,
+                                                                              Runtime::ReconfigurationType::BufferOutGoingTuples,
+                                                                              inherited0::shared_from_this());
+    return queryManager->addReconfigurationMessage(nesPartition.getQueryId(), decomposedQueryPlanId, message, false);
+}
+
+WorkerId NetworkSink::getReceiverId() {
+    return receiverLocation.getNodeId();
+}
 }// namespace NES::Network
