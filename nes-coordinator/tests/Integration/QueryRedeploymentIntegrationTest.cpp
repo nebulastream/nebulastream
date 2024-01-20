@@ -626,6 +626,12 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
     wrkConf1->connectSourceEventChannelsAsync.setValue(true);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf1->mobilityConfiguration.locationProviderType.setValue(
+        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY)
+                                                                    / "singleLocation.csv");
+
     wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
     auto wrk1DataPort = getAvailablePort();
