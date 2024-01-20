@@ -635,11 +635,11 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             // 13. Record information about the query plan and worker id
                             DecomposedQueryPlanId decomposedPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
                             if (candidateOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
-                                decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(candidateOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                                decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
+                                    candidateOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
                             }
 
-                            connectedSysSubPlanDetails.emplace_back(
-                                SysPlanMetaData(decomposedPlanId, currentWorkerId));
+                            connectedSysSubPlanDetails.emplace_back(SysPlanMetaData(decomposedPlanId, currentWorkerId));
                             // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
@@ -737,8 +737,8 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
 
             // 1.4. Fetch the execution node to update and placed query sub plans
             auto topologyNode = workerIdToTopologyNodeMap[workerNodeId];
-            auto executionNode = getExecutionNode(topologyNode);
-            auto placedQuerySubPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
+            auto executionNode = getLockedExecutionNode(lockedTopologyNode);
+            auto placedQuerySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
 
             // 1.5. Iterate over the placed query sub plans and update execution node
             auto computedQuerySubPlans = computedSubQueryPlans[workerNodeId];
@@ -845,8 +845,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         updatedQuerySubPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->registerDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(), updatedQuerySubPlan);
-
+                        executionNode->operator*()->registerDecomposedQueryPlan(updatedQuerySubPlan);
                     } else if (containPinnedDownstreamOperator) {
 
                         auto computedOperators = computedQuerySubPlan->getAllOperators();
@@ -927,7 +926,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         updatedQuerySubPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->registerDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(), updatedQuerySubPlan);
+                        executionNode->operator*()->registerDecomposedQueryPlan(updatedQuerySubPlan);
                     } else {
                         NES_ERROR(
                             "A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
@@ -940,15 +939,12 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                     auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
                     updatedQuerySubPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                     updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                    executionNode->registerDecomposedQueryPlan(updatedQuerySubPlan->getSharedQueryId(), updatedQuerySubPlan);
+                    executionNode->operator*()->registerDecomposedQueryPlan(updatedQuerySubPlan);
                 }
             }
 
-            // 1.6. Add the execution node to the global execution plan
-            globalExecutionPlan->addExecutionNode(executionNode);
-
-            // 1.7. Update state and properties of all operators placed on the execution node
-            placedQuerySubPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
+            // 1.6. Update state and properties of all operators placed on the execution node
+            placedQuerySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
             for (auto placedQuerySubPlan : placedQuerySubPlans) {
                 DecomposedQueryPlanId decomposedQueryPlanId = placedQuerySubPlan->getDecomposedQueryPlanId();
                 auto allPlacedOperators = placedQuerySubPlan->getAllOperators();
@@ -968,10 +964,13 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                 }
             }
 
-            // 1.8. Release lock on the topology node
+            // 1.7. Release lock on the topology node
             if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
                 lockedTopologyNode->unlock();
             }
+
+            // 1.8. release lock on the execution node
+            executionNode->unlock();
         } catch (std::exception& ex) {
             NES_ERROR("Exception occurred during pinned operator placement {}.", ex.what());
             throw ex;
@@ -981,8 +980,8 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
 }
 
 bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanVersion querySubPlanVersion,
-                                                     const NodePtr& placedDownstreamOperator,
-                                                     const SourceLogicalOperatorNodePtr& newNetworkSourceOperator) {
+                                                            const NodePtr& placedDownstreamOperator,
+                                                            const SourceLogicalOperatorNodePtr& newNetworkSourceOperator) {
 
     //check if the new source is a network source
     auto newSourceDescriptor = newNetworkSourceOperator->getSourceDescriptor();
@@ -1013,14 +1012,14 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanV
 
         if (std::any_cast<OperatorId>(existingSource->getProperty(UPSTREAM_LOGICAL_OPERATOR_ID))
             == std::any_cast<OperatorId>(newNetworkSourceOperator->getProperty(UPSTREAM_LOGICAL_OPERATOR_ID))) {
-            auto mergedNetworkSourceDescriptor = Network::NetworkSourceDescriptor::create(
-                newNetworkSourceDescriptor->getSchema(),
-                newNetworkSourceDescriptor->getNesPartition(),
-                newNetworkSourceDescriptor->getNodeLocation(),
-                SOURCE_RETRY_WAIT,
-                SOURCE_RETRIES,
-                querySubPlanVersion,
-                existingNetworkSourceDescriptor->getUniqueId());
+            auto mergedNetworkSourceDescriptor =
+                Network::NetworkSourceDescriptor::create(newNetworkSourceDescriptor->getSchema(),
+                                                         newNetworkSourceDescriptor->getNesPartition(),
+                                                         newNetworkSourceDescriptor->getNodeLocation(),
+                                                         SOURCE_RETRY_WAIT,
+                                                         SOURCE_RETRIES,
+                                                         querySubPlanVersion,
+                                                         existingNetworkSourceDescriptor->getUniqueId());
             existingSource->setSourceDescriptor(mergedNetworkSourceDescriptor);
             auto computedParent = newNetworkSourceOperator->getParents().front();
             replacedOperator = true;
@@ -1031,9 +1030,9 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanV
 }
 
 bool BasePlacementAdditionStrategy::tryMergingNetworkSink(DecomposedQueryPlanVersion querySubPlanVersion,
-                                                   const DecomposedQueryPlanPtr & computedQuerySubPlan,
-                                                   const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
-                                                   const SinkLogicalOperatorNodePtr& newNetworkSinkOperator) {
+                                                          const DecomposedQueryPlanPtr& computedQuerySubPlan,
+                                                          const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
+                                                          const SinkLogicalOperatorNodePtr& newNetworkSinkOperator) {
     //check if the new sink is a network sink
     auto newSinkDescriptor = newNetworkSinkOperator->getSinkDescriptor();
     if (!newSinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
@@ -1081,14 +1080,15 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSink(DecomposedQueryPlanVer
     return replacedOperator;
 }
 
-ExecutionNodePtr BasePlacementAdditionStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
+ExecutionNodeWLock BasePlacementAdditionStrategy::getLockedExecutionNode(const TopologyNodeWLock& lockedTopologyNode) {
 
-    ExecutionNodePtr candidateExecutionNode = globalExecutionPlan->getLockedExecutionNode(candidateTopologyNode->getId());
+    auto topologyNodeId = lockedTopologyNode->operator*()->getId();
+    auto candidateExecutionNode = globalExecutionPlan->getLockedExecutionNode(topologyNodeId);
     if (candidateExecutionNode) {
-        NES_TRACE("node {} was already used by other deployment", candidateTopologyNode->toString());
+        NES_TRACE("Node {} was already used by other deployment", topologyNodeId);
     } else {
-        NES_TRACE("create new execution node with id: {}", candidateTopologyNode->getId());
-        candidateExecutionNode = ExecutionNode::create(candidateTopologyNode);
+        NES_TRACE("create new execution node with id: {}", topologyNodeId);
+        candidateExecutionNode = globalExecutionPlan->createAndGetLockedExecutionNode(lockedTopologyNode);
     }
     return candidateExecutionNode;
 }

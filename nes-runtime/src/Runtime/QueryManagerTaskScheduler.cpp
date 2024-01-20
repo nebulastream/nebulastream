@@ -394,7 +394,7 @@ bool DynamicQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
                   decomposedQueryPlanId,
                   blocking,
                   magic_enum::enum_name(task->getType()));
-        NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");`
+        NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
         auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(decomposedQueryPlanId,
                                                                                                  inherited0::shared_from_this());
         auto reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();

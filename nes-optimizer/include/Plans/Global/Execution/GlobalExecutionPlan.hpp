@@ -31,6 +31,7 @@ class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
+using TopologyNodeWLock = std::shared_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
 
 /**
  * This class holds the global execution plan for the NES system. The nodes in this graph are represented by ExecutionNode class.
@@ -41,15 +42,14 @@ class GlobalExecutionPlan {
     static GlobalExecutionPlanPtr create();
 
     /**
-     * @brief Add a decomposed query plan originated from a shared query plan on an execution node representing the
-     * given topology node
+     * @brief Add a decomposed query plan belonging to a shared query plan on the given execution node.
      * @note If the execution node does not exists then create one and create parent child relationships based on the
      * topology node.
-     * @param topologyNode: the topology node that will be represented by the execution node
+     * @param executionNodeId: the topology node that will be represented by the execution node
      * @param decomposedQueryPlan: the decomposed query plan
      * @return true if success else false
      */
-    bool addDecomposedQueryPlan(TopologyNodePtr topologyNode, DecomposedQueryPlanPtr decomposedQueryPlan);
+    bool addDecomposedQueryPlan(ExecutionNodeId executionNodeId, DecomposedQueryPlanPtr decomposedQueryPlan);
 
     /**
      * @brief Update the decomposed query plan state to the new query state.
@@ -97,25 +97,25 @@ class GlobalExecutionPlan {
                                                                          SharedQueryId sharedQueryId);
 
     /**
-     * @brief Add execution node and automatically add parent child relation ship with existing execution nodes.
-     * @param executionNode: the execution node to add
-     * @return true if added else false
+     * @brief create and get locked execution node and automatically add parent child relation ship with existing execution nodes.
+     * @param lockedTopologyNode: the locked topology node
+     * @return locked execution node
      */
-    bool addExecutionNode(const ExecutionNodePtr& executionNode);
+    ExecutionNodeWLock createAndGetLockedExecutionNode(const TopologyNodeWLock& lockedTopologyNode);
 
     /**
      * Add execution node as root of the execution graph
-     * @param executionNode : Node to be added
+     * @param executionNodeId : the id of the execution node
      * @return true if operation succeeds
      */
-    bool addExecutionNodeAsRoot(const ExecutionNodePtr& executionNode);
+    bool addExecutionNodeAsRoot(ExecutionNodeId executionNodeId);
 
     /**
      * Remove the execution node from the graph
-     * @param id: id of the execution node to be removed
+     * @param executionNodeId: id of the execution node to be removed
      * @return true if operation succeeds
      */
-    bool removeExecutionNode(ExecutionNodeId id);
+    bool removeExecutionNode(ExecutionNodeId executionNodeId);
 
     /**
      * Remove all the decomposed query plans for the input shared query plan id

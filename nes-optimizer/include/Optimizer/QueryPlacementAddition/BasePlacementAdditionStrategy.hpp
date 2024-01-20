@@ -83,6 +83,8 @@ using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;
 using PlacementMatrix = std::vector<std::vector<bool>>;
 using ComputedDecomposedQueryPlans = std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>>;
 
+using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -149,10 +151,10 @@ class BasePlacementAdditionStrategy {
 
     /**
      * @brief Get Execution node for the input topology node
-     * @param candidateTopologyNode: topology node
+     * @param lockedTopologyNode: topology node
      * @return Execution Node pointer
      */
-    ExecutionNodePtr getExecutionNode(const TopologyNodePtr& candidateTopologyNode);
+    ExecutionNodeWLock getLockedExecutionNode(const TopologyNodeWLock& lockedTopologyNode);
 
     /**
      * @brief Get the Topology node with the input id
@@ -257,9 +259,9 @@ class BasePlacementAdditionStrategy {
      * @return true if merging was performed, false if no matching sink could be found
      */
     bool tryMergingNetworkSink(DecomposedQueryPlanVersion querySubPlanVersion,
-                        const DecomposedQueryPlanPtr& computedQuerySubPlan,
-                        const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
-                        const SinkLogicalOperatorNodePtr& newNetworkSinkOperator);
+                               const DecomposedQueryPlanPtr& computedQuerySubPlan,
+                               const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
+                               const SinkLogicalOperatorNodePtr& newNetworkSinkOperator);
 
     /**
      * @brief chack if a computed source operator corresponds to a placed source that is to be reconfigured. If so,
@@ -270,8 +272,8 @@ class BasePlacementAdditionStrategy {
      * @return
      */
     bool tryMergingNetworkSource(DecomposedQueryPlanVersion querySubPlanVersion,
-                          const NodePtr& placedDownstreamOperator,
-                          const SourceLogicalOperatorNodePtr& newNetworkSourceOperator);
+                                 const NodePtr& placedDownstreamOperator,
+                                 const SourceLogicalOperatorNodePtr& newNetworkSourceOperator);
 
     //Number of retries to connect to downstream source operators
     static constexpr auto SINK_RETRIES = 100;

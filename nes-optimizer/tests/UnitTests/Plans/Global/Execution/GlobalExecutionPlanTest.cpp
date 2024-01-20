@@ -70,7 +70,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const auto executionNode = Optimizer::ExecutionNode::create(topologyNode);
 
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
     std::string actualPlan = globalExecutionPlan->getAsString();
@@ -172,7 +172,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan2);
 
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
@@ -239,7 +239,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
 
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
@@ -326,7 +326,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     decomposedQueryPlan22->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode->registerDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan22);
 
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
@@ -423,8 +423,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode2->registerDecomposedQueryPlan(sharedQueryId2, decomposedQueryPlan2);
 
-    globalExecutionPlan->addExecutionNode(executionNode1);
-    globalExecutionPlan->addExecutionNode(executionNode2);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode1);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode2);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
 
@@ -526,9 +526,9 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     decomposedQueryPlan3->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode3->registerDecomposedQueryPlan(sharedQueryId3, decomposedQueryPlan3);
 
-    globalExecutionPlan->addExecutionNode(executionNode1);
-    globalExecutionPlan->addExecutionNode(executionNode2);
-    globalExecutionPlan->addExecutionNode(executionNode3);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode1);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode2);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode3);
 
     //create execution node 4
     const auto executionNode4 = Optimizer::ExecutionNode::create(topologyNode4);
@@ -543,7 +543,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     decomposedQueryPlan4->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     executionNode4->registerDecomposedQueryPlan(sharedQueryId4, decomposedQueryPlan4);
 
-    globalExecutionPlan->addExecutionNode(executionNode4);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode4);
 
     const std::string& actualPlan = globalExecutionPlan->getAsString();
     NES_INFO("Actual query plan \n{}", actualPlan);

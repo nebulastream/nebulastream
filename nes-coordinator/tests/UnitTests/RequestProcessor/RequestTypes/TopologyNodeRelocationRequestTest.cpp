@@ -142,42 +142,42 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
     topology->setRootTopologyNodeId(workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     workerIdCounter++;
 
     //id = 2
     topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
     topology->addTopologyNodeAsChild(1, workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     workerIdCounter++;
 
     //id = 3
     topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
     topology->addTopologyNodeAsChild(2, workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     workerIdCounter++;
 
     //id = 4
     topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
     topology->addTopologyNodeAsChild(2, workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     workerIdCounter++;
 
     //id = 5
     topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
     topology->addTopologyNodeAsChild(3, workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     workerIdCounter++;
 
     //id = 6
     topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
     topology->addTopologyNodeAsChild(4, workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     workerIdCounter++;
 
     //id = 7
@@ -185,21 +185,21 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     topology->addTopologyNodeAsChild(5, workerIdCounter);
     topology->addTopologyNodeAsChild(6, workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     workerIdCounter++;
 
     //id = 8
     topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
     topology->addTopologyNodeAsChild(6, workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
     workerIdCounter++;
 
     //id = 9
     topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
     topology->addTopologyNodeAsChild(3, workerIdCounter);
     executionNode = Optimizer::ExecutionNode::createExecutionNode(topology->getCopyOfTopologyNodeWithId(workerIdCounter));
-    globalExecutionPlan->addExecutionNode(executionNode);
+    globalExecutionPlan->createAndGetLockedExecutionNode(executionNode);
 
     std::cout << topology->toString() << std::endl;
 
