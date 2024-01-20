@@ -206,7 +206,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     const uint64_t numBuffersToProduceAfterReconnect = 10;
     const uint64_t buffersToProducePerReconnectCycle =
         (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering);
-    const uint64_t totalBuffersToProduce = numberOfReconnectsToPerform * buffersToProducePerReconnectCycle;
+    //const uint64_t totalBuffersToProduce = numberOfReconnectsToPerform * buffersToProducePerReconnectCycle;
+    const uint64_t totalBuffersToProduce = (numberOfReconnectsToPerform + 1) * buffersToProducePerReconnectCycle;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
     uint64_t tuplesPerBuffer = 10;
@@ -496,6 +497,10 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         waitForFinalCount = true;
     }
 
+    waitForReconfig = true;
+    waitForReconnect = true;
+    actualReconnects++;
+    waitForFinalCount = true;
     //send the last tuples, after which the lambda source shuts down
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
 

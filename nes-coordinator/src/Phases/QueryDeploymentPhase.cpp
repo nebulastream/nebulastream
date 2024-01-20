@@ -152,9 +152,10 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     for (const auto& node : executionNodes) {
         auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
-            const auto subplanMetaData = queryCatalogService->getEntryForQuery(singleQueryId)
-                                             ->getQuerySubPlanMetaData(decomposedQueryPlan->getDecomposedQueryPlanId());
-            auto subPlanStatus = subplanMetaData->getSubQueryStatus();
+            // const auto subplanMetaData = queryCatalogService->getEntryForQuery(singleQueryId)
+            //                                  ->getQuerySubPlanMetaData(decomposedQueryPlan->getDecomposedQueryPlanId());
+            // auto subPlanStatus = subplanMetaData->getSubQueryStatus();
+            auto subPlanStatus = decomposedQueryPlan->getState();
             if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
                 globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
                                                                 sharedQueryId,
