@@ -253,24 +253,24 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
                           ->addField("d", DataTypeFactory::createUInt64())
                           ->addField("e", DataTypeFactory::createUInt64())
                           ->addField("f", DataTypeFactory::createUInt64())
-                          ->addField("g", DataTypeFactory::createUInt64())
-                          ->addField("h", DataTypeFactory::createUInt64())
-                          ->addField("i", DataTypeFactory::createUInt64())
-                          ->addField("j", DataTypeFactory::createUInt64())
-                          ->addField("k", DataTypeFactory::createUInt64())
-                          ->addField("l", DataTypeFactory::createUInt64())
-                          ->addField("m", DataTypeFactory::createUInt64())
-                          ->addField("n", DataTypeFactory::createUInt64())
-                          ->addField("o", DataTypeFactory::createUInt64())
-                          ->addField("p", DataTypeFactory::createUInt64())
-                          ->addField("q", DataTypeFactory::createUInt64())
-                          ->addField("r", DataTypeFactory::createUInt64())
-                          ->addField("s", DataTypeFactory::createUInt64())
-                          ->addField("t", DataTypeFactory::createUInt64())
-                          ->addField("u", DataTypeFactory::createUInt64())
-                          ->addField("v", DataTypeFactory::createUInt64())
-                          ->addField("w", DataTypeFactory::createUInt64())
-                          ->addField("x", DataTypeFactory::createUInt64())
+//                          ->addField("g", DataTypeFactory::createUInt64())
+//                          ->addField("h", DataTypeFactory::createUInt64())
+//                          ->addField("i", DataTypeFactory::createUInt64())
+//                          ->addField("j", DataTypeFactory::createUInt64())
+//                          ->addField("k", DataTypeFactory::createUInt64())
+//                          ->addField("l", DataTypeFactory::createUInt64())
+//                          ->addField("m", DataTypeFactory::createUInt64())
+//                          ->addField("n", DataTypeFactory::createUInt64())
+//                          ->addField("o", DataTypeFactory::createUInt64())
+//                          ->addField("p", DataTypeFactory::createUInt64())
+//                          ->addField("q", DataTypeFactory::createUInt64())
+//                          ->addField("r", DataTypeFactory::createUInt64())
+//                          ->addField("s", DataTypeFactory::createUInt64())
+//                          ->addField("t", DataTypeFactory::createUInt64())
+//                          ->addField("u", DataTypeFactory::createUInt64())
+//                          ->addField("v", DataTypeFactory::createUInt64())
+//                          ->addField("w", DataTypeFactory::createUInt64())
+//                          ->addField("x", DataTypeFactory::createUInt64())
                           ->addField("timestamp1", DataTypeFactory::createUInt64())
                           ->addField("timestamp2", DataTypeFactory::createUInt64());
     }
@@ -615,22 +615,22 @@ TEST_F(UpstreamBackupTest, testDecisionTime) {
             records[u].d = u % 4;
             records[u].e = u % 5;
             records[u].f = u % 6;
-            records[u].g = u % 7;
-            records[u].h = u % 8;
-            records[u].i = u % 9;
-            records[u].j = u % 10;
-            records[u].k = u % 11;
-            records[u].l = u % 12;
-            records[u].m = u % 13;
-            records[u].n = u % 14;
-            records[u].o = u % 15;
-            records[u].p = u % 16;
-            records[u].q = u % 17;
-            records[u].r = u % 18;
-            records[u].s = u % 19;
-            records[u].t = u % 20;
-            records[u].w = u % 21;
-            records[u].x = u % 22;
+//            records[u].g = u % 7;
+//            records[u].h = u % 8;
+//            records[u].i = u % 9;
+//            records[u].j = u % 10;
+//            records[u].k = u % 11;
+//            records[u].l = u % 12;
+//            records[u].m = u % 13;
+//            records[u].n = u % 14;
+//            records[u].o = u % 15;
+//            records[u].p = u % 16;
+//            records[u].q = u % 17;
+//            records[u].r = u % 18;
+//            records[u].s = u % 19;
+//            records[u].t = u % 20;
+//            records[u].w = u % 21;
+//            records[u].x = u % 22;
             records[u].timestamp1 = value.count();
             records[u].timestamp2 = value.count();
         }
