@@ -220,7 +220,7 @@ bool WorkerContext::doNotTryConnectingDataChannel(OperatorId operatorId) {
                   "attempt is still ongoing", operatorId);
         return false;
     }
-    dataChannelFutures.insert({operatorId, std::nullopt});
+    dataChannelFutures[operatorId] = std::nullopt;
     return true;
 }
 
@@ -236,6 +236,9 @@ LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; 
 
 Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId operatorId) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
+    if (iteratorOperatorId == dataChannelFutures.end()) {
+        return nullptr;
+    }
     if (!iteratorOperatorId->second.has_value()) {
         dataChannelFutures.erase(iteratorOperatorId);
         return nullptr;
@@ -250,7 +253,6 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId
 
 Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventChannel(NES::OperatorId operatorId) {
     auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);// note we assume it's always available
-    //todo: do this also for data channels
     if (iteratorOperatorId == reverseEventChannelFutures.end()) {
         return nullptr;
     }

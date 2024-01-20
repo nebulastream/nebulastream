@@ -45,6 +45,7 @@
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestUtils.hpp>
 #include <atomic>
+#include <filesystem>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -206,7 +207,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     const uint64_t numBuffersToProduceAfterReconnect = 10;
     const uint64_t buffersToProducePerReconnectCycle =
         (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering);
-    //const uint64_t totalBuffersToProduce = numberOfReconnectsToPerform * buffersToProducePerReconnectCycle;
     const uint64_t totalBuffersToProduce = (numberOfReconnectsToPerform + 1) * buffersToProducePerReconnectCycle;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
@@ -745,9 +745,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
         auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
         std::vector<TopologyLinkInformation> removedLinks = {{wrk1->getWorkerId(), oldWorker->getWorkerId()}};
         std::vector<TopologyLinkInformation> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
-        // std::string coordinatorAddress = coordinatorConfig->coordinatorIp.getValue() + ":" + std::to_string(*rpcCoordinatorPort);
-        // auto coordinatorRPCClient = CoordinatorRPCClient(coordinatorAddress);
-        // coordinatorRPCClient.relocateTopologyNode(removedLinks, addedLinks);
         auto currentParent = oldWorker->getWorkerId();
         wrk1->getMobilityHandler()->triggerReconnectionRoutine(currentParent, wrk3->getWorkerId());
         ASSERT_EQ(currentParent, wrk3->getWorkerId());

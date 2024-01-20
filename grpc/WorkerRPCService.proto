@@ -25,7 +25,6 @@ service WorkerRPCService {
 
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
-  rpc MigrateQuery (MigrateQueryRequest) returns (MigrateQueryReply) {}
 
   rpc RegisterMonitoringPlan (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
@@ -77,14 +76,6 @@ message UnregisterQueryReply {
 
 message StartQueryRequest {
   uint64 queryId = 1;
-}
-
-message MigrateQueryRequest {
-  repeated uint64 subPlanIds = 1;
-}
-
-message MigrateQueryReply {
-  bool success = 1;
 }
 
 message StartQueryReply {

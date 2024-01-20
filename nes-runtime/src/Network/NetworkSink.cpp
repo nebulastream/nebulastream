@@ -175,16 +175,20 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            terminationType = Runtime::QueryTerminationType::Drain;
+            break;
+        }
         case Runtime::ReconfigurationType::BufferOutGoingTuples: {
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
                 workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
             }
             workerContext.doNotTryConnectingDataChannel(getUniqueNetworkSinkDescriptorId());
-            //todo: drain type
             workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                 Runtime::QueryTerminationType::Drain,
                                                 queryManager->getNumberOfWorkerThreads(),
                                                 messageSequenceNumber);
+            workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
@@ -418,6 +422,7 @@ bool NetworkSink::applyNextSinkDescriptor() {
     configureNewSinkDescriptor(nextSinkDescriptor.value());
     return true;
 }
+
 bool NetworkSink::startBuffering() {
     Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
                                                                               decomposedQueryPlanId,

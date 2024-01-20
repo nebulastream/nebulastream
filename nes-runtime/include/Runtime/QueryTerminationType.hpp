@@ -29,6 +29,7 @@ static O& operator<<(O& os, const QueryTerminationType& type) {
         case QueryTerminationType::Graceful: return os << "Graceful";
         case QueryTerminationType::HardStop: return os << "HardStop";
         case QueryTerminationType::Failure: return os << "Failure";
+        case QueryTerminationType::Drain: return os << "Drain";
         default: return os << "Invalid";
     }
 }
@@ -43,6 +44,7 @@ struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string> {
             case NES::Runtime::QueryTerminationType::Graceful: return fmt::format_to(ctx.out(), "Graceful");
             case NES::Runtime::QueryTerminationType::HardStop: return fmt::format_to(ctx.out(), "HardStop");
             case NES::Runtime::QueryTerminationType::Failure: return fmt::format_to(ctx.out(), "Failure");
+            case NES::Runtime::QueryTerminationType::Drain: return fmt::format_to(ctx.out(), "Drain");
             default: return fmt::format_to(ctx.out(), "Invalid");
         }
     }

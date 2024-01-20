@@ -119,6 +119,8 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::stop(QueryTermi
             }
         }
         dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(), collectedSlices);
+    } else if (queryTerminationType == Runtime::QueryTerminationType::Drain) {
+        NES_NOT_IMPLEMENTED();
     }
 }
 template<class SliceType, typename SliceStore>

@@ -104,7 +104,7 @@ bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr
     return true;
 }
 
-bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+bool NodeEngine::registerAndStartDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
 
@@ -117,7 +117,10 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
     auto result = queryCompiler->compileQuery(request);
     try {
         auto executablePlan = result->getExecutableQueryPlan();
-        return registerExecutableQueryPlan(executablePlan);
+        if (registerExecutableQueryPlan(executablePlan)) {
+            return queryManager->startQuery(executablePlan);
+        }
+        return false;
     } catch (std::exception const& error) {
         NES_ERROR("Error while building query execution plan: {}", error.what());
         NES_ASSERT(false, "Error while building query execution plan: " << error.what());
@@ -269,6 +272,7 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId, Runtime::QueryTerminatio
         }
 
         switch (terminationType) {
+            case QueryTerminationType::Drain:
             case QueryTerminationType::Graceful:
             case QueryTerminationType::HardStop: {
                 for (auto querySubPlanId : querySubPlanIds) {
@@ -303,7 +307,6 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId, Runtime::QueryTerminatio
                 }
             }
             case QueryTerminationType::Invalid: NES_NOT_IMPLEMENTED();
-            case QueryTerminationType::Drain: NES_NOT_IMPLEMENTED();
         }
         return true;
     }
@@ -728,8 +731,8 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
                 if (reconfiguredNetworkSink
                     && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
-                    //todo: check expected version
                     networkSink->scheduleNewDescriptor(*reconfiguredNetworkSink);
+                    networkSink->applyNextSinkDescriptor();
                 }
             }
         }

@@ -266,7 +266,7 @@ void DataSource::close() {
         std::unique_lock lock(startStopMutex);
         queryTerminationType = this->wasGracefullyStopped;
     }
-    if (queryTerminationType != Runtime::QueryTerminationType::Graceful
+    if ((queryTerminationType != Runtime::QueryTerminationType::Graceful && queryTerminationType != Runtime::QueryTerminationType::Drain)
         || queryManager->canTriggerEndOfStream(shared_from_base<DataSource>(), queryTerminationType)) {
         // inject reconfiguration task containing end of stream
         std::unique_lock lock(startStopMutex);

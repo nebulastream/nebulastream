@@ -95,6 +95,11 @@ bool NetworkManager::unregisterSubpartitionConsumer(const NesPartition& nesParti
     return partitionManager->unregisterSubpartitionConsumer(nesPartition);
 }
 
+bool NetworkManager::unregisterSubpartitionConsumerIfNotConnected(const NesPartition& nesPartition) const {
+    NES_DEBUG("NetworkManager: Unregistering SubpartitionConsumer: {}", nesPartition.toString());
+    return partitionManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition);
+}
+
 bool NetworkManager::unregisterSubpartitionProducer(const NesPartition& nesPartition) const {
     NES_DEBUG("NetworkManager: Unregistering SubpartitionProducer: {}", nesPartition.toString());
     return partitionManager->unregisterSubpartitionProducer(nesPartition);

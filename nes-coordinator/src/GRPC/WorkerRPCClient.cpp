@@ -310,22 +310,6 @@ void WorkerRPCClient::stopQueryAsync(const std::string& address,
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
-bool WorkerRPCClient::migrateSubplans(const std::string& address, std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds) {
-    NES_DEBUG("WorkerRPCCLient: Migrate query subplans");
-    ClientContext context;
-    MigrateQueryRequest request;
-    MigrateQueryReply reply;
-
-    for (auto id : decomposedQueryPlanIds) {
-        request.add_subplanids(id);
-    }
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->MigrateQuery(&context, request, &reply);
-    return reply.success();
-}
 
 bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address={}", address);

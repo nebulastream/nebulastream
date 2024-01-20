@@ -145,7 +145,17 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool applyNextSinkDescriptor();
 
+    /**
+     * @brief disconnect all existing data channels and buffer outgoing tuples until this source is reconfigured with
+     * a new descriptor
+     * @return true if the reconfiguration message has been queued succesfully
+     */
     bool startBuffering();
+
+    /**
+     * @brief getter for the node id of the worker hosting the source which receives data from this sink
+     * @return the worker id of the node hosting the source
+     */
     WorkerId getReceiverId();
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }

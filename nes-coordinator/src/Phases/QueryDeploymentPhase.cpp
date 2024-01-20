@@ -144,11 +144,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
-    NES_DEBUG("QueryDeploymentPhase: start query");
-    startQuery(sharedQueryId, executionNodes);
-
     //remove subplans from global query plan if they were stopped due to migration
-    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
     for (const auto& node : executionNodes) {
         auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
@@ -211,6 +207,12 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                     completionQueues[queueForExecutionNode]++;
                     break;
                 }
+                case QueryState::MIGRATING: {
+                    //workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
+                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
+                    completionQueues[queueForExecutionNode]++;
+                    break;
+                }
                 default: {
                     break;
                 }
@@ -267,38 +269,4 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(
         openCLOperator->setOpenClCode(openCLCode);
     }
 }
-
-void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG("QueryDeploymentPhase::startQuery queryId= {}", queryId);
-    //TODO: check if one queue can be used among multiple connections
-    std::map<CompletionQueuePtr, uint64_t> completionQueues;
-
-    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
-        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
-        const auto& nesNode = executionNode->getTopologyNode();
-        auto ipAddress = nesNode->getIpAddress();
-        auto grpcPort = nesNode->getGrpcPort();
-        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
-
-        std::vector<DecomposedQueryPlanId> migratingPlanIds;
-        for (const auto& subPlan : executionNode->getAllDecomposedQueryPlans(queryId)) {
-            if (subPlan->getState() == QueryState::MIGRATING) {
-                migratingPlanIds.push_back(subPlan->getDecomposedQueryPlanId());
-            }
-        }
-        //todo: make async call also for migrating
-        if (!migratingPlanIds.empty()) {
-            workerRPCClient->migrateSubplans(rpcAddress, migratingPlanIds);
-        }
-
-        //enable this for sync calls
-        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
-        workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
-        completionQueues[queueForExecutionNode] = 1;
-    }
-    workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
-    NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id {}", queryId);
-}
-
 }// namespace NES
