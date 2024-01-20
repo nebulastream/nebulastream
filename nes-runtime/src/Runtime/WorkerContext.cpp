@@ -250,6 +250,10 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId
 
 Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventChannel(NES::OperatorId operatorId) {
     auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);// note we assume it's always available
+    //todo: do this also for data channels
+    if (iteratorOperatorId == reverseEventChannelFutures.end()) {
+        return nullptr;
+    }
     //blocking wait on get
     auto channel = iteratorOperatorId->second.first.get();
     iteratorOperatorId->second.second.set_value(true);

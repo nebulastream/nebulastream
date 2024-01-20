@@ -310,7 +310,7 @@ bool NetworkSource::hasReceivedDrainMessage() {
 
 void NetworkSource::markAsMigrated() {
     //todo: REACTIVATE!
-    //std::unique_lock lock(versionMutex);
+    std::unique_lock lock(versionMutex);
     migrated = true;
     bool startVersion = true;
     if (!receivedDrainMessage) {
