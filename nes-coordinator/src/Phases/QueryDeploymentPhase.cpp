@@ -217,6 +217,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
             }
         }
     }
+    //todo: problem is here
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
 }

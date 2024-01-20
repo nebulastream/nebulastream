@@ -185,6 +185,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                 Runtime::QueryTerminationType::Drain,
                                                 queryManager->getNumberOfWorkerThreads(),
                                                 messageSequenceNumber);
+            workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
@@ -418,6 +419,7 @@ bool NetworkSink::applyNextSinkDescriptor() {
     configureNewSinkDescriptor(nextSinkDescriptor.value());
     return true;
 }
+
 bool NetworkSink::startBuffering() {
     Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
                                                                               decomposedQueryPlanId,

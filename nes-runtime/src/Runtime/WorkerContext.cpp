@@ -220,7 +220,7 @@ bool WorkerContext::doNotTryConnectingDataChannel(OperatorId operatorId) {
                   "attempt is still ongoing", operatorId);
         return false;
     }
-    dataChannelFutures.insert({operatorId, std::nullopt});
+    dataChannelFutures[operatorId] = std::nullopt;
     return true;
 }
 

@@ -300,29 +300,14 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
 }
 
 void NetworkSource::onDrainMessage() {
-    NES_ASSERT(!receivedDrainMessage, "Received more than one drain message");
     std::unique_lock lock(versionMutex);
-    receivedDrainMessage = true;
     startNewVersion();
 }
 
-bool NetworkSource::hasReceivedDrainMessage() {
-    std::unique_lock lock(versionMutex);
-    return receivedDrainMessage;
-}
-
 void NetworkSource::markAsMigrated() {
-    //todo: REACTIVATE!
     std::unique_lock lock(versionMutex);
     migrated = true;
-    bool startVersion = true;
-    // if (!receivedDrainMessage) {
-    //     //todo: if no channel has connected yet, remove partition and set start new version to true
-    //     //todo: this requires atomic compare and exchange on the partition count
-    //     //startVersion =
-    // }
-    // if (startVersion) {
-    if (receivedDrainMessage) {
+    if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
         startNewVersion();
     }
 }
@@ -332,13 +317,15 @@ bool NetworkSource::startNewVersion() {
     std::unique_lock lock(versionMutex);
     if (nextSourceDescriptor) {
         NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
-        networkManager->unregisterSubpartitionConsumer(nesPartition);
+        //check if the partition is still registered of if it was removed because no channels were connected
+        if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Registered) {
+            networkManager->unregisterSubpartitionConsumer(nesPartition);
+        }
         auto newDescriptor = nextSourceDescriptor.value();
         version = newDescriptor.getVersion();
         sinkLocation = newDescriptor.getNodeLocation();
         nesPartition = newDescriptor.getNesPartition();
         nextSourceDescriptor = std::nullopt;
-        receivedDrainMessage = false;
         //bind the sink to the new partition
         bind();
         auto reconfMessage = Runtime::ReconfigurationMessage(-1,
@@ -349,9 +336,9 @@ bool NetworkSource::startNewVersion() {
         return true;
     }
     if (migrated) {
-        receivedDrainMessage = false;
         migrated = false;
         onEndOfStream(Runtime::QueryTerminationType::Graceful);
+        return true;
     }
     return false;
 }
@@ -391,7 +378,7 @@ bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& network
     std::unique_lock lock(versionMutex);
     if (nesPartition != networkSourceDescriptor.getNesPartition()) {
         nextSourceDescriptor = networkSourceDescriptor;
-        if (receivedDrainMessage) {
+        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
             startNewVersion();
         }
         return true;

@@ -150,7 +150,7 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const Optimizer::Global
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] = executionNode->getTopologyNode()->getIpAddress();
 
         auto allDecomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
-        if (!allDecomposedQueryPlans.empty()) {
+        if (allDecomposedQueryPlans.empty()) {
             continue;
         }
 
