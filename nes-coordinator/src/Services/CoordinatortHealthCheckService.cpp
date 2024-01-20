@@ -41,7 +41,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
             for (auto node : topologyIdToRPCAddressMap.lock_table()) {
                 std::string destAddress = node.second;
                 //check health
-                NES_INFO("NesCoordinator::healthCheck: checking node= {}", destAddress);
+                NES_TRACE("NesCoordinator::healthCheck: checking node= {}", destAddress);
                 auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
                 if (res) {
                     NES_TRACE("NesCoordinator::healthCheck: node={} is alive", destAddress);
