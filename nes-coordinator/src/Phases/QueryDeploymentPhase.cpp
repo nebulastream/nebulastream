@@ -144,6 +144,9 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
+    NES_DEBUG("QueryDeploymentPhase: start query");
+    startQuery(sharedQueryId, executionNodes);
+
     //remove subplans from global query plan if they were stopped due to migration
     auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
     for (const auto& node : executionNodes) {
@@ -152,7 +155,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             const auto subplanMetaData = queryCatalogService->getEntryForQuery(singleQueryId)
                                              ->getQuerySubPlanMetaData(decomposedQueryPlan->getDecomposedQueryPlanId());
             auto subPlanStatus = subplanMetaData->getSubQueryStatus();
-            if (subPlanStatus == QueryState::MIGRATING) {
+            if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
                 globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
                                                                 sharedQueryId,
                                                                 decomposedQueryPlan->getDecomposedQueryPlanId());
@@ -161,9 +164,6 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             }
         }
     }
-
-    NES_DEBUG("QueryDeploymentPhase: start query");
-    startQuery(sharedQueryId, executionNodes);
 }
 
 void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
@@ -281,6 +281,18 @@ void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Optimiz
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
+
+        std::vector<DecomposedQueryPlanId> migratingPlanIds;
+        for (const auto& subPlan : executionNode->getAllDecomposedQueryPlans(queryId)) {
+            if (subPlan->getState() == QueryState::MIGRATING) {
+                migratingPlanIds.push_back(subPlan->getDecomposedQueryPlanId());
+            }
+        }
+        //todo: make async call also for migrating
+        if (!migratingPlanIds.empty()) {
+            workerRPCClient->migrateSubplans(rpcAddress, migratingPlanIds);
+        }
+
         //enable this for sync calls
         //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
         workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);

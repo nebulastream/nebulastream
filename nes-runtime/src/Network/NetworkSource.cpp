@@ -309,9 +309,16 @@ bool NetworkSource::hasReceivedDrainMessage() {
 }
 
 void NetworkSource::markAsMigrated() {
-    std::unique_lock lock(versionMutex);
+    //todo: REACTIVATE!
+    //std::unique_lock lock(versionMutex);
     migrated = true;
-    if (receivedDrainMessage) {
+    bool startVersion = true;
+    if (!receivedDrainMessage) {
+        //todo: if no channel has connected yet, remove partition and set start new version to true
+        //todo: this requires atomic compare and exchange on the partition count
+        //startVersion =
+    }
+    if (startVersion) {
         startNewVersion();
     }
 }
