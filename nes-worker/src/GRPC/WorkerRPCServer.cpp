@@ -117,6 +117,22 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     return Status::CANCELLED;
 }
 
+Status WorkerRPCServer::MigrateQuery(ServerContext*, const MigrateQueryRequest* request, MigrateQueryReply* reply) {
+    NES_DEBUG("WorkerRPCServer::MigrateQuery: got request to migrate queries");
+    bool success = true;
+    for (auto id : request->subplanids()) {
+        success = success && nodeEngine->markSubPlanAsMigrated(id);
+    }
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("WorkerRPCServer::StopQuery: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
 Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
                                                const MonitoringRegistrationRequest* request,
                                                MonitoringRegistrationReply*) {

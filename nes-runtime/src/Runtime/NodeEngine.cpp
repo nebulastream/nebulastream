@@ -671,26 +671,22 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
 
 bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId) {
     std::unique_lock lock(engineMutex);
-    auto deployedPlanIterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId->getDecomposedQueryPlanId());
+    auto deployedPlanIterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId);
 
     //if not running sub query plan with the given id exists, return false
     if (deployedPlanIterator == deployedExecutableQueryPlans.end()) {
         return false;
     }
+
     auto deployedPlan = deployedPlanIterator->second;
     // iterate over all network sources and apply the reconfigurations
     for (auto& source : deployedPlan->getSources()) {
         auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
         if (networkSource != nullptr) {
-            for (auto& reconfiguredSource : decomposedQueryPlanId->getSourceOperators()) {
-                auto reconfiguredNetworkSourceDescriptor =
-                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
-                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
-                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
-                    //try starting the new version. I
-                    networkSource->markAsMigrated();
-                }
-            }
+            networkSource->markAsMigrated();
+        } else {
+            //Migrating non network sources not supported
+            NES_NOT_IMPLEMENTED();
         }
     }
     return true;
@@ -716,6 +712,7 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
                 if (reconfiguredNetworkSink
                     && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
+                    //todo: check expected version
                     networkSink->scheduleNewDescriptor(*reconfiguredNetworkSink);
                 }
             }
