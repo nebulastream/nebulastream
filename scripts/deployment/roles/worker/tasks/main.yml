@@ -22,6 +22,11 @@
     src: worker.yaml.j2
     dest: "/tmp/worker-conf.yaml"
 
+- name: Copy and populate Chameleon template
+  template:
+    src: worker-chameleon.yaml.j2
+    dest: "/tmp/worker-conf-chameleon.yaml"
+
 - name: Copy and populate mosquitto template
   template:
     src: mosquitto.conf.j2
