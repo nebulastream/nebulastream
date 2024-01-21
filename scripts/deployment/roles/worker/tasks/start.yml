@@ -23,7 +23,6 @@
 
 - name: Start Worker (numa-controlled)
   shell: |
-    sleep {{ last_octet }}
     nohup numactl -N 0 -m 0 taskset -c {{ worker_cores }} /home/{{ ansible_user_id | regex_replace(' ') }}/{{ cmake_build_dir }}/{{ worker_bin_name }} --configPath=/tmp/worker-conf.yaml > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.log 2>&1 &
     echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ worker_bin_name }}.pid
 
