@@ -31,7 +31,6 @@
   copy:
     src: ./binaries/
     dest: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/"
-    recursive: yes
 
 - name: Install requirements
   pip:
