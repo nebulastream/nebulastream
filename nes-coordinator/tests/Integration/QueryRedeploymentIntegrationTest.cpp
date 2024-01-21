@@ -911,7 +911,6 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-
     //TopologyNodePtr node = topology->getRootTopologyNodeId();
     std::vector<NES::Spatial::DataTypes::Experimental::GeoLocation> locVec = {
         {52.53024925374664, 13.440408001670573},  {52.44959193751221, 12.994693532702838},
@@ -983,7 +982,8 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     //wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv");
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue("/home/x/.local/share/Cryptomator/mnt/tubCloudCr/old_test_data/path1.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(
+        "/home/x/.local/share/Cryptomator/mnt/tubCloudCr/old_test_data/path1.csv");
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -995,11 +995,10 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
         Optimizer::PlacementStrategy::BottomUp);
 
     std::stringstream ss;
-    ss << "chromium \"http://localhost:3000/?host=localhost&port=";
+    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
     ss << std::to_string(*restPort);
     ss << "\"";
     std::system(ss.str().c_str());
-
 
     NES_INFO("Query ID: {}", queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
@@ -1012,11 +1011,10 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
         sleep(1);
     }
 
-
     ASSERT_EQ(recv_tuples, 10001);
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareString, testFile));
 
-    std::cin.get();
+    //std::cin.get();
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
@@ -1034,6 +1032,98 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
+
+TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
+    coordinatorConfig->restPort.setValue(*restPort);
+    NES_INFO("start coordinator")
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    ASSERT_NE(port, 0UL);
+    NES_INFO("coordinator started successfully")
+
+    TopologyPtr topology = crd->getTopology();
+    ASSERT_TRUE(waitForNodes(5, 1, topology));
+
+    auto schema =
+        Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64));
+    crd->getSourceCatalog()->addLogicalSource("values", schema);
+
+    auto topologyJsonPath = "/home/x/simulation_temp/nes_simulation_starter_rs/three_layer_topology.json";
+    auto stream = std::ifstream(topologyJsonPath);
+    std::stringstream buffer;
+    buffer << stream.rdbuf();
+    auto topologyJson = nlohmann::json::parse(buffer.str());
+    auto nodes = topologyJson["nodes"];
+    std::cout << nodes.size() << std::endl;
+
+    std::vector<NesWorkerPtr> fieldNodes;
+    std::vector<std::shared_ptr<Testing::BorrowedPort>> ports;
+    for (auto elem : nodes) {
+        //for (auto [lat, lng] : nodes.get<std::vector<std::pair<double, double>>>()) {
+        auto dataPort = getAvailablePort();
+        ports.push_back(dataPort);
+        auto rpcPort = getAvailablePort();
+        ports.push_back(rpcPort);
+        WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+        wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
+        wrkConf->dataPort.setValue(*dataPort);
+        wrkConf->rpcPort.setValue(*rpcPort);
+        wrkConf->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
+        wrkConf->locationCoordinates.setValue({elem[0], elem[1]});
+        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
+        fieldNodes.push_back(wrk);
+        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        ASSERT_TRUE(retStart);
+    }
+
+    auto childLists = topologyJson["children"];
+    auto count = 0;
+    auto coordinatorId = crd->getNesWorker()->getWorkerId();
+    //    for (auto childList : childLists) {
+    //        auto parentId = fieldNodes[count]->getWorkerId();
+    //        for (auto child : childList) {
+    //            auto childId = fieldNodes[child]->getWorkerId();
+    //            topology->addTopologyNodeAsChild(parentId, childId);
+    //            topology->removeTopologyNodeAsChild(coordinatorId, childId);
+    //        }
+    //        count++;
+    //    }
+
+    for (auto parent : fieldNodes) {
+        auto parentId = parent->getWorkerId();
+        for (auto child : childLists[std::to_string(count)]) {
+            auto childId = fieldNodes[child]->getWorkerId();
+            topology->addTopologyNodeAsChild(parentId, childId);
+            //topology->removeTopologyNodeAsChild(coordinatorId, childId);
+        }
+
+        count++;
+    }
+
+    std::stringstream ss;
+    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
+    ss << std::to_string(*restPort);
+    ss << "\"";
+    std::system(ss.str().c_str());
+    //std::cin.get();
+    //auto nodeMap = nodes.get<std::map<uint64, std::pair<double, double>>>();
+    std::map<uint64_t, uint64_t> workerIdToJsonId;
+
+    //    auto count = 0;
+    //    for (auto node : nodes) {
+    //        std::cout << node << std::endl;
+    //
+    //    }
+    //auto nodeMap = nodes.get<std::map<uint64, std::pair<double, double>>>();
+    //std::map<uint64, std::vector<double>> nodeMap;
+    //nodes.get_to(nodeMap);
+    //auto nodes = topologyJson["nodes"];
+    //nlohmann::json::object_t topologyObject = topologyJson.parse();
+    //auto nodes = topologyObject["nodes"];
+}
+
 #endif
 
 INSTANTIATE_TEST_CASE_P(QueryRedeploymentIntegrationTestParam, QueryRedeploymentIntegrationTest, ::testing::Values(1, 4));
