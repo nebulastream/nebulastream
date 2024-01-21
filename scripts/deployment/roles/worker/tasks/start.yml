@@ -18,7 +18,7 @@
 
 - name: Start Python data generator
   shell: |
-    nohup numactl -N 1 -m 1 python3 /home/{{ ansible_user_id | regex_replace(' ') }}/e2e_latency.py > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/generator.log &
+    nohup numactl -N 1 -m 1 python3 {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/e2e_latency.py > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/generator.log &
     echo $! > echo $! > {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/generator.pid
 
 - name: Start Worker (numa-controlled)
