@@ -911,6 +911,7 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
+
     //TopologyNodePtr node = topology->getRootTopologyNodeId();
     std::vector<NES::Spatial::DataTypes::Experimental::GeoLocation> locVec = {
         {52.53024925374664, 13.440408001670573},  {52.44959193751221, 12.994693532702838},
@@ -993,6 +994,13 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
 
+    std::stringstream ss;
+    ss << "chromium \"http://localhost:3000/?host=localhost&port=";
+    ss << std::to_string(*restPort);
+    ss << "\"";
+    std::system(ss.str().c_str());
+
+
     NES_INFO("Query ID: {}", queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     size_t recv_tuples = 0;
@@ -1004,8 +1012,11 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
         sleep(1);
     }
 
+
     ASSERT_EQ(recv_tuples, 10001);
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareString, testFile));
+
+    std::cin.get();
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
