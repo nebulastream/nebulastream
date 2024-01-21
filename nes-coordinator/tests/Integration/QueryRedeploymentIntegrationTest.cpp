@@ -45,6 +45,7 @@
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestUtils.hpp>
 #include <atomic>
+#include <filesystem>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -1082,35 +1083,62 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
     //auto childLists = topologyJson["children"];
     auto childLists = topologyJson["children"].get<std::map<std::string, std::vector<uint64_t>>>();
     //auto childLists = topologyJson["children"].get<std::map<std::string, std::vector<std::string>>>();
-    auto count = 0;
     auto coordinatorId = crd->getNesWorker()->getWorkerId();
-    //    for (auto childList : childLists) {
-    //        auto parentId = fieldNodes[count]->getWorkerId();
-    //        for (auto child : childList) {
-    //            auto childId = fieldNodes[child]->getWorkerId();
-    //            topology->addTopologyNodeAsChild(parentId, childId);
-    //            topology->removeTopologyNodeAsChild(coordinatorId, childId);
-    //        }
-    //        count++;
-    //    }
 
     for (auto parent : fieldNodes) {
         auto parentId = parent.second->getWorkerId();
         for (auto child : childLists[parent.first]) {
             auto childId = fieldNodes[std::to_string(child)]->getWorkerId();
             topology->addTopologyNodeAsChild(parentId, childId);
-            //topology->removeTopologyNodeAsChild(coordinatorId, childId);
+            topology->removeTopologyNodeAsChild(coordinatorId, childId);
         }
-
-        count++;
     }
 
-    std::stringstream ss;
-    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
-    ss << std::to_string(*restPort);
-    ss << "\"";
-    std::system(ss.str().c_str());
-    //std::cin.get();
+    auto stype = CSVSourceType::create("values", "values");
+    stype->setFilePath("/home/x/sequence2.csv");
+    stype->setNumberOfBuffersToProduce(1000);
+    stype->setNumberOfTuplesToProducePerBuffer(10);
+    stype->setGatheringInterval(1000);
+
+    auto mobileWorkerConfigDir = "/home/x/simulation_temp/nes_simulation_starter_rs/1h_dublin_bus_nanosec";
+    std::vector<NesWorkerPtr> mobileWorkers;
+    for (const auto& configFile : std::filesystem::recursive_directory_iterator(mobileWorkerConfigDir)) {
+        std::cout << configFile << std::endl;
+        auto dataPort = getAvailablePort();
+        ports.push_back(dataPort);
+        auto rpcPort = getAvailablePort();
+        ports.push_back(rpcPort);
+        WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+        wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
+        wrkConf->dataPort.setValue(*dataPort);
+        wrkConf->rpcPort.setValue(*rpcPort);
+        wrkConf->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
+        wrkConf->mobilityConfiguration.locationProviderConfig.setValue(configFile.path());
+        wrkConf->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+        wrkConf->physicalSourceTypes.add(stype);
+        //wrkConf->locationCoordinates.setValue({elem.second[0], elem.second[1]});
+        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
+        //fieldNodes[elem.first] = wrk;
+        mobileWorkers.push_back(wrk);
+        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        ASSERT_TRUE(retStart);
+    }
+
+    std::string testFile = "/tmp/test_sink";
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
+        R"(Query::from("values").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        Optimizer::PlacementStrategy::BottomUp);
+
+//    std::stringstream ss;
+//    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
+//    ss << std::to_string(*restPort);
+//    ss << "\"";
+//    std::system(ss.str().c_str());
+
+    std::cin.get();
     //auto nodeMap = nodes.get<std::map<uint64, std::pair<double, double>>>();
     std::map<uint64_t, uint64_t> workerIdToJsonId;
 
