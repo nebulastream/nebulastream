@@ -20,15 +20,15 @@ dataPort: {{ default_worker_ports[1] }}
 ###
 physicalSources:
         - logicalSourceName: sensors
-                  physicalSourceName: sensors_{{ local_worker_ip }}
-                  type: MQTT_SOURCE
-                  configuration:
-                      url: ws://localhost:9001
-                      clientId: sensors_{{ local_worker_ip }}
-                      inputFormat: CSV
-                      topic: benchmark
-                      userName: admin
-                      cleanSession: true
-                      flushIntervalMS: 0
-                      sourceGatheringInterval: 4000
-                      sourceGatheringMode: ADAPTIVE_MODE
+          physicalSourceName: sensors_{{ local_worker_ip }}
+          type: MQTT_SOURCE
+          configuration:
+              url: ws://localhost:9001
+              clientId: sensors_{{ local_worker_ip }}
+              inputFormat: CSV
+              topic: benchmark
+              userName: admin
+              cleanSession: true
+              flushIntervalMS: 0
+              sourceGatheringInterval: 4000
+              sourceGatheringMode: ADAPTIVE_MODE
