@@ -1055,10 +1055,11 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
     std::stringstream buffer;
     buffer << stream.rdbuf();
     auto topologyJson = nlohmann::json::parse(buffer.str());
-    auto nodes = topologyJson["nodes"];
-    std::cout << nodes.size() << std::endl;
+    //auto nodes = topologyJson["nodes"];
+    auto nodes = topologyJson["nodes"].get<std::map<std::string, std::vector<double>>>();
+    //std::cout << nodes.size() << std::endl;
 
-    std::vector<NesWorkerPtr> fieldNodes;
+    std::map<std::string, NesWorkerPtr> fieldNodes;
     std::vector<std::shared_ptr<Testing::BorrowedPort>> ports;
     for (auto elem : nodes) {
         //for (auto [lat, lng] : nodes.get<std::vector<std::pair<double, double>>>()) {
@@ -1071,14 +1072,16 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
         wrkConf->dataPort.setValue(*dataPort);
         wrkConf->rpcPort.setValue(*rpcPort);
         wrkConf->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
-        wrkConf->locationCoordinates.setValue({elem[0], elem[1]});
+        wrkConf->locationCoordinates.setValue({elem.second[0], elem.second[1]});
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
-        fieldNodes.push_back(wrk);
+        fieldNodes[elem.first] = wrk;
         bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
         ASSERT_TRUE(retStart);
     }
 
-    auto childLists = topologyJson["children"];
+    //auto childLists = topologyJson["children"];
+    auto childLists = topologyJson["children"].get<std::map<std::string, std::vector<uint64_t>>>();
+    //auto childLists = topologyJson["children"].get<std::map<std::string, std::vector<std::string>>>();
     auto count = 0;
     auto coordinatorId = crd->getNesWorker()->getWorkerId();
     //    for (auto childList : childLists) {
@@ -1092,9 +1095,9 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
     //    }
 
     for (auto parent : fieldNodes) {
-        auto parentId = parent->getWorkerId();
-        for (auto child : childLists[std::to_string(count)]) {
-            auto childId = fieldNodes[child]->getWorkerId();
+        auto parentId = parent.second->getWorkerId();
+        for (auto child : childLists[parent.first]) {
+            auto childId = fieldNodes[std::to_string(child)]->getWorkerId();
             topology->addTopologyNodeAsChild(parentId, childId);
             //topology->removeTopologyNodeAsChild(coordinatorId, childId);
         }
