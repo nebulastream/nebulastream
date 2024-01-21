@@ -24,20 +24,11 @@
     msg: "Log file not found"
   when: stat_result.stat.exists == False
 
-- name: Deploy Smartgrid schema
+- name: Deploy sensors schema
   uri:
     url: "http://{{ default_coordinator_ip}}:{{ default_coordinator_ports[0] }}/v1/nes/sourceCatalog/addLogicalSource"
     method: POST
-    src: schemata/smartgrid.json
-    headers:
-      content-type: application/json
-      cache-control: no-cache
-
-- name: Deploy KTM schema
-  uri:
-    url: "http://{{ default_coordinator_ip}}:{{ default_coordinator_ports[0] }}/v1/nes/sourceCatalog/addLogicalSource"
-    method: POST
-    src: schemata/ktm.json
+    src: schemata/sensors.json
     headers:
       content-type: application/json
       cache-control: no-cache
