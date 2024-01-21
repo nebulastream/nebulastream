@@ -19,13 +19,16 @@ dataPort: {{ default_worker_ports[1] }}
 ### Physical source configuration
 ###
 physicalSources:
-        - logicalSourceName: ktm
-          physicalSourceName: ktm_{{ local_worker_ip }}
-          type: CSV_SOURCE
-          configuration:
-                  filePath: /tmp/ktm.csv
-                  numberOfBuffersToProduce: 1024
-                  numberOfTuplesToProducePerBuffer: 1
-                  skipHeader: false
-                  sourceGatheringMode: ADAPTIVE_MODE
-                  sourceGatheringInterval: 4000
+        - logicalSourceName: sensors
+                  physicalSourceName: sensors_{{ local_worker_ip }}
+                  type: MQTT_SOURCE
+                  configuration:
+                      url: ws://localhost:9001
+                      clientId: sensors_{{ local_worker_ip }}
+                      inputFormat: CSV
+                      topic: benchmark
+                      userName: admin
+                      cleanSession: true
+                      flushIntervalMS: 0
+                      sourceGatheringInterval: 4000
+                      sourceGatheringMode: ADAPTIVE_MODE
