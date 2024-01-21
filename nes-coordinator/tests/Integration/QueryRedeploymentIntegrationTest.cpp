@@ -964,7 +964,8 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
     auto stype = CSVSourceType::create("seq", "test_stream");
-    stype->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv");
+    //stype->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv");
+    stype->setFilePath("/home/x/.local/share/Cryptomator/mnt/tubCloudCr/old_test_data/sequence_long.csv");
     stype->setNumberOfBuffersToProduce(1000);
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
@@ -980,7 +981,8 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
     wrkConf1->mobilityConfiguration.mobilityHandlerUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv");
+    //wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue("/home/x/.local/share/Cryptomator/mnt/tubCloudCr/old_test_data/path1.csv");
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

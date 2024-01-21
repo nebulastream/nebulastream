@@ -185,6 +185,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                 Runtime::QueryTerminationType::Drain,
                                                 queryManager->getNumberOfWorkerThreads(),
                                                 messageSequenceNumber);
+            workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
