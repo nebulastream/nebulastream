@@ -1,0 +1,10 @@
+---
+# This Playbook stops a NES cluster
+
+- hosts: coordinator
+  tasks:
+    - include_tasks: roles/coordinator/tasks/stop.yml
+
+- hosts: single_worker
+  tasks:
+    - include_tasks: roles/worker/tasks/stop.yml
