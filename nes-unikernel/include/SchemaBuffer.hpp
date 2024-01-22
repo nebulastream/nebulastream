@@ -129,7 +129,6 @@ inline T::ctype Field<T>::read(std::span<uint8_t> memory, NES::Runtime::TupleBuf
 
 template<>
 inline void Field<TEXT>::write(std::span<uint8_t> memory, const std::string& value, NES::Runtime::TupleBuffer& tb) {
-    static_assert("Not Implemented");
     NES_ASSERT(memory.size() == TEXT::size, "Memory size does not match");
 
     //allocate child buffer
@@ -147,7 +146,6 @@ inline void Field<TEXT>::write(std::span<uint8_t> memory, const std::string& val
 
 template<>
 std::string Field<TEXT>::read(std::span<uint8_t> memory, NES::Runtime::TupleBuffer& tb) {
-    static_assert("Not Implemented");
     NES_ASSERT(memory.size() == TEXT::size, "Memory size does not match");
 
     int32_t childBufferIndex = 0;
