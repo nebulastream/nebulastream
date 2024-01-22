@@ -53,14 +53,6 @@ class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
 using DataEmitterPtr = std::shared_ptr<DataEmitter>;
-#else
-template<typename Config>
-class DataSource;
-
-template<typename Config>
-using DataSourcePtr = std::shared_ptr<DataSource<Config>>;
-
-using DataEmitterPtr = DataEmitter*;
 #endif
 
 namespace Runtime {
@@ -140,8 +132,6 @@ class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
 #else
-template<typename Config>
-using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource<Config>>, std::weak_ptr<ExecutablePipeline>>;
 using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContext;
 using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContext*;
 #endif
