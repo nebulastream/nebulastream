@@ -40,6 +40,16 @@
 
 namespace NES {
 
+template<typename T, typename Config>
+concept DataSourceImpl = requires(T t) {
+    {
+        t.receiveData(std::declval<const std::stop_token&>(),
+                      std::declval<NES::Unikernel::SchemaBuffer<typename Config::Schema, 8192>>())
+    } -> std::same_as<std::optional<NES::Unikernel::SchemaBuffer<typename Config::Schema, 8192>>>;
+
+    { t.open() };
+    { t.close() };
+};
 /**
     * @brief Base class for all data sources in NES
     * we allow only three cases:
@@ -49,74 +59,79 @@ namespace NES {
     *  2.) If the user set numBuffersToProcess to 0, we read the source until it ends, e.g, until the file ends
     *  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
     */
-template<typename Config>
-class DataSource : public DataEmitter {
+template<typename Config, DataSourceImpl<Config> Impl>
+class DataSource {
 
   public:
     /**
-         * @brief public constructor for data source
-         * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
-         * by some test to produce a deterministic behavior
-         * @param successors the subsequent operators in the pipeline to which the data is pushed
-         */
+     * @brief public constructor for data source
+     * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
+     * by some test to produce a deterministic behavior
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     */
     explicit DataSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
         : executableSuccessors(std::move(successor)){};
 
     DataSource() = delete;
 
-    ~DataSource() override = default;
+    ~DataSource() = default;
 
     using BufferType = NES::Unikernel::SchemaBuffer<typename Config::Schema, 8192>;
 
     /**
-         * @brief This methods initializes thread-local state. For instance, it creates the local buffer pool and is necessary
-         * because we cannot do it in the constructor.
-         */
-    virtual void open() { bufferManager = TheBufferManager->createFixedSizeBufferPool(Config::LocalBuffers); }
-
-    /**
-         * @brief This method cleans up thread-local state for the source.
-         */
-    virtual void close() {
-        Runtime::QueryTerminationType queryTerminationType;
-        { queryTerminationType = this->wasGracefullyStopped; }
-        if (queryTerminationType != Runtime::QueryTerminationType::Graceful) {
-            // inject reconfiguration task containing end of stream
-            NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
-            NES_DEBUG("DataSource {} : Data Source add end of stream. Gracefully={}", Config::OperatorId, queryTerminationType);
-
-            bufferManager->destroy();
-        }
+     * @brief This methods initializes thread-local state. For instance, it creates the local buffer pool and is necessary
+     * because we cannot do it in the constructor.
+     */
+    void open() {
+        std::cerr << "DATA Open" << std::endl;
+        NES_INFO("Data source open");
+        bufferManager = TheBufferManager->createFixedSizeBufferPool(Config::LocalBuffers);
+        impl.open();
     }
 
     /**
-         * @brief method to start the source.
-         * 1.) check if bool running is true, if true return if not start source
-         * 2.) start new thread with runningRoutine
-         */
-    virtual bool start() {
-        NES_DEBUG("DataSource  {} : start source", Config::OperatorId);
-        if (running)
-            return false;
+     * @brief This method cleans up thread-local state for the source.
+     */
+    void close() {
+        impl.close();
+        bufferManager->destroy();
+    }
 
-        running = true;
+    /**
+     * @brief method to start the source.
+     * 1.) check if bool running is true, if true return if not start source
+     * 2.) start new thread with runningRoutine
+     */
+    bool start() {
+        NES_DEBUG("DataSource  {} : start source", Config::OperatorId);
+        worker.emplace([this](const std::stop_token& stoken) {
+            try {
+                NES_DEBUG("DataSource {} call open", Config::OperatorId);
+                open();
+                NES_DEBUG("DataSource {} start running routine", Config::OperatorId);
+                runningRoutine(stoken);
+                NES_DEBUG("DataSource {} call close", Config::OperatorId);
+                std::cerr << "About to close" << std::endl;
+                close();
+                NES_DEBUG("DataSource {} end running", Config::OperatorId);
+
+                if (!stoken.stop_requested()) {
+                    executableSuccessors.stop();
+                }
+            } catch (const std::exception& exception) {
+                NES_ERROR("Exception: {}", exception.what());
+            }
+        });
+
         return true;
     }
 
     /**
-         * @brief method to stop the source.
-         * 1.) check if bool running is false, if false return, if not stop source
-         * 2.) stop thread by join
-         */
-    [[nodiscard]] virtual bool stop(Runtime::QueryTerminationType) { return false; }
-
-    /**
-         * @brief running routine while source is active
-         */
-    virtual void runningRoutine() {
+     * @brief running routine while source is active
+     */
+    void runningRoutine(const std::stop_token& stoken) {
         static_assert(Config::OperatorId != 0, "The id of the source is not set properly");
-        std::string thName = "DataSrc-" + std::to_string(Config::OperatorId);
-        setThreadName(thName.c_str());
+        setThreadName(fmt::format("DataSrc-{}", Config::OperatorId).c_str());
 
         NES_DEBUG("DataSource {}: Running Data Source of type={} ",
                   Config::OperatorId,
@@ -129,24 +144,23 @@ class DataSource : public DataEmitter {
         } else {
             NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
         }
-        open();
         uint64_t numberOfBuffersProduced = 0;
-        while (running) {
+        while (!stoken.stop_requested()) {
             //check if already produced enough buffer
             if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce) {
-                auto optBuf = receiveData();// note that receiveData might block
-                if (!running) {
+                auto buffer = allocateBuffer();
+                auto optBuf = impl.receiveData(stoken, BufferType::of(buffer));
+                if (stoken.stop_requested() && !optBuf.has_value()) {
                     // necessary if source stops while receiveData is called due to stricter shutdown logic
                     break;
                 }
                 //this checks we received a valid output buffer
                 if (optBuf.has_value()) {
-                    auto& buf = optBuf.value();
-                    NES_TRACE("DataSource produced buffer {} type= {} string={}: Received Data: {} tuples iteration= {} "
+                    auto buf = optBuf.value().getBuffer();
+                    NES_TRACE("DataSource produced buffer {} type= {}: Received Data: {} tuples iteration= {} "
                               "Config::OperatorId={} orgID={}",
                               Config::OperatorId,
                               magic_enum::enum_name(Config::SourceType::SourceType),
-                              toString(),
                               buf.getNumberOfTuples(),
                               numberOfBuffersProduced,
                               Config::OperatorId,
@@ -156,8 +170,8 @@ class DataSource : public DataEmitter {
                     ++numberOfBuffersProduced;
                 } else {
                     NES_DEBUG("DataSource {}: stopping cause of invalid buffer", Config::OperatorId);
-                    running = false;
                     NES_DEBUG("DataSource {}: Thread going to terminating with graceful exit.", Config::OperatorId);
+                    break;
                 }
             } else {
                 NES_DEBUG("DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than "
@@ -165,129 +179,48 @@ class DataSource : public DataEmitter {
                           Config::OperatorId,
                           numberOfBuffersProduced,
                           numberOfBuffersToProduce);
-                running = false;
             }
+            std::cerr << "About to close 1" << std::endl;
             NES_TRACE("DataSource {} : Data Source finished processing iteration {}",
                       Config::OperatorId,
                       numberOfBuffersProduced);
         }
-        NES_DEBUG("DataSource {} call close", Config::OperatorId);
-        close();
-        NES_DEBUG("DataSource {} end running", Config::OperatorId);
+
+        std::cerr << "About to close 2" << stoken.stop_requested() << std::endl;
     }
 
     /**
-         * @brief virtual function to receive a buffer
-         * @Note this function is overwritten by the particular data source
-         * @return returns a tuple buffer
-         */
-    virtual std::optional<Runtime::TupleBuffer> receiveData() = 0;
+     * @brief debug function for testing to get number of generated tuples
+     * @return number of generated tuples
+     */
+    [[nodiscard]] uint64_t getNumberOfGeneratedTuples() const { return generatedTuples; }
 
     /**
-         * @brief virtual function to get a string describing the particular source
-         * @Note this function is overwritten by the particular data source
-         * @return string with name and additional information about the source
-         */
-    virtual std::string toString() const = 0;
+     * @brief debug function for testing to get number of generated buffer
+     * @return number of generated buffer
+     */
+    [[nodiscard]] uint64_t getNumberOfGeneratedBuffers() const { return generatedBuffers; }
 
     /**
-         * @brief debug function for testing to test if source is running
-         * @return bool indicating if source is running
-         * @dev    I made this function non-virtual. If implementations of this class should be able to override
-         *         this function, we have to ensure that `isRunning` and this class' private member `running` are
-         *         consistent or that this class does not evaluate `running` directly when checking if it is running.
-         */
-    inline bool isRunning() const noexcept { return running; }
-
-    /**
-         * @brief debug function for testing to get number of generated tuples
-         * @return number of generated tuples
-         */
-    uint64_t getNumberOfGeneratedTuples() const { return generatedTuples; }
-
-    /**
-         * @brief debug function for testing to get number of generated buffer
-         * @return number of generated buffer
-         */
-    uint64_t getNumberOfGeneratedBuffers() const { return generatedBuffers; }
-
-    /**
-         * @brief Get number of buffers to be processed
-         */
-    uint64_t getNumBuffersToProcess() const { return numberOfBuffersToProduce; }
-
-    /**
-         * @brief API method called upon receiving an event.
-         * @note Currently has no behaviour. We need to overwrite DataEmitter::onEvent for compliance.
-         * @param event
-         */
-    void onEvent(Runtime::BaseEvent& event) override {
-        NES_DEBUG("DataSource::onEvent(event) called. Config::OperatorId: {}", Config::OperatorId);
-        // no behaviour needed, call onEvent of direct ancestor
-        DataEmitter::onEvent(event);
-    }
-
-    /**
-         * @brief API method called upon receiving an event, whose handling requires the WorkerContext (e.g. its network channels).
-         * @note Only calls onEvent(event) of this class or derived classes.
-         * @param event
-         * @param workerContext
-         */
-    virtual void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
-        NES_DEBUG("DataSource::onEvent(event, wrkContext) called. Config::OperatorId:  {}", Config::OperatorId);
-        onEvent(event);
-    }
-
-    /**
-         * @brief method injects epoch barrier to the data source
-         * @param epochBarrier current epoch barrier
-         * @param queryId currect query id
-         * @return success is the message was sent
-         */
-    virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) {
-        NES_DEBUG("DataSource::injectEpochBarrier received timestamp  {} with queryId  {}", epochBarrier, queryId);
-        return true;
-    }
-
-    [[nodiscard]] virtual bool fail() {
-        bool isStopped = stop(Runtime::QueryTerminationType::Failure);// this will block until the thread is stopped
-        NES_DEBUG("Source {} stop executed= {}", Config::OperatorId, (isStopped ? "stopped" : "cannot stop"));
-        {
-            NES_DEBUG("Source {} has already injected failure? {}",
-                      Config::OperatorId,
-                      (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
-            if (!this->endOfStreamSent) {
-            }
-            return isStopped && endOfStreamSent;
-        }
-        return false;
-    }
+     * @brief Get number of buffers to be processed
+     */
+    [[nodiscard]] uint64_t getNumBuffersToProcess() const { return numberOfBuffersToProduce; }
 
   protected:
+    std::optional<std::jthread> worker;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
     NES::Unikernel::UnikernelPipelineExecutionContext executableSuccessors;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
-    Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful};// protected by mutex
-    bool wasStarted{false};
-    bool futureRetrieved{false};
-    bool running{false};
-    uint64_t sourceAffinity;
-    uint64_t taskQueueId;
-    bool sourceSharing = false;
-
-    //this counter is used to count the number of queries that use this source
-    uint64_t refCounter = 0;
-    uint64_t numberOfConsumerQueries = 1;
 
     /**
-         * @brief Emits a tuple buffer to the successors.
-         * @param buffer
-         */
-    void emitWork(Runtime::TupleBuffer& buffer) override { executableSuccessors.emit(buffer); }
+     * @brief Emits a tuple buffer to the successors.
+     * @param buffer
+     */
+    void emitWork(Runtime::TupleBuffer& buffer) { executableSuccessors.emit(buffer); }
 
-    Runtime::TupleBuffer allocateBuffer() { return TheBufferManager->getBufferBlocking(); }
+    NES::Runtime::TupleBuffer allocateBuffer() { return bufferManager->getBufferBlocking(); }
 
     void emitWorkFromSource(Runtime::TupleBuffer& buffer) {
         {
@@ -305,15 +238,12 @@ class DataSource : public DataEmitter {
         }
     }
 
-  protected:
-  private:
     uint64_t maxSequenceNumber = 0;
-
-    bool endOfStreamSent{false};// protected by startStopMutex
+    Impl impl;
 };
 
-template<typename Config>
-using DataSourcePtr = std::shared_ptr<DataSource<Config>>;
+template<typename Config, DataSourceImpl<Config> Impl>
+using DataSourcePtr = std::shared_ptr<DataSource<Config, Impl>>;
 
 }// namespace NES
 
