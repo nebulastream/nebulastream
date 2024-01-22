@@ -83,7 +83,7 @@ extern "C" [[maybe_unused]] void emitBufferProxy(void* worker_context_ptr, void*
 }
 
 int main() {
-    NES::Logger::setupLogging(magic_enum::enum_value<NES::LogLevel>(NES_COMPILE_TIME_LOG_LEVEL));
+    NES::Logger::setupLogging(static_cast<NES::LogLevel>(NES_COMPILE_TIME_LOG_LEVEL));
     errno = 0;
     auto partition_manager = std::make_shared<NES::Network::PartitionManager>();
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
@@ -97,13 +97,5 @@ int main() {
                                                              std::move(exchange_protocol),
                                                              TheBufferManager);
     NES::Unikernel::QueryPlan::setup();
-    {
-        std::unique_lock lock(m);
-        stop_condition.wait(lock, []() {
-            return should_exit;
-        });
-    }
-    NES_INFO("Stopping Unikernel")
-    NES::Unikernel::QueryPlan::stop();
-    NES_INFO("Unikernel Stopped")
+    NES::Unikernel::QueryPlan::wait();
 }
