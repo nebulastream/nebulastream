@@ -74,6 +74,7 @@ void UnikernelExport::exportPipelineStageToObjectFile(
 
     if (llvmIr.has_error()) {
         std::cerr << llvmIr.assume_error().message << std::endl;
+        std::cerr << generatedSource << std::endl;
         NES_THROW_RUNTIME_ERROR("Could not Compile Pipeline");
     }
 

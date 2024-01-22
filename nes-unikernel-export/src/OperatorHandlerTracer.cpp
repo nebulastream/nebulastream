@@ -199,8 +199,8 @@ std::string OperatorHandlerTracer::generateRuntimeIncludes() {
     return "#include <OperatorHandler.hpp>\n"
            "#include <UnikernelStage.hpp>\n"
            "#include <cassert>\n"
-           "#include <array>\n"
-           "#include <Runtime/RuntimeForwardRefs.hpp>\n";
+           "#include <array>\n";
+           // "#include <Runtime/RuntimeForwardRefs.hpp>\n";
 }
 
 std::string OperatorHandlerTracer::generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handlers,
