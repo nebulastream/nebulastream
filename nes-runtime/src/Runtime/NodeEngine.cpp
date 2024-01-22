@@ -694,6 +694,7 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
         return false;
     }
 
+    sharedQueryIdToDecomposedQueryPlanIds.erase(decomposedQueryPlanId);
     auto deployedPlan = deployedPlanIterator->second;
     // iterate over all network sources and apply the reconfigurations
     for (auto& source : deployedPlan->getSources()) {
@@ -705,6 +706,7 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
             NES_NOT_IMPLEMENTED();
         }
     }
+    deployedExecutableQueryPlans.erase(decomposedQueryPlanId);
     return true;
 }
 
