@@ -1132,11 +1132,11 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
         R"(Query::from("values").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
 
-//    std::stringstream ss;
-//    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
-//    ss << std::to_string(*restPort);
-//    ss << "\"";
-//    std::system(ss.str().c_str());
+    std::stringstream ss;
+    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
+    ss << std::to_string(*restPort);
+    ss << "\"";
+    std::system(ss.str().c_str());
 
     std::cin.get();
     //auto nodeMap = nodes.get<std::map<uint64, std::pair<double, double>>>();
