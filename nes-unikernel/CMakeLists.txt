@@ -3,9 +3,13 @@ add_subdirectory(src)
 get_source(unikernel-lib NES_UNIKERNEL_LIB_SOURCE_FILES)
 set(UNIKERNEL_COMPILE_OPTIONS "-O0" "-std=c++20" "-Wno-error=deprecated" "-DUNIKERNEL_LIB=1" "-DWINDOW_OPERATOR=1")
 set(UNIKERNEL_LINK_OPTIONS "-fuse-ld=lld")
+SET(UNIKERNEL_USE_UBSAN "OFF")
 if (UNIKERNEL_USE_TSAN)
     set(UNIKERNEL_LINK_OPTIONS ${UNIKERNEL_LINK_OPTIONS} "-fsanitize=thread")
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-fsanitize=thread" "-g" "-fno-omit-frame-pointer")
+elseif(UNIKERNEL_USE_UBSAN)
+    set(UNIKERNEL_LINK_OPTIONS ${UNIKERNEL_LINK_OPTIONS} "-fsanitize=undefined")
+    SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-fsanitize=undefined" "-g" "-fno-omit-frame-pointer")
 endif ()
 
 if(UNIKERNEL_USE_LIB_DWARF)
@@ -25,7 +29,7 @@ target_include_directories(unikernel-lib PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>)
 target_compile_options(unikernel-lib PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
 target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork Folly::folly cppkafka::cppkafka RdKafka::rdkafka RdKafka::rdkafka++)
-
+target_compile_definitions(unikernel-lib PRIVATE NES_LOGLEVEL_TRACE)
 
 add_executable(pipeline-test tests/pipelineTest.cpp)
 target_compile_options(pipeline-test PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
@@ -57,6 +61,7 @@ foreach(PIPELINE_FILE ${PIPELINE_FILES})
     set_target_properties(unikernel${PIPELINE_NUMBER} PROPERTIES OUTPUT_NAME "unikernel${UNIKERNEL_WORKER_ID}")
     target_compile_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline${PIPELINE_NUMBER}.hpp")
     target_link_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_LINK_OPTIONS})
+    target_compile_definitions(unikernel${PIPELINE_NUMBER} PRIVATE NES_LOGLEVEL_DEBUG)
 
     # Link libraries and include directories
     file(GLOB OPERATOR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/operators/*.o)
