@@ -1,0 +1,24 @@
+query: |
+  Query::from("bid")
+    .filter(Attribute("auctionId") % static_cast<uint64_t>(123) == 0)
+  .sink(NullOutputSinkDescriptor::create());
+topology:
+  sink:
+    node:
+      ip: 127.0.0.1
+      port: 8085
+      resources: 1
+  workers:
+    - node:
+        ip: 127.0.0.1
+        port: 8080
+        resources: 90
+      sources:
+        - name: bid
+          tcp:
+            ip: 127.0.0.1
+            port: 8091
+          schema:
+            type: NEXMARK_BID
+      links:
+        - sink
