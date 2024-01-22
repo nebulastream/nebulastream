@@ -22,6 +22,7 @@
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
+#include <Execution/Expressions/Functions/ModExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterEqualsExpression.hpp>
@@ -33,6 +34,7 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
@@ -99,6 +101,10 @@ std::shared_ptr<Expression> ExpressionProvider::lowerExpression(const Expression
         auto leftNautilusExpression = lowerExpression(divNode->getLeft());
         auto rightNautilusExpression = lowerExpression(divNode->getRight());
         return std::make_shared<DivExpression>(leftNautilusExpression, rightNautilusExpression);
+    } else if (auto modNode = expressionNode->as_if<ModExpressionNode>()) {
+        auto leftNautilusExpression = lowerExpression(modNode->getLeft());
+        auto rightNautilusExpression = lowerExpression(modNode->getRight());
+        return std::make_shared<ModExpression>(leftNautilusExpression, rightNautilusExpression);
     } else if (auto functionExpression = expressionNode->as_if<FunctionExpression>()) {
         return lowerFunctionExpression(functionExpression);
     } else if (auto constantValue = expressionNode->as_if<ConstantValueExpressionNode>()) {

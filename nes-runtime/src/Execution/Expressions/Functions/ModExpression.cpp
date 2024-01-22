@@ -51,6 +51,14 @@ Value<> ModExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Int32>(), rightValue.as<Int32>());
     } else if (leftValue->isType<Int64>() && rightValue->isType<Int64>()) {
         return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Int64>(), rightValue.as<Int64>());
+    } else if (leftValue->isType<UInt8>() && rightValue->isType<UInt8>()) {
+        return FunctionCall<>("calculateMod", calculateMod, leftValue.as<UInt8>(), rightValue.as<UInt8>());
+    } else if (leftValue->isType<UInt16>() && rightValue->isType<UInt16>()) {
+        return FunctionCall<>("calculateMod", calculateMod, leftValue.as<UInt16>(), rightValue.as<UInt16>());
+    } else if (leftValue->isType<UInt32>() && rightValue->isType<UInt32>()) {
+        return FunctionCall<>("calculateMod", calculateMod, leftValue.as<UInt32>(), rightValue.as<UInt32>());
+    } else if (leftValue->isType<UInt64>() && rightValue->isType<UInt64>()) {
+        return leftValue.as<UInt64>() % rightValue.as<UInt64>();
     } else if (leftValue->isType<Float>() && rightValue->isType<Float>()) {
         return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Float>(), rightValue.as<Float>());
     } else if (leftValue->isType<Double>() && rightValue->isType<Double>()) {
