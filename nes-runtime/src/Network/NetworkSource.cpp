@@ -322,7 +322,9 @@ void NetworkSource::markAsMigrated() {
     //     //startVersion =
     // }
     // if (startVersion) {
-    if (receivedDrainMessage) {
+
+    //if (receivedDrainMessage) {
+    if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
         startNewVersion();
     }
 }
@@ -332,7 +334,11 @@ bool NetworkSource::startNewVersion() {
     std::unique_lock lock(versionMutex);
     if (nextSourceDescriptor) {
         NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
-        networkManager->unregisterSubpartitionConsumer(nesPartition);
+        //check if the partition is still registered of if it was removed because no channels were connected
+        if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Registered) {
+            //todo: can this condition ever happen?
+            networkManager->unregisterSubpartitionConsumer(nesPartition);
+        }
         auto newDescriptor = nextSourceDescriptor.value();
         version = newDescriptor.getVersion();
         sinkLocation = newDescriptor.getNodeLocation();
@@ -391,7 +397,8 @@ bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& network
     std::unique_lock lock(versionMutex);
     if (nesPartition != networkSourceDescriptor.getNesPartition()) {
         nextSourceDescriptor = networkSourceDescriptor;
-        if (receivedDrainMessage) {
+        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+        //if (receivedDrainMessage) {
             startNewVersion();
         }
         return true;

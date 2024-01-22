@@ -248,6 +248,8 @@ class PartitionManager {
      */
     void clear();
 
+    bool unregisterSubpartitionConsumerIfNotConnected(NesPartition partition);
+
   private:
     std::unordered_map<NesPartition, PartitionProducerEntry> producerPartitions;
     std::unordered_map<NesPartition, PartitionConsumerEntry> consumerPartitions;

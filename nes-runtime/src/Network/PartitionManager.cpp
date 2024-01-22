@@ -109,6 +109,30 @@ bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
     return false;
 }
 
+bool PartitionManager::unregisterSubpartitionConsumerIfNotConnected(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+
+    auto it = consumerPartitions.find(partition);
+    NES_ASSERT2_FMT(it != consumerPartitions.end(),
+                    "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
+
+    // safeguard
+    if (it->second.count() == 0) {
+        NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
+        return true;
+    }
+
+    if (it->second.count() != 1) {
+        NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
+        return false;
+    }
+
+    it->second.unpin();
+
+    NES_INFO("PartitionManager: Unregistering Consumer {}; newCnt({})", partition.toString(), it->second.count());
+    return true;
+}
+
 std::optional<uint64_t> PartitionManager::getSubpartitionConsumerCounter(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {

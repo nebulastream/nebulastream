@@ -419,6 +419,7 @@ bool NetworkSink::applyNextSinkDescriptor() {
     configureNewSinkDescriptor(nextSinkDescriptor.value());
     return true;
 }
+
 bool NetworkSink::startBuffering() {
     Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
                                                                               decomposedQueryPlanId,

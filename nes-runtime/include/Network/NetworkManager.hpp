@@ -245,6 +245,7 @@ class NetworkManager {
      */
     bool getConnectSourceEventChannelsAsync();
 
+    bool unregisterSubpartitionConsumerIfNotConnected(const NesPartition& nesPartition) const;
   private:
     NodeLocation nodeLocation;
     ZmqServerPtr server;
