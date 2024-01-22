@@ -145,10 +145,9 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     }
 
     NES_DEBUG("QueryDeploymentPhase: start query");
-    startQuery(sharedQueryId, executionNodes);
+    //startQuery(sharedQueryId, executionNodes);
 
     //remove subplans from global query plan if they were stopped due to migration
-    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
     for (const auto& node : executionNodes) {
         auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
@@ -211,13 +210,18 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                     completionQueues[queueForExecutionNode]++;
                     break;
                 }
+                case QueryState::MIGRATING: {
+                    //workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
+                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
+                    completionQueues[queueForExecutionNode]++;
+                    break;
+                }
                 default: {
                     break;
                 }
             }
         }
     }
-    //todo: problem is here
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
 }

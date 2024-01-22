@@ -58,6 +58,10 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
                 success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
                 break;
             }
+            case QueryState::MIGRATING: {
+                success = nodeEngine->markSubPlanAsMigrated(decomposedQueryPlan->getDecomposedQueryPlanId());
+                break;
+            }
             default: NES_ASSERT(false, "Cannot register query in another state than DEPLOYED or REDEPLOYED");
         }
     } catch (std::exception& error) {

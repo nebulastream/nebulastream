@@ -117,7 +117,11 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
     auto result = queryCompiler->compileQuery(request);
     try {
         auto executablePlan = result->getExecutableQueryPlan();
-        return registerExecutableQueryPlan(executablePlan);
+        if (registerExecutableQueryPlan(executablePlan)) {
+            //return queryManager->startQuery(deployedExecutableQueryPlans[decomposedQueryPlanId]);
+            return queryManager->startQuery(executablePlan);
+        }
+        return false;
     } catch (std::exception const& error) {
         NES_ERROR("Error while building query execution plan: {}", error.what());
         NES_ASSERT(false, "Error while building query execution plan: " << error.what());
@@ -732,6 +736,7 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                     && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
                     //todo: check expected version
                     networkSink->scheduleNewDescriptor(*reconfiguredNetworkSink);
+                    networkSink->applyNextSinkDescriptor();
                 }
             }
         }

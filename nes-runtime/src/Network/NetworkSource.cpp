@@ -338,6 +338,7 @@ bool NetworkSource::startNewVersion() {
     if (migrated) {
         migrated = false;
         onEndOfStream(Runtime::QueryTerminationType::Graceful);
+        return true;
     }
     return false;
 }
