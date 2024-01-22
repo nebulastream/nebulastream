@@ -285,6 +285,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
             continue;
         }
 
+        //todo: refactor this to keep the plans in migrating also when soft stop is triggered
         querySubPlanMetaData->updateStatus(querySubPlanStatus);
 
         if (currentQueryStatus == QueryState::MIGRATING) {
@@ -308,8 +309,8 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                     }
                     NES_ASSERT(querySubPlanStatus == QueryState::RUNNING || querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED
                                    || querySubPlanStatus == QueryState::MIGRATION_COMPLETED
-                                   || querySubPlanStatus == QueryState::REDEPLOYED,
-                               "Unexpected subplan status.");
+                                   || querySubPlanStatus == QueryState::REDEPLOYED || querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED,
+                               "Unexpected subplan status: " << magic_enum::enum_name(querySubPlanStatus));
                 }
                 if (queryMigrationComplete) {
                     queryCatalogEntry->setQueryStatus(QueryState::RUNNING);
