@@ -112,14 +112,7 @@ void RequestProcessorService::start() {
                             //3.2.1. Perform placement of new shared query plan
                             auto queryPlan = sharedQueryPlan->getQueryPlan();
                             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-                            bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-                            if (!placementSuccessful) {
-                                throw Exceptions::QueryPlacementAdditionException(
-                                    sharedQueryId,
-                                    "QueryProcessingService: Failed to perform query placement for "
-                                    "query plan with shared query id: "
-                                        + std::to_string(sharedQueryId));
-                            }
+                            auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
                             //3.2.2. Perform deployment of placed shared query plan
                             queryDeploymentPhase->execute(sharedQueryPlan);
@@ -139,15 +132,7 @@ void RequestProcessorService::start() {
                             //3.3.2. Perform placement of updated shared query plan
                             auto queryPlan = sharedQueryPlan->getQueryPlan();
                             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-                            bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-                            if (!placementSuccessful) {
-                                throw Exceptions::QueryPlacementAdditionException(
-                                    sharedQueryId,
-                                    "QueryProcessingService: Failed to perform query placement for "
-                                    "query plan with shared query id: "
-                                        + std::to_string(sharedQueryId));
-                            }
-
+                            auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
                             //3.3.3. Perform deployment of re-placed shared query plan
                             queryDeploymentPhase->execute(sharedQueryPlan);
                             //Update the shared query plan as deployed

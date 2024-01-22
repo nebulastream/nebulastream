@@ -29,13 +29,14 @@ namespace NES::Experimental {
 
 std::pair<std::set<OperatorId>, std::set<OperatorId>>
 findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPlan,
-                                         const Optimizer::ExecutionNodePtr& upstreamNode,
-                                         const Optimizer::ExecutionNodePtr& downstreamNode,
+                                         Optimizer::ExecutionNodeWLock lockedUpstreamNode,
+                                         Optimizer::ExecutionNodeWLock lockedDownstreamNode,
                                          const TopologyPtr& topology) {
     auto sharedQueryPlanId = sharedQueryPlan->getId();
     auto queryPlanForSharedQuery = sharedQueryPlan->getQueryPlan();
     //find the pairs of source and sink operators that were using the removed link
-    auto upstreamDownstreamOperatorPairs = findNetworkOperatorsForLink(sharedQueryPlanId, upstreamNode, downstreamNode);
+    auto upstreamDownstreamOperatorPairs =
+        findNetworkOperatorsForLink(sharedQueryPlanId, lockedUpstreamNode, lockedDownstreamNode);
     for (auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         //replace the system generated operators with their non system up- or downstream operators
         auto upstreamLogicalOperatorId =
@@ -122,11 +123,11 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
 
 std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
 findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
-                            const Optimizer::ExecutionNodePtr& upstreamNode,
-                            const Optimizer::ExecutionNodePtr& downstreamNode) {
-    const auto& upstreamSubPlans = upstreamNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                            Optimizer::ExecutionNodeWLock lockedUpstreamNode,
+                            Optimizer::ExecutionNodeWLock lockedDownstreamNode) {
+    const auto& upstreamSubPlans = lockedUpstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
     std::unordered_map<Network::NesPartition, LogicalOperatorNodePtr> upstreamSinkMap;
-    auto downstreamWorkerId = downstreamNode->getId();
+    auto downstreamWorkerId = lockedDownstreamNode->operator*()->getId();
     for (const auto& subPlan : upstreamSubPlans) {
         for (const auto& sinkOperator : subPlan->getSinkOperators()) {
             auto upstreamNetworkSinkDescriptor =
@@ -138,8 +139,8 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
         }
     }
 
-    const auto& downstreamSubPlans = downstreamNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-    auto upstreamWorkerId = upstreamNode->getId();
+    const auto& downstreamSubPlans = lockedDownstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+    auto upstreamWorkerId = lockedUpstreamNode->operator*()->getId();
     std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>> pairs;
     for (const auto& subPlan : downstreamSubPlans) {
         for (const auto& sourceOperator : subPlan->getSourceOperators()) {

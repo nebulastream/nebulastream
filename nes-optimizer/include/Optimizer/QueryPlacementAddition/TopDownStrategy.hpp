@@ -30,10 +30,10 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
                                            const TypeInferencePhasePtr& typeInferencePhase,
                                            PlacementAmendmentMode placementAmendmentMode);
 
-    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                   DecomposedQueryPlanVersion querySubPlanVersion) override;
+    std::vector<DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                                DecomposedQueryPlanVersion querySubPlanVersion) override;
 
   private:
     TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -75,4 +75,4 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
 };
 
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_TOPDOWNSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_TOPDOWNSTRATEGY_HPP_

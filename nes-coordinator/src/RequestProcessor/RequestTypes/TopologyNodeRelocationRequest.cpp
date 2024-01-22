@@ -85,16 +85,16 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
 }
 
 void TopologyNodeRelocationRequest::processRemoveTopologyLinkRequest(WorkerId upstreamNodeId, WorkerId downstreamNodeId) {
-    auto upstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(upstreamNodeId);
-    auto downstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(downstreamNodeId);
+    auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
+    auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
     if (!upstreamExecutionNode || !downstreamExecutionNode) {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return;
     }
 
-    auto upstreamSharedQueryIds = upstreamExecutionNode->getPlacedSharedQueryPlanIds();
-    auto downstreamSharedQueryIds = downstreamExecutionNode->getPlacedSharedQueryPlanIds();
+    auto upstreamSharedQueryIds = upstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
+    auto downstreamSharedQueryIds = downstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
     //If any of the two execution nodes do not have any shared query plan placed then skip rest of the operation
     if (upstreamSharedQueryIds.empty() || downstreamSharedQueryIds.empty()) {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
@@ -188,8 +188,8 @@ void TopologyNodeRelocationRequest::processRemoveTopologyLinkRequest(WorkerId up
 
 void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
     SharedQueryId sharedQueryPlanId,
-    const Optimizer::ExecutionNodePtr& upstreamExecutionNode,
-    const Optimizer::ExecutionNodePtr& downstreamExecutionNode) {
+    Optimizer::ExecutionNodeWLock lockedUpstreamExecutionNode,
+    Optimizer::ExecutionNodeWLock lockedDownstreamExecutionNode) {
     //Fetch the shared query plan and update its status
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryPlanId);
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
@@ -197,8 +197,8 @@ void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
     //find the pinned operators for the changelog
     auto [upstreamOperatorIds, downstreamOperatorIds] =
         NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
-                                                                    upstreamExecutionNode,
-                                                                    downstreamExecutionNode,
+                                                                    lockedUpstreamExecutionNode,
+                                                                    lockedDownstreamExecutionNode,
                                                                     topology);
     //perform re-operator placement on the query plan
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);

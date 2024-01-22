@@ -54,6 +54,9 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class PlacementRemovalStrategy;
 using PlacementRemovalStrategyPtr = std::shared_ptr<PlacementRemovalStrategy>;
 
+class DeploymentContext;
+using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
+
 /**
  * @brief This class takes as input a query plan (represented by a upstream and downstream operators) and removes the
  * placements for all intermediate operators that are in the state To-Be-Removed or To-Be-Replaced. Upon successful
@@ -85,12 +88,12 @@ class PlacementRemovalStrategy {
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @param querySubPlanVersion: the new version of the updated query sub plans
-     * @return true if successful else false
+     * @return vector of deployment context containing updated decomposed query plans
      */
-    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                   DecomposedQueryPlanVersion querySubPlanVersion);
+    std::vector<DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                                DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
      * @brief Destructor releases all locks (if any acquired) for pessimistic mode
@@ -130,9 +133,9 @@ class PlacementRemovalStrategy {
      * @brief Add the computed query sub plans tot he global execution plan
      * @param sharedQueryId: the shared query plan id
      * @param querySubPlanVersion: the new version of the query sub plan
-     * @return true if global execution plan gets updated successfully else false
+     * @return vector of deployment contexts
      */
-    bool updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion);
+    std::vector<DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,

@@ -51,10 +51,10 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
                                            const TypeInferencePhasePtr& typeInferencePhase,
                                            PlacementAmendmentMode placementAmendmentMode);
 
-    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                   DecomposedQueryPlanVersion querySubPlanVersion) override;
+    std::vector<DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                                DecomposedQueryPlanVersion querySubPlanVersion) override;
 
   private:
     explicit ElegantPlacementStrategy(const std::string& serviceURL,
@@ -106,4 +106,4 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
 
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ELEGANTPLACEMENTSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ELEGANTPLACEMENTSTRATEGY_HPP_

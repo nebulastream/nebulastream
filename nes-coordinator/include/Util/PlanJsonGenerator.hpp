@@ -39,15 +39,6 @@ class PlanJsonGenerator {
   public:
     static nlohmann::json getQueryPlanAsJson(const QueryPlanPtr& queryPlan);
 
-    /**
-     * @brief get the json representation of execution plan of a query
-     * @param the global execution plan
-     * @param id of the query
-     * @return a JSON object representing the execution plan
-     */
-    static nlohmann::json getExecutionPlanAsJson(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                 QueryId queryId = INVALID_QUERY_ID);
-
   private:
     /**
      * @brief function to traverse to queryPlanChildren

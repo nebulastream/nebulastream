@@ -115,12 +115,6 @@ class ExecutionNode : public Node {
     PlacedDecomposedQueryPlans getAllQuerySubPlans();
 
     /**
-     * Get the resources occupied by the decomposed query plans for the input query id.
-     * @param sharedQueryId : the input shared query plan id
-     */
-    uint32_t getOccupiedResources(SharedQueryId sharedQueryId);
-
-    /**
      * @brief Get identifier of all shared query plans placed on the execution node
      * @return set of shared query plan ids
      */

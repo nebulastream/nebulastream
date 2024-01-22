@@ -65,6 +65,10 @@ using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentP
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+class DeploymentContext;
+using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
+
 /**
  * @brief This class is responsible for placing and removing operators (depending on their status) from the
  * global execution.
@@ -91,7 +95,7 @@ class QueryPlacementAmendmentPhase {
      * @return true is placement amendment successful.
      * @throws QueryPlacementException
      */
-    bool execute(const SharedQueryPlanPtr& sharedQueryPlan);
+    std::set<DeploymentContextPtr> execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
     explicit QueryPlacementAmendmentPhase(GlobalExecutionPlanPtr globalExecutionPlan,

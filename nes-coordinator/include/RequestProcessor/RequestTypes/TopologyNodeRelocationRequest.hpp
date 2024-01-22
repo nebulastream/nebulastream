@@ -13,9 +13,11 @@
 */
 #ifndef NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
 #define NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
+
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <Util/TopologyLinkInformation.hpp>
+#include <folly/Synchronized.h>
 
 namespace NES {
 
@@ -28,6 +30,8 @@ using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
+
+using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
 }// namespace Optimizer
 
 namespace RequestProcessor::Experimental {
@@ -85,8 +89,8 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * @param downstreamNodeId the id of the downstream node of the removed link
      */
     void markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
-                                             const std::shared_ptr<Optimizer::ExecutionNode>& upstreamExecutionNode,
-                                             const std::shared_ptr<Optimizer::ExecutionNode>& downstreamExecutionNode);
+                                             Optimizer::ExecutionNodeWLock upstreamExecutionNode,
+                                             Optimizer::ExecutionNodeWLock downstreamExecutionNode);
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.

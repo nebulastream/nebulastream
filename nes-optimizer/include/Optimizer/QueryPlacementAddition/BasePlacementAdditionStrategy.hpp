@@ -80,9 +80,11 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class BasePlacementAdditionStrategy;
 using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;
 
+class DeploymentContext;
+using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
+
 using PlacementMatrix = std::vector<std::vector<bool>>;
 using ComputedDecomposedQueryPlans = std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>>;
-
 using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
 
 /**
@@ -105,12 +107,13 @@ class BasePlacementAdditionStrategy {
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @param querySubPlanVersion: the new version of the updated query sub plans
-     * @return true if successful else false
+     * @return vector of deployment contexts
      */
-    virtual bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                           const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                           const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                           DecomposedQueryPlanVersion querySubPlanVersion) = 0;
+    virtual std::vector<DeploymentContextPtr>
+    updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                              const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                              const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                              DecomposedQueryPlanVersion querySubPlanVersion) = 0;
 
   protected:
     /**
@@ -143,11 +146,11 @@ class BasePlacementAdditionStrategy {
      * @param sharedQueryId: the shared query plan id
      * @param computedSubQueryPlans: the computed query sub plans
      * @param querySubPlanVersion: the version of the query sub plan
-     * @return true if global execution plan gets updated successfully else false
+     * @return vector of deployment contexts
      */
-    bool updateExecutionNodes(SharedQueryId sharedQueryId,
-                              ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                              DecomposedQueryPlanVersion querySubPlanVersion);
+    std::vector<DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId,
+                                                           ComputedDecomposedQueryPlans& computedSubQueryPlans,
+                                                           DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
      * @brief Get Execution node for the input topology node

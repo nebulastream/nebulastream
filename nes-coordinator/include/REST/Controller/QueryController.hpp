@@ -17,6 +17,7 @@
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
@@ -48,11 +49,6 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
-
-namespace Optimizer {
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace Optimizer
 
 class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
@@ -105,7 +101,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             //find the shared query plan id hosting the query
             auto sharedQueryPlanId = globalQueryPlan->getSharedQueryId(queryId);
             //Return the execution nodes running the shared query plan
-            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, sharedQueryPlanId);
+            auto executionPlanJson = globalExecutionPlan->getAsJson(sharedQueryPlanId);
             NES_DEBUG("QueryController:: execution-plan: {}", executionPlanJson.dump());
             return createResponse(Status::CODE_200, executionPlanJson.dump());
         } catch (Exceptions::QueryNotFoundException& e) {

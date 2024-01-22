@@ -110,17 +110,9 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         } else if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
             //Perform placement of updated shared query plan
             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-            bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-            if (!placementSuccessful) {
-                throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                                  "QueryProcessingService: Failed to perform query placement for "
-                                                                  "query plan with shared query id: "
-                                                                      + std::to_string(sharedQueryId));
-            }
-
-            //Perform deployment of re-placed shared query plan
+            auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+            //Perform deployment of updated decomposed query plans
             queryDeploymentPhase->execute(sharedQueryPlan);
-
             //Update the shared query plan as deployed
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
         }
