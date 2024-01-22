@@ -25,7 +25,10 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-
+namespace NES {
+class DataEmitter;
+using DataEmitterPtr = DataEmitter*;
+}// namespace NES
 namespace NES::Network {
 
 /**
