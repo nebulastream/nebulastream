@@ -56,30 +56,6 @@ enum class QueryState : uint8_t {
     MIGRATION_COMPLETED,
     EXPLAINED,
 };
-
-//std::string queryStateToString(QueryState queryState) {
-//    switch (queryState) {
-//        case QueryState::REGISTERED: return "REGISTERED";
-//        case QueryState::OPTIMIZING: break;
-//        case QueryState::MARKED_FOR_DEPLOYMENT: break;
-//        case QueryState::MARKED_FOR_REDEPLOYMENT: break;
-//        case QueryState::MARKED_FOR_MIGRATION: break;
-//        case QueryState::DEPLOYED: break;
-//        case QueryState::REDEPLOYED: break;
-//        case QueryState::RUNNING: break;
-//        case QueryState::MIGRATING: break;
-//        case QueryState::MARKED_FOR_HARD_STOP: break;
-//        case QueryState::MARKED_FOR_SOFT_STOP: break;
-//        case QueryState::SOFT_STOP_TRIGGERED: break;
-//        case QueryState::SOFT_STOP_COMPLETED: break;
-//        case QueryState::STOPPED: break;
-//        case QueryState::MARKED_FOR_FAILURE: break;
-//        case QueryState::FAILED: break;
-//        case QueryState::RESTARTING: break;
-//        case QueryState::MIGRATION_COMPLETED: break;
-//        case QueryState::EXPLAINED: break;
-//    }
-//}
 }// namespace NES
 
 #endif// NES_COMMON_INCLUDE_UTIL_QUERYSTATE_HPP_

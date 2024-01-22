@@ -1128,15 +1128,18 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
+//    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
+//        R"(Query::from("values").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+//        Optimizer::PlacementStrategy::BottomUp);
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-        R"(Query::from("values").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        R"(Query::from("values").map(Attribute("value") = Attribute("value") * 2).sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
 
-    std::stringstream ss;
-    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
-    ss << std::to_string(*restPort);
-    ss << "\"";
-    std::system(ss.str().c_str());
+//    std::stringstream ss;
+//    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
+//    ss << std::to_string(*restPort);
+//    ss << "\"";
+//    std::system(ss.str().c_str());
 
     std::cin.get();
     //auto nodeMap = nodes.get<std::map<uint64, std::pair<double, double>>>();

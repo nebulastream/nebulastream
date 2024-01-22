@@ -152,9 +152,6 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     for (const auto& node : executionNodes) {
         auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
-            // const auto subplanMetaData = queryCatalogService->getEntryForQuery(singleQueryId)
-            //                                  ->getQuerySubPlanMetaData(decomposedQueryPlan->getDecomposedQueryPlanId());
-            // auto subPlanStatus = subplanMetaData->getSubQueryStatus();
             auto subPlanStatus = decomposedQueryPlan->getState();
             if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
                 globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
@@ -205,16 +202,13 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                     workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
                     decomposedQueryPlan->setState(QueryState::RUNNING);
                     subplanMetaData->updateStatus(decomposedQueryPlan->getState());
-                    //completionQueues[queueForExecutionNode] = allDecomposedQueryPlans.size();
                     completionQueues[queueForExecutionNode]++;
                     break;
                 }
                 case QueryState::REDEPLOYED: {
-                    //todo #4440: make async function work for this
-                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
-                    //completionQueues[queueForExecutionNode] = allDecomposedQueryPlans.size();
-                    completionQueues[queueForExecutionNode]++;
                     //workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
+                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
+                    completionQueues[queueForExecutionNode]++;
                     break;
                 }
                 default: {
