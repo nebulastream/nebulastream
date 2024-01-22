@@ -20,8 +20,9 @@
 extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 namespace {
 using namespace std::chrono_literals;
-template<typename Config>
-class UnikernelSink {
+
+template<typename SubQuery, typename Config>
+class UnikernelSinkImpl {
   public:
     static constexpr size_t StageId = 1;
     static std::optional<typename Config::SinkType> sink;
@@ -29,7 +30,7 @@ class UnikernelSink {
     static void setup() {
         if constexpr (std::is_same_v<typename Config::SinkType, NES::Network::NetworkSink>) {
             NES_INFO("Calling Setup for NetworkSink");
-            UnikernelSink::sink.emplace(
+            UnikernelSinkImpl::sink.emplace(
                 1,
                 Config::QueryID,
                 Config::QuerySubplanID,
@@ -46,19 +47,32 @@ class UnikernelSink {
             sink->setup();
         } else if constexpr (std::is_same_v<typename Config::SinkType, NES::KafkaSink<Config>>) {
             NES_INFO("Calling Setup for KafkaSink");
-            UnikernelSink::sink.emplace(1, Config::Broker, Config::Topic, Config::QueryID, Config::QuerySubplanID);
+            UnikernelSinkImpl::sink.emplace(1, Config::Broker, Config::Topic, Config::QueryID, Config::QuerySubplanID);
         } else {
             // Test Sink
-            UnikernelSink::sink.emplace(1);
+            UnikernelSinkImpl::sink.emplace(1);
         }
     }
 
     static void execute(NES::Runtime::TupleBuffer& tupleBuffer) { sink->writeData(tupleBuffer, *TheWorkerContext); }
 
-    static void stop() { sink->shutdown(); }
+    static void stop(size_t /*stage_id*/) {
+        NES_INFO("Calling Stop for Sink {}", StageId);
+        sink->shutdown();
+        SubQuery::stop();
+    }
+
+    static void request_stop() { sink->shutdown(); }
 };
-template<typename T>
-std::optional<typename T::SinkType> UnikernelSink<T>::sink = std::nullopt;
+
+template<typename Config>
+class UnikernelSink {
+  public:
+    template<typename SubQuery>
+    using Impl = UnikernelSinkImpl<SubQuery, Config>;
+};
+template<typename SubQuery, typename Config>
+std::optional<typename Config::SinkType> UnikernelSinkImpl<SubQuery, Config>::sink = std::nullopt;
 }// namespace
 
 #endif//NES_UNIKERNELSINK_HPP
