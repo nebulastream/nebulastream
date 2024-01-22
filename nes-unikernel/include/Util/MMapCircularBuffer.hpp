@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_UNIKERNEL_UTIL_CIRCULARBUFFER_HPP
-#define NES_UNIKERNEL_UTIL_CIRCULARBUFFER_HPP
+#ifndef NES_UNIKERNEL_UTIL_MMAPCIRCULARBUFFER_HPP
+#define NES_UNIKERNEL_UTIL_MMAPCIRCULARBUFFER_HPP
 #include <span>
-class CircularBuffer {
+class MMapCircularBuffer {
   public:
     explicit CircularBuffer(size_t capacity);
 
@@ -47,4 +47,4 @@ class CircularBuffer {
     size_t read = 0;
     size_t write = 0;
 };
-#endif//NES_UNIKERNEL_UTIL_CIRCULARBUFFER_HPP
+#endif//NES_UNIKERNEL_UTIL_MMAPCIRCULARBUFFER_HPP
