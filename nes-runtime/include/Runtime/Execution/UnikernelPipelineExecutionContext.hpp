@@ -21,25 +21,27 @@ extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 namespace NES::Unikernel {
 
 class UnikernelPipelineExecutionContext {
-    std::function<void(NES::Runtime::TupleBuffer&)> emitProxy;
-    std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy;
+    std::function<void(NES::Runtime::TupleBuffer&)> emitProxy = nullptr;
+    std::function<void(size_t stageId)> stopProxy = nullptr;
+    std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy = nullptr;
     size_t currentStageId;
     size_t nextStageId;
     UnikernelPipelineExecutionContext(std::function<void(NES::Runtime::TupleBuffer&)> emitProxy,
+                                      std::function<void(size_t stageId)> stop,
                                       std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy,
                                       size_t currentStageId,
                                       size_t nextStageId)
-        : emitProxy(std::move(emitProxy)), getOperatorHandlerProxy(std::move(getOperatorHandlerProxy)),
-          currentStageId(currentStageId), nextStageId(nextStageId) {}
+        : emitProxy(std::move(emitProxy)), stopProxy(std::move(stop)),
+          getOperatorHandlerProxy(std::move(getOperatorHandlerProxy)), currentStageId(currentStageId), nextStageId(nextStageId) {}
 
   public:
     template<typename T, typename Stage>
     static UnikernelPipelineExecutionContext create() {
-        return UnikernelPipelineExecutionContext(&T::execute, &Stage::getOperatorHandler, Stage::StageId, T::StageId);
+        return UnikernelPipelineExecutionContext(&T::execute, &T::stop, &Stage::getOperatorHandler, Stage::StageId, T::StageId);
     }
     template<IsEmitablePipelineStage T>
     static UnikernelPipelineExecutionContext create() {
-        return UnikernelPipelineExecutionContext(&T::execute, nullptr, 0, T::StageId);
+        return UnikernelPipelineExecutionContext(&T::execute, &T::stop, nullptr, 0, T::StageId);
     }
     [[nodiscard]] NES::Runtime::Execution::OperatorHandler* getOperatorHandler(int index) const {
         NES_INFO("getOperatorHandler for {}", currentStageId);
@@ -98,6 +100,13 @@ class UnikernelPipelineExecutionContext {
 
         emitProxy(tb);
     }
+
+    void stop() const {
+        NES_INFO("Stop was called from: {}", currentStageId);
+        std::cerr << "Calling stop for " << nextStageId << std::endl;
+        stopProxy(currentStageId);
+    }
+
     NES::Runtime::BufferManagerPtr getBufferManager() { return TheBufferManager; }
     size_t getNumberOfWorkerThreads() { return 1; }
 };

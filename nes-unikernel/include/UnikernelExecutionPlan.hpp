@@ -54,10 +54,17 @@ class PipelineImpl<Prev, Stage, Stages...> {
         Next::setup();
     }
 
-    static void stop() {
+    static void stop(size_t /*stage_id*/) {
+        NES_INFO("Calling Stop for stage {}", StageId);
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
         Stage::terminate(ctx, TheWorkerContext);
-        Next::stop();
+        Prev::stop(Stage::StageId);
+    }
+
+    static void request_stop() {
+        Next::request_stop();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        Stage::terminate(ctx, TheWorkerContext);
     }
 
     static void execute(NES::Runtime::TupleBuffer& tb) {
@@ -77,7 +84,7 @@ class PipelineImpl<Prev, Source> {
         SourceImpl::setup();
     }
 
-    static void stop() { SourceImpl::stop(); }
+    static void request_stop() { SourceImpl::request_stop(); }
 };
 
 template<typename... Stages>
@@ -87,19 +94,33 @@ class Pipeline {
     using Impl = PipelineImpl<Prev, Stages...>;
 };
 
-template<typename Sink, UnikernelPipeline<Sink> Pipeline>
-class SubQuery {
-    using PipelineImpl = Pipeline::template Impl<Sink>;
+template<typename Query, typename Sink, UnikernelPipeline<Sink> Pipeline>
+class SubQueryImpl {
+    using SinkImpl = typename Sink::template Impl<SubQueryImpl>;
+    using PipelineImpl = typename Pipeline::template Impl<SinkImpl>;
 
   public:
     static void setup() {
-        Sink::setup();
+        SinkImpl::setup();
         PipelineImpl::setup();
     }
     static void stop() {
-        PipelineImpl::stop();
-        Sink::stop();
+        NES_INFO("SubQuery Stopped");
+        Query::stop();
     }
+
+    static void request_stop() {
+        PipelineImpl::request_stop();
+        SinkImpl::request_stop();
+        Query::stop();
+    }
+};
+
+template<typename Sink, UnikernelPipeline<Sink> Pipeline>
+class SubQuery {
+  public:
+    template<typename Query>
+    using Impl = SubQueryImpl<Query, Sink, Pipeline>;
 };
 
 template<UnikernelBackwardsPipelineImpl Prev,
@@ -126,11 +147,27 @@ class PipelineJoinImpl {
         Stage::execute(ctx, TheWorkerContext, tb);
     }
 
-    static void stop() {
+    static void stop(size_t stageId) {
+        std::cerr << "Calling stop" << std::endl;
+
+        if (stageId == LeftImpl::StageId) {
+            RightImpl::request_stop();
+        } else {
+            LeftImpl::request_stop();
+        }
+
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
         Stage::terminate(ctx, TheWorkerContext);
-        LeftImpl::stop();
-        RightImpl::stop();
+
+        Prev::stop(Stage::StageId);
+    }
+
+    static void request_stop() {
+        std::cerr << "Requesting stop" << std::endl;
+        LeftImpl::request_stop();
+        RightImpl::request_stop();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        Stage::terminate(ctx, TheWorkerContext);
     }
 };
 
@@ -143,12 +180,46 @@ class PipelineJoin {
 
 template<typename... SubQuery>
 class UnikernelExecutionPlan {
+    static std::condition_variable stop_condition;
+    static std::mutex m;
+    static bool is_running;
+
   public:
-    static void setup() { (SubQuery::setup(), ...); }
+    static void setup() {
+        (SubQuery::template Impl<UnikernelExecutionPlan>::setup(), ...);
+        std::unique_lock lock(m);
+        is_running = true;
+    }
 
-    static void stop() { (SubQuery::stop(), ...); }
+    static void stop() {
+        {
+            std::unique_lock lock(m);
+            is_running = false;
+        }
+        stop_condition.notify_all();
+        NES_INFO("Query has stopped");
+    }
+
+    static void request_stop() {
+        NES_INFO("Query Stop Requested");
+        (SubQuery::template Impl<UnikernelExecutionPlan>::request_stop(), ...);
+    }
+
+    static void wait() {
+        std::unique_lock lock(m);
+        stop_condition.wait(lock, []() {
+            return !is_running;
+        });
+    }
 };
+template<typename... SubQuery>
+std::condition_variable UnikernelExecutionPlan<SubQuery...>::stop_condition;
 
+template<typename... SubQuery>
+std::mutex UnikernelExecutionPlan<SubQuery...>::m;
+
+template<typename... SubQuery>
+bool UnikernelExecutionPlan<SubQuery...>::is_running = false;
 }// namespace NES::Unikernel
 
 #endif//NES_UNIKERNELEXECUTIONPLAN_H
