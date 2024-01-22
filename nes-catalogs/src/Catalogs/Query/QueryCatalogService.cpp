@@ -292,7 +292,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                 /* receiving a soft stop for a query sub plan of a migrating query marks the completion of the
                  * migration of that specific query sub plan.*/
                 if (querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
-                    //todo #4396: once a specifig drain EOS is implemented, remove this as the received state should already equal migration completed
+                    //todo #4396: once a specific drain EOS is implemented, remove this as the received state should already equal migration completed
                     querySubPlanMetaData->updateStatus(QueryState::MIGRATION_COMPLETED);
                 }
 

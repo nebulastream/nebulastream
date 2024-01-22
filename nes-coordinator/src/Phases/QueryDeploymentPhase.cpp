@@ -188,6 +188,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {}", sharedQueryId, rpcAddress);
 
+        completionQueues[queueForExecutionNode] = 0;
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
             auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
             auto subplanMetaData = queryCatalogService->getEntryForQuery(singleQueryId)
@@ -204,13 +205,16 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                     workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
                     decomposedQueryPlan->setState(QueryState::RUNNING);
                     subplanMetaData->updateStatus(decomposedQueryPlan->getState());
-                    completionQueues[queueForExecutionNode] = allDecomposedQueryPlans.size();
+                    //completionQueues[queueForExecutionNode] = allDecomposedQueryPlans.size();
+                    completionQueues[queueForExecutionNode]++;
                     break;
                 }
                 case QueryState::REDEPLOYED: {
                     //todo #4440: make async function work for this
-                    //workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
-                    workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
+                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
+                    //completionQueues[queueForExecutionNode] = allDecomposedQueryPlans.size();
+                    completionQueues[queueForExecutionNode]++;
+                    //workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
                     break;
                 }
                 default: {
@@ -219,6 +223,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
             }
         }
     }
+    //todo: problem is here
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
 }
