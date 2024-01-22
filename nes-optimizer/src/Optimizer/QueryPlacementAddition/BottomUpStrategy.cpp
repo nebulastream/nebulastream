@@ -40,10 +40,11 @@ BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecution
                                    PlacementAmendmentMode placementAmendmentMode)
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
-bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                                 DecomposedQueryPlanVersion querySubPlanVersion) {
+std::vector<DeploymentContextPtr>
+BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                            DecomposedQueryPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
 

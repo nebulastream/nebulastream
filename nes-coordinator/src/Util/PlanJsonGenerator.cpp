@@ -134,54 +134,6 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
     }
 }
 
-nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                         QueryId queryId) {
-    NES_INFO("UtilityFunctions: getting execution plan as JSON");
-
-    nlohmann::json executionPlanJson{};
-    std::vector<nlohmann::json> nodes = {};
-
-    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
-    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
-        nlohmann::json currentExecutionNodeJsonValue{};
-
-        currentExecutionNodeJsonValue["executionNodeId"] = executionNode->getId();
-        currentExecutionNodeJsonValue["topologyNodeId"] = executionNode->getTopologyNode()->getId();
-        currentExecutionNodeJsonValue["topologyNodeIpAddress"] = executionNode->getTopologyNode()->getIpAddress();
-
-        auto allDecomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
-        if (!allDecomposedQueryPlans.empty()) {
-            continue;
-        }
-
-        nlohmann::json queryToQuerySubPlans{};
-        queryToQuerySubPlans["queryId"] = queryId;
-
-        std::vector<nlohmann::json> scheduledSubQueries;
-        // loop over all query sub plans inside the current executionNode
-        for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
-
-            // prepare json object to hold information on current query sub plan
-            nlohmann::json currentQuerySubPlan{};
-
-            // id of current query sub plan
-            currentQuerySubPlan["querySubPlanId"] = decomposedQueryPlan->getDecomposedQueryPlanId();
-
-            // add the string containing operator to the json object of current query sub plan
-            currentQuerySubPlan["querySubPlan"] = decomposedQueryPlan->toString();
-
-            scheduledSubQueries.push_back(currentQuerySubPlan);
-        }
-        queryToQuerySubPlans["querySubPlans"] = scheduledSubQueries;
-        currentExecutionNodeJsonValue["ScheduledQueries"] = queryToQuerySubPlans;
-        nodes.push_back(currentExecutionNodeJsonValue);
-    }
-
-    // add `executionNodes` JSON array to the final JSON result
-    executionPlanJson["executionNodes"] = nodes;
-    return executionPlanJson;
-}
-
 nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPlan) {
 
     NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");

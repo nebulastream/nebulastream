@@ -27,6 +27,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/SysPlanMetaData.hpp>
 #include <algorithm>
@@ -700,9 +701,12 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
     }
 }
 
-bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
-                                                         ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                         DecomposedQueryPlanVersion querySubPlanVersion) {
+std::vector<DeploymentContextPtr>
+BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
+                                                    ComputedDecomposedQueryPlans& computedSubQueryPlans,
+                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
+
+    std::vector<DeploymentContextPtr> deploymentContexts;
 
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
@@ -723,7 +727,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
             auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
             if (!lockedTopologyNode->operator*()->occupySlots(consumedResources)) {
                 NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
-                return false;
+                return deploymentContexts;
             }
 
             // 1.3. Check if the worker node contains pinned upstream operators
@@ -736,23 +740,22 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
             }
 
             // 1.4. Fetch the execution node to update and placed query sub plans
-            auto topologyNode = workerIdToTopologyNodeMap[workerNodeId];
             auto executionNode = getLockedExecutionNode(lockedTopologyNode);
             auto placedQuerySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
 
             // 1.5. Iterate over the placed query sub plans and update execution node
-            auto computedQuerySubPlans = computedSubQueryPlans[workerNodeId];
-            for (const auto& computedQuerySubPlan : computedQuerySubPlans) {
+            auto computedDecomposedQueryPlans = computedSubQueryPlans[workerNodeId];
+            for (const auto& computedDecomposedQueryPlan : computedDecomposedQueryPlans) {
 
                 // 1.5.1. Perform the type inference phase on the updated query sub plan and update execution node.
-                if (computedQuerySubPlan->getDecomposedQueryPlanId() == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
+                if (computedDecomposedQueryPlan->getDecomposedQueryPlanId() == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
                     if (containPinnedUpstreamOperator) {
 
                         // Record all placed query sub plans that host pinned leaf operators
                         std::set<DecomposedQueryPlanPtr> hostQuerySubPlans;
 
                         // Iterate over all pinned leaf operators and find a host placed query sub plan that hosts
-                        auto computedOperators = computedQuerySubPlan->getAllOperators();
+                        auto computedOperators = computedDecomposedQueryPlan->getAllOperators();
                         for (const auto& computedOperator : computedOperators) {
 
                             // If the pinned leaf operator is not of type logical source and was already placed.
@@ -798,7 +801,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                             if (pinnedDownstreamOperator->instanceOf<SinkLogicalOperatorNode>()) {
                                                 mergedOperator = tryMergingNetworkSink(
                                                     querySubPlanVersion,
-                                                    computedQuerySubPlan,
+                                                    computedDecomposedQueryPlan,
                                                     matchingPlacedLeafOperator,
                                                     pinnedDownstreamOperator->as<SinkLogicalOperatorNode>());
                                             }
@@ -837,7 +840,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         }
 
                         //In the end, add root operators of computed plan as well.
-                        for (const auto& rootOperator : computedQuerySubPlan->getRootOperators()) {
+                        for (const auto& rootOperator : computedDecomposedQueryPlan->getRootOperators()) {
                             updatedQuerySubPlan->addRootOperator(rootOperator);
                         }
 
@@ -848,7 +851,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         executionNode->operator*()->registerDecomposedQueryPlan(updatedQuerySubPlan);
                     } else if (containPinnedDownstreamOperator) {
 
-                        auto computedOperators = computedQuerySubPlan->getAllOperators();
+                        auto computedOperators = computedDecomposedQueryPlan->getAllOperators();
                         std::set<DecomposedQueryPlanPtr> hostQuerySubPlans;
                         for (const auto& computedOperator : computedOperators) {
 
@@ -931,12 +934,12 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         NES_ERROR(
                             "A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
                             "operator.",
-                            computedQuerySubPlan->toString());
+                            computedDecomposedQueryPlan->toString());
                         throw Exceptions::RuntimeException("A query sub plan with invalid query sub plan found that has no "
                                                            "pinned upstream or downstream operator.");
                     }
                 } else {
-                    auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
+                    auto updatedQuerySubPlan = typeInferencePhase->execute(computedDecomposedQueryPlan);
                     updatedQuerySubPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                     updatedQuerySubPlan->setVersion(querySubPlanVersion);
                     executionNode->operator*()->registerDecomposedQueryPlan(updatedQuerySubPlan);
@@ -964,19 +967,26 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                 }
             }
 
-            // 1.7. Release lock on the topology node
+            // 1.7. compute deployment context
+            const std::string& ipAddress = lockedTopologyNode->operator*()->getIpAddress();
+            uint32_t grpcPort = lockedTopologyNode->operator*()->getGrpcPort();
+            for (const auto& decomposedQueryPlan : computedDecomposedQueryPlans) {
+                deploymentContexts.emplace_back(DeploymentContext::create(ipAddress, grpcPort, decomposedQueryPlan));
+            }
+
+            // 1.8. Release lock on the topology node
             if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
                 lockedTopologyNode->unlock();
             }
 
-            // 1.8. release lock on the execution node
+            // 1.9. release lock on the execution node
             executionNode->unlock();
         } catch (std::exception& ex) {
             NES_ERROR("Exception occurred during pinned operator placement {}.", ex.what());
             throw ex;
         }
     }
-    return true;
+    return deploymentContexts;
 }
 
 bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanVersion querySubPlanVersion,

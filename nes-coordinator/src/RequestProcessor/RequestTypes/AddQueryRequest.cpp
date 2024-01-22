@@ -328,12 +328,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         }
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        if (!queryPlacementAmendmentPhase->execute(sharedQueryPlan)) {
-            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                              "QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with shared query id: "
-                                                                  + std::to_string(sharedQueryId));
-        }
+        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //22. Perform deployment of re-placed shared query plan
         queryDeploymentPhase->execute(sharedQueryPlan);

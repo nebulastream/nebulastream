@@ -20,14 +20,15 @@
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
+#include <nlohmann/json.hpp>
 
 namespace NES::Optimizer {
 
 GlobalExecutionPlanPtr Optimizer::GlobalExecutionPlan::create() { return std::make_shared<GlobalExecutionPlan>(); }
 
 bool GlobalExecutionPlan::addDecomposedQueryPlan(ExecutionNodeId executionNodeId, DecomposedQueryPlanPtr decomposedQueryPlan) {
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
-        auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
+    auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
+    if (lockedExecutionNodeMap->contains(executionNodeId)) {
         auto lockedExecutionNode = (*lockedExecutionNodeMap)[executionNodeId].wlock();
         return (*lockedExecutionNode)->registerDecomposedQueryPlan(decomposedQueryPlan);
     }
@@ -40,9 +41,9 @@ bool GlobalExecutionPlan::updateDecomposedQueryPlanState(ExecutionNodeId executi
                                                          DecomposedQueryPlanId decomposedQueryPlanId,
                                                          DecomposedQueryPlanVersion expectedVersion,
                                                          QueryState newDecomposedQueryPlanState) {
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
+    auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
+    if (lockedExecutionNodeMap->contains(executionNodeId)) {
         NES_DEBUG("Returning execution node with id  {}", executionNodeId);
-        auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
         auto lockedExecutionNode = (*lockedExecutionNodeMap)[executionNodeId].wlock();
         auto decomposedPlan = (*lockedExecutionNode)->getDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
         if (!decomposedPlan) {
@@ -63,9 +64,9 @@ bool GlobalExecutionPlan::updateDecomposedQueryPlanState(ExecutionNodeId executi
 }
 
 std::set<SharedQueryId> GlobalExecutionPlan::getPlacedSharedQueryIds(ExecutionNodeId executionNodeId) const {
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
+    auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
+    if (lockedExecutionNodeMap->contains(executionNodeId)) {
         NES_DEBUG("Returning execution node with id  {}", executionNodeId);
-        auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
         auto lockedExecutionNode = (*lockedExecutionNodeMap).at(executionNodeId).wlock();
         return (*lockedExecutionNode)->getPlacedSharedQueryPlanIds();
     }
@@ -76,9 +77,9 @@ std::set<SharedQueryId> GlobalExecutionPlan::getPlacedSharedQueryIds(ExecutionNo
 DecomposedQueryPlanPtr GlobalExecutionPlan::getCopyOfDecomposedQueryPlan(ExecutionNodeId executionNodeId,
                                                                          SharedQueryId sharedQueryId,
                                                                          DecomposedQueryPlanId decomposedQueryPlanId) {
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
+    auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
+    if (lockedExecutionNodeMap->contains(executionNodeId)) {
         NES_DEBUG("Returning execution node with id  {}", executionNodeId);
-        auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
         auto lockedExecutionNode = (*lockedExecutionNodeMap).at(executionNodeId).wlock();
         const auto& decomposedQueryPlan = (*lockedExecutionNode)->getDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
         if (decomposedQueryPlan) {
@@ -92,9 +93,9 @@ DecomposedQueryPlanPtr GlobalExecutionPlan::getCopyOfDecomposedQueryPlan(Executi
 
 std::vector<DecomposedQueryPlanPtr> GlobalExecutionPlan::getCopyOfAllDecomposedQueryPlans(ExecutionNodeId executionNodeId,
                                                                                           SharedQueryId sharedQueryId) {
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
+    auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
+    if (lockedExecutionNodeMap->contains(executionNodeId)) {
         NES_DEBUG("Returning execution node with id  {}", executionNodeId);
-        auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
         auto lockedExecutionNode = (*lockedExecutionNodeMap).at(executionNodeId).wlock();
         const auto& decomposedQueryPlans = (*lockedExecutionNode)->getAllDecomposedQueryPlans(sharedQueryId);
         std::vector<DecomposedQueryPlanPtr> copiedDecomposedQueryPlans;
@@ -108,9 +109,9 @@ std::vector<DecomposedQueryPlanPtr> GlobalExecutionPlan::getCopyOfAllDecomposedQ
 }
 
 ExecutionNodeWLock GlobalExecutionPlan::getLockedExecutionNode(ExecutionNodeId executionNodeId) {
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
+    auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
+    if (lockedExecutionNodeMap->contains(executionNodeId)) {
         NES_DEBUG("Returning execution node with id  {}", executionNodeId);
-        auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
         auto lockedExecutionNode = (*lockedExecutionNodeMap)[executionNodeId].tryWLock();
         //Try to acquire a write lock on the topology node
         if (lockedExecutionNode) {
@@ -123,9 +124,9 @@ ExecutionNodeWLock GlobalExecutionPlan::getLockedExecutionNode(ExecutionNodeId e
 
 bool GlobalExecutionPlan::addExecutionNodeAsRoot(ExecutionNodeId executionNodeId) {
     NES_DEBUG("Added Execution node as root node");
-    auto found = std::find(rootExecutionNodeIds.begin(), rootExecutionNodeIds.end(), executionNodeId);
-    if (found == rootExecutionNodeIds.end()) {
-        rootExecutionNodeIds.push_back(executionNodeId);
+    auto found = std::find(rootExecutionNodeIds->begin(), rootExecutionNodeIds->end(), executionNodeId);
+    if (found == rootExecutionNodeIds->end()) {
+        rootExecutionNodeIds->push_back(executionNodeId);
     } else {
         NES_WARNING("Execution node already present in the root node list");
     }
@@ -136,7 +137,7 @@ ExecutionNodeWLock GlobalExecutionPlan::createAndGetLockedExecutionNode(const To
     ExecutionNodeId executionNodeId = lockedTopologyNode->operator*()->getId();
     NES_DEBUG("Added Execution node with id  {}", executionNodeId);
     auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
+    if (lockedExecutionNodeMap->contains(executionNodeId)) {
         NES_DEBUG("Execution node {} already present.", executionNodeId);
         return getLockedExecutionNode(executionNodeId);
     }
@@ -146,7 +147,7 @@ ExecutionNodeWLock GlobalExecutionPlan::createAndGetLockedExecutionNode(const To
     // Add child execution nodes
     for (const auto& childTopologyNode : lockedTopologyNode->operator*()->getChildren()) {
         auto childExecutionNodeId = childTopologyNode->as<TopologyNode>()->getId();
-        if (idToExecutionNodeMap->contains(childExecutionNodeId)) {
+        if (lockedExecutionNodeMap->contains(childExecutionNodeId)) {
             auto lockedChildExecutionNode = (*lockedExecutionNodeMap)[childExecutionNodeId].wlock();
             (*lockedChildExecutionNode)->addParent(newExecutionNode);
         }
@@ -158,7 +159,7 @@ ExecutionNodeWLock GlobalExecutionPlan::createAndGetLockedExecutionNode(const To
         // Add parent execution nodes
         for (const auto& parentTopologyNode : lockedTopologyNode->operator*()->getParents()) {
             auto parentExecutionNodeId = parentTopologyNode->as<TopologyNode>()->getId();
-            if (idToExecutionNodeMap->contains(parentExecutionNodeId)) {
+            if (lockedExecutionNodeMap->contains(parentExecutionNodeId)) {
                 auto parentExecutionNode = getLockedExecutionNode(parentExecutionNodeId);
                 auto lockedParentExecutionNode = (*lockedExecutionNodeMap)[parentExecutionNodeId].wlock();
                 (*lockedParentExecutionNode)->addChild(newExecutionNode);
@@ -177,108 +178,189 @@ ExecutionNodeWLock GlobalExecutionPlan::createAndGetLockedExecutionNode(const To
 
 bool GlobalExecutionPlan::removeExecutionNode(ExecutionNodeId executionNodeId) {
     NES_DEBUG("Removing Execution node with id  {}", executionNodeId);
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
+    //Lock execution node map and root execution node id
+    auto [lockedExecutionNodeMap, lockedRootExecutionNodeIds] = folly::acquireLocked(idToExecutionNodeMap, rootExecutionNodeIds);
+    if (lockedExecutionNodeMap->contains(executionNodeId)) {
         NES_DEBUG("Removed execution node with id  {}", executionNodeId);
-        auto found = std::find(rootExecutionNodeIds.begin(), rootExecutionNodeIds.end(), executionNodeId);
-        auto nodeToRemove = idToExecutionNodeMap.at(executionNodeId);
-        for (const auto& parent : nodeToRemove->getParents()) {
-            parent->removeChild(nodeToRemove);
+        auto found = std::find(lockedRootExecutionNodeIds->begin(), lockedRootExecutionNodeIds->end(), executionNodeId);
+        if (found != lockedRootExecutionNodeIds->end()) {
+            lockedRootExecutionNodeIds->erase(found);
+            //Release the lock
+            lockedRootExecutionNodeIds.unlock();
         }
-        for (const auto& child : nodeToRemove->getChildren()) {
-            child->removeParent(nodeToRemove);
+        auto lockedExecutionNodeToRemove = (*lockedExecutionNodeMap)[executionNodeId].wlock();
+        const auto& parentExecutionNodes = (*lockedExecutionNodeToRemove)->getParents();
+        for (const auto& parentExecutionNode : parentExecutionNodes) {
+            parentExecutionNode->removeChild((*lockedExecutionNodeToRemove));
         }
-        if (found != rootNodes.end()) {
-            rootNodes.erase(found);
-        } else {
+        const auto& childrenExecutionNodes = (*lockedExecutionNodeToRemove)->getChildren();
+        for (const auto& childExecutionNode : childrenExecutionNodes) {
+            childExecutionNode->removeParent((*lockedExecutionNodeToRemove));
         }
-        return idToExecutionNodeMap->erase(executionNodeId) == 1;
+        //Unlock the execution node before removal
+        lockedExecutionNodeToRemove.unlock();
+        //Erase the execution node
+        return lockedExecutionNodeMap->erase(executionNodeId) == 1;
     }
     NES_DEBUG("Failed to remove Execution node with id  {}", executionNodeId);
     return false;
 }
 
 bool GlobalExecutionPlan::removeAllDecomposedQueryPlans(SharedQueryId sharedQueryId) {
-    if (!sharedQueryIdToExecutionNodeIdMap.contains(sharedQueryId)) {
+    NES_DEBUG("Removing all decomposed query plans for shared query {}", sharedQueryId);
+    //Lock execution node map and root execution node id
+    auto [lockedExecutionNodeMap, lockedSharedQueryIdToExecutionNodeIdMap] =
+        folly::acquireLocked(idToExecutionNodeMap, sharedQueryIdToExecutionNodeIdMap);
+
+    if (!lockedSharedQueryIdToExecutionNodeIdMap->contains(sharedQueryId)) {
         NES_DEBUG("No query with id {} exists in the system", sharedQueryId);
         return false;
     }
 
-    auto executionNodes = sharedQueryIdToExecutionNodeIdMap[sharedQueryId];
-    NES_DEBUG("Found {} Execution node for shared query with id {}", executionNodes.size(), sharedQueryId);
-    for (const auto& executionNode : executionNodes) {
-        uint64_t executionNodeId = executionNode->getId();
-        if (!executionNode->removeDecomposedQueryPlans(sharedQueryId)) {
+    auto executionNodeIds = (*lockedSharedQueryIdToExecutionNodeIdMap)[sharedQueryId];
+    NES_DEBUG("Found {} Execution node for shared query with id {}", executionNodeIds.size(), sharedQueryId);
+    for (const auto& executionNodeId : executionNodeIds) {
+        auto lockedExecutionNode = (*lockedExecutionNodeMap)[executionNodeId].wlock();
+        if (!(*lockedExecutionNode)->removeDecomposedQueryPlans(sharedQueryId)) {
             NES_ERROR("Unable to remove query sub plan with id {} from execution node with id {}",
                       sharedQueryId,
                       executionNodeId);
             return false;
         }
-        if (executionNode->getAllQuerySubPlans().empty()) {
+
+        if ((*lockedExecutionNode)->getAllQuerySubPlans().empty()) {
             removeExecutionNode(executionNodeId);
         }
     }
-    sharedQueryIdToExecutionNodeIdMap.erase(sharedQueryId);
+    lockedSharedQueryIdToExecutionNodeIdMap->erase(sharedQueryId);
     NES_DEBUG("Removed all Execution nodes for the shared query with id {}", sharedQueryId);
     return true;
 }
 
 std::vector<ExecutionNodeWLock> GlobalExecutionPlan::getLockedExecutionNodesHostingSharedQueryId(SharedQueryId sharedQueryId) {
 
-    if (sharedQueryIdToExecutionNodeIdMap.contains(sharedQueryId)) {
+    //Lock execution node map and root execution node id
+    auto [lockedExecutionNodeMap, lockedSharedQueryIdToExecutionNodeIdMap] =
+        folly::acquireLocked(idToExecutionNodeMap, sharedQueryIdToExecutionNodeIdMap);
+
+    std::vector<ExecutionNodeWLock> lockedExecutionNodes;
+
+    if (lockedSharedQueryIdToExecutionNodeIdMap->contains(sharedQueryId)) {
         NES_DEBUG("Returning vector of Execution nodes for the shared query with id  {}", sharedQueryId);
-        return sharedQueryIdToExecutionNodeIdMap[sharedQueryId];
-    }
-    NES_WARNING("unable to find the Execution nodes for the shared query with id {}", sharedQueryId);
-    return {};
-}
+        auto executionNodeIds = (*lockedSharedQueryIdToExecutionNodeIdMap)[sharedQueryId];
 
-bool GlobalExecutionPlan::removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId,
-                                                     SharedQueryId sharedQueryId,
-                                                     DecomposedQueryPlanId decomposedQueryPlanId) {
-
-    //return false if no node with the given id could be found
-    if (idToExecutionNodeMap->contains(executionNodeId)) {
-        return false;
-    }
-
-    auto executionNode = idToExecutionNodeMap[executionNodeId];
-
-    //return false if no query sub plan with the given id was found at the node
-    if (!executionNode->removeDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId)) {
-        return false;
-    }
-
-    /* Check if the node still hosts query sub plans belonging the shared query with the given id. If not, remove
-     * the node from the vector of nodes associated with this shared query*/
-    if (executionNode->getAllDecomposedQueryPlans(sharedQueryId).empty()) {
-        auto& mappedNodes = sharedQueryIdToExecutionNodeIdMap[sharedQueryId];
-        if (mappedNodes.size() == 1) {
-            /* if this was the only node associated with this shared query id, remove the entry for this shared query
-             * from the index */
-            sharedQueryIdToExecutionNodeIdMap.erase(sharedQueryId);
-        } else {
-            /* if other nodes are still hosting sub queries of this shared query, remove only this node, from the list
-             * of nodes which host sub query plans of this shared query */
-            mappedNodes.erase(std::find(mappedNodes.begin(), mappedNodes.end(), executionNode));
+        for (const auto& executionNodeId : executionNodeIds) {
+            auto lockedExecutionNode = (*lockedExecutionNodeMap)[executionNodeId].wlock();
+            lockedExecutionNodes.emplace_back(
+                std::make_shared<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>(std::move(lockedExecutionNode)));
         }
     }
-
-    // if the node does not host any query sub plans anymore, remove it
-    if (executionNode->getAllQuerySubPlans().empty()) {
-        removeExecutionNode(executionNodeId);
-    }
-    return true;
+    NES_WARNING("unable to find the Execution nodes for the shared query with id {}", sharedQueryId);
+    return lockedExecutionNodes;
 }
+
+//bool GlobalExecutionPlan::removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId,
+//                                                     SharedQueryId sharedQueryId,
+//                                                     DecomposedQueryPlanId decomposedQueryPlanId) {
+//
+//    //return false if no node with the given id could be found
+//    if (idToExecutionNodeMap->contains(executionNodeId)) {
+//        return false;
+//    }
+//
+//    auto executionNode = idToExecutionNodeMap[executionNodeId];
+//
+//    //return false if no query sub plan with the given id was found at the node
+//    if (!executionNode->removeDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId)) {
+//        return false;
+//    }
+//
+//    /* Check if the node still hosts query sub plans belonging the shared query with the given id. If not, remove
+//     * the node from the vector of nodes associated with this shared query*/
+//    if (executionNode->getAllDecomposedQueryPlans(sharedQueryId).empty()) {
+//        auto& mappedNodes = sharedQueryIdToExecutionNodeIdMap[sharedQueryId];
+//        if (mappedNodes.size() == 1) {
+//            /* if this was the only node associated with this shared query id, remove the entry for this shared query
+//             * from the index */
+//            sharedQueryIdToExecutionNodeIdMap->erase(sharedQueryId);
+//        } else {
+//            /* if other nodes are still hosting sub queries of this shared query, remove only this node, from the list
+//             * of nodes which host sub query plans of this shared query */
+//            mappedNodes.erase(std::find(mappedNodes.begin(), mappedNodes.end(), executionNode));
+//        }
+//    }
+//
+//    // if the node does not host any query sub plans anymore, remove it
+//    if (executionNode->getAllQuerySubPlans().empty()) {
+//        removeExecutionNode(executionNodeId);
+//    }
+//    return true;
+//}
 
 std::string GlobalExecutionPlan::getAsString() {
     NES_DEBUG("Get Execution plan as string");
+    //Lock execution node map and root execution node id
+    auto [lockedExecutionNodeMap, lockedRootExecutionNodeIds] = folly::acquireLocked(idToExecutionNodeMap, rootExecutionNodeIds);
     std::stringstream ss;
     auto dumpHandler = QueryConsoleDumpHandler::create(ss);
-    for (const auto& rootNode : rootExecutionNodeIds) {
 
-        dumpHandler->multilineDump(rootNode);
+    auto rootIds = (*lockedRootExecutionNodeIds);
+    for (const auto& rootExecutionNodeId : rootIds) {
+        auto rootExecutionNode = (*lockedExecutionNodeMap)[rootExecutionNodeId].wlock();
+        dumpHandler->multilineDump((*rootExecutionNode));
     }
     return ss.str();
+}
+
+nlohmann::json GlobalExecutionPlan::getAsJson(SharedQueryId sharedQueryId) {
+    NES_INFO("UtilityFunctions: getting execution plan as JSON");
+
+    nlohmann::json executionPlanJson{};
+    //Lock execution node map and root execution node id
+    auto [lockedExecutionNodeMap, lockedSharedQueryIdToExecutionNodeIdMap] =
+        folly::acquireLocked(idToExecutionNodeMap, sharedQueryIdToExecutionNodeIdMap);
+
+    if (!lockedSharedQueryIdToExecutionNodeIdMap->contains(sharedQueryId)) {
+        NES_DEBUG("No shared query with id {} exists.", sharedQueryId);
+        return executionPlanJson;
+    }
+
+    std::vector<nlohmann::json> nodes = {};
+    auto executionNodeIds = (*lockedSharedQueryIdToExecutionNodeIdMap)[sharedQueryId];
+    for (const auto& executionNodeId : executionNodeIds) {
+        nlohmann::json currentExecutionNodeJsonValue{};
+        auto lockedExecutionNode = (*lockedExecutionNodeMap)[executionNodeId].wlock();
+        currentExecutionNodeJsonValue["executionNodeId"] = executionNodeId;
+        auto allDecomposedQueryPlans = (*lockedExecutionNode)->getAllDecomposedQueryPlans(sharedQueryId);
+        if (allDecomposedQueryPlans.empty()) {
+            continue;
+        }
+        nlohmann::json sharedQueryPlanToDecomposedQueryPlans{};
+        sharedQueryPlanToDecomposedQueryPlans["SharedQueryId"] = sharedQueryId;
+
+        std::vector<nlohmann::json> scheduledSubQueries;
+        // loop over all query sub plans inside the current executionNode
+        for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
+
+            // prepare json object to hold information on current query sub plan
+            nlohmann::json currentQuerySubPlan{};
+
+            // id of current query sub plan
+            currentQuerySubPlan["decomposedQueryPlanId"] = decomposedQueryPlan->getDecomposedQueryPlanId();
+
+            // add the string containing operator to the json object of current query sub plan
+            currentQuerySubPlan["decomposedQueryPlan"] = decomposedQueryPlan->toString();
+
+            scheduledSubQueries.push_back(currentQuerySubPlan);
+        }
+        sharedQueryPlanToDecomposedQueryPlans["decomposedQueryPlans"] = scheduledSubQueries;
+        currentExecutionNodeJsonValue["ScheduledQueries"] = sharedQueryPlanToDecomposedQueryPlans;
+        nodes.push_back(currentExecutionNodeJsonValue);
+    }
+
+    // add `executionNodes` JSON array to the final JSON result
+    executionPlanJson["executionNodes"] = nodes;
+    return executionPlanJson;
 }
 
 //void GlobalExecutionPlan::scheduleExecutionNode(const ExecutionNodePtr& executionNode) {
@@ -293,11 +375,11 @@ std::string GlobalExecutionPlan::getAsString() {
 //    mapExecutionNodeToSharedQueryId(executionNode);
 //}
 
-void GlobalExecutionPlan::mapExecutionNodeToSharedQueryId(const ExecutionNodePtr& executionNode) {
+/*void GlobalExecutionPlan::mapExecutionNodeToSharedQueryId(const ExecutionNodePtr& executionNode) {
     NES_DEBUG("Mapping execution node {} to the query Id index.", executionNode->getId());
     auto querySubPlanMap = executionNode->getAllQuerySubPlans();
     for (const auto& [sharedQueryId, querySubPlans] : querySubPlanMap) {
-        if (!sharedQueryIdToExecutionNodeIdMap.contains(sharedQueryId)) {
+        if (!sharedQueryIdToExecutionNodeIdMap->contains(sharedQueryId)) {
             NES_DEBUG("Query Id {} does not exists adding a new entry with execution node {}",
                       sharedQueryId,
                       executionNode->getId());
@@ -316,7 +398,7 @@ void GlobalExecutionPlan::mapExecutionNodeToSharedQueryId(const ExecutionNodePtr
             }
         }
     }
-}
+}*/
 
 //std::map<WorkerId, uint32_t> GlobalExecutionPlan::getMapOfWorkerIdToOccupiedResource(SharedQueryId sharedQueryId) {
 //    NES_INFO("Get a map of occupied resources for the shared query {}", sharedQueryId);

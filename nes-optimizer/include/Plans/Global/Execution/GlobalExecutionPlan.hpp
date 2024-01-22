@@ -20,9 +20,18 @@
 #include <folly/Synchronized.h>
 #include <map>
 #include <memory>
+#include <nlohmann/json_fwd.hpp>
 #include <vector>
 
-namespace NES::Optimizer {
+namespace NES {
+
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
+
+namespace Optimizer {
 
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
@@ -111,13 +120,6 @@ class GlobalExecutionPlan {
     bool addExecutionNodeAsRoot(ExecutionNodeId executionNodeId);
 
     /**
-     * Remove the execution node from the graph
-     * @param executionNodeId: id of the execution node to be removed
-     * @return true if operation succeeds
-     */
-    bool removeExecutionNode(ExecutionNodeId executionNodeId);
-
-    /**
      * Remove all the decomposed query plans for the input shared query plan id
      * @param sharedQueryId : the shared query id used for removing the input query
      * @return true if successful else false
@@ -144,6 +146,13 @@ class GlobalExecutionPlan {
      */
     std::string getAsString();
 
+    /**
+     * @brief get the json representation of execution plan of a query
+     * @param sharedQueryId of the shared query plan for which the execution plan is needed
+     * @return a JSON object representing the execution plan
+     */
+    nlohmann::json getAsJson(SharedQueryId sharedQueryId);
+
     //    /**
     //     * Add execution node to the collection of execution nodes to schedule
     //     * @param executionNode : execution node to schedule
@@ -157,23 +166,30 @@ class GlobalExecutionPlan {
     //     */
     //    std::map<uint64_t, uint32_t> getMapOfWorkerIdToOccupiedResource(SharedQueryId sharedQueryId);
 
-    /**
+    /*    *//**
      * @brief removes a decomposed query plan if it exists at a specific node
      * @param executionNodeId the id of the node hosting the decomposed query plan
      * @param sharedQueryId the id of the shared query
      * @param decomposedQueryPlanId the id of the decomposed query plan
      * @return true if the decomposed was found and removed, false if it could not be found
-     */
+     *//*
     bool removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId,
                                     SharedQueryId sharedQueryId,
-                                    DecomposedQueryPlanId decomposedQueryPlanId);
+                                    DecomposedQueryPlanId decomposedQueryPlanId);*/
 
   private:
     /**
+     * Remove the execution node from the graph
+     * @param executionNodeId: id of the execution node to be removed
+     * @return true if operation succeeds
+     */
+    bool removeExecutionNode(ExecutionNodeId executionNodeId);
+
+    /*    *//**
      * Map the input execution node with different sub query plans it has
      * @param executionNode : the input execution node
-     */
-    void mapExecutionNodeToSharedQueryId(const ExecutionNodePtr& executionNode);
+     *//*
+    void mapExecutionNodeToSharedQueryId(const ExecutionNodePtr& executionNode);*/
 
     /**
      * Index based on nodeId for faster access to the execution nodes
@@ -183,15 +199,15 @@ class GlobalExecutionPlan {
     /**
      * Index based on shared query Id for faster access to the execution nodes
      */
-    folly::Synchronized<std::map<SharedQueryId, folly::Synchronized<std::vector<ExecutionNodeId>>>>
-        sharedQueryIdToExecutionNodeIdMap;
+    folly::Synchronized<std::map<SharedQueryId, std::vector<ExecutionNodeId>>> sharedQueryIdToExecutionNodeIdMap;
 
     /**
      * List of root node ids
      */
-    std::vector<ExecutionNodeId> rootExecutionNodeIds;
+    folly::Synchronized<std::vector<ExecutionNodeId>> rootExecutionNodeIds;
 };
 
-}// namespace NES::Optimizer
+}// namespace Optimizer
+}// namespace NES
 
 #endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBALEXECUTIONPLAN_HPP_

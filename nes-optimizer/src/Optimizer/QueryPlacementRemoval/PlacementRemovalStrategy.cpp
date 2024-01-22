@@ -26,6 +26,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <Util/SysPlanMetaData.hpp>
@@ -56,10 +57,11 @@ PlacementRemovalStrategy::~PlacementRemovalStrategy() {
     }
 }
 
-bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId sharedQueryId,
-                                                         const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                                         DecomposedQueryPlanVersion querySubPlanVersion) {
+std::vector<DeploymentContextPtr>
+PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId sharedQueryId,
+                                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
         NES_INFO("Placement removal strategy called for the shared query plan {}", sharedQueryId);
@@ -77,7 +79,7 @@ bool PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId shar
         // 4. If no operator in the state PLACED or TO_BE_REPLACED or TO_BE_REMOVED then skip rest of the process.
         if (workerIdsInBFS.empty()) {
             NES_WARNING("Skipping placement removal phase as nothing to be removed.");
-            return true;
+            return {};
         }
 
         // 5. Fetch all placed query sub plans by analyzing the PLACED_SUB_PLAN_ID and CONNECTED_SYS_SUB_PLAN_DETAILS.
@@ -361,8 +363,10 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
     }
 }
 
-bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion) {
+std::vector<DeploymentContextPtr> PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
+                                                                                 DecomposedQueryPlanVersion querySubPlanVersion) {
 
+    std::vector<DeploymentContextPtr> deploymentContexts;
     NES_INFO("Releasing locks for all locked topology nodes {}.", sharedQueryId);
     for (const auto& workerId : workerIdsInBFS) {
 
@@ -391,7 +395,7 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             bool nodeValidationPassed = (releasedSlots <= occupiedResources && releasedSlots <= totalResources);
             if (!nodeValidationPassed) {
                 NES_ERROR("Unable to release resources on the topology node {} to successfully remove operators.", workerId);
-                return false;
+                return deploymentContexts;
             }
 
             // Lock the execution node.
@@ -403,28 +407,28 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
 
             // 3. Step2:: Perform validation by checking if the currently placed query sub plan has the same version as
             // the updated query sub plan or not
-            auto updatedQuerySubPlans = workerIdToUpdatedDecomposedQueryPlans[workerId];
-            for (const auto& updatedQuerySubPlan : updatedQuerySubPlans) {
-                auto decomposedQueryPlanId = updatedQuerySubPlan->getDecomposedQueryPlanId();
+            auto updatedDecomposedQueryPlans = workerIdToUpdatedDecomposedQueryPlans[workerId];
+            for (const auto& updatedDecomposedQueryPlan : updatedDecomposedQueryPlans) {
+                auto decomposedQueryPlanId = updatedDecomposedQueryPlan->getDecomposedQueryPlanId();
                 auto actualQuerySubPlan =
                     executionNode->operator*()->getDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
 
                 // 4. Check is the updated and actual query sub plan has the same version number
-                if (actualQuerySubPlan->getVersion() != updatedQuerySubPlan->getVersion()) {
+                if (actualQuerySubPlan->getVersion() != updatedDecomposedQueryPlan->getVersion()) {
                     NES_ERROR("Query sub plan with id {} got updated. Current version {} Read version {}",
                               decomposedQueryPlanId,
                               actualQuerySubPlan->getVersion(),
-                              updatedQuerySubPlan->getVersion());
-                    return false;
+                              updatedDecomposedQueryPlan->getVersion());
+                    return deploymentContexts;
                 }
 
                 // 5. Set the new version to the updated query sub plan
-                updatedQuerySubPlan->setVersion(querySubPlanVersion);
+                updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
             }
 
             // 6. Save Update query sub plans and release the occupied resources
             lockedTopologyNode->operator*()->releaseSlots(releasedSlots);
-            executionNode->operator*()->updateDecomposedQueryPlans(sharedQueryId, updatedQuerySubPlans);
+            executionNode->operator*()->updateDecomposedQueryPlans(sharedQueryId, updatedDecomposedQueryPlans);
 
             // 7. Update the status of all operators
             auto updatedOperatorIds = workerIdToOperatorIdMap[workerId];
@@ -450,7 +454,14 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 }
             }
 
-            // 8. Release lock on the topology node
+            // 8. compute deployment context
+            const std::string& ipAddress = lockedTopologyNode->operator*()->getIpAddress();
+            uint32_t grpcPort = lockedTopologyNode->operator*()->getGrpcPort();
+            for (const auto& decomposedQueryPlan : updatedDecomposedQueryPlans) {
+                deploymentContexts.emplace_back(DeploymentContext::create(ipAddress, grpcPort, decomposedQueryPlan));
+            }
+
+            // 9. Release lock on the topology node
             if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
                 lockedTopologyNode->unlock();
             }
@@ -459,7 +470,7 @@ bool PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             throw ex;
         }
     }
-    return true;
+    return deploymentContexts;
 }
 
 }// namespace NES::Optimizer

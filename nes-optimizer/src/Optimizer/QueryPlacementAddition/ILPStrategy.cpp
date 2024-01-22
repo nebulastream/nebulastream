@@ -56,7 +56,7 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
       z3Context(z3Context) {}
 
-bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+std::vector<DeploymentContextPtr> ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                             DecomposedQueryPlanVersion querySubPlanVersion) {
@@ -105,7 +105,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
 
                 if (downstreamOperators.empty()) {
                     NES_ERROR("Unable to find pinned downstream operator.");
-                    return false;
+                    return {};
                 }
 
                 uint16_t unplacedDownStreamOperatorCount = 0;
@@ -115,7 +115,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                     //  multiple sinks or parents.
                     if (unplacedDownStreamOperatorCount > 1) {
                         NES_ERROR("Current implementation can not place plan with multiple downstream operators.");
-                        return false;
+                        return {};
                     }
 
                     // Only include unplaced operators in the path
@@ -139,7 +139,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                 //FIXME #2290: path with multiple parents not supported
                 if (topologyPath[0]->getParents().size() > 1) {
                     NES_ERROR("Current implementation can not place operators on topology with multiple paths.");
-                    return false;
+                    return {};
                 }
                 topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
             }
@@ -212,7 +212,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 6. Check if we have solution, return false if that is not the case
         if (z3::sat != opt.check()) {
             NES_ERROR("Solver failed.");
-            return false;
+            return {};
         }
 
         // At this point, we already get the solution.

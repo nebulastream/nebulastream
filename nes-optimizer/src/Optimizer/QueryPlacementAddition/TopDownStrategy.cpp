@@ -42,7 +42,7 @@ TopDownStrategy::TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPl
                                  PlacementAmendmentMode placementAmendmentMode)
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
-bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+std::vector<DeploymentContextPtr> TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                                 DecomposedQueryPlanVersion querySubPlanVersion) {

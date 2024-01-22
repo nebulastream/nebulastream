@@ -13,5 +13,6 @@
 
 add_source_files(nes-optimizer
         CopiedPinnedOperators.cpp
+        DeploymentContext.cpp
 )
 add_subdirectory(QuerySignatures)

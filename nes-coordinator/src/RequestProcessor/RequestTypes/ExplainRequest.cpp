@@ -236,12 +236,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        if (!queryPlacementAmendmentPhase->execute(sharedQueryPlan)) {
-            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                              "QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with shared query id: "
-                                                                  + std::to_string(sharedQueryId));
-        }
+        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //22. Fetch configurations for elegant optimizations
         auto accelerateJavaUdFs = coordinatorConfiguration->elegant.accelerateJavaUDFs;
@@ -292,16 +287,16 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};
 
-    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
-    for (const auto& executionNode : executionNodes) {
+    auto lockedExecutionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
+    for (const auto& lockedExecutionNode : lockedExecutionNodes) {
         nlohmann::json executionNodeMetaData{};
 
-        executionNodeMetaData["nodeId"] = executionNode->getId();
-        auto topologyNode = topology->getCopyOfTopologyNodeWithId(executionNode->getId());
+        executionNodeMetaData["nodeId"] = lockedExecutionNode->operator*()->getId();
+        auto topologyNode = topology->getCopyOfTopologyNodeWithId(lockedExecutionNode->operator*()->getId());
 
         // loop over all query sub plans inside the current executionNode
         nlohmann::json scheduledSubQueries{};
-        for (const auto& decomposedQueryPlan : executionNode->getAllDecomposedQueryPlans(sharedQueryId)) {
+        for (const auto& decomposedQueryPlan : lockedExecutionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId)) {
 
             // prepare json object to hold information on current query sub plan
             nlohmann::json currentQuerySubPlanMetaData{};
