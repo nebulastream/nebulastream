@@ -1025,7 +1025,6 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanV
                 existingNetworkSourceDescriptor->getUniqueId());
             existingSource->setSourceDescriptor(mergedNetworkSourceDescriptor);
             auto computedParent = newNetworkSourceOperator->getParents().front();
-            computedParent->removeChild(newNetworkSourceOperator);
             replacedOperator = true;
             break;
         }
