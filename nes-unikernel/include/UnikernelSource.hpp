@@ -17,13 +17,15 @@
 #include <Network/NetworkSource.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 #include <Sources/TCPSource.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES::Unikernel {
 template<typename Config, typename Prev>
 class UnikernelSourceImpl {
   public:
     constexpr static size_t Id = Config::UpstreamNodeID;
-    static std::optional<typename Config::SourceType> source;
+    using DataSourceType = DataSource<Config, typename Config::SourceType>;
+    static DataSourceType source;
 
     static void setup() {
         if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
@@ -40,17 +42,14 @@ class UnikernelSourceImpl {
             source->bind();
             source->start();
         } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
-            NES_INFO("Calling Setup for TCPSource");
-            UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
-            source->start();
-            source->runningRoutine();
+            source.start();
         } else {
-            //Test Source
-            UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
+            source.start();
         }
     }
 
-    static void stop() { auto ret = source->stop(Runtime::QueryTerminationType::Graceful); }
+    static void stop() { auto ret = source.stop(Runtime::QueryTerminationType::Graceful); }
+    static void request_stop() { auto ret = source.stop(Runtime::QueryTerminationType::Graceful); }
 };
 
 template<typename Config>
@@ -61,7 +60,8 @@ class UnikernelSource {
 };
 
 template<typename Config, typename Prev>
-std::optional<typename Config::SourceType> UnikernelSourceImpl<Config, Prev>::source = std::nullopt;
+typename UnikernelSourceImpl<Config, Prev>::DataSourceType
+    UnikernelSourceImpl<Config, Prev>::source(UnikernelPipelineExecutionContext::create<Prev>());
 }// namespace NES::Unikernel
 
 #endif//NES_UNIKERNELSOURCE_HPP

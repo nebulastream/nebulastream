@@ -17,10 +17,7 @@
 
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <SchemaBuffer.hpp>
-#include <Sinks/Formats/CsvFormat.hpp>
-#include <Sources/DataSource.hpp>
 #include <Util/CircularBuffer.hpp>
 #include <arpa/inet.h>
 #include <boost/iostreams/stream.hpp>
@@ -35,9 +32,10 @@ using ParserPtr = std::shared_ptr<Parser>;
  * @brief source to receive data via TCP connection
  */
 template<typename TCPConfig>
-class TCPSource : public DataSource<TCPConfig> {
+class TCPSource {
 
   public:
+    using BufferType = NES::Unikernel::SchemaBuffer<typename TCPConfig::Schema, 8192>;
     constexpr static NES::SourceType SourceType = NES::SourceType::TCP_SOURCE;
     /**
      * @brief constructor of a TCP Source
@@ -45,30 +43,26 @@ class TCPSource : public DataSource<TCPConfig> {
      * They are also subject to reference counting.
      * @param successor executable operators coming after this source
      */
-    explicit TCPSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
-        : DataSource<TCPConfig>(successor), circularBuffer(getpagesize() * 8) {}
+    explicit TCPSource() : circularBuffer(getpagesize() * 8) {}
 
     /**
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
      */
-    std::optional<Runtime::TupleBuffer> receiveData() override {
-        NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
-        auto tupleBuffer = DataSource<TCPConfig>::allocateBuffer();
-        auto schemaBuffer = DataSource<TCPConfig>::BufferType::of(tupleBuffer);
-        NES_DEBUG("TCPSource buffer allocated ");
+    std::optional<BufferType> receiveData(const std::stop_token& stoken, BufferType schemaBuffer) {
         try {
-            do {
-                if (!DataSource<TCPConfig>::running) {
-                    return std::nullopt;
-                }
-                fillBuffer(schemaBuffer);
-            } while (schemaBuffer.getBuffer().getNumberOfTuples() == 0);
+            if (stoken.stop_requested()) {
+                return std::nullopt;
+            }
+            if (!fillBuffer(schemaBuffer, stoken)) {
+                return std::nullopt;
+            }
         } catch (const std::exception& e) {
             NES_ERROR("TCPSource<Schema>::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
             throw e;
         }
-        return tupleBuffer;
+        std::cerr << "Created a buffer" << std::endl;
+        return schemaBuffer;
     }
 
     /**
@@ -90,7 +84,7 @@ class TCPSource : public DataSource<TCPConfig> {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    bool fillBuffer(DataSource<TCPConfig>::BufferType& tupleBuffer) {
+    bool fillBuffer(BufferType& tupleBuffer, std::stop_token stoken) {
 
         // determine how many tuples fit into the buffer
         tuplesThisPass = tupleBuffer.getCapacity();
@@ -109,7 +103,7 @@ class TCPSource : public DataSource<TCPConfig> {
         //init size of received data from socket with 0
         int64_t bufferSizeReceived = 0;
         //receive data until tupleBuffer capacity reached or flushIntervalPassed
-        while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
+        while (tupleCount < tuplesThisPass && !(flushIntervalPassed || stoken.stop_requested())) {
             //if circular buffer is not full obtain data from socket
             if (!circularBuffer.full()) {
                 //fill created buffer with data from socket. Socket returns the number of bytes it actually sent.
@@ -121,6 +115,12 @@ class TCPSource : public DataSource<TCPConfig> {
                 if (bufferSizeReceived == -1) {
                     NES_ERROR("TCPSource<Schema>::fillBuffer: an error occurred while reading from socket. Error: {}",
                               strerror(errno));
+                    circularBuffer.returnMemoryForWrite(bufferReservation, 0);
+                    return false;
+                }
+
+                if (bufferSizeReceived == 0) {
+                    NES_ERROR("TCPSource<Schema>::fillBuffer: EOF");
                     circularBuffer.returnMemoryForWrite(bufferReservation, 0);
                     return false;
                 }
@@ -167,8 +167,6 @@ class TCPSource : public DataSource<TCPConfig> {
                 flushIntervalPassed = true;
             }
         }
-        DataSource<TCPConfig>::generatedTuples += tupleCount;
-        DataSource<TCPConfig>::generatedBuffers++;
         return true;
     }
 
@@ -176,7 +174,7 @@ class TCPSource : public DataSource<TCPConfig> {
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source
      */
-    std::string toString() const override {
+    std::string toString() const {
         std::stringstream ss;
         ss << "TCPSOURCE(";
         ss << ")";
@@ -186,8 +184,9 @@ class TCPSource : public DataSource<TCPConfig> {
     /**
      * @brief opens TCP connection
      */
-    void open() override {
-        DataSource<TCPConfig>::open();
+    void open() {
+        std::cerr << "TCP Open" << std::endl;
+        NES_INFO("TCP source open");
         NES_TRACE("TCPSource::connected: Trying to create socket.");
         if (sockfd < 0) {
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -218,9 +217,8 @@ class TCPSource : public DataSource<TCPConfig> {
     /**
      * @brief closes TCP connection
      */
-    void close() override {
+    void close() {
         NES_TRACE("TCPSource::close: trying to close connection.");
-        DataSource<TCPConfig>::close();
         if (connection >= 0) {
             ::close(connection);
             ::close(sockfd);
