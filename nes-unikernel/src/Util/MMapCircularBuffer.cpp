@@ -16,7 +16,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <sys/mman.h>
 
-CircularBuffer::CircularBuffer(size_t capacity) : capacity(capacity) {
+MMapCircularBuffer::MMapCircularBuffer(size_t capacity) : capacity(capacity) {
     assert(capacity % getpagesize() == 0 && "Cirular Buffer requires a capacity that is divisible by the getpagesize()");
     fd = memfd_create("queue_buffer", 0);
     ftruncate(fd, capacity);
@@ -24,25 +24,25 @@ CircularBuffer::CircularBuffer(size_t capacity) : capacity(capacity) {
     mmap(data, capacity, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
     mmap(data + capacity, capacity, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
 }
-CircularBuffer::~CircularBuffer() {
+MMapCircularBuffer::~MMapCircularBuffer() {
     munmap(data + capacity, capacity);
     munmap(data, capacity);
     close(fd);
 }
-std::span<char> CircularBuffer::reserveDataForWrite(size_t requestedSize) {
+std::span<char> MMapCircularBuffer::reserveDataForWrite(size_t requestedSize) {
     const auto actualSize = std::min(requestedSize, getCapacity() - size());
     const auto memory = std::span(data + write, actualSize);
     write += actualSize;
     return memory;
 }
-void CircularBuffer::returnMemoryForWrite(std::span<char> reserved, size_t usedBytes) {
+void MMapCircularBuffer::returnMemoryForWrite(std::span<char> reserved, size_t usedBytes) {
     assert(reserved.size() <= size());
     assert(reserved.size() >= usedBytes);
 
     const auto left_over = reserved.size() - usedBytes;
     write -= left_over;
 }
-std::span<const char> CircularBuffer::popData(size_t requestedSize) {
+std::span<const char> MMapCircularBuffer::popData(size_t requestedSize) {
     const auto actualSize = std::min(requestedSize, size());
     const auto memory = std::span(data + read, actualSize);
     read += actualSize;
@@ -55,13 +55,13 @@ std::span<const char> CircularBuffer::popData(size_t requestedSize) {
     return memory;
 }
 
-std::span<const char> CircularBuffer::peekData(size_t requestedSize) {
+std::span<const char> MMapCircularBuffer::peekData(size_t requestedSize) {
     const auto actualSize = std::min(requestedSize, size());
     const auto memory = std::span(data + read, actualSize);
     return memory;
 }
 
-size_t CircularBuffer::size() const { return (write - read); }
-size_t CircularBuffer::getCapacity() const { return capacity; }
-bool CircularBuffer::full() const { return size() == getCapacity(); }
-bool CircularBuffer::empty() const { return size() == 0; }
+size_t MMapCircularBuffer::size() const { return (write - read); }
+size_t MMapCircularBuffer::getCapacity() const { return capacity; }
+bool MMapCircularBuffer::full() const { return size() == getCapacity(); }
+bool MMapCircularBuffer::empty() const { return size() == 0; }
