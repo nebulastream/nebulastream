@@ -205,6 +205,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
         }
         case ReconfigurationType::FailEndOfStream:
         case ReconfigurationType::HardEndOfStream:
+        case ReconfigurationType::Drain:
         case ReconfigurationType::SoftEndOfStream: {
             if (context.decreaseObjectRefCnt(this) == 1) {
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
@@ -271,8 +272,8 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 QueryTerminationType terminationType;
                 switch (task.getType()) {
                     case ReconfigurationType::SoftEndOfStream: terminationType = QueryTerminationType::Graceful; break;
-                    case ReconfigurationType::HardEndOfStream: terminationType = QueryTerminationType::HardStop break;
-                    case ReconfigurationType::Drain: terminationType = QueryTerminationType::Drain break;
+                    case ReconfigurationType::HardEndOfStream: terminationType = QueryTerminationType::HardStop; break;
+                    case ReconfigurationType::Drain: terminationType = QueryTerminationType::Drain; break;
                     default: NES_THROW_RUNTIME_ERROR("Unexpected reconfiguration type");
                 }
 

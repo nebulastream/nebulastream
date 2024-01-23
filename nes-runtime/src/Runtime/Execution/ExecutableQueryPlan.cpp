@@ -223,6 +223,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                                                   task.getType());
             break;
         }
+        case ReconfigurationType::Drain:
         case ReconfigurationType::SoftEndOfStream: {
             NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan {} sub plan {} left tokens = {}",
                       sharedQueryId,
