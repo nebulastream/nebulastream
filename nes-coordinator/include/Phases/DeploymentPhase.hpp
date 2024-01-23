@@ -16,6 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_
 
 #include <Identifiers.hpp>
+#include <Util/RequestType.hpp>
 #include <iostream>
 #include <memory>
 #include <set>
@@ -63,10 +64,11 @@ class DeploymentPhase {
 
     /**
      * @brief method for deploying decomposed query plans in different states
-     * @param deploymentContexts : the vector of deployment contexts containing the worker rpc address and decomposed query plan
+     * @param deploymentContexts: the vector of deployment contexts containing the worker rpc address and decomposed query plan
+     * @param requestType: request type
      * @throws ExecutionNodeNotFoundException: Unable to find ExecutionNodes where the query {sharedQueryId} is deployed
      */
-    void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts);
+    void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
 
   private:
     /**
@@ -78,19 +80,16 @@ class DeploymentPhase {
      * @throws QueryDeploymentException: Error in call to Elegant acceleration service with code
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
-    void deployQuery(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts);
+    void registerUnregisterDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
+
 
     /**
-     * @brief method to start a already deployed query
-     * @param queryId
+     * @brief
+     * @param deploymentContexts
+     * @param requestType
      */
-    void startQuery(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts);
+    void startStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
 
-    /**
-     * @brief apply java UDF acceleration to a decomposed query plan
-     * @param decomposedQueryPlan the decomposed query plan
-     */
-    void applyJavaUDFAcceleration(const DecomposedQueryPlanPtr& decomposedQueryPlan) const;
 
     WorkerRPCClientPtr workerRPCClient;
     QueryCatalogServicePtr queryCatalogService;

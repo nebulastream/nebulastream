@@ -17,13 +17,14 @@
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RuntimeException.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 
 namespace NES::RequestProcessor::Experimental {
@@ -34,7 +35,10 @@ FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
     : AbstractUniRequest({ResourceType::GlobalQueryPlan,
                           ResourceType::QueryCatalogService,
                           ResourceType::Topology,
-                          ResourceType::GlobalExecutionPlan},
+                          ResourceType::UdfCatalog,
+                          ResourceType::SourceCatalog,
+                          ResourceType::GlobalExecutionPlan,
+                          ResourceType::CoordinatorConfiguration},
                          maxRetries),
       queryId(queryId), querySubPlanId(failedSubPlanId) {}
 
@@ -62,24 +66,33 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
     queryCatalogService = storageHandle->getQueryCatalogServiceHandle(requestId);
     topology = storageHandle->getTopologyHandle(requestId);
+    coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
+    auto sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
+    auto udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
     auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         throw Exceptions::QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)
                                                  + " in the global query plan");
     }
 
-    //respond to the calling service which is the shared query id to the query being undeployed
-    responsePromise.set_value(std::make_shared<FailQueryResponse>(sharedQueryId));
-
     //todo 4255: allow requests to skip to the front of the line
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 
-    globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
+    globalQueryPlan->removeQuery(sharedQueryId, RequestType::FailQuery);
+
+    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                        topology,
+                                                                                        typeInferencePhase,
+                                                                                        coordinatorConfiguration);
+    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+    auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     //undeploy queries
     try {
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
-        queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::FAILED);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalogService, coordinatorConfiguration);
+        deploymentPhase->execute(deploymentContexts, RequestType::FailQuery);
     } catch (NES::Exceptions::RuntimeException& e) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,
                                                      "Failed to undeploy query with id " + std::to_string(queryId));
@@ -89,6 +102,9 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
         queryCatalogService->updateQueryStatus(id, QueryState::FAILED, "Failed");
     }
+
+    //respond to the calling service which is the shared query id to the query being undeployed
+    responsePromise.set_value(std::make_shared<FailQueryResponse>(sharedQueryId));
 
     //no follow up requests
     return {};

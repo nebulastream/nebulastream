@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -47,11 +47,15 @@ void GlobalQueryPlan::removeQuery(uint64_t queryId, RequestType requestType) {
     if (RequestType::FailQuery == requestType) {
         //For failure request query id is nothing but id of the shared query plan
         auto sharedQueryPlan = sharedQueryIdToPlanMap[queryId];
+        auto hostedQueryIds = sharedQueryPlan->getQueryIds();
+        for (const auto& hostedQueryId : hostedQueryIds) {
+            sharedQueryPlan->removeQuery(hostedQueryId);
+        }
         //Instead of removing query we mark the status of the shared query plan to failed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::FAILED);
     } else if (RequestType::StopQuery == requestType) {
         //Check if the query id present in the Global query Plan
-        if (queryIdToSharedQueryIdMap.find(queryId) != queryIdToSharedQueryIdMap.end()) {
+        if (queryIdToSharedQueryIdMap.contains(queryId)) {
             //Fetch the shared query plan id and remove the query and associated operators
             SharedQueryId sharedQueryId = queryIdToSharedQueryIdMap[queryId];
             SharedQueryPlanPtr sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryId];

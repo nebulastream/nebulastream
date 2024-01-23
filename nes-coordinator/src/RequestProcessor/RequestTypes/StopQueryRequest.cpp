@@ -23,8 +23,7 @@
 #include <Optimizer/Exceptions/QueryPlacementAmendmentException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
@@ -69,8 +68,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                                                        topology,
                                                                                        typeInferencePhase,
                                                                                        coordinatorConfiguration);
-        queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
-        queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
+        deploymentPhase = DeploymentPhase::create(queryCatalogService, coordinatorConfiguration);
         NES_TRACE("Phases created. Stop request initialized.");
 
         if (queryId == INVALID_SHARED_QUERY_ID) {
@@ -100,43 +98,23 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
 
         // remove single query from global query plan
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-
         // remove placements and update the query sub plans
-        bool placementAmendmentSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-        if (!placementAmendmentSuccessful) {
-            throw Exceptions::QueryPlacementAmendmentException(
-                sharedQueryId,
-                "StopQueryRequest: Failed to perform query placement amendment for query plan with shared query id: "
-                    + std::to_string(sharedQueryId));
-        }
+        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+        deploymentPhase->execute(deploymentContexts, RequestType::StopQuery);
 
-        queryDeploymentPhase->execute(sharedQueryPlan);
-
-        queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
-        if (SharedQueryPlanStatus::STOPPED == sharedQueryPlan->getStatus()) {
-            //Mark all contained queryIdAndCatalogEntryMapping as stopped
-            for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
-                queryCatalogService->updateQueryStatus(involvedQueryIds, QueryState::STOPPED, "Hard Stopped");
-            }
-            globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
-        } else if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
-            //Perform placement of updated shared query plan
-            NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-            auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-            //Perform deployment of updated decomposed query plans
-            queryDeploymentPhase->execute(sharedQueryPlan);
-            //Update the shared query plan as deployed
-            sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
-        }
-
-        //todo: #3742 FIXME: This is a work-around for an edge case. To reproduce this:
+        //FIXME: #3742 This may not work well when shared query plan contains more than one queries:
         // 1. The query merging feature is enabled.
-        // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queryIdAndCatalogEntryMapping (Case 3.1).
+        // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queries.
         // Expected Result:
-        //  - Query status of the removed query is marked as stopped.
+        //  - only the stopped query is marked as stopped.
         // Actual Result:
-        //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
-        queryCatalogService->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
+        //  - All queries are set to stopped and the whole shared query plan is removed.
+
+        //Mark all contained queries as stopped
+        for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
+            queryCatalogService->updateQueryStatus(involvedQueryIds, QueryState::STOPPED, "Hard Stopped");
+        }
+        globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         responsePromise.set_value(std::make_shared<StopQueryResponse>(true));
 
     } catch (RequestExecutionException& e) {
@@ -166,7 +144,8 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
     try {
         std::rethrow_exception(exception);
     } catch (Exceptions::QueryPlacementAmendmentException& ex) {
-        failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+        failRequest.push_back(
+            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
     } catch (QueryDeploymentException& ex) {
         //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
         //Happens if:

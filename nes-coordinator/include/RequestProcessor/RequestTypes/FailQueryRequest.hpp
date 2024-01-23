@@ -102,6 +102,8 @@ class FailQueryRequest : public AbstractUniRequest {
     QueryCatalogServicePtr queryCatalogService;
     TopologyPtr topology;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

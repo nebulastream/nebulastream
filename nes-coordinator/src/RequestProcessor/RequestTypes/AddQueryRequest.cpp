@@ -43,9 +43,8 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -194,9 +193,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto queryDeploymentPhase =
-            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalogService, coordinatorConfiguration);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
@@ -318,22 +315,14 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                sharedQueryId);
         }
 
-        //20. If the shared query plan is not new but updated an existing shared query plan, we first need to undeploy that plan
-        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
-
-            NES_DEBUG("Shared Query Plan is non empty and an older version is already "
-                      "running.");
-            //20.1 First undeploy the running shared query plan with the shared query plan id
-            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::UPDATED);
-        }
-        //21. Perform placement of updated shared query plan
+        //20. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
         auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-        //22. Perform deployment of re-placed shared query plan
-        queryDeploymentPhase->execute(sharedQueryPlan);
+        //21. Perform deployment of re-placed shared query plan
+        deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
 
-        //23. Update the shared query plan as deployed
+        //22. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
