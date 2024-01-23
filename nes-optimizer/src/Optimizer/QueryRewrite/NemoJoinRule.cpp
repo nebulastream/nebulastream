@@ -32,8 +32,7 @@ NemoJoinRulePtr NemoJoinRule::create(Configurations::OptimizerConfiguration conf
 }
 
 QueryPlanPtr NemoJoinRule::apply(QueryPlanPtr queryPlan) {
-    NES_INFO("NemoJoinRule: Apply NemoJoinRule.");
-    NES_DEBUG("NemoJoinRule::apply: plan before replace\n{}", queryPlan->toString());
+    NES_DEBUG("NemoJoinRule: Plan before replacement\n{}", queryPlan->toString());
     auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
     if (!joinOps.empty()) {
         NES_DEBUG("NemoJoinRule::apply: found {} join operators", joinOps.size());
@@ -57,10 +56,10 @@ QueryPlanPtr NemoJoinRule::apply(QueryPlanPtr queryPlan) {
             joinOp->removeChildren();
         }
     } else {
-        NES_DEBUG("NemoJoinRule::apply: no join operator in query");
+        NES_DEBUG("NemoJoinRule: No join operator in query");
     }
 
-    NES_DEBUG("NemoJoinRule::apply: plan after replace\n{}", queryPlan->toString());
+    NES_DEBUG("NemoJoinRule: Plan after replacement\n{}", queryPlan->toString());
 
     return queryPlan;
 }

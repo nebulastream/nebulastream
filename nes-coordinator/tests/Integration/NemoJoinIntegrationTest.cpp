@@ -31,8 +31,7 @@ static const std::string sourceNameLeft = "log_left";
 static const std::string sourceNameRight = "log_right";
 
 /**
- * @brief Test the NEMO placement on different topologies to check if shared nodes contain the window operator based on the configs
- * of setDistributedWindowChildThreshold and setDistributedWindowCombinerThreshold.
+ * @brief Test of distributed NEMO join
  */
 class NemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
   public:
@@ -50,10 +49,11 @@ class NemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
         bufferManager = std::make_shared<BufferManager>();
     }
 
-    static CSVSourceTypePtr
-    createCSVSourceType(std::string logicalSourceNAme, std::string physicalSourceName, std::string inputPath) {
+    static CSVSourceTypePtr createCSVSourceType(const std::string& logicalSourceNAme,
+                                                const std::string& physicalSourceName,
+                                                const std::string& inputPath) {
         CSVSourceTypePtr csvSourceType = CSVSourceType::create(logicalSourceNAme, physicalSourceName);
-        csvSourceType->setFilePath(std::move(inputPath));
+        csvSourceType->setFilePath(inputPath);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(50);
         csvSourceType->setNumberOfBuffersToProduce(1);
         csvSourceType->setSkipHeader(false);
@@ -61,6 +61,15 @@ class NemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
         return csvSourceType;
     }
 
+    /**
+     * Creates a TestHarness with a given query and topology parameters. The leafs of the topology are sources.
+     * @param query the query
+     * @param crdFunctor functor to pass coordinator params
+     * @param layers number of layers of the topology tree
+     * @param nodesPerNode number of children per node
+     * @param leafNodesPerNode number of leaf nodes for the parents of last layer
+     * @return the TestHarness
+     */
     TestHarness createTestHarness(const Query& query,
                                   std::function<void(CoordinatorConfigurationPtr)> crdFunctor,
                                   uint64_t layers,

@@ -57,8 +57,8 @@ using namespace z3;
 using namespace Configurations;
 using namespace Optimizer;
 
-static const std::string sourceNameLeft = "log_left";
-static const std::string sourceNameRight = "log_right";
+static const std::string logSourceNameLeft = "log_left";
+static const std::string logSourceNameRight = "log_right";
 
 class NemoJoinPlacementTest : public Testing::BaseUnitTest {
   public:
@@ -83,7 +83,6 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
 
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
         // Setup the topology
         TopologyPtr topology = Topology::create();
@@ -124,26 +123,20 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
                           ->addField("value", BasicType::UINT64)
                           ->addField("timestamp", DataTypeFactory::createUInt64());
         Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-        sourceCatalog->addLogicalSource(sourceNameLeft, schema);
-        sourceCatalog->addLogicalSource(sourceNameRight, schema);
+        sourceCatalog->addLogicalSource(logSourceNameLeft, schema);
+        sourceCatalog->addLogicalSource(logSourceNameRight, schema);
 
         for (auto nodeId : sourceNodes) {
-            CSVSourceTypePtr csvSourceType;
-            std::string sourceName;
-            if (nodeId % 2 == 0) {
-                // put even node ids to left join
-                sourceName = sourceNameLeft;
-                csvSourceType = CSVSourceType::create(sourceName, "left_" + std::to_string(nodeId));
-            } else {
-                // put odd node ids to right join
-                sourceName = sourceNameRight;
-                csvSourceType = CSVSourceType::create(sourceName, "right_" + std::to_string(nodeId));
-            }
-            auto physicalSource = PhysicalSource::create(csvSourceType);
-            auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+            const auto isEven = nodeId % 2 == 0;
+            std::string logSourceName = isEven ? logSourceNameLeft : logSourceNameRight;
+            std::string phySourceName = isEven ? "left_" + std::to_string(nodeId) : "right_" + std::to_string(nodeId);
+            CSVSourceTypePtr csvSourceType = CSVSourceType::create(logSourceName, phySourceName);
 
-            auto sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId);
-            sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+            auto physicalSource = PhysicalSource::create(csvSourceType);
+            auto logicalSource = sourceCatalog->getLogicalSource(logSourceName);
+
+            auto entry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId);
+            sourceCatalog->addPhysicalSource(logSourceName, entry);
         }
         return sourceCatalog;
     }
@@ -151,7 +144,7 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
     static std::tuple<uint64_t, GlobalExecutionPlanPtr> runNemoPlacement(const Query& query,
                                                                          const TopologyPtr& topology,
                                                                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                         OptimizerConfiguration optimizerConfig) {
+                                                                         const OptimizerConfiguration& optimizerConfig) {
         std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto testQueryPlan = query.getQueryPlan();
         testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
@@ -184,7 +177,7 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
     }
 
     template<typename T>
-    static void verifyChildrenOfType(std::vector<DecomposedQueryPlanPtr>& querySubPlans,
+    static void verifyChildrenOfType(const std::vector<DecomposedQueryPlanPtr>& querySubPlans,
                                      uint64_t expectedSubPlanSize = 1,
                                      uint64_t expectedRootOperators = 1) {
         ASSERT_EQ(querySubPlans.size(), expectedSubPlanSize);
@@ -217,15 +210,17 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
+    const std::vector<WorkerId>& sourceNodes = {2, 3, 4, 5};
+    // create topology with 1 coordinator and 4 sources
     auto topology = setupTopology(2, 3, 4);
-    auto sourceCatalog = setupSourceCatalog({2, 3, 4, 5});
+    auto sourceCatalog = setupSourceCatalog(sourceNodes);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.enableNemoPlacement = true;
 
     //run the placement
-    Query query = Query::from(sourceNameLeft)
-                      .joinWith(Query::from(sourceNameRight))
+    Query query = Query::from(logSourceNameLeft)
+                      .joinWith(Query::from(logSourceNameRight))
                       .where(Attribute("id"))
                       .equalsTo(Attribute("id"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
@@ -235,7 +230,7 @@ TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
     auto queryId = std::get<0>(outputTuple);
     auto executionPlan = std::get<1>(outputTuple);
     auto executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
-    EXPECT_EQ(executionNodes.size(), 5);
+    EXPECT_EQ(executionNodes.size(), 5); //size of the topology
 
     for (const auto& executionNode : executionNodes) {
         std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->getAllDecomposedQueryPlans(queryId);
