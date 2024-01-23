@@ -234,9 +234,6 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId,
 bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                                          DecomposedQueryPlanId querySubPlanId,
                                          QueryState querySubPlanStatus) {
-    (void) sharedQueryId;
-    (void) querySubPlanId;
-    (void) querySubPlanStatus;
     std::unique_lock lock(serviceMutex);
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
               "plan with id {}",

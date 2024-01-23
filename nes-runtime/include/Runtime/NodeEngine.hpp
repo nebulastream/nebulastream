@@ -325,7 +325,19 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             uint64_t uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
                                             DecomposedQueryPlanVersion version);
+
+    /**
+     * @brief Buffer all outgoing tuples to the worker with the specified if
+     * @param receivingWorkerId the id of the receiver to to which tuples should be buffered.
+     * @return true if at lest one sink with the specified receiver was found and started buffering
+     */
     bool bufferOutgoingTuples(WorkerId receivingWorkerId);
+
+    /**
+     * @brief mark all network sources of a sub plan as migrated
+     * @param decomposedQueryPlanId the plan for which the sources are to be marked as migrated
+     * @return true if a running subplan with a matching id was found and marked as migrated.
+     */
     bool markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**

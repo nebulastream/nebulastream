@@ -88,9 +88,9 @@ class WorkerMobilityHandler {
      */
     bool stop();
 
-    //todo: change testing and make this private
     /**
-     * @brief Buffer outgoing data, perform reconnect and unbuffer data once reconnect succeeded
+     * @brief Buffer outgoing data, perform reconnect and unbuffer data once reconnect succeeded. (This method is public
+     * for testing purposes)
      * @param oldParent : the mobile workers old parent
      * @param newParent : the mobile workers new parent
      * @param currentParentWorkerIds : a list of the ids of this workers current parents

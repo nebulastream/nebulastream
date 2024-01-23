@@ -235,6 +235,12 @@ class WorkerContext {
      * @return true if a connection is currently being established
      */
     bool isAsyncConnectionInProgress(OperatorId operatorId);
+
+    /**
+     * @brief do not try connecting to a new data channel until the next time storeNetworkChannelFuture() is called
+     * @param operatorId the id of the callling operator
+     * @return true on success. False if the operation was aborted because a connection attempt is still in progress
+     */
     bool doNotTryConnectingDataChannel(OperatorId operatorId);
 
     /**

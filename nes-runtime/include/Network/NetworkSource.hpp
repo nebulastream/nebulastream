@@ -138,8 +138,17 @@ class NetworkSource : public DataSource {
      * @param terminationType
      */
     void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
+
+    /**
+     * @brief handle incoming drain message: if a new version is present, start it. If a the source is marked as
+     * migrated, stop it. Otherwise do nothing until a reconfiguration message is received from the coordinator
+     */
     void onDrainMessage();
-    bool hasReceivedDrainMessage();
+
+    /**
+     * @brief mark this source as migrated. If not incoming channels are connected to this source, stop the source.
+     * Otherwise wait for all remaining channels to disconnect and stop the source afterwards.
+     */
     void markAsMigrated();
 
     /**

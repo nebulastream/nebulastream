@@ -93,12 +93,6 @@ class QueryDeploymentPhase {
     void deployQuery(SharedQueryId sharedQueryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes);
 
     /**
-     * @brief method to start a already deployed query
-     * @param queryId
-     */
-    void startQuery(QueryId queryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes);
-
-    /**
      * @brief apply java UDF acceleration to a query sub plan
      * @param sharedQueryId the id of the shared query to which the query sub plan belongs
      * @param executionNode the execution node which hosts the query sub plan

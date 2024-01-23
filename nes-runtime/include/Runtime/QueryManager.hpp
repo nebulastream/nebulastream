@@ -257,7 +257,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     /**
      * @brief Informs the query manager about a status change in a sub query plan
      * @param qep the sub query plan
-     * @param status the new status of the query plan
+     * @param newStatus the new status of the query plan
+     * @param reconfigurationType The type of the reconfiguration that caused the status change
      */
     void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
                                  Execution::ExecutableQueryPlanStatus newStatus,

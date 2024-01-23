@@ -266,9 +266,6 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 NES_DEBUG("Reconfiguration of pipeline belonging to subplanId:{} stage id:{} reached prev=1",
                           decomposedQueryPlanId,
                           pipelineId);
-//                auto terminationType = task.getType() == Runtime::ReconfigurationType::SoftEndOfStream
-//                    ? Runtime::QueryTerminationType::Graceful
-//                    : Runtime::QueryTerminationType::HardStop;
                 QueryTerminationType terminationType;
                 switch (task.getType()) {
                     case ReconfigurationType::SoftEndOfStream: terminationType = QueryTerminationType::Graceful; break;

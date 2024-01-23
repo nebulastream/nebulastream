@@ -184,7 +184,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
             }
             workerContext.doNotTryConnectingDataChannel(getUniqueNetworkSinkDescriptorId());
-            //todo: drain type
             workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                 Runtime::QueryTerminationType::Drain,
                                                 queryManager->getNumberOfWorkerThreads(),
