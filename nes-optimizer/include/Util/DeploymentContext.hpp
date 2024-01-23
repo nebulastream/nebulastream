@@ -36,8 +36,22 @@ class DeploymentContext {
 
     DeploymentContext(const std::string& ipAddress,
                       uint32_t grpcPort,
+                      SharedQueryId sharedQueryId,
+                      QueryState decomposedQueryState,
                       DecomposedQueryPlanId decomposedQueryPlanId,
                       const DecomposedQueryPlanPtr& decomposedQueryPlan);
+
+    /**
+     * @brief Get the id of the shared query plan
+     * @return the shared query id
+     */
+    SharedQueryId getSharedQueryId();
+
+    /**
+     * @brief Get the decomposed query plan state
+     * @return query plan state
+     */
+    QueryState getDecomposedQueryPlanState();
 
     /**
      * @brief Get the id of the decomposed query plan
@@ -60,6 +74,8 @@ class DeploymentContext {
   private:
     std::string ipAddress;
     uint32_t grpcPort;
+    SharedQueryId sharedQueryId;
+    QueryState decomposedQueryState;
     DecomposedQueryPlanId decomposedQueryPlanId;
     DecomposedQueryPlanPtr decomposedQueryPlan;
 };

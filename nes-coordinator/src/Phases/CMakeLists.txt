@@ -12,6 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-coordinator
+        DeploymentPhase.cpp
         QueryDeploymentPhase.cpp
         QueryUndeploymentPhase.cpp
         SampleCodeGenerationPhase.cpp

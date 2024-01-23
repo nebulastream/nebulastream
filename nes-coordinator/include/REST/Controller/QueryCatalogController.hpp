@@ -29,7 +29,7 @@
 #include <utility>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
-#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
+#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 
 namespace NES {
 class NesCoordinator;
@@ -151,7 +151,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             response["queryMetaData"] = catalogEntry->getMetaInformation();
             response["history"] = catalogEntry->getHistory();
             std::unordered_map<std::string, QueryStateHistory> workerHistory;
-            for (const QuerySubPlanMetaDataPtr& subPlanMetaData : catalogEntry->getAllSubQueryPlanMetaData()) {
+            for (const DecomposedQueryPlanMetaDataPtr& subPlanMetaData : catalogEntry->getAllSubQueryPlanMetaData()) {
                 workerHistory.emplace(std::to_string(subPlanMetaData->getWorkerId()), subPlanMetaData->getHistory());
             }
             response["workerHistory"] = workerHistory;

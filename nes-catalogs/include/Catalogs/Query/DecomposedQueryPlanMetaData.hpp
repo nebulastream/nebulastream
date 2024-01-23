@@ -22,22 +22,22 @@
 
 namespace NES {
 
-class QuerySubPlanMetaData;
-using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
+class DecomposedQueryPlanMetaData;
+using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaData>;
 
 /**
- * This class stores metadata about a query sub plan.
+ * This class stores metadata about a decomposed query plan.
  */
-class QuerySubPlanMetaData {
+class DecomposedQueryPlanMetaData {
 
   public:
-    static QuerySubPlanMetaDataPtr create(DecomposedQueryPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
+    static DecomposedQueryPlanMetaDataPtr create(DecomposedQueryPlanId decomposedQueryPlanId, QueryState queryState, uint64_t workerId);
 
     /**
      * Update the status of the qub query
-     * @param queryStatus : new status
+     * @param newDecomposedQueryPlanState : new state
      */
-    void updateStatus(QueryState queryStatus);
+    void updateStatus(QueryState newDecomposedQueryPlanState);
 
     /**
      * Update the meta information
@@ -49,31 +49,46 @@ class QuerySubPlanMetaData {
      * Get status of query sub plan
      * @return status
      */
-    QueryState getQuerySubPlanStatus();
+    QueryState getDecomposedQueryPlanStatus() const;
 
-    DecomposedQueryPlanId getQuerySubPlanId() const;
+    /**
+     * @brief Get the decomposed query id
+     * @return id of the decomposed query
+     */
+    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
 
-    QueryState getSubQueryStatus() const;
+    /**
+     * @brief Get the worker id where decomposed plan is located
+     * @return id of the worker
+     */
+    WorkerId getWorkerId() const;
 
-    uint64_t getWorkerId() const;
-
+    /**
+     * @brief String rep of the meta information
+     * @return meta data as string``
+     */
     const std::string& getMetaInformation() const;
 
     /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;
 
-    QuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
+    DecomposedQueryPlanMetaData(DecomposedQueryPlanId querySubPlanId, QueryState decomposedQueryPlanState, uint64_t workerId);
 
   private:
     /**
-     * Id of the subquery plan
+     * Id of the decomposed query plan
      */
-    DecomposedQueryPlanId querySubPlanId;
+    DecomposedQueryPlanId decomposedQueryPlanId;
+
+    /**
+     * @brief the current version of the decomposed query plan
+     */
+    DecomposedQueryPlanVersion decomposedQueryPlanVersion;
 
     /**
      * status of the sub query
      */
-    QueryState subQueryStatus;
+    QueryState decomposedQueryPlanState;
 
     /** @brief Stores a history of QueryState updates with their timestamp in milliseconds. */
     QueryStateHistory history;
@@ -81,7 +96,7 @@ class QuerySubPlanMetaData {
     /**
      * worker id where the sub query is deployed
      */
-    uint64_t workerId;
+    WorkerId workerId;
 
     /**
      * Any addition meta information e.g., failure reason
@@ -90,4 +105,4 @@ class QuerySubPlanMetaData {
 };
 }// namespace NES
 
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
