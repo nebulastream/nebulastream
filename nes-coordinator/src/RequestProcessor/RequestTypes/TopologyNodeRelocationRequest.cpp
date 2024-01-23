@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -203,17 +203,17 @@ void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
     //perform re-operator placement on the query plan
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 
-    //ammendment phase
+    //Amendment phase
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    auto amendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                          topology,
-                                                                          typeInferencePhase,
-                                                                          coordinatorConfiguration);
-    amendmentPhase->execute(sharedQueryPlan);
+    auto placementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                   topology,
+                                                                                   typeInferencePhase,
+                                                                                   coordinatorConfiguration);
+    auto deploymentContexts = placementAmendmentPhase->execute(sharedQueryPlan);
 
     //deployment phase
-    auto queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
-    queryDeploymentPhase->execute(sharedQueryPlan);
+    auto deploymentPhase = DeploymentPhase::create(queryCatalogService, coordinatorConfiguration);
+    deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
 
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
 }

@@ -41,8 +41,8 @@ namespace NES {
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class QueryDeploymentPhase;
-using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
+class DeploymentPhase;
+using DeploymentPhasePtr = std::shared_ptr<DeploymentPhase>;
 
 class QueryUndeploymentPhase;
 using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
@@ -155,8 +155,7 @@ class StopQueryRequest : public AbstractUniRequest {
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    QueryDeploymentPhasePtr queryDeploymentPhase;
-    QueryUndeploymentPhasePtr queryUndeploymentPhase;
+    DeploymentPhasePtr deploymentPhase;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementAmendmentPhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
