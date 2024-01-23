@@ -14,10 +14,10 @@
 
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -125,7 +125,7 @@ void QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, De
         queryCatalogEntry->setQueryStatus(QueryState::MARKED_FOR_FAILURE);
         for (const auto& subQueryPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
             //Mark the sub query plan as already failed for which the failure message was received
-            if (subQueryPlanMetaData->getQuerySubPlanId() == querySubPlanId) {
+            if (subQueryPlanMetaData->getDecomposedQueryPlanId() == querySubPlanId) {
                 subQueryPlanMetaData->updateStatus(QueryState::FAILED);
             } else {
                 subQueryPlanMetaData->updateStatus(QueryState::MARKED_FOR_FAILURE);
@@ -265,7 +265,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
         auto querySubPlanMetaData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
 
         // check the query sub plan status
-        auto currentStatus = querySubPlanMetaData->getQuerySubPlanStatus();
+        auto currentStatus = querySubPlanMetaData->getDecomposedQueryPlanStatus();
         if (currentStatus == QueryState::SOFT_STOP_COMPLETED && querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
             NES_WARNING("Received multiple soft stop completed for sub query with id {} for query {}", querySubPlanId, queryId);
             NES_WARNING("Skipping remaining operation");
@@ -301,7 +301,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                  * and the state is set to RUNNING again */
                 bool queryMigrationComplete = true;
                 for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
-                    auto querySubPlanStatus = querySubPlanMetaData->getQuerySubPlanStatus();
+                    auto querySubPlanStatus = querySubPlanMetaData->getDecomposedQueryPlanStatus();
                     if (querySubPlanStatus == QueryState::MIGRATING) {
                         queryMigrationComplete = false;
                         break;
@@ -322,9 +322,9 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                 for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
                     NES_DEBUG("Updating query subplan status for query id= {} subplan= {} is {}",
                               queryId,
-                              querySubPlanMetaData->getQuerySubPlanId(),
-                              std::string(magic_enum::enum_name(querySubPlanMetaData->getQuerySubPlanStatus())));
-                    if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::SOFT_STOP_COMPLETED) {
+                              querySubPlanMetaData->getDecomposedQueryPlanId(),
+                              std::string(magic_enum::enum_name(querySubPlanMetaData->getDecomposedQueryPlanStatus())));
+                    if (querySubPlanMetaData->getDecomposedQueryPlanStatus() != QueryState::SOFT_STOP_COMPLETED) {
                         stopQuery = false;
                         break;
                     }

@@ -18,9 +18,14 @@
 #include <Identifiers.hpp>
 #include <iostream>
 #include <memory>
-#include <vector>
+#include <set>
 
 namespace NES {
+
+namespace Optimizer {
+class DeploymentContext;
+using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
+}// namespace Optimizer
 
 namespace Configurations {
 class CoordinatorConfiguration;
@@ -30,49 +35,40 @@ using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-class ExecutionNode;
-using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
-
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-
-class QueryDeploymentPhase;
-using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
+class DeploymentPhase;
+using DeploymentPhasePtr = std::shared_ptr<DeploymentPhase>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class SharedQueryPlan;
-using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
-
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+class DecomposedQueryPlan;
+using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 /**
  * @brief This class contains logic to transmit a collection of query sub plans to the desired worker nodes.
  */
-class QueryDeploymentPhase {
+class DeploymentPhase {
   public:
-
     /**
      * @brief Returns a smart pointer to the QueryDeploymentPhase
      * @param coordinatorConfiguration: coordinator configuration
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static QueryDeploymentPhasePtr create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
+    static DeploymentPhasePtr create(const QueryCatalogServicePtr& queryCatalogService,
+                                     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
+
+    explicit DeploymentPhase(const QueryCatalogServicePtr& queryCatalogService,
+                             bool accelerateJavaUDFs,
+                             const std::string& accelerationServiceURL);
 
     /**
-     * @brief method for deploying and starting the query
-     * @param queryId : the query Id of the query to be deployed and started
+     * @brief method for deploying decomposed query plans in different states
+     * @param deploymentContexts : the vector of deployment contexts containing the worker rpc address and decomposed query plan
      * @throws ExecutionNodeNotFoundException: Unable to find ExecutionNodes where the query {sharedQueryId} is deployed
      */
-    void execute(std::vector<> SharedQueryPlanPtr& sharedQueryPlan);
+    void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts);
 
   private:
-    explicit QueryDeploymentPhase(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                  const QueryCatalogServicePtr& queryCatalogService,
-                                  bool accelerateJavaUDFs,
-                                  const std::string& accelerationServiceURL);
     /**
      * @brief method send query to nodes
      * @param sharedQueryId
@@ -82,29 +78,25 @@ class QueryDeploymentPhase {
      * @throws QueryDeploymentException: Error in call to Elegant acceleration service with code
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
-    void deployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void deployQuery(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts);
 
     /**
      * @brief method to start a already deployed query
      * @param queryId
      */
-    void startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void startQuery(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts);
 
     /**
-     * @brief apply java UDF acceleration to a query sub plan
-     * @param sharedQueryId the id of the shared query to which the query sub plan belongs
-     * @param executionNode the execution node which hosts the query sub plan
-     * @param querySubPlan the query sub plan
+     * @brief apply java UDF acceleration to a decomposed query plan
+     * @param decomposedQueryPlan the decomposed query plan
      */
-    void applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
-                                  const ExecutionNodePtr& executionNode,
-                                  const QueryPlanPtr& querySubPlan) const;
+    void applyJavaUDFAcceleration(const DecomposedQueryPlanPtr& decomposedQueryPlan) const;
 
+    WorkerRPCClientPtr workerRPCClient;
+    QueryCatalogServicePtr queryCatalogService;
     bool accelerateJavaUDFs;
     std::string accelerationServiceURL;
-
     const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
-
     //OpenCL payload constants
     const std::string DEVICE_INFO_KEY = "deviceInfo";
 };

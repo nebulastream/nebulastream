@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
+#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>

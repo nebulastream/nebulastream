@@ -15,9 +15,9 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>

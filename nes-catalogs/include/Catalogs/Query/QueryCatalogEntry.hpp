@@ -18,20 +18,20 @@
 #include <Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
+#include <Util/QueryStateHistory.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
-#include <Util/QueryStateHistory.hpp>
 
 namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class QuerySubPlanMetaData;
-using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
+class DecomposedQueryPlanMetaData;
+using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaData>;
 
 namespace Catalogs::Query {
 
@@ -130,30 +130,44 @@ class QueryCatalogEntry {
 
     /**
      * @brief Check if metadata exists for a specific subplan
-     * @param Ths id of the subplan to check
-     * @return true if metadata has already been created for the subplan in question
+     * @param decomposedQueryPlanId id of the decomposed plan to check
+     * @return true if metadata has already been created
      */
-    bool hasQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId);
+    bool hasQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * Add sub query plan to the query catalog
-     * @param querySubPlanId : the sub query plan id
+     * @param decomposedQueryPlanId : the sub query plan id
+     * @param decomposedQueryPlanVersion: the decomposed query plan version
      * @param workerId : the worker node on which the query is running
-     * @param subQueryState : the state of the subplan
+     * @param queryState : the state of the decomposed plan
      */
-    void addQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState);
+    void addQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                 WorkerId workerId,
+                                 QueryState queryState);
+
+    /**
+     * Add sub query plan to the query catalog
+     * @param decomposedQueryPlanId : the sub query plan id
+     * @param workerId : the worker node on which the query is running
+     * @param queryState : the state of the decomposed plan
+     */
+    void addQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+                                 WorkerId workerId,
+                                 QueryState queryState);
 
     /**
      * Get sub query plan meta data
-     * @param querySubPlanId : the sub query plan id
+     * @param decomposedQueryPlanId : the decomposed query plan id
      */
-    QuerySubPlanMetaDataPtr getQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId);
+    DecomposedQueryPlanMetaDataPtr getQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * Get all sub query plan mea data
      * @return vector of sub query plan meta data
      */
-    std::vector<QuerySubPlanMetaDataPtr> getAllSubQueryPlanMetaData();
+    std::vector<DecomposedQueryPlanMetaDataPtr> getAllSubQueryPlanMetaData();
 
     void removeAllQuerySubPlanMetaData();
 
@@ -170,11 +184,11 @@ class QueryCatalogEntry {
     QueryState queryState;
     std::string metaInformation;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
-    std::map<DecomposedQueryPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;
+    std::map<DecomposedQueryPlanId, DecomposedQueryPlanMetaDataPtr> querySubPlanMetaDataMap;
     QueryStateHistory history;
 };
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace Catalogs::Query
 }// namespace NES
 
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
