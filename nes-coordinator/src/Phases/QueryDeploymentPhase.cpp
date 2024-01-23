@@ -148,7 +148,6 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     startQuery(sharedQueryId, executionNodes);
 
     //remove subplans from global query plan if they were stopped due to migration
-    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
     for (const auto& node : executionNodes) {
         auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
@@ -217,7 +216,6 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
             }
         }
     }
-    //todo: problem is here
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
 }

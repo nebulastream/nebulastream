@@ -225,6 +225,12 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             isTermination = true;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            //event channels do not need to be drained
+            terminationType = Runtime::QueryTerminationType::Graceful;
+            isTermination = true;
+            break;
+        }
         case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
             isTermination = true;
@@ -270,6 +276,10 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            terminationType = Runtime::QueryTerminationType::Drain;
+            break;
+        }
         default: {
             break;
         }
@@ -292,8 +302,8 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runti
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
-    if (Runtime::QueryTerminationType::Graceful == terminationType) {
-        queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
+    if (Runtime::QueryTerminationType::Graceful == terminationType || Runtime::QueryTerminationType::Drain == terminationType) {
+        queryManager->addEndOfStream(shared_from_base<DataSource>(), terminationType);
     } else {
         NES_WARNING("Ignoring forceful EoS on {}", nesPartition);
     }
@@ -301,44 +311,45 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
 
 void NetworkSource::onDrainMessage() {
     std::unique_lock lock(versionMutex);
-    startNewVersion();
+    tryStartingNewVersion();
 }
 
 void NetworkSource::markAsMigrated() {
     std::unique_lock lock(versionMutex);
     migrated = true;
-    if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-        startNewVersion();
-    }
+    tryStartingNewVersion();
 }
 
-bool NetworkSource::startNewVersion() {
+bool NetworkSource::tryStartingNewVersion() {
     NES_DEBUG("Updating version for network source {}", nesPartition);
     std::unique_lock lock(versionMutex);
     if (nextSourceDescriptor) {
         NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
         //check if the partition is still registered of if it was removed because no channels were connected
-        if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Registered) {
-            networkManager->unregisterSubpartitionConsumer(nesPartition);
+        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+            auto newDescriptor = nextSourceDescriptor.value();
+            version = newDescriptor.getVersion();
+            sinkLocation = newDescriptor.getNodeLocation();
+            nesPartition = newDescriptor.getNesPartition();
+            nextSourceDescriptor = std::nullopt;
+            //bind the sink to the new partition
+            bind();
+            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
+                                                                 -1,
+                                                                 Runtime::ReconfigurationType::UpdateVersion,
+                                                                 Runtime::Reconfigurable::shared_from_this());
+            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+            return true;
         }
-        auto newDescriptor = nextSourceDescriptor.value();
-        version = newDescriptor.getVersion();
-        sinkLocation = newDescriptor.getNodeLocation();
-        nesPartition = newDescriptor.getNesPartition();
-        nextSourceDescriptor = std::nullopt;
-        //bind the sink to the new partition
-        bind();
-        auto reconfMessage = Runtime::ReconfigurationMessage(-1,
-                                                             -1,
-                                                             Runtime::ReconfigurationType::UpdateVersion,
-                                                             Runtime::Reconfigurable::shared_from_this());
-        queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
-        return true;
+        return false;
     }
     if (migrated) {
-        migrated = false;
-        onEndOfStream(Runtime::QueryTerminationType::Graceful);
-        return true;
+        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+            migrated = false;
+            onEndOfStream(Runtime::QueryTerminationType::Drain);
+            return true;
+        }
+        return false;
     }
     return false;
 }
@@ -378,9 +389,7 @@ bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& network
     std::unique_lock lock(versionMutex);
     if (nesPartition != networkSourceDescriptor.getNesPartition()) {
         nextSourceDescriptor = networkSourceDescriptor;
-        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-            startNewVersion();
-        }
+        tryStartingNewVersion();
         return true;
     }
     return false;

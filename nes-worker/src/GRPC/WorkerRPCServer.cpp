@@ -104,7 +104,8 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     NES_DEBUG("WorkerRPCServer::StopQuery: got request for {}", request->queryid());
     auto terminationType = Runtime::QueryTerminationType(request->queryterminationtype());
     NES_ASSERT2_FMT(terminationType != Runtime::QueryTerminationType::Graceful
-                        && terminationType != Runtime::QueryTerminationType::Invalid,
+                        && terminationType != Runtime::QueryTerminationType::Invalid
+                        && terminationType != Runtime::QueryTerminationType::Drain,
                     "Invalid termination type requested");
     bool success = nodeEngine->stopQuery(request->queryid(), terminationType);
     if (success) {

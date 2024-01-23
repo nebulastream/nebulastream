@@ -162,12 +162,11 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
         } else {
             auto dataEmitter = partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition());
-            //if (!(networkSource && networkSource->startNewVersion())) {
-            auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);
             if (endOfStreamMessage.getQueryTerminationType() == Runtime::QueryTerminationType::Drain) {
+                auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);
                 NES_ASSERT(networkSource, "Received drain message but the data emitter is not a network source");
                 networkSource->onDrainMessage();
-            } else if (!(networkSource && networkSource->startNewVersion())) {
+            } else {
                 dataEmitter->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
                 protocolListener->onEndOfStream(endOfStreamMessage);
             }

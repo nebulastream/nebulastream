@@ -192,13 +192,10 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(
 
 bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconnectionRoutine(uint64_t& currentParentId,
                                                                                              uint64_t newParentId) {
-    //todo #4283: trigger buffering of sinks before reoconnect happens
-
     auto workerId = nodeEngine->getNodeId();
     TopologyLinkInformation removedLink(workerId, currentParentId);
     TopologyLinkInformation addedLink(workerId, newParentId);
     nodeEngine->bufferOutgoingTuples(currentParentId);
-    //todo: make this return the new version number and assign it to the sink
     bool success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink});
     if (success) {
         //update locally saved information about parent

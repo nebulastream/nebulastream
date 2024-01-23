@@ -37,6 +37,8 @@ enum class ReconfigurationType : uint8_t {
     ConnectionEstablished,
     /// Indicates that the version of the operator is updated due to reconfiguration as part of query redeployment
     UpdateVersion,
+    /// Indicates that this operator is drained due to migration
+    Drain,
 };
 }
 

@@ -237,110 +237,110 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
     (void) sharedQueryId;
     (void) querySubPlanId;
     (void) querySubPlanStatus;
-//    std::unique_lock lock(serviceMutex);
-//    NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
-//              "plan with id {}",
-//              std::string(magic_enum::enum_name(querySubPlanStatus)),
-//              querySubPlanId,
-//              sharedQueryId);
-//
-//    //Fetch query catalog entries
-//    auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
-//    for (auto& queryCatalogEntry : queryCatalogEntries) {
-//        auto queryId = queryCatalogEntry->getQueryId();
-//        //Check if query is in correct status
-//        auto currentQueryStatus = queryCatalogEntry->getQueryState();
-//        //todo #4396: when query migration has its own termination type, this function will not be called during migration. remove MIGRATING below
-//        if (currentQueryStatus != QueryState::MARKED_FOR_SOFT_STOP && currentQueryStatus != QueryState::MIGRATING) {
-//            NES_WARNING("Found query in {} but received {} for the sub query with id {} for query id {}",
-//                        queryCatalogEntry->getQueryStatusAsString(),
-//                        std::string(magic_enum::enum_name(querySubPlanStatus)),
-//                        querySubPlanId,
-//                        queryId);
-//            //FIXME: fix what to do when this occurs
-//            NES_ASSERT(false,
-//                       "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
-//                                         << std::string(magic_enum::enum_name(querySubPlanStatus))
-//                                         << " for the sub query with id " << querySubPlanId << " for query id " << queryId);
-//        }
-//
-//        //Get the sub query plan
-//        auto querySubPlanMetaData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
-//
-//        // check the query sub plan status
-//        auto currentStatus = querySubPlanMetaData->getQuerySubPlanStatus();
-//        if (currentStatus == QueryState::SOFT_STOP_COMPLETED && querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
-//            NES_WARNING("Received multiple soft stop completed for sub query with id {} for query {}", querySubPlanId, queryId);
-//            NES_WARNING("Skipping remaining operation");
-//            continue;
-//        } else if (currentStatus == QueryState::SOFT_STOP_COMPLETED && querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED) {
-//            NES_ERROR("Received soft stop triggered for sub query with id {} for query {} but sub query is already marked as "
-//                      "soft stop completed.",
-//                      querySubPlanId,
-//                      sharedQueryId);
-//            NES_WARNING("Skipping remaining operation");
-//            continue;
-//        } else if (currentStatus == QueryState::SOFT_STOP_TRIGGERED && querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED) {
-//            NES_ERROR("Received multiple soft stop triggered for sub query with id {} for query {}",
-//                      querySubPlanId,
-//                      sharedQueryId);
-//            NES_WARNING("Skipping remaining operation");
-//            continue;
-//        }
-//
-//        //todo: refactor this to keep the plans in migrating also when soft stop is triggered
-//        querySubPlanMetaData->updateStatus(querySubPlanStatus);
-//
-//        if (currentQueryStatus == QueryState::MIGRATING) {
-//            if (querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
-//                /* receiving a soft stop for a query sub plan of a migrating query marks the completion of the
-//                 * migration of that specific query sub plan.*/
-//                if (querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
-//                    //todo #4396: once a specific drain EOS is implemented, remove this as the received state should already equal migration completed
-//                    querySubPlanMetaData->updateStatus(QueryState::MIGRATION_COMPLETED);
-//                }
-//
-//                /*if the query is in MIGRATING status, check if there are still any querySubPlans that did not finish their
-//                 * migration. If no subplan in state MIGRATING could be found, the migration of the whole query is complete
-//                 * and the state is set to RUNNING again */
-//                bool queryMigrationComplete = true;
-//                for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
-//                    auto querySubPlanStatus = querySubPlanMetaData->getQuerySubPlanStatus();
-//                    if (querySubPlanStatus == QueryState::MIGRATING) {
-//                        queryMigrationComplete = false;
-//                        break;
-//                    }
-//                    NES_ASSERT(querySubPlanStatus == QueryState::RUNNING || querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED
-//                                   || querySubPlanStatus == QueryState::MIGRATION_COMPLETED
-//                                   || querySubPlanStatus == QueryState::REDEPLOYED || querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED,
-//                               "Unexpected subplan status: " << magic_enum::enum_name(querySubPlanStatus));
-//                }
-//                if (queryMigrationComplete) {
-//                    queryCatalogEntry->setQueryStatus(QueryState::RUNNING);
-//                }
-//            }
-//        } else {
-//            //Check if all sub queryIdAndCatalogEntryMapping are stopped when a sub query soft stop completes
-//            bool stopQuery = true;
-//            if (querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
-//                for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
-//                    NES_DEBUG("Updating query subplan status for query id= {} subplan= {} is {}",
-//                              queryId,
-//                              querySubPlanMetaData->getQuerySubPlanId(),
-//                              std::string(magic_enum::enum_name(querySubPlanMetaData->getQuerySubPlanStatus())));
-//                    if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::SOFT_STOP_COMPLETED) {
-//                        stopQuery = false;
-//                        break;
-//                    }
-//                }
-//                // Mark the query as stopped if all sub queryIdAndCatalogEntryMapping are stopped
-//                if (stopQuery) {
-//                    queryCatalogEntry->setQueryStatus(QueryState::STOPPED);
-//                    NES_INFO("Query with id {} is now stopped", queryCatalogEntry->getQueryId());
-//                }
-//            }
-//        }
-//    }
+    std::unique_lock lock(serviceMutex);
+    NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
+              "plan with id {}",
+              std::string(magic_enum::enum_name(querySubPlanStatus)),
+              querySubPlanId,
+              sharedQueryId);
+
+    //Fetch query catalog entries
+    auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
+    for (auto& queryCatalogEntry : queryCatalogEntries) {
+        auto queryId = queryCatalogEntry->getQueryId();
+        //Check if query is in correct status
+        auto currentQueryStatus = queryCatalogEntry->getQueryState();
+        //todo #4396: when query migration has its own termination type, this function will not be called during migration. remove MIGRATING below
+        if (currentQueryStatus != QueryState::MARKED_FOR_SOFT_STOP && currentQueryStatus != QueryState::MIGRATING) {
+            NES_WARNING("Found query in {} but received {} for the sub query with id {} for query id {}",
+                        queryCatalogEntry->getQueryStatusAsString(),
+                        std::string(magic_enum::enum_name(querySubPlanStatus)),
+                        querySubPlanId,
+                        queryId);
+            //FIXME: fix what to do when this occurs
+            NES_ASSERT(false,
+                       "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
+                                         << std::string(magic_enum::enum_name(querySubPlanStatus))
+                                         << " for the sub query with id " << querySubPlanId << " for query id " << queryId);
+        }
+
+        //Get the sub query plan
+        auto querySubPlanMetaData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
+
+        // check the query sub plan status
+        auto currentStatus = querySubPlanMetaData->getQuerySubPlanStatus();
+        if (currentStatus == QueryState::SOFT_STOP_COMPLETED && querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
+            NES_WARNING("Received multiple soft stop completed for sub query with id {} for query {}", querySubPlanId, queryId);
+            NES_WARNING("Skipping remaining operation");
+            continue;
+        } else if (currentStatus == QueryState::SOFT_STOP_COMPLETED && querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED) {
+            NES_ERROR("Received soft stop triggered for sub query with id {} for query {} but sub query is already marked as "
+                      "soft stop completed.",
+                      querySubPlanId,
+                      sharedQueryId);
+            NES_WARNING("Skipping remaining operation");
+            continue;
+        } else if (currentStatus == QueryState::SOFT_STOP_TRIGGERED && querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED) {
+            NES_ERROR("Received multiple soft stop triggered for sub query with id {} for query {}",
+                      querySubPlanId,
+                      sharedQueryId);
+            NES_WARNING("Skipping remaining operation");
+            continue;
+        }
+
+        //todo: refactor this to keep the plans in migrating also when soft stop is triggered
+        querySubPlanMetaData->updateStatus(querySubPlanStatus);
+
+        if (currentQueryStatus == QueryState::MIGRATING) {
+            if (querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
+                /* receiving a soft stop for a query sub plan of a migrating query marks the completion of the
+                 * migration of that specific query sub plan.*/
+                if (querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
+                    //todo #4396: once a specific drain EOS is implemented, remove this as the received state should already equal migration completed
+                    querySubPlanMetaData->updateStatus(QueryState::MIGRATION_COMPLETED);
+                }
+
+                /*if the query is in MIGRATING status, check if there are still any querySubPlans that did not finish their
+                 * migration. If no subplan in state MIGRATING could be found, the migration of the whole query is complete
+                 * and the state is set to RUNNING again */
+                bool queryMigrationComplete = true;
+                for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
+                    auto querySubPlanStatus = querySubPlanMetaData->getQuerySubPlanStatus();
+                    if (querySubPlanStatus == QueryState::MIGRATING) {
+                        queryMigrationComplete = false;
+                        break;
+                    }
+                    NES_ASSERT(querySubPlanStatus == QueryState::RUNNING || querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED
+                                   || querySubPlanStatus == QueryState::MIGRATION_COMPLETED
+                                   || querySubPlanStatus == QueryState::REDEPLOYED || querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED,
+                               "Unexpected subplan status: " << magic_enum::enum_name(querySubPlanStatus));
+                }
+                if (queryMigrationComplete) {
+                    queryCatalogEntry->setQueryStatus(QueryState::RUNNING);
+                }
+            }
+        } else {
+            //Check if all sub queryIdAndCatalogEntryMapping are stopped when a sub query soft stop completes
+            bool stopQuery = true;
+            if (querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
+                for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
+                    NES_DEBUG("Updating query subplan status for query id= {} subplan= {} is {}",
+                              queryId,
+                              querySubPlanMetaData->getQuerySubPlanId(),
+                              std::string(magic_enum::enum_name(querySubPlanMetaData->getQuerySubPlanStatus())));
+                    if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::SOFT_STOP_COMPLETED) {
+                        stopQuery = false;
+                        break;
+                    }
+                }
+                // Mark the query as stopped if all sub queryIdAndCatalogEntryMapping are stopped
+                if (stopQuery) {
+                    queryCatalogEntry->setQueryStatus(QueryState::STOPPED);
+                    NES_INFO("Query with id {} is now stopped", queryCatalogEntry->getQueryId());
+                }
+            }
+        }
+    }
     return true;
 }
 

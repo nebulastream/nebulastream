@@ -116,12 +116,6 @@ bool PartitionManager::unregisterSubpartitionConsumerIfNotConnected(NesPartition
     NES_ASSERT2_FMT(it != consumerPartitions.end(),
                     "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
 
-    // safeguard
-    if (it->second.count() == 0) {
-        NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
-        return true;
-    }
-
     if (it->second.count() != 1) {
         NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
         return false;

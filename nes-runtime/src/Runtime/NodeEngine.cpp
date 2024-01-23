@@ -269,6 +269,7 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId, Runtime::QueryTerminatio
         }
 
         switch (terminationType) {
+            case QueryTerminationType::Drain:
             case QueryTerminationType::Graceful:
             case QueryTerminationType::HardStop: {
                 for (auto querySubPlanId : querySubPlanIds) {
@@ -303,7 +304,6 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId, Runtime::QueryTerminatio
                 }
             }
             case QueryTerminationType::Invalid: NES_NOT_IMPLEMENTED();
-            case QueryTerminationType::Drain: NES_NOT_IMPLEMENTED();
         }
         return true;
     }
@@ -694,7 +694,6 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
         return false;
     }
 
-    //sharedQueryIdToDecomposedQueryPlanIds.erase(decomposedQueryPlanId);
     auto deployedPlan = deployedPlanIterator->second;
     // iterate over all network sources and apply the reconfigurations
     for (auto& source : deployedPlan->getSources()) {
@@ -706,7 +705,6 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
             NES_NOT_IMPLEMENTED();
         }
     }
-    //deployedExecutableQueryPlans.erase(decomposedQueryPlanId);
     return true;
 }
 
@@ -730,8 +728,8 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
                 if (reconfiguredNetworkSink
                     && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
-                    //todo: check expected version
                     networkSink->scheduleNewDescriptor(*reconfiguredNetworkSink);
+                    networkSink->applyNextSinkDescriptor();
                 }
             }
         }

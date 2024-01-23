@@ -248,6 +248,12 @@ class PartitionManager {
      */
     void clear();
 
+    /**
+     * @brief This function checks if there are currently any data channels connected for this partition and will
+     * unregister the partition only, if no connected channels exist
+     * @param nesPartition the consumer partition to unregister
+     * @return true if the partition count was at one and was set to zero
+     */
     bool unregisterSubpartitionConsumerIfNotConnected(NesPartition partition);
 
   private:
