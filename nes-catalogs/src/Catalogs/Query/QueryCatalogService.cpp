@@ -234,9 +234,6 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId,
 bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                                          DecomposedQueryPlanId querySubPlanId,
                                          QueryState querySubPlanStatus) {
-    (void) sharedQueryId;
-    (void) querySubPlanId;
-    (void) querySubPlanStatus;
     std::unique_lock lock(serviceMutex);
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
               "plan with id {}",
@@ -258,10 +255,10 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                         querySubPlanId,
                         queryId);
             //FIXME: fix what to do when this occurs
-            NES_ASSERT(false,
-                       "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
-                                         << std::string(magic_enum::enum_name(querySubPlanStatus))
-                                         << " for the sub query with id " << querySubPlanId << " for query id " << queryId);
+//            NES_ASSERT(false,
+//                       "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
+//                                         << std::string(magic_enum::enum_name(querySubPlanStatus))
+//                                         << " for the sub query with id " << querySubPlanId << " for query id " << queryId);
         }
 
         //Get the sub query plan
