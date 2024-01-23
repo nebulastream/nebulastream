@@ -207,7 +207,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     const uint64_t numBuffersToProduceAfterReconnect = 10;
     const uint64_t buffersToProducePerReconnectCycle =
         (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering);
-    //const uint64_t totalBuffersToProduce = numberOfReconnectsToPerform * buffersToProducePerReconnectCycle;
     const uint64_t totalBuffersToProduce = (numberOfReconnectsToPerform + 1) * buffersToProducePerReconnectCycle;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
