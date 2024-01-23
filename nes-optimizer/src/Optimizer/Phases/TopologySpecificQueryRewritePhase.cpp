@@ -31,7 +31,7 @@ TopologySpecificQueryRewritePhase::create(NES::TopologyPtr topology,
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
     TopologyPtr topology,
-    Catalogs::Source::SourceCatalogPtr sourceCatalog,
+    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
     Configurations::OptimizerConfiguration optimizerConfiguration)
     : topology(topology), optimizerConfiguration(optimizerConfiguration) {
     logicalSourceExpansionRule =

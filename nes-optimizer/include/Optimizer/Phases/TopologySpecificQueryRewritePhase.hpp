@@ -71,7 +71,7 @@ class TopologySpecificQueryRewritePhase {
 
   private:
     explicit TopologySpecificQueryRewritePhase(TopologyPtr topology,
-                                               Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                               const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                Configurations::OptimizerConfiguration optimizerConfiguration);
     TopologyPtr topology;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
