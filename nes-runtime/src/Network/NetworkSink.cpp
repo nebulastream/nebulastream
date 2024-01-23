@@ -408,6 +408,7 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
 }
 
 bool NetworkSink::scheduleNewDescriptor(const NetworkSinkDescriptor& networkSinkDescriptor) {
+    std::unique_lock lock(scheduledVersionMutex);
     if (version != networkSinkDescriptor.getVersion()) {
         nextSinkDescriptor = networkSinkDescriptor;
         return true;
@@ -416,10 +417,12 @@ bool NetworkSink::scheduleNewDescriptor(const NetworkSinkDescriptor& networkSink
 }
 
 bool NetworkSink::applyNextSinkDescriptor() {
+    std::unique_lock lock(scheduledVersionMutex);
     if (!nextSinkDescriptor.has_value()) {
         return false;
     }
     configureNewSinkDescriptor(nextSinkDescriptor.value());
+    nextSinkDescriptor = std::nullopt;
     return true;
 }
 

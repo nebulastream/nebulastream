@@ -201,6 +201,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
+    std::mutex scheduledVersionMutex;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
