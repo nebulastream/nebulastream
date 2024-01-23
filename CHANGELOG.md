@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.28](https://github.com/nebulastream/nebulastream/tree/v0.6.28) (2024-01-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.27...v0.6.28)
+
+**Implemented enhancements:**
+
+- \[TASK\] enable async rpc for query reconfiguration in worker [\#4440](https://github.com/nebulastream/nebulastream/issues/4440)
+- \[Feature\] Accelerate CI Tests [\#3162](https://github.com/nebulastream/nebulastream/issues/3162)
+- NES Explain [\#423](https://github.com/nebulastream/nebulastream/issues/423)
+
 ## [v0.6.27](https://github.com/nebulastream/nebulastream/tree/v0.6.27) (2024-01-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.26...v0.6.27)
