@@ -204,7 +204,8 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                       sharedQueryId,
                       decomposedQueryPlanId);
             queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(),
-                                                  Execution::ExecutableQueryPlanStatus::ErrorState);
+                                                  Execution::ExecutableQueryPlanStatus::ErrorState,
+                                                  task.getType());
             break;
         }
         case ReconfigurationType::HardEndOfStream: {
@@ -218,7 +219,8 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                             "Cannot hard stop qep sharedQueryId=" << sharedQueryId
                                                                   << " decomposedQueryPlanId=" << decomposedQueryPlanId);
             queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(),
-                                                  Execution::ExecutableQueryPlanStatus::Stopped);
+                                                  Execution::ExecutableQueryPlanStatus::Stopped,
+                                                  task.getType());
             break;
         }
         case ReconfigurationType::SoftEndOfStream: {
@@ -235,7 +237,8 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                               decomposedQueryPlanId);
                     qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
                     queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(),
-                                                          Execution::ExecutableQueryPlanStatus::Finished);
+                                                          Execution::ExecutableQueryPlanStatus::Finished,
+                                                          task.getType());
                     return;
                 }
             } else {
@@ -288,6 +291,14 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
               decomposedQueryPlanId,
               source->getOperatorId(),
               (tokensLeft - 1));
+    ReconfigurationType reconfigurationType;
+    switch (terminationType) {
+        case QueryTerminationType::Graceful: reconfigurationType = ReconfigurationType::SoftEndOfStream; break;
+        case QueryTerminationType::HardStop: reconfigurationType = ReconfigurationType::HardEndOfStream; break;
+        case QueryTerminationType::Failure: reconfigurationType = ReconfigurationType::FailEndOfStream; break;
+        case QueryTerminationType::Drain: reconfigurationType = ReconfigurationType::Drain; break;
+        default: NES_THROW_RUNTIME_ERROR("Unexpected termination type");
+    }
     // the following check is necessary because a data sources first emits an EoS marker and then calls this method.
     // However, it might happen that the marker is so fast that one possible execution is as follows:
     // 1) Data Source emits EoS marker
@@ -298,11 +309,7 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(getSharedQueryId(),
                                                        getDecomposedQueryPlanId(),
-                                                       terminationType == QueryTerminationType::Graceful
-                                                           ? ReconfigurationType::SoftEndOfStream
-                                                           : (terminationType == QueryTerminationType::HardStop
-                                                                  ? ReconfigurationType::HardEndOfStream
-                                                                  : ReconfigurationType::FailEndOfStream),
+                                                       reconfigurationType,
                                                        Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getSharedQueryId(), getDecomposedQueryPlanId(), reconfMessageQEP, false);
     }
@@ -320,15 +327,19 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
               decomposedQueryPlanId,
               pipeline->getPipelineId(),
               (tokensLeft - 1));
+    ReconfigurationType reconfigurationType;
+    switch (terminationType) {
+        case QueryTerminationType::Graceful: reconfigurationType = ReconfigurationType::SoftEndOfStream; break;
+        case QueryTerminationType::HardStop: reconfigurationType = ReconfigurationType::HardEndOfStream; break;
+        case QueryTerminationType::Failure: reconfigurationType = ReconfigurationType::FailEndOfStream; break;
+        case QueryTerminationType::Drain: reconfigurationType = ReconfigurationType::Drain; break;
+        default: NES_THROW_RUNTIME_ERROR("Unexpected termination type");
+    }
     // the same applies here for the pipeline
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(getSharedQueryId(),
                                                        getDecomposedQueryPlanId(),
-                                                       terminationType == QueryTerminationType::Graceful
-                                                           ? ReconfigurationType::SoftEndOfStream
-                                                           : (terminationType == QueryTerminationType::HardStop
-                                                                  ? ReconfigurationType::HardEndOfStream
-                                                                  : ReconfigurationType::FailEndOfStream),
+                                                       reconfigurationType,
                                                        Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getSharedQueryId(), getDecomposedQueryPlanId(), reconfMessageQEP, false);
     }
@@ -342,15 +353,19 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Sink was last termination token for " << decomposedQueryPlanId);
     NES_DEBUG("QEP {} Sink {} is terminated; tokens left = {}", decomposedQueryPlanId, sink->toString(), (tokensLeft - 1));
+    ReconfigurationType reconfigurationType;
+    switch (terminationType) {
+        case QueryTerminationType::Graceful: reconfigurationType = ReconfigurationType::SoftEndOfStream; break;
+        case QueryTerminationType::HardStop: reconfigurationType = ReconfigurationType::HardEndOfStream; break;
+        case QueryTerminationType::Failure: reconfigurationType = ReconfigurationType::FailEndOfStream; break;
+        case QueryTerminationType::Drain: reconfigurationType = ReconfigurationType::Drain; break;
+        default: NES_THROW_RUNTIME_ERROR("Unexpected termination type");
+    }
     // sinks also require to spawn a reconfig task for the qep
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(getSharedQueryId(),
                                                        getDecomposedQueryPlanId(),
-                                                       terminationType == QueryTerminationType::Graceful
-                                                           ? ReconfigurationType::SoftEndOfStream
-                                                           : (terminationType == QueryTerminationType::HardStop
-                                                                  ? ReconfigurationType::HardEndOfStream
-                                                                  : ReconfigurationType::FailEndOfStream),
+                                                       reconfigurationType,
                                                        Reconfigurable::shared_from_this<ExecutableQueryPlan>());
         queryManager->addReconfigurationMessage(getSharedQueryId(), getDecomposedQueryPlanId(), reconfMessageQEP, false);
     }

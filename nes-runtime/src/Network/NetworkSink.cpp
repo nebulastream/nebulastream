@@ -175,6 +175,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            terminationType = Runtime::QueryTerminationType::Drain;
+            break;
+        }
         case Runtime::ReconfigurationType::BufferOutGoingTuples: {
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
                 workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());

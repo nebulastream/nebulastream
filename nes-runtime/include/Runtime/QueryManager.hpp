@@ -257,9 +257,11 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     /**
      * @brief Informs the query manager about a status change in a sub query plan
      * @param qep the sub query plan
-     * @param newStatus the new status of the query plan
+     * @param status the new status of the query plan
      */
-    void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus newStatus);
+    void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
+                                 Execution::ExecutableQueryPlanStatus newStatus,
+                                 ReconfigurationType reconfigurationType);
 
     /**
      * @brief get the shared query id mapped to the decomposed query plan id
@@ -440,6 +442,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
+    bool drain(DataSourcePtr source);
 };
 
 class DynamicQueryManager : public AbstractQueryManager {

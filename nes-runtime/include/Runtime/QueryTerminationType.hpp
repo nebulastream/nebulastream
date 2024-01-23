@@ -25,12 +25,14 @@ enum class QueryTerminationType : uint8_t { Graceful = 0, HardStop, Failure, Dra
 
 template<typename O = std::ostream>
 static O& operator<<(O& os, const QueryTerminationType& type) {
-    switch (type) {
-        case QueryTerminationType::Graceful: return os << "Graceful";
-        case QueryTerminationType::HardStop: return os << "HardStop";
-        case QueryTerminationType::Failure: return os << "Failure";
-        default: return os << "Invalid";
-    }
+        switch (type) {
+            case QueryTerminationType::Graceful: return os << "Graceful";
+            case QueryTerminationType::HardStop: return os << "HardStop";
+            case QueryTerminationType::Failure: return os << "Failure";
+            case QueryTerminationType::Drain: return os << "Drain";
+            default: return os << "Invalid";
+        }
+    //return os << magic_enum::enum_name(type);
 }
 
 }// namespace NES::Runtime

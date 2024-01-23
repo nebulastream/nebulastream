@@ -112,6 +112,8 @@ void AppendToSliceStoreHandler<Slice>::stop(NES::Runtime::QueryTerminationType q
             task->sequenceNumber = resultSequenceNumber++;
             ctx->dispatchBuffer(buffer);
         }
+    } else if (queryTerminationType == Runtime::QueryTerminationType::Drain) {
+        NES_NOT_IMPLEMENTED();
     }
 }
 

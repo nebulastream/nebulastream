@@ -77,6 +77,10 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            terminationType = Runtime::QueryTerminationType::Drain;
+            break;
+        }
         case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
             break;

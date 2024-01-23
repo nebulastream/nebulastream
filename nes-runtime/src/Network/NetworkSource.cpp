@@ -225,6 +225,12 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             isTermination = true;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            //event channels do not need to be drained
+            terminationType = Runtime::QueryTerminationType::Graceful;
+            isTermination = true;
+            break;
+        }
         case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
             isTermination = true;
@@ -270,6 +276,10 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            terminationType = Runtime::QueryTerminationType::Drain;
+            break;
+        }
         default: {
             break;
         }
@@ -292,8 +302,8 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runti
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
-    if (Runtime::QueryTerminationType::Graceful == terminationType) {
-        queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
+    if (Runtime::QueryTerminationType::Graceful == terminationType || Runtime::QueryTerminationType::Drain == terminationType) {
+        queryManager->addEndOfStream(shared_from_base<DataSource>(), terminationType);
     } else {
         NES_WARNING("Ignoring forceful EoS on {}", nesPartition);
     }
@@ -337,7 +347,7 @@ bool NetworkSource::startNewVersion() {
     }
     if (migrated) {
         migrated = false;
-        onEndOfStream(Runtime::QueryTerminationType::Graceful);
+        onEndOfStream(Runtime::QueryTerminationType::Drain);
         return true;
     }
     return false;
