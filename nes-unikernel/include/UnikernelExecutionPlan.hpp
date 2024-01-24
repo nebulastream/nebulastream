@@ -24,6 +24,21 @@
 #include <string>
 #include <tuple>
 
+#define UNIKERNEL_TRACE_PIPELINE_EXECUTION
+#ifdef UNIKERNEL_TRACE_PIPELINE_EXECUTION
+#define TRACE_PIPELINE_SETUP(...) NES_INFO("Pipeline: Setup {} {}", StageId, fmt::format(__VA_ARGS__))
+#define TRACE_PIPELINE_EXECUTE(...) NES_INFO("Pipeline: Execute {} {}", StageId, fmt::format(__VA_ARGS__))
+#define TRACE_PIPELINE_STOP(...)                                                                                                 \
+    NES_INFO("Pipeline: Stopping {} {} {}", magic_enum::enum_name(type), StageId, fmt::format(__VA_ARGS__))
+#define TRACE_PIPELINE_STOP_REQUEST(...)                                                                                         \
+    NES_INFO("Pipeline: Stop Requested {} {} {}", magic_enum::enum_name(type), StageId, fmt::format(__VA_ARGS__))
+#else
+#define TRACE_PIPELINE_SETUP(...)
+#define TRACE_PIPELINE_EXECUTE(...)
+#define TRACE_PIPELINE_STOP(...)
+#define TRACE_PIPELINE_STOP_REQUEST(...)
+#endif
+
 extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 
 namespace NES::Unikernel {
@@ -48,27 +63,28 @@ class PipelineImpl<Prev, Stage, Stages...> {
   public:
     constexpr static size_t StageId = Stage::StageId;
     static void setup() {
-        NES_INFO("Calling Setup for stage {}", StageId);
+        TRACE_PIPELINE_SETUP("Pipeline");
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
         Stage::setup(ctx, TheWorkerContext);
         Next::setup();
     }
 
-    static void stop(size_t /*stage_id*/) {
-        NES_INFO("Calling Stop for stage {}", StageId);
+    static void stop(size_t /*stage_id*/, Runtime::QueryTerminationType type) {
+        TRACE_PIPELINE_STOP("Pipeline");
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
         Stage::terminate(ctx, TheWorkerContext);
-        Prev::stop(Stage::StageId);
+        Prev::stop(Stage::StageId, type);
     }
 
-    static void request_stop() {
-        Next::request_stop();
+    static void request_stop(Runtime::QueryTerminationType type) {
+        TRACE_PIPELINE_STOP_REQUEST("Pipeline");
+        Next::request_stop(type);
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
         Stage::terminate(ctx, TheWorkerContext);
     }
 
     static void execute(NES::Runtime::TupleBuffer& tb) {
-        NES_INFO("Execute: {}", StageId);
+        TRACE_PIPELINE_EXECUTE("Pipeline");
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
         Stage::execute(ctx, TheWorkerContext, tb);
     }
@@ -77,14 +93,18 @@ class PipelineImpl<Prev, Stage, Stages...> {
 template<UnikernelBackwardsPipelineImpl Prev, typename Source>
 class PipelineImpl<Prev, Source> {
     using SourceImpl = Source::template Impl<Prev>;
+    constexpr static size_t StageId = SourceImpl::Id;
 
   public:
     static void setup() {
-        NES_INFO("Calling Setup for Source {}", SourceImpl::Id);
+        TRACE_PIPELINE_SETUP("Pipeline Source");
         SourceImpl::setup();
     }
 
-    static void request_stop() { SourceImpl::request_stop(); }
+    static void request_stop(Runtime::QueryTerminationType type) {
+        TRACE_PIPELINE_STOP_REQUEST("Pipeline Source");
+        SourceImpl::request_stop(type);
+    }
 };
 
 template<typename... Stages>
@@ -98,21 +118,24 @@ template<typename Query, typename Sink, UnikernelPipeline<Sink> Pipeline>
 class SubQueryImpl {
     using SinkImpl = typename Sink::template Impl<SubQueryImpl>;
     using PipelineImpl = typename Pipeline::template Impl<SinkImpl>;
+    constexpr static size_t StageId = 0;
 
   public:
     static void setup() {
+        TRACE_PIPELINE_SETUP("SubQuery");
         SinkImpl::setup();
         PipelineImpl::setup();
     }
-    static void stop() {
-        NES_INFO("SubQuery Stopped");
-        Query::stop();
+    static void stop(Runtime::QueryTerminationType type) {
+        TRACE_PIPELINE_STOP("SubQuery");
+        Query::stop(type);
     }
 
-    static void request_stop() {
-        PipelineImpl::request_stop();
-        SinkImpl::request_stop();
-        Query::stop();
+    static void request_stop(Runtime::QueryTerminationType type) {
+        TRACE_PIPELINE_STOP_REQUEST("SubQuery");
+        PipelineImpl::request_stop(type);
+        SinkImpl::request_stop(type);
+        Query::stop(type);
     }
 };
 
@@ -130,46 +153,91 @@ template<UnikernelBackwardsPipelineImpl Prev,
 class PipelineJoinImpl {
     using LeftImpl = Left::template Impl<PipelineJoinImpl>;
     using RightImpl = Right::template Impl<PipelineJoinImpl>;
+    static std::atomic_bool eos_left;
+    static std::atomic_bool eos_right;
 
   public:
     constexpr static size_t StageId = Stage::StageId;
     static void setup() {
+        TRACE_PIPELINE_SETUP("PipelineJoin")
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
-        NES_INFO("Calling Setup for Stage {}", Stage::StageId);
         Stage::setup(ctx, TheWorkerContext);
         LeftImpl::setup();
         RightImpl::setup();
     }
 
     static void execute(NES::Runtime::TupleBuffer& tb) {
-        NES_INFO("Calling Execute for Stage {}", Stage::StageId);
+        NES_ASSERT(tb.getBuffer() != nullptr, "Execute called with empty tuple buffer");
+        NES_ASSERT(tb.getOriginId() != 0, "Execute called with tuple buffer with a bad origin id");
+
+        TRACE_PIPELINE_EXECUTE("PipelineJoin");
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
         Stage::execute(ctx, TheWorkerContext, tb);
     }
 
-    static void stop(size_t stageId) {
-        std::cerr << "Calling stop" << std::endl;
+    static void stop(size_t stageId, Runtime::QueryTerminationType type) {
+        NES_ASSERT(stageId == LeftImpl::StageId || stageId == RightImpl::StageId, "Stop called with bad arguments");
 
-        if (stageId == LeftImpl::StageId) {
-            RightImpl::request_stop();
+        TRACE_PIPELINE_STOP("PipelineJoin");
+        if (type == Runtime::QueryTerminationType::Graceful) {
+            if (stageId == LeftImpl::StageId) {
+                NES_INFO("PipelineJoin EoS for Left: {}", stageId);
+                if (eos_left.exchange(true)) {
+                    NES_FATAL_ERROR("Left called EoS twice", stageId);
+                }
+            } else if (stageId == RightImpl::StageId) {
+                NES_INFO("PipelineJoin EoS for Right: {}", stageId);
+                if (eos_right.exchange(true)) {
+                    NES_FATAL_ERROR("Right called EoS twice", stageId);
+                }
+            }
+
+            if (eos_right.load() && eos_left.load()) {
+                NES_INFO("PipelineJoin left and right are EoS propagating: {}", stageId);
+                auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+                Stage::terminate(ctx, TheWorkerContext);
+                Prev::stop(Stage::StageId, type);
+            }
         } else {
-            LeftImpl::request_stop();
+            if (stageId == LeftImpl::StageId && !eos_left.exchange(true)) {
+                RightImpl::request_stop(type);
+            } else if (stageId == RightImpl::StageId && !eos_right.exchange(true)) {
+                LeftImpl::request_stop(type);
+            } else {
+                return;
+            }
+
+            auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+            Stage::terminate(ctx, TheWorkerContext);
+            Prev::stop(Stage::StageId, type);
+        }
+    }
+
+    static void request_stop(Runtime::QueryTerminationType type) {
+        TRACE_PIPELINE_STOP_REQUEST("PipelineJoin")
+        if (!eos_left.exchange(true)) {
+            LeftImpl::request_stop(type);
+        }
+
+        if (!eos_right.exchange(true)) {
+            RightImpl::request_stop(type);
         }
 
         auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
         Stage::terminate(ctx, TheWorkerContext);
-
-        Prev::stop(Stage::StageId);
-    }
-
-    static void request_stop() {
-        std::cerr << "Requesting stop" << std::endl;
-        LeftImpl::request_stop();
-        RightImpl::request_stop();
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
-        Stage::terminate(ctx, TheWorkerContext);
     }
 };
+
+template<UnikernelBackwardsPipelineImpl Prev,
+         NES::Unikernel::UnikernelStage Stage,
+         UnikernelPipeline<Prev> Left,
+         UnikernelPipeline<Prev> Right>
+std::atomic_bool PipelineJoinImpl<Prev, Stage, Left, Right>::eos_left = false;
+template<UnikernelBackwardsPipelineImpl Prev,
+         NES::Unikernel::UnikernelStage Stage,
+         UnikernelPipeline<Prev> Left,
+         UnikernelPipeline<Prev> Right>
+std::atomic_bool PipelineJoinImpl<Prev, Stage, Left, Right>::eos_right = false;
 
 template<NES::Unikernel::UnikernelStage Stage, typename Left, typename Right>
 class PipelineJoin {
@@ -191,18 +259,18 @@ class UnikernelExecutionPlan {
         is_running = true;
     }
 
-    static void stop() {
+    static void stop(Runtime::QueryTerminationType type) {
         {
             std::unique_lock lock(m);
             is_running = false;
         }
         stop_condition.notify_all();
-        NES_INFO("Query has stopped");
+        NES_INFO("Query has stopped: {}", magic_enum::enum_name(type));
     }
 
-    static void request_stop() {
+    static void request_stop(Runtime::QueryTerminationType type) {
         NES_INFO("Query Stop Requested");
-        (SubQuery::template Impl<UnikernelExecutionPlan>::request_stop(), ...);
+        (SubQuery::template Impl<UnikernelExecutionPlan>::request_stop(type), ...);
     }
 
     static void wait() {

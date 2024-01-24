@@ -56,13 +56,13 @@ class UnikernelSinkImpl {
 
     static void execute(NES::Runtime::TupleBuffer& tupleBuffer) { sink->writeData(tupleBuffer, *TheWorkerContext); }
 
-    static void stop(size_t /*stage_id*/) {
+    static void stop(size_t /*stage_id*/, NES::Runtime::QueryTerminationType type) {
         NES_INFO("Calling Stop for Sink {}", StageId);
         sink->shutdown();
-        SubQuery::stop();
+        SubQuery::stop(type);
     }
 
-    static void request_stop() { sink->shutdown(); }
+    static void request_stop(NES::Runtime::QueryTerminationType /*type*/) { sink->shutdown(); }
 };
 
 template<typename Config>
