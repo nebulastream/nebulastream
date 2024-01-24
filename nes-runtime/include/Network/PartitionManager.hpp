@@ -25,10 +25,12 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#ifdef UNIKERNEL_LIB
 namespace NES {
 class DataEmitter;
 using DataEmitterPtr = DataEmitter*;
 }// namespace NES
+#endif
 namespace NES::Network {
 
 /**
