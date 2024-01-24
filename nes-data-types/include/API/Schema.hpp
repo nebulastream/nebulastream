@@ -253,6 +253,7 @@ class Schema {
     static DataTypePtr stringToFieldType(const std::string& fieldType, const std::string& fieldLength);
 
     MemoryLayoutType layoutType;
+    size_t schemaSizeInBytesCache = 0;
 };
 
 AttributeFieldPtr createField(std::string name, BasicType type);

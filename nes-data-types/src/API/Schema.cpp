@@ -36,32 +36,28 @@ SchemaPtr Schema::create(MemoryLayoutType layoutType) { return std::make_shared<
 
 uint64_t Schema::getSize() const { return fields.size(); }
 
-Schema::Schema(const SchemaPtr& schema, MemoryLayoutType layoutType) : layoutType(layoutType) { copyFields(schema); }
+Schema::Schema(const SchemaPtr& schema, MemoryLayoutType layoutType) : layoutType(layoutType) {
+    copyFields(schema);
+}
 
 SchemaPtr Schema::copy() const { return std::make_shared<Schema>(*this); }
 
-/* Return size of one row of schema in bytes. */
-uint64_t Schema::getSchemaSizeInBytes() const {
-    uint64_t size = 0;
-    // todo if we introduce a physical schema.
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto const& field : fields) {
-        auto const type = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        size += type->size();
-    }
-    return size;
-}
+uint64_t Schema::getSchemaSizeInBytes() const { return schemaSizeInBytesCache; }
 
 SchemaPtr Schema::copyFields(const SchemaPtr& otherSchema) {
     for (const AttributeFieldPtr& attribute : otherSchema->fields) {
         fields.push_back(attribute->copy());
     }
+    schemaSizeInBytesCache += otherSchema->schemaSizeInBytesCache;
     return copy();
 }
 
 SchemaPtr Schema::addField(const AttributeFieldPtr& attribute) {
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     if (attribute) {
+        auto const type = physicalDataTypeFactory.getPhysicalType(attribute->getDataType());
         fields.push_back(attribute->copy());
+        schemaSizeInBytesCache += type->size();
     }
     return copy();
 }
@@ -75,9 +71,11 @@ SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
 }
 
 void Schema::removeField(const AttributeFieldPtr& field) {
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto it = fields.begin();
     while (it != fields.end()) {
         if (it->get()->getName() == field->getName()) {
+            schemaSizeInBytesCache -= physicalDataTypeFactory.getPhysicalType(it->get()->getDataType())->size();
             fields.erase(it);
             break;
         }
@@ -86,9 +84,12 @@ void Schema::removeField(const AttributeFieldPtr& field) {
 }
 
 void Schema::replaceField(const std::string& name, const DataTypePtr& type) {
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : fields) {
         if (field->getName() == name) {
+            schemaSizeInBytesCache -= physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
             field = AttributeField::create(name, type);
+            schemaSizeInBytesCache += physicalDataTypeFactory.getPhysicalType(type)->size();
             return;
         }
     }
@@ -252,7 +253,10 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     return nullptr;
 }
 
-void Schema::clear() { fields.clear(); }
+void Schema::clear() {
+    schemaSizeInBytesCache = 0;
+    fields.clear();
+}
 
 std::string Schema::getLayoutTypeAsString() const {
     switch (this->layoutType) {
