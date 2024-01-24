@@ -14,7 +14,8 @@
 
 #ifndef NES_PHYSICALDATATYPES_HPP
 #define NES_PHYSICALDATATYPES_HPP
-
+#include <string>
+#include <cstdint>
 template<typename CType>
 struct SimplePhysicalDataType {
     static constexpr size_t size = sizeof(CType);
