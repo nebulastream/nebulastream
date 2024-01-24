@@ -15,9 +15,9 @@
 #include <Sources/DataSource.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <YAMLModel.h>
+#include <algorithm>
 #include <boost/asio.hpp>
 #include <execution>
-#include <algorithm>
 #include <memory>
 #include <span>
 #include <string>
@@ -39,7 +39,7 @@ class APrioriDataGenerator {
                 generatorImpl = std::make_unique<NES::Benchmark::DataGeneration::NEAuctionDataGenerator>();
                 break;
             case NEXMARK_PERSON: NES_NOT_IMPLEMENTED(); break;
-            case MANUAL: generatorImpl = AutomaticDataGenerator::create(options.schema);
+            case MANUAL: generatorImpl = AutomaticDataGenerator::create(options.schema); break;
             default: NES_NOT_IMPLEMENTED();
         }
 
@@ -112,7 +112,6 @@ class TcpServer {
                     }
                     startSend(socket, chunk_index + 1);// Continue sending random tuples
                 } else {
-                    std::cerr << "Error sending data: " << error.message() << std::endl;
                     socket->close();
                 }
             });
