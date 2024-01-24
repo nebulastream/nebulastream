@@ -31,9 +31,21 @@ PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& 
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; }
+void PartitionManager::PartitionConsumerEntry::pin() {
+#ifdef UNIKERNEL_LIB
+    partitionCounter = 2;
+#else
+    partitionCounter++;
+#endif
+}
 
-void PartitionManager::PartitionConsumerEntry::unpin() { partitionCounter--; }
+void PartitionManager::PartitionConsumerEntry::unpin() {
+#ifdef UNIKERNEL_LIB
+    partitionCounter = 1;
+#else
+    partitionCounter--;
+#endif
+}
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
