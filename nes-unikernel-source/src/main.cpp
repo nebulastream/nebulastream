@@ -28,6 +28,7 @@ class APrioriDataGenerator {
     NES::Runtime::BufferManagerPtr bufferManager;
     NES::Benchmark::DataGeneration::DataGeneratorPtr generatorImpl;
     NES::SinkFormatPtr format;
+    std::jthread generatorThread;
 
   public:
     APrioriDataGenerator(const Options& options) {
@@ -56,14 +57,16 @@ class APrioriDataGenerator {
         }
     }
 
-    void generate(size_t numberOfBuffers) {
-        data_chunks.resize(numberOfBuffers);
-        std::for_each(std::execution::par_unseq, data_chunks.begin(), data_chunks.end(), [this](auto& v) {
-            auto buffer = generatorImpl->createData(1, bufferManager->getBufferSize());
-            auto tupleData = format->getFormattedBuffer(buffer[0]);
-            std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
+    void startGenerator(size_t numberOfBuffers) {
+        generatorThread = std::jthread([this, numberOfBuffers]() {
+            data_chunks.resize(numberOfBuffers);
+            std::for_each(std::execution::par_unseq, data_chunks.begin(), data_chunks.end(), [this](auto& v) {
+                auto buffer = generatorImpl->createData(1, bufferManager->getBufferSize());
+                auto tupleData = format->getFormattedBuffer(buffer[0]);
+                std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
+            });
+            NES_DEBUG("Generated {} buffers", numberOfBuffers);
         });
-        NES_DEBUG("Generated {} buffers", numberOfBuffers);
     }
 
     std::span<const uint8_t> get_chunk(size_t chunk_index) {
@@ -71,6 +74,8 @@ class APrioriDataGenerator {
             return {};
         return {data_chunks[chunk_index].data(), data_chunks[chunk_index].size()};
     }
+
+    void wait() { generatorThread.join(); }
 };
 
 class TcpServer {
@@ -89,6 +94,7 @@ class TcpServer {
                 std::stringstream ss;
                 ss << newConnection->remote_endpoint();
                 NES_INFO("Accepted connection from {}", ss.str());
+                dataGenerator->wait();
                 startSend(newConnection, 0);
                 startAccept();// Accept the next connection
             } else {
@@ -218,7 +224,7 @@ int main(int argc, char* argv[]) {
     }
     auto options = optionsResult.assume_value();
     auto dataGenerator = std::make_unique<APrioriDataGenerator>(options);
-    dataGenerator->generate(options.numberOfBuffers);
+    dataGenerator->startGenerator(options.numberOfBuffers);
 
     if (options.type == NetworkSource) {
         NES_INFO("Running Network Source");
