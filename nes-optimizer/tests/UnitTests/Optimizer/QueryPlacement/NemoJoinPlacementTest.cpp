@@ -210,8 +210,8 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
+    // create flat topology with 1 coordinator and 4 sources
     const std::vector<WorkerId>& sourceNodes = {2, 3, 4, 5};
-    // create topology with 1 coordinator and 4 sources
     auto topology = setupTopology(2, 3, 4);
     auto sourceCatalog = setupSourceCatalog(sourceNodes);
 
@@ -230,16 +230,19 @@ TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
     auto queryId = std::get<0>(outputTuple);
     auto executionPlan = std::get<1>(outputTuple);
     auto executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
-    EXPECT_EQ(executionNodes.size(), 5); //size of the topology
+    EXPECT_EQ(executionNodes.size(), 5); // topology contains 1 coordinator, 4 workers
 
     for (const auto& executionNode : executionNodes) {
         std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->getAllDecomposedQueryPlans(queryId);
         if (executionNode->getId() == 1u) {
+            // coordinator should have 1 sink, 8 network sources
             verifyChildrenOfType<JoinLogicalOperatorNode>(querySubPlans, 1, 1);
-            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 8);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 2*sourceNodes.size());
         } else {
+            // 2x replication factor, therefore each source should have 2 network sources
             verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans, 1, 2);
             verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
         }
     }
+    // std::this_thread::sleep_for(std::chrono::milliseconds(4000));
 }
