@@ -22,12 +22,12 @@ namespace NES::Unikernel {
 
 class UnikernelPipelineExecutionContext {
     std::function<void(NES::Runtime::TupleBuffer&)> emitProxy = nullptr;
-    std::function<void(size_t stageId)> stopProxy = nullptr;
+    std::function<void(size_t stageId, Runtime::QueryTerminationType type)> stopProxy = nullptr;
     std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy = nullptr;
     size_t currentStageId;
     size_t nextStageId;
     UnikernelPipelineExecutionContext(std::function<void(NES::Runtime::TupleBuffer&)> emitProxy,
-                                      std::function<void(size_t stageId)> stop,
+                                      std::function<void(size_t stageId, Runtime::QueryTerminationType type)> stop,
                                       std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy,
                                       size_t currentStageId,
                                       size_t nextStageId)
@@ -101,10 +101,9 @@ class UnikernelPipelineExecutionContext {
         emitProxy(tb);
     }
 
-    void stop() const {
+    void stop(Runtime::QueryTerminationType type) const {
         NES_INFO("Stop was called from: {}", currentStageId);
-        std::cerr << "Calling stop for " << nextStageId << std::endl;
-        stopProxy(currentStageId);
+        stopProxy(currentStageId, type);
     }
 
     NES::Runtime::BufferManagerPtr getBufferManager() { return TheBufferManager; }
