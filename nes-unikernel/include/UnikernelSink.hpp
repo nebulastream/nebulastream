@@ -32,13 +32,13 @@ class UnikernelSinkImpl {
             NES_INFO("Calling Setup for NetworkSink");
             UnikernelSinkImpl::sink.emplace(
                 1,
-                Config::QueryID,
-                Config::QuerySubplanID,
-                NES::Network::NodeLocation(Config::DownstreamNodeID, Config::DownstreamNodeHostname, Config::DownstreamNodePort),
-                NES::Network::NesPartition(Config::QueryID,
-                                           Config::DownstreamOperatorID,
-                                           Config::DownstreamPartitionID,
-                                           Config::DownstreamSubPartitionID),
+                Config::QueryId,
+                Config::QuerySubplanId,
+                NES::Network::NodeLocation(Config::DownstreamNodeId, Config::DownstreamNodeHostname, Config::DownstreamNodePort),
+                NES::Network::NesPartition(Config::QueryId,
+                                           Config::DownstreamOperatorId,
+                                           Config::DownstreamPartitionId,
+                                           Config::DownstreamSubPartitionId),
                 Config::OutputSchemaSizeInBytes,
                 1,
                 200ms,
@@ -47,7 +47,7 @@ class UnikernelSinkImpl {
             sink->setup();
         } else if constexpr (std::is_same_v<typename Config::SinkType, NES::KafkaSink<Config>>) {
             NES_INFO("Calling Setup for KafkaSink");
-            UnikernelSinkImpl::sink.emplace(1, Config::Broker, Config::Topic, Config::QueryID, Config::QuerySubplanID);
+            UnikernelSinkImpl::sink.emplace(1, Config::Broker, Config::Topic, Config::QueryId, Config::QuerySubplanId);
         } else {
             // Test Sink
             UnikernelSinkImpl::sink.emplace(1);
