@@ -48,7 +48,7 @@ class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListe
 
     void onServerError(NES::Network::Messages::ErrorMessage) override {}
 
-    void onEvent(NES::Network::NesPartition, NES::Runtime::BaseEvent&) override {}
+    void onEvent(NES::Network::NesPartition, NES::Runtime::EventPtr) override {}
 
     void onChannelError(NES::Network::Messages::ErrorMessage) override {}
 };
@@ -89,9 +89,9 @@ int main() {
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
     TheBufferManager = std::make_shared<NES::Runtime::BufferManager>();
     TheBufferManager->createFixedSizeBufferPool(128);
-    TheWorkerContext = new NES::Runtime::WorkerContext(NES::Unikernel::CTConfiguration::NodeID, TheBufferManager, 1, 1);
+    TheWorkerContext = new NES::Runtime::WorkerContext(NES::Unikernel::CTConfiguration::NodeId, TheBufferManager, 1, 1);
     NES::Network::ExchangeProtocol exchange_protocol(partition_manager, exchange_listener);
-    TheNetworkManager = NES::Network::NetworkManager::create(NES::Unikernel::CTConfiguration::NodeID,
+    TheNetworkManager = NES::Network::NetworkManager::create(NES::Unikernel::CTConfiguration::NodeId,
                                                              NES::Unikernel::CTConfiguration::NodeIP,
                                                              NES::Unikernel::CTConfiguration::NodePort,
                                                              std::move(exchange_protocol),

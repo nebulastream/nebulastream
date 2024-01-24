@@ -239,14 +239,14 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @note Currently has no behaviour. We need to overwrite DataEmitter::onEvent for compliance.
      * @param event
      */
-    virtual void onEvent(Runtime::BaseEvent&) override;
+    virtual void onEvent(Runtime::EventPtr) override;
     /**
      * @brief API method called upon receiving an event, whose handling requires the WorkerContext (e.g. its network channels).
      * @note Only calls onEvent(event) of this class or derived classes.
      * @param event
      * @param workerContext
      */
-    virtual void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
+    virtual void onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef workerContext);
 
     /**
      * @brief method injects epoch barrier to the data source

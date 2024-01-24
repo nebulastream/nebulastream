@@ -74,7 +74,7 @@ class NetworkSource : public DataSource {
       * The event type is PropagateEpochEvent. Method passes epoch barrier further to network sink as a reconfiguration message.
       * @param event
       */
-    void onEvent(Runtime::BaseEvent& event) override;
+    void onEvent(Runtime::EventPtr event) override;
 
     /**
      * @brief Get source type
@@ -127,7 +127,7 @@ class NetworkSource : public DataSource {
      * @param event
      * @param workerContext
      */
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) override;
+    void onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef workerContext) override;
 
     /**
      * @brief

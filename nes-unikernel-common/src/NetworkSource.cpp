@@ -129,10 +129,10 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     return true;
 }
 
-void NetworkSource::onEvent(Runtime::BaseEvent& event) {
+void NetworkSource::onEvent(Runtime::EventPtr event) {
     NES_DEBUG("NetworkSource: received an event");
-    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
-        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+    if (event->getEventType() == Runtime::EventType::kCustomEvent) {
+        auto epochEvent = std::dynamic_pointer_cast<Runtime::CustomEventWrapper>(event)->data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
         auto queryId = epochEvent->queryIdValue();
         auto success = true;
@@ -248,9 +248,9 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
-void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
+void NetworkSource::onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);
-    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
+    if (event->getEventType() == Runtime::EventType::kStartSourceEvent) {
         auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
         senderChannel->sendEvent<Runtime::StartSourceEvent>();
     }
