@@ -19,7 +19,6 @@
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
-#include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES {
 namespace Network {
 class NodeLocation;
@@ -50,7 +49,7 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     /**
      * @brief
      */
-    virtual void onEvent(Runtime::BaseEvent&) override {}
+    virtual void onEvent(Runtime::EventPtr) override {}
 
     virtual DecomposedQueryPlanVersion getVersion() const {
         NES_WARNING("Trying to get version of a data emitter that does not carry version information, returning 0");

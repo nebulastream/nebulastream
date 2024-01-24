@@ -204,7 +204,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @note Add handling for different event types here.
      * @param event
      */
-    void onEvent(BaseEvent& event) override;
+    void onEvent(EventPtr event) override;
 
   private:
     /**

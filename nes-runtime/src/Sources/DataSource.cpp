@@ -498,13 +498,13 @@ Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() {
     return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
-void DataSource::onEvent(Runtime::BaseEvent& event) {
+void DataSource::onEvent(Runtime::EventPtr event) {
     NES_DEBUG("DataSource::onEvent(event) called. operatorId: {}", this->operatorId);
     // no behaviour needed, call onEvent of direct ancestor
     DataEmitter::onEvent(event);
 }
 
-void DataSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
+void DataSource::onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef) {
     NES_DEBUG("DataSource::onEvent(event, wrkContext) called. operatorId:  {}", this->operatorId);
     onEvent(event);
 }
