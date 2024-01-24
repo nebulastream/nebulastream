@@ -75,7 +75,7 @@ class ExchangeProtocol {
      * @param nesPartition
      * @param event
      */
-    void onEvent(NesPartition nesPartition, Runtime::BaseEvent& event);
+    void onEvent(NesPartition nesPartition, Runtime::EventPtr event);
 
     /**
      * @brief getter for the PartitionManager

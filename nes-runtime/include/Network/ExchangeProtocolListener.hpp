@@ -32,7 +32,7 @@ class ExchangeProtocolListener {
      * @param NesPartition partition that receives the event
      * @param Runtime::BaseEvent& ref to the actual event
      */
-    virtual void onEvent(NesPartition, Runtime::BaseEvent&) = 0;
+    virtual void onEvent(NesPartition, Runtime::EventPtr) = 0;
 
     /**
      * @brief This is called on every data buffer that the network stack receives

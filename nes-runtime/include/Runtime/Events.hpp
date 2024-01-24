@@ -39,7 +39,7 @@ class BaseEvent {
      * @param eventType
      */
     explicit BaseEvent(EventType eventType = EventType::kInvalidEvent) : eventType(eventType) {}
-
+    virtual ~BaseEvent() = default;
     /**
      * @brief Gets the payload of the event
      * @return the payload of the event
@@ -55,6 +55,8 @@ class BaseEvent {
   private:
     EventType eventType;
 };
+
+using EventPtr = std::shared_ptr<BaseEvent>;
 
 struct PropagateEpochEvent {
     /**

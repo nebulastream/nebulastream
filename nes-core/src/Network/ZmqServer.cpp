@@ -371,12 +371,12 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                                     "Recv not matching sizes " << optRetSize.value().size << "!=" << bufferHeader->payloadSize);
                     switch (bufferHeader->eventType) {
                         case Runtime::EventType::kCustomEvent: {
-                            auto event = Runtime::CustomEventWrapper(std::move(buffer));
+                            auto event = std::make_shared<Runtime::CustomEventWrapper>(std::move(buffer));
                             exchangeProtocol.onEvent(nesPartition, event);
                             break;
                         }
                         case Runtime::EventType::kStartSourceEvent: {
-                            auto event = Runtime::StartSourceEvent();
+                            auto event = std::make_shared<Runtime::StartSourceEvent>();
                             exchangeProtocol.onEvent(nesPartition,
                                                      event);// todo jm finish up the funtion calls folowing from here
                             break;

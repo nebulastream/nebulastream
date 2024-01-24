@@ -150,7 +150,7 @@ class DummyExchangeProtocolListener : public ExchangeProtocolListener {
     void onDataBuffer(NesPartition, TupleBuffer&) override {}
     void onEndOfStream(Messages::EndOfStreamMessage) override {}
     void onServerError(Messages::ErrorMessage) override {}
-    void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+    void onEvent(NesPartition, Runtime::EventPtr&&) override {}
     void onChannelError(Messages::ErrorMessage) override {}
 };
 

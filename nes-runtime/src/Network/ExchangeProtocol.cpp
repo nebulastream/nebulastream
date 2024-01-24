@@ -93,7 +93,7 @@ void ExchangeProtocol::onServerError(const Messages::ErrorMessage error) { proto
 
 void ExchangeProtocol::onChannelError(const Messages::ErrorMessage error) { protocolListener->onChannelError(error); }
 
-void ExchangeProtocol::onEvent(NesPartition nesPartition, Runtime::BaseEvent& event) {
+void ExchangeProtocol::onEvent(NesPartition nesPartition, Runtime::EventPtr event) {
     if (partitionManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Registered) {
         protocolListener->onEvent(nesPartition, event);
         partitionManager->getDataEmitter(nesPartition)->onEvent(event);

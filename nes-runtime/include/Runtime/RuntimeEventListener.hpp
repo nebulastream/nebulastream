@@ -23,6 +23,7 @@ class ExchangeProtocol;
 
 namespace NES::Runtime {
 class BaseEvent;
+using EventPtr = std::shared_ptr<BaseEvent>;
 /**
  * @brief This is the listener for runtime events
  */
@@ -43,7 +44,7 @@ class RuntimeEventListener
      * @brief API method called upon receiving an event
      * @param event
      */
-    virtual void onEvent(Runtime::BaseEvent& event) = 0;
+    virtual void onEvent(Runtime::EventPtr event) = 0;
 };
 
 #ifndef UNIKERNEL_LIB

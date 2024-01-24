@@ -258,7 +258,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief this callback is called once a tuple buffer arrives on the network manager
      * for a given nes partition
      */
-    void onEvent(Network::NesPartition, Runtime::BaseEvent&) override;
+    void onEvent(Network::NesPartition, Runtime::EventPtr) override;
 
     /**
      * @brief this callback is called once an end of stream message arrives

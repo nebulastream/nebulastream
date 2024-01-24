@@ -17,7 +17,6 @@
 
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
-#include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES {
 namespace Runtime {
 class TupleBuffer;
@@ -44,7 +43,7 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     /**
      * @brief
      */
-    virtual void onEvent(Runtime::BaseEvent&) override {}
+    virtual void onEvent(Runtime::EventPtr) override {}
 };
 }// namespace NES
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
