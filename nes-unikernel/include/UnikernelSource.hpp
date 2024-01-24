@@ -14,42 +14,29 @@
 #ifndef NES_UNIKERNELSOURCE_HPP
 #define NES_UNIKERNELSOURCE_HPP
 
-#include <Network/NetworkSource.hpp>
+#include <Network/UnikernelNetworkSource.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
-#include <Sources/TCPSource.hpp>
 #include <Sources/DataSource.hpp>
+#include <Sources/TCPSource.hpp>
 
 namespace NES::Unikernel {
 template<typename Config, typename Prev>
 class UnikernelSourceImpl {
   public:
-    constexpr static size_t Id = Config::UpstreamNodeID;
+    constexpr static size_t Id = Config::OperatorId;
     using DataSourceType = DataSource<Config, typename Config::SourceType>;
     static DataSourceType source;
 
-    static void setup() {
-        if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
-            NES_INFO("Calling Setup for NetworkSource");
-            UnikernelSourceImpl::source.emplace(
-                NES::Network::NesPartition(Config::QueryID,
-                                           Config::UpstreamOperatorID,
-                                           Config::UpstreamPartitionID,
-                                           Config::UpstreamSubPartitionID),
-                NES::Network::NodeLocation(Config::UpstreamNodeID, Config::UpstreamNodeHostname, Config::UpstreamNodePort),
-                200ms,
-                100,
-                UnikernelPipelineExecutionContext::create<Prev>());
-            source->bind();
-            source->start();
-        } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
-            source.start();
-        } else {
-            source.start();
-        }
-    }
+    static void setup() { source.start(); }
 
-    static void stop() { auto ret = source.stop(Runtime::QueryTerminationType::Graceful); }
-    static void request_stop() { auto ret = source.stop(Runtime::QueryTerminationType::Graceful); }
+    static void stop(Runtime::QueryTerminationType type) {
+        NES_INFO("Pipeline Stop called on Source{}", Id);
+        source.stop(type);
+    }
+    static void request_stop(Runtime::QueryTerminationType type) {
+        NES_INFO("Pipeline Stop requested on Source{}", Id);
+        source.stop(type);
+    }
 };
 
 template<typename Config>
