@@ -98,10 +98,7 @@ void YamlExport::setQueryPlan(NES::QueryPlanPtr queryPlan,
 }
 
 WorkerTCPSourceConfiguration buildTCPSource(const NES::NoOpSourceDescriptor& desc) {
-    return WorkerTCPSourceConfiguration{desc.getTcp()->ip,
-                                        desc.getTcp()->port,
-                                        desc.getOriginId(),
-                                        SchemaConfiguration(MANUAL, desc.getSchema())};
+    return WorkerTCPSourceConfiguration{desc.getTcp()->ip, desc.getTcp()->port, SchemaConfiguration(MANUAL, desc.getSchema())};
 }
 
 WorkerLinkConfiguration buildWorkerLink(NES::Network::NetworkSourceDescriptorPtr desc) {
@@ -115,18 +112,19 @@ WorkerLinkConfiguration buildWorkerLink(NES::Network::NetworkSourceDescriptorPtr
     };
 }
 
-WorkerSourceConfiguration buildSource(const NES::SourceDescriptorPtr& sourceDescriptor) {
+WorkerSourceConfiguration buildSource(const NES::SourceDescriptorPtr& sourceDescriptor, NES::OriginId originId) {
     if (sourceDescriptor->instanceOf<NES::Network::NetworkSourceDescriptor>()) {
         auto networkSource = sourceDescriptor->as<NES::Network::NetworkSourceDescriptor>();
         return WorkerSourceConfiguration{
             networkSource->getNesPartition().getOperatorId(),
+            originId,
             buildWorkerLink(networkSource),
             std::nullopt,
         };
     } else if (sourceDescriptor->instanceOf<NES::NoOpSourceDescriptor>()) {
         auto noOpSource = sourceDescriptor->as<NES::NoOpSourceDescriptor>();
         NES_ASSERT(noOpSource->getTcp().has_value(), "TCP Configuration is missing in Source Descriptor");
-        return WorkerSourceConfiguration{noOpSource->getOperatorId(), std::nullopt, buildTCPSource(*noOpSource)};
+        return WorkerSourceConfiguration{noOpSource->getOperatorId(), originId, std::nullopt, buildTCPSource(*noOpSource)};
     }
 
     NES_NOT_IMPLEMENTED();
@@ -134,7 +132,7 @@ WorkerSourceConfiguration buildSource(const NES::SourceDescriptorPtr& sourceDesc
 
 WorkerStageConfiguration buildTreeRec(WorkerSubQueryStage current,
                                       const std::map<NES::PipelineId, WorkerSubQueryStage>& stages,
-                                      const std::map<NES::PipelineId, NES::SourceDescriptorPtr>& sourceMap) {
+                                      const std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>>& sourceMap) {
     WorkerStageConfiguration config;
     config.stageId = current.stageId;
     config.numberOfOperatorHandlers = current.numberOfHandlers;
@@ -156,7 +154,7 @@ WorkerStageConfiguration buildTreeRec(WorkerSubQueryStage current,
 
     for (const auto& pred : current.predecessors) {
         if (sourceMap.contains(pred)) {
-            config.upstream = buildSource(sourceMap.find(pred)->second);
+            config.upstream = buildSource(sourceMap.find(pred)->second.first, sourceMap.find(pred)->second.second);
         }
     }
     return config;
@@ -164,7 +162,7 @@ WorkerStageConfiguration buildTreeRec(WorkerSubQueryStage current,
 
 WorkerStageConfiguration buildTree(const SinkStage& sink,
                                    const std::vector<WorkerSubQueryStage>& workerSubQueryStage,
-                                   const std::map<NES::PipelineId, NES::SourceDescriptorPtr>& sourceMap) {
+                                   const std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>>& sourceMap) {
     std::map<NES::PipelineId, WorkerSubQueryStage> stages;
     for (const auto& stage : workerSubQueryStage) {
         stages[stage.stageId] = stage;
@@ -203,7 +201,8 @@ void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const 
         auto rootPipeline = subQuery.sinks.begin()->second.predecessor[0];
         if (subQuery.sources.count(rootPipeline)) {
             return WorkerSubQueryConfiguration{std::nullopt,
-                                               buildSource(subQuery.sources.find(rootPipeline)->second),
+                                               buildSource(subQuery.sources.find(rootPipeline)->second.first,
+                                                           subQuery.sources.find(rootPipeline)->second.second),
                                                subQuery.subplan->getQuerySubPlanId(),
                                                sink[0]->getOutputSchema()->getSchemaSizeInBytes(),
                                                type,

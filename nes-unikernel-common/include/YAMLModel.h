@@ -275,7 +275,6 @@ struct convert<WorkerLinkConfiguration> {
 struct WorkerTCPSourceConfiguration {
     std::string ip;
     size_t port;
-    NES::OriginId originId;
     SchemaConfiguration schema;
 };
 
@@ -286,7 +285,6 @@ struct convert<WorkerTCPSourceConfiguration> {
     static Node encode(const WorkerTCPSourceConfiguration& rhs) {
         Node node;
         UNIKERNEL_MODEL_YAML_ENCODE(port);
-        UNIKERNEL_MODEL_YAML_ENCODE(originId);
         UNIKERNEL_MODEL_YAML_ENCODE(ip);
         UNIKERNEL_MODEL_YAML_ENCODE(schema);
         return node;
@@ -294,7 +292,6 @@ struct convert<WorkerTCPSourceConfiguration> {
 
     static Node decode(const Node& node, WorkerTCPSourceConfiguration& rhs) {
         UNIKERNEL_MODEL_YAML_DECODE(port);
-        UNIKERNEL_MODEL_YAML_DECODE(originId);
         UNIKERNEL_MODEL_YAML_DECODE(ip);
         UNIKERNEL_MODEL_YAML_DECODE(schema);
         return node;
@@ -304,6 +301,7 @@ struct convert<WorkerTCPSourceConfiguration> {
 
 struct WorkerSourceConfiguration {
     NES::OperatorId operatorId;
+    NES::OriginId originId;
     std::optional<WorkerLinkConfiguration> worker;
     std::optional<WorkerTCPSourceConfiguration> tcpSource;
 };
@@ -322,6 +320,7 @@ struct convert<WorkerSourceConfiguration> {
             node["tcpSource"] = *rhs.tcpSource;
         }
 
+        UNIKERNEL_MODEL_YAML_ENCODE(originId);
         UNIKERNEL_MODEL_YAML_ENCODE(operatorId);
         return node;
     };
@@ -335,6 +334,7 @@ struct convert<WorkerSourceConfiguration> {
             rhs.tcpSource.emplace(node["tcpSource"].as<WorkerTCPSourceConfiguration>());
         }
 
+        UNIKERNEL_MODEL_YAML_DECODE(originId);
         UNIKERNEL_MODEL_YAML_DECODE(operatorId);
         return node;
     };

@@ -19,33 +19,29 @@ std::string NES::NoOpSourceDescriptor::toString() const { return "NoOpSourceDesc
 bool NES::NoOpSourceDescriptor::equal(const NES::SourceDescriptorPtr& other) const {
     return other->instanceOf<NoOpSourceDescriptor>() && other->getLogicalSourceName() == getLogicalSourceName()
         && other->getSchema() == getSchema() && other->as<NoOpSourceDescriptor>()->getTcp() == getTcp()
-        && other->as<NoOpSourceDescriptor>()->getOperatorId() == getOperatorId()
-        && other->as<NoOpSourceDescriptor>()->getOriginId() == getOriginId();
+        && other->as<NoOpSourceDescriptor>()->getOperatorId() == getOperatorId();
 }
 
 NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::copy() {
-    return std::make_shared<NoOpSourceDescriptor>(schema, schemaType, getLogicalSourceName(), tcp, originId, operatorId);
+    return std::make_shared<NoOpSourceDescriptor>(schema, schemaType, getLogicalSourceName(), tcp, operatorId);
 }
 
 NES::NoOpSourceDescriptor::NoOpSourceDescriptor(SchemaPtr schema,
                                                 SchemaType schemaType,
                                                 std::string logicalSourceName,
                                                 std::optional<TCPSourceConfiguration> tcp,
-                                                NES::OriginId originId,
                                                 NES::OperatorId operatorId)
     : SourceDescriptor(std::move(schema), std::move(logicalSourceName)), schemaType(schemaType), tcp(std::move(tcp)),
-      originId(originId), operatorId(operatorId) {}
+      operatorId(operatorId) {}
 
 NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::create(NES::SchemaPtr schemaPtr,
                                                            SchemaType schemaType,
                                                            std::string logicalSourceName,
                                                            std::optional<TCPSourceConfiguration> tcp,
-                                                           OriginId originId,
                                                            OperatorId operatorId) {
     return std::make_shared<NoOpSourceDescriptor>(std::move(schemaPtr),
                                                   schemaType,
                                                   std::move(logicalSourceName),
                                                   std::move(tcp),
-                                                  originId,
                                                   operatorId);
 }

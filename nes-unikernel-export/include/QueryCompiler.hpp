@@ -39,7 +39,7 @@ struct SinkStage {
 class ExportQueryCompiler {
   public:
     std::tuple<std::map<NES::PipelineId, SinkStage>,
-               std::map<NES::PipelineId, NES::SourceDescriptorPtr>,
+               std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>>,
                std::vector<Stage>,
                std::vector<NES::Runtime::Unikernel::OperatorHandlerDescriptor>>
     compile(NES::QueryPlanPtr queryPlan, size_t bufferSize, NES::Catalogs::Source::SourceCatalogPtr sourceCatalog);
