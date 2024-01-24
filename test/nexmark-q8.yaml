@@ -1,0 +1,33 @@
+query: |
+  Query::from("bid")
+    .joinWith(Query::from("auction"))
+      .where(Attribute("auctionId"))
+      .equalsTo(Attribute("id"))
+      .window(TumblingWindow::of(IngestionTime(),Hours(12)))
+    .sink(NullOutputSinkDescriptor::create());
+topology:
+  sink:
+    node:
+      ip: 127.0.0.1
+      port: 8085
+      resources: 1
+  workers:
+    - node:
+        ip: 127.0.0.1
+        port: 8080
+        resources: 90
+      sources:
+        - name: auction
+          tcp:
+            ip: 127.0.0.1
+            port: 8091
+          schema:
+            type: NEXMARK_AUCTION
+        - name: bid
+          tcp:
+            ip: 127.0.0.1
+            port: 8092
+          schema:
+            type: NEXMARK_BID
+      links:
+        - sink
