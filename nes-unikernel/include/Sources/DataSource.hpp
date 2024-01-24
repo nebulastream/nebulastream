@@ -35,10 +35,11 @@ namespace NES {
 
 template<typename T>
 concept DataSourceConfig = requires(T* t) {
-    requires(std::same_as<decltype(T::OperatorId), size_t>);
-    requires(std::same_as<decltype(T::OriginId), size_t>);
-    { T::Schema };
-    { T::SourceType };
+    requires(std::same_as<decltype(T::OperatorId), const size_t>);
+    requires(std::same_as<decltype(T::OriginId), const size_t>);
+    requires(std::same_as<decltype(T::LocalBuffers), const size_t>);
+    typename T::Schema;
+    typename T::SourceType;
 };
 
 template<typename T, typename Config>
@@ -50,7 +51,7 @@ concept DataSourceImpl = requires(T t) {
     } -> std::same_as<std::optional<NES::Runtime::TupleBuffer>>;
 
     std::constructible_from<T>;
-
+    { T::SourceType } -> std::same_as<const NES::SourceType&>;
     { t.open() };
     { t.close(std::declval<Runtime::QueryTerminationType>()) };
 };
@@ -126,7 +127,7 @@ class DataSource {
         return true;
     }
 
-    /**
+    /*P
      * @brief running routine while source is active
      */
     void runningRoutine(const std::stop_token& stoken) {
@@ -135,7 +136,7 @@ class DataSource {
 
         NES_DEBUG("DataSource {}: Running Data Source of type={} ",
                   Config::OperatorId,
-                  magic_enum::enum_name(Config::SourceType::SourceType));
+                  magic_enum::enum_name(Impl::SourceType));
 
         if constexpr (!BufferLimitingConfig<Config>) {
             NES_DEBUG(
@@ -265,11 +266,11 @@ class DataSource {
                 buffer.setSequenceNumber(maxSequenceNumber);
             }
             NES_DEBUG("DataSource produced buffer {} type= {} tuples= {} "
-                     "orgID={}",
-                     Config::OperatorId,
-                     magic_enum::enum_name(Config::SourceType::SourceType),
-                     buffer.getNumberOfTuples(),
-                     buffer.getOriginId());
+                      "orgID={}",
+                      Config::OperatorId,
+                      magic_enum::enum_name(Config::SourceType::SourceType),
+                      buffer.getNumberOfTuples(),
+                      buffer.getOriginId());
             emitWork(buffer);
         }
     }
