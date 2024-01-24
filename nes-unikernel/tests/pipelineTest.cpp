@@ -38,24 +38,24 @@ namespace NES::Unikernel {
     }
 
 CREATE_SIMPLE_STAGE(4)
-static bool received_from_1 = false;
-static bool received_from_2 = false;
+static bool stage_4_received_from_1 = false;
+static bool stage_4_received_from_2 = false;
 template<>
 void Stage<4>::execute(NES::Unikernel::UnikernelPipelineExecutionContext& context,
                        NES::Runtime::WorkerContext*,
                        NES::Runtime::TupleBuffer& buffer) {
     if (buffer.getOriginId() == 1) {
-        NES_ASSERT(!received_from_1, "Expected only 1 Buffer from 1");
+        NES_ASSERT(!stage_4_received_from_1, "Expected only 1 Buffer from 1");
         NES_INFO("Received from 1");
-        received_from_1 = true;
+        stage_4_received_from_1 = true;
     }
     if (buffer.getOriginId() == 2) {
-        NES_ASSERT(!received_from_2, "Expected only 1 Buffer from 1");
+        NES_ASSERT(!stage_4_received_from_2, "Expected only 1 Buffer from 1");
         NES_INFO("Received from 2");
-        received_from_2 = true;
+        stage_4_received_from_2 = true;
     }
 
-    if (received_from_1 && received_from_2) {
+    if (stage_4_received_from_1 && stage_4_received_from_2) {
         buffer.setOriginId(3);
         NES_INFO("Join Done");
         context.emit(buffer);
@@ -78,6 +78,41 @@ void Stage<6>::execute(NES::Unikernel::UnikernelPipelineExecutionContext& contex
     NES_INFO("Stage 6 Execute");
     context.emit(buffer);
 }
+
+CREATE_SIMPLE_STAGE(7)
+template<>
+void Stage<7>::execute(NES::Unikernel::UnikernelPipelineExecutionContext& context,
+                       NES::Runtime::WorkerContext*,
+                       NES::Runtime::TupleBuffer& buffer) {
+    NES_INFO("Stage 7 Execute");
+    context.emit(buffer);
+}
+
+CREATE_SIMPLE_STAGE(8)
+static bool stage_8_received_from_1 = false;
+static bool stage_8_received_from_2 = false;
+template<>
+void Stage<8>::execute(NES::Unikernel::UnikernelPipelineExecutionContext& context,
+                       NES::Runtime::WorkerContext*,
+                       NES::Runtime::TupleBuffer& buffer) {
+    if (buffer.getOriginId() == 1) {
+        NES_ASSERT(!stage_8_received_from_1, "Expected only 1 Buffer from 1");
+        NES_INFO("Stage 8 Received from 1");
+        stage_8_received_from_1 = true;
+    }
+    if (buffer.getOriginId() == 2) {
+        NES_ASSERT(!stage_8_received_from_2, "Expected only 1 Buffer from 1");
+        NES_INFO("Stage 8 Received from 2");
+        stage_8_received_from_2 = true;
+    }
+
+    if (stage_8_received_from_1 && stage_8_received_from_2) {
+        buffer.setOriginId(3);
+        NES_INFO("Stage 8 Join Done");
+        context.emit(buffer);
+    }
+}
+
 struct TestSinkImpl {
     OperatorId operatorId;
     void writeData(NES::Runtime::TupleBuffer&, NES::Runtime::WorkerContext&) { NES_INFO("Sink Received Data"); }
@@ -96,97 +131,125 @@ struct overloaded : Ts... {
 template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 
-struct TestSource {
+template<typename Config>
+struct TestSourceImpl final {
     using QueueValueType = std::variant<Benchmark::DataProvision::TupleBufferHolder, bool>;
-    using SPSCQueue = folly::UnboundedQueue<QueueValueType, true, true, true>;
-    std::optional<std::jthread> worker = std::nullopt;
-    static std::map<NES::OriginId, TestSource*> sources;
-    virtual void emit(NES::Runtime::TupleBuffer& tb) = 0;
-    virtual void eof() = 0;
-    virtual ~TestSource() = default;
+    using SPSCQueue = folly::DynamicBoundedQueue<QueueValueType, true, true, true>;
+    using BufferType = SchemaBuffer<typename Config::Schema, 8192>;
+    constexpr static NES::SourceType SourceType = NES::SourceType::TEST_SOURCE;
+    constexpr static bool NeedsBuffer = Config::CopyBuffer;
+    SPSCQueue queue{100};
+    std::atomic_bool opened = false;
+    std::atomic_bool closed = false;
+    std::atomic_bool stop_request = false;
 
-    bool stop(Runtime::QueryTerminationType) {
-        worker->request_stop();
-        worker->join();
+    TestSourceImpl();
+
+    void emit(NES::Runtime::TupleBuffer& tb) { queue.enqueue(tb); }
+
+    void eof() { queue.enqueue(true); }
+
+    bool open() {
+        NES_ASSERT(!opened.exchange(true), "Open called multiple times");
         return true;
     }
 
-    void start() {
-        const auto next = this->getNext();
-        worker = std::jthread([this, next](const std::stop_token& stoken) {
-            runningRoutine(stoken);
-            std::cerr << "Calling stop" << std::endl;
-            // if the stop was requested from
-            if (!stoken.stop_requested()) {
-                next.stop();
-            }
-        });
+    bool close(Runtime::QueryTerminationType) {
+        NES_ASSERT(!closed.exchange(true), "Close called multiple times");
+        return true;
     }
 
-  protected:
-    SPSCQueue dataQueue = SPSCQueue();
-    virtual UnikernelPipelineExecutionContext& getNext() = 0;
-    void runningRoutine(const std::stop_token& stoken) {
-        while (!stoken.stop_requested()) {
-            if (auto tb = dataQueue.try_dequeue_for(10ms); !tb) {
-                continue;
-            } else {
-                auto stop = std::visit(overloaded{[this](Benchmark::DataProvision::TupleBufferHolder& tbHolder) {
-                                                      getNext().emit(tbHolder.bufferToHold);
-                                                      return true;
-                                                  },
-                                                  [](bool&) {
-                                                      return false;
-                                                  }},
-                                       *tb);
+    std::optional<NES::Runtime::TupleBuffer> receiveData(const std::stop_token& stoken, BufferType buffer) {
+        QueueValueType item;
+        while (!(queue.try_dequeue_for(item, 20ms) || stoken.stop_requested())) {
+        }
 
-                if (stop) {
-                    break;
-                }
-            }
+        if (stoken.stop_requested()) {
+            NES_ASSERT(!stop_request.exchange(true), "stop was requested multiple times");
+            return std::nullopt;
+        }
+
+        if constexpr (Config::CopyBuffer) {
+            return std::visit(
+                overloaded{
+                    [&buffer](const Benchmark::DataProvision::TupleBufferHolder& tb) -> std::optional<NES::Runtime::TupleBuffer> {
+                        NES_ASSERT(tb.bufferToHold.getBufferSize() == 8192, "Expected Buffer Size");
+                        std::memcpy(buffer.getBuffer().getBuffer(), tb.bufferToHold.getBuffer(), 8192);
+                        return buffer.getBuffer();
+                    },
+                    [](const bool& /*bool*/) -> std::optional<NES::Runtime::TupleBuffer> {
+                        return std::nullopt;
+                    }},
+                item);
+        } else {
+            return std::visit(
+                overloaded{[](const Benchmark::DataProvision::TupleBufferHolder& tb) -> std::optional<NES::Runtime::TupleBuffer> {
+                               return tb.bufferToHold;
+                           },
+                           [](const bool& /*bool*/) -> std::optional<NES::Runtime::TupleBuffer> {
+                               return std::nullopt;
+                           }},
+                item);
         }
     }
 };
-std::map<NES::OriginId, TestSource*> TestSource::sources = {};
+
+struct TestSourceConfig1 {
+    constexpr static bool CopyBuffer = true;
+    constexpr static size_t OriginId = 1;
+
+    constexpr static size_t LocalBuffers = 100;
+    constexpr static size_t OperatorId = 1;
+    using Schema = Schema<Field<INT32>>;
+    using SourceType = TestSourceImpl<TestSourceConfig1>;
+};
+
+struct TestSourceConfig2 {
+    constexpr static bool CopyBuffer = false;
+    constexpr static size_t OriginId = 0;
+
+    constexpr static size_t LocalBuffers = 100;
+    constexpr static size_t OperatorId = 2;
+    using Schema = Schema<Field<INT32>>;
+    using SourceType = TestSourceImpl<TestSourceConfig2>;
+};
+
+struct TestSourceConfig3 {
+    constexpr static bool CopyBuffer = false;
+    constexpr static size_t OriginId = 0;
+
+    constexpr static size_t LocalBuffers = 100;
+    constexpr static size_t OperatorId = 3;
+    using Schema = Schema<Field<INT32>>;
+    using SourceType = TestSourceImpl<TestSourceConfig3>;
+};
+
+static_assert(DataSourceConfig<TestSourceConfig1>, "TestSourceConfig does not implement DataSourceConfig");
+static_assert(DataSourceConfig<TestSourceConfig2>, "TestSourceConfig does not implement DataSourceConfig");
+static_assert(DataSourceConfig<TestSourceConfig3>, "TestSourceConfig does not implement DataSourceConfig");
+
+static_assert(DataSourceImpl<TestSourceImpl<TestSourceConfig1>, TestSourceConfig1>,
+              "Test source does not implement DataSourceImpl");
+static_assert(DataSourceImpl<TestSourceImpl<TestSourceConfig2>, TestSourceConfig2>,
+              "Test source does not implement DataSourceImpl");
+static_assert(DataSourceImpl<TestSourceImpl<TestSourceConfig3>, TestSourceConfig2>,
+              "Test source does not implement DataSourceImpl");
+
 template<typename Config>
-struct TestSourceImpl : public TestSource {
-    size_t seqNumber = 0;
-    UnikernelPipelineExecutionContext next;
+TestSourceImpl<Config>* SourceHandle = nullptr;
 
-    explicit TestSourceImpl(UnikernelPipelineExecutionContext next) : TestSource(), next(std::move(next)) {
-        TestSource::sources[Config::OriginId] = this;
-    }
-
-    void emit(NES::Runtime::TupleBuffer& tb) override {
-        tb.setOriginId(Config::OriginId);
-        tb.setSequenceNumber(seqNumber);
-        NES_INFO("Source {} Emitted TupleBuffer: {}", Config::OriginId, seqNumber);
-        seqNumber++;
-        dataQueue.enqueue(std::move(tb));
-    }
-
-    void eof() override { dataQueue.enqueue(false); }
-
-  protected:
-    UnikernelPipelineExecutionContext& getNext() override { return next; }
-};
-struct TestSource1 {
-    using SourceType = TestSourceImpl<TestSource1>;
-    static constexpr NES::NodeId UpstreamNodeID = 1;
-    static constexpr NES::OriginId OriginId = 1;
-};
-
-struct TestSource2 {
-    using SourceType = TestSourceImpl<TestSource2>;
-    static constexpr NES::NodeId UpstreamNodeID = 2;
-    static constexpr NES::OriginId OriginId = 2;
-};
+template<typename Config>
+TestSourceImpl<Config>::TestSourceImpl() {
+    SourceHandle<Config> = this;
+}
 
 using Sink = UnikernelSink<TestSink>;
-using Source1 = UnikernelSource<TestSource1>;
-using Source2 = UnikernelSource<TestSource2>;
-using Join = PipelineJoin<Stage<4>, Pipeline<Stage<5>, Source1>, Pipeline<Stage<6>, Source2>>;
-using SubQueryPlan = SubQuery<Sink, Join>;
+using Source1 = UnikernelSource<TestSourceConfig1>;
+using Source2 = UnikernelSource<TestSourceConfig2>;
+using Source3 = UnikernelSource<TestSourceConfig3>;
+using FirstJoin = PipelineJoin<Stage<4>, Pipeline<Stage<5>, Source1>, Pipeline<Stage<6>, Source2>>;
+using SecondJoin = PipelineJoin<Stage<8>, Pipeline<Stage<7>, Source3>, FirstJoin>;
+using SubQueryPlan = SubQuery<Sink, SecondJoin>;
 using QueryPlan = UnikernelExecutionPlan<SubQueryPlan>;
 
 }// namespace NES::Unikernel
@@ -196,25 +259,34 @@ NES::Network::NetworkManagerPtr TheNetworkManager = nullptr;
 NES::Runtime::BufferManagerPtr TheBufferManager = nullptr;
 int main() {
     NES::Logger::setupLogging(NES::LogLevel::LOG_DEBUG);
-    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>();
-    bufferManager->createFixedSizeBufferPool(128);
-    TheWorkerContext = new NES::Runtime::WorkerContext(0, bufferManager, 1, 1);
+    TheBufferManager = std::make_shared<NES::Runtime::BufferManager>();
+    TheBufferManager->createFixedSizeBufferPool(128);
+    TheWorkerContext = new NES::Runtime::WorkerContext(0, TheBufferManager, 1, 1);
     NES::Unikernel::QueryPlan::setup();
-    auto& source1 = *NES::Unikernel::TestSource::sources[1];
-    auto& source2 = *NES::Unikernel::TestSource::sources[2];
+    auto& source1 = *NES::Unikernel::SourceHandle<NES::Unikernel::TestSourceConfig1>;
+    auto& source2 = *NES::Unikernel::SourceHandle<NES::Unikernel::TestSourceConfig2>;
+    auto& source3 = *NES::Unikernel::SourceHandle<NES::Unikernel::TestSourceConfig3>;
 
-    auto t1 = std::jthread([&bufferManager, &source1]() {
-        auto buffer = bufferManager->getBufferBlocking();
+    auto t1 = std::jthread([&source1]() {
+        auto buffer = TheBufferManager->getBufferBlocking();
         source1.emit(buffer);
         source1.eof();
     });
 
-    auto t2 = std::jthread([&bufferManager, &source2]() {
-        auto buffer = bufferManager->getBufferBlocking();
+    auto t2 = std::jthread([&source2]() {
+        auto buffer = TheBufferManager->getBufferBlocking();
+        buffer.setOriginId(2);
         source2.emit(buffer);
+        source2.eof();
+    });
+
+    auto t3 = std::jthread([&source3]() {
+        auto buffer = TheBufferManager->getBufferBlocking();
+        buffer.setOriginId(3);
+        source3.emit(buffer);
+        source3.eof();
     });
 
     NES::Unikernel::QueryPlan::wait();
-    std::this_thread::sleep_for(2s);
     return 0;
 }
