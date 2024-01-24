@@ -49,6 +49,7 @@ std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifi
 }
 
 void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipelineCtx) {
+    std::vector<std::pair<WindowInfo, std::vector<StreamSlicePtr>>> toBeEmitted;
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
         for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
@@ -58,15 +59,18 @@ void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipel
                 case WindowInfoState::EMITTED_TO_PROBE: continue;
                 case WindowInfoState::ONCE_SEEN_DURING_TERMINATION: {
                     slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
-
-                    // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
-                    // For bucketing, this should be only done once
-                    for (auto& sliceLeft : slicesAndStateForWindow.slices) {
-                        for (auto& sliceRight : slicesAndStateForWindow.slices) {
-                            emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
-                        }
-                    }
+                    toBeEmitted.emplace_back(windowInfo, std::move(slicesAndStateForWindow.slices));
                 }
+            }
+        }
+    }
+
+    // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
+    // For bucketing, this should be only done once
+    for (const auto& [window, emittedSlices] : toBeEmitted) {
+        for (auto& sliceLeft : emittedSlices) {
+            for (auto& sliceRight : emittedSlices) {
+                emitSliceIdsToProbe(*sliceLeft, *sliceRight, window, pipelineCtx);
             }
         }
     }
