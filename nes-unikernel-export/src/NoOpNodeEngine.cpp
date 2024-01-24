@@ -77,7 +77,7 @@ void NES::Runtime::NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&)
     // nop :: kept as legacy
 }
 
-void NES::Runtime::NodeEngine::onEvent(NES::Network::NesPartition, NES::Runtime::BaseEvent&) {
+void NES::Runtime::NodeEngine::onEvent(NES::Network::NesPartition, NES::Runtime::EventPtr) {
     // nop :: kept as legacy
 }
 

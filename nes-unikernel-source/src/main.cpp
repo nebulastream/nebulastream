@@ -135,8 +135,8 @@ class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListe
         NES_DEBUG("On Server Error: {}", msg.getErrorTypeAsString());
     }
 
-    void onEvent(NES::Network::NesPartition, NES::Runtime::BaseEvent& event) override {
-        NES_DEBUG("On Event: {}", magic_enum::enum_name(event.getEventType()));
+    void onEvent(NES::Network::NesPartition, NES::Runtime::EventPtr event) override {
+        NES_DEBUG("On Event: {}", magic_enum::enum_name(event->getEventType()));
     }
 
     void onChannelError(NES::Network::Messages::ErrorMessage msg) override {

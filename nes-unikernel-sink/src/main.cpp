@@ -31,7 +31,7 @@ class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListe
 
     void onServerError(NES::Network::Messages::ErrorMessage) override {}
 
-    void onEvent(NES::Network::NesPartition, NES::Runtime::BaseEvent&) override {}
+    void onEvent(NES::Network::NesPartition, NES::Runtime::EventPtr) override {}
 
     void onChannelError(NES::Network::Messages::ErrorMessage) override {}
 };

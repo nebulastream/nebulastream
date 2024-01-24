@@ -76,14 +76,14 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @brief This method is called once an event is triggered for the current sink
      * @param event
      */
-    void onEvent(Runtime::BaseEvent& event) override;
+    void onEvent(Runtime::EventPtr event) override;
     /**
      * @brief API method called upon receiving an event.
      * @note Only calls onEvent(event)
      * @param event
      * @param workerContext
      */
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
+    void onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef workerContext);
 
   public:
     /**
