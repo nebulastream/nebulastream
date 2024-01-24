@@ -63,14 +63,14 @@ static const std::string logSourceNameRight = "log_right";
 class NemoJoinPlacementTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryPlacementTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup QueryPlacementTest test class.");
+        NES::Logger::setupLogging("NemoJoinPlacementTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup NemoJoinPlacementTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        NES_DEBUG("Setup QueryPlacementTest test case.");
+        NES_DEBUG("Setup NemoJoinPlacementTest test case.");
     }
 
     static TopologyPtr setupTopology(uint64_t layers, uint64_t nodesPerNode, uint64_t leafNodesPerNode) {
@@ -112,7 +112,7 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
             parents = newParents;
         }
 
-        NES_DEBUG("NemoPlacementTest: topology: {}", topology->toString());
+        NES_DEBUG("NemoJoinPlacementTest: topology: {}", topology->toString());
         return topology;
     }
 
