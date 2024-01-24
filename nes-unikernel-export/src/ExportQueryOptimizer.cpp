@@ -55,9 +55,9 @@ ExportQueryOptimizer::optimize(NES::TopologyPtr topology,
     query->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
 
     auto queryPlan1 = queryRewritePhase->execute(query);
-    auto queryPlan2 = originInferencePhase->execute(queryPlan1);
+    auto queryPlan2 = typeInferencePhase->execute(queryPlan1);
     auto queryPlan3 = logicalSourceExpansionRule->apply(queryPlan2);
-    auto queryPlan = typeInferencePhase->execute(queryPlan3);
+    auto queryPlan = originInferencePhase->execute(queryPlan3);
 
     auto sharedQueryPlan = NES::SharedQueryPlan::create(queryPlan);
     auto queryPlacementPhase = NES::Optimizer::QueryPlacementPhase::create(gep, topology, typeInferencePhase, config);
