@@ -38,7 +38,7 @@ struct WorkerSubQueryStage {
 struct WorkerSubQuery {
     NES::QueryPlanPtr subplan;
     std::vector<WorkerSubQueryStage> stages;
-    std::map<NES::PipelineId, NES::SourceDescriptorPtr> sources;
+    std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>> sources;
     std::map<NES::PipelineId, SinkStage> sinks;
 };
 

@@ -65,13 +65,13 @@ static std::map<NES::PipelineId, SinkStage> getSinks(std::vector<NES::QueryCompi
     return sinkMap;
 }
 
-static std::map<NES::PipelineId, NES::SourceDescriptorPtr>
+static std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>>
 getSources(std::vector<NES::QueryCompilation::OperatorPipelinePtr> pipelines, NES::Catalogs::Source::SourceCatalogPtr catalog) {
     auto filterSource = std::ranges::views::filter([](NES::QueryCompilation::OperatorPipelinePtr pipeline) {
         return pipeline->isSourcePipeline();
     });
 
-    std::map<NES::PipelineId, NES::SourceDescriptorPtr> sourceMap;
+    std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>> sourceMap;
     std::ranges::for_each(pipelines | filterSource, [&sourceMap, &catalog](NES::QueryCompilation::OperatorPipelinePtr pipeline) {
         auto sources =
             pipeline->getQueryPlan()->getOperatorByType<NES::QueryCompilation::PhysicalOperators::PhysicalSourceOperator>();
@@ -79,7 +79,7 @@ getSources(std::vector<NES::QueryCompilation::OperatorPipelinePtr> pipelines, NE
         auto source = sources[0];
 
         if (source->getSourceDescriptor()->instanceOf<NES::Network::NetworkSourceDescriptor>()) {
-            sourceMap[pipeline->getPipelineId()] = source->getSourceDescriptor();
+            sourceMap[pipeline->getPipelineId()] = {source->getSourceDescriptor(), source->getOriginId()};
             return;
         }
 
@@ -87,13 +87,13 @@ getSources(std::vector<NES::QueryCompilation::OperatorPipelinePtr> pipelines, NE
                                       ->getPhysicalSource()
                                       ->getPhysicalSourceType();
         auto noOpSource = std::dynamic_pointer_cast<NES::NoOpPhysicalSourceType>(physicalSourceType);
-        sourceMap[pipeline->getPipelineId()] =
+        sourceMap[pipeline->getPipelineId()] = {
             NES::NoOpSourceDescriptor::create(source->getInputSchema(),
-                                                noOpSource->getSchemaType(),
+                                              noOpSource->getSchemaType(),
                                               source->getSourceDescriptor()->getLogicalSourceName(),
                                               noOpSource->getTCP(),
-                                              source->getOriginId(),
-                                              source->getId());
+                                              source->getId()),
+            source->getOriginId()};
     });
 
     return sourceMap;
@@ -184,7 +184,7 @@ getStages(std::vector<NES::QueryCompilation::OperatorPipelinePtr> pipelines,
 }
 
 std::tuple<std::map<NES::PipelineId, SinkStage>,
-           std::map<NES::PipelineId, NES::SourceDescriptorPtr>,
+           std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>>,
            std::vector<Stage>,
            std::vector<NES::Runtime::Unikernel::OperatorHandlerDescriptor>>
 ExportQueryCompiler::compile(NES::QueryPlanPtr queryPlan,
@@ -210,5 +210,5 @@ ExportQueryCompiler::compile(NES::QueryPlanPtr queryPlan,
 
     auto pipelines = qp2->getPipelines();
     auto [stages, sharedHandler] = getStages(pipelines, queryCompilerOptions, bufferSize);
-    return {getSinks(pipelines), getSources(pipelines, sourceCatalog), std::move(stages), sharedHandler};
+    return {getSinks(pipelines), getSources(pipelines, std::move(sourceCatalog)), std::move(stages), sharedHandler};
 }
