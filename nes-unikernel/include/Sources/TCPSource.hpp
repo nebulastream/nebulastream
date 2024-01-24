@@ -37,6 +37,8 @@ class TCPSource {
   public:
     using BufferType = NES::Unikernel::SchemaBuffer<typename TCPConfig::Schema, 8192>;
     constexpr static NES::SourceType SourceType = NES::SourceType::TCP_SOURCE;
+    constexpr static bool NeedsBuffer = true;
+
     /**
      * @brief constructor of a TCP Source
      * must be reference counted 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly.
@@ -49,7 +51,7 @@ class TCPSource {
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
      */
-    std::optional<BufferType> receiveData(const std::stop_token& stoken, BufferType schemaBuffer) {
+    std::optional<NES::Runtime::TupleBuffer> receiveData(const std::stop_token& stoken, BufferType schemaBuffer) {
         try {
             if (stoken.stop_requested()) {
                 return std::nullopt;
@@ -61,8 +63,7 @@ class TCPSource {
             NES_ERROR("TCPSource<Schema>::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
             throw e;
         }
-        std::cerr << "Created a buffer" << std::endl;
-        return schemaBuffer;
+        return schemaBuffer.getBuffer();
     }
 
     /**
@@ -184,8 +185,7 @@ class TCPSource {
     /**
      * @brief opens TCP connection
      */
-    void open() {
-        std::cerr << "TCP Open" << std::endl;
+    bool open() {
         NES_INFO("TCP source open");
         NES_TRACE("TCPSource::connected: Trying to create socket.");
         if (sockfd < 0) {
@@ -195,7 +195,7 @@ class TCPSource {
         if (sockfd < 0) {
             NES_ERROR("TCPSource::connected: Failed to create socket. Error: {}", strerror(errno));
             connection = -1;
-            return;
+            return false;
         }
         NES_TRACE("Created socket");
         struct sockaddr_in servaddr;
@@ -209,21 +209,34 @@ class TCPSource {
         }
         if (connection < 0) {
             connection = -1;
-            NES_THROW_RUNTIME_ERROR("TCPSource::connected: Connection with server failed. Error: " << strerror(errno));
+            NES_ERROR("TCPSource::connected: Connection with server failed. Error: ", strerror(errno));
+            return false;
         }
         NES_TRACE("TCPSource::connected: Connected to server.");
+        return true;
     }
 
     /**
      * @brief closes TCP connection
      */
-    void close() {
+    bool close(Runtime::QueryTerminationType /*type*/) {
         NES_TRACE("TCPSource::close: trying to close connection.");
-        if (connection >= 0) {
-            ::close(connection);
-            ::close(sockfd);
-            NES_TRACE("TCPSource::close: connection closed.");
+        if (connection < 0) {
+            NES_WARNING("Calling close on a non active tcp connection");
+            return false;
         }
+
+        if (::close(connection) < 0) {
+            NES_WARNING("Could not close tcp connection");
+        }
+
+        if (::close(sockfd)) {
+            NES_WARNING("Could not close tcp socket");
+            return false;
+        }
+
+        NES_TRACE("TCPSource::close: connection closed.");
+        return true;
     }
 
   private:

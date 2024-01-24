@@ -1,7 +1,6 @@
 add_source_files(unikernel-lib
 #        DataSource.cpp
         NetworkSink.cpp
-        NetworkSource.cpp
         SinkMedium.cpp
 #        Util/MMapCircularBuffer.cpp
         Util/CircularBuffer.cpp
