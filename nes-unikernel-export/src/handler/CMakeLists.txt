@@ -8,8 +8,7 @@ add_source_files(unikernel-export
         StreamJoinOperatorHandlerBucketing.cpp
         StreamJoinOperatorHandlerSlicing.cpp
         StreamJoinOperatorHandler.cpp
-        AppendToSliceStoreAction.cpp
-        AppendToSliceStoreAction.cpp
+        AppendToSliceStoreHandler.cpp
         EverythingThatIsNeeded.cpp
         KeyedBucketPreAggregationHandler.cpp
         KeyedSliceMergingHandler.cpp
