@@ -26,7 +26,6 @@ add_source_files(nes-execution
 )
 
 add_source_files(unikernel-lib
-        NonKeyedSlicePreAggregation.cpp
         NonKeyedSliceMergingHandler.cpp
         NonKeyedSlicePreAggregationHandler.cpp
         NonKeyedThreadLocalSliceStore.cpp
