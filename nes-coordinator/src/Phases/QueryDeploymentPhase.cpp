@@ -82,8 +82,9 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     for (auto& executionNode : executionNodes) {
         const auto workerId = executionNode->getId();
         const auto subQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
-        for (auto& subQueryPlan : subQueryPlans) {
+        for (const auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getDecomposedQueryPlanId();
+            NES_INFO("Updating state of decomposed query plan {} with old state {}", subQueryPlan->getDecomposedQueryPlanId(), magic_enum::enum_name(subQueryPlan->getState()))
             switch (subQueryPlan->getState()) {
                 case QueryState::MARKED_FOR_DEPLOYMENT: subQueryPlan->setState(QueryState::DEPLOYED); break;
                 case QueryState::MARKED_FOR_REDEPLOYMENT: subQueryPlan->setState(QueryState::REDEPLOYED); break;
