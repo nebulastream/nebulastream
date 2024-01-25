@@ -22,9 +22,6 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class NonKeyedSlice;
-using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
-
 /**
 * @brief The slice store for sliding windows that maintains a set of slices for all in-flight sliding windows.
 */

@@ -16,6 +16,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/Allocator/MemoryResource.hpp>
+#include <memory>
 #include <cassert>
 
 namespace NES::Nautilus::Interface {
