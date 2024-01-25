@@ -79,7 +79,7 @@ void FileSink::shutdown() {
             auto inputBuffer = receivedBuffers[i];
             auto timestamp = arrivalTimestamps[i];
 
-            NES_DEBUG("FileSink: getSchema medium {} format {} mode {}",
+            NES_INFO("FileSink: getSchema medium {} format {} mode {}",
                       toString(),
                       sinkFormat->toString(),
                       this->getAppendAsString());
@@ -95,7 +95,7 @@ void FileSink::shutdown() {
             } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
                 NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
             } else {
-                NES_DEBUG("FileSink::getData: schema already written");
+                NES_INFO("FileSink::getData: schema already written");
             }
 
             //auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
@@ -109,7 +109,7 @@ void FileSink::shutdown() {
             schema->addField("timestamp", BasicType::UINT64);
             //return bufferContent;
 
-            NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, bufferContent);
+            NES_INFO("FileSink::getData: writing to file {} following content {}", filePath, bufferContent);
             //outputFile.write(fBuffer.c_str(), fBuffer.size());
             outputFile.write(bufferContent.c_str(), bufferContent.size());
 
