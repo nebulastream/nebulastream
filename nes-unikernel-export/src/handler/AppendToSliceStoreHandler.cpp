@@ -13,7 +13,7 @@
 */
 #include "OperatorHandlerTracer.hpp"
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
+#include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
@@ -40,15 +40,17 @@ AppendToSliceStoreHandler<Slice>::AppendToSliceStoreHandler(uint64_t windowSize,
     static_assert(std::is_same_v<Slice, NonKeyedSlice> || std::is_same_v<Slice, KeyedSlice>,
                   "AppendToSliceStoreHandler only Supports: KeyedSlice and NonKeyedSlice");
     if constexpr (std::is_same_v<Slice, NonKeyedSlice>) {
-        TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<NonKeyedSlice>",
-                               "Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp",
-                               windowSize,
-                               windowSlide);
+        TRACE_OPERATOR_HANDLER(
+            "NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<Runtime::Execution::Operators::NonKeyedSlice>",
+            "Execution/Operators/Streaming/Aggregations/AppendToSliceStoreHandler.hpp",
+            windowSize,
+            windowSlide);
     } else if constexpr (std::is_same_v<Slice, KeyedSlice>) {
-        TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<KeyedSlice>",
-                               "Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp",
-                               windowSize,
-                               windowSlide);
+        TRACE_OPERATOR_HANDLER(
+            "NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<Runtime::Execution::Operators::KeyedSlice>",
+            "Execution/Operators/Streaming/Aggregations/AppendToSliceStoreHandler.hpp",
+            windowSize,
+            windowSlide);
     }
 
     std::vector<OriginId> ids = {0};
@@ -73,30 +75,7 @@ void AppendToSliceStoreHandler<Slice>::stop(NES::Runtime::QueryTerminationType q
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-template<class Slice>
-AppendToSliceStoreAction<Slice>::AppendToSliceStoreAction(const uint64_t operatorHandlerIndex)
-    : operatorHandlerIndex(operatorHandlerIndex) {}
-
-template<class Slice>
-void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
-                                                ExecuteOperatorPtr&,
-                                                Value<UInt64>&,
-                                                Value<UInt64>& sliceEnd,
-                                                Value<UInt64>& sequenceNumber,
-                                                Value<MemRef>& combinedSlice) const {
-    auto actionHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    FunctionCall("appendToGlobalSliceStore", appendToGlobalSliceStore<Slice>, actionHandler, combinedSlice);
-    FunctionCall("triggerSlidingWindows",
-                 triggerSlidingWindows<Slice>,
-                 actionHandler,
-                 ctx.getWorkerContext(),
-                 ctx.getPipelineContext(),
-                 sequenceNumber,
-                 sliceEnd);
-}
 // Instantiate types
 template class AppendToSliceStoreHandler<NonKeyedSlice>;
 template class AppendToSliceStoreHandler<KeyedSlice>;
-template class AppendToSliceStoreAction<NonKeyedSlice>;
-template class AppendToSliceStoreAction<KeyedSlice>;
 }// namespace NES::Runtime::Execution::Operators
