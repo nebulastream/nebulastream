@@ -21,6 +21,7 @@ add_source_files(nes-runtime
         WindowProcessingException.cpp
         SlidingWindowSliceStore.cpp
         AppendToSliceStoreAction.cpp
+        AppendToSliceStoreHandler.cpp
         AbstractSlicePreAggregationHandler.cpp
         ThreadLocalSliceStore.cpp
 )

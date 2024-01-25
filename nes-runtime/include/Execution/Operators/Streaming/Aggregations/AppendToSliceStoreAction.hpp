@@ -17,35 +17,9 @@
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <memory>
+#include <atomic>
 namespace NES::Runtime::Execution::Operators {
 class MultiOriginWatermarkProcessor;
-
-/**
- * @brief This is the operator handler for the AppendToSliceStoreAction.
- * It maintains the SlidingWindowSliceStore<Slice> that stores all slices.
- * @tparam Slice
- */
-template<class Slice>
-class AppendToSliceStoreHandler : public OperatorHandler {
-  public:
-    AppendToSliceStoreHandler(uint64_t windowSize, uint64_t windowSlide);
-    void start(PipelineExecutionContextPtr, uint32_t) override {}
-    void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
-    void appendToGlobalSliceStore(std::unique_ptr<Slice> slice);
-    void triggerSlidingWindows(Runtime::WorkerContext& wctx,
-                               Runtime::Execution::PipelineExecutionContext& ctx,
-                               uint64_t sequenceNumber,
-                               uint64_t slideEnd);
-
-  private:
-    std::unique_ptr<SlidingWindowSliceStore<Slice>> sliceStore;
-    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
-    std::atomic<uint64_t> lastTriggerWatermark = 0;
-    std::atomic<uint64_t> resultSequenceNumber = 1;
-    std::mutex triggerMutex;
-};
-
 /**
  * @brief The AppendToSliceStoreAction appends slices to the slice store for sliding windows.
  * @tparam Slice
@@ -67,10 +41,8 @@ class AppendToSliceStoreAction : public SliceMergingAction {
 };
 class NonKeyedSlice;
 using NonKeyedAppendToSliceStoreAction = AppendToSliceStoreAction<NonKeyedSlice>;
-using NonKeyedAppendToSliceStoreHandler = AppendToSliceStoreHandler<NonKeyedSlice>;
 class KeyedSlice;
 using KeyedAppendToSliceStoreAction = AppendToSliceStoreAction<KeyedSlice>;
-using KeyedAppendToSliceStoreHandler = AppendToSliceStoreHandler<KeyedSlice>;
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_
