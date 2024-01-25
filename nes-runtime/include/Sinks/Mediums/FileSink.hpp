@@ -110,7 +110,8 @@ class FileSink : public SinkMedium {
     std::string filePath;
     std::ofstream outputFile;
     bool append{false};
-    std::vector<Runtime::TupleBuffer> receivedBuffers;
+    //std::vector<Runtime::TupleBuffer> receivedBuffers;
+    std::vector<std::basic_string<char>> receivedBuffers;
     std::vector<uint64_t> arrivalTimestamps;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
