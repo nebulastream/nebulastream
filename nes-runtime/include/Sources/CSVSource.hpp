@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>
@@ -104,6 +105,9 @@ class CSVSource : public DataSource {
     size_t fileSize;
     bool skipHeader;
     CSVParserPtr inputParser;
+    //std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> readLines;
+    std::vector<std::string> readLines;
+    uint64_t nextLinesIndex = 0;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

@@ -30,7 +30,7 @@
 #include <vector>
 
 namespace NES {
-//constexpr bool ADD_TIME_STAMP = true;
+constexpr bool READ_ALL_ON_STARTUP = true;
 
 CSVSource::CSVSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,
@@ -93,12 +93,69 @@ CSVSource::CSVSource(SchemaPtr schema,
     }
 
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
+    if (READ_ALL_ON_STARTUP) {
+        NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
+        if (this->fileEnded) {
+            NES_WARNING("CSVSource::fillBuffer: but file has already ended");
+            return;
+        }
+
+        input.seekg(currentPositionInFile, std::ifstream::beg);
+
+        std::string line;
+        uint64_t tupleCount = 0;
+
+        if (skipHeader && currentPositionInFile == 0) {
+            NES_TRACE("CSVSource: Skipping header");
+            std::getline(input, line);
+            currentPositionInFile = input.tellg();
+        }
+        while (true) {
+            //Check if EOF has reached
+            if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
+                NES_TRACE("CSVSource::fillBuffer: reset tellg()={} fileSize={}", input.tellg(), fileSize);
+                input.clear();
+                NES_TRACE("CSVSource::fillBuffer: break because file ended");
+                this->fileEnded = true;
+                break;
+            }
+
+            std::getline(input, line);
+            readLines.push_back(line);
+            NES_TRACE("CSVSource line={} val={}", tupleCount, line);
+        }
+    }
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
-    fillBuffer(buffer);
+    if (READ_ALL_ON_STARTUP) {
+        uint64_t generatedTuplesThisPass = 0;
+        if (numberOfTuplesToProducePerBuffer == 0) {
+            generatedTuplesThisPass = buffer.getCapacity();
+        } else {
+            generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
+            NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
+        }
+        NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
+
+        uint64_t tupleCount = 0;
+        while ( tupleCount < generatedTuplesThisPass ) {
+            if (nextLinesIndex == readLines.size()) {
+                break;
+            }
+            auto line = readLines[nextLinesIndex];
+            inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
+            nextLinesIndex++;
+            ++tupleCount;
+        }
+        buffer.setNumberOfTuples(tupleCount);
+        generatedTuples += tupleCount;
+        generatedBuffers++;
+    } else {
+        fillBuffer(buffer);
+    }
     NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
 
     if (buffer.getNumberOfTuples() == 0) {

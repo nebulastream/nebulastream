@@ -60,6 +60,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
     }
     if (ADD_TIME_STAMP) {
         tupleBuffer[tupleCount][numberOfSchemaFields - 1].write<uint64_t>(getTimestamp());
+        //tupleBuffer[tupleCount][numberOfSchemaFields - 1].write<uint64_t>(0);
     }
     return true;
 }
