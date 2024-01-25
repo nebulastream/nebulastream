@@ -117,51 +117,65 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoi
     std::optional<ReconnectSchedule>& reconnectSchedule,
     const DataTypes::Experimental::GeoLocation& currentOwnLocation,
     const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,
-    const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex) {
+    const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex,
+    WorkerId currentParentId) {
 
-    //if the current parent location is not known, try reconnecting to the closest node
+    (void) reconnectSchedule;
+    auto closesNodeId = getClosestNodeId(currentOwnLocation, defaultCoverageRadiusAngle, neighbourWorkerSpatialIndex);
     if (!currentParentLocation.has_value()) {
-        auto closesNodeId = getClosestNodeId(currentOwnLocation, defaultCoverageRadiusAngle, neighbourWorkerSpatialIndex);
         if (closesNodeId) {
             return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
         } else {
             return std::nullopt;
         }
-    }
-
-    auto currentParentPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentParentLocation.value());
-    auto currentOwnPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentOwnLocation);
-    S1Angle currentDistFromParent(currentOwnPoint, currentParentPoint);
-
-    //get the next scheduled reconnect from the reconnect schedule if there is one
-    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> nextScheduledReconnect;
-    if (reconnectSchedule && !reconnectSchedule->getReconnectVector().empty()) {
-        nextScheduledReconnect = reconnectSchedule->getReconnectVector().at(0);
-    } else {
-        nextScheduledReconnect = std::nullopt;
-    }
-
-    //check if we left the coverage of our current parent
-    if (currentDistFromParent >= defaultCoverageRadiusAngle) {
-        //if there is no scheduled reconnect, connect to the closest node we can find
-        if (!nextScheduledReconnect) {
-            auto closesNodeId = getClosestNodeId(currentOwnLocation, defaultCoverageRadiusAngle, neighbourWorkerSpatialIndex);
-            if (closesNodeId) {
-                return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
-            } else {
-                return std::nullopt;
-            }
-        } else if (S1Angle(currentOwnPoint,
-                           NES::Spatial::Util::S2Utilities::geoLocationToS2Point(nextScheduledReconnect->pointGeoLocation))
-                   <= currentDistFromParent) {
-            //if the next scheduled parent is closer than the current parent, reconnect to the current parent
-            reconnectSchedule.value().removeNextReconnect();
-            NES_DEBUG("popped reconnect from schedule, remaining schedule size {}",
-                      reconnectSchedule.value().getReconnectVector().size());
-            return nextScheduledReconnect.value();
-        }
+    } else if (closesNodeId != currentParentId) {
+        return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
     }
     return std::nullopt;
+
+    //    //if the current parent location is not known, try reconnecting to the closest node
+//    if (!currentParentLocation.has_value()) {
+//        auto closesNodeId = getClosestNodeId(currentOwnLocation, defaultCoverageRadiusAngle, neighbourWorkerSpatialIndex);
+//        if (closesNodeId) {
+//            return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
+//        } else {
+//            return std::nullopt;
+//        }
+//    }
+//
+//    auto currentParentPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentParentLocation.value());
+//    auto currentOwnPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentOwnLocation);
+//    S1Angle currentDistFromParent(currentOwnPoint, currentParentPoint);
+//
+//    //get the next scheduled reconnect from the reconnect schedule if there is one
+//    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> nextScheduledReconnect;
+//    if (reconnectSchedule && !reconnectSchedule->getReconnectVector().empty()) {
+//        nextScheduledReconnect = reconnectSchedule->getReconnectVector().at(0);
+//    } else {
+//        nextScheduledReconnect = std::nullopt;
+//    }
+//
+//    //check if we left the coverage of our current parent
+//    if (currentDistFromParent >= defaultCoverageRadiusAngle) {
+//        //if there is no scheduled reconnect, connect to the closest node we can find
+//        if (!nextScheduledReconnect) {
+//            auto closesNodeId = getClosestNodeId(currentOwnLocation, defaultCoverageRadiusAngle, neighbourWorkerSpatialIndex);
+//            if (closesNodeId) {
+//                return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
+//            } else {
+//                return std::nullopt;
+//            }
+//        } else if (S1Angle(currentOwnPoint,
+//                           NES::Spatial::Util::S2Utilities::geoLocationToS2Point(nextScheduledReconnect->pointGeoLocation))
+//                   <= currentDistFromParent) {
+//            //if the next scheduled parent is closer than the current parent, reconnect to the current parent
+//            reconnectSchedule.value().removeNextReconnect();
+//            NES_DEBUG("popped reconnect from schedule, remaining schedule size {}",
+//                      reconnectSchedule.value().getReconnectVector().size());
+//            return nextScheduledReconnect.value();
+//        }
+//    }
+//    return std::nullopt;
 }
 
 std::optional<uint64_t> NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getClosestNodeId(
@@ -320,8 +334,11 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
         }
 
         //get the reconnect if it is to be performed now
-        auto nextReconnectPoint =
-            getNextReconnectPoint(currentReconnectSchedule, currentLocation, currentParentLocation, neighbourWorkerSpatialIndex);
+        auto nextReconnectPoint = getNextReconnectPoint(currentReconnectSchedule,
+                                                        currentLocation,
+                                                        currentParentLocation,
+                                                        neighbourWorkerSpatialIndex,
+                                                        currentParentId);
 
         //perform reconnect if needed
         if (nextReconnectPoint.has_value()) {

@@ -179,7 +179,8 @@ class WorkerMobilityHandler {
     getNextReconnectPoint(std::optional<ReconnectSchedule>& reconnectSchedule,
                           const DataTypes::Experimental::GeoLocation& currentOwnLocation,
                           const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,
-                          const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex);
+                          const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex,
+                          WorkerId currentParentId);
 
     /**
      * @brief checks if the position supplied as an argument is further than the configured threshold from the last position
