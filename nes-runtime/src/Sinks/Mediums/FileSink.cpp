@@ -26,7 +26,7 @@
 #include <utility>
 
 namespace NES {
-constexpr bool WRITE_ALL_ON_SHUTDOWN = false;
+constexpr bool WRITE_ALL_ON_SHUTDOWN = true;
 
 SinkMediumTypes FileSink::getSinkMediumType() { return SinkMediumTypes::FILE_SINK; }
 
@@ -74,7 +74,6 @@ void FileSink::setup() {}
 
 void FileSink::shutdown() {
     if (WRITE_ALL_ON_SHUTDOWN) {
-        std::unique_lock lock(writeMutex);
         sinkFormat->setAddTimestamp(true);
         for (uint64_t i = 0; i < receivedBuffers.size(); ++i) {
             auto inputBuffer = receivedBuffers[i];
