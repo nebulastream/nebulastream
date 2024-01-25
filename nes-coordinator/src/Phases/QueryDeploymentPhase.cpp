@@ -149,16 +149,16 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     startQuery(sharedQueryId, executionNodes);
 
     //remove subplans from global query plan if they were stopped due to migration
-    for (const auto& node : executionNodes) {
+    for (auto node : executionNodes) {
         auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
-        for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
+        for (auto decomposedQueryPlan : allDecomposedQueryPlans) {
             auto subPlanStatus = decomposedQueryPlan->getState();
             if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
                 NES_INFO("Removing migrated subplan with id  {} from execution node {}", decomposedQueryPlan->getDecomposedQueryPlanId(), node->getId())
-                globalExecutionPlan->getExecutionNodeById(node->getId())->removeDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan->getDecomposedQueryPlanId());
-//                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
-//                                                                sharedQueryId,
-//                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
+                //globalExecutionPlan->getExecutionNodeById(node->getId())->removeDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan->getDecomposedQueryPlanId());
+                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
+                                                                sharedQueryId,
+                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
 //                node->removeDecomposedQueryPlan(sharedQueryId,
 //                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
                 auto resourceAmount = Optimizer::ExecutionNode::getOccupiedResourcesForDecomposedQueryPlan(decomposedQueryPlan);
