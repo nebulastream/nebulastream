@@ -255,10 +255,10 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                         querySubPlanId,
                         queryId);
             //FIXME: fix what to do when this occurs
-//            NES_ASSERT(false,
-//                       "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
-//                                         << std::string(magic_enum::enum_name(querySubPlanStatus))
-//                                         << " for the sub query with id " << querySubPlanId << " for query id " << queryId);
+            NES_ASSERT(false,
+                       "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
+                                         << std::string(magic_enum::enum_name(querySubPlanStatus))
+                                         << " for the sub query with id " << querySubPlanId << " for query id " << queryId);
         }
 
         //Get the sub query plan
