@@ -16,13 +16,17 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <filesystem>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <utility>
 
 namespace NES {
+constexpr bool WRITE_ALL_ON_SHUTDOWN = true;
 
 SinkMediumTypes FileSink::getSinkMediumType() { return SinkMediumTypes::FILE_SINK; }
 
@@ -68,9 +72,59 @@ std::string FileSink::toString() const {
 
 void FileSink::setup() {}
 
-void FileSink::shutdown() {}
+void FileSink::shutdown() {
+    std::unique_lock lock(writeMutex);
+    sinkFormat->setAddTimestamp(true);
+    for (uint64_t i = 0; i < receivedBuffers.size(); ++i) {
+        auto inputBuffer = receivedBuffers[i];
+        auto timestamp = arrivalTimestamps[i];
 
-bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) { return writeDataToFile(inputBuffer); }
+        NES_DEBUG("FileSink: getSchema medium {} format {} mode {}",
+                  toString(),
+                  sinkFormat->toString(),
+                  this->getAppendAsString());
+
+        if (!inputBuffer) {
+            NES_ERROR("FileSink::writeDataToFile input buffer invalid");
+        }
+
+        if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
+            auto schemaStr = sinkFormat->getFormattedSchema();
+            outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
+            schemaWritten = true;
+        } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
+            NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
+        } else {
+            NES_DEBUG("FileSink::getData: schema already written");
+        }
+
+        //auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
+        std::string bufferContent;
+        auto schema = sinkFormat->getSchemaPtr();
+        //auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
+        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
+        std::string repReg = "," + std::to_string(timestamp) + "\n";
+        bufferContent = std::regex_replace(bufferContent, std::regex(R"(\n)"), repReg);
+        schema->addField("timestamp", BasicType::UINT64);
+        //return bufferContent;
+
+        NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, bufferContent);
+        //outputFile.write(fBuffer.c_str(), fBuffer.size());
+        outputFile.write(bufferContent.c_str(), bufferContent.size());
+
+        outputFile.flush();
+    }
+}
+
+bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+    if (WRITE_ALL_ON_SHUTDOWN) {
+        receivedBuffers.push_back(inputBuffer);
+        arrivalTimestamps.push_back(getTimestamp());
+        return true;
+    }
+    return writeDataToFile(inputBuffer);
+}
 
 std::string FileSink::getFilePath() const { return filePath; }
 
