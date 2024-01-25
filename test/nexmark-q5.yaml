@@ -1,0 +1,32 @@
+query: |
+  Query::from("bid")
+    .window(
+        SlidingWindow::of(
+            EventTime(Attribute("timestamp")),
+            Seconds(10),
+            Seconds(2)
+        )
+    )
+      .byKey(Attribute("auctionId"))
+      .apply(Count()->as(Attribute("num")))
+    .sink(NullOutputSinkDescriptor::create());
+topology:
+  sink:
+    node:
+      ip: 127.0.0.1
+      port: 8085
+      resources: 1
+  workers:
+    - node:
+        ip: 127.0.0.1
+        port: 8080
+        resources: 90
+      sources:
+        - name: bid
+          tcp:
+            ip: 127.0.0.1
+            port: 8091
+          schema:
+            type: NEXMARK_BID
+      links:
+        - sink
