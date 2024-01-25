@@ -13,9 +13,8 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/Allocator/MemoryResource.hpp>
+#include <memory>
 #include <cassert>
 
 namespace NES::Nautilus::Interface {
