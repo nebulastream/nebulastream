@@ -325,7 +325,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                               queryId,
                               querySubPlanMetaData->getQuerySubPlanId(),
                               std::string(magic_enum::enum_name(querySubPlanMetaData->getQuerySubPlanStatus())));
-                    if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::SOFT_STOP_COMPLETED) {
+                    if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::SOFT_STOP_COMPLETED && querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::MIGRATION_COMPLETED) {
                         stopQuery = false;
                         break;
                     }
