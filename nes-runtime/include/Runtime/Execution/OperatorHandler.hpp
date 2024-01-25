@@ -52,13 +52,14 @@ class OperatorHandler
      */
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
-#ifndef UNIKERNEL_LIB
     /**
      * @brief Default deconstructor
      */
+#ifndef UNIKERNEL_LIB
     ~OperatorHandler() override = default;
-#endif
-
+#else
+    virtual ~OperatorHandler() = default;
+#endif UNIKERNEL_LIB
     /**
      * @brief Checks if the current operator handler is of type OperatorHandlerType
      * @tparam OperatorHandlerType
