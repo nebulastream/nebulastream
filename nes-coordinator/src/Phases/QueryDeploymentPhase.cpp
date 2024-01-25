@@ -94,7 +94,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
                 case QueryState::RUNNING: break;            //do not modify anything for running plans
                 case QueryState::MIGRATION_COMPLETED: break;//do not modfify plans that have been stopped after migration
-                default: NES_FATAL_ERROR("Unexpected query plan state: {}", magic_enum::enum_name(subQueryPlan->getState()));
+                default: NES_THROW_RUNTIME_ERROR("Unexpected query plan state: {}");
             }
             //todo #4452: avoid looping over all query ids by changing the structure of the query catalog
             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
