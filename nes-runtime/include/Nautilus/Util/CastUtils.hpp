@@ -20,7 +20,9 @@
  * This file provides simple and fast type checks and casts.
  */
 namespace NES::Nautilus {
-
+#ifdef UNIKERNEL_LIB
+#error "Should not be included"
+#endif
 /**
  * @brief Provides an identifier for runtime types.
  */
