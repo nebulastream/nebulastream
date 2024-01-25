@@ -154,6 +154,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
             auto subPlanStatus = decomposedQueryPlan->getState();
             if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
+                NES_INFO("Removing migrated subplan with id  {} from execution node {}", decomposedQueryPlan->getDecomposedQueryPlanId(), node->getId())
                 globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
                                                                 sharedQueryId,
                                                                 decomposedQueryPlan->getDecomposedQueryPlanId());
