@@ -51,14 +51,25 @@ void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
                                                 Value<MemRef>& combinedSlice) const {
 
     auto actionHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    FunctionCall("appendToGlobalSliceStore", appendToGlobalSliceStore<Slice>, actionHandler, combinedSlice);
-    FunctionCall("triggerSlidingWindows",
-                 triggerSlidingWindows<Slice>,
-                 actionHandler,
-                 ctx.getWorkerContext(),
-                 ctx.getPipelineContext(),
-                 sequenceNumber,
-                 sliceEnd);
+    if constexpr (std::same_as<Slice, NonKeyedSlice>) {
+        FunctionCall("appendToGlobalSliceStoreNonKeyed", appendToGlobalSliceStore<Slice>, actionHandler, combinedSlice);
+        FunctionCall("triggerSlidingWindowsNonKeyed",
+                     triggerSlidingWindows<Slice>,
+                     actionHandler,
+                     ctx.getWorkerContext(),
+                     ctx.getPipelineContext(),
+                     sequenceNumber,
+                     sliceEnd);
+    } else if constexpr (std::same_as<Slice, KeyedSlice>) {
+        FunctionCall("appendToGlobalSliceStoreKeyed", appendToGlobalSliceStore<Slice>, actionHandler, combinedSlice);
+        FunctionCall("triggerSlidingWindowsKeyed",
+                     triggerSlidingWindows<Slice>,
+                     actionHandler,
+                     ctx.getWorkerContext(),
+                     ctx.getPipelineContext(),
+                     sequenceNumber,
+                     sliceEnd);
+    }
 }
 
 // Instantiate types

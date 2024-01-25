@@ -16,6 +16,7 @@ add_subdirectory(Buckets)
 
 add_source_files(unikernel-export
         WindowProcessingException.cpp
+        AppendToSliceStoreAction.cpp
 )
 add_source_files(nes-runtime
         WindowProcessingException.cpp
