@@ -67,7 +67,7 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
 
     void start(PipelineExecutionContextPtr, uint32_t);
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
-    ~AbstractSlicePreAggregationHandler();
+    ~AbstractSlicePreAggregationHandler() override;
 
   protected:
     const uint64_t windowSize;
