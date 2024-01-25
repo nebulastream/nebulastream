@@ -90,7 +90,7 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
-        NES_DEBUG("Got EoS on Sink  {}", toString());
+        NES_INFO("Got EoS on Sink  {}", toString());
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
             nodeEngine->getQueryManager()->notifySinkCompletion(decomposedQueryPlanId,
