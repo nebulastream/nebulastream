@@ -19,3 +19,6 @@ add_source_files(nes-runtime
         ChainedHashMap.cpp
         ChainedHashMapRef.cpp
         )
+
+# KeyedWindows
+add_source(unikernel-lib ChainedHashMap.cpp)

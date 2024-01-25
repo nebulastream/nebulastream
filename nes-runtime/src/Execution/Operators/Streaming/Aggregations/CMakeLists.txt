@@ -29,4 +29,15 @@ add_source_files(nes-runtime
 add_source_files(unikernel-lib
         AbstractSlicePreAggregationHandler.cpp
         ThreadLocalSliceStore.cpp
+        WindowProcessingException.cpp
+)
+
+# KeyedWindows
+add_source_files(unikernel-lib
+        AppendToSliceStoreHandler.cpp
+)
+
+# SlidingWindows
+add_source_files(unikernel-lib
+        SlidingWindowSliceStore.cpp
 )

@@ -24,3 +24,11 @@ add_source_files(nes-runtime
         KeyedSliceMergingHandler.cpp
         KeyedWindowEmitAction.cpp
         )
+
+# KeyedSlices
+add_source_files(unikernel-lib
+        KeyedSliceMergingHandler.cpp
+        KeyedSlicePreAggregationHandler.cpp
+        KeyedThreadLocalSliceStore.cpp
+        KeyedSlice.cpp
+)

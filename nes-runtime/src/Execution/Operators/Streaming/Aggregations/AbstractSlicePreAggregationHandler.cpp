@@ -14,11 +14,8 @@
 
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 
-#ifndef UNIKERNEL_LIB
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
-#endif
-
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
@@ -151,11 +148,7 @@ AbstractSlicePreAggregationHandler<SliceType, SliceStore>::~AbstractSlicePreAggr
 
 // Instantiate types
 template class AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore>;
-
-#ifndef UNIKERNEL_LIB
-
 template class AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore>;
 
-#endif
 
 }// namespace NES::Runtime::Execution::Operators
