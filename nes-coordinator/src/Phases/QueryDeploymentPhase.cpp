@@ -155,8 +155,10 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             auto subPlanStatus = decomposedQueryPlan->getState();
             if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
                 NES_INFO("Removing migrated subplan with id  {} from execution node {}", decomposedQueryPlan->getDecomposedQueryPlanId(), node->getId())
-                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
-                                                                sharedQueryId,
+//                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
+//                                                                sharedQueryId,
+//                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
+                node->removeDecomposedQueryPlan(sharedQueryId,
                                                                 decomposedQueryPlan->getDecomposedQueryPlanId());
                 auto resourceAmount = Optimizer::ExecutionNode::getOccupiedResourcesForDecomposedQueryPlan(decomposedQueryPlan);
                 node->getTopologyNode()->releaseSlots(resourceAmount);
