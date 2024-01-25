@@ -1,7 +1,7 @@
 add_subdirectory(src)
 
 get_source(unikernel-lib NES_UNIKERNEL_LIB_SOURCE_FILES)
-set(UNIKERNEL_COMPILE_OPTIONS "-O0" "-std=c++20" "-Wno-error=deprecated" "-DUNIKERNEL_LIB=1" "-DWINDOW_OPERATOR=1")
+set(UNIKERNEL_COMPILE_OPTIONS "-O3" "-std=c++20" "-Wno-error=deprecated" "-DUNIKERNEL_LIB=1" "-DWINDOW_OPERATOR=1")
 set(UNIKERNEL_LINK_OPTIONS "-fuse-ld=lld")
 SET(UNIKERNEL_USE_UBSAN "OFF")
 SET(UNIKERNEL_USE_LIB_DWARF "OFF")

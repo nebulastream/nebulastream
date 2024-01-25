@@ -18,3 +18,6 @@ add_source_files(nes-nautilus
         ChainedHashMap.cpp
         ChainedHashMapRef.cpp
         )
+
+# KeyedWindows
+add_source(unikernel-lib ChainedHashMap.cpp)
