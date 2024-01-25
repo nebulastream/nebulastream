@@ -1048,10 +1048,10 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
     auto schema =
-        Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64));
+        Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalog()->addLogicalSource("values", schema);
 
-    auto topologyJsonPath = "/home/x/simulation_temp/nes_simulation_starter_rs/three_layer_topology.json";
+    auto topologyJsonPath = "/home/x/rustProjects/nes_simulation_starter_rs/three_layer_topology.json";
     auto stream = std::ifstream(topologyJsonPath);
     std::stringstream buffer;
     buffer << stream.rdbuf();
@@ -1100,7 +1100,7 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1000);
 
-    auto mobileWorkerConfigDir = "/home/x/simulation_temp/nes_simulation_starter_rs/1h_dublin_bus_nanosec";
+    auto mobileWorkerConfigDir = "/home/x/rustProjects/nes_simulation_starter_rs/1h_dublin_bus_nanosec";
     std::vector<NesWorkerPtr> mobileWorkers;
     for (const auto& configFile : std::filesystem::recursive_directory_iterator(mobileWorkerConfigDir)) {
         std::cout << configFile << std::endl;

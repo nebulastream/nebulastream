@@ -21,6 +21,7 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <chrono>
 #include <cstring>
 #include <sstream>
@@ -29,6 +30,7 @@
 #include <vector>
 
 namespace NES {
+//constexpr bool ADD_TIME_STAMP = true;
 
 CSVSource::CSVSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,
