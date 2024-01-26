@@ -75,6 +75,8 @@ void FileSink::setup() {}
 void FileSink::shutdown() {
     if (WRITE_ALL_ON_SHUTDOWN) {
         sinkFormat->setAddTimestamp(true);
+        std::vector<std::string> timestampedOutputStrings;
+        timestampedOutputStrings.reserve(receivedBuffers.size());
         for (uint64_t i = 0; i < receivedBuffers.size(); ++i) {
             //auto inputBuffer = receivedBuffers[i];
             auto bufferContent = receivedBuffers[i];
@@ -111,8 +113,12 @@ void FileSink::shutdown() {
             schema->addField("timestamp", BasicType::UINT64);
 
             NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, bufferContent);
-            outputFile.write(bufferContent.c_str(), bufferContent.size());
+            //outputFile.write(bufferContent.c_str(), bufferContent.size());
+            timestampedOutputStrings.push_back(bufferContent);
 
+        }
+        for (const auto& bufferContent : timestampedOutputStrings) {
+            outputFile.write(bufferContent.c_str(), bufferContent.size());
         }
         outputFile.flush();
     }
