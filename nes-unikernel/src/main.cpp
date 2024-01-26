@@ -11,14 +11,11 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
-#include <API/Schema.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/LocalBufferPool.hpp>
-#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <UnikernelExecutionPlan.hpp>
 
@@ -28,23 +25,13 @@ NES::Runtime::WorkerContextPtr TheWorkerContext = nullptr;
 
 using namespace std::literals::chrono_literals;
 
-std::mutex m;
-std::condition_variable stop_condition;
-bool should_exit = false;
-
 class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListener {
   public:
     ~DummyExchangeProtocolListener() override = default;
 
     void onDataBuffer(NES::Network::NesPartition, NES::Runtime::TupleBuffer&) override {}
 
-    void onEndOfStream(NES::Network::Messages::EndOfStreamMessage) override {
-        {
-            std::unique_lock lock(m);
-            should_exit = true;
-        }
-        stop_condition.notify_all();
-    }
+    void onEndOfStream(NES::Network::Messages::EndOfStreamMessage) override {}
 
     void onServerError(NES::Network::Messages::ErrorMessage) override {}
 
