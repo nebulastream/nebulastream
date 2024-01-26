@@ -59,7 +59,7 @@ class OperatorHandler
     ~OperatorHandler() override = default;
 #else
     virtual ~OperatorHandler() = default;
-#endif UNIKERNEL_LIB
+#endif
     /**
      * @brief Checks if the current operator handler is of type OperatorHandlerType
      * @tparam OperatorHandlerType

@@ -54,12 +54,8 @@ std::list<std::shared_ptr<SliceType>> ThreadLocalSliceStore<SliceType>::extractS
 template<class SliceType>
 ThreadLocalSliceStore<SliceType>::SliceTypePtr& ThreadLocalSliceStore<SliceType>::findSliceByTs(uint64_t ts) {
     if (ts < lastWatermarkTs) {
-#ifndef UNIKERNEL_LIB
         throw WindowProcessingException("The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs "
                                         + std::to_string(lastWatermarkTs));
-#else
-        NES_ERROR("Window Error");
-#endif
     }
     // get a read lock
     auto readLock = synchronizedSlices.rlock();
