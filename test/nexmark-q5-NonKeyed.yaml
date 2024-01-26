@@ -4,11 +4,10 @@ query: |
         SlidingWindow::of(
             EventTime(Attribute("timestamp")),
             Seconds(2),
-            Seconds(1)
+            Seconds(2)
         )
     )
-      .byKey(Attribute("auctionId"))
-      .apply(Count()->as(Attribute("num")))
+    .apply(Count()->as(Attribute("num")))
     .sink(NullOutputSinkDescriptor::create());
 topology:
   sink:
