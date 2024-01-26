@@ -45,8 +45,8 @@ class SchemaBuffer {
         // No Overflow
         NES_ASSERT(offset + Schema::TupleSize <= BufferSize, "Out of Bound Read");
 
-        auto tupleMemory = std::span(buffer.getBuffer() + offset, Schema::TupleSize, buffer);
-        return Schema::readTupleAtBufferAddress(tupleMemory);
+        auto tupleMemory = std::span(buffer.getBuffer() + offset, Schema::TupleSize);
+        return Schema::readTupleAtBufferAddress(tupleMemory, buffer);
     }
 
     static const SchemaBuffer of(const NES::Runtime::TupleBuffer& tb) {
@@ -114,16 +114,16 @@ struct Schema {
 };
 
 template<typename T>
-inline void Field<T>::write(std::span<uint8_t> memory, const T::ctype& value, NES::Runtime::TupleBuffer&) {
+void Field<T>::write(std::span<uint8_t> memory, const typename T::ctype& value, NES::Runtime::TupleBuffer&) {
     NES_ASSERT(memory.size() == T::size, "Memory size does not match");
-    std::memcpy(memory.data(), &value, sizeof(T));
+    std::memcpy(memory.data(), &value, sizeof(typename T::ctype));
 }
 
 template<typename T>
-inline T::ctype Field<T>::read(std::span<uint8_t> memory, NES::Runtime::TupleBuffer&) {
+typename T::ctype Field<T>::read(std::span<uint8_t> memory, NES::Runtime::TupleBuffer&) {
     NES_ASSERT(memory.size() == T::size, "Memory size does not match");
-    T value;
-    std::memcpy(&value, memory.data(), sizeof(T));
+    typename T::ctype value;
+    std::memcpy(&value, memory.data(), sizeof(typename T::ctype));
     return value;
 }
 
