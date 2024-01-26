@@ -113,8 +113,8 @@ void FileSink::shutdown() {
             NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, bufferContent);
             outputFile.write(bufferContent.c_str(), bufferContent.size());
 
-            outputFile.flush();
         }
+        outputFile.flush();
     }
 }
 
