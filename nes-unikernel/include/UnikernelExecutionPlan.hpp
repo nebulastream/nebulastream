@@ -24,7 +24,6 @@
 #include <string>
 #include <tuple>
 
-#define UNIKERNEL_TRACE_PIPELINE_EXECUTION
 #ifdef UNIKERNEL_TRACE_PIPELINE_EXECUTION
 #define TRACE_PIPELINE_SETUP(...) NES_INFO("Pipeline: Setup {} {}", StageId, fmt::format(__VA_ARGS__))
 #define TRACE_PIPELINE_EXECUTE(...) NES_INFO("Pipeline: Execute {} {}", StageId, fmt::format(__VA_ARGS__))

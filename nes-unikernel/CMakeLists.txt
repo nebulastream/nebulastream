@@ -4,17 +4,29 @@ get_source(unikernel-lib NES_UNIKERNEL_LIB_SOURCE_FILES)
 set(UNIKERNEL_COMPILE_OPTIONS "-O3" "-std=c++20" "-Wno-error=deprecated" "-DUNIKERNEL_LIB=1" "-DWINDOW_OPERATOR=1")
 set(UNIKERNEL_LINK_OPTIONS "-fuse-ld=lld")
 SET(UNIKERNEL_USE_UBSAN "OFF")
-SET(UNIKERNEL_USE_LIB_DWARF "OFF")
+SET(UNIKERNEL_TRACE_PROXY_FUNCTIONS "ON")
+SET(UNIKERNEL_TRACE_PIPELINE_EXECUTION "OFF")
+SET(UNIKERNEL_USE_LIB_DWARF "ON")
 
 if (UNIKERNEL_USE_TSAN)
     set(UNIKERNEL_LINK_OPTIONS ${UNIKERNEL_LINK_OPTIONS} "-fsanitize=thread")
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-fsanitize=thread" "-g" "-fno-omit-frame-pointer")
-elseif(UNIKERNEL_USE_UBSAN)
+elseif (UNIKERNEL_USE_UBSAN)
     set(UNIKERNEL_LINK_OPTIONS ${UNIKERNEL_LINK_OPTIONS} "-fsanitize=undefined")
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-fsanitize=undefined" "-g" "-fno-omit-frame-pointer")
 endif ()
 
-if(UNIKERNEL_USE_LIB_DWARF)
+if (UNIKERNEL_TRACE_PROXY_FUNCTIONS)
+    message("-- Tracing Proxy functions")
+    set(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUNIKERNEL_TRACE_PROXY_FUNCTIONS")
+endif ()
+
+if (UNIKERNEL_TRACE_PIPELINE_EXECUTION)
+    message("-- Tracing Pipeline Execution")
+    set(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUNIKERNEL_TRACE_PIPELINE_EXECUTION")
+endif ()
+
+if (UNIKERNEL_USE_LIB_DWARF)
     set(UNIKERNEL_LINK_OPTIONS ${UNIKERNEL_LINK_OPTIONS} "-ldw")
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUSE_LIB_DWARF")
 endif ()
@@ -50,7 +62,7 @@ target_include_directories(pipeline-test PRIVATE
 # Get a list of files matching the pattern
 file(GLOB PIPELINE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline*.hpp)
 # Loop over the files
-foreach(PIPELINE_FILE ${PIPELINE_FILES})
+foreach (PIPELINE_FILE ${PIPELINE_FILES})
     # Extract the pipeline number from the filename
     string(REGEX MATCH "Pipeline([0-9]+)\\.hpp" PIPELINE_NUMBER ${PIPELINE_FILE})
 
