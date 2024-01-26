@@ -72,6 +72,6 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
         }
         child->execute(ctx, resultWindow);
     }
-    Nautilus::FunctionCall("deleteSlice", deleteSlice, globalSlice);
+    Nautilus::FunctionCall("deleteSliceKeyed", deleteSlice, globalSlice);
 }
 }// namespace NES::Runtime::Execution::Operators

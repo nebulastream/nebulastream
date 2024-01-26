@@ -106,7 +106,7 @@ KeyedSlicePreAggregation::KeyedSlicePreAggregation(
 
 void KeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("setupWindowHandler",
+    Nautilus::FunctionCall("setupWindowHandlerKeyed",
                            setupWindowHandler2,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),

@@ -84,7 +84,7 @@ void NonKeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
-    Nautilus::FunctionCall("setupWindowHandler",
+    Nautilus::FunctionCall("setupWindowHandlerNonKeyed",
                            setupWindowHandler,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
