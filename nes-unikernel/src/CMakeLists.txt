@@ -5,6 +5,7 @@ add_source_files(unikernel-lib
 #        Util/MMapCircularBuffer.cpp
         Util/CircularBuffer.cpp
         Util/StacktraceLoader.cpp
+        sharedHandler.cpp
 #        Sources/TCPSource.cpp
 )
 
