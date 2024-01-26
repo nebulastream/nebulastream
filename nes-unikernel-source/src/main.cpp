@@ -24,7 +24,7 @@
 
 using namespace std::literals::chrono_literals;
 class APrioriDataGenerator {
-    std::vector<std::vector<uint8_t>> data_chunks;
+    std::vector<std::vector<char>> data_chunks;
     NES::Runtime::BufferManagerPtr bufferManager;
     NES::Benchmark::DataGeneration::DataGeneratorPtr generatorImpl;
     NES::SinkFormatPtr format;
@@ -60,16 +60,28 @@ class APrioriDataGenerator {
     void startGenerator(size_t numberOfBuffers) {
         generatorThread = std::jthread([this, numberOfBuffers]() {
             data_chunks.resize(numberOfBuffers);
-            std::for_each(std::execution::par_unseq, data_chunks.begin(), data_chunks.end(), [this](auto& v) {
-                auto buffer = generatorImpl->createData(1, bufferManager->getBufferSize());
-                auto tupleData = format->getFormattedBuffer(buffer[0]);
-                std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
-            });
+            std::for_each(
+#ifdef NES_UNIKERNEL_SOURCE_HAS_TBB
+                std::execution::par_unseq,
+#else
+                std::execution::unseq,
+#endif
+                data_chunks.begin(),
+                data_chunks.end(),
+                [this](auto& v) {
+                    auto chunkIndex = &v - data_chunks.data();
+                    auto buffer = generatorImpl->createData(1, bufferManager->getBufferSize());
+                    generatorImpl->insertTimestamps(buffer,
+                                                    bufferManager->getBufferSize(),
+                                                    chunkIndex * buffer[0].getNumberOfTuples());
+                    auto tupleData = format->getFormattedBuffer(buffer[0]);
+                    std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
+                });
             NES_DEBUG("Generated {} buffers", numberOfBuffers);
         });
     }
 
-    std::span<const uint8_t> get_chunk(size_t chunk_index) {
+    std::span<const char> get_chunk(size_t chunk_index) {
         if (chunk_index >= data_chunks.size())
             return {};
         return {data_chunks[chunk_index].data(), data_chunks[chunk_index].size()};
@@ -82,7 +94,7 @@ class TcpServer {
   public:
     TcpServer(boost::asio::io_service& ioService, const Options& option, std::unique_ptr<APrioriDataGenerator> generator)
         : acceptor(ioService, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), option.port)), delay(option.delayInMS),
-          dataGenerator(std::move(generator)) {
+          dataGenerator(std::move(generator)), print(option.print) {
         startAccept();
     }
 
@@ -108,6 +120,9 @@ class TcpServer {
         if (chunk.empty()) {
             return;
         }
+        if (print) {
+            NES_INFO("Chunk {}\n{}", chunk_index, std::string_view{chunk.data(), chunk.size()});
+        }
         boost::asio::async_write(
             *socket,
             boost::asio::buffer(chunk.data(), chunk.size()),
@@ -126,6 +141,7 @@ class TcpServer {
     boost::asio::ip::tcp::acceptor acceptor;
     std::chrono::milliseconds delay;
     std::unique_ptr<APrioriDataGenerator> dataGenerator;
+    bool print = false;
 };
 
 class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListener {
