@@ -17,9 +17,12 @@
 
 #include <cstdint>
 #include <memory>
+namespace NES::Runtime::Execution {
+class StreamSlice;
+}
 
 namespace NES::Runtime::Execution::Operators {
-class StreamSlice;
+
 using StreamSlicePtr = std::unique_ptr<StreamSlice>;
 class JoinOperatorHandlerInterfaceSlicing {
   public:
