@@ -30,7 +30,7 @@
 #include <vector>
 
 namespace NES {
-constexpr bool READ_ALL_ON_STARTUP = false;
+constexpr bool READ_ALL_ON_STARTUP = true;
 
 CSVSource::CSVSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,

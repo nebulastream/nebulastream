@@ -26,7 +26,7 @@
 #include <utility>
 
 namespace NES {
-constexpr bool WRITE_ALL_ON_SHUTDOWN = false;
+constexpr bool WRITE_ALL_ON_SHUTDOWN = true;
 
 SinkMediumTypes FileSink::getSinkMediumType() { return SinkMediumTypes::FILE_SINK; }
 
