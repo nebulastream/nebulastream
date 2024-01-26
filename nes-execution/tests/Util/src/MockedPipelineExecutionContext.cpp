@@ -13,6 +13,7 @@
 */
 
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
+#include <utility>
 namespace NES::Runtime::Execution {
 
 MockedPipelineExecutionContext::MockedPipelineExecutionContext()
@@ -22,14 +23,23 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext()
         nullptr,
         1,
         [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+            if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
+                NES_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
+            }
+            this->seenSeqNumbers.insert(buffer.getSequenceNumber());
             this->buffers.emplace_back(std::move(buffer));
         },
         [this](TupleBuffer& buffer) {
-            this->buffers.emplace_back(std::move(buffer));
+              if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
+                  NES_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
+              }
+              this->seenSeqNumbers.insert(buffer.getSequenceNumber());
+              this->buffers.emplace_back(std::move(buffer));
         },
         {}){
         // nop
     };
+
 
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler)
     : PipelineExecutionContext(
@@ -38,12 +48,20 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<Opera
         nullptr,
         1,
         [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-            this->buffers.emplace_back(std::move(buffer));
+              if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
+                  NES_FATAL_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
+              }
+              this->seenSeqNumbers.insert(buffer.getSequenceNumber());
+              this->buffers.emplace_back(std::move(buffer));
         },
         [this](TupleBuffer& buffer) {
-            this->buffers.emplace_back(std::move(buffer));
+              if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
+                  NES_FATAL_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
+              }
+              this->seenSeqNumbers.insert(buffer.getSequenceNumber());
+              this->buffers.emplace_back(std::move(buffer));
         },
-        handler){
+        std::move(handler)){
         // nop
     };
 

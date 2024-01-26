@@ -39,9 +39,6 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
 
 void Emit::execute(ExecutionContext& ctx, Record& record) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
-    auto outputIndex = emitState->outputIndex;
-    memoryProvider->write(outputIndex, emitState->bufferReference, record);
-    emitState->outputIndex = outputIndex + 1_u64;
     // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
         auto resultBuffer = emitState->resultBuffer;
@@ -55,6 +52,13 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
         emitState->bufferReference = emitState->resultBuffer.getBuffer();
         emitState->outputIndex = 0_u64;
     }
+
+    /* We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
+     * emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
+     * to the brim, i.e., have no more space left.
+     */
+    memoryProvider->write(emitState->outputIndex, emitState->bufferReference, record);
+    emitState->outputIndex = emitState->outputIndex + 1_u64;
 }
 
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {

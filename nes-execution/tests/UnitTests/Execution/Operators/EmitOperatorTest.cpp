@@ -93,12 +93,21 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
     auto pipelineContext = MockedPipelineExecutionContext();
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
+
+    Value<UInt64> seqNumber(1_u64);
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    ctx.setSequenceNumber(seqNumber);
+
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
     emitOperator.open(ctx, recordBuffer);
     for (uint64_t i = 0; i < rowMemoryLayout->getCapacity() * 2; i++) {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
         emitOperator.execute(ctx, record);
+        // If we have filled a buffer, we have to increase the sequence number for now. This should be fixed with issue #4343
+        if (i == rowMemoryLayout->getCapacity()) {
+            seqNumber = seqNumber + 1;
+            ctx.setSequenceNumber(seqNumber);
+        }
     }
     emitOperator.close(ctx, recordBuffer);
 
