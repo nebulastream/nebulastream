@@ -100,5 +100,8 @@ std::string NEBitDataGenerator::toString() {
     oss << getName();
     return oss.str();
 }
+Runtime::MemoryLayouts::DynamicField NEBitDataGenerator::getTimestampField(Runtime::MemoryLayouts::DynamicTuple tuple) {
+    return tuple["timestamp"];
+}
 
 }// namespace NES::Benchmark::DataGeneration
