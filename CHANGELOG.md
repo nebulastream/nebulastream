@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.29](https://github.com/nebulastream/nebulastream/tree/v0.6.29) (2024-01-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.28...v0.6.29)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Missing SequenceNumbers if filter gets rid of buffer [\#4469](https://github.com/nebulastream/nebulastream/issues/4469)
+
 ## [v0.6.28](https://github.com/nebulastream/nebulastream/tree/v0.6.28) (2024-01-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.27...v0.6.28)
