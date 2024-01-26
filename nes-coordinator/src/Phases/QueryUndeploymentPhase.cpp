@@ -41,11 +41,10 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(const TopologyPtr& topo
     return std::make_shared<QueryUndeploymentPhase>(QueryUndeploymentPhase(topology, globalExecutionPlan));
 }
 
-void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
+void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", sharedQueryId);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
-        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
     if (executionNodes.empty()) {
         NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", sharedQueryId);
@@ -56,17 +55,17 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query");
     //todo 3916: changed method's signature since the return value was always true; invokes NES_THROW_RUNTIME_ERROR
     //todo: what kind of error is NES_THROW_RUNTIME_ERROR?
-    stopQuery(sharedQueryId, executionNodes, sharedQueryPlanStatus);
+    //    stopQuery(sharedQueryId, executionNodes, sharedQueryPlanStatus);
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query  {}", sharedQueryId);
-    undeployQuery(sharedQueryId, executionNodes);
+    //    undeployQuery(sharedQueryId, executionNodes);
 
-    const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfWorkerIdToOccupiedResource(sharedQueryId);
+    //    const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfWorkerIdToOccupiedResource(sharedQueryId);
 
-    for (const auto [id, resourceAmount] : resourceMap) {
-        NES_TRACE("QueryUndeploymentPhase: Releasing {} resources for the node {}", resourceAmount, id);
-        topology->releaseSlots(id, resourceAmount);
-    }
+    //    for (const auto [id, resourceAmount] : resourceMap) {
+    //        NES_TRACE("QueryUndeploymentPhase: Releasing {} resources for the node {}", resourceAmount, id);
+    //        topology->releaseSlots(id, resourceAmount);
+    //    }
 
     if (!globalExecutionPlan->removeAllDecomposedQueryPlans(sharedQueryId)) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,
@@ -76,38 +75,38 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
 }
 
 void QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
-                                       const std::vector<Optimizer::ExecutionNodePtr>& executionNodes,
-                                       SharedQueryPlanStatus sharedQueryPlanStatus) {
+                                       const std::vector<Optimizer::ExecutionNodePtr>&,
+                                       SharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase:markQueryForStop queryId= {}", sharedQueryId);
     //NOTE: the uncommented lines below have to be activated for async calls
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     std::map<CompletionQueuePtr, uint64_t> mapQueueToExecutionNodeId;
 
-    for (auto&& executionNode : executionNodes) {
-        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
-        const auto& nesNode = executionNode->getTopologyNode();
-        auto ipAddress = nesNode->getIpAddress();
-        auto grpcPort = nesNode->getGrpcPort();
-        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryUndeploymentPhase::markQueryForStop at execution node with id={} and IP={}",
-                  executionNode->getId(),
-                  rpcAddress);
-
-        Runtime::QueryTerminationType queryTerminationType;
-
-        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlanStatus || SharedQueryPlanStatus::STOPPED == sharedQueryPlanStatus) {
-            queryTerminationType = Runtime::QueryTerminationType::HardStop;
-        } else if (SharedQueryPlanStatus::FAILED == sharedQueryPlanStatus) {
-            queryTerminationType = Runtime::QueryTerminationType::Failure;
-        } else {
-            NES_ERROR("Unhandled request type {}", std::string(magic_enum::enum_name(sharedQueryPlanStatus)));
-            NES_NOT_IMPLEMENTED();
-        }
-
-        workerRPCClient->stopQueryAsync(rpcAddress, sharedQueryId, queryTerminationType, queueForExecutionNode);
-        completionQueues[queueForExecutionNode] = 1;
-        mapQueueToExecutionNodeId[queueForExecutionNode] = executionNode->getId();
-    }
+    //    for (auto&& executionNode : executionNodes) {
+    //        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+    //        const auto& nesNode = executionNode->getTopologyNode();
+    //        auto ipAddress = nesNode->getIpAddress();
+    //        auto grpcPort = nesNode->getGrpcPort();
+    //        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+    //        NES_DEBUG("QueryUndeploymentPhase::markQueryForStop at execution node with id={} and IP={}",
+    //                  executionNode->getId(),
+    //                  rpcAddress);
+    //
+    //        Runtime::QueryTerminationType queryTerminationType;
+    //
+    //        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlanStatus || SharedQueryPlanStatus::STOPPED == sharedQueryPlanStatus) {
+    //            queryTerminationType = Runtime::QueryTerminationType::HardStop;
+    //        } else if (SharedQueryPlanStatus::FAILED == sharedQueryPlanStatus) {
+    //            queryTerminationType = Runtime::QueryTerminationType::Failure;
+    //        } else {
+    //            NES_ERROR("Unhandled request type {}", std::string(magic_enum::enum_name(sharedQueryPlanStatus)));
+    //            NES_NOT_IMPLEMENTED();
+    //        }
+    //
+    //        workerRPCClient->stopQueryAsync(rpcAddress, sharedQueryId, queryTerminationType, queueForExecutionNode);
+    //        completionQueues[queueForExecutionNode] = 1;
+    //        mapQueueToExecutionNodeId[queueForExecutionNode] = executionNode->getId();
+    //    }
 
     // activate below for async calls
     try {
@@ -122,27 +121,26 @@ void QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
     }
 }
 
-void QueryUndeploymentPhase::undeployQuery(QueryId sharedQueryId,
-                                           const std::vector<Optimizer::ExecutionNodePtr>& executionNodes) {
+void QueryUndeploymentPhase::undeployQuery(QueryId sharedQueryId, const std::vector<Optimizer::ExecutionNodePtr>&) {
     NES_DEBUG("QueryUndeploymentPhase::undeployQuery queryId= {}", sharedQueryId);
 
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     std::map<CompletionQueuePtr, uint64_t> mapQueueToExecutionNodeId;
 
-    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
-        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
-
-        const auto& nesNode = executionNode->getTopologyNode();
-        auto ipAddress = nesNode->getIpAddress();
-        auto grpcPort = nesNode->getGrpcPort();
-        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id={} and IP={}",
-                  executionNode->getId(),
-                  rpcAddress);
-        workerRPCClient->unregisterQueryAsync(rpcAddress, sharedQueryId, queueForExecutionNode);
-        completionQueues[queueForExecutionNode] = 1;
-        mapQueueToExecutionNodeId[queueForExecutionNode] = executionNode->getId();
-    }
+    //    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
+    //        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+    //
+    //        const auto& nesNode = executionNode->getTopologyNode();
+    //        auto ipAddress = nesNode->getIpAddress();
+    //        auto grpcPort = nesNode->getGrpcPort();
+    //        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+    //        NES_DEBUG("QueryUndeploymentPhase::undeployQuery query at execution node with id={} and IP={}",
+    //                  executionNode->getId(),
+    //                  rpcAddress);
+    //        workerRPCClient->unregisterQueryAsync(rpcAddress, sharedQueryId, queueForExecutionNode);
+    //        completionQueues[queueForExecutionNode] = 1;
+    //        mapQueueToExecutionNodeId[queueForExecutionNode] = executionNode->getId();
+    //    }
     try {
         workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Unregister);
         NES_DEBUG("QueryDeploymentPhase: Finished stopping execution plan for query with Id {}", sharedQueryId);

@@ -153,13 +153,6 @@ class BasePlacementAdditionStrategy {
                                                            DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
-     * @brief Get Execution node for the input topology node
-     * @param lockedTopologyNode: topology node
-     * @return Execution Node pointer
-     */
-    ExecutionNodeWLock getLockedExecutionNode(const TopologyNodeWLock& lockedTopologyNode);
-
-    /**
      * @brief Get the Topology node with the input id
      * @param workerId: the id of the topology node
      * @return Topology node ptr or nullptr
@@ -251,6 +244,13 @@ class BasePlacementAdditionStrategy {
                                           const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
 
   private:
+    /**
+     * @brief Update state of all operators that were placed but as placed
+     * @param workerId: the id of the worker where the operator is placed
+     * @param decomposedQueryPlan: the  decomposed query plan updated by the placement addition strategy
+     */
+    void markOperatorsAsPlaced(WorkerId workerId, DecomposedQueryPlanPtr decomposedQueryPlan);
+
     /**
      * @brief check if a computed sink operator corresponds to a placed sink that is to be reconfigured. If so,
      * update the version, the receiver location and the partition of the placed sink

@@ -212,7 +212,7 @@ void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
     auto deploymentContexts = placementAmendmentPhase->execute(sharedQueryPlan);
 
     //deployment phase
-    auto deploymentPhase = DeploymentPhase::create(queryCatalogService, coordinatorConfiguration);
+    auto deploymentPhase = DeploymentPhase::create(queryCatalogService);
     deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
 
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();

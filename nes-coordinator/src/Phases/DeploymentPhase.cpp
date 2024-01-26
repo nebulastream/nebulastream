@@ -21,18 +21,12 @@
 
 namespace NES {
 
-DeploymentPhasePtr DeploymentPhase::create(const NES::QueryCatalogServicePtr& queryCatalogService,
-                                           const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
-    bool accelerateJavaUDFs = coordinatorConfiguration->elegant.accelerateJavaUDFs.getValue();
-    std::string accelerationServiceURL = coordinatorConfiguration->elegant.accelerationServiceURL.getValue();
-    return std::make_shared<DeploymentPhase>(queryCatalogService, accelerateJavaUDFs, accelerationServiceURL);
+DeploymentPhasePtr DeploymentPhase::create(const NES::QueryCatalogServicePtr& queryCatalogService) {
+    return std::make_shared<DeploymentPhase>(queryCatalogService);
 }
 
-DeploymentPhase::DeploymentPhase(const QueryCatalogServicePtr& queryCatalogService,
-                                 bool accelerateJavaUDFs,
-                                 const std::string& accelerationServiceURL)
-    : workerRPCClient(WorkerRPCClient::create()), queryCatalogService(queryCatalogService),
-      accelerateJavaUDFs(accelerateJavaUDFs), accelerationServiceURL(accelerationServiceURL) {
+DeploymentPhase::DeploymentPhase(const QueryCatalogServicePtr& queryCatalogService)
+    : workerRPCClient(WorkerRPCClient::create()), queryCatalogService(queryCatalogService) {
     NES_INFO("DeploymentPhase()");
 }
 

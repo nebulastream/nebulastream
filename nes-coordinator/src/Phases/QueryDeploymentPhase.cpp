@@ -58,8 +58,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     auto sharedQueryId = sharedQueryPlan->getId();
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes =
-        globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
     if (executionNodes.empty()) {
         NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", sharedQueryId);
         throw Exceptions::ExecutionNodeNotFoundException("Unable to find ExecutionNodes where the query "
@@ -80,7 +79,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     }
 
     //Add sub query plan metadata in the catalog
-    for (auto& executionNode : executionNodes) {
+    /*for (auto& executionNode : executionNodes) {
         const auto workerId = executionNode->getId();
         const auto subQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
         for (auto& subQueryPlan : subQueryPlans) {
@@ -104,7 +103,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                 }
             }
         }
-    }
+    }*/
 
     //Mark queries as deployed
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
@@ -116,7 +115,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
-    deployQuery(sharedQueryId, executionNodes);
+//    deployQuery(sharedQueryId, executionNodes);
     NES_DEBUG("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
 
     //Mark queries as running if they are not in migrating state
@@ -129,28 +128,28 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //mark subqueries that were reconfigured as running again
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         for (const auto& subPlanMetaData : queryCatalogService->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData()) {
-            if (subPlanMetaData->getSubQueryStatus() == QueryState::REDEPLOYED) {
-                subPlanMetaData->updateStatus(QueryState::RUNNING);
-            }
+            //            if (subPlanMetaData->getSubQueryStatus() == QueryState::REDEPLOYED) {
+            //                subPlanMetaData->updateStatus(QueryState::RUNNING);
+            //            }
         }
     }
-    for (auto& executionNode : executionNodes) {
-        const auto workerId = executionNode->getId();
-        const auto subQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
-        for (auto& subQueryPlan : subQueryPlans) {
-            auto querySubPlanId = subQueryPlan->getDecomposedQueryPlanId();
-            if (subQueryPlan->getState() == QueryState::REDEPLOYED) {
-                subQueryPlan->setState(QueryState::RUNNING);
-            }
-        }
-    }
+//    for (auto& executionNode : executionNodes) {
+//        const auto workerId = executionNode->getId();
+//        const auto subQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
+//        for (auto& subQueryPlan : subQueryPlans) {
+//            auto querySubPlanId = subQueryPlan->getDecomposedQueryPlanId();
+//            if (subQueryPlan->getState() == QueryState::REDEPLOYED) {
+//                subQueryPlan->setState(QueryState::RUNNING);
+//            }
+//        }
+//    }
 
     NES_DEBUG("QueryDeploymentPhase: start query");
-    startQuery(sharedQueryId, executionNodes);
+//    startQuery(sharedQueryId, executionNodes);
 
     //remove subplans from global query plan if they were stopped due to migration
     auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
-    for (const auto& node : executionNodes) {
+    /*for (const auto& node : executionNodes) {
         auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
             auto subPlanStatus = decomposedQueryPlan->getState();
@@ -162,7 +161,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                 node->getTopologyNode()->releaseSlots(resourceAmount);
             }
         }
-    }
+    }*/
 }
 
 void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
@@ -180,11 +179,11 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
 
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
-        const auto& nesNode = executionNode->getTopologyNode();
+        /*const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {}", sharedQueryId, rpcAddress);
+        NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {}", sharedQueryId, rpcAddress);*/
 
         completionQueues[queueForExecutionNode] = 0;
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
@@ -200,7 +199,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                     }
                     //enable this for sync calls
                     //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
-                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
+                    //                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
                     decomposedQueryPlan->setState(QueryState::RUNNING);
                     subplanMetaData->updateStatus(decomposedQueryPlan->getState());
                     completionQueues[queueForExecutionNode]++;
@@ -208,7 +207,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                 }
                 case QueryState::REDEPLOYED: {
                     //workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
-                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
+                    //                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
                     completionQueues[queueForExecutionNode]++;
                     break;
                 }
@@ -222,17 +221,16 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
 }
 
-void QueryDeploymentPhase::applyJavaUDFAcceleration(
-    SharedQueryId sharedQueryId,
-    const Optimizer::ExecutionNodePtr& executionNode,
-    const DecomposedQueryPlanPtr& decomposedQueryPlan) const {//Elegant acceleration service call
-    //1. Fetch the OpenCL Operators
+void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId,
+                                                    const Optimizer::ExecutionNodePtr&,
+                                                    const DecomposedQueryPlanPtr&) const {//Elegant acceleration service call
+    /*    //1. Fetch the OpenCL Operators
     auto openCLOperators = decomposedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
 
     //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {
         //3. Fetch the topology node and compute the topology node payload
-        auto topologyNode = executionNode->getTopologyNode();
+        auto topologyNode = executionNode->getId();
         nlohmann::json payload;
         payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<Runtime::OpenCLDeviceInfo>>(
             topologyNode->getNodeProperty(Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
@@ -266,26 +264,26 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(
         auto openCLCode = jsonResponse["AccelerationCode"];
         //6. Set the Open CL code
         openCLOperator->setOpenClCode(openCLCode);
-    }
+    }*/
 }
 
-void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Optimizer::ExecutionNodePtr>& executionNodes) {
+void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Optimizer::ExecutionNodePtr>&) {
     NES_DEBUG("QueryDeploymentPhase::startQuery queryId= {}", queryId);
     //TODO: check if one queue can be used among multiple connections
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
-    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
-        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
-        const auto& nesNode = executionNode->getTopologyNode();
-        auto ipAddress = nesNode->getIpAddress();
-        auto grpcPort = nesNode->getGrpcPort();
-        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
-        //enable this for sync calls
-        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
-        workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
-        completionQueues[queueForExecutionNode] = 1;
-    }
+    //    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
+    //        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+    //        const auto& nesNode = executionNode->getTopologyNode();
+    //        auto ipAddress = nesNode->getIpAddress();
+    //        auto grpcPort = nesNode->getGrpcPort();
+    //        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+    //        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
+    //        //enable this for sync calls
+    //        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
+    //        workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
+    //        completionQueues[queueForExecutionNode] = 1;
+    //    }
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
     NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id {}", queryId);
 }

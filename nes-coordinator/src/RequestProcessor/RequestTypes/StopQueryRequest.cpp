@@ -68,7 +68,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                                                        topology,
                                                                                        typeInferencePhase,
                                                                                        coordinatorConfiguration);
-        deploymentPhase = DeploymentPhase::create(queryCatalogService, coordinatorConfiguration);
+        deploymentPhase = DeploymentPhase::create(queryCatalogService);
         NES_TRACE("Phases created. Stop request initialized.");
 
         if (queryId == INVALID_SHARED_QUERY_ID) {

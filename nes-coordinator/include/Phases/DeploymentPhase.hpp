@@ -52,15 +52,11 @@ class DeploymentPhase {
   public:
     /**
      * @brief Returns a smart pointer to the QueryDeploymentPhase
-     * @param coordinatorConfiguration: coordinator configuration
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static DeploymentPhasePtr create(const QueryCatalogServicePtr& queryCatalogService,
-                                     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
+    static DeploymentPhasePtr create(const QueryCatalogServicePtr& queryCatalogService);
 
-    explicit DeploymentPhase(const QueryCatalogServicePtr& queryCatalogService,
-                             bool accelerateJavaUDFs,
-                             const std::string& accelerationServiceURL);
+    explicit DeploymentPhase(const QueryCatalogServicePtr& queryCatalogService);
 
     /**
      * @brief method for deploying decomposed query plans in different states
@@ -93,9 +89,9 @@ class DeploymentPhase {
 
     WorkerRPCClientPtr workerRPCClient;
     QueryCatalogServicePtr queryCatalogService;
-    bool accelerateJavaUDFs;
+//    bool accelerateJavaUDFs=true;
     std::string accelerationServiceURL;
-    const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
+//    const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
     //OpenCL payload constants
     const std::string DEVICE_INFO_KEY = "deviceInfo";
 };
