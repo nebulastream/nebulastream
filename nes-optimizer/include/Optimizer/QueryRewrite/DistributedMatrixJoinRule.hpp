@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOJOINRULE_HPP_
-#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOJOINRULE_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
@@ -31,16 +31,16 @@ using NodePtr = std::shared_ptr<Node>;
 }// namespace NES
 
 namespace NES::Optimizer {
-class NemoJoinRule;
-using NemoJoinRulePtr = std::shared_ptr<NemoJoinRule>;
+class DistributedMatrixJoinRule;
+using DistributedMatrixJoinRulePtr = std::shared_ptr<DistributedMatrixJoinRule>;
 
 /**
- * @brief NemoJoin which is rewriting a central to a distributed grid-partitioned join based on the physical streams.
+ * @brief DistributedMatrixJoinRule which is rewriting a central to a distributed grid-partitioned join based on the physical streams.
  */
-class NemoJoinRule : public BaseRewriteRule {
+class DistributedMatrixJoinRule : public BaseRewriteRule {
   public:
-    static NemoJoinRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
-    virtual ~NemoJoinRule() = default;
+    static DistributedMatrixJoinRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
+    virtual ~DistributedMatrixJoinRule() = default;
 
     /**
      * @brief Searches query plan for a join operator and replicates the join operators across physical sources equal
@@ -51,11 +51,11 @@ class NemoJoinRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
-    explicit NemoJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
+    explicit DistributedMatrixJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
 
   private:
     TopologyPtr topology;
     Configurations::OptimizerConfiguration configuration;
 };
 }// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOJOINRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_

@@ -44,8 +44,8 @@ using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule
 class DistributedWindowRule;
 using DistributeWindowRulePtr = std::shared_ptr<DistributedWindowRule>;
 
-class NemoJoinRule;
-using NemoJoinRulePtr = std::shared_ptr<NemoJoinRule>;
+class DistributedMatrixJoinRule;
+using DistributedMatrixJoinRulePtr = std::shared_ptr<DistributedMatrixJoinRule>;
 
 /**
  * @brief This phase is responsible for re-writing the query plan based on the topology information.
@@ -76,8 +76,6 @@ class TopologySpecificQueryRewritePhase {
     TopologyPtr topology;
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     Configurations::OptimizerConfiguration optimizerConfiguration;
-    DistributeWindowRulePtr distributedWindowRule;
-    NemoJoinRulePtr distributeJoinRule;
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_

@@ -33,15 +33,15 @@ static const std::string sourceNameRight = "log_right";
 /**
  * @brief Test of distributed NEMO join
  */
-class NemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
+class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     BufferManagerPtr bufferManager;
     QueryCompilation::StreamJoinStrategy joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
     QueryCompilation::WindowingStrategy windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
 
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("NemoJoinIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup NemoJoinIntegrationTest test class.");
+        NES::Logger::setupLogging("DistributedMatrixJoinIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup DistributedMatrixJoinIntegrationTest test class.");
     }
 
     void SetUp() override {
@@ -117,14 +117,13 @@ class NemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
 
                         auto csvSource = createCSVSourceType(sourceName,
                                                              "src_" + std::to_string(leafNodes),
-                                                             std::string(TEST_DATA_DIRECTORY) + "KeyedWindows/window_"
-                                                                 + std::to_string(cnt++) + ".csv");
+                                                             std::string(TEST_DATA_DIRECTORY) + "window.csv");
                         testHarness.attachWorkerWithCSVSourceToWorkerWithId(csvSource, parent);
-                        NES_DEBUG("NemoJoinIntegrationTest: Adding CSV source:{} for node:{}", sourceName, nodeId);
+                        NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding CSV source:{} for node:{}", sourceName, nodeId);
                         continue;
                     }
                     testHarness.attachWorkerToWorkerWithId(parent);
-                    NES_DEBUG("NemoJoinIntegrationTest: Adding worker to worker with ID:{}", parent);
+                    NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding worker to worker with ID:{}", parent);
                 }
             }
             parents = newParents;
@@ -134,10 +133,10 @@ class NemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(NemoJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
-    uint64_t expectedTuples = 54;
+TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
+    uint64_t sourceNo = 4;
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config) {
-        config->optimizer.enableNemoPlacement.setValue(true);
+        config->optimizer.performDistributedWindowOptimization.setValue(true);
     };
     Query query = Query::from(sourceNameLeft)
                       .joinWith(Query::from(sourceNameRight))
@@ -145,16 +144,20 @@ TEST_F(NemoJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
                       .equalsTo(Attribute("value"))
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    auto testHarness = createTestHarness(query, crdFunctor, 2, 2, 4);
+    // create flat topology with 1 coordinator and 4 sources
+    auto testHarness = createTestHarness(query, crdFunctor, 2, 2, sourceNo);
+    // 17 join keys
+    uint64_t expectedTuples = 17 * pow(2, sourceNo - 1);
+
     auto actualOutput = testHarness.runQuery(expectedTuples).getOutput();
     auto outputString = actualOutput[0].toString(testHarness.getOutputSchema(), true);
-    NES_DEBUG("NemoJoinIntegrationTest: Output\n{}", outputString);
+    NES_DEBUG("DistributedMatrixJoinIntegrationTest: Output\n{}", outputString);
     EXPECT_EQ(TestUtils::countTuples(actualOutput), expectedTuples);
 
     TopologyPtr topology = testHarness.getTopology();
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
-    NES_DEBUG("NemoJoinIntegrationTest: Executed with topology \n{}", topology->toString());
-    NES_INFO("NemoJoinIntegrationTest: Executed with plan \n{}", queryPlan->toString());
+    NES_DEBUG("DistributedMatrixJoinIntegrationTest: Executed with topology \n{}", topology->toString());
+    NES_INFO("DistributedMatrixJoinIntegrationTest: Executed with plan \n{}", queryPlan->toString());
     EXPECT_EQ(4, countOccurrences("Join", queryPlan->toString()));
 }
 

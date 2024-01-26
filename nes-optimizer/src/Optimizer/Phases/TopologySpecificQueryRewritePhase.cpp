@@ -14,9 +14,9 @@
 
 #include <Catalogs/Topology/Topology.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
+#include <Optimizer/QueryRewrite/DistributedMatrixJoinRule.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Optimizer/QueryRewrite/NemoJoinRule.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -26,7 +26,7 @@ TopologySpecificQueryRewritePhase::create(NES::TopologyPtr topology,
                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                           Configurations::OptimizerConfiguration optimizerConfiguration) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
-        TopologySpecificQueryRewritePhase(topology, sourceCatalog, std::move(optimizerConfiguration)));
+        TopologySpecificQueryRewritePhase(topology, sourceCatalog, optimizerConfiguration));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
@@ -40,9 +40,9 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
 
 QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     queryPlan = logicalSourceExpansionRule->apply(queryPlan);
-    if (optimizerConfiguration.enableNemoPlacement) {
-        auto nemoJoinRule = NemoJoinRule::create(optimizerConfiguration, topology);
-        queryPlan = nemoJoinRule->apply(queryPlan);
+    if (optimizerConfiguration.performDistributedWindowOptimization) {
+        auto matrixJoinRule = DistributedMatrixJoinRule::create(optimizerConfiguration, topology);
+        queryPlan = matrixJoinRule->apply(queryPlan);
     }
     return queryPlan;
 }

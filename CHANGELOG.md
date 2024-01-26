@@ -1043,7 +1043,7 @@
 
 ### Bug Fixes 🐛
 
-- \[BUG\] NemoPlacemenTest and NemoJoinIntegrationTest [\#4149](https://github.com/nebulastream/nebulastream/issues/4149)
+- \[BUG\] NemoPlacemenTest and DistributedMatrixJoinIntegrationTest [\#4149](https://github.com/nebulastream/nebulastream/issues/4149)
 
 ### Miscellaneous Issues ✌️
 
