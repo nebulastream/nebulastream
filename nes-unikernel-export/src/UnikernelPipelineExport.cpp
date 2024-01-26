@@ -140,12 +140,17 @@ void NES::Unikernel::UnikernelPipelineExport::exportPipelineIntoModule(
     auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
     timer.start();
 
-    auto dumpHelper = NES::DumpHelper::create("UnikernelExport", false, false);
+    auto dumpHelper = NES::DumpHelper::create("UnikernelExport", false, true);
 
+    dumpHelper.change_prefix(fmt::format("execute-{}", pipelineId));
     auto llvmModule = convertToLLVM(stage->createIR(dumpHelper, timer), module.getContext());
     importFunction(module, mangledStageFunctionName("execute", pipelineId), *llvmModule);
+
+    dumpHelper.change_prefix(fmt::format("setup-{}", pipelineId));
     auto llvmSetupModule = convertToLLVM(stage->setupIR(), module.getContext());
     importFunction(module, mangledStageFunctionName("setup", pipelineId), *llvmSetupModule);
+
+    dumpHelper.change_prefix(fmt::format("terminate-{}", pipelineId));
     auto llvmTerminateModule = convertToLLVM(stage->closeIR(), module.getContext());
     importFunction(module, mangledStageFunctionName("terminate", pipelineId), *llvmTerminateModule);
 }
