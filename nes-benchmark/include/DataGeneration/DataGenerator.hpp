@@ -15,6 +15,7 @@
 #ifndef NES_DATAGENERATOR_HPP
 #define NES_DATAGENERATOR_HPP
 
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <vector>
@@ -82,6 +83,21 @@ class DataGenerator {
     void setBufferManager(Runtime::BufferManagerPtr bufferManager);
 
     /**
+     * @brief updates timestamps on the buffers
+     * @param buffers list of buffers created by the generator
+     * @param startingTimestamp the initialTimestamp
+     * @param stepSize increment of the timestamp
+     * @param stepChanceInPercent the chance that (a full) step happens
+     * @param allowPartialSteps
+     */
+    void insertTimestamps(std::vector<NES::Runtime::TupleBuffer>& buffers,
+                          size_t bufferSize,
+                          size_t startingTimestamp,
+                          size_t stepSize = 1,
+                          uint8_t stepChanceInPercent = 100,
+                          bool allowPartialSteps = false);
+
+    /**
      * @brief creates a data generator depending on the name
      * @param name
      * @return
@@ -101,6 +117,9 @@ class DataGenerator {
      * @return TupleBuffer
      */
     Runtime::TupleBuffer allocateBuffer();
+    virtual Runtime::MemoryLayouts::DynamicField getTimestampField(Runtime::MemoryLayouts::DynamicTuple /*tuple*/) {
+        NES_NOT_IMPLEMENTED();
+    }
 
   private:
     Runtime::BufferManagerPtr bufferManager;

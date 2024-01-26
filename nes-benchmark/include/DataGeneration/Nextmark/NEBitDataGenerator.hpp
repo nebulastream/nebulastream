@@ -26,6 +26,9 @@ class NEBitDataGenerator : public DataGenerator {
     Configurations::SchemaTypePtr getSchemaType() override;
     SchemaPtr getSchema() override;
     std::string toString() override;
+
+  protected:
+    Runtime::MemoryLayouts::DynamicField getTimestampField(Runtime::MemoryLayouts::DynamicTuple tuple) override;
 };
 
 }// namespace NES::Benchmark::DataGeneration
