@@ -17,11 +17,16 @@
 #include <Identifiers.hpp>
 #include <OperatorHandlerTracer.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Util/Common.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <cxxabi.h>
 #include <ranges>
+namespace NES::Join::Experimental {
+class AbstractBatchJoinHandler;
+class LogicalBatchJoinDefinition;
+}// namespace NES::Join::Experimental
 namespace NES::Runtime::Unikernel {
 static thread_local OperatorHandlerTracer* traceContext = nullptr;
 
@@ -60,65 +65,25 @@ void OperatorHandlerTracer::reset() {
     traceContext = new OperatorHandlerTracer();
 }
 
-static size_t fixAlignment(size_t currentOffset, size_t alignment) {
-    size_t remainder = currentOffset % alignment;
-    if (remainder == 0) {
-        return currentOffset;
-    }
-    size_t fixedOffset = currentOffset + alignment - remainder;
-    NES_ASSERT2_FMT(fixedOffset % alignment == 0, "New offset is not aligned");
-    NES_ASSERT2_FMT(fixedOffset > currentOffset, "New offset has to be larger than old offset");
-    return fixedOffset;
-}
-
-static size_t getBufferSize(const std::vector<OperatorHandlerDescriptor>& handlers) {
-    size_t bufferSize = handlers[0].size;
-    for (const auto& handler : handlers | std::ranges::views::drop(1)) {
-        bufferSize = fixAlignment(bufferSize, handler.alignment);
-        bufferSize += handler.size;
-    }
-    return bufferSize;
-}
-
-std::string OperatorHandlerTracer::generateAlignedStaticBufferAllocation(std::vector<OperatorHandlerDescriptor> descriptors) {
-    if (descriptors.empty()) {
-        return "";
-    }
-
-    std::stringstream ss;
-    size_t bufferSize = getBufferSize(descriptors);
-    size_t alignment = descriptors[0].alignment;
-
-    ss << "template<size_t SizeInBytes>\n"
-       << "struct alignas(" << alignment << ") ByteBuffer {\n"
-       << "std::array<uint8_t, SizeInBytes> buffer;\n"
-       << "void* offset(size_t offset){\n"
-       << "return std::addressof(buffer[offset]);\n"
-       << "}\n"
-       << "};\n";
-
-    ss << "static ByteBuffer<" << bufferSize << "> buffer;\n";
-
-    return ss.str();
-};
-
 std::string OperatorHandlerTracer::generateOperatorInstantiation(std::vector<OperatorHandlerDescriptor> descriptors) {
     if (descriptors.empty()) {
         return "";
     }
 
-    size_t bufferSize = getBufferSize(descriptors);
     std::stringstream ss;
-    ss << "static std::array<NES::Runtime::Execution::OperatorHandler*, " << descriptors.size() << "> handlers = {" << std::endl;
-    ss << descriptors[0].generate(0);
-    size_t current = descriptors[0].size;
+    ss << "static std::tuple<";
+    ss << descriptors[0].className;
     for (const auto& desc : descriptors | std::ranges::views::drop(1)) {
-        current = fixAlignment(current, desc.alignment);
-        ss << ",\n";
-        ss << desc.generate(current);
-        current += desc.size;
+        ss << ",";
+        ss << desc.className;
     }
-    ss << "};" << std::endl;
+    ss << "> handler = std::make_tuple(";
+    ss << descriptors[0].generate();
+    for (const auto& desc : descriptors | std::ranges::views::drop(1)) {
+        ss << ",\n";
+        ss << desc.generate();
+    }
+    ss << ");";
 
     return ss.str();
 }
@@ -162,7 +127,6 @@ std::string OperatorHandlerTracer::generateFile(std::vector<EitherSharedOrLocal>
         ss << "extern NES::Runtime::Execution::OperatorHandler* getSharedOperatorHandler(int index);\n";
     }
 
-    ss << generateAlignedStaticBufferAllocation(descriptors);
     ss << "template<> NES::Runtime::Execution::OperatorHandler* NES::Unikernel::Stage<" << pipelineID
        << ">::getOperatorHandler(int index) { \n"
        << generateOperatorInstantiation(descriptors);
@@ -172,7 +136,7 @@ std::string OperatorHandlerTracer::generateFile(std::vector<EitherSharedOrLocal>
     for (size_t i = 0; i < eitherSharedOrLocal.size(); ++i) {
         ss << "case " << i << ":\n";
         if (std::holds_alternative<OperatorHandlerDescriptor>(eitherSharedOrLocal[i])) {
-            ss << "\treturn handlers[" << localHandlerIndex++ << "];\n";
+            ss << "\treturn std::get<" << localHandlerIndex++ << ">(handler);\n";
         } else {
             ss << "\treturn getSharedOperatorHandler<" << subPlanId << ">(" << std::get<size_t>(eitherSharedOrLocal[i]) << ");\n";
         }
@@ -199,8 +163,21 @@ std::string OperatorHandlerTracer::generateRuntimeIncludes() {
     return "#include <OperatorHandler.hpp>\n"
            "#include <UnikernelStage.hpp>\n"
            "#include <cassert>\n"
-           "#include <array>\n"
+           "#include <tuple>\n"
            "#include <Runtime/RuntimeForwardRefs.hpp>\n";
+}
+
+std::string generateSwitch(size_t handlers) {
+    std::stringstream ss;
+
+    ss << "switch(index) {\n";
+    for (size_t i = 0; i < handlers; i++) {
+        ss << "case " << i << ":\n";
+        ss << "return static_cast<NES::Runtime::Execution::OperatorHandler*>(&std::get<" << i << ">(handler));\n";
+    }
+
+    ss << "}";
+    return ss.str();
 }
 
 std::string OperatorHandlerTracer::generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handlers,
@@ -212,16 +189,16 @@ std::string OperatorHandlerTracer::generateSharedHandlerFile(const std::vector<O
     for (auto& handler : handlers) {
         ss << handler.generateInclude();
     }
+    std::tuple<int, int, int> t;
     ss << "template<size_t SubQueryPlanId>\nNES::Runtime::Execution::OperatorHandler* "
           "getSharedOperatorHandler(int index);\n";
-    ss << generateAlignedStaticBufferAllocation(handlers) << "template <>\n"
+    ss << "template <>\n"
        << "NES::Runtime::Execution::OperatorHandler* getSharedOperatorHandler<" << subPlanId
        << ">(int "
           "index) { \n"
        << generateOperatorInstantiation(handlers);
     ss << "assert(index < " << handlers.size() << "&& \"Called getSharedOperatorHandler with an out of bound index\");\n"
-       << "return handlers[index];"
-       << "}\n";
+       << generateSwitch(handlers.size()) << "}\n";
     return ss.str();
 }
 
@@ -233,10 +210,10 @@ OperatorHandlerDescriptor::OperatorHandlerDescriptor(std::string className,
     : className(std::move(className)), headerPath(std::move(headerPath)), size(classSize), alignment(alignment),
       parameters(std::move(parameters)) {}
 
-std::string OperatorHandlerDescriptor::generate(size_t offset) const {
+std::string OperatorHandlerDescriptor::generate() const {
     std::stringstream ss;
 
-    ss << "new(buffer.offset(" << offset << "))" << className << "(";
+    ss << className << "(";
 
     if (!parameters.empty()) {
         ss << parameters[0].generate();

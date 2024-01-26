@@ -17,19 +17,33 @@
 
 #include <API/Schema.hpp>
 #include <Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Runtime/Reconfigurable.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <any>
-#include <variant>
 #include <cstdint>
 #include <ranges>
 #include <string>
+#include <variant>
 #include <vector>
 
 #ifdef UNIKERNEL_EXPORT
+
 #define VA_ARGS(...) , ##__VA_ARGS__
 #define TRACE_OPERATOR_HANDLER(className, headerPath, ...)                                                                       \
-    OperatorHandler::trace((className), (headerPath), sizeof(*this), alignof(*this) VA_ARGS(__VA_ARGS__))
+    do {                                                                                                                         \
+        NES_INFO("OperatorHandler Tracer: {} size: {}, align: {}",                                                               \
+                 className,                                                                                                      \
+                 sizeof(*this) - NES::Runtime::Unikernel::unikernelOperatorHandlerDiff,                                                                   \
+                 alignof(*this));                                                                                                \
+        OperatorHandler::trace((className),                                                                                      \
+                               (headerPath),                                                                                     \
+                               sizeof(*this) - NES::Runtime::Unikernel::unikernelOperatorHandlerDiff,                                                     \
+                               alignof(*this) VA_ARGS(__VA_ARGS__));                                                             \
+    } while (0)
+#else
+#define TRACE_OPERATOR_HANDLER(name, ...)
+#endif
+
 namespace NES::Runtime::Unikernel {
 enum OperatorHandlerParameterType {
     INT32,
@@ -84,7 +98,7 @@ struct OperatorHandlerDescriptor {
     size_t alignment;
     std::vector<OperatorHandlerParameterDescriptor> parameters;
 
-    [[nodiscard]] std::string generate(size_t offset) const;
+    [[nodiscard]] std::string generate() const;
     [[nodiscard]] std::string generateInclude() const;
 };
 
@@ -121,12 +135,11 @@ class OperatorHandlerTracer {
   private:
     std::vector<OperatorHandlerDescriptor> descriptors;
     static std::string generateOperatorInstantiation(std::vector<OperatorHandlerDescriptor> descriptors);
-    static std::string generateAlignedStaticBufferAllocation(std::vector<OperatorHandlerDescriptor> descriptors);
 };
 
+// this value holds the total size of objects that are missing from the unikernel operator handler
+static constexpr size_t unikernelOperatorHandlerDiff =
+    sizeof(NES::Runtime::Reconfigurable) + sizeof(std::optional<NES::Runtime::Unikernel::OperatorHandlerDescriptor>);
 }// namespace NES::Runtime::Unikernel
 
-#else
-#define TRACE_OPERATOR_HANDLER(name, ...)
-#endif
 #endif//NES_RUNTIME_INCLUDE_RUNTIME_UNIKERNEL_OPERATORHANDLERTRACER_HPP_

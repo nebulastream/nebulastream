@@ -19,11 +19,12 @@
 #include <Util/Common.hpp>
 #include <handler/JoinOperatorHandlerInterfaceSlicing.hpp>
 
-namespace NES::Runtime::Execution::Operators {
-
-class BufferMetaData;
+namespace NES::Runtime::Execution {
 class WindowInfo;
+class BufferMetaData;
+}// namespace NES::Runtime::Execution
 
+namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This operator is the general join operator handler and implements the JoinOperatorHandlerInterface. It is expected that
  * all StreamJoinOperatorHandlers inherit from this
