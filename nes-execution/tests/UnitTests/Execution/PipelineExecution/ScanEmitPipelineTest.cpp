@@ -106,6 +106,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
         auto value = (bool) (i % 2);
         dynamicBuffer[i]["f11"].write<bool>(value);
         dynamicBuffer.setNumberOfTuples(i + 1);
+        dynamicBuffer.getBuffer().setSequenceNumber(1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);

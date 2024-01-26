@@ -50,10 +50,13 @@ void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
     auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto workerCtx = static_cast<WorkerContext*>(wc);
-    // check if buffer has values
-    if (tb->getNumberOfTuples() != 0) {
-        pipelineCtx->emitBuffer(*tb, *workerCtx);
-    }
+
+    /* We have to emit all buffer, regardless of their number of tuples. This is due to the fact, that we expect all
+     * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
+     * fusion, this should only happen occasionally.
+     */
+    pipelineCtx->emitBuffer(*tb, *workerCtx);
+
     // delete tuple buffer as it was allocated within the pipeline and is not required anymore
     delete tb;
 }

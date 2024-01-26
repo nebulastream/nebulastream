@@ -154,22 +154,22 @@ TEST_F(TensorflowOperatorTest, testInferModelForFloatInput) {
 
     inferModelOperator->setup(ctx);
 
-    auto firstRecord = Record({{"f1", Value<Float>((Float) 5.1)},
-                               {"f2", Value<Float>((Float) 3.5)},
-                               {"f3", Value<Float>((Float) 1.4)},
-                               {"f4", Value<Float>((Float) 0.2)}});
-    auto secondRecord = Record({{"f1", Value<Float>((Float) 4.9)},
-                                {"f2", Value<Float>((Float) 3.0)},
-                                {"f3", Value<Float>((Float) 1.4)},
-                                {"f4", Value<Float>((Float) 0.2)}});
-    auto thirdRecord = Record({{"f1", Value<Float>((Float) 4.7)},
-                               {"f2", Value<Float>((Float) 3.2)},
-                               {"f3", Value<Float>((Float) 1.3)},
-                               {"f4", Value<Float>((Float) 0.2)}});
-    auto fourthRecord = Record({{"f1", Value<Float>((Float) 4.6)},
-                                {"f2", Value<Float>((Float) 3.1)},
-                                {"f3", Value<Float>((Float) 1.5)},
-                                {"f4", Value<Float>((Float) 0.2)}});
+    auto firstRecord = Record({{"f1", Value<Float>((float_t) 5.1)},
+                               {"f2", Value<Float>((float_t) 3.5)},
+                               {"f3", Value<Float>((float_t) 1.4)},
+                               {"f4", Value<Float>((float_t) 0.2)}});
+    auto secondRecord = Record({{"f1", Value<Float>((float_t) 4.9)},
+                                {"f2", Value<Float>((float_t) 3.0)},
+                                {"f3", Value<Float>((float_t) 1.4)},
+                                {"f4", Value<Float>((float_t) 0.2)}});
+    auto thirdRecord = Record({{"f1", Value<Float>((float_t) 4.7)},
+                               {"f2", Value<Float>((float_t) 3.2)},
+                               {"f3", Value<Float>((float_t) 1.3)},
+                               {"f4", Value<Float>((float_t) 0.2)}});
+    auto fourthRecord = Record({{"f1", Value<Float>((float_t) 4.6)},
+                                {"f2", Value<Float>((float_t) 3.1)},
+                                {"f3", Value<Float>((float_t) 1.5)},
+                                {"f4", Value<Float>((float_t) 0.2)}});
     inferModelOperator->execute(ctx, firstRecord);
     inferModelOperator->execute(ctx, secondRecord);
     inferModelOperator->execute(ctx, thirdRecord);

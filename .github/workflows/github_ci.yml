@@ -342,10 +342,10 @@ jobs:
           fetch-depth: 0
       - name: Get changed files using defaults
         id: changed-files
-        uses: tj-actions/changed-files@v32.1.2
+        uses: tj-actions/changed-files@v41.0.0
       - name: Get changed files using a comma separator
         id: changed-files-comma-separate
-        uses: tj-actions/changed-files@v32.1.2
+        uses: tj-actions/changed-files@v41.0.0
         with:
           separator: ","
       - name: "Set up QEMU"
