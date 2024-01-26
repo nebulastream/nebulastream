@@ -25,7 +25,7 @@ add_nes_unit_test(optimizer-unit-tests "UnitTests/Optimizer/Phases/TypeInference
         "UnitTests/Optimizer/Phases/QueryPlacementAmendmentTest.cpp"
         "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp"
         "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp"
-        "UnitTests/Optimizer/QueryPlacement/NemoJoinPlacementTest.cpp"
+        "UnitTests/Optimizer/QueryPlacement/DistributedMatrixJoinPlacementTest.cpp"
         "UnitTests/Optimizer/QuerySignatures/QuerySignatureUtilTests.cpp"
         "UnitTests/Optimizer/QuerySignatures/QueryContainmentIdentificationTest.cpp"
         "UnitTests/Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRuleTest.cpp"

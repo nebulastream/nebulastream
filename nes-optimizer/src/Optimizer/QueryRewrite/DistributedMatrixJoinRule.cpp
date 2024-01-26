@@ -18,48 +18,51 @@
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/NemoJoinRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedMatrixJoinRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer {
 
-NemoJoinRule::NemoJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology)
+DistributedMatrixJoinRule::DistributedMatrixJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology)
     : topology(topology), configuration(configuration) {}
 
-NemoJoinRulePtr NemoJoinRule::create(Configurations::OptimizerConfiguration configuration, TopologyPtr topology) {
-    return std::make_shared<NemoJoinRule>(NemoJoinRule(configuration, topology));
+DistributedMatrixJoinRulePtr DistributedMatrixJoinRule::create(Configurations::OptimizerConfiguration configuration,
+                                                               TopologyPtr topology) {
+    return std::make_shared<DistributedMatrixJoinRule>(DistributedMatrixJoinRule(configuration, topology));
 }
 
-QueryPlanPtr NemoJoinRule::apply(QueryPlanPtr queryPlan) {
-    NES_DEBUG("NemoJoinRule: Plan before replacement\n{}", queryPlan->toString());
+QueryPlanPtr DistributedMatrixJoinRule::apply(QueryPlanPtr queryPlan) {
+    NES_DEBUG("DistributedMatrixJoinRule: Plan before replacement\n{}", queryPlan->toString());
     auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
     if (!joinOps.empty()) {
-        NES_DEBUG("NemoJoinRule::apply: found {} join operators", joinOps.size());
+        NES_DEBUG("DistributedMatrixJoinRule::apply: found {} join operators", joinOps.size());
         for (const JoinLogicalOperatorNodePtr& joinOp : joinOps) {
-            NES_DEBUG("NemoJoinRule::apply: join operator {}", joinOp->toString());
+            NES_DEBUG("DistributedMatrixJoinRule::apply: join operator {}", joinOp->toString());
             auto parents = joinOp->getParents();
             auto leftOps = joinOp->getLeftOperators();
             auto rightOps = joinOp->getRightOperators();
-            for (auto leftOp : leftOps) {
-                for (auto rightOp : rightOps) {
+            for (const auto& leftOp : leftOps) {
+                for (const auto& rightOp : rightOps) {
+                    // create join replicas for each lhs/rhs combination
                     JoinLogicalOperatorNodePtr newJoin =
                         LogicalOperatorFactory::createJoinOperator(joinOp->getJoinDefinition())->as<JoinLogicalOperatorNode>();
                     newJoin->addChild(leftOp);
                     newJoin->addChild(rightOp);
-                    for (auto parent : parents) {
+                    for (const auto& parent : parents) {
                         parent->addChild(newJoin);
                     }
                 }
             }
+            // replace old central join with the new join replicas
             joinOp->removeAllParent();
             joinOp->removeChildren();
         }
     } else {
-        NES_DEBUG("NemoJoinRule: No join operator in query");
+        NES_DEBUG("DistributedMatrixJoinRule: No join operator in query");
     }
 
-    NES_DEBUG("NemoJoinRule: Plan after replacement\n{}", queryPlan->toString());
+    NES_DEBUG("DistributedMatrixJoinRule: Plan after replacement\n{}", queryPlan->toString());
 
     return queryPlan;
 }

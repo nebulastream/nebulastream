@@ -60,19 +60,22 @@ using namespace Optimizer;
 static const std::string logSourceNameLeft = "log_left";
 static const std::string logSourceNameRight = "log_right";
 
-class NemoJoinPlacementTest : public Testing::BaseUnitTest {
+class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("NemoJoinPlacementTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup NemoJoinPlacementTest test class.");
+        NES::Logger::setupLogging("DistributedMatrixJoinPlacementTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup DistributedMatrixJoinPlacementTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        NES_DEBUG("Setup NemoJoinPlacementTest test case.");
+        NES_DEBUG("Setup DistributedMatrixJoinPlacementTest test case.");
     }
 
+    /**
+     * Create topology based on given layers, intermediate nodes, and source nodes
+     */
     static TopologyPtr setupTopology(uint64_t layers, uint64_t nodesPerNode, uint64_t leafNodesPerNode) {
         uint64_t resources = 100;
         uint64_t nodeId = 1;
@@ -112,7 +115,7 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
             parents = newParents;
         }
 
-        NES_DEBUG("NemoJoinPlacementTest: topology: {}", topology->toString());
+        NES_DEBUG("DistributedMatrixJoinPlacementTest: topology: {}", topology->toString());
         return topology;
     }
 
@@ -141,7 +144,7 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
         return sourceCatalog;
     }
 
-    static std::tuple<uint64_t, GlobalExecutionPlanPtr> runNemoPlacement(const Query& query,
+    static std::tuple<uint64_t, GlobalExecutionPlanPtr> runPlacement(const Query& query,
                                                                          const TopologyPtr& topology,
                                                                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                                          const OptimizerConfiguration& optimizerConfig) {
@@ -209,14 +212,14 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
+TEST_F(DistributedMatrixJoinPlacementTest, testNemoJoinPlacement) {
     // create flat topology with 1 coordinator and 4 sources
     const std::vector<WorkerId>& sourceNodes = {2, 3, 4, 5};
     auto topology = setupTopology(2, 3, 4);
     auto sourceCatalog = setupSourceCatalog(sourceNodes);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
-    optimizerConfig.enableNemoPlacement = true;
+    optimizerConfig.performDistributedWindowOptimization = true;
 
     //run the placement
     Query query = Query::from(logSourceNameLeft)
@@ -226,7 +229,7 @@ TEST_F(NemoJoinPlacementTest, testNemoJoinPlacement) {
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                       .sink(NullOutputSinkDescriptor::create());
 
-    auto outputTuple = runNemoPlacement(query, topology, sourceCatalog, optimizerConfig);
+    auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig);
     auto queryId = std::get<0>(outputTuple);
     auto executionPlan = std::get<1>(outputTuple);
     auto executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
