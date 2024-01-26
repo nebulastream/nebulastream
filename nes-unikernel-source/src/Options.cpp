@@ -124,7 +124,8 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        NES::FormatTypes::CSV_FORMAT,
                        source.type,
                        NEXMARK_BID,
-                       source.numberOfBuffers.value_or(32)};
+                       source.numberOfBuffers.value_or(32),
+                       source.print.value_or(false)};
     } else if (source.type == TcpSource) {
         return Options{0,
                        0,
@@ -145,7 +146,8 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        NES::FormatTypes::CSV_FORMAT,
                        source.type,
                        source.schema.type,
-                       source.numberOfBuffers.value_or(32)};
+                       source.numberOfBuffers.value_or(32),
+                       source.print.value_or(false)};
     } else {
         NES_NOT_IMPLEMENTED();
     }

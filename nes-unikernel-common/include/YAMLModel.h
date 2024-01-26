@@ -190,6 +190,7 @@ struct SourceEndpointConfiguration {
     NES::QuerySubPlanId subQueryID;
     SchemaConfiguration schema;
     std::optional<size_t> numberOfBuffers;
+    std::optional<bool> print;
     std::string ip;
     uint32_t port;
     NES::NodeId nodeId;
@@ -208,6 +209,7 @@ struct convert<SourceEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(port);
         UNIKERNEL_MODEL_YAML_ENCODE_OPT(delayInMS);
         UNIKERNEL_MODEL_YAML_ENCODE_OPT(numberOfBuffers);
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(print);
         node["type"] = std::string(magic_enum::enum_name(rhs.type));
 
         if (rhs.type == NetworkSource) {
@@ -225,6 +227,7 @@ struct convert<SourceEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(port);
         UNIKERNEL_MODEL_YAML_DECODE_OPT(delayInMS);
         UNIKERNEL_MODEL_YAML_DECODE_OPT(numberOfBuffers);
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(print);
         rhs.type = magic_enum::enum_cast<SourceType>(node["type"].as<std::string>()).value();
 
         if (rhs.type == NetworkSource) {
