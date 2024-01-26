@@ -91,7 +91,7 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
 
     //undeploy queries
     try {
-        auto deploymentPhase = DeploymentPhase::create(queryCatalogService, coordinatorConfiguration);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalogService);
         deploymentPhase->execute(deploymentContexts, RequestType::FailQuery);
     } catch (NES::Exceptions::RuntimeException& e) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,

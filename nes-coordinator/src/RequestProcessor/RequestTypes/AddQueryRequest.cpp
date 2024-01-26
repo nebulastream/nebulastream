@@ -193,7 +193,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto deploymentPhase = DeploymentPhase::create(queryCatalogService, coordinatorConfiguration);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalogService);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));

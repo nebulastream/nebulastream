@@ -54,11 +54,11 @@ class GlobalExecutionPlan {
      * @brief Add a decomposed query plan belonging to a shared query plan on the given execution node.
      * @note If the execution node does not exists then create one and create parent child relationships based on the
      * topology node.
-     * @param executionNodeId: the topology node that will be represented by the execution node
+     * @param lockedTopologyNode: the locked topology node that will be represented by the execution node
      * @param decomposedQueryPlan: the decomposed query plan
      * @return true if success else false
      */
-    bool addDecomposedQueryPlan(ExecutionNodeId executionNodeId, DecomposedQueryPlanPtr decomposedQueryPlan);
+    bool addDecomposedQueryPlan(const TopologyNodeWLock& lockedTopologyNode, DecomposedQueryPlanPtr decomposedQueryPlan);
 
     /**
      * @brief Update the decomposed query plan state to the new query state.
@@ -199,7 +199,7 @@ class GlobalExecutionPlan {
     /**
      * Index based on shared query Id for faster access to the execution nodes
      */
-    folly::Synchronized<std::map<SharedQueryId, std::vector<ExecutionNodeId>>> sharedQueryIdToExecutionNodeIdMap;
+    folly::Synchronized<std::map<SharedQueryId, std::set<ExecutionNodeId>>> sharedQueryIdToExecutionNodeIdMap;
 
     /**
      * List of root node ids

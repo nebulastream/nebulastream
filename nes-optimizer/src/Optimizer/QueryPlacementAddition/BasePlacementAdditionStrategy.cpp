@@ -739,10 +739,6 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 containPinnedDownstreamOperator = true;
             }
 
-            // 1.4. Fetch the execution node to update and placed query sub plans
-            auto executionNode = getLockedExecutionNode(lockedTopologyNode);
-            auto placedQuerySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
-
             // 1.5. Iterate over the placed query sub plans and update execution node
             auto computedDecomposedQueryPlans = computedSubQueryPlans[workerNodeId];
             for (const auto& computedDecomposedQueryPlan : computedDecomposedQueryPlans) {
@@ -762,14 +758,17 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                             // Then find and merge the operator with query sub plan containing the placed leaf operator
                             if (computedOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
 
-                                bool foundHostQuerySubPlan = false;
+                                // Flag indicating, if we found a placed decomposed query plan that contains pinned operator
+                                bool found = false;
+                                auto placedDecomposedQueryPlans =
+                                    globalExecutionPlan->getCopyOfAllDecomposedQueryPlans(workerNodeId, sharedQueryId);
 
                                 // Find and merge with the shared query plan
-                                for (const auto& placedQuerySubPlan : placedQuerySubPlans) {
+                                for (const auto& placedDecomposedQueryPlan : placedDecomposedQueryPlans) {
 
                                     // If the placed query sub plan contains the pinned upstream operator
                                     auto matchingPlacedLeafOperator =
-                                        placedQuerySubPlan->getOperatorWithId(computedOperator->getId());
+                                        placedDecomposedQueryPlan->getOperatorWithId(computedOperator->getId());
                                     if (matchingPlacedLeafOperator) {
                                         if (computedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
                                             auto connectedSysSubPlanDetails =
@@ -810,14 +809,14 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                 pinnedDownstreamOperator->addChild(matchingPlacedLeafOperator);
                                             }
                                         }
-                                        hostQuerySubPlans.emplace(placedQuerySubPlan);
-                                        foundHostQuerySubPlan = true;
+                                        hostQuerySubPlans.emplace(placedDecomposedQueryPlan);
+                                        found = true;
                                         break;
                                     }
                                 }
 
                                 // If no query sub plan found that hosts the placed leaf operator
-                                if (!foundHostQuerySubPlan) {
+                                if (!found) {
                                     NES_ERROR("Unable to find query sub plan hosting the placed and pinned upstream operator.");
                                     throw Exceptions::RuntimeException(
                                         "Unable to find query sub plan hosting the placed and pinned upstream operator.");
@@ -825,15 +824,15 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                             }
                         }
 
-                        DecomposedQueryPlanPtr updatedQuerySubPlan;
+                        DecomposedQueryPlanPtr updatedDecomposedQueryPlan;
                         // Merge the two host query sub plans
                         if (!hostQuerySubPlans.empty()) {
                             for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
-                                if (!updatedQuerySubPlan) {
-                                    updatedQuerySubPlan = hostQuerySubPlan;
+                                if (!updatedDecomposedQueryPlan) {
+                                    updatedDecomposedQueryPlan = hostQuerySubPlan;
                                 } else {
                                     for (const auto& hostRootOperators : hostQuerySubPlan->getRootOperators()) {
-                                        updatedQuerySubPlan->addRootOperator(hostRootOperators);
+                                        updatedDecomposedQueryPlan->addRootOperator(hostRootOperators);
                                     }
                                 }
                             }
@@ -841,14 +840,17 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
 
                         //In the end, add root operators of computed plan as well.
                         for (const auto& rootOperator : computedDecomposedQueryPlan->getRootOperators()) {
-                            updatedQuerySubPlan->addRootOperator(rootOperator);
+                            updatedDecomposedQueryPlan->addRootOperator(rootOperator);
                         }
 
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
-                        updatedQuerySubPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
-                        updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
-                        updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->operator*()->registerDecomposedQueryPlan(updatedQuerySubPlan);
+                        updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
+                        updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
+                        updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
+                        //Add decomposed query plan to the global execution plan
+                        globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                        // 1.6. Update state and properties of all operators placed on the execution node
+                        markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                     } else if (containPinnedDownstreamOperator) {
 
                         auto computedOperators = computedDecomposedQueryPlan->getAllOperators();
@@ -859,14 +861,17 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                             // Then find and merge the operator with query sub plan containing the placed leaf operator
                             if (computedOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
 
-                                bool foundHostQuerySubPlan = false;
+                                // Flag indicating, if we found a placed decomposed query plan that contains pinned operator
+                                bool found = false;
+                                auto placedDecomposedQueryPlans =
+                                    globalExecutionPlan->getCopyOfAllDecomposedQueryPlans(workerNodeId, sharedQueryId);
 
                                 // Find and merge with the shared query plan
-                                for (const auto& placedQuerySubPlan : placedQuerySubPlans) {
+                                for (const auto& placedDecomposedQueryPlan : placedDecomposedQueryPlans) {
 
                                     // If the placed query sub plan contains the pinned upstream operator
                                     auto matchingPinnedRootOperator =
-                                        placedQuerySubPlan->getOperatorWithId(computedOperator->getId());
+                                        placedDecomposedQueryPlan->getOperatorWithId(computedOperator->getId());
                                     if (matchingPinnedRootOperator) {
                                         // Add all newly computed downstream operators to matching placed leaf operator
                                         for (const auto& upstreamOperator : computedOperator->getChildren()) {
@@ -896,14 +901,14 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                 matchingPinnedRootOperator->addChild(upstreamOperator);
                                             }
                                         }
-                                        hostQuerySubPlans.emplace(placedQuerySubPlan);
-                                        foundHostQuerySubPlan = true;
+                                        hostQuerySubPlans.emplace(placedDecomposedQueryPlan);
+                                        found = true;
                                         break;
                                     }
                                 }
 
                                 // If no query sub plan found that hosts the placed leaf operator
-                                if (!foundHostQuerySubPlan) {
+                                if (!found) {
                                     NES_ERROR("Unable to find query sub plan hosting the placed and pinned upstream operator.");
                                     throw Exceptions::RuntimeException(
                                         "Unable to find query sub plan hosting the placed and pinned upstream operator.");
@@ -911,25 +916,27 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                             }
                         }
 
-                        DecomposedQueryPlanPtr updatedQuerySubPlan;
+                        DecomposedQueryPlanPtr updatedDecomposedQueryPlan;
                         // Merge the two host query sub plans
                         if (!hostQuerySubPlans.empty()) {
                             for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
-                                if (!updatedQuerySubPlan) {
-                                    updatedQuerySubPlan = hostQuerySubPlan;
+                                if (!updatedDecomposedQueryPlan) {
+                                    updatedDecomposedQueryPlan = hostQuerySubPlan;
                                 } else {
                                     for (const auto& hostRootOperators : hostQuerySubPlan->getRootOperators()) {
-                                        updatedQuerySubPlan->addRootOperator(hostRootOperators);
+                                        updatedDecomposedQueryPlan->addRootOperator(hostRootOperators);
                                     }
                                 }
                             }
                         }
 
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
-                        updatedQuerySubPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
-                        updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
-                        updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                        executionNode->operator*()->registerDecomposedQueryPlan(updatedQuerySubPlan);
+                        updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
+                        updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
+                        updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
+                        globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                        // 1.6. Update state and properties of all operators placed on the execution node
+                        markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                     } else {
                         NES_ERROR(
                             "A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
@@ -939,31 +946,12 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                            "pinned upstream or downstream operator.");
                     }
                 } else {
-                    auto updatedQuerySubPlan = typeInferencePhase->execute(computedDecomposedQueryPlan);
-                    updatedQuerySubPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-                    updatedQuerySubPlan->setVersion(querySubPlanVersion);
-                    executionNode->operator*()->registerDecomposedQueryPlan(updatedQuerySubPlan);
-                }
-            }
-
-            // 1.6. Update state and properties of all operators placed on the execution node
-            placedQuerySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
-            for (auto placedQuerySubPlan : placedQuerySubPlans) {
-                DecomposedQueryPlanId decomposedQueryPlanId = placedQuerySubPlan->getDecomposedQueryPlanId();
-                auto allPlacedOperators = placedQuerySubPlan->getAllOperators();
-                for (const auto& placedOperator : allPlacedOperators) {
-                    OperatorId operatorId = placedOperator->getId();
-                    //Set status to Placed and copy over metadata properties for
-                    if (operatorIdToOriginalOperatorMap.contains(operatorId)) {
-                        auto originalOperator = operatorIdToOriginalOperatorMap[operatorId];
-                        originalOperator->setOperatorState(OperatorState::PLACED);
-                        originalOperator->addProperty(PINNED_WORKER_ID, workerNodeId);
-                        originalOperator->addProperty(PLACED_DECOMPOSED_PLAN_ID, decomposedQueryPlanId);
-                        if (placedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
-                            originalOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
-                                                          placedOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
-                        }
-                    }
+                    auto updatedDecomposedQueryPlan = typeInferencePhase->execute(computedDecomposedQueryPlan);
+                    updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
+                    updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
+                    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                    // 1.6. Update state and properties of all operators placed on the execution node
+                    markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                 }
             }
 
@@ -978,15 +966,32 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
                 lockedTopologyNode->unlock();
             }
-
-            // 1.9. release lock on the execution node
-            executionNode->unlock();
         } catch (std::exception& ex) {
             NES_ERROR("Exception occurred during pinned operator placement {}.", ex.what());
             throw ex;
         }
     }
     return deploymentContexts;
+}
+
+void BasePlacementAdditionStrategy::markOperatorsAsPlaced(WorkerId workerId, DecomposedQueryPlanPtr decomposedQueryPlan) {
+
+    DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+    auto allPlacedOperators = decomposedQueryPlan->getAllOperators();
+    for (const auto& placedOperator : allPlacedOperators) {
+        OperatorId operatorId = placedOperator->getId();
+        //Set status to Placed and copy over metadata properties for all operators considered in this placement
+        if (operatorIdToOriginalOperatorMap.contains(operatorId)) {
+            auto originalOperator = operatorIdToOriginalOperatorMap[operatorId];
+            originalOperator->setOperatorState(OperatorState::PLACED);
+            originalOperator->addProperty(PINNED_WORKER_ID, workerId);
+            originalOperator->addProperty(PLACED_DECOMPOSED_PLAN_ID, decomposedQueryPlanId);
+            if (placedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
+                originalOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
+                                              placedOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
+            }
+        }
+    }
 }
 
 bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanVersion querySubPlanVersion,
@@ -1088,19 +1093,6 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSink(DecomposedQueryPlanVer
         }
     }
     return replacedOperator;
-}
-
-ExecutionNodeWLock BasePlacementAdditionStrategy::getLockedExecutionNode(const TopologyNodeWLock& lockedTopologyNode) {
-
-    auto topologyNodeId = lockedTopologyNode->operator*()->getId();
-    auto candidateExecutionNode = globalExecutionPlan->getLockedExecutionNode(topologyNodeId);
-    if (candidateExecutionNode) {
-        NES_TRACE("Node {} was already used by other deployment", topologyNodeId);
-    } else {
-        NES_TRACE("create new execution node with id: {}", topologyNodeId);
-        candidateExecutionNode = globalExecutionPlan->createAndGetLockedExecutionNode(lockedTopologyNode);
-    }
-    return candidateExecutionNode;
 }
 
 TopologyNodePtr BasePlacementAdditionStrategy::getTopologyNode(WorkerId workerId) {
