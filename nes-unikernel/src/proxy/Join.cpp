@@ -20,6 +20,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cstdint>
+#include <proxy/common.hpp>
+
 /**
      * @brief This method casts from a void* pointer depending on the join and window strategy to the correct derived class
      * and then pack to a parent class. This is necessary, as we do not always exactly know the child class.
@@ -29,87 +31,86 @@
      * @param windowingStrategyInt
      * @return OutputClass*
      */
-template<typename OutputClass = NES::Runtime::Execution::Operators::StreamJoinOperatorHandler>
-static OutputClass* getSpecificOperatorHandler(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
-
-    auto joinStrategy = magic_enum::enum_value<NES::QueryCompilation::StreamJoinStrategy>(joinStrategyInt);
-    auto windowingStrategy = magic_enum::enum_value<NES::QueryCompilation::WindowingStrategy>(windowingStrategyInt);
-    switch (joinStrategy) {
-        case NES::QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
-        case NES::QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
-        case NES::QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL: {
-            NES_THROW_RUNTIME_ERROR("Windowing strategy was used that is not supported with this compiler!");
-        }
-        case NES::QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN: {
-            if (windowingStrategy == NES::QueryCompilation::WindowingStrategy::SLICING) {
-                auto* tmpOpHandler = static_cast<NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing*>(ptrOpHandler);
-                return dynamic_cast<OutputClass*>(tmpOpHandler);
-            } else {
-                NES_THROW_RUNTIME_ERROR("Windowing strategy was used that is not supported with this compiler!");
-            }
-        }
-    }
+// template<typename OutputClass = NES::Runtime::Execution::Operators::StreamJoinOperatorHandler>
+static_assert(sizeof(NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing) == 280);
+static_assert(sizeof(std::tuple<NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing, NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing>) == 560);
+static NES::Runtime::Execution::Operators::NLJOperatorHandler*
+getSpecificOperatorHandler(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+    NES_ASSERT(magic_enum::enum_value<NES::QueryCompilation::StreamJoinStrategy>(joinStrategyInt)
+                   == NES::QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+               "Only NLJ is supported");
+    NES_ASSERT(magic_enum::enum_value<NES::QueryCompilation::WindowingStrategy>(windowingStrategyInt)
+                   == NES::QueryCompilation::WindowingStrategy::SLICING,
+               "Only Slicing is supported");
+    return static_cast<NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing*>(ptrOpHandler);
 }
 
-extern "C" uint64_t getNLJSliceStartProxy(void* ptrNljSlice) {
+EXT_C uint64_t getNLJSliceStartProxy(void* ptrNljSlice) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto* nljSlice = static_cast<NES::Runtime::Execution::NLJSlice*>(ptrNljSlice);
+    TRACE_PROXY_FUNCTION(*nljSlice);
     return nljSlice->getSliceStart();
 }
 
-extern "C" uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
+EXT_C uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto* nljSlice = static_cast<NES::Runtime::Execution::NLJSlice*>(ptrNljSlice);
+    TRACE_PROXY_FUNCTION(*nljSlice)
     return nljSlice->getSliceEnd();
 }
 
-extern "C" void* getCurrentWindowProxy(void* ptrOpHandler) {
+EXT_C void* getCurrentWindowProxy(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing*>(ptrOpHandler);
+    TRACE_PROXY_FUNCTION_NO_ARG;
     return opHandler->getCurrentSliceOrCreate();
 }
 
-extern "C" void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp) {
+EXT_C void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing*>(ptrOpHandler);
+    TRACE_PROXY_FUNCTION(timestamp)
     return opHandler->getSliceByTimestampOrCreateIt(timestamp).get();
 }
 
-extern "C" void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {
+EXT_C void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto joinBuildSide = magic_enum::enum_cast<NES::QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     auto* nljSlice = static_cast<NES::Runtime::Execution::NLJSlice*>(ptrNljSlice);
-    NES_DEBUG("nljSlice:\n{}", nljSlice->toString());
+    TRACE_PROXY_FUNCTION(workerId, magic_enum::enum_name(joinBuildSide));
     switch (joinBuildSide) {
         case NES::QueryCompilation::JoinBuildSideType::Left: return nljSlice->getPagedVectorRefLeft(workerId);
         case NES::QueryCompilation::JoinBuildSideType::Right: return nljSlice->getPagedVectorRefRight(workerId);
     }
 }
 
-extern "C" void allocateNewPageProxy(void* pagedVectorPtr) {
+EXT_C void allocateNewPageProxy(void* pagedVectorPtr) {
     auto* pagedVector = (NES::Nautilus::Interface::PagedVector*) pagedVectorPtr;
+    TRACE_PROXY_FUNCTION(*pagedVector);
     pagedVector->appendPage();
 }
 
-extern "C" void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
+EXT_C void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
     auto* pagedVector = (NES::Nautilus::Interface::PagedVector*) pagedVectorPtr;
+    TRACE_PROXY_FUNCTION(*pagedVector, pagePos);
     return pagedVector->getPages()[pagePos];
 }
 
-extern "C" void checkWindowsTriggerProxy(void* ptrOpHandler,
-                                         void* ptrPipelineCtx,
-                                         void* ptrWorkerCtx,
-                                         uint64_t watermarkTs,
-                                         uint64_t sequenceNumber,
-                                         NES::OriginId originId,
-                                         uint64_t joinStrategyInt,
-                                         uint64_t windowingStrategyInt) {
+EXT_C void checkWindowsTriggerProxy(void* ptrOpHandler,
+                                    void* ptrPipelineCtx,
+                                    void* ptrWorkerCtx,
+                                    uint64_t watermarkTs,
+                                    uint64_t sequenceNumber,
+                                    NES::OriginId originId,
+                                    uint64_t joinStrategyInt,
+                                    uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
+    TRACE_PROXY_FUNCTION(watermarkTs, sequenceNumber, originId, joinStrategyInt, windowingStrategyInt);
 
     auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    auto* pipelineCtx = static_cast<NES::Runtime::Execution::PipelineExecutionContext*>(ptrPipelineCtx);
+    auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineCtx);
     auto* workerCtx = static_cast<NES::Runtime::WorkerContext*>(ptrWorkerCtx);
 
     //update last seen watermark by this worker
@@ -120,33 +121,40 @@ extern "C" void checkWindowsTriggerProxy(void* ptrOpHandler,
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
-extern "C" void
+EXT_C void
 triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
+    TRACE_PROXY_FUNCTION(joinStrategyInt, windowingStrategyInt);
     auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    auto* pipelineCtx = static_cast<NES::Runtime::Execution::PipelineExecutionContext*>(ptrPipelineCtx);
+    auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineCtx);
 
     opHandler->triggerAllSlices(pipelineCtx);
 }
 
-extern "C" void setNumberOfWorkerThreadsProxy(void* ptrOpHandler,
-                                              void* ptrPipelineContext,
-                                              uint64_t joinStrategyInt,
-                                              uint64_t windowingStrategyInt) {
+EXT_C void setNumberOfWorkerThreadsProxy(void* ptrOpHandler,
+                                         void* ptrPipelineContext,
+                                         uint64_t joinStrategyInt,
+                                         uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineContext != nullptr, "pipeline context should not be null!");
 
+    TRACE_PROXY_FUNCTION(joinStrategyInt, windowingStrategyInt);
     auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    auto* pipelineCtx = static_cast<NES::Runtime::Execution::PipelineExecutionContext*>(ptrPipelineContext);
+    auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineContext);
 
-    opHandler->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+    auto numberOfWorkers = pipelineCtx->getNumberOfWorkerThreads();
+    std::cout << opHandler << std::endl;
+    std::cout << pipelineCtx << std::endl;
+    std::cout << numberOfWorkers << std::endl;
+    opHandler->setNumberOfWorkerThreads(numberOfWorkers);
 }
 
-extern "C" void* getNLJSliceRefFromIdProxy(void* ptrOpHandler, uint64_t sliceIdentifier) {
+EXT_C void* getNLJSliceRefFromIdProxy(void* ptrOpHandler, uint64_t sliceIdentifier) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     const auto opHandler = static_cast<NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing*>(ptrOpHandler);
+    TRACE_PROXY_FUNCTION(sliceIdentifier);
     auto slice = opHandler->getSliceBySliceIdentifier(sliceIdentifier);
     if (slice.has_value()) {
         return slice.value().get();
@@ -156,28 +164,30 @@ extern "C" void* getNLJSliceRefFromIdProxy(void* ptrOpHandler, uint64_t sliceIde
     return nullptr;
 }
 
-extern "C" uint64_t getNLJWindowStartProxy(void* ptrNLJWindowTriggerTask) {
+EXT_C uint64_t getNLJWindowStartProxy(void* ptrNLJWindowTriggerTask) {
     NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
-    return static_cast<NES::Runtime::Execution::Operators::EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)
-        ->windowInfo.windowStart;
+    auto task = static_cast<NES::Runtime::Execution::Operators::EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask);
+    TRACE_PROXY_FUNCTION(*task);
+    return task->windowInfo.windowStart;
 }
 
-extern "C" uint64_t getNLJWindowEndProxy(void* ptrNLJWindowTriggerTask) {
+EXT_C uint64_t getNLJWindowEndProxy(void* ptrNLJWindowTriggerTask) {
     NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
-    return static_cast<NES::Runtime::Execution::Operators::EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)
-        ->windowInfo.windowEnd;
+    auto task = static_cast<NES::Runtime::Execution::Operators::EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask);
+    TRACE_PROXY_FUNCTION(*task);
+    return task->windowInfo.windowEnd;
 }
 
-extern "C" uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSideInt) {
+EXT_C uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
     auto joinBuildSide = magic_enum::enum_cast<NES::QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
+    auto task = static_cast<NES::Runtime::Execution::Operators::EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask);
+    TRACE_PROXY_FUNCTION(*task, joinBuildSideInt);
 
     if (joinBuildSide == NES::QueryCompilation::JoinBuildSideType::Left) {
-        return static_cast<NES::Runtime::Execution::Operators::EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)
-            ->leftSliceIdentifier;
+        return task->leftSliceIdentifier;
     } else if (joinBuildSide == NES::QueryCompilation::JoinBuildSideType::Right) {
-        return static_cast<NES::Runtime::Execution::Operators::EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)
-            ->rightSliceIdentifier;
+        return task->rightSliceIdentifier;
     } else {
         NES_THROW_RUNTIME_ERROR("Not Implemented");
     }
@@ -186,14 +196,15 @@ extern "C" uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t j
 /**
  * @brief Deletes all slices that are not valid anymore
  */
-extern "C" void deleteAllSlicesProxy(void* ptrOpHandler,
-                                     uint64_t watermarkTs,
-                                     uint64_t sequenceNumber,
-                                     NES::OriginId originId,
-                                     uint64_t joinStrategyInt,
-                                     uint64_t windowingStrategyInt) {
+EXT_C void deleteAllSlicesProxy(void* ptrOpHandler,
+                                uint64_t watermarkTs,
+                                uint64_t sequenceNumber,
+                                NES::OriginId originId,
+                                uint64_t joinStrategyInt,
+                                uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    TRACE_PROXY_FUNCTION(watermarkTs, sequenceNumber, originId, joinStrategyInt, windowingStrategyInt);
     NES::Runtime::Execution::Operators::BufferMetaData bufferMetaData(watermarkTs, sequenceNumber, originId);
     opHandler->deleteSlices(bufferMetaData);
 }

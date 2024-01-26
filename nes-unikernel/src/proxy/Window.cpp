@@ -12,6 +12,8 @@
      limitations under the License.
 */
 #include "fmt.hpp"
+
+#include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 
@@ -32,20 +34,10 @@ extern "C" void* getSliceStoreProxy(void* op, uint64_t workerId) {
 
 extern "C" void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
     auto sliceStore = static_cast<NES::Runtime::Execution::Operators::NonKeyedThreadLocalSliceStore*>(ss);
-    NES_DEBUG("findSliceStateByTsProxy ts: {}", ts);
+    NES_DEBUG("findSliceStateByTsProxy(ts: {})", ts);
     auto slice = sliceStore->findSliceByTs(ts).get();
-    NES_DEBUG("Slice: {}-{}", slice->getStart(), slice->getEnd());
     auto state = slice->getState().get();
-    NES_DEBUG("State: {}", *state);
     return state->ptr;
-}
-extern "C" void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index) {
-    NES_DEBUG("PC: {} index: {}", pc, index);
-    auto pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(pc);
-    NES_DEBUG("getGlobalOperatorHandlerProxy");
-
-    NES_DEBUG("PC: {}", (void*) pipelineCtx);
-    return pipelineCtx->getOperatorHandler(index);
 }
 
 extern "C" void triggerThreadLocalStateProxy(void* op,
@@ -83,7 +75,7 @@ extern "C" void* getDefaultMergingState(void* ss) {
     auto handler = static_cast<NES::Runtime::Execution::Operators::NonKeyedSliceMergingHandler*>(ss);
     return handler->getDefaultState()->ptr;
 }
-extern "C" void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
+extern "C" void setupWindowHandlerNonKeyed(void* ss, void* ctx, uint64_t size) {
     NES_DEBUG("setupWindowHandler()");
     auto handler = static_cast<NES::Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler*>(ss);
     auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ctx);
@@ -129,4 +121,22 @@ extern "C" void deleteNonKeyedSlice(void* slice) {
     auto deleteNonKeyedSlice = static_cast<NES::Runtime::Execution::Operators::NonKeyedSlice*>(slice);
     NES_DEBUG("deleteNonKeyedSlice({})", *deleteNonKeyedSlice);
     delete deleteNonKeyedSlice;
+}
+
+extern "C" void appendToGlobalSliceStoreNonKeyed(void* ss, void* slicePtr) {
+    auto handler = static_cast<
+        NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<NES::Runtime::Execution::Operators::NonKeyedSlice>*>(ss);
+    auto slice = std::unique_ptr<NES::Runtime::Execution::Operators::NonKeyedSlice>(
+        (NES::Runtime::Execution::Operators::NonKeyedSlice*) slicePtr);
+    NES_DEBUG("appendToGlobalSliceStoreNonKeyed({})", *slice);
+    handler->appendToGlobalSliceStore(std::move(slice));
+}
+
+extern "C" void triggerSlidingWindowsNonKeyed(void* sh, void* wctx, void* pctx, uint64_t sequenceNumber, uint64_t sliceEnd) {
+    auto handler = static_cast<
+        NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<NES::Runtime::Execution::Operators::NonKeyedSlice>*>(sh);
+    auto workerContext = static_cast<NES::Runtime::WorkerContext*>(wctx);
+    auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(pctx);
+    NES_DEBUG("triggerSlidingWindowsNonKeyed(seq:{} end:{})", sequenceNumber, sliceEnd);
+    handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, sequenceNumber, sliceEnd);
 }
