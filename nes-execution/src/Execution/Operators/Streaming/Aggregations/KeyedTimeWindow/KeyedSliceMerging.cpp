@@ -75,7 +75,7 @@ KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
 
 void KeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("setupSliceMergingHandler",
+    Nautilus::FunctionCall("setupKeyedSliceMergingHandler",
                            setupKeyedSliceMergingHandler,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
