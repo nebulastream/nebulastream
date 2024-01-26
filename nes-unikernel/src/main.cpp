@@ -40,35 +40,6 @@ class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListe
     void onChannelError(NES::Network::Messages::ErrorMessage) override {}
 };
 
-extern "C" uint64_t getWorkerIdProxy(void* workerContext) {
-    auto* wc = (NES::Runtime::WorkerContext*) workerContext;
-    return wc->getId();
-}
-
-extern "C" void* allocateBufferProxy(void* worker_context_ptr) {
-    if (worker_context_ptr == nullptr) {
-        NES_THROW_RUNTIME_ERROR("worker context should not be null");
-    }
-    auto wc = static_cast<NES::Runtime::WorkerContext*>(worker_context_ptr);
-    // We allocate a new tuple buffer for the runtime.
-    // As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
-    // This increases the reference counter in the buffer.
-    // When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
-    auto buffer = wc->getBufferProvider()->getBufferBlocking();
-    auto* tb = new NES::Runtime::TupleBuffer(buffer);
-    return tb;
-}
-
-extern "C" [[maybe_unused]] void emitBufferProxy(void* worker_context_ptr, void* pc_ptr, void* tupleBuffer) {
-    NES_TRACE("Emit Buffer Proxy: {} {} {}", worker_context_ptr, pc_ptr, tupleBuffer);
-    auto* tb = (NES::Runtime::TupleBuffer*) tupleBuffer;
-    auto pipeline_context = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(pc_ptr);
-    if (tb->getNumberOfTuples() != 0) {
-        pipeline_context->emit(*tb);
-    }
-    tb->release();
-}
-
 int main() {
     NES::Logger::setupLogging(static_cast<NES::LogLevel>(NES_COMPILE_TIME_LOG_LEVEL));
     errno = 0;
