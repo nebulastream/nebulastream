@@ -24,6 +24,9 @@
 #include <regex>
 #include <string>
 #include <utility>
+#include <sys/socket.h>
+#include <sys/un.h>
+
 
 namespace NES {
 constexpr bool WRITE_ALL_ON_SHUTDOWN = true;
@@ -47,14 +50,14 @@ FileSink::FileSink(SinkFormatPtr format,
             NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
         }
     }
-    NES_DEBUG("FileSink: open file= {}", filePath);
-
-    // open the file stream
-    if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
-    }
-    NES_ASSERT(outputFile.is_open(), "file is not open");
-    NES_ASSERT(outputFile.good(), "file not good");
+//    NES_DEBUG("FileSink: open file= {}", filePath);
+//
+//    // open the file stream
+//    if (!outputFile.is_open()) {
+//        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+//    }
+//    NES_ASSERT(outputFile.is_open(), "file is not open");
+//    NES_ASSERT(outputFile.good(), "file not good");
 }
 
 FileSink::~FileSink() {
@@ -91,15 +94,15 @@ void FileSink::shutdown() {
 //                NES_ERROR("FileSink::writeDataToFile input buffer invalid");
 //            }
 
-            if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
-                auto schemaStr = sinkFormat->getFormattedSchema();
-                outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
-                schemaWritten = true;
-            } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
-                NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
-            } else {
-                NES_DEBUG("FileSink::getData: schema already written");
-            }
+//            if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
+//                auto schemaStr = sinkFormat->getFormattedSchema();
+//                outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
+//                schemaWritten = true;
+//            } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
+//                NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
+//            } else {
+//                NES_DEBUG("FileSink::getData: schema already written");
+//            }
 
 //            std::string bufferContent;
 //            auto schema = sinkFormat->getSchemaPtr();
@@ -117,10 +120,37 @@ void FileSink::shutdown() {
             timestampedOutputStrings.push_back(bufferContent);
 
         }
-        for (const auto& bufferContent : timestampedOutputStrings) {
-            outputFile.write(bufferContent.c_str(), bufferContent.size());
+        // Create a Unix domain socket
+        int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (sockfd == -1) {
+            perror("socket");
+            return;
         }
-        outputFile.flush();
+
+        // Set up the address structure
+        struct sockaddr_un addr;
+        memset(&addr, 0, sizeof(addr));
+        addr.sun_family = AF_UNIX;
+        strncpy(addr.sun_path, filePath.c_str(), sizeof(addr.sun_path) - 1);
+
+        // Connect to the Unix domain socket
+        if (connect(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+            perror("connect");
+            close(sockfd);
+            return;
+        }
+        for (const auto& bufferContent : timestampedOutputStrings) {
+            //outputFile.write(bufferContent.c_str(), bufferContent.size());
+            // Write data to the socket
+            ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.size());
+            if (bytes_written == -1) {
+                perror("write");
+                close(sockfd);
+                return;
+            }
+        }
+        //outputFile.flush();
+        close(sockfd);
     }
 }
 
