@@ -55,7 +55,9 @@ option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(NES_USE_CCACHE "USE CCACHE" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-option(NES_USE_KAFKA "Build with Kafka support" OFF)
+option(NES_FORCE_UBUNTU_DEPENDENCIES "Use ubuntu dependencies regardless of distribution" OFF)
+# TODO #3351 Do not enable Kafka by default
+option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
 
 # Plugins
