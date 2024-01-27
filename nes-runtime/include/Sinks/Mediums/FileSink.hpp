@@ -113,6 +113,7 @@ class FileSink : public SinkMedium {
     //std::vector<Runtime::TupleBuffer> receivedBuffers;
     std::vector<std::basic_string<char>> receivedBuffers;
     std::vector<uint64_t> arrivalTimestamps;
+    int sockfd;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

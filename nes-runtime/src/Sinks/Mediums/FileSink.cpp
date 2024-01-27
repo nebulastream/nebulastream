@@ -23,6 +23,8 @@
 #include <iostream>
 #include <regex>
 #include <string>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <utility>
 
 namespace NES {
@@ -50,16 +52,38 @@ FileSink::FileSink(SinkFormatPtr format,
     NES_DEBUG("FileSink: open file= {}", filePath);
 
     // open the file stream
-    if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+//    if (!outputFile.is_open()) {
+//        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+//    }
+//    NES_ASSERT(outputFile.is_open(), "file is not open");
+//    NES_ASSERT(outputFile.good(), "file not good");
+
+    // Create a Unix domain socket
+    sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        perror("socket");
+        return;
     }
-    NES_ASSERT(outputFile.is_open(), "file is not open");
-    NES_ASSERT(outputFile.good(), "file not good");
+
+    // Set up the address structure
+    struct sockaddr_un addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, filePath.c_str(), sizeof(addr.sun_path) - 1);
+
+    // Connect to the Unix domain socket
+    if (connect(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        perror("connect");
+        close(sockfd);
+        return;
+    }
+
 }
 
 FileSink::~FileSink() {
     NES_DEBUG("~FileSink: close file={}", filePath);
-    outputFile.close();
+    //outputFile.close();
+    close(sockfd);
 }
 
 std::string FileSink::toString() const {
@@ -74,53 +98,10 @@ void FileSink::setup() {}
 
 void FileSink::shutdown() {
     if (WRITE_ALL_ON_SHUTDOWN) {
-//        sinkFormat->setAddTimestamp(true);
-//        std::vector<std::string> timestampedOutputStrings;
-//        timestampedOutputStrings.reserve(receivedBuffers.size());
-//        for (uint64_t i = 0; i < receivedBuffers.size(); ++i) {
-//            //auto inputBuffer = receivedBuffers[i];
-//            auto bufferContent = receivedBuffers[i];
-//            auto timestamp = arrivalTimestamps[i];
-//
-//            NES_DEBUG("FileSink: getSchema medium {} format {} mode {}",
-//                      toString(),
-//                      sinkFormat->toString(),
-//                      this->getAppendAsString());
-//
-////            if (!inputBuffer) {
-////                NES_ERROR("FileSink::writeDataToFile input buffer invalid");
-////            }
-//
-//            if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
-//                auto schemaStr = sinkFormat->getFormattedSchema();
-//                outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
-//                schemaWritten = true;
-//            } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
-//                NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
-//            } else {
-//                NES_DEBUG("FileSink::getData: schema already written");
-//            }
-//
-////            std::string bufferContent;
-////            auto schema = sinkFormat->getSchemaPtr();
-////            schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-////            bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
-//
-//
-//            auto schema = sinkFormat->getSchemaPtr();
-//            std::string repReg = "," + std::to_string(timestamp) + "\n";
-//            bufferContent = std::regex_replace(bufferContent, std::regex(R"(\n)"), repReg);
-//            schema->addField("timestamp", BasicType::UINT64);
-//
-//            NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, bufferContent);
-//            //outputFile.write(bufferContent.c_str(), bufferContent.size());
-//            timestampedOutputStrings.push_back(bufferContent);
-//
+//        for (const auto& bufferContent : receivedBuffers) {
+//            outputFile.write(bufferContent.c_str(), bufferContent.size());
 //        }
-        for (const auto& bufferContent : receivedBuffers) {
-            outputFile.write(bufferContent.c_str(), bufferContent.size());
-        }
-        outputFile.flush();
+        //outputFile.flush();
     }
 }
 
@@ -130,8 +111,18 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto schema = sinkFormat->getSchemaPtr();
         schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
         bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
-        receivedBuffers.push_back(bufferContent);
-        arrivalTimestamps.push_back(getTimestamp());
+
+        // Write data to the socket
+        ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.size());
+        if (bytes_written == -1) {
+            perror("write");
+            close(sockfd);
+            return 1;
+        }
+
+//        receivedBuffers.push_back(bufferContent);
+//        arrivalTimestamps.push_back(getTimestamp());
+
         return true;
     }
     return writeDataToFile(inputBuffer);
