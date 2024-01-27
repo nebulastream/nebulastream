@@ -23,6 +23,7 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -71,6 +72,7 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
             }
             offset += fieldSize;
         }
+        ss << "," << getTimestamp();
         ss << std::endl;
     }
     return ss.str();

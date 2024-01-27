@@ -131,7 +131,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
         bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
         receivedBuffers.push_back(bufferContent);
-        //arrivalTimestamps.push_back(getTimestamp());
+        arrivalTimestamps.push_back(getTimestamp());
         return true;
     }
     return writeDataToFile(inputBuffer);
