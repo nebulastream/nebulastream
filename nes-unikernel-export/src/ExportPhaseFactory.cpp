@@ -8,6 +8,7 @@
 #include "QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp"
 #include "QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp"
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+#include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 namespace NES::QueryCompilation::Phases {
 PhaseFactoryPtr ExportPhaseFactory::create() { return std::make_shared<ExportPhaseFactory>(); }
@@ -36,5 +37,8 @@ LowerLogicalToPhysicalOperatorsPtr ExportPhaseFactory::createLowerLogicalQueryPl
 AddScanAndEmitPhasePtr ExportPhaseFactory::createAddScanAndEmitPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
+}
+BufferOptimizationPhasePtr ExportPhaseFactory::createBufferOptimizationPhase(QueryCompilerOptionsPtr options) {
+    return NES::QueryCompilation::BufferOptimizationPhase::create(options->getOutputBufferOptimizationLevel());
 }
 }// namespace NES::QueryCompilation::Phases

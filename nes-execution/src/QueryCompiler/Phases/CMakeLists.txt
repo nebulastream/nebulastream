@@ -12,6 +12,7 @@
 
 add_source_files(unikernel-export
         AddScanAndEmitPhase.cpp
+        BufferOptimizationPhase.cpp
         NautilusCompilationPhase.cpp
 )
 add_source_files(nes-execution
