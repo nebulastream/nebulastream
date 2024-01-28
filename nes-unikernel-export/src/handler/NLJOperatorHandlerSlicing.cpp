@@ -39,7 +39,7 @@ NLJOperatorHandlerSlicing::NLJOperatorHandlerSlicing(const std::vector<OriginId>
                                        sizeOfRecordLeft,
                                        sizeOfRecordRight) {
     TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing",
-                           "handler/NLJOperatorHandlerSlicing.hpp",
+                           "Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp",
                            inputOrigins,
                            outputOriginId,
                            windowSize,
