@@ -30,7 +30,7 @@
 #include <utility>
 
 namespace NES {
-constexpr bool WRITE_ALL_ON_SHUTDOWN = true;
+//constexpr bool WRITE_ALL_ON_SHUTDOWN = true;
 
 SinkMediumTypes FileSink::getSinkMediumType() { return SinkMediumTypes::FILE_SINK; }
 
@@ -41,8 +41,8 @@ FileSink::FileSink(SinkFormatPtr format,
                    bool append,
                    QueryId queryId,
                    DecomposedQueryPlanId querySubPlanId,
-                   uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins) {
+                   uint64_t numberOfOrigins, bool timestampAndWriteToSocket)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins), timestampAndWriteToSocket(timestampAndWriteToSocket) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
@@ -53,60 +53,59 @@ FileSink::FileSink(SinkFormatPtr format,
     }
     NES_DEBUG("FileSink: open file= {}", filePath);
 
-    // open the file stream
-//    if (!outputFile.is_open()) {
-//        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
-//    }
-//    NES_ASSERT(outputFile.is_open(), "file is not open");
-//    NES_ASSERT(outputFile.good(), "file not good");
+    if (!timestampAndWriteToSocket) {
+        // open the file stream
+        if (!outputFile.is_open()) {
+            outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+        }
+        NES_ASSERT(outputFile.is_open(), "file is not open");
+        NES_ASSERT(outputFile.good(), "file not good");
+    } else {
+
+        //todo: use this in case domain socket should be used instead of tcp
+        //    // Create a Unix domain socket
+        //    sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+        //    if (sockfd == -1) {
+        //        perror("socket");
+        //        return;
+        //    }
+        //
+        //    // Set up the address structure
+        //    struct sockaddr_un addr;
+        //    memset(&addr, 0, sizeof(addr));
+        //    addr.sun_family = AF_UNIX;
+        //    strncpy(addr.sun_path, filePath.c_str(), sizeof(addr.sun_path) - 1);
+        //
+        //    // Connect to the Unix domain socket
+        //    if (connect(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        //        perror("connect");
+        //        close(sockfd);
+        //        return;
+        //    }
 
 
+        // Create a TCP socket
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd == -1) {
+            perror("socket");
+            return;
+        }
 
+        // Specify the address and port of the server
+        struct sockaddr_in server_addr;
+        memset(&server_addr, 0, sizeof(server_addr));
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Example IP address
+        server_addr.sin_port = htons(12345); // Example port number
 
-//    // Create a Unix domain socket
-//    sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-//    if (sockfd == -1) {
-//        perror("socket");
-//        return;
-//    }
-//
-//    // Set up the address structure
-//    struct sockaddr_un addr;
-//    memset(&addr, 0, sizeof(addr));
-//    addr.sun_family = AF_UNIX;
-//    strncpy(addr.sun_path, filePath.c_str(), sizeof(addr.sun_path) - 1);
-//
-//    // Connect to the Unix domain socket
-//    if (connect(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-//        perror("connect");
-//        close(sockfd);
-//        return;
-//    }
+        // Connect to the server
+        if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+            perror("connect");
+            close(sockfd);
+            return;
+        }
 
-
-    // Create a TCP socket
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        perror("socket");
-        return;
     }
-
-    // Specify the address and port of the server
-    struct sockaddr_in server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Example IP address
-    server_addr.sin_port = htons(12345); // Example port number
-
-    // Connect to the server
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
-        perror("connect");
-        close(sockfd);
-        return;
-    }
-
-
-
 }
 
 FileSink::~FileSink() {
@@ -126,7 +125,7 @@ std::string FileSink::toString() const {
 void FileSink::setup() {}
 
 void FileSink::shutdown() {
-    if (WRITE_ALL_ON_SHUTDOWN) {
+    if (timestampAndWriteToSocket) {
 //        for (const auto& bufferContent : receivedBuffers) {
 //            outputFile.write(bufferContent.c_str(), bufferContent.size());
 //        }
@@ -135,12 +134,12 @@ void FileSink::shutdown() {
 }
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    if (WRITE_ALL_ON_SHUTDOWN) {
+    if (timestampAndWriteToSocket) {
         std::unique_lock lock(writeMutex);
         std::string bufferContent;
         auto schema = sinkFormat->getSchemaPtr();
         schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
+        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
 
         // Write data to the socket
         ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());

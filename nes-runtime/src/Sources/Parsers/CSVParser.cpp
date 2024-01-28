@@ -24,11 +24,10 @@
 
 using namespace std::string_literals;
 namespace NES {
-constexpr bool ADD_TIME_STAMP = true;
 
-CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
+CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter, bool addTimeStamp)
     : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), physicalTypes(std::move(physicalTypes)),
-      delimiter(std::move(delimiter)) {}
+      delimiter(std::move(delimiter)), addTimeStamp(addTimeStamp) {}
 
 bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
                                              uint64_t tupleCount,
@@ -45,7 +44,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
             "CSVParser::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: " << strerror(errno));
     }
 
-    uint8_t additionalFields = ADD_TIME_STAMP ? 1 : 0;
+    uint8_t additionalFields = addTimeStamp ? 1 : 0;
     if (values.size() != schema->getSize() - additionalFields) {
         NES_THROW_RUNTIME_ERROR(
             "CSVParser: The input line does not contain the right number of delimited fields. Fields in schema: "
@@ -58,7 +57,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
         NES_TRACE("Current value is:  {}", values[j]);
         writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, schema, tupleCount, bufferManager);
     }
-    if (ADD_TIME_STAMP) {
+    if (addTimeStamp) {
         tupleBuffer[tupleCount][numberOfSchemaFields - 1].write<uint64_t>(getTimestamp());
         //tupleBuffer[tupleCount][numberOfSchemaFields - 1].write<uint64_t>(0);
     }

@@ -30,7 +30,7 @@
 #include <vector>
 
 namespace NES {
-constexpr bool READ_ALL_ON_STARTUP = true;
+//constexpr bool READ_ALL_ON_STARTUP = true;
 
 CSVSource::CSVSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,
@@ -41,7 +41,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      const std::string& physicalSourceName,
-                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors, bool addTimestampsAndReadOnStartup)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -53,7 +53,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                  std::move(successors)),
       fileEnded(false), csvSourceType(csvSourceType), filePath(csvSourceType->getFilePath()->getValue()),
       numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
-      delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()) {
+      delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()), addTimeStampsAndReadOnStartup(addTimestampsAndReadOnStartup) {
 
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
@@ -92,8 +92,8 @@ CSVSource::CSVSource(SchemaPtr schema,
         physicalTypes.push_back(physicalField);
     }
 
-    this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
-    if (READ_ALL_ON_STARTUP) {
+    this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter, addTimeStampsAndReadOnStartup);
+    if (addTimeStampsAndReadOnStartup) {
         NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
         if (this->fileEnded) {
             NES_WARNING("CSVSource::fillBuffer: but file has already ended");
@@ -130,7 +130,7 @@ CSVSource::CSVSource(SchemaPtr schema,
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
-    if (READ_ALL_ON_STARTUP) {
+    if (addTimeStampsAndReadOnStartup) {
         uint64_t generatedTuplesThisPass = 0;
         if (numberOfTuplesToProducePerBuffer == 0) {
             generatedTuplesThisPass = buffer.getCapacity();
