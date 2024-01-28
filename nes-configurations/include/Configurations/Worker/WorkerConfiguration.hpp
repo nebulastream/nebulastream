@@ -291,6 +291,8 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     BoolOption connectSourceEventChannelsAsync = {CONNECT_SOURCE_ASYNC, true, "Let network sources use a separate thread to establish a the upstream event channel"};
 
+    BoolOption timestampFileSinkAndWriteToTCP = {TIMESTAMP_FILE_SINK, true, "Let network sources use a separate thread to establish a the upstream event channel"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&workerId,

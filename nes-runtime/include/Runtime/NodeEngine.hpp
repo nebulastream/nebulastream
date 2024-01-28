@@ -339,6 +339,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan);
 
+    bool getTimesStampOutputSources();
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -357,7 +359,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerWorker,
-                        bool sourceSharing);
+                        bool sourceSharing, bool timeStampOutputSources = true);
 
   private:
     WorkerId nodeId;
@@ -381,6 +383,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+    bool timestampOutPutSources;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
