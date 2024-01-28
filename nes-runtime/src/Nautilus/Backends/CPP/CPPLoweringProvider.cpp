@@ -41,6 +41,11 @@ std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
     return ctx.process().str();
 }
 
+std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir, std::string_view functionName) {
+    auto ctx = LoweringContext(std::move(ir));
+    return ctx.processUnikernel(functionName).str();
+}
+
 std::string CPPLoweringProvider::LoweringContext::getType(const IR::Types::StampPtr& stamp) {
     if (stamp->isInteger()) {
         auto value = cast<IR::Types::IntegerStamp>(stamp);
@@ -73,6 +78,41 @@ std::string CPPLoweringProvider::LoweringContext::getType(const IR::Types::Stamp
         return "bool";
     }
     NES_NOT_IMPLEMENTED();
+}
+
+std::stringstream CPPLoweringProvider::LoweringContext::processUnikernel(std::string_view functionName) {
+
+    auto functionOperation = ir->getRootOperation();
+    RegisterFrame rootFrame;
+    std::vector<std::string> arguments;
+    auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
+    for (auto i = 0ull; i < functionBasicBlock->getArguments().size(); i++) {
+        auto argument = functionBasicBlock->getArguments()[i];
+        auto var = getVariable(argument->getIdentifier());
+        rootFrame.setValue(argument->getIdentifier(), var);
+        arguments.emplace_back(getType(argument->getStamp()) + " " + var);
+    }
+    this->process(functionBasicBlock, rootFrame);
+
+    std::stringstream pipelineCode;
+    pipelineCode << "static inline auto " << functionName << "(";
+    for (size_t i = 0; i < arguments.size(); i++) {
+        if (i != 0) {
+            pipelineCode << ",";
+        }
+        pipelineCode << arguments[i] << " ";
+    }
+    pipelineCode << "){\n";
+    pipelineCode << "//variable declarations\n";
+    pipelineCode << blockArguments.str();
+    pipelineCode << "//basic blocks\n";
+    for (auto& block : blocks) {
+        pipelineCode << block.str();
+        pipelineCode << "\n";
+    }
+    pipelineCode << "}\n";
+
+    return pipelineCode;
 }
 
 std::stringstream CPPLoweringProvider::LoweringContext::process() {
@@ -387,7 +427,16 @@ void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Ope
         frame.setValue(opt->getIdentifier(), resultVar);
         blocks[blockIndex] << resultVar << " = ";
     }
-    blocks[blockIndex] << opt->getFunctionSymbol() << "(" << args.str() << ");\n";
+    if (opt->getStamp()->isAddress()) {
+        blocks[blockIndex] << "static_cast<" << getType(opt->getStamp()) << ">(";
+    }
+    blocks[blockIndex] << opt->getFunctionSymbol() << "(" << args.str() << ")";
+
+    if (opt->getStamp()->isAddress()) {
+        blocks[blockIndex] << ")";
+    }
+
+    blocks[blockIndex] << ";\n";
 }
 
 void CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::NegateOperation>& negateOperation,

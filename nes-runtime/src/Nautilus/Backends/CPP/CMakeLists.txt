@@ -16,4 +16,8 @@ add_source_files(nes-runtime
         CPPExecutable.cpp
         CPPLoweringProvider.cpp
         CPPPipelineProvider.cpp
-        )
+)
+
+add_source_files(unikernel-export
+        CPPLoweringProvider.cpp
+)
