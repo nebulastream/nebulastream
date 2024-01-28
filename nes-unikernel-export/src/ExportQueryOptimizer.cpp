@@ -11,27 +11,22 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
+
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <ExportPhaseFactory.h>
 #include <ExportQueryOptimizer.h>
-#include <NoOpPhysicalSourceType.hpp>
+#include <NoOp/NoOpPhysicalSourceType.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
-#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
-#include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
-#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <memory>
 

@@ -1,21 +1,23 @@
-#include "Runtime/NodeEngine.hpp"
-#include "Services/QueryService.hpp"
-#include "UnikernelExport.h"
 #include <CLIOptions.h>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <ExportQueryOptimizer.h>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <QueryCompiler.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <QueryPlanExport.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Services/QueryService.hpp>
+#include <Stage/CppBackendExport.hpp>
+#include <Stage/OperatorHandlerCppExport.hpp>
+#include <Stage/QueryPipeliner.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <YamlExport.h>
@@ -51,6 +53,16 @@ bool isUnikernelWorkerNode(const NES::ExecutionNodePtr node) {
     return hasNetworkSink;
 }
 
+struct OutputFileEmitter {
+    boost::filesystem::path outputDirectory;
+
+    void emitFile(const std::string& filename, const std::string& content) {
+        boost::filesystem::ofstream os(outputDirectory / filename);
+        NES_ASSERT(os.good(), fmt::format("Could not open output file {}", (outputDirectory / filename).string()));
+        os << content;
+    }
+};
+
 int main(int argc, char** argv) {
     using namespace NES;
     using namespace NES::Runtime;
@@ -78,35 +90,39 @@ int main(int argc, char** argv) {
 
     yamlExport.setQueryPlan(queryPlan, gep, sourcesCatalog);
 
-    ExportQueryCompiler queryCompiler;
+    NES::Unikernel::Export::QueryPlanExporter queryPlanExporter(sourcesCatalog);
 
     for (const auto& executionNode : gep->getExecutionNodesByQueryId(1) | stdv::filter(isUnikernelWorkerNode)) {
         auto subQueries = executionNode->getQuerySubPlans(1);
         std::vector<WorkerSubQuery> workerSubQueries;
         for (const auto& subquery : subQueries) {
             auto logicalSubQueryPlan = subquery->copy();
-            auto [sinkMap, sourceMap, stages, sharedHandler] =
-                queryCompiler.compile(subquery, options.getBufferSize(), sourcesCatalog);
-            UnikernelExport unikernelExport;
-            std::vector<WorkerSubQueryStage> stageIds;
+            auto pipeliner = NES::Unikernel::Export::QueryPipeliner(8192);
+            auto pipeliningResult = pipeliner.lowerQuery(subquery);
+            auto cppEmitter = NES::Unikernel::Export::CppBackendExport();
+            OutputFileEmitter emitter((options.getStageOutputPathForNode(executionNode->getId())));
 
-            if (!sharedHandler.empty()) {
-                unikernelExport.exportSharedOperatorHandlersToObjectFile(
-                    options.getOutputPathForFile(fmt::format("sharedHandlers{}.o", subquery->getQuerySubPlanId())),
-                    subquery->getQuerySubPlanId(),
-                    sharedHandler);
+            if (!pipeliningResult.sharedOperatorHandler.empty()) {
+                auto handler = NES::Unikernel::Export::OperatorHandlerCppExporter::generateSharedHandler(
+                    pipeliningResult.sharedOperatorHandler,
+                    subquery->getQuerySubPlanId());
+                emitter.emitFile(fmt::format("sharedHandler{}.cpp", subquery->getQuerySubPlanId()), handler);
             }
 
-            for (auto& [pipelineId, successor, predecessors, stage, handlers] : stdv::reverse(stages)) {
-                stageIds.emplace_back(pipelineId, predecessors, successor, handlers.size());
-                unikernelExport.exportPipelineStageToObjectFile(
-                    options.getOutputPathForFile("stage" + std::to_string(pipelineId) + ".o"),
-                    pipelineId,
-                    subquery->getQuerySubPlanId(),
-                    std::move(handlers),
-                    std::move(stage));
+            auto isNautilusStage = std::ranges::views::filter([](const NES::Unikernel::Export::Stage& stage) {
+                return stage.pipeline->isOperatorPipeline();
+            });
+
+            for (const auto& stage : pipeliningResult.stages | isNautilusStage) {
+                std::stringstream ss;
+                ss << cppEmitter.emitAsCppSourceFiles(stage);
+                ss << NES::Unikernel::Export::OperatorHandlerCppExporter::generateHandler(stage, subquery->getQuerySubPlanId());
+                emitter.emitFile(fmt::format("stage{}.cpp", stage.pipeline->getPipelineId()), ss.str());
             }
-            workerSubQueries.emplace_back(logicalSubQueryPlan, stageIds, sourceMap, sinkMap);
+
+            auto queryPlanExporterResult = queryPlanExporter.exportQueryPlan(pipeliningResult);
+
+            workerSubQueries.emplace_back(logicalSubQueryPlan, pipeliningResult, queryPlanExporterResult);
         }
         yamlExport.addWorker(workerSubQueries, executionNode);
     }

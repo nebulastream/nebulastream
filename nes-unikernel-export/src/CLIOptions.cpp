@@ -21,7 +21,7 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
-#include <NoOpPhysicalSourceType.hpp>
+#include <NoOp/NoOpPhysicalSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <argumentum/argparse.h>
