@@ -54,6 +54,7 @@ class CPPLoweringProvider {
   public:
     CPPLoweringProvider() = default;
     static std::string lower(std::shared_ptr<IR::IRGraph> ir);
+    static std::string lower(std::shared_ptr<IR::IRGraph> ir, std::string_view functionName);
 
   private:
     using RegisterFrame = Frame<std::string, std::string>;
@@ -63,6 +64,7 @@ class CPPLoweringProvider {
       public:
         explicit LoweringContext(std::shared_ptr<IR::IRGraph> ir);
         Code process();
+        Code processUnikernel(std::string_view functionName);
 
       private:
         Code blockArguments;
