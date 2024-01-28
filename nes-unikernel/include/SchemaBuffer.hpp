@@ -22,13 +22,13 @@ namespace NES::Unikernel {
 template<typename Schema, size_t BufferSize>
 class SchemaBuffer {
   public:
-    using TupleType = Schema::TupleType;
+    using TupleType = typename Schema::TupleType;
 
     [[nodiscard]] size_t getSize() const { return buffer.getNumberOfTuples(); }
 
     [[nodiscard]] constexpr size_t getCapacity() const { return BufferSize / Schema::TupleSize; }
 
-    void writeTuple(Schema::TupleType tuple) {
+    void writeTuple(TupleType tuple) {
         size_t offset = buffer.getNumberOfTuples() * Schema::TupleSize;
 
         // No Overflow
@@ -39,7 +39,7 @@ class SchemaBuffer {
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
     }
 
-    Schema::TupleType readTuple(size_t index) const {
+    TupleType readTuple(size_t index) const {
         NES_ASSERT(index < buffer.getNumberOfTuples(), "Out of Bound Read");
         size_t offset = index * Schema::TupleSize;
         // No Overflow
@@ -49,14 +49,14 @@ class SchemaBuffer {
         return Schema::readTupleAtBufferAddress(tupleMemory, buffer);
     }
 
-    static const SchemaBuffer of(const NES::Runtime::TupleBuffer& tb) {
+    static SchemaBuffer of(const NES::Runtime::TupleBuffer& tb) {
         // This constructor only hands out a const version of SchemaBuffer which does not allow any modification to tb
         return SchemaBuffer(const_cast<NES::Runtime::TupleBuffer&>(tb));
     }
 
     NES::Runtime::TupleBuffer getBuffer() { return this->buffer; }
 
-    const NES::Runtime::TupleBuffer getBuffer() const { return this->buffer; }
+    [[nodiscard]] NES::Runtime::TupleBuffer getBuffer() const { return this->buffer; }
 
     static SchemaBuffer of(NES::Runtime::TupleBuffer& tb) { return SchemaBuffer(tb); }
 
@@ -67,10 +67,10 @@ class SchemaBuffer {
 
 template<typename T>
 struct Field {
-    static void write(std::span<uint8_t>, const T::ctype&, NES::Runtime::TupleBuffer&);
-    static T::ctype read(std::span<uint8_t>, NES::Runtime::TupleBuffer&);
+    using ctype = typename T::ctype;
+    static void write(std::span<uint8_t>, const ctype&, NES::Runtime::TupleBuffer&);
+    static ctype read(std::span<uint8_t>, NES::Runtime::TupleBuffer&);
     static constexpr size_t size = T::size;
-    using ctype = T::ctype;
 };
 
 template<size_t... D, std::size_t... Is>
@@ -145,7 +145,7 @@ inline void Field<TEXT>::write(std::span<uint8_t> memory, const std::string& val
 }
 
 template<>
-std::string Field<TEXT>::read(std::span<uint8_t> memory, NES::Runtime::TupleBuffer& tb) {
+inline std::string Field<TEXT>::read(std::span<uint8_t> memory, NES::Runtime::TupleBuffer& tb) {
     NES_ASSERT(memory.size() == TEXT::size, "Memory size does not match");
 
     int32_t childBufferIndex = 0;
