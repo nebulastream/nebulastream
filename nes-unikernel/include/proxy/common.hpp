@@ -42,10 +42,9 @@ std::string print_args(std::string fields, const Ts&... t) {
     return ss.str();
 }
 #else
-#error "not here"
 #define TRACE_PROXY_FUNCTION(...)
 #define TRACE_PROXY_FUNCTION_NO_ARG
 #endif
-#define EXT_C extern "C"
+#define PROXY_FN [[maybe_unused]] static inline
 
 #endif//UNIKERNEL_PROXY_COMMON_H
