@@ -31,14 +31,8 @@
 #define VA_ARGS(...) , ##__VA_ARGS__
 #define TRACE_OPERATOR_HANDLER(className, headerPath, ...)                                                                       \
     do {                                                                                                                         \
-        NES_INFO("OperatorHandler Tracer: {} size: {}, align: {}",                                                               \
-                 className,                                                                                                      \
-                 sizeof(*this) - NES::Runtime::Unikernel::unikernelOperatorHandlerDiff,                                                                   \
-                 alignof(*this));                                                                                                \
-        OperatorHandler::trace((className),                                                                                      \
-                               (headerPath),                                                                                     \
-                               sizeof(*this) - NES::Runtime::Unikernel::unikernelOperatorHandlerDiff,                                                     \
-                               alignof(*this) VA_ARGS(__VA_ARGS__));                                                             \
+        NES_INFO("OperatorHandler Tracer: {} size: {}, align: {}", className, sizeof(*this), alignof(*this));                    \
+        OperatorHandler::trace((className), (headerPath), sizeof(*this), alignof(*this) VA_ARGS(__VA_ARGS__));                   \
     } while (0)
 #else
 #define TRACE_OPERATOR_HANDLER(name, ...)
@@ -68,9 +62,6 @@ struct OperatorHandlerParameterDescriptor {
 
     template<typename T>
     static OperatorHandlerParameterDescriptor of(const std::vector<T>& value);
-
-    [[nodiscard]] std::string generate() const;
-    [[nodiscard]] std::string typeName() const;
 };
 
 template<typename T>
@@ -82,7 +73,7 @@ OperatorHandlerParameterDescriptor OperatorHandlerParameterDescriptor::of(const 
 
     return {OperatorHandlerParameterType::VECTOR, parameters};
 }
-
+using GlobalOperatorHandlerIndex = size_t;
 struct OperatorHandlerDescriptor {
     OperatorHandlerDescriptor(std::string className,
                               std::string headerPath,
@@ -96,16 +87,15 @@ struct OperatorHandlerDescriptor {
     std::string headerPath;
     size_t size;
     size_t alignment;
+    GlobalOperatorHandlerIndex handlerId;
     std::vector<OperatorHandlerParameterDescriptor> parameters;
-
-    [[nodiscard]] std::string generate() const;
-    [[nodiscard]] std::string generateInclude() const;
 };
 
 using EitherSharedOrLocal = std::variant<size_t, OperatorHandlerDescriptor>;
 class OperatorHandlerTracer {
   public:
     static OperatorHandlerTracer* get();
+    static GlobalOperatorHandlerIndex currentHandlerId;
     template<typename... Args>
     static void traceOperatorHandlerInstantiation(const std::string& className,
                                                   const std::string& headerPath,
@@ -125,21 +115,10 @@ class OperatorHandlerTracer {
 
     static std::vector<OperatorHandlerDescriptor> getDescriptors();
 
-    static std::string generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handler,
-                                                 NES::QuerySubPlanId subPlanId);
-    static std::string
-    generateFile(std::vector<EitherSharedOrLocal> descriptors, uint64_t pipelineID, NES::QuerySubPlanId subPlanId);
-
-    [[nodiscard]] static std::string generateRuntimeIncludes();
-
   private:
     std::vector<OperatorHandlerDescriptor> descriptors;
-    static std::string generateOperatorInstantiation(std::vector<OperatorHandlerDescriptor> descriptors);
 };
 
-// this value holds the total size of objects that are missing from the unikernel operator handler
-static constexpr size_t unikernelOperatorHandlerDiff =
-    sizeof(NES::Runtime::Reconfigurable) + sizeof(std::optional<NES::Runtime::Unikernel::OperatorHandlerDescriptor>);
 }// namespace NES::Runtime::Unikernel
 
 #endif//NES_RUNTIME_INCLUDE_RUNTIME_UNIKERNEL_OPERATORHANDLERTRACER_HPP_
