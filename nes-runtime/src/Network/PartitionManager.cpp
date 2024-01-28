@@ -31,21 +31,9 @@ PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& 
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionConsumerEntry::pin() {
-#ifdef UNIKERNEL_LIB
-    partitionCounter = 2;
-#else
-    partitionCounter++;
-#endif
-}
+void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; }
 
-void PartitionManager::PartitionConsumerEntry::unpin() {
-#ifdef UNIKERNEL_LIB
-    partitionCounter = 1;
-#else
-    partitionCounter--;
-#endif
-}
+void PartitionManager::PartitionConsumerEntry::unpin() { partitionCounter--; }
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
@@ -210,6 +198,7 @@ bool PartitionManager::unregisterSubpartitionProducer(NesPartition partition) {
     NES_ASSERT2_FMT(it != producerPartitions.end(),
                     "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
 
+    NES_DEBUG("Current cnt: {}", it->second.count());
     // safeguard
     if (it->second.count() == 0) {
         NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());

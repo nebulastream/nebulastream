@@ -98,15 +98,13 @@ void NetworkSink::setup() {
 }
 
 void NetworkSink::shutdown() {
-    NES_DEBUG("NetworkSink: method setup() called {} qep {}", nesPartition.toString(), querySubPlanId);
+    NES_DEBUG("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), queryId, querySubPlanId);
     auto reconf = Runtime::ReconfigurationMessage(queryId,
                                                   querySubPlanId,
                                                   Runtime::ReconfigurationType::HardEndOfStream,
                                                   nullptr,
                                                   std::make_any<uint32_t>(numOfProducers));
     this->reconfigure(reconf, *TheWorkerContext);
-    NES_DEBUG("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), queryId, querySubPlanId);
-    networkManager->unregisterSubpartitionProducer(nesPartition);
 }
 
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }

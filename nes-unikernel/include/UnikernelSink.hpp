@@ -43,7 +43,9 @@ class UnikernelSinkImpl {
                 1,
                 200ms,
                 100);
-            sink->preSetup();
+
+            // TODO: Figure out if we need the event channel
+            // sink->preSetup();
             sink->setup();
         } else if constexpr (std::is_same_v<typename Config::SinkType, NES::KafkaSink<Config>>) {
             NES_INFO("Calling Setup for KafkaSink");
