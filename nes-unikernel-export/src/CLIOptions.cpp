@@ -12,8 +12,6 @@
      limitations under the License.
 */
 
-#include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
-#include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <API/Schema.hpp>
 #include <CLIOptions.h>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -21,6 +19,8 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
+#include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <NoOpPhysicalSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -208,6 +208,15 @@ CLIResult Options::getCLIOptions(int argc, char** argv) {
 }
 size_t Options::getBufferSize() const { return bufferSize; }
 std::string Options::getYAMLOutputPath() const { return this->yamlOutput; }
+boost::filesystem::path Options::getStageOutputPathForNode(NES::NodeId nodeId) const {
+    auto path = boost::filesystem::path(output.value_or(boost::filesystem::current_path().string()));
+    NES_ASSERT2_FMT(is_directory(path), fmt::format("Path does not exist: {}", path.string()));
+
+    auto nodePath = path / fmt::format("node{}", nodeId);
+    boost::filesystem::create_directories(nodePath);
+
+    return nodePath;
+}
 size_t Options::getOtherNodeIdFromLink(const std::variant<std::string, size_t>& variant) {
     if (std::holds_alternative<std::string>(variant)) {
         assert(std::get<std::string>(variant) == "sink" && "'sink' is the only accepted string parameter for links");
