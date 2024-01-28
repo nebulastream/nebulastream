@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Operators {
 
 KeyedSliceMergingHandler::KeyedSliceMergingHandler() {
     TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::KeyedSliceMergingHandler",
-                           "handler/KeyedSliceMergingHandler.hpp");
+                           "Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp");
 }
 
 void KeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t keySize, uint64_t valueSize) {

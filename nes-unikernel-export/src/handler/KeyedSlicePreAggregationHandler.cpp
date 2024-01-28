@@ -31,7 +31,7 @@ KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(uint64_t window
     : AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore>(windowSize, windowSlide, origins) {
 
     TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::KeyedSlicePreAggregationHandler",
-                           "handler/KeyedSlicePreAggregationHandler.hpp",
+                           "Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp",
                            windowSize,
                            windowSlide,
                            origins);

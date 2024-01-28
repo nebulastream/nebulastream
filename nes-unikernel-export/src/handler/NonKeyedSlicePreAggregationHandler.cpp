@@ -26,7 +26,7 @@ NonKeyedSlicePreAggregationHandler::NonKeyedSlicePreAggregationHandler(uint64_t 
                                                                        const std::vector<OriginId>& origins)
     : AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore>(windowSize, windowSlide, origins) {
     TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler",
-                           "handler/NonKeyedSlicePreAggregationHandler.hpp",
+                           "Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp",
                            windowSize,
                            windowSlide,
                            origins);

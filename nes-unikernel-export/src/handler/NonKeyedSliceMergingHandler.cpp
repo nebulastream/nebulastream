@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Operators {
 State::~State() = default;
 NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler() {
     TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::NonKeyedSliceMergingHandler",
-                           "handler/NonKeyedSliceMergingHandler.hpp");
+                           "Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp");
 }
 
 void NonKeyedSliceMergingHandler::setup(PipelineExecutionContext&, uint64_t entrySize) {
