@@ -2341,6 +2341,9 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
     WorkerId srcNodeId = 2;
     topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 2, properties);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+    WorkerId middleNodeId2 = 4;
+    topology->registerTopologyNode(middleNodeId2, "localhost", 4004, 5004, 1, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId2);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -2472,6 +2475,9 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
     std::for_each(sinkOperators.begin(), sinkOperators.end(), [&](const OperatorNodePtr& item) {
         sinkOperatorIds.emplace(item->getId());
     });
+
+    topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId);
+    topology->removeTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     sharedQueryPlan->performReOperatorPlacement(sourceOperatorIds, sinkOperatorIds);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
