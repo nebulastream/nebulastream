@@ -3,6 +3,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <YAMLModel.h>
+#include <boost/filesystem.hpp>
 #include <boost/lexical_cast/try_lexical_convert.hpp>
 #include <boost/outcome.hpp>
 #include <optional>
@@ -283,6 +284,7 @@ class Options {
     getTopologyAndSources();
     [[nodiscard]] ExportKafkaConfiguration getKafkaConfiguration() const;
     [[nodiscard]] std::string getYAMLOutputPath() const;
+    [[nodiscard]] boost::filesystem::path getStageOutputPathForNode(NES::NodeId) const;
 
   private:
     ExportConfiguration configuration;
