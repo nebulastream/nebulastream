@@ -177,8 +177,10 @@ class TupleBuffer {
         return *this;
     }
 
+#ifndef UNIKERNEL_LIB
     /// @brief Delete address-of operator to make it harder to circumvent reference counting mechanism with an l-value.
     TupleBuffer* operator&() = delete;
+#endif
 
     /// @brief Return if this is not valid.
     [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return ptr == nullptr; }
