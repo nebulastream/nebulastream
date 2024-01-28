@@ -1,45 +1,31 @@
-//
-// Created by ls on 01.10.23.
-//
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 
 #ifndef NES_YAMLEXPORT_H
 #define NES_YAMLEXPORT_H
-#include "CLIOptions.h"
-#include "Execution/Pipelines/CompiledExecutablePipelineStage.hpp"
-#include "Util/Logger/Logger.hpp"
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <CLIOptions.h>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <QueryPlanExport.hpp>
+#include <Stage/QueryPipeliner.hpp>
 #include <YAMLModel.h>
-#include <fstream>
-#include <map>
-#include <ranges>
 #include <string>
-#include <utility>
 #include <vector>
-#include <yaml-cpp/yaml.h>
-
-struct WorkerSubQueryStage {
-    size_t stageId;
-    std::vector<size_t> predecessors;
-    std::optional<size_t> successor;
-    size_t numberOfHandlers;
-};
 
 struct WorkerSubQuery {
     NES::QueryPlanPtr subplan;
-    std::vector<WorkerSubQueryStage> stages;
-    std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>> sources;
-    std::map<NES::PipelineId, SinkStage> sinks;
+    NES::Unikernel::Export::QueryPipeliner::Result stages;
+    NES::Unikernel::Export::QueryPlanExporter::Result sourcesAndSinks;
 };
 
 class YamlExport {
@@ -53,20 +39,8 @@ class YamlExport {
 
     void addWorker(const std::vector<WorkerSubQuery>& subqueries, const NES::ExecutionNodePtr& workerNode);
 
-    void setSinkSchema(NES::SchemaPtr schema) {
-        configuration.sink.schema.fields.clear();
-        for (const auto& field : schema->fields) {
-            configuration.sink.schema.fields.emplace_back(field->getName(),
-                                                          std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
-        }
-    }
-    void writeToOutputFile(std::string filepath) {
-        std::ofstream f(filepath);
-        YAML::Node yaml;
-        yaml = this->configuration;
-        NES_INFO("Writing Export YAML to {}", filepath);
-        f << yaml;
-    }
+    void setSinkSchema(const NES::SchemaPtr& schema);
+    void writeToOutputFile(std::string filepath) const;
 };
 
 #endif//NES_YAMLEXPORT_H

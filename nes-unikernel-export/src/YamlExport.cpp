@@ -15,11 +15,14 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <NoOpPhysicalSourceType.hpp>
-#include <NoOpSourceDescriptor.hpp>
+#include <NoOp/NoOpPhysicalSourceType.hpp>
+#include <NoOp/NoOpSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <YamlExport.h>
 #include <ranges>
 
@@ -112,62 +115,69 @@ WorkerLinkConfiguration buildWorkerLink(NES::Network::NetworkSourceDescriptorPtr
     };
 }
 
-WorkerSourceConfiguration buildSource(const NES::SourceDescriptorPtr& sourceDescriptor, NES::OriginId originId) {
-    if (sourceDescriptor->instanceOf<NES::Network::NetworkSourceDescriptor>()) {
-        auto networkSource = sourceDescriptor->as<NES::Network::NetworkSourceDescriptor>();
+WorkerSourceConfiguration buildSource(const NES::Unikernel::Export::QueryPlanExporter::ExportSourceDescriptor& source) {
+    if (source.sourceDescriptor->instanceOf<NES::Network::NetworkSourceDescriptor>()) {
+        auto networkSource = source.sourceDescriptor->as<NES::Network::NetworkSourceDescriptor>();
         return WorkerSourceConfiguration{
             networkSource->getNesPartition().getOperatorId(),
-            originId,
+            source.originId,
             buildWorkerLink(networkSource),
             std::nullopt,
         };
-    } else if (sourceDescriptor->instanceOf<NES::NoOpSourceDescriptor>()) {
-        auto noOpSource = sourceDescriptor->as<NES::NoOpSourceDescriptor>();
+    } else if (source.sourceDescriptor->instanceOf<NES::NoOpSourceDescriptor>()) {
+        auto noOpSource = source.sourceDescriptor->as<NES::NoOpSourceDescriptor>();
         NES_ASSERT(noOpSource->getTcp().has_value(), "TCP Configuration is missing in Source Descriptor");
-        return WorkerSourceConfiguration{noOpSource->getOperatorId(), originId, std::nullopt, buildTCPSource(*noOpSource)};
+        return WorkerSourceConfiguration{noOpSource->getOperatorId(), source.originId, std::nullopt, buildTCPSource(*noOpSource)};
     }
 
     NES_NOT_IMPLEMENTED();
 }
 
-WorkerStageConfiguration buildTreeRec(WorkerSubQueryStage current,
-                                      const std::map<NES::PipelineId, WorkerSubQueryStage>& stages,
-                                      const std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>>& sourceMap) {
+WorkerStageConfiguration buildTreeRec(
+    const NES::Unikernel::Export::Stage& current,
+    const std::unordered_map<NES::PipelineId, NES::Unikernel::Export::Stage>& stages,
+    const std::unordered_map<NES::PipelineId, NES::Unikernel::Export::QueryPlanExporter::ExportSourceDescriptor>& sources) {
     WorkerStageConfiguration config;
-    config.stageId = current.stageId;
-    config.numberOfOperatorHandlers = current.numberOfHandlers;
+    config.stageId = current.pipeline->getPipelineId();
+    config.numberOfOperatorHandlers = current.handler.size();
 
-    auto filter = std::ranges::views::filter([&stages](auto pipelineId) {
-        return stages.contains(pipelineId);
+    auto nonSources = std::ranges::views::filter([sources](auto pipelineId) {
+        return !sources.contains(pipelineId);
     });
 
     std::vector<WorkerStageConfiguration> predecessor;
-    std::ranges::transform(current.predecessors | filter,
+    std::ranges::transform(current.predecessors | nonSources,
                            std::back_inserter(predecessor),
-                           [&stages, &sourceMap](NES::PipelineId pipelineId) -> WorkerStageConfiguration {
-                               return buildTreeRec(stages.at(pipelineId), stages, sourceMap);
+                           [&stages, &sources](NES::PipelineId pipelineId) -> WorkerStageConfiguration {
+                               return buildTreeRec(stages.at(pipelineId), stages, sources);
                            });
 
+    bool eitherOne = false;
     if (!predecessor.empty()) {
+        eitherOne = true;
         config.predecessor.emplace(predecessor);
     }
 
     for (const auto& pred : current.predecessors) {
-        if (sourceMap.contains(pred)) {
-            config.upstream = buildSource(sourceMap.find(pred)->second.first, sourceMap.find(pred)->second.second);
+        if (sources.contains(pred)) {
+            eitherOne = true;
+            config.upstream = buildSource(sources.at(pred));
         }
     }
+
+    NES_ASSERT(eitherOne, "Either Predecessor Stage or Source");
     return config;
 }
 
-WorkerStageConfiguration buildTree(const SinkStage& sink,
-                                   const std::vector<WorkerSubQueryStage>& workerSubQueryStage,
-                                   const std::map<NES::PipelineId, std::pair<NES::SourceDescriptorPtr, NES::OriginId>>& sourceMap) {
-    std::map<NES::PipelineId, WorkerSubQueryStage> stages;
-    for (const auto& stage : workerSubQueryStage) {
-        stages[stage.stageId] = stage;
+WorkerStageConfiguration
+buildTree(const NES::Unikernel::Export::QueryPlanExporter::ExportSinkDescriptor& sink,
+          const std::vector<NES::Unikernel::Export::Stage>& stages,
+          const std::unordered_map<NES::PipelineId, NES::Unikernel::Export::QueryPlanExporter::ExportSourceDescriptor>& sources) {
+    std::unordered_map<NES::PipelineId, NES::Unikernel::Export::Stage> stageMap;
+    for (const auto& stage : stages) {
+        stageMap[stage.pipeline->getPipelineId()] = stage;
     }
-    return buildTreeRec(stages[sink.predecessor[0]], stages, sourceMap);
+    return buildTreeRec(stageMap[sink.predecessor[0]], stageMap, sources);
 }
 
 void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const NES::ExecutionNodePtr& workerNode) {
@@ -196,13 +206,13 @@ void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const 
             });
         }
 
-        NES_ASSERT2_FMT(subQuery.sinks.size() == 1, "Expected exactly one Sink");
-        NES_ASSERT2_FMT(subQuery.sinks.begin()->second.predecessor.size() == 1, "Sink Pipeline to have a single predecessor");
-        auto rootPipeline = subQuery.sinks.begin()->second.predecessor[0];
-        if (subQuery.sources.count(rootPipeline)) {
+        NES_ASSERT2_FMT(subQuery.sourcesAndSinks.sinksByPipeline.size() == 1, "Expected exactly one Sink");
+        NES_ASSERT2_FMT(subQuery.sourcesAndSinks.sinksByPipeline.begin()->second.predecessor.size() == 1,
+                        "Sink Pipeline to have a single predecessor");
+        auto rootPipeline = subQuery.sourcesAndSinks.sinksByPipeline.begin()->second.predecessor[0];
+        if (subQuery.sourcesAndSinks.sourcesByPipeline.count(rootPipeline)) {
             return WorkerSubQueryConfiguration{std::nullopt,
-                                               buildSource(subQuery.sources.find(rootPipeline)->second.first,
-                                                           subQuery.sources.find(rootPipeline)->second.second),
+                                               buildSource(subQuery.sourcesAndSinks.sourcesByPipeline.at(rootPipeline)),
                                                subQuery.subplan->getQuerySubPlanId(),
                                                sink[0]->getOutputSchema()->getSchemaSizeInBytes(),
                                                type,
@@ -210,7 +220,9 @@ void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const 
                                                kafkaSinkConfig};
         }
 
-        return WorkerSubQueryConfiguration{buildTree(subQuery.sinks.begin()->second, subQuery.stages, subQuery.sources),
+        return WorkerSubQueryConfiguration{buildTree(subQuery.sourcesAndSinks.sinksByPipeline.begin()->second,
+                                                     subQuery.stages.stages,
+                                                     subQuery.sourcesAndSinks.sourcesByPipeline),
                                            std::nullopt,
                                            subQuery.subplan->getQuerySubPlanId(),
                                            sink[0]->getOutputSchema()->getSchemaSizeInBytes(),
@@ -223,6 +235,20 @@ void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const 
                                              workerNode->getTopologyNode()->getDataPort(),
                                              workerNode->getTopologyNode()->getId(),
                                              subQueryConfiguration);
+}
+void YamlExport::setSinkSchema(const NES::SchemaPtr& schema) {
+    configuration.sink.schema.fields.clear();
+    for (const auto& field : schema->fields) {
+        configuration.sink.schema.fields.emplace_back(field->getName(),
+                                                      std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
+    }
+}
+void YamlExport::writeToOutputFile(std::string filepath) const {
+    std::ofstream f(filepath);
+    YAML::Node yaml;
+    yaml = this->configuration;
+    NES_INFO("Writing Export YAML to {}", filepath);
+    f << yaml;
 }
 
 YamlExport::YamlExport(const std::optional<ExportKafkaConfiguration>& exportToKafka) : exportToKafka(exportToKafka) {}
