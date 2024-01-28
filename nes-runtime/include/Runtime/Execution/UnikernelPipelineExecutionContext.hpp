@@ -44,11 +44,11 @@ class UnikernelPipelineExecutionContext {
         return UnikernelPipelineExecutionContext(&T::execute, &T::stop, nullptr, 0, T::StageId);
     }
     [[nodiscard]] NES::Runtime::Execution::OperatorHandler* getOperatorHandler(int index) const {
-        NES_INFO("getOperatorHandler for {}", currentStageId);
+        NES_TRACE("getOperatorHandler for {}", currentStageId);
         auto opHandler = getOperatorHandlerProxy(index);
         NES_ASSERT2_FMT(opHandler, "Op Handler is Null");
 
-        NES_INFO("OpHandler for Stage {} @ {}", currentStageId, static_cast<void*>(opHandler));
+        NES_TRACE("OpHandler for Stage {} @ {}", currentStageId, static_cast<void*>(opHandler));
         return opHandler;
     }
 
