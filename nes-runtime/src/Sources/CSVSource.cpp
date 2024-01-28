@@ -59,6 +59,9 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
+    if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
+        return;
+    }
     struct Deleter {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
@@ -127,13 +130,29 @@ CSVSource::CSVSource(SchemaPtr schema,
     }
 }
 
+struct Record {
+    uint64_t id;
+    uint64_t value;
+    uint64_t timestamp;
+};
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         uint64_t generatedTuplesThisPass = 0;
         if (numberOfTuplesToProducePerBuffer == 0) {
+            uint64_t valCount = 0;
             generatedTuplesThisPass = buffer.getCapacity();
+            auto* records = buffer.getBuffer().getBuffer<Record>();
+            for (auto u = 0u; u < generatedTuplesThisPass; ++u) {
+                records[u].id = operatorId;
+                records[u].value = valCount + u;
+                records[u].timestamp = getTimestamp();
+            }
+            buffer.setNumberOfTuples(generatedTuplesThisPass);
+            generatedTuples += generatedTuplesThisPass;
+            generatedBuffers++;
+            return buffer.getBuffer();
         } else {
             generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
             NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
