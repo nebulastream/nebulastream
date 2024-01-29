@@ -24,6 +24,10 @@
 #include <Runtime/LocalBufferPool.hpp>
 #include <proxy/common.hpp>
 
+template<typename T>
+PROXY_FN T max(T a, T b) {
+    return std::max(a, b);
+}
 PROXY_FN uint64_t getWorkerIdProxy(void* workerContext) {
     TRACE_PROXY_FUNCTION_NO_ARG;
     auto* wc = static_cast<NES::Runtime::WorkerContext*>(workerContext);
@@ -179,9 +183,6 @@ PROXY_FN void setNumberOfWorkerThreadsProxy(void* ptrOpHandler,
     auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineContext);
 
     auto numberOfWorkers = pipelineCtx->getNumberOfWorkerThreads();
-    std::cout << opHandler << std::endl;
-    std::cout << pipelineCtx << std::endl;
-    std::cout << numberOfWorkers << std::endl;
     opHandler->setNumberOfWorkerThreads(numberOfWorkers);
 }
 
