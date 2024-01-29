@@ -60,17 +60,18 @@ class PipelineImpl<Prev, Stage, Stages...> {
     using Next = PipelineImpl<PipelineImpl, Stages...>;
 
   public:
+    constexpr static size_t NumberOfWorkerThreads = Next::NumberOfWorkerThreads;
     constexpr static size_t StageId = Stage::StageId;
     static void setup() {
         TRACE_PIPELINE_SETUP("Pipeline");
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
         Stage::setup(ctx, TheWorkerContext);
         Next::setup();
     }
 
     static void stop(size_t /*stage_id*/, Runtime::QueryTerminationType type) {
         TRACE_PIPELINE_STOP("Pipeline");
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
         Stage::terminate(ctx, TheWorkerContext);
         Prev::stop(Stage::StageId, type);
     }
@@ -78,13 +79,13 @@ class PipelineImpl<Prev, Stage, Stages...> {
     static void request_stop(Runtime::QueryTerminationType type) {
         TRACE_PIPELINE_STOP_REQUEST("Pipeline");
         Next::request_stop(type);
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
         Stage::terminate(ctx, TheWorkerContext);
     }
 
     static void execute(NES::Runtime::TupleBuffer& tb) {
         TRACE_PIPELINE_EXECUTE("Pipeline");
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
         Stage::execute(ctx, TheWorkerContext, tb);
     }
 };
@@ -92,9 +93,10 @@ class PipelineImpl<Prev, Stage, Stages...> {
 template<UnikernelBackwardsPipelineImpl Prev, typename Source>
 class PipelineImpl<Prev, Source> {
     using SourceImpl = Source::template Impl<Prev>;
-    constexpr static size_t StageId = SourceImpl::Id;
 
   public:
+    constexpr static size_t StageId = SourceImpl::Id;
+    constexpr static size_t NumberOfWorkerThreads = SourceImpl::NumberOfWorkerThreads;
     static void setup() {
         TRACE_PIPELINE_SETUP("Pipeline Source");
         SourceImpl::setup();
@@ -156,10 +158,11 @@ class PipelineJoinImpl {
     static std::atomic_bool eos_right;
 
   public:
+    static constexpr size_t NumberOfWorkerThreads = LeftImpl::NumberOfWorkerThreads + RightImpl::NumberOfWorkerThreads;
     constexpr static size_t StageId = Stage::StageId;
     static void setup() {
         TRACE_PIPELINE_SETUP("PipelineJoin")
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
         Stage::setup(ctx, TheWorkerContext);
         LeftImpl::setup();
         RightImpl::setup();
@@ -170,7 +173,7 @@ class PipelineJoinImpl {
         NES_ASSERT(tb.getOriginId() != 0, "Execute called with tuple buffer with a bad origin id");
 
         TRACE_PIPELINE_EXECUTE("PipelineJoin");
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
         Stage::execute(ctx, TheWorkerContext, tb);
     }
 
@@ -193,7 +196,7 @@ class PipelineJoinImpl {
 
             if (eos_right.load() && eos_left.load()) {
                 NES_INFO("PipelineJoin left and right are EoS propagating: {}", stageId);
-                auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+                auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
                 Stage::terminate(ctx, TheWorkerContext);
                 Prev::stop(Stage::StageId, type);
             }
@@ -206,7 +209,7 @@ class PipelineJoinImpl {
                 return;
             }
 
-            auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+            auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
             Stage::terminate(ctx, TheWorkerContext);
             Prev::stop(Stage::StageId, type);
         }
@@ -222,7 +225,7 @@ class PipelineJoinImpl {
             RightImpl::request_stop(type);
         }
 
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage>();
+        auto ctx = UnikernelPipelineExecutionContext::create<Prev, Stage, NumberOfWorkerThreads>();
         Stage::terminate(ctx, TheWorkerContext);
     }
 };
