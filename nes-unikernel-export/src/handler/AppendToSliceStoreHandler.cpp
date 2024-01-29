@@ -41,13 +41,13 @@ AppendToSliceStoreHandler<Slice>::AppendToSliceStoreHandler(uint64_t windowSize,
                   "AppendToSliceStoreHandler only Supports: KeyedSlice and NonKeyedSlice");
     if constexpr (std::is_same_v<Slice, NonKeyedSlice>) {
         TRACE_OPERATOR_HANDLER(
-            "NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<Runtime::Execution::Operators::NonKeyedSlice>",
+            "NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<NES::Runtime::Execution::Operators::NonKeyedSlice>",
             "Execution/Operators/Streaming/Aggregations/AppendToSliceStoreHandler.hpp",
             windowSize,
             windowSlide);
     } else if constexpr (std::is_same_v<Slice, KeyedSlice>) {
         TRACE_OPERATOR_HANDLER(
-            "NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<Runtime::Execution::Operators::KeyedSlice>",
+            "NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<NES::Runtime::Execution::Operators::KeyedSlice>",
             "Execution/Operators/Streaming/Aggregations/AppendToSliceStoreHandler.hpp",
             windowSize,
             windowSlide);
