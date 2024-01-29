@@ -28,6 +28,8 @@ class NEBitDataGenerator : public DataGenerator {
     std::string toString() override;
 
   protected:
+    bool hasTimestampField() override {return true;}
+
     Runtime::MemoryLayouts::DynamicField getTimestampField(Runtime::MemoryLayouts::DynamicTuple tuple) override;
 };
 
