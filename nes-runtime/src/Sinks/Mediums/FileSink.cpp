@@ -141,7 +141,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto schema = sinkFormat->getSchemaPtr();
         schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
         bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
-        totalTupleCountreceived += inputBuffer.getBufferSize();
+        totalTupleCountreceived += inputBuffer.getNumberOfTuples();
 
         // Write data to the socket
         ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
