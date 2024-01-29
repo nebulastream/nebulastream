@@ -24,6 +24,56 @@
 
 using namespace std::literals::chrono_literals;
 class APrioriDataGenerator {
+  public:
+    virtual ~APrioriDataGenerator() = default;
+
+  public:
+    virtual void startGenerator(size_t numberOfBuffers) = 0;
+    virtual void wait() = 0;
+    virtual std::span<const char> get_chunk(size_t chunkIndex) = 0;
+};
+
+class CSVFileDataGenerator : public APrioriDataGenerator {
+    const char* filename;
+    std::vector<std::vector<char>> data_chunks;
+    std::jthread generatorThread;
+    std::atomic<bool> done = false;
+
+  public:
+    explicit CSVFileDataGenerator(const char* filename) : filename(filename) {}
+
+    void startGenerator(size_t /*numberOfBuffers*/) override {
+        generatorThread = std::jthread([this]() {
+            boost::filesystem::ifstream file(filename);
+            NES_ASSERT(file.good(), "Could not open file");
+            std::string lineBuffer;
+            while (true) {
+                std::vector<char> chunk;
+                size_t tuplesInChunk = 0;
+                while (tuplesInChunk < 150 && std::getline(file, lineBuffer)) {
+                    std::ranges::copy(lineBuffer, std::back_inserter(chunk));
+                    chunk.back() = '\n';
+                    tuplesInChunk++;
+                };
+                data_chunks.emplace_back(std::move(chunk));
+                if (tuplesInChunk < 150)
+                    break;
+            }
+            done.store(true);
+            NES_INFO("Loaded {} chunks", data_chunks.size());
+        });
+    }
+
+    std::span<const char> get_chunk(size_t chunk_index) override {
+        if (chunk_index >= data_chunks.size())
+            return {};
+        return {data_chunks[chunk_index].data(), data_chunks[chunk_index].size()};
+    }
+
+    void wait() override { done.wait(false); }
+};
+
+class NESAPrioriDataGenerator : public APrioriDataGenerator {
     std::vector<std::vector<char>> data_chunks;
     NES::Runtime::BufferManagerPtr bufferManager;
     NES::Benchmark::DataGeneration::DataGeneratorPtr generatorImpl;
@@ -31,7 +81,7 @@ class APrioriDataGenerator {
     std::jthread generatorThread;
 
   public:
-    APrioriDataGenerator(const Options& options) {
+    NESAPrioriDataGenerator(const Options& options) {
         bufferManager = std::make_shared<NES::Runtime::BufferManager>(options.bufferSize);
         bufferManager->createFixedSizeBufferPool(32);
         switch (options.generator) {
@@ -57,7 +107,7 @@ class APrioriDataGenerator {
         }
     }
 
-    void startGenerator(size_t numberOfBuffers) {
+    void startGenerator(size_t numberOfBuffers) override {
         generatorThread = std::jthread([this, numberOfBuffers]() {
             data_chunks.resize(numberOfBuffers);
             std::for_each(
@@ -81,13 +131,13 @@ class APrioriDataGenerator {
         });
     }
 
-    std::span<const char> get_chunk(size_t chunk_index) {
+    std::span<const char> get_chunk(size_t chunk_index) override {
         if (chunk_index >= data_chunks.size())
             return {};
         return {data_chunks[chunk_index].data(), data_chunks[chunk_index].size()};
     }
 
-    void wait() { generatorThread.join(); }
+    void wait() override { generatorThread.join(); }
 };
 
 class TcpServer {
@@ -239,7 +289,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     auto options = optionsResult.assume_value();
-    auto dataGenerator = std::make_unique<APrioriDataGenerator>(options);
+    auto dataGenerator = std::make_unique<CSVFileDataGenerator>("bid.csv");
     dataGenerator->startGenerator(options.numberOfBuffers);
 
     if (options.type == NetworkSource) {

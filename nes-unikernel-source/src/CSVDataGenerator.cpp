@@ -179,14 +179,16 @@ NES::SchemaPtr parseSchema(std::string firstLineOfCSVFile) {
     return schema;
 }
 
-std::unique_ptr<CSVDataGenerator> CSVDataGenerator::create(const char* filename, bool repeat) {
+std::unique_ptr<CSVDataGenerator> CSVDataGenerator::create(const char* filename, bool repeat, NES::SchemaPtr schema) {
     std::ifstream f(filename);
     if (!f)
         return nullptr;
 
-    std::string first_line;
-    std::getline(f, first_line);
-    auto schema = parseSchema(first_line);
+    if (!schema) {
+        std::string first_line;
+        std::getline(f, first_line);
+        schema = parseSchema(first_line);
+    }
 
     return std::unique_ptr<CSVDataGenerator>(new CSVDataGenerator(std::move(f), std::move(schema), repeat));
 }
