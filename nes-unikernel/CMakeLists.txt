@@ -74,7 +74,7 @@ foreach (PIPELINE_FILE ${PIPELINE_FILES})
     set_target_properties(unikernel${PIPELINE_NUMBER} PROPERTIES OUTPUT_NAME "unikernel${PIPELINE_NUMBER}")
     target_compile_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline${PIPELINE_NUMBER}.hpp")
     target_link_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_LINK_OPTIONS})
-    target_compile_definitions(unikernel${PIPELINE_NUMBER} PRIVATE NES_LOGLEVEL_INFO)
+    target_compile_definitions(unikernel${PIPELINE_NUMBER} PRIVATE NES_LOGLEVEL_INFO USE_MMAP_CIRCBUFFER)
 
     # Link libraries and include directories
     target_link_libraries(unikernel${PIPELINE_NUMBER} PRIVATE ${OPERATOR_FILES} unikernel-lib)
