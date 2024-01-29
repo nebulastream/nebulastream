@@ -239,6 +239,7 @@ class WorkerMobilityHandler {
     LocationProviderPtr locationProvider;
     ReconnectSchedulePredictorPtr reconnectSchedulePredictor;
     CoordinatorRPCCLientPtr coordinatorRpcClient;
+    ReconnectPredictorType reconnectPredictorType;
 };
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Spatial::Mobility::Experimental

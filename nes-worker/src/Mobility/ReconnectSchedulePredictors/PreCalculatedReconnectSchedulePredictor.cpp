@@ -13,6 +13,40 @@ NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::g
     bool) {
     return {};
 }
+
+std::optional<std::pair<NES::WorkerId, NES::Timestamp>>
+NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::getReconnect(WorkerId currentParent) {
+    if (reconnects.empty()) {
+        loadReconnectSimulationDataFromFile();
+    }
+
+    //get the time the request is made so we can compare it to the timestamps in the list of waypoints
+    Timestamp requestTime = getTimestamp();
+
+    //find the waypoint with the smallest timestamp greater than requestTime
+    //this point is the next waypoint on the way ahead of us
+    while (nextReconnectIndex < reconnects.size() && reconnects.at(nextReconnectIndex).second < requestTime) {
+        nextReconnectIndex++;
+    }
+
+    std::pair<WorkerId, Timestamp> reconnectPoint;
+    //Check if next waypoint is still initialized as 0.
+    //Set the current waypoint as the first location in the csv file
+    if (nextReconnectIndex == 0) {
+         reconnectPoint = reconnects.at(nextReconnectIndex);
+    }
+
+    //find the last point behind us on the way
+    auto currentReconnectPointIndex = nextReconnectIndex - 1;
+    reconnectPoint = reconnects.at(currentReconnectPointIndex);
+
+    if (reconnectPoint.first != currentParent) {
+        return reconnectPoint;
+    }
+    return std::nullopt;
+
+}
+
 NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::PreCalculatedReconnectSchedulePredictor(
     const NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration)
     : ReconnectSchedulePredictor(configuration), startTime(getTimestamp()), csvPath(configuration->precalculatedReconnectPath) {
@@ -21,13 +55,14 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr NES::Spatial
     const NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {
     return std::make_shared<PreCalculatedReconnectSchedulePredictor>(configuration);
 }
+
 void NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::loadReconnectSimulationDataFromFile() {
     std::string csvLine;
     std::ifstream inputStream(csvPath);
     std::string parentIdString;
     std::string timeString;
     std::basic_string<char> delimiter = {','};
-    NES_DEBUG("Started csv location source at {}", startTime)
+    NES_DEBUG("Started precalculated reconnect predictor at {}", startTime)
 
     while (std::getline(inputStream, csvLine)) {
         std::stringstream stringStream(csvLine);
@@ -73,7 +108,7 @@ void NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredict
     }
     if (reconnects.empty()) {
         std::string errorString = std::string("No data in CSV, cannot start location provider");
-        NES_ERROR("LocationProviderCSV: {}", errorString);
+        NES_ERROR("PrecalcuatedReconnectSchedulePredictor: {}", errorString);
         throw Spatial::Exception::LocationProviderException(errorString);
     }
     NES_DEBUG("read {} reconnects from csv", reconnects.size());

@@ -105,6 +105,8 @@ class ReconnectSchedulePredictor {
                                                           const DataTypes::Experimental::GeoLocation& parentLocation,
                                                           const S2PointIndex<uint64_t>& FieldNodeIndex,
                                                           bool isIndexUpdted);
+
+    virtual ~ReconnectSchedulePredictor();
 #endif
   private:
     /**

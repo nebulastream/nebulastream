@@ -48,9 +48,11 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::WorkerMobilityHandl
     coveredRadiusWithoutThreshold =
         S2Earth::MetersToAngle(nodeInfoDownloadRadius - mobilityConfiguration->nodeIndexUpdateThreshold.getValue());
     defaultCoverageRadiusAngle = S2Earth::MetersToAngle(mobilityConfiguration->defaultCoverageRadius.getValue());
+    reconnectPredictorType = mobilityConfiguration->reconnectPredictorType.getValue();
     switch (mobilityConfiguration->reconnectPredictorType) {
         case ReconnectPredictorType::LIVE: reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(mobilityConfiguration); break;
-        case ReconnectPredictorType::PRECALCULATED: reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(PreCalculatedReconnectSchedulePredictor(mobilityConfiguration)); break;
+        //case ReconnectPredictorType::PRECALCULATED: reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(PreCalculatedReconnectSchedulePredictor(mobilityConfiguration)); break;
+        case ReconnectPredictorType::PRECALCULATED: reconnectSchedulePredictor = PreCalculatedReconnectSchedulePredictor::create(mobilityConfiguration); break;
         case ReconnectPredictorType::INVALID: NES_THROW_RUNTIME_ERROR("Invalid reconnect predictor set");
     }
 #endif
@@ -124,8 +126,17 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoi
     const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,
     const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex,
     WorkerId currentParentId) {
-
     (void) reconnectSchedule;
+
+    if (reconnectPredictorType == ReconnectPredictorType::PRECALCULATED) {
+        auto reconnectPairOptional = std::dynamic_pointer_cast<PreCalculatedReconnectSchedulePredictor>(reconnectSchedulePredictor)->getReconnect(currentParentId);
+        if (reconnectPairOptional) {
+            auto [parentId, time] = reconnectPairOptional.value();
+            return ReconnectPoint(Spatial::DataTypes::Experimental::GeoLocation(), parentId, time);
+        }
+        return std::nullopt;
+    }
+
     auto closesNodeId = getClosestNodeId(currentOwnLocation, defaultCoverageRadiusAngle, neighbourWorkerSpatialIndex);
     if (!currentParentLocation.has_value()) {
         if (closesNodeId) {
