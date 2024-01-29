@@ -217,7 +217,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                 //auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
                 // Calculate the number of tuples read
-                uint64_t numCompleteTuplesRead = bytesRead / incomingTupleSize;
+                auto newTupleBytesRead = bytesRead - bytesToJoinWithLeftover;
+                uint64_t numCompleteTuplesRead = newTupleBytesRead / incomingTupleSize;
                 for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
                     auto index = i * incomingTupleSize + bytesToJoinWithLeftover;
                     auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
@@ -231,7 +232,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[writeIndex].processingTimestamp = getTimestamp();
                 }
 
-                leftoverByteCount = bytesRead % incomingTupleSize;
+                leftoverByteCount = newTupleBytesRead % incomingTupleSize;
                 auto processedBytes = numCompleteTuplesRead * incomingTupleSize;
                 for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
                     NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
