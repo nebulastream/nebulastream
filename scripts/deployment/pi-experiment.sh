@@ -18,15 +18,14 @@ run_experiment() {
         exit 1
     fi
 
-    # Sleep for half a minute
-    echo "Sleeping for half a min..."
-    sleep 30
+    echo "Sleeping for 2s..."
+    sleep 2
 
     # Send query to coordinator
     echo "Sending query on coordinator..."
     ansible-playbook pi-avg-query.yml
 
-    echo "Sleeping for 2 mins..."
+    echo "Sleeping for 5 mins..."
     sleep 300
 
     # Stop everything
@@ -35,7 +34,7 @@ run_experiment() {
 
     # Sleep for 6 seconds
     echo "Sleeping for 6 seconds..."
-    sleep 6
+    sleep 2
 
     echo "Experiment completed."
 }
