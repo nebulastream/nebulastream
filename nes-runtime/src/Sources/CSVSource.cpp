@@ -234,8 +234,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                 leftoverByteCount = newTupleBytesRead % incomingTupleSize;
                 auto processedBytes = numCompleteTuplesRead * incomingTupleSize;
-                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
+                if (leftoverByteCount != 0) {
                     NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
+                }
+                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
                     leftOverBytes[i] = incomingBuffer[i + processedBytes];
                 }
                 auto tupleKept = leftoverByteCount == 0 ? 0 : 1;
