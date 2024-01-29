@@ -19,7 +19,7 @@
 
 - name: Start Worker
   shell: |
-    nohup taskset -c 1-3 /home/ubuntu/git/nebulastream/build/nes-core/{{ worker_bin_name }} --configPath=/tmp/worker-conf-chameleon.yaml > /home/ubuntu/dimitrios/{{ worker_bin_name }}.log 2>&1 & 
+    nohup taskset -c 1-2 /home/ubuntu/git/nebulastream/build/nes-core/{{ worker_bin_name }} --configPath=/tmp/worker-conf-chameleon.yaml > /home/ubuntu/dimitrios/{{ worker_bin_name }}.log 2>&1 & 
     echo $! > /home/ubuntu/dimitrios/{{ worker_bin_name }}.pid
 
 - name: Read PID from file
@@ -65,4 +65,4 @@
 
 - name: Start dool monitoring
   shell: |
-    nohup taskset -c 0 /home/ubuntu/git/{{ dool_name }}/{{ dool_name }} -tTcm -C 1,2,3 --output /home/ubuntu/dimitrios/worker_{{ local_worker_ip }}_{{ current_datetime }}-sysStat.csv > /dev/null 2>&1 &
+    nohup taskset -c 0 /home/ubuntu/git/{{ dool_name }}/{{ dool_name }} -tTcm -C 1,2 --output /home/ubuntu/dimitrios/worker_{{ local_worker_ip }}_{{ current_datetime }}-sysStat.csv > /dev/null 2>&1 &
