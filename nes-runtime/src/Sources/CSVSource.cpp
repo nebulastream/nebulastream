@@ -199,7 +199,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto additionalTupleRead = 0;
                 if (leftoverByteCount != 0) {
                     bytesToJoinWithLeftover = incomingTupleSize - leftoverByteCount;
-                    NES_INFO("Copying {} bytes of to complete leftover tuple", bytesToJoinWithLeftover)
+                    NES_INFO("Copying {} bytes to complete leftover tuple", bytesToJoinWithLeftover)
                     for (uint16_t i = leftoverByteCount; i < incomingTupleSize; ++i) {
                         leftOverBytes[i] = incomingBuffer[i];
                     }
@@ -224,10 +224,11 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
                     auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
                     //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
-                    records[i].id = *id;
-                    records[i].value = *seqenceNr;
-                    records[i].ingestionTimestamp = *ingestionTime;
-                    records[i].processingTimestamp = getTimestamp();
+                    auto writeIndex = i + additionalTupleRead;
+                    records[writeIndex].id = *id;
+                    records[writeIndex].value = *seqenceNr;
+                    records[writeIndex].ingestionTimestamp = *ingestionTime;
+                    records[writeIndex].processingTimestamp = getTimestamp();
                 }
 
                 leftoverByteCount = bytesRead % incomingTupleSize;
