@@ -211,7 +211,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[0].value = *seqenceNr;
                     records[0].ingestionTimestamp = *ingestionTime;
                     records[0].processingTimestamp = getTimestamp();
-                    std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+                    //std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
                 }
 
                 //auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
@@ -222,7 +222,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
                     auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
                     auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
-                    std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+                    //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
                     records[i].id = *id;
                     records[i].value = *seqenceNr;
                     records[i].ingestionTimestamp = *ingestionTime;
