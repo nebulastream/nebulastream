@@ -185,6 +185,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     return std::nullopt;
                 }
 
+                NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
+
                 // Calculate the number of tuples read
                 int numTuplesRead = bytesRead / tupleSize;
                 for (int i = 0; i < numTuplesRead; ++i) {
