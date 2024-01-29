@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.30](https://github.com/nebulastream/nebulastream/tree/v0.6.30) (2024-01-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.29...v0.6.30)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Enable NEMO placement for JOIN operator [\#4217](https://github.com/nebulastream/nebulastream/issues/4217)
+
 ## [v0.6.29](https://github.com/nebulastream/nebulastream/tree/v0.6.29) (2024-01-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.28...v0.6.29)
@@ -1043,7 +1051,7 @@
 
 ### Bug Fixes 🐛
 
-- \[BUG\] NemoPlacemenTest and DistributedMatrixJoinIntegrationTest [\#4149](https://github.com/nebulastream/nebulastream/issues/4149)
+- \[BUG\] NemoPlacemenTest and NemoIntegrationTest [\#4149](https://github.com/nebulastream/nebulastream/issues/4149)
 
 ### Miscellaneous Issues ✌️
 
@@ -5578,15 +5586,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
-
-## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
 
 ## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+
+## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
 
 #### Complex Event Processing
 
