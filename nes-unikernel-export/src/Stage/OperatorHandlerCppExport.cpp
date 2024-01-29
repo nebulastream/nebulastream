@@ -14,9 +14,9 @@
 
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <OperatorHandlerTracer.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
-#include <OperatorHandlerTracer.hpp>
 #include <Stage/OperatorHandlerCppExport.hpp>
 #include <Stage/QueryPipeliner.hpp>
 #include <algorithm>
@@ -139,15 +139,17 @@ void OperatorHandlerCppExporter::HandlerExport::generateParameter(
 void OperatorHandlerCppExporter::HandlerExport::generateHandlerInstantiation(
     size_t index,
     const Runtime::Unikernel::OperatorHandlerDescriptor& handler) {
-    ss << "static " << handler.className << " handler" << index << "(";
+    ss << "static " << handler.className << " handler" << index;
     if (!handler.parameters.empty()) {
+        ss << "(";
         generateParameter(handler.parameters[0]);
         for (const auto& parameter : handler.parameters | std::ranges::views::drop(1)) {
             ss << ", ";
             generateParameter(parameter);
         }
+        ss << ")";
     }
-    ss << ");\n";
+    ss << ";\n";
 }
 void OperatorHandlerCppExporter::HandlerExport::generateLocalHandlerFunction(const Stage& stage) {
     ss << "template<>" << std::endl;
