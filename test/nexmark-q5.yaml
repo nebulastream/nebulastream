@@ -1,14 +1,35 @@
 query: |
   Query::from("bid")
+  .window(
+     SlidingWindow::of(
+         EventTime(Attribute("timestamp")),
+         Seconds(10),
+         Seconds(2)
+     )
+  )
+   .byKey(Attribute("auctionId"))
+   .apply(Count()->as(Attribute("num")))
+  .joinWith(
+  Query::from("bid")
     .window(
         SlidingWindow::of(
             EventTime(Attribute("timestamp")),
-            Seconds(2),
-            Seconds(1)
+            Seconds(10),
+            Seconds(2)
         )
     )
       .byKey(Attribute("auctionId"))
       .apply(Count()->as(Attribute("num")))
+  .window(
+        TumblingWindow::of(
+            EventTime(Attribute("start")),
+            Seconds(10)
+        )
+  ).apply(Max(Attribute("num"))->as(Attribute("max"))))
+  .where(Attribute("start")).equalsTo(Attribute("start"))
+  .window(SlidingWindow::of(EventTime(Attribute("bid$start")), Seconds(10), Seconds(2)))
+  .filter(Attribute("num") >= Attribute("max"))
+  .project(Attribute("bid$auctionId"), Attribute("bid$num"))
     .sink(NullOutputSinkDescriptor::create());
 topology:
   sink:
@@ -27,6 +48,17 @@ topology:
             ip: 127.0.0.1
             port: 8091
           schema:
-            type: NEXMARK_BID
+            type: MANUAL
+            fields:
+              - name: creationTS
+                type: UINT64
+              - name: auctionId
+                type: UINT64
+              - name: bidderId
+                type: UINT64
+              - name: timestamp
+                type: UINT64
+              - name: price
+                type: FLOAT64
       links:
         - sink
