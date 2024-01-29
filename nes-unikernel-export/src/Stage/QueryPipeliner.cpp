@@ -31,8 +31,7 @@ Stage Stage::from(
     IntermediateStage&& im,
     const std::unordered_map<Runtime::Unikernel::GlobalOperatorHandlerIndex, Runtime::Execution::OperatorHandlerPtr>& handlerById,
     const std::unordered_map<Runtime::Unikernel::GlobalOperatorHandlerIndex, size_t>& uniqueOperatorHandlers,
-    const std::unordered_map<Runtime::Unikernel::GlobalOperatorHandlerIndex, SharedOperatorHandlerIndex>& sharedByGlobal
-    ) {
+    const std::unordered_map<Runtime::Unikernel::GlobalOperatorHandlerIndex, SharedOperatorHandlerIndex>& sharedByGlobal) {
 
     std::vector<std::pair<LocalOperatorHandlerIndex, Runtime::Unikernel::OperatorHandlerDescriptor>> descriptors;
     std::vector<std::pair<LocalOperatorHandlerIndex, Runtime::Unikernel::GlobalOperatorHandlerIndex>> sharedHandlersIndices;
@@ -60,7 +59,6 @@ QueryCompilation::QueryCompilerOptionsPtr QueryPipeliner::createOptions() {
     return queryCompilerOptions;
 }
 IntermediateStage QueryPipeliner::lowerToNautilus(const QueryCompilation::OperatorPipelinePtr& pipeline) {
-    Runtime::Unikernel::OperatorHandlerTracer::reset();
     const auto lowerToNautilus = std::make_shared<QueryCompilation::LowerPhysicalToNautilusOperators>(options);
     std::optional<PipelineId> successor = std::nullopt;
     if (!pipeline->getSuccessors().empty()) {
@@ -82,6 +80,13 @@ IntermediateStage QueryPipeliner::lowerToNautilus(const QueryCompilation::Operat
                         ->getRootOperators()[0]
                         ->as<QueryCompilation::NautilusPipelineOperator>()
                         ->getOperatorHandlers();
+    if (!handlers.empty()) {
+        std::stringstream ss;
+        for (const auto& handler : handlers) {
+            ss << "\t" << handler->getDescriptor().className << "(" << handler->getDescriptor().handlerId << ")\n";
+        }
+        NES_INFO("OperatorHandler Tracer: Stage {} uses:\n{}", pipeline->getPipelineId(), ss.str());
+    }
     std::ranges::for_each(handlers, [this, &handlerIds](const auto& handler) {
         handlerIndexCounter[handler->getDescriptor().handlerId] += 1;
         handlerByHandlerIndex[handler->getDescriptor().handlerId] = handler;
@@ -93,6 +98,7 @@ IntermediateStage QueryPipeliner::lowerToNautilus(const QueryCompilation::Operat
 QueryPipeliner::Result QueryPipeliner::lowerQuery(const QueryPlanPtr& unikernelWorkerQueryPlan) {
     const auto phaseFactory = QueryCompilation::Phases::ExportPhaseFactory::create();
 
+    Runtime::Unikernel::OperatorHandlerTracer::reset();
     NES_INFO("Initial Unikernel Query Plan:\n{}", unikernelWorkerQueryPlan->toString());
     const auto logicalPlan = phaseFactory->createLowerLogicalQueryPlanPhase(options)->apply(unikernelWorkerQueryPlan);
     NES_INFO("Logical Unikernel Query Plan:\n{}", logicalPlan->toString());
@@ -110,11 +116,12 @@ QueryPipeliner::Result QueryPipeliner::lowerQuery(const QueryPlanPtr& unikernelW
     auto [sharedHandler, sharedByGlobal] = sharedHandlers();
 
     std::vector<Stage> stages;
-    std::ranges::transform(std::move(intermediateStages),
-                           std::back_inserter(stages),
-                           [this, &sharedByGlobal](IntermediateStage& intermediateStage) {
-                               return Stage::from(std::move(intermediateStage), handlerByHandlerIndex, handlerIndexCounter, sharedByGlobal);
-                           });
+    std::ranges::transform(
+        std::move(intermediateStages),
+        std::back_inserter(stages),
+        [this, &sharedByGlobal](IntermediateStage& intermediateStage) {
+            return Stage::from(std::move(intermediateStage), handlerByHandlerIndex, handlerIndexCounter, sharedByGlobal);
+        });
 
     return {std::move(sharedHandler), std::move(stages)};
 }
@@ -128,6 +135,8 @@ QueryPipeliner::sharedHandlers() {
 
     for (const auto& [globalIndex, users] : handlerIndexCounter) {
         if (users > 1) {
+            NES_INFO("OperatorHandler Tracer: Shared Handler {}",
+                     handlerByHandlerIndex.at(globalIndex)->getDescriptor().className);
             sharedHandlers[currentSharedHandlerIndex] = handlerByHandlerIndex.at(globalIndex)->getDescriptor();
             sharedByGlobal[globalIndex] = currentSharedHandlerIndex;
             currentSharedHandlerIndex++;

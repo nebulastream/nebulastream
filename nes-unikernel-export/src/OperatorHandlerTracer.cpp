@@ -63,6 +63,7 @@ GlobalOperatorHandlerIndex OperatorHandlerTracer::currentHandlerId = 0;
 
 void OperatorHandlerTracer::reset() {
     delete traceContext;
+    NES_INFO("OperatorHandler Tracer: Reset");
     currentHandlerId = 0;
     traceContext = new OperatorHandlerTracer();
 }
@@ -76,6 +77,7 @@ OperatorHandlerDescriptor::OperatorHandlerDescriptor(std::string className,
                                                      std::vector<OperatorHandlerParameterDescriptor> parameters)
     : className(std::move(className)), headerPath(std::move(headerPath)), size(classSize), alignment(alignment),
       parameters(std::move(parameters)) {
+    NES_INFO("OperatorHandler Tracer: Created Handler {}", OperatorHandlerTracer::currentHandlerId);
     handlerId = OperatorHandlerTracer::currentHandlerId++;
 }
 
