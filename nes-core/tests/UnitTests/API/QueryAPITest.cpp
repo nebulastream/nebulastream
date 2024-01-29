@@ -435,4 +435,23 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
     EXPECT_EQ(sinkOperators2.size(), 1U);
 }
 
+TEST_F(QueryAPITest, NexMarkQ5) {
+    Query::from("bid")
+        .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(2)))
+        .byKey(Attribute("auctionId"))
+        .apply(Count()->as(Attribute("num")))
+        .joinWith(Query::from("bid")
+                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(2)))
+                      .byKey(Attribute("auctionId"))
+                      .apply(Count()->as(Attribute("num")))
+                      .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(10)))
+                      .apply(Max(Attribute("num"))->as(Attribute("max"))))
+        .where(Attribute("start"))
+        .equalsTo(Attribute("start"))
+        .window(SlidingWindow::of(EventTime(Attribute("bid$start")), Seconds(10), Seconds(2)))
+        .filter(Attribute("num") >= Attribute("max"))
+        .project(Attribute("bid$auctionId"), Attribute("bid$num"))
+        .sink(NullOutputSinkDescriptor::create());
+}
+
 }// namespace NES
