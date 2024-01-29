@@ -111,6 +111,7 @@ class CSVSource : public DataSource {
     bool addTimeStampsAndReadOnStartup;
     uint64_t port;
     int sockfd;
+    std::vector<uint64_t> incomingBuffer;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

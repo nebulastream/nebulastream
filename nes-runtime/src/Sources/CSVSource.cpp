@@ -87,6 +87,7 @@ CSVSource::CSVSource(SchemaPtr schema,
             }
 
         }
+        incomingBuffer.reserve(bufferManager->getBufferSize());
 
         return;
     }
@@ -175,8 +176,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         if (numberOfTuplesToProducePerBuffer == 0) {
             if (port != 0) {
 
-                std::vector<uint64_t> incomingBuffer;
-                incomingBuffer.reserve(tupleSize * generatedTuplesThisPass);
+                //incomingBuffer.reserve(tupleSize * generatedTuplesThisPass);
+                NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
 
 
                 // Read data from the socket
@@ -185,7 +186,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     return std::nullopt;
                 }
 
-                NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
+                //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
 
                 // Calculate the number of tuples read
                 int numTuplesRead = bytesRead / tupleSize;
@@ -200,6 +201,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[i].ingestionTimestamp = ingestionTime;
                     records[i].processingTimestamp = getTimestamp();
                 }
+//                auto incompleteTupleBytes = bytesRead % tupleSize;
+//                for (int i = numTuplesRead * 3; i < bytesRead % tupleSize; ++i) {
+//
+//                }
                 buffer.setNumberOfTuples(numTuplesRead);
 
                 //todo: adjust schema
