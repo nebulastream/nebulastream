@@ -64,8 +64,8 @@ FileSink::FileSink(SinkFormatPtr format,
 
         //todo: use this in case domain socket should be used instead of tcp
         //    // Create a Unix domain socket
-        //    sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-        //    if (sockfd == -1) {
+        //    clientSockFd = socket(AF_UNIX, SOCK_STREAM, 0);
+        //    if (clientSockFd == -1) {
         //        perror("socket");
         //        return;
         //    }
@@ -77,9 +77,9 @@ FileSink::FileSink(SinkFormatPtr format,
         //    strncpy(addr.sun_path, filePath.c_str(), sizeof(addr.sun_path) - 1);
         //
         //    // Connect to the Unix domain socket
-        //    if (connect(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        //    if (connect(clientSockFd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         //        perror("connect");
-        //        close(sockfd);
+        //        close(clientSockFd);
         //        return;
         //    }
 

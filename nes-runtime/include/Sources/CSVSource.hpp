@@ -109,6 +109,8 @@ class CSVSource : public DataSource {
     std::vector<std::string> readLines;
     uint64_t nextLinesIndex = 0;
     bool addTimeStampsAndReadOnStartup;
+    uint64_t port;
+    int sockfd;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

@@ -71,7 +71,7 @@ class TCPSourceIntegrationTest : public Testing::BaseIntegrationTest {
         uint8_t counter = 0;
         while (sockfd == 0 && counter < 10) {
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
-            NES_TRACE("Retrieved sockfd: {} on try: {}", sockfd, std::to_string(counter));
+            NES_TRACE("Retrieved clientSockFd: {} on try: {}", sockfd, std::to_string(counter));
             counter++;
         }
         if (sockfd == 0) {

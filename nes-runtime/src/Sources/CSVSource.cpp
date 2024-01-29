@@ -22,10 +22,13 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
+#include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
+#include <netinet/in.h>
 #include <sstream>
 #include <string>
+#include <sys/socket.h>
 #include <utility>
 #include <vector>
 
@@ -60,6 +63,31 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     if (numberOfTuplesToProducePerBuffer == 0 && addTimestampsAndReadOnStartup) {
+        port = std::stol(filePath);
+        // Create a TCP socket
+        if (port != 0) {
+            // Create a TCP socket
+            sockfd = socket(AF_INET, SOCK_STREAM, 0);
+            if (sockfd == -1) {
+                perror("socket");
+                return;
+            }
+
+            // Specify the server address and port
+            struct sockaddr_in server_addr;
+            server_addr.sin_family = AF_INET;
+            server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Server IP address
+            server_addr.sin_port = htons(port);
+
+            // Connect to the server
+            if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+                perror("connect");
+                ::close(sockfd);
+                return;
+            }
+
+        }
+
         return;
     }
     struct Deleter {
@@ -133,21 +161,53 @@ CSVSource::CSVSource(SchemaPtr schema,
 struct Record {
     uint64_t id;
     uint64_t value;
-    uint64_t timestamp;
+    uint64_t ingestionTimestamp;
+    uint64_t processingTimestamp;
 };
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         uint64_t generatedTuplesThisPass = 0;
+        generatedTuplesThisPass = buffer.getCapacity();
+        auto* records = buffer.getBuffer().getBuffer<Record>();
+        //if port was set, use tcp as input
         if (numberOfTuplesToProducePerBuffer == 0) {
-            uint64_t valCount = 0;
-            generatedTuplesThisPass = buffer.getCapacity();
-            auto* records = buffer.getBuffer().getBuffer<Record>();
-            for (auto u = 0u; u < generatedTuplesThisPass; ++u) {
-                records[u].id = operatorId;
-                records[u].value = valCount + u;
-                records[u].timestamp = getTimestamp();
+            if (port != 0) {
+
+                std::vector<uint64_t> incomingBuffer;
+                incomingBuffer.reserve(tupleSize * generatedTuplesThisPass);
+
+
+                // Read data from the socket
+                int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * tupleSize);
+                if (bytesRead <= 0) {
+                    return std::nullopt;
+                }
+
+                // Calculate the number of tuples read
+                int numTuplesRead = bytesRead / tupleSize;
+                for (int i = 0; i < numTuplesRead; ++i) {
+                    auto index = i * 3;
+                    auto id = incomingBuffer[index];
+                    auto seqenceNr = incomingBuffer[index+1];
+                    auto ingestionTime = incomingBuffer[index+2];
+                    std::cout << "id: " << id << " seq: " << seqenceNr << " time: " << ingestionTime << std::endl;
+                    records[i].id = id;
+                    records[i].value = seqenceNr;
+                    records[i].ingestionTimestamp = ingestionTime;
+                    records[i].processingTimestamp = getTimestamp();
+                }
+
+                //todo: adjust schema
+            } else {
+                uint64_t valCount = 0;
+                for (auto u = 0u; u < generatedTuplesThisPass; ++u) {
+                    records[u].id = operatorId;
+                    records[u].value = valCount + u;
+                    records[u].ingestionTimestamp = getTimestamp();
+                    records[u].processingTimestamp = 0;
+                }
             }
             buffer.setNumberOfTuples(generatedTuplesThisPass);
             generatedTuples += generatedTuplesThisPass;

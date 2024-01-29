@@ -1230,7 +1230,8 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
     auto schema =
-        Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("input_timestamp", BasicType::UINT64));
+        Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("ingestion_timestamp", BasicType::UINT64))->addField(createField("processing_timestamp"
+                                                                                                                                                                                                                   "", BasicType::UINT64));
     crd->getSourceCatalog()->addLogicalSource("values", schema);
 
     auto topologyJsonPath = "/home/x/rustProjects/nes_simulation_starter_rs/stuff/3_layer_topology.json";
@@ -1278,7 +1279,8 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
 
     auto stype = CSVSourceType::create("values", "values");
     //stype->setFilePath("/home/x/sequence2.csv");
-    stype->setFilePath("/home/x/sequence3.csv");
+    //stype->setFilePath("/home/x/sequence3.csv");
+    stype->setFilePath("54321");
     stype->setNumberOfBuffersToProduce(1000);
     stype->setNumberOfTuplesToProducePerBuffer(0);
     stype->setGatheringInterval(1000);
