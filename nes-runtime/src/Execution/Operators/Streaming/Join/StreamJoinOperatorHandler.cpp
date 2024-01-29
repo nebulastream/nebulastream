@@ -95,7 +95,7 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
             }
 
             slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
-            NES_INFO("Emitting all slices for window {}", windowInfo.toString());
+            NES_DEBUG("Emitting all slices for window {}", windowInfo.toString());
 
             toBeEmitted.emplace_back(windowInfo, std::move(slicesAndStateForWindow.slices));
         }

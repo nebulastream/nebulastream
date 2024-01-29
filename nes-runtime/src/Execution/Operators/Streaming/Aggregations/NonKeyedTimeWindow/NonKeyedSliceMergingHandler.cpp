@@ -26,7 +26,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler() {}
+NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler() : entrySize(0), defaultState(nullptr) {}
 
 void NonKeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
