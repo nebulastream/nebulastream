@@ -234,7 +234,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
                     leftOverBytes[i] = incomingBuffer[i + processedBytes];
                 }
-                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead);
+                auto tupleKept = leftoverByteCount == 0 ? 0 : 1;
+                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead - tupleKept);
 
                 //todo: adjust schema
             } else {
