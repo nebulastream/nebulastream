@@ -11,6 +11,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
+
 #ifndef NES_UNIKERNELSOURCE_HPP
 #define NES_UNIKERNELSOURCE_HPP
 
@@ -25,6 +26,7 @@ class UnikernelSourceImpl {
   public:
     constexpr static size_t Id = Config::OperatorId;
     using DataSourceType = DataSource<Config, typename Config::SourceType>;
+    constexpr static size_t NumberOfWorkerThreads = DataSourceType::NumberOfWorkerThreads;
     static DataSourceType source;
 
     static void setup() { source.start(); }
@@ -48,7 +50,7 @@ class UnikernelSource {
 
 template<typename Config, typename Prev>
 typename UnikernelSourceImpl<Config, Prev>::DataSourceType
-    UnikernelSourceImpl<Config, Prev>::source(UnikernelPipelineExecutionContext::create<Prev>());
+    UnikernelSourceImpl<Config, Prev>::source(UnikernelPipelineExecutionContext::create<Prev, NumberOfWorkerThreads>());
 }// namespace NES::Unikernel
 
 #endif//NES_UNIKERNELSOURCE_HPP

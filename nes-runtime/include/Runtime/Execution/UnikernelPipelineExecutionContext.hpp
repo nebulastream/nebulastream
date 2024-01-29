@@ -26,22 +26,30 @@ class UnikernelPipelineExecutionContext {
     std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy = nullptr;
     size_t currentStageId;
     size_t nextStageId;
+    size_t numberOfWorkerThreads;
     UnikernelPipelineExecutionContext(std::function<void(NES::Runtime::TupleBuffer&)> emitProxy,
                                       std::function<void(size_t stageId, Runtime::QueryTerminationType type)> stop,
                                       std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy,
                                       size_t currentStageId,
-                                      size_t nextStageId)
+                                      size_t nextStageId,
+                                      size_t numberOfWorkerThreads)
         : emitProxy(std::move(emitProxy)), stopProxy(std::move(stop)),
-          getOperatorHandlerProxy(std::move(getOperatorHandlerProxy)), currentStageId(currentStageId), nextStageId(nextStageId) {}
+          getOperatorHandlerProxy(std::move(getOperatorHandlerProxy)), currentStageId(currentStageId), nextStageId(nextStageId),
+          numberOfWorkerThreads(numberOfWorkerThreads) {}
 
   public:
-    template<typename T, typename Stage>
+    template<typename T, typename Stage, size_t NumberOfWorkerThreads>
     static UnikernelPipelineExecutionContext create() {
-        return UnikernelPipelineExecutionContext(&T::execute, &T::stop, &Stage::getOperatorHandler, Stage::StageId, T::StageId);
+        return UnikernelPipelineExecutionContext(&T::execute,
+                                                 &T::stop,
+                                                 &Stage::getOperatorHandler,
+                                                 Stage::StageId,
+                                                 T::StageId,
+                                                 NumberOfWorkerThreads);
     }
-    template<IsEmitablePipelineStage T>
+    template<IsEmitablePipelineStage T, size_t NumberOfWorkerThreads>
     static UnikernelPipelineExecutionContext create() {
-        return UnikernelPipelineExecutionContext(&T::execute, &T::stop, nullptr, 0, T::StageId);
+        return UnikernelPipelineExecutionContext(&T::execute, &T::stop, nullptr, 0, T::StageId, NumberOfWorkerThreads);
     }
     [[nodiscard]] NES::Runtime::Execution::OperatorHandler* getOperatorHandler(int index) const {
         NES_TRACE("getOperatorHandler for {}", currentStageId);
@@ -107,7 +115,7 @@ class UnikernelPipelineExecutionContext {
     }
 
     NES::Runtime::BufferManagerPtr getBufferManager() { return TheBufferManager; }
-    size_t getNumberOfWorkerThreads() { return 1; }
+    size_t getNumberOfWorkerThreads() { return numberOfWorkerThreads; }
 };
 }// namespace NES::Unikernel
 #endif//NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_HPP

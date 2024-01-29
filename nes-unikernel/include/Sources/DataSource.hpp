@@ -89,6 +89,8 @@ class DataSource {
 
     using BufferType = NES::Unikernel::SchemaBuffer<typename Config::Schema, 8192>;
 
+    constexpr static size_t NumberOfWorkerThreads = 1;
+
     /**
      * @brief method to start the source.
      * 1.) start new thread with runningRoutine
@@ -134,9 +136,7 @@ class DataSource {
         static_assert(Config::OperatorId != 0, "The id of the source is not set properly");
         setThreadName(fmt::format("DataSrc-{}", Config::OperatorId).c_str());
 
-        NES_DEBUG("DataSource {}: Running Data Source of type={} ",
-                  Config::OperatorId,
-                  magic_enum::enum_name(Impl::SourceType));
+        NES_DEBUG("DataSource {}: Running Data Source of type={} ", Config::OperatorId, magic_enum::enum_name(Impl::SourceType));
 
         if constexpr (!BufferLimitingConfig<Config>) {
             NES_DEBUG(
