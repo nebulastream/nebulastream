@@ -212,6 +212,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[0].value = *seqenceNr;
                     records[0].ingestionTimestamp = *ingestionTime;
                     records[0].processingTimestamp = getTimestamp();
+                    totalTupleCount++;
                     //std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
                 }
 
@@ -230,6 +231,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[writeIndex].value = *seqenceNr;
                     records[writeIndex].ingestionTimestamp = *ingestionTime;
                     records[writeIndex].processingTimestamp = getTimestamp();
+                    totalTupleCount++;
                 }
 
                 leftoverByteCount = newTupleBytesRead % incomingTupleSize;
@@ -242,6 +244,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 }
                 auto tupleKept = leftoverByteCount == 0 ? 0 : 1;
                 buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead - tupleKept);
+                NES_INFO("TotalTupleCount {}", totalTupleCount)
 
                 //todo: adjust schema
             } else {

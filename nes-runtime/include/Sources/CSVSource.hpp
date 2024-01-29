@@ -114,6 +114,7 @@ class CSVSource : public DataSource {
     std::vector<uint8_t> incomingBuffer;
     std::vector<uint8_t> leftOverBytes;
     uint16_t leftoverByteCount = 0;
+    uint64_t totalTupleCount = 0;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
