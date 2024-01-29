@@ -17,9 +17,9 @@
 #include <span>
 class MMapCircularBuffer {
   public:
-    explicit CircularBuffer(size_t capacity);
+    explicit MMapCircularBuffer(size_t capacity);
 
-    ~CircularBuffer();
+    ~MMapCircularBuffer();
 
     std::span<char> reserveDataForWrite(size_t requested_size);
 
