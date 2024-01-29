@@ -21,7 +21,7 @@ class CSVDataGenerator : public NES::Benchmark::DataGeneration::DataGenerator {
     NES::Configurations::SchemaTypePtr getSchemaType() override;
     std::string getName() override;
     std::string toString() override;
-    static std::unique_ptr<CSVDataGenerator> create(const char* filename, bool repeat = false);
+    static std::unique_ptr<CSVDataGenerator> create(const char* filename, bool repeat = false, NES::SchemaPtr = nullptr);
     bool parseLineIntoBuffer(const std::string& line, NES::Runtime::MemoryLayouts::DynamicTuple tuple);
 };
 
