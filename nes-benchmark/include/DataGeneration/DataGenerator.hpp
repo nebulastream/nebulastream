@@ -117,6 +117,7 @@ class DataGenerator {
      * @return TupleBuffer
      */
     Runtime::TupleBuffer allocateBuffer();
+    virtual bool hasTimestampField() {return false;}
     virtual Runtime::MemoryLayouts::DynamicField getTimestampField(Runtime::MemoryLayouts::DynamicTuple /*tuple*/) {
         NES_NOT_IMPLEMENTED();
     }

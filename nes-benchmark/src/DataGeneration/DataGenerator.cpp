@@ -98,6 +98,11 @@ void DataGenerator::insertTimestamps(std::vector<NES::Runtime::TupleBuffer>& buf
                                      size_t stepSize,
                                      uint8_t stepChanceInPercent,
                                      bool allowPartialSteps) {
+    if (!hasTimestampField()) {
+        NES_WARNING("{} does not support timestamps", getName());
+        return;
+    }
+
     NES_ASSERT(stepChanceInPercent <= 100, "Step chance required to be less or equal to 100");
 
     size_t currentTimestamp = startingTimestamp;
