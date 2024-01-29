@@ -176,8 +176,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         if (numberOfTuplesToProducePerBuffer == 0) {
             if (port != 0) {
 
-                //incomingBuffer.reserve(tupleSize * generatedTuplesThisPass);
-                NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
+                //todo: move to beginning
+                incomingBuffer.reserve(tupleSize * generatedTuplesThisPass);
+                leftOverBytes.reserve(tupleSize);
+                //NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
 
 
                 // Read data from the socket
@@ -188,23 +190,47 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                 //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
 
+                auto bytesToJoinWithLeftover = tupleSize - leftoverByteCount;
+                for (uint16_t i = leftoverByteCount; i < tupleSize; ++i) {
+                    leftOverBytes[i] = incomingBuffer[i];
+                }
+
+                //todo: do not hardcode
+                auto valueSize = sizeof(uint64_t);
+
+                uint64_t i = 0;
+                if (leftoverByteCount != 0) {
+                    i = tupleSize;
+                    auto id = reinterpret_cast<uint64_t*>(&leftOverBytes[0]);
+                    auto seqenceNr = reinterpret_cast<uint64_t*>(&leftOverBytes[valueSize]);
+                    auto ingestionTime = reinterpret_cast<uint64_t*>(&leftOverBytes[2 * valueSize]);
+                    records[0].id = *id;
+                    records[0].value = *seqenceNr;
+                    records[0].ingestionTimestamp = *ingestionTime;
+                    records[0].processingTimestamp = getTimestamp();
+                    std::cout << "Leftover: id: " << id << " seq: " << seqenceNr << " time: " << ingestionTime << std::endl;
+                }
+
+                auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
                 // Calculate the number of tuples read
-                int numTuplesRead = bytesRead / tupleSize;
-                for (int i = 0; i < numTuplesRead; ++i) {
-                    auto index = i * 3;
-                    auto id = incomingBuffer[index];
-                    auto seqenceNr = incomingBuffer[index+1];
-                    auto ingestionTime = incomingBuffer[index+2];
+                uint64_t numTuplesRead = sizeOfCompleteTuplesRead / tupleSize;
+                for (; i < numTuplesRead; ++i) {
+                    auto index = i * tupleSize + bytesToJoinWithLeftover;
+                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
+                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
+                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
                     std::cout << "id: " << id << " seq: " << seqenceNr << " time: " << ingestionTime << std::endl;
-                    records[i].id = id;
-                    records[i].value = seqenceNr;
-                    records[i].ingestionTimestamp = ingestionTime;
+                    records[i].id = *id;
+                    records[i].value = *seqenceNr;
+                    records[i].ingestionTimestamp = *ingestionTime;
                     records[i].processingTimestamp = getTimestamp();
                 }
-//                auto incompleteTupleBytes = bytesRead % tupleSize;
-//                for (int i = numTuplesRead * 3; i < bytesRead % tupleSize; ++i) {
-//
-//                }
+
+                leftoverByteCount = bytesRead % tupleSize;
+                auto processedBytes =  numTuplesRead * tupleSize;
+                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
+                    leftOverBytes[i] = incomingBuffer[i + processedBytes];
+                }
                 buffer.setNumberOfTuples(numTuplesRead);
 
                 //todo: adjust schema
