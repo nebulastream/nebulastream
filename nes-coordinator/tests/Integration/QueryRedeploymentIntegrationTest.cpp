@@ -1123,6 +1123,7 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
         wrkConf->mobilityConfiguration.locationProviderConfig.setValue(configFile.path());
         wrkConf->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
         wrkConf->physicalSourceTypes.add(stype);
+        wrkConf->numberOfSlots.setValue(1);
         //wrkConf->locationCoordinates.setValue({elem.second[0], elem.second[1]});
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         //fieldNodes[elem.first] = wrk;

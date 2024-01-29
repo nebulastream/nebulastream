@@ -17,6 +17,7 @@
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Mobility/ReconnectSchedulePredictors/PreCalculatedReconnectSchedulePredictor.hpp>
 #include <Mobility/WorkerMobilityHandler.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
@@ -47,7 +48,11 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::WorkerMobilityHandl
     coveredRadiusWithoutThreshold =
         S2Earth::MetersToAngle(nodeInfoDownloadRadius - mobilityConfiguration->nodeIndexUpdateThreshold.getValue());
     defaultCoverageRadiusAngle = S2Earth::MetersToAngle(mobilityConfiguration->defaultCoverageRadius.getValue());
-    reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(mobilityConfiguration);
+    switch (mobilityConfiguration->reconnectPredictorType) {
+        case ReconnectPredictorType::LIVE: reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(mobilityConfiguration); break;
+        case ReconnectPredictorType::PRECALCULATED: reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(PreCalculatedReconnectSchedulePredictor(mobilityConfiguration)); break;
+        case ReconnectPredictorType::INVALID: NES_THROW_RUNTIME_ERROR("Invalid reconnect predictor set");
+    }
 #endif
 }
 

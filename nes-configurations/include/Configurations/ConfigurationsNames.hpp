@@ -141,7 +141,9 @@ const std::string SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG = "sendDevicePosi
 const std::string PUSH_DEVICE_LOCATION_UPDATES_CONFIG = "pushPositionUpdates";
 const std::string SEND_LOCATION_UPDATE_INTERVAL_CONFIG = "mobilityHandlerUpdateInterval";
 const std::string LOCATION_PROVIDER_CONFIG = "locationProviderConfig";
+const std::string PRECALCULATED_RECONNECTS_PATH = "precalculatedReconnectPath";
 const std::string LOCATION_PROVIDER_TYPE_CONFIG = "locationProviderType";
+const std::string RECONNECT_PREDICTOR_TYPE_CONFIG = "ReconnectPredictoryType";
 const std::string LOCATION_SIMULATED_START_TIME_CONFIG = "locationProviderSimulatedStartTime";
 
 //Different Source Types supported in NES
