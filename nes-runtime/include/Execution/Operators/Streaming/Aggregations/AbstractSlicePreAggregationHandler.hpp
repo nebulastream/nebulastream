@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_
 #include <Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <atomic>
 #include <map>
 #include <tuple>
