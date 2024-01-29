@@ -198,6 +198,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[i].ingestionTimestamp = ingestionTime;
                     records[i].processingTimestamp = getTimestamp();
                 }
+                buffer.setNumberOfTuples(numTuplesRead);
 
                 //todo: adjust schema
             } else {
@@ -208,8 +209,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[u].ingestionTimestamp = getTimestamp();
                     records[u].processingTimestamp = 0;
                 }
+                buffer.setNumberOfTuples(generatedTuplesThisPass);
             }
-            buffer.setNumberOfTuples(generatedTuplesThisPass);
             generatedTuples += generatedTuplesThisPass;
             generatedBuffers++;
             return buffer.getBuffer();
