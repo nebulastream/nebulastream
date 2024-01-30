@@ -126,7 +126,7 @@ void FileSink::setup() {}
 
 void FileSink::shutdown() {
     if (timestampAndWriteToSocket) {
-        NES_INFO("total buffers received at file sink {}", totalTupleCountreceived);
+        //NES_INFO("total buffers received at file sink {}", totalTupleCountreceived);
 //        for (const auto& bufferContent : receivedBuffers) {
 //            outputFile.write(bufferContent.c_str(), bufferContent.size());
 //        }
@@ -141,7 +141,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto schema = sinkFormat->getSchemaPtr();
         schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
         bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
-        totalTupleCountreceived += inputBuffer.getNumberOfTuples();
+        //totalTupleCountreceived += inputBuffer.getNumberOfTuples();
 
         // Write data to the socket
         ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());

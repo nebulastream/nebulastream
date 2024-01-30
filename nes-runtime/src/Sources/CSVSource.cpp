@@ -195,7 +195,6 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 uint16_t bytesToJoinWithLeftover = 0;
 
 
-                //uint64_t i = 0;
                 auto additionalTupleRead = 0;
                 if (leftoverByteCount != 0) {
                     bytesToJoinWithLeftover = incomingTupleSize - leftoverByteCount;
@@ -204,7 +203,6 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         leftOverBytes[i] = incomingBuffer[i - leftoverByteCount];
                     }
                     additionalTupleRead = 1;
-                    //i = tupleSize;
                     auto id = reinterpret_cast<uint64_t*>(&leftOverBytes[0]);
                     auto seqenceNr = reinterpret_cast<uint64_t*>(&leftOverBytes[valueSize]);
                     auto ingestionTime = reinterpret_cast<uint64_t*>(&leftOverBytes[2 * valueSize]);
@@ -212,8 +210,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[0].value = *seqenceNr;
                     records[0].ingestionTimestamp = *ingestionTime;
                     records[0].processingTimestamp = getTimestamp();
-                    totalTupleCount++;
-                    std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+                    //totalTupleCount++;
+                    //std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
                 }
 
                 //auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
@@ -231,23 +229,20 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     records[writeIndex].value = *seqenceNr;
                     records[writeIndex].ingestionTimestamp = *ingestionTime;
                     records[writeIndex].processingTimestamp = getTimestamp();
-                    totalTupleCount++;
+                    //totalTupleCount++;
                 }
 
                 leftoverByteCount = newTupleBytesRead % incomingTupleSize;
                 auto processedBytes = numCompleteTuplesRead * incomingTupleSize + bytesToJoinWithLeftover;
-                if (leftoverByteCount != 0) {
-                    NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
-                }
+//                if (leftoverByteCount != 0) {
+//                    NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
+//                }
                 for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
                     leftOverBytes[i] = incomingBuffer[i + processedBytes];
                 }
-                auto tupleKept = leftoverByteCount == 0 ? 0 : 1;
-                //buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead - tupleKept);
                 buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead);
-                NES_INFO("TotalTupleCount {}", totalTupleCount)
+                //NES_INFO("TotalTupleCount {}", totalTupleCount)
 
-                //todo: adjust schema
             } else {
                 uint64_t valCount = 0;
                 for (auto u = 0u; u < generatedTuplesThisPass; ++u) {

@@ -115,7 +115,7 @@ class FileSink : public SinkMedium {
     std::vector<uint64_t> arrivalTimestamps;
     int sockfd;
     bool timestampAndWriteToSocket;
-    uint64_t totalTupleCountreceived = 0;
+    //uint64_t totalTupleCountreceived = 0;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
