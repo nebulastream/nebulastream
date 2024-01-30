@@ -12,25 +12,25 @@
     limitations under the License.
 */
 
-#include <Util/MMapCircularBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/MMapCircularBuffer.hpp>
 #include <sys/mman.h>
 
-MMapCircularBuffer::MMapCircularBuffer(size_t capacity) : capacity(capacity) {
-    assert(capacity % getpagesize() == 0 && "Cirular Buffer requires a capacity that is divisible by the getpagesize()");
+MMapCircularBuffer::MMapCircularBuffer(size_t capacity) : capacity_(capacity) {
+    assert(capacity_ % getpagesize() == 0 && "Cirular Buffer requires a capacity_ that is divisible by the getpagesize()");
     fd = memfd_create("queue_buffer", 0);
-    ftruncate(fd, capacity);
-    data = static_cast<char*>(mmap(NULL, 2 * capacity, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
-    mmap(data, capacity, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
-    mmap(data + capacity, capacity, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
+    ftruncate(fd, capacity_);
+    data = static_cast<char*>(mmap(NULL, 2 * capacity_, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+    mmap(data, capacity_, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
+    mmap(data + capacity_, capacity_, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
 }
 MMapCircularBuffer::~MMapCircularBuffer() {
-    munmap(data + capacity, capacity);
-    munmap(data, capacity);
+    munmap(data + capacity_, capacity_);
+    munmap(data, capacity_);
     close(fd);
 }
 std::span<char> MMapCircularBuffer::reserveDataForWrite(size_t requestedSize) {
-    const auto actualSize = std::min(requestedSize, getCapacity() - size());
+    const auto actualSize = std::min(requestedSize, capacity_ - size());
     const auto memory = std::span(data + write, actualSize);
     write += actualSize;
     return memory;
@@ -47,9 +47,9 @@ std::span<const char> MMapCircularBuffer::popData(size_t requestedSize) {
     const auto memory = std::span(data + read, actualSize);
     read += actualSize;
 
-    if (read > capacity) {
-        write -= capacity;
-        read -= capacity;
+    if (read > capacity_) {
+        write -= capacity_;
+        read -= capacity_;
     }
 
     return memory;
@@ -62,6 +62,6 @@ std::span<const char> MMapCircularBuffer::peekData(size_t requestedSize) {
 }
 
 size_t MMapCircularBuffer::size() const { return (write - read); }
-size_t MMapCircularBuffer::getCapacity() const { return capacity; }
-bool MMapCircularBuffer::full() const { return size() == getCapacity(); }
+size_t MMapCircularBuffer::capacity() const { return capacity_; }
+bool MMapCircularBuffer::full() const { return size() == capacity_; };
 bool MMapCircularBuffer::empty() const { return size() == 0; }

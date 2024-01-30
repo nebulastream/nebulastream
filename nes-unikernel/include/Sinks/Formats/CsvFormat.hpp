@@ -16,21 +16,13 @@
 #define NES_CSVFORMAT_HPP
 #include <Runtime/TupleBuffer.hpp>
 #include <SchemaBuffer.hpp>
+#include <Util/DisableWarningsPragma.hpp>
+#include <ranges>
+#include <scn/scan.h>
 #include <sstream>
+#include <tuple>
+
 namespace NES::Unikernel {
-
-template<typename IN, typename TupleType>
-TupleType read_csv(IN& in) {
-    TupleType tuple;
-    std::apply(
-        [&in](auto&&... value) {
-            char comma;
-            ((in >> value >> comma), ...);
-        },
-        tuple);
-
-    return tuple;
-}
 
 template<typename OUT, typename TupleType>
 void write_csv(OUT& out, const TupleType& tuple) {
@@ -54,15 +46,51 @@ std::string printTupleBufferAsCSV(const NES::Runtime::TupleBuffer& tbuffer) {
     return ss.str();
 }
 
-template<typename SchemaBufferType, typename IS>
-size_t parseCSVIntoBuffer(IS& istream, SchemaBufferType& buffer) {
-    size_t tuples_written = 0;
-    while (buffer.getSize() < buffer.getCapacity() && !istream.eof()) {
-        auto tuple = read_csv<IS, typename SchemaBufferType::TupleType>(istream);
-        buffer.writeTuple(tuple);
-        tuples_written++;
+template<typename SchemaBufferType, typename... T>
+static std::string_view scanRecursively(std::string_view sv, SchemaBufferType& buffer, size_t tuplesLeft) {
+    if (tuplesLeft == 0)
+        return sv;
+
+    if (auto result = scn::scan<T...>(sv, SchemaBufferType::SchemaType::csvFormat)) {
+        buffer.writeTuple(result->values());
+        auto new_sv = std::string_view{result->range().begin(), result->range().end()};
+        [[clang::musttail]] return scanRecursively<SchemaBufferType, T...>(new_sv, buffer, tuplesLeft - 1);
     }
-    return tuples_written;
+    return sv;
+}
+
+template<typename SchemaBufferType>
+std::string_view parseCSVIntoBuffer(std::span<const char> data, SchemaBufferType& buffer) {
+    size_t tuplesLeft = buffer.getCapacity() - buffer.getSize();
+    // size_t bytesConsumed = 0;
+    typename SchemaBufferType::TupleType t;
+    return std::apply([data, &buffer, tuplesLeft]<typename ... T>(T...) {
+        return scanRecursively<SchemaBufferType, T...>(std::string_view{data.begin(), data.end()}, buffer, tuplesLeft);
+    }, t);
+
+    // scn::scan(data, SchemaBufferType::SchemaType::csvFormat).and_then([&buffer](auto& result) {
+    //     buffer.writeTuple(result.values());
+    // });
+    // for (const auto& line :
+    //      std::ranges::views::split(std::string_view(data.begin(), data.end()), "\n") | std::ranges::views::take(tuplesLeft)) {
+    //     typename SchemaBufferType::TupleType tuple;
+    //     NES_INFO("Line: {}", std::string_view(line.begin(), line.end()));
+    //     auto result = std::apply(
+    //         [&line]<typename... T>(const T&...) {
+    //             return scn::scan<T...>(line, SchemaBufferType::SchemaType::csvFormat);
+    //         },
+    //         tuple);
+    //     if (!result) {
+    //         NES_ERROR("Failed to parse");
+    //         return std::span{data.begin() + bytesConsumed, data.end()};
+    //     }
+    //     bytesConsumed += line.size() + 1;
+    //     buffer.writeTuple(result->values());
+    // }
+    //
+    // if (bytesConsumed >= data.size()) {
+    //     return std::span{data.end(), data.end()};
+    // }
 }
 }// namespace NES::Unikernel
 #endif//NES_CSVFORMAT_HPP

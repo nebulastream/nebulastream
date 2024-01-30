@@ -22,9 +22,9 @@ class CircularBuffer {
   public:
     CircularBuffer(size_t capacity) : buffer(capacity), read(0), write(0), size_(0) {}
 
-    std::span<char> reserveDataForWrite();
+    std::span<char> reserveDataForWrite(size_t requested_size);
 
-    void returnMemoryForWrite(std::span<char> segment, size_t bytes_written);
+    void returnMemoryForWrite(std::span<char> segment, size_t used_bytes);
 
     struct Iterator {
         using iterator_category = std::forward_iterator_tag;
@@ -61,7 +61,8 @@ class CircularBuffer {
         bool full;
     };
 
-    [[nodiscard]] std::span<char> popData(std::span<char>&& possible_dst);
+    void popData(size_t bytes_used);
+    [[nodiscard]] std::span<char> peekData(std::span<char>&& possible_dst, size_t max_request);
 
     [[nodiscard]] Iterator begin() const { return {*this, read, full()}; }
 
