@@ -49,10 +49,18 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::WorkerMobilityHandl
         S2Earth::MetersToAngle(nodeInfoDownloadRadius - mobilityConfiguration->nodeIndexUpdateThreshold.getValue());
     defaultCoverageRadiusAngle = S2Earth::MetersToAngle(mobilityConfiguration->defaultCoverageRadius.getValue());
     reconnectPredictorType = mobilityConfiguration->reconnectPredictorType.getValue();
+    NES_INFO("Creating mobility handler");
     switch (mobilityConfiguration->reconnectPredictorType) {
-        case ReconnectPredictorType::LIVE: reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(mobilityConfiguration); break;
+        case ReconnectPredictorType::LIVE: {
+            NES_INFO("Using live calculation of reconnects");
+            reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(mobilityConfiguration);
+            break;
+        }
         //case ReconnectPredictorType::PRECALCULATED: reconnectSchedulePredictor = std::make_shared<ReconnectSchedulePredictor>(PreCalculatedReconnectSchedulePredictor(mobilityConfiguration)); break;
-        case ReconnectPredictorType::PRECALCULATED: reconnectSchedulePredictor = PreCalculatedReconnectSchedulePredictor::create(mobilityConfiguration); break;
+        case ReconnectPredictorType::PRECALCULATED: {
+            NES_INFO("Using precalculated reconnects");
+            reconnectSchedulePredictor = PreCalculatedReconnectSchedulePredictor::create(mobilityConfiguration); break;
+        }
         case ReconnectPredictorType::INVALID: NES_THROW_RUNTIME_ERROR("Invalid reconnect predictor set");
     }
 #endif
