@@ -119,7 +119,7 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      */
     UIntOption mobilityHandlerUpdateInterval = {
         SEND_LOCATION_UPDATE_INTERVAL_CONFIG,
-        10000,
+        100,
         "the time which the thread running at the worker mobility handler will sleep after each iteration"};
 
     /**

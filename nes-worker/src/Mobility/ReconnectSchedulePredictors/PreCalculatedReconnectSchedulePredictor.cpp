@@ -16,6 +16,7 @@ NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::g
 
 std::optional<std::pair<NES::WorkerId, NES::Timestamp>>
 NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::getReconnect(WorkerId currentParent) {
+    NES_INFO("Checking for precalculated reconnect");
     if (reconnects.empty()) {
         loadReconnectSimulationDataFromFile();
     }

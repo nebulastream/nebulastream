@@ -128,6 +128,7 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoi
     WorkerId currentParentId) {
     (void) reconnectSchedule;
 
+
     if (reconnectPredictorType == ReconnectPredictorType::PRECALCULATED) {
         auto reconnectPairOptional = std::dynamic_pointer_cast<PreCalculatedReconnectSchedulePredictor>(reconnectSchedulePredictor)->getReconnect(currentParentId);
         if (reconnectPairOptional) {
@@ -294,6 +295,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
     //FIXME: currently only one parent per worker is supported. We therefore only ever access the parent id vectors front
     auto currentParentId = currentParentWorkerIds.front();
 
+    NES_INFO("Starting loop in mobility handler")
     while (isRunning) {
         //get current device waypoint
         auto currentWaypoint = locationProvider->getCurrentWaypoint();
@@ -349,6 +351,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
             currentReconnectSchedule = newReconnectSchedule;
         }
 
+        NES_INFO("Mobility Handler checking for next reconnect")
         //get the reconnect if it is to be performed now
         auto nextReconnectPoint = getNextReconnectPoint(currentReconnectSchedule,
                                                         currentLocation,
