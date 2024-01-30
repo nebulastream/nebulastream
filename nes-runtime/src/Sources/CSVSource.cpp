@@ -201,7 +201,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     bytesToJoinWithLeftover = incomingTupleSize - leftoverByteCount;
                     NES_INFO("Copying {} bytes to complete leftover tuple", bytesToJoinWithLeftover)
                     for (uint16_t i = leftoverByteCount; i < incomingTupleSize; ++i) {
-                        leftOverBytes[i] = incomingBuffer[i];
+                        leftOverBytes[i] = incomingBuffer[i - leftoverByteCount];
                     }
                     additionalTupleRead = 1;
                     //i = tupleSize;
