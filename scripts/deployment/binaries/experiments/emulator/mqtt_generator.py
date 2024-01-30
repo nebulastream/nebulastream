@@ -31,7 +31,7 @@ class SensorEventProducer:
             self.publish_data(id=id, value=value, payload=payload, timestamp=timestamp)
             time.sleep(pub_freq)
 
-    def start_data_generation(self, pub_freq: float = .0001):
+    def start_data_generation(self, pub_freq: float = .00001):
         # Create a thread to run generate_data
         self.data_thread = threading.Thread(target=self.generate_data, args=(pub_freq,))
         self.data_thread.daemon = True  # Set as a daemon, so it terminates when the program ends
