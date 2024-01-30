@@ -141,7 +141,7 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      */
     StringOption locationProviderConfig = {LOCATION_PROVIDER_CONFIG, "", "the configuration data for the location interface"};
 
-    StringOption precalculatedReconnectPath = {LOCATION_PROVIDER_CONFIG, "", "the configuration data for the location interface"};
+    StringOption precalculatedReconnectPath = {PRECALCULATED_RECONNECTS_PATH, "", "the configuration data for the location interface"};
 
     /**
      * @brief if the locationprovider simulates device movement, setting this option to a non zero value will result in that
