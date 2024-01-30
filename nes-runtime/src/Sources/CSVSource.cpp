@@ -243,7 +243,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     leftOverBytes[i] = incomingBuffer[i + processedBytes];
                 }
                 auto tupleKept = leftoverByteCount == 0 ? 0 : 1;
-                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead - tupleKept);
+                //buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead - tupleKept);
+                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead);
                 NES_INFO("TotalTupleCount {}", totalTupleCount)
 
                 //todo: adjust schema
