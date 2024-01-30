@@ -45,16 +45,16 @@ iterations=${1:-5}
 echo "Deploying on pis..."
 ansible-playbook deploy-pi.yml
 
-echo "Starting fixed iterations..."
-for (( i=1; i<=iterations; i++ ))
-do
-  run_experiment "fixed"
-done
-
 echo "Starting Chameleon iterations..."
 for (( i=1; i<=iterations; i++ ))
 do
   run_experiment "chameleon"
+done
+
+echo "Starting fixed iterations..."
+for (( i=1; i<=iterations; i++ ))
+do
+  run_experiment "fixed"
 done
 
 echo "All experiments completed."
