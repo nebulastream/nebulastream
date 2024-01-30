@@ -42,7 +42,7 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::WorkerMobilityHandl
     const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration)
     : updateInterval(mobilityConfiguration->mobilityHandlerUpdateInterval),
       nodeInfoDownloadRadius(mobilityConfiguration->nodeInfoDownloadRadius), isRunning(false), nodeEngine(std::move(nodeEngine)),
-      locationProvider(locationProvider), coordinatorRpcClient(std::move(coordinatorRpcClient)) {
+      locationProvider(locationProvider), coordinatorRpcClient(std::move(coordinatorRpcClient)), reconnectPredictorType(mobilityConfiguration->reconnectPredictorType) {
 #ifdef S2DEF
     locationUpdateThreshold = S2Earth::MetersToAngle(mobilityConfiguration->sendDevicePositionUpdateThreshold);
     coveredRadiusWithoutThreshold =
@@ -310,7 +310,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
         auto currentLocation = currentWaypoint.getLocation();
 
         //if device has not moved more than threshold, do nothing
-        if (!shouldSendCurrentWaypointToCoordinator(lastTransmittedLocation, currentLocation)) {
+        if (!shouldSendCurrentWaypointToCoordinator(lastTransmittedLocation, currentLocation) || reconnectPredictorType == ReconnectPredictorType::PRECALCULATED) {
             NES_DEBUG("device has not moved further than threshold, location will not be transmitted");
             std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
             continue;
