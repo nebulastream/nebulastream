@@ -71,22 +71,6 @@ class TCPSource {
     }
 
     /**
-     * @brief search from the back (first inputted item) to the front for the given search token
-     * @token to search for
-     * @return number of places until first occurrence of token (place of token IS included)
-     */
-    std::optional<uint64_t> sizeUntilSearchToken(char token) {
-        uint64_t places = 0;
-        auto memory = circularBuffer.peekData(circularBuffer.size());
-        auto position = std::find_if(memory.begin(), memory.end(), [&places, token](auto c) {
-            places++;
-            return c == token;
-        });
-
-        return position != memory.end() ? std::optional<int64_t>(places) : std::nullopt;
-    }
-
-    /**
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
@@ -95,27 +79,21 @@ class TCPSource {
         // determine how many tuples fit into the buffer
         tuplesThisPass = tupleBuffer.getCapacity();
         NES_TRACE("TCPSource<Schema>::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
-
-        //init tuple count for buffer
-        uint64_t tupleCount = 0;
         //init timer for flush interval
         auto flushIntervalTimerStart = std::chrono::system_clock::now();
         //init flush interval value
         bool flushIntervalPassed = false;
         //need this to indicate that the whole tuple was successfully received from the circular buffer
-        bool popped = true;
-        //init tuple size
-        uint64_t inputTupleSize = 0;
         //init size of received data from socket with 0
         int64_t bufferSizeReceived = 0;
         //receive data until tupleBuffer capacity reached or flushIntervalPassed
-        while (tupleCount < tuplesThisPass && !(flushIntervalPassed || stoken.stop_requested())) {
+        while (!tupleBuffer.isFull() && !(flushIntervalPassed || stoken.stop_requested())) {
             //if circular buffer is not full obtain data from socket
             if (!circularBuffer.full()) {
                 //fill created buffer with data from socket. Socket returns the number of bytes it actually sent.
                 //might send more than one tuple at a time, hence we need to extract one tuple below in switch case.
                 //user needs to specify how to find out tuple size when creating TCPSource
-                auto bufferReservation = circularBuffer.reserveDataForWrite(circularBuffer.getCapacity());
+                auto bufferReservation = circularBuffer.reserveDataForWrite(circularBuffer.capacity());
                 bufferSizeReceived = read(sockfd, bufferReservation.data(), bufferReservation.size());
                 //if read method returned -1 an error occurred during read.
                 if (bufferSizeReceived == -1) {
@@ -136,30 +114,22 @@ class TCPSource {
 
                 //if size of received data is not 0 (no data received), push received data to circular buffer
             }
+#ifdef USE_MMAP_CIRCBUFFER
+            auto csvData = circularBuffer.peekData(circularBuffer.capacity());
+#else
+            auto csvData = circularBuffer.peekData(std::span{backupBuffer.data(), backupBuffer.size()}, circularBuffer.capacity());
+#endif
+            auto dataLeft = Unikernel::parseCSVIntoBuffer(csvData, tupleBuffer);
 
-            for (auto& c : circularBuffer.peekData(circularBuffer.size())) {
-                if (c == '\n') {
-                    const_cast<char&>(c) = '\0';
-                }
+#ifndef USE_MMAP_CIRCBUFFER
+            // this means that the tuple did no fit into the backup buffer and the parser could not extract a complete tuple
+            if (dataLeft.size() == backupBuffer.size()) {
+                backupBuffer.resize(backupBuffer.size() * 2);
             }
+#endif
 
-            while (!circularBuffer.empty() && tupleCount < tuplesThisPass) {
-                uint64_t a, b, c, d;
-                double e;
-                int bytesUsed;
-                auto test = sscanf(circularBuffer.peekData(circularBuffer.size()).data(),
-                                   "%lu,%lu,%lu,%lu,%lf%n",
-                                   &a,
-                                   &b,
-                                   &c,
-                                   &d,
-                                   &e,
-                                   &bytesUsed);
-                NES_ASSERT(test == 5, "Could no parse csv");
-                circularBuffer.popData(bytesUsed+1);
-                tupleBuffer.writeTuple(std::make_tuple(a, b, c, d, e));
-                tupleCount++;
-            }
+            circularBuffer.popData(csvData.size() - dataLeft.size());
+
             // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
             // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
             // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
@@ -252,7 +222,7 @@ class TCPSource {
     MMapCircularBuffer circularBuffer;
 #else
     CircularBuffer circularBuffer;
-    std::vector<char> backupBuffer;
+    std::vector<char> backupBuffer = std::vector<char>(100);
 #endif
 };
 }// namespace NES

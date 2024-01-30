@@ -31,6 +31,14 @@ if (UNIKERNEL_USE_LIB_DWARF)
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUSE_LIB_DWARF")
 endif ()
 
+FetchContent_Declare(
+        scnlib
+        GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
+        GIT_TAG        bca530899335775139d866855b4c59eb0c22abc9 # 2.0.0
+)
+
+FetchContent_MakeAvailable(scnlib)
+
 add_library(unikernel-lib STATIC ${NES_UNIKERNEL_LIB_SOURCE_FILES})
 target_include_directories(unikernel-lib PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -41,8 +49,11 @@ target_include_directories(unikernel-lib PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>)
-target_compile_options(unikernel-lib PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
-target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork Folly::folly cppkafka::cppkafka RdKafka::rdkafka RdKafka::rdkafka++)
+target_compile_options(unikernel-lib PRIVATE ${UNIKERNEL_COMPILE_OPTIONS}
+        -Wno-error=unused-parameter
+)
+target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork Folly::folly cppkafka::cppkafka RdKafka::rdkafka RdKafka::rdkafka++ scn::scn)
+
 
 add_executable(pipeline-test tests/pipelineTest.cpp)
 target_compile_options(pipeline-test PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
@@ -57,6 +68,9 @@ target_include_directories(pipeline-test PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
 )
+
+
+
 
 # Get a list of files matching the pattern
 file(GLOB PIPELINE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline*.hpp)
@@ -74,7 +88,7 @@ foreach (PIPELINE_FILE ${PIPELINE_FILES})
     set_target_properties(unikernel${PIPELINE_NUMBER} PROPERTIES OUTPUT_NAME "unikernel${PIPELINE_NUMBER}")
     target_compile_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline${PIPELINE_NUMBER}.hpp")
     target_link_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_LINK_OPTIONS})
-    target_compile_definitions(unikernel${PIPELINE_NUMBER} PRIVATE NES_LOGLEVEL_INFO USE_MMAP_CIRCBUFFER)
+    target_compile_definitions(unikernel${PIPELINE_NUMBER} PRIVATE NES_LOGLEVEL_INFO)
 
     # Link libraries and include directories
     target_link_libraries(unikernel${PIPELINE_NUMBER} PRIVATE ${OPERATOR_FILES} unikernel-lib)

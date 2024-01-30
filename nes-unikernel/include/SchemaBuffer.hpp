@@ -19,16 +19,87 @@
 #include <Util/Logger/Logger.hpp>
 #include <span>
 namespace NES::Unikernel {
+
+namespace CSVFormat::detail {
+
+template<char... symbols>
+struct String {
+    static constexpr char value[] = {symbols...};
+};
+
+template<typename, typename>
+struct Concat;
+
+template<char... symbols1, char... symbols2>
+struct Concat<String<symbols1...>, String<symbols2...>> {
+    using type = String<symbols1..., symbols2...>;
+};
+
+template<typename...>
+struct Concatenate;
+
+template<typename S, typename... Strings>
+struct Concatenate<S, Strings...> {
+    using type = typename Concat<S, typename Concatenate<Strings...>::type>::type;
+};
+
+template<>
+struct Concatenate<> {
+    using type = String<>;
+};
+
+template<typename Separtor, typename...>
+struct ConcatPlaceholdersRec;
+
+template<typename Separator, typename S, typename... Strings>
+struct ConcatPlaceholdersRec<Separator, S, Strings...> {
+    using type = typename Concatenate<Separator, S, typename ConcatPlaceholdersRec<Separator, Strings...>::type>::type;
+};
+
+template<typename Separator>
+struct ConcatPlaceholdersRec<Separator> {
+    using type = String<'\n', '\0'>;
+};
+
+template<typename Separator, typename S, typename... Strings>
+struct ConcatPlaceholders {
+    using type = typename Concatenate<S, typename ConcatPlaceholdersRec<Separator, Strings...>::type>::type;
+};
+
+using DefaultScanPlaceholder = String<'{', '}'>;
+using Comma = String<','>;
+
+template<typename T>
+struct CSVFormatAdapter {
+    using ScanLibPlaceHolder = DefaultScanPlaceholder;
+};
+
+template<>
+struct CSVFormatAdapter<TEXT> {
+    using ScanLibPlaceHolder = Concatenate<String<'\"'>, DefaultScanPlaceholder, String<'\"'>>::type;
+};
+
+template<typename... Fields>
+struct CSVSchemaFormat {
+    static constexpr const char* fmt =
+        ConcatPlaceholders<Comma, typename CSVFormatAdapter<Fields>::ScanLibPlaceHolder...>::type::value;
+};
+
+}// namespace CSVFormat::detail
+
 template<typename Schema, size_t BufferSize>
 class SchemaBuffer {
   public:
     using TupleType = typename Schema::TupleType;
+    using SchemaType = Schema;
 
     [[nodiscard]] size_t getSize() const { return buffer.getNumberOfTuples(); }
-
     [[nodiscard]] constexpr size_t getCapacity() const { return BufferSize / Schema::TupleSize; }
+    [[nodiscard]] constexpr bool isFull() const { return getCapacity() == getSize(); }
+    [[nodiscard]] constexpr bool isEmpty() const { return getSize() == 0; }
 
     void writeTuple(TupleType tuple) {
+        NES_ASSERT(!isFull(), "Buffer is full");
         size_t offset = buffer.getNumberOfTuples() * Schema::TupleSize;
 
         // No Overflow
@@ -40,6 +111,7 @@ class SchemaBuffer {
     }
 
     TupleType readTuple(size_t index) const {
+        NES_ASSERT(!isEmpty(), "Buffer is empty");
         NES_ASSERT(index < buffer.getNumberOfTuples(), "Out of Bound Read");
         size_t offset = index * Schema::TupleSize;
         // No Overflow
@@ -97,6 +169,7 @@ struct Schema {
     static constexpr std::array<size_t, sizeof...(T) + 1> _array = cumulative_sum<T::size...>();
     using TupleType = std::tuple<typename T::ctype...>;
     static constexpr size_t TupleSize = (T::size + ...);
+    static constexpr static const char* csvFormat = CSVFormat::detail::CSVSchemaFormat<T...>::fmt;
 
     static void writeTupleAtBufferAddress(std::span<uint8_t> memoryLocation, TupleType tuple, NES::Runtime::TupleBuffer& tb) {
         std::apply(

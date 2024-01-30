@@ -36,14 +36,14 @@ class MMapCircularBuffer {
 
     size_t size() const;
 
-    size_t getCapacity() const;
+    size_t capacity() const;
     bool full() const;
     bool empty() const;
 
   private:
     char* data;
     int fd;
-    size_t capacity = 0;
+    size_t capacity_ = 0;
     size_t read = 0;
     size_t write = 0;
 };

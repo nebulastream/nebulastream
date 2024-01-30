@@ -16,37 +16,47 @@
 #include <Util/Logger/Logger.hpp>
 #include <sys/mman.h>
 
-std::span<char> CircularBuffer::reserveDataForWrite() {
-    auto segment_size = contigous_write_range();
+std::span<char> CircularBuffer::reserveDataForWrite(size_t requested_size) {
+    auto segment_size = std::min(contigous_write_range(), requested_size);
     NES_TRACE("Write: Reserving {} bytes\n", segment_size);
     std::span<char> segment{buffer.data() + write, segment_size};
     advance_write(segment_size);
     return segment;
 }
-void CircularBuffer::returnMemoryForWrite(std::span<char> segment, size_t bytes_written) {
-    NES_ASSERT(segment.size() >= bytes_written, "Overflow");
-    auto bytes_returned = segment.size() - bytes_written;
+void CircularBuffer::returnMemoryForWrite(std::span<char> segment, size_t used_bytes) {
+    NES_ASSERT(segment.size() >= used_bytes, "Overflow");
+    auto bytes_returned = segment.size() - used_bytes;
     NES_TRACE("Return: Returning {} bytes\n", bytes_returned);
     return_write(bytes_returned);
 }
 
-[[nodiscard]] std::span<char> CircularBuffer::popData(std::span<char>&& possible_span) {
-    auto total_read_size = std::min(possible_span.size(), static_cast<size_t>(size_));
+[[nodiscard]] std::span<char> CircularBuffer::peekData(std::span<char>&& possible_span, size_t max_request_size) {
+
+    // 1. If contigous memory > min
+    // use min(contiguous, max_request) contigous memory
+    // 2. Copy into span min (span_size, max_request)
+    // copy contigous bytes into span
+        //wrap around
+    // copy request_size - contigous into span
+
     auto current_max_contigoues_range = contigous_read_range();
-    if (current_max_contigoues_range >= total_read_size) {
-        NES_TRACE("Pop: Reading {} bytes\n", total_read_size);
-        std::span<char> segment{buffer.data() + read, total_read_size};
-        advance_read(total_read_size);
-        return segment;
+
+    if (current_max_contigoues_range >= possible_span.size()) {
+        return std::span<char>{buffer.data() + read, std::min(current_max_contigoues_range, max_request_size)};
     } else {
+        auto total_read_size = std::min(possible_span.size(), static_cast<size_t>(size_));
+        // source has to be smaller
         std::memcpy(possible_span.data(), buffer.data() + read, current_max_contigoues_range);
-        advance_read(current_max_contigoues_range);
         auto bytes_left_to_read = total_read_size - current_max_contigoues_range;
-        NES_ASSERT(contigous_read_range() >= bytes_left_to_read, "Wrap around did not work as expected");
-        std::memcpy(possible_span.data() + current_max_contigoues_range, buffer.data() + read, bytes_left_to_read);
-        advance_read(bytes_left_to_read);
+        std::memcpy(possible_span.data() + current_max_contigoues_range, buffer.data(), bytes_left_to_read);
         return possible_span;
     }
+}
+
+
+void CircularBuffer::popData(size_t bytes_used) {
+    NES_ASSERT(bytes_used <= size(), "cannot pop data");
+    advance_read(bytes_used);
 }
 
 size_t CircularBuffer::size() const { return size_; }

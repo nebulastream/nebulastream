@@ -50,6 +50,9 @@
 
 #define DISABLE_WARNING_UNREFERENCED_FORMAL_PARAMETER    DISABLE_WARNING(-Wunused-parameter)
 #define DISABLE_WARNING_UNREFERENCED_FUNCTION            DISABLE_WARNING(-Wunused-function)
+#define DISABLE_WARNING_DEPRECTATED_COPY_WITH_USER_PROVIDED_COPY DISABLE_WARNING(-Wdeprecated-copy-with-user-provided-copy)
+#define DISABLE_WARNING_UNUSED_RESULT DISABLE_WARNING(-Wunused-result)
+#define DISABLE_WARNING_UNUSED_PARAMETER DISABLE_WARNING(-Wunused-parameter)
 // other warnings you want to deactivate...
 
 #else
