@@ -26,7 +26,7 @@ run_experiment() {
     ansible-playbook pi-avg-query.yml
 
     echo "Sleeping for 1 mins..."
-    sleep 60
+    sleep 120
 
     # Stop everything
     echo "Stopping everything..."
