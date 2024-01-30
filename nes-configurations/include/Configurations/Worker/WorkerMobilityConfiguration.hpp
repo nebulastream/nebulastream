@@ -141,7 +141,9 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      */
     StringOption locationProviderConfig = {LOCATION_PROVIDER_CONFIG, "", "the configuration data for the location interface"};
 
-    StringOption precalculatedReconnectPath = {PRECALCULATED_RECONNECTS_PATH, "", "the configuration data for the location interface"};
+    StringOption precalculatedReconnectPath = {PRECALCULATED_RECONNECTS_PATH,
+                                               "",
+                                               "the configuration data for the location interface"};
 
     /**
      * @brief if the locationprovider simulates device movement, setting this option to a non zero value will result in that
@@ -153,22 +155,26 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&locationBufferSize,
-                &locationBufferSaveRate,
-                &pathDistanceDelta,
-                &nodeInfoDownloadRadius,
-                &nodeIndexUpdateThreshold,
-                &defaultCoverageRadius,
-                &pathPredictionLength,
-                &speedDifferenceThresholdFactor,
-                &sendDevicePositionUpdateThreshold,
-                &pushDeviceLocationUpdates,
-                &mobilityHandlerUpdateInterval,
-                &locationProviderType,
-                &locationProviderConfig,
-                &locationProviderSimulatedStartTime};
+        return {
+            &locationBufferSize,
+            &locationBufferSaveRate,
+            &pathDistanceDelta,
+            &nodeInfoDownloadRadius,
+            &nodeIndexUpdateThreshold,
+            &defaultCoverageRadius,
+            &pathPredictionLength,
+            &speedDifferenceThresholdFactor,
+            &sendDevicePositionUpdateThreshold,
+            &pushDeviceLocationUpdates,
+            &mobilityHandlerUpdateInterval,
+            &locationProviderType,
+            &locationProviderConfig,
+            &locationProviderSimulatedStartTime,
+            &precalculatedReconnectPath,
+            &reconnectPredictorType,
+        };
     }
 };
 }// namespace NES::Configurations::Spatial::Mobility::Experimental
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_
