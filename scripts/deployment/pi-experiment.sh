@@ -25,8 +25,8 @@ run_experiment() {
     echo "Sending query on coordinator..."
     ansible-playbook pi-avg-query.yml
 
-    echo "Sleeping for 1 mins..."
-    sleep 120
+    echo "Sleeping for 2 mins..."
+    sleep 126
 
     # Stop everything
     echo "Stopping everything..."
