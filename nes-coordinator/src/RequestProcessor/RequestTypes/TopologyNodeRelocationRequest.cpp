@@ -199,15 +199,18 @@ void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryPlanId);
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
 
+    NES_INFO("TopologyNodeRelocationRequest: find up and downstream operators")
     //find the pinned operators for the changelog
     auto [upstreamOperatorIds, downstreamOperatorIds] =
         NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
                                                                     upstreamExecutionNode,
                                                                     downstreamExecutionNode,
                                                                     topology);
+    NES_INFO("TopologyNodeRelocationRequest: marm operators for new placement")
     //perform re-operator placement on the query plan
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 
+    NES_INFO("TopologyNodeRelocationRequest: calculate new placement")
     //ammendment phase
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto amendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
