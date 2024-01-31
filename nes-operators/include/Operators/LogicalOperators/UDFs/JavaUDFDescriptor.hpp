@@ -16,7 +16,6 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_JAVAUDFDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>

@@ -18,7 +18,7 @@
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 

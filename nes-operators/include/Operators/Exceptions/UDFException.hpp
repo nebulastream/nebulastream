@@ -16,7 +16,6 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_
 
 #include <Exceptions/RequestExecutionException.hpp>
-#include <Exceptions/RuntimeException.hpp>
 
 #include <string>
 

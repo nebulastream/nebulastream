@@ -28,7 +28,6 @@
 #include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>

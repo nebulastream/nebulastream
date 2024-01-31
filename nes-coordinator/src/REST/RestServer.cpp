@@ -13,7 +13,6 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/LocationController.hpp>

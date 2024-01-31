@@ -13,8 +13,6 @@
 */
 
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
-#include <Util/JNI/JNI.hpp>
-#include <Util/JNI/JNIUtils.hpp>
 #include <algorithm>
 #include <jni.h>
 #include <string>

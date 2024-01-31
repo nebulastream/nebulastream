@@ -16,10 +16,7 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
 
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <memory>
 #include <string>
-#include <utility>
 
 namespace NES::Catalogs::UDF {
 

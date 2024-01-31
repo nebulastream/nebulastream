@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Util/JNI/JNI.hpp>
 #include <Util/JNI/JNIUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <jni.h>
