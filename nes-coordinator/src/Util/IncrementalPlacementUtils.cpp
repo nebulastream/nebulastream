@@ -135,7 +135,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     NES_ASSERT(!upstreamSubPlans.empty(), "Upstream node does not host any plans of the query in question");
     std::unordered_map<Network::NesPartition, LogicalOperatorNodePtr> upstreamSinkMap;
     auto downstreamWorkerId = downstreamNode->getId();
-    NES_INFO("Checking sources on node {}", downstreamWorkerId);
+    NES_INFO("Checking sinks sending to node {} in {} subplans", downstreamWorkerId, upstreamSubPlans.size());
     for (const auto& subPlan : upstreamSubPlans) {
         for (const auto& sinkOperator : subPlan->getSinkOperators()) {
             auto upstreamNetworkSinkDescriptor =
@@ -151,7 +151,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     NES_ASSERT(!downstreamSubPlans.empty(), "Downstream node does not host any plans of the query in question");
     auto upstreamWorkerId = upstreamNode->getId();
     std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>> pairs;
-    NES_INFO("Checking sinks on node {}", downstreamWorkerId);
+    NES_INFO("Checking sources receiving from node {} in {} sub plans", upstreamWorkerId, downstreamSubPlans.size());
     for (const auto& subPlan : downstreamSubPlans) {
         for (const auto& sourceOperator : subPlan->getSourceOperators()) {
             auto downNetworkSourceDescriptor =
