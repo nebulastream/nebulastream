@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.6.31](https://github.com/nebulastream/nebulastream/tree/v0.6.31) (2024-01-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.30...v0.6.31)
+
+**Implemented enhancements:**
+
+- \[TASK\] Adding join tests in DeepHierarchyTest [\#4518](https://github.com/nebulastream/nebulastream/issues/4518)
+- \[TASK\] Remove unused window classes [\#4409](https://github.com/nebulastream/nebulastream/issues/4409)
+- \[TASK\] Add functionality to process a CSV file of arbitrary size [\#3477](https://github.com/nebulastream/nebulastream/issues/3477)
+- Implement Sort operator [\#2521](https://github.com/nebulastream/nebulastream/issues/2521)
+
+### Bug Fixes 🐛
+
+- \[BUG\] The TensorFlow plugin is not built correctly [\#4392](https://github.com/nebulastream/nebulastream/issues/4392)
+
 ## [v0.6.30](https://github.com/nebulastream/nebulastream/tree/v0.6.30) (2024-01-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.29...v0.6.30)
