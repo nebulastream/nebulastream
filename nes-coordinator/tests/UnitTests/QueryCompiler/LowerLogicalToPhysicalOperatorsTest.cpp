@@ -27,9 +27,9 @@
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
@@ -103,9 +103,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         auto windowType = TumblingWindow::of(EventTime(Attribute("test")), Seconds(10));
-        auto windowDefinition = LogicalWindowDefinition::create({Sum(Attribute("test"))->aggregation},
-                                                                windowType,
-                                                                0);
+        auto windowDefinition = LogicalWindowDefinition::create({Sum(Attribute("test"))->aggregation}, windowType, 0);
 
         watermarkAssigner1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
             Windowing::IngestionTimeWatermarkStrategyDescriptor::create());

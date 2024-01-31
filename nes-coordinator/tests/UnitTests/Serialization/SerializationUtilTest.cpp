@@ -638,9 +638,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
-                                                       windowType,
-                                                       0);
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto tumblingWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(tumblingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -650,9 +648,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto windowType = Windowing::SlidingWindow::of(EventTime(Attribute("ts")), Seconds(10), Hours(200));
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
-                                                       windowType,
-                                                       0);
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto slidingWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(slidingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -663,9 +659,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45);
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
-                                                       windowType,
-                                                       0);
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto thresholdWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -676,9 +670,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45, 5);
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
-                                                       windowType,
-                                                       0);
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto thresholdWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);

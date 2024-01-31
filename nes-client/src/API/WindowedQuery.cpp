@@ -88,10 +88,7 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
     for (auto const& agg : aggregations) {
         windowAggregationDescriptors.emplace_back(agg->aggregation);
     }
-    auto windowDefinition =
-        Windowing::LogicalWindowDefinition::create(windowAggregationDescriptors,
-                                                   windowType,
-                                                   allowedLateness);
+    auto windowDefinition = Windowing::LogicalWindowDefinition::create(windowAggregationDescriptors, windowType, allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);
@@ -153,10 +150,7 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
     }
 
     auto windowDefinition =
-        Windowing::LogicalWindowDefinition::create(expressionNodes,
-                                                   windowAggregationDescriptors,
-                                                   windowType,
-                                                   allowedLateness);
+        Windowing::LogicalWindowDefinition::create(expressionNodes, windowAggregationDescriptors, windowType, allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);
