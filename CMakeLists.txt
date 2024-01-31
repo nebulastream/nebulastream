@@ -641,6 +641,7 @@ add_subdirectory(nes-execution)
 add_subdirectory(nes-nautilus)
 # Add targets for plugins
 add_subdirectory(nes-plugins)
+add_subdirectory(nes-udf)
 
 
 # Add targets for benchmarks
