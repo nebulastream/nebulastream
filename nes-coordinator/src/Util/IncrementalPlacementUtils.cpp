@@ -35,6 +35,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     auto sharedQueryPlanId = sharedQueryPlan->getId();
     auto queryPlanForSharedQuery = sharedQueryPlan->getQueryPlan();
     //find the pairs of source and sink operators that were using the removed link
+    NES_INFO("Find affected source sink pairs")
     auto upstreamDownstreamOperatorPairs = findNetworkOperatorsForLink(sharedQueryPlanId, upstreamNode, downstreamNode);
     for (auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         //replace the system generated operators with their non system up- or downstream operators
@@ -50,6 +51,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     std::set<OperatorId> downstreamPinned;
     std::set<OperatorId> toRemove;
 
+    NES_INFO("Find delta")
     for (const auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         const auto upstreamSharedQueryOperater = queryPlanForSharedQuery->getOperatorWithId(upstreamOperator->getId());
         const auto upstreamWorkerId =
@@ -66,13 +68,16 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
         //find all toplogy nodes that are reachable from the pinned upstream operator node
         std::set<WorkerId> reachable;
         //todo :
+        NES_INFO("Find reachable downstream nodes")
         topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
 
         //check if the old downstream was found, then only forward operators need to be inserted between the old up and downstream
         if (reachable.contains(downstreamWorkerId)) {
+            NES_INFO("Old downstream found")
             //only one target node as been supplied, so the vector of found targets can contain one item at most
             downstreamPinned.insert(downstreamOperator->getId());
         } else {
+            NES_INFO("Old downstream not reachable, find new one")
             //because the old downstream was not found (list of found target nodes is empty), another path has to be found
 
             //at this point all reachable downstream nodes in the new topology are found for a specific operator
@@ -125,6 +130,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
                             const Optimizer::ExecutionNodePtr& upstreamNode,
                             const Optimizer::ExecutionNodePtr& downstreamNode) {
     const auto& upstreamSubPlans = upstreamNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
+    NES_ASSERT(!upstreamSubPlans.empty(), "Upstream node does not host any plans of the query in question");
     std::unordered_map<Network::NesPartition, LogicalOperatorNodePtr> upstreamSinkMap;
     auto downstreamWorkerId = downstreamNode->getId();
     for (const auto& subPlan : upstreamSubPlans) {
@@ -139,6 +145,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     }
 
     const auto& downstreamSubPlans = downstreamNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
+    NES_ASSERT(!downstreamSubPlans.empty(), "Downstream node does not host any plans of the query in question");
     auto upstreamWorkerId = upstreamNode->getId();
     std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>> pairs;
     for (const auto& subPlan : downstreamSubPlans) {
