@@ -31,7 +31,7 @@ Spatial::Experimental::SpatialType LocationProvider::getSpatialType() const { re
 
 DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
     switch (spatialType) {
-        case Spatial::Experimental::SpatialType::MOBILE_NODE: return getCurrentWaypoint();
+        case Spatial::Experimental::SpatialType::MOBILE_NODE: return DataTypes::Experimental::Waypoint(workerGeoLocation);
         case Spatial::Experimental::SpatialType::FIXED_LOCATION: return DataTypes::Experimental::Waypoint(workerGeoLocation);
         case Spatial::Experimental::SpatialType::NO_LOCATION:
         case Spatial::Experimental::SpatialType::INVALID:
