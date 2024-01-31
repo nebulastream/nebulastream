@@ -54,7 +54,7 @@ QueryDeploymentPhase::create(const Optimizer::GlobalExecutionPlanPtr& globalExec
 }
 
 void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
-    NES_DEBUG("QueryDeploymentPhase: deploy the query");
+    NES_INFO("QueryDeploymentPhase: deploy the query");
 
     auto sharedQueryId = sharedQueryPlan->getId();
 
@@ -120,7 +120,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     }
 
     deployQuery(sharedQueryId, executionNodes);
-    NES_DEBUG("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
+    NES_INFO("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
 
     //Mark queries as running if they are not in migrating state
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
@@ -148,7 +148,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
-    NES_DEBUG("QueryDeploymentPhase: start query");
+    NES_INFO("QueryDeploymentPhase: start query");
     startQuery(sharedQueryId, executionNodes);
 
     //remove subplans from global query plan if they were stopped due to migration
@@ -170,6 +170,8 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 //            }
 //        }
 //    }
+
+    NES_INFO("QueryDeploymentPhase: redeployment done");
 }
 
 void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
