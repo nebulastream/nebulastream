@@ -65,11 +65,6 @@ add_nes_integration_test(non-keyed-tumbling-window-tests "Windowing/TumblingWind
 add_nes_integration_test(keyed-sliding-window-tests "Windowing/SlidingWindow/KeyedSlidingWindowTests.cpp")
 add_nes_integration_test(non-keyed-sliding-window-tests "Windowing/SlidingWindow/NonKeyedSlidingWindowTests.cpp")
 
-### distributed window deployment test ###
-# Disable this tests currently
-
-#add_nes_integration_test(distributed-window-deployment-test "Windowing/DistributedWindowDeploymentTest.cpp")
-
 
 ### MultipleWindowsTest ###
 add_nes_integration_test(multi-window-test "Windowing/MultipleWindowsTest.cpp")

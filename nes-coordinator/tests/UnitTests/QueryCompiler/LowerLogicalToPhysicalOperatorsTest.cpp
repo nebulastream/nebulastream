@@ -24,11 +24,10 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -90,13 +89,11 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
         projectPp = LogicalOperatorFactory::createProjectionOperator({});
         {
-            auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
             auto joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
             Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
-                distrType,
                 1,
                 1,
                 joinType);
@@ -108,19 +105,10 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         auto windowType = TumblingWindow::of(EventTime(Attribute("test")), Seconds(10));
         auto windowDefinition = LogicalWindowDefinition::create({Sum(Attribute("test"))->aggregation},
                                                                 windowType,
-                                                                Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                                 0);
 
         watermarkAssigner1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
             Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-        centralWindowOperator = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
-        centralWindowOperator->as<WindowOperatorNode>()->setInputOriginIds({0});
-        sliceCreationOperator = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition);
-        sliceCreationOperator->as<WindowOperatorNode>()->setInputOriginIds({0});
-        windowComputation = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition);
-        windowComputation->as<WindowOperatorNode>()->setInputOriginIds({0});
-        sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
-        sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
         auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
         mapJavaUDFOp = LogicalOperatorFactory::createMapUDFLogicalOperator(javaUDFDescriptor);
@@ -133,7 +121,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
   protected:
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     LogicalOperatorNodePtr sourceOp1, sourceOp2, sourceOp3, sourceOp4, unionOp1;
-    LogicalOperatorNodePtr watermarkAssigner1, centralWindowOperator, sliceCreationOperator, windowComputation, sliceMerging;
+    LogicalOperatorNodePtr watermarkAssigner1;
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
     LogicalOperatorNodePtr sinkOp1, sinkOp2;
     LogicalOperatorNodePtr mapOp, mapJavaUDFOp;
@@ -552,7 +540,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
 TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateWindowQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(watermarkAssigner1);
-    queryPlan->appendOperatorAsNewRoot(centralWindowOperator);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
     NES_DEBUG("{}", queryPlan->toString());

@@ -56,7 +56,6 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
@@ -599,12 +598,10 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
-        auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
         Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
-            distrType,
             1,
             1,
             NES::Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
@@ -643,9 +640,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto windowDefinition =
             Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
-                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                        0);
-        auto tumblingWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto tumblingWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(tumblingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(tumblingWindow->equal(deserializedOperator));
@@ -656,9 +652,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto windowDefinition =
             Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
-                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                        0);
-        auto slidingWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto slidingWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(slidingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(slidingWindow->equal(deserializedOperator));
@@ -670,9 +665,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto windowDefinition =
             Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
-                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                        0);
-        auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto thresholdWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(thresholdWindow->equal(deserializedOperator));
@@ -684,9 +678,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto windowDefinition =
             Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
-                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                        0);
-        auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto thresholdWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(thresholdWindow->equal(deserializedOperator));

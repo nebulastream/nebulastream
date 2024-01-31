@@ -15,7 +15,6 @@
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <utility>
@@ -25,16 +24,14 @@ namespace NES::Join {
 LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType,
                                              FieldAccessExpressionNodePtr rightJoinKeyType,
                                              Windowing::WindowTypePtr windowType,
-                                             Windowing::DistributionCharacteristicPtr distributionType,
                                              uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight,
                                              JoinType joinType,
                                              OriginId originId)
     : leftJoinKeyType(std::move(leftJoinKeyType)), rightJoinKeyType(std::move(rightJoinKeyType)),
       leftSourceType(Schema::create()), rightSourceType(Schema::create()), outputSchema(Schema::create()),
-      windowType(std::move(windowType)), distributionType(std::move(distributionType)),
-      numberOfInputEdgesLeft(numberOfInputEdgesLeft), numberOfInputEdgesRight(numberOfInputEdgesRight),
-      joinType(joinType), originId(originId) {
+      windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
+      numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType), originId(originId) {
 
     NES_ASSERT(this->leftJoinKeyType, "Invalid left join key type");
     NES_ASSERT(this->rightJoinKeyType, "Invalid right join key type");
@@ -48,14 +45,12 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
 LogicalJoinDefinitionPtr LogicalJoinDefinition::create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
                                                        const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                                        const Windowing::WindowTypePtr& windowType,
-                                                       const Windowing::DistributionCharacteristicPtr& distributionType,
                                                        uint64_t numberOfInputEdgesLeft,
                                                        uint64_t numberOfInputEdgesRight,
                                                        JoinType joinType) {
     return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType,
                                                          rightJoinKeyType,
                                                          windowType,
-                                                         distributionType,
                                                          numberOfInputEdgesLeft,
                                                          numberOfInputEdgesRight,
                                                          joinType);
@@ -72,8 +67,6 @@ SchemaPtr LogicalJoinDefinition::getRightSourceType() { return rightSourceType; 
 Windowing::WindowTypePtr LogicalJoinDefinition::getWindowType() { return windowType; }
 
 Join::LogicalJoinDefinition::JoinType LogicalJoinDefinition::getJoinType() const { return joinType; }
-
-Windowing::DistributionCharacteristicPtr LogicalJoinDefinition::getDistributionType() const { return distributionType; }
 
 uint64_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() const { return numberOfInputEdgesLeft; }
 
@@ -111,8 +104,8 @@ bool LogicalJoinDefinition::equals(const LogicalJoinDefinition& other) const {
     return leftJoinKeyType->equal(other.leftJoinKeyType) && rightJoinKeyType->equal(other.rightJoinKeyType)
         && leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
         && outputSchema->equals(other.outputSchema) && windowType->equal(other.windowType)
-        && distributionType->equals(*other.distributionType) && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft
-        && numberOfInputEdgesRight == other.numberOfInputEdgesRight && joinType == other.joinType && originId == other.originId;
+        && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft && numberOfInputEdgesRight == other.numberOfInputEdgesRight
+        && joinType == other.joinType && originId == other.originId;
 }
 
 };// namespace NES::Join
