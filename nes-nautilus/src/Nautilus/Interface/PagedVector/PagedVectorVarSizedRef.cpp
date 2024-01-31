@@ -21,11 +21,24 @@ PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<NES::Nautilus::MemRef
     : pagedVectorVarSizedRef(pagedVectorVarSizedRef) {}
 
 void PagedVectorVarSizedRef::writeRecord(NES::Nautilus::Record record) {
-
+    // get memref to new entry (getMember(currPage)?)
+    for (auto& fieldIdentifier : record.getAllFields()) {
+        auto fieldValue = record.read(fieldIdentifier);
+        // if text -> copy to varSizedDataPages and save ptr and size in new entry
+        // else -> copy value to new entry
+        // increase new entry by size of written data
+    }
+    // write new memref to new entry back as currPage
 }
 
 Record PagedVectorVarSizedRef::readRecord(/* TODO pass pos or memref? */) {
-
+    Record record;
+    // get memref to entry at pos
+    // use schema fields to retrieve values from entry
+    // use schema fields to get fieldName
+    // if text -> get varSizedData from the ptr and size in entry and copy to record
+    // else -> copy value to record
+    return record;
 }
 
 } //NES::Nautilus::Interface
