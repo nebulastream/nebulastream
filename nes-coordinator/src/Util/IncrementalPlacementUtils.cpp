@@ -161,6 +161,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
             }
         }
     }
+    NES_ASSERT(!pairs.empty(), "No source/sink pair found");
     return pairs;
 }
 }// namespace NES::Experimental
