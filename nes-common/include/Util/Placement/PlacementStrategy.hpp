@@ -26,7 +26,8 @@ enum class PlacementStrategy : uint8_t {
     MlHeuristic = 4,
     ELEGANT_PERFORMANCE = 5,
     ELEGANT_ENERGY = 6,
-    ELEGANT_BALANCED = 7
+    ELEGANT_BALANCED = 7,
+    NEMO = 8
 };
 }// namespace NES::Optimizer
 #endif// NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

@@ -53,7 +53,6 @@
 #include <z3++.h>
 
 using namespace NES;
-using namespace z3;
 using namespace Configurations;
 using namespace Optimizer;
 
