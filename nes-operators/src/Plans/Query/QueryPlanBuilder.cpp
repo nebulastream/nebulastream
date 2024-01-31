@@ -23,7 +23,6 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
@@ -117,9 +116,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
     auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
     auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "leftSide");
 
-    // we use a complete window type as we currently do not have a distributed join
-    auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
-
     NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
@@ -134,7 +130,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
     auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess,
                                                               rightQueryPlanKeyFieldAccess,
                                                               windowType,
-                                                              distrType,
                                                               1,
                                                               1,
                                                               joinType);

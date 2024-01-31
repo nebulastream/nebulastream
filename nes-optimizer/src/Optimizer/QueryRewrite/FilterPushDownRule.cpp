@@ -30,7 +30,6 @@
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>

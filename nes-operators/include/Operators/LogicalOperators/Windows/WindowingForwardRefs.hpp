@@ -108,9 +108,6 @@ class TimeMeasure;
 class TimeCharacteristic;
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
-class DistributionCharacteristic;
-using DistributionCharacteristicPtr = std::shared_ptr<DistributionCharacteristic>;
-
 inline uint64_t getTsFromClock() { return time(nullptr) * 1000; }
 
 class WindowAggregationDescriptor;

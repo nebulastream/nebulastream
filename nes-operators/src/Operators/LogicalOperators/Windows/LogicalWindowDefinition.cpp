@@ -15,7 +15,6 @@
 
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
@@ -26,11 +25,9 @@ namespace NES::Windowing {
 LogicalWindowDefinition::LogicalWindowDefinition(const std::vector<FieldAccessExpressionNodePtr> keys,
                                                  std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                                  WindowTypePtr windowType,
-                                                 DistributionCharacteristicPtr distChar,
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)),
-      windowType(std::move(windowType)), onKey(std::move(keys)),
-      distributionType(std::move(distChar)), allowedLateness(allowedLateness) {
+      windowType(std::move(windowType)), onKey(std::move(keys)), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
@@ -38,28 +35,20 @@ bool LogicalWindowDefinition::isKeyed() { return !onKey.empty(); }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                                            const WindowTypePtr& windowType,
-                                                           const DistributionCharacteristicPtr& distChar,
                                                            uint64_t allowedLateness) {
-    return create({}, windowAggregations, windowType, distChar, allowedLateness);
+    return create({}, windowAggregations, windowType, allowedLateness);
 }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::vector<FieldAccessExpressionNodePtr> keys,
                                                            std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                                            const WindowTypePtr& windowType,
-                                                           const DistributionCharacteristicPtr& distChar,
                                                            uint64_t allowedLateness) {
     return std::make_shared<LogicalWindowDefinition>(keys,
                                                      windowAggregation,
                                                      windowType,
-                                                     distChar,
                                                      allowedLateness);
 }
 
-void LogicalWindowDefinition::setDistributionCharacteristic(DistributionCharacteristicPtr characteristic) {
-    this->distributionType = std::move(characteristic);
-}
-
-DistributionCharacteristicPtr LogicalWindowDefinition::getDistributionType() { return distributionType; }
 uint64_t LogicalWindowDefinition::getNumberOfInputEdges() const { return numberOfInputEdges; }
 void LogicalWindowDefinition::setNumberOfInputEdges(uint64_t numberOfInputEdges) {
     this->numberOfInputEdges = numberOfInputEdges;
@@ -74,7 +63,7 @@ void LogicalWindowDefinition::setWindowType(WindowTypePtr windowType) { this->wi
 void LogicalWindowDefinition::setOnKey(std::vector<FieldAccessExpressionNodePtr> onKey) { this->onKey = std::move(onKey); }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
-    return create(onKey, windowAggregation, windowType, distributionType, allowedLateness);
+    return create(onKey, windowAggregation, windowType, allowedLateness);
 }
 
 std::string LogicalWindowDefinition::toString() {
@@ -84,7 +73,6 @@ std::string LogicalWindowDefinition::toString() {
     if (isKeyed()) {
         //ss << " onKey=" << onKey << std::endl;
     }
-    ss << " distributionType=" << distributionType->toString() << std::endl;
     ss << " numberOfInputEdges=" << numberOfInputEdges;
     ss << std::endl;
     return ss.str();

@@ -30,9 +30,10 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -264,8 +265,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
     auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source3);
-    auto dummyWindowDefinition = LogicalWindowDefinition::create({}, WindowTypePtr(), DistributionCharacteristicPtr(), 0);
-    auto window = LogicalOperatorFactory::createCentralWindowSpecializedOperator(dummyWindowDefinition)->as<WindowOperatorNode>();
+    auto dummyWindowDefinition = LogicalWindowDefinition::create({}, WindowTypePtr(), 0);
+    auto window = LogicalOperatorFactory::createWindowOperator(dummyWindowDefinition)->as<WindowLogicalOperatorNode>();
     queryPlan->appendOperatorAsNewRoot(window);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);

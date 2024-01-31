@@ -123,46 +123,6 @@ class LogicalOperatorFactory {
                                                             OperatorId id = getNextOperatorId());
 
     /**
-     * @brief Create a specialized central window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return UnaryOperatorNodePtr
-     */
-    static LogicalUnaryOperatorNodePtr
-    createCentralWindowSpecializedOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                           OperatorId id = getNextOperatorId());
-
-    /**
-     * @brief Create a specialized slice creation window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return UnaryOperatorNodePtr
-     */
-    static LogicalUnaryOperatorNodePtr
-    createSliceCreationSpecializedOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                           OperatorId id = getNextOperatorId());
-
-    /**
-     * @brief Create a specialized slice merging window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return UnaryOperatorNodePtr
-     */
-    static LogicalUnaryOperatorNodePtr
-    createSliceMergingSpecializedOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                          OperatorId id = getNextOperatorId());
-
-    /**
-     * @brief Create a specialized window computation window operator with window definition.
-     * @param windowDefinition the LogicalWindowDefinitionPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return UnaryOperatorNodePtr
-     */
-    static LogicalUnaryOperatorNodePtr
-    createWindowComputationSpecializedOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
-                                               OperatorId id = getNextOperatorId());
-
-    /**
      * @brief Create a specialized union operator.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return BinaryOperatorNode

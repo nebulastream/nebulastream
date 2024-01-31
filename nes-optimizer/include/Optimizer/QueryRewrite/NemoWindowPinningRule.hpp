@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDWINDOWRULE_HPP_
-#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDWINDOWRULE_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOWINDOWPINNINGRULE_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOWINDOWPINNINGRULE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
+#include <unordered_map>
 
 namespace NES {
 class QueryPlan;
@@ -30,12 +31,16 @@ using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
 
 class WatermarkAssignerLogicalOperatorNode;
 using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
+
+class Topology;
+using TopologyPtr = std::shared_ptr<Topology>;
+
 }// namespace NES
 
 namespace NES::Optimizer {
 
-class DistributedWindowRule;
-using DistributeWindowRulePtr = std::shared_ptr<DistributedWindowRule>;
+class NemoWindowPinningRule;
+using NemoWindowPinningRulePtr = std::shared_ptr<NemoWindowPinningRule>;
 
 /**
  * @brief This rule will replace the logical window operator with either a centralized or distributed implementation.
@@ -88,29 +93,42 @@ using DistributeWindowRulePtr = std::shared_ptr<DistributedWindowRule>;
  *                                      |               |
  *                                   Source(Car1)    Source(Car2)
 */
-class DistributedWindowRule : public BaseRewriteRule {
+class NemoWindowPinningRule : public DistributedWindowRule {
   public:
     /**
-     * @brief Creates a new DistributedWindowRule with specific thresholds that influence when the rule is applied.
+     * @brief Creates a new NemoWindowPinningRule with specific thresholds that influence when the rule is applied.
      * @param windowDistributionChildrenThreshold The number of child nodes from which on we will replace a central window operator with a distributed window operator.
      * @param windowDistributionCombinerThreshold The number of child nodes from which on we will introduce combiner
-     * @return DistributeWindowRulePtr
+     * @return NemoWindowPinningRulePtr
      */
-    static DistributeWindowRulePtr create(Configurations::OptimizerConfiguration configuration);
-    virtual ~DistributedWindowRule() = default;
+    static NemoWindowPinningRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topologyNode);
+    virtual ~NemoWindowPinningRule() = default;
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-  protected:
-    explicit DistributedWindowRule(Configurations::OptimizerConfiguration configuration);
-
   private:
-    void createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan);
+    explicit NemoWindowPinningRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
+
+    /**
+     * @brief This helper method identifies the nodes where the window operator should be placed its sources.
+     * @param operatorNode the operator node
+     * @param sharedParentThreshold threshold that identifies when to combine based on the number of sources of an operator
+     * @return map with the node id where the window operator shall be placed and its sources
+     */
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
+    getMergerNodes(OperatorNodePtr operatorNode, uint64_t sharedParentThreshold);
+
+    /**
+     * @deprecated Replaced by pinWindowOperators as it is using the old window operator implementation
+     */
+    void createDistributedWindowOperator(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan);
 
     bool performDistributedWindowOptimization;
     // The number of child nodes from which on we will replace a central window operator with a distributed window operator.
     uint64_t windowDistributionChildrenThreshold;
     // The number of child nodes from which on we will introduce combiner
     uint64_t windowDistributionCombinerThreshold;
+    TopologyPtr topology;
+    bool enableNemoPlacement;
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDWINDOWRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_NEMOWINDOWPINNINGRULE_HPP_

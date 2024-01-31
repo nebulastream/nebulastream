@@ -47,7 +47,6 @@ class LogicalJoinDefinition {
     static LogicalJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
                                            const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                            const Windowing::WindowTypePtr& windowType,
-                                           const Windowing::DistributionCharacteristicPtr& distributionType,
                                            uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight,
                                            JoinType joinType);
@@ -55,7 +54,6 @@ class LogicalJoinDefinition {
     explicit LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType,
                                    FieldAccessExpressionNodePtr rightJoinKeyType,
                                    Windowing::WindowTypePtr windowType,
-                                   Windowing::DistributionCharacteristicPtr distributionType,
                                    uint64_t numberOfInputEdgesLeft,
                                    uint64_t numberOfInputEdgesRight,
                                    JoinType joinType,
@@ -91,12 +89,6 @@ class LogicalJoinDefinition {
      * @return trigger action
     */
     [[nodiscard]] JoinType getJoinType() const;
-
-    /**
-     * @brief getter for on distribution type
-     * @return distributionType
-    */
-    [[nodiscard]] Windowing::DistributionCharacteristicPtr getDistributionType() const;
 
     /**
      * @brief number of input edges. Need to define a clear concept for this
@@ -159,7 +151,6 @@ class LogicalJoinDefinition {
     SchemaPtr rightSourceType;
     SchemaPtr outputSchema;
     Windowing::WindowTypePtr windowType;
-    Windowing::DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
     JoinType joinType;

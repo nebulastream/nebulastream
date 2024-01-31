@@ -27,12 +27,8 @@
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 
 namespace NES {
@@ -94,30 +90,6 @@ LogicalOperatorFactory::createBatchJoinOperator(const Join::Experimental::Logica
 LogicalUnaryOperatorNodePtr
 LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinition, id);
-}
-
-LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                                               OperatorId id) {
-    return std::make_shared<CentralWindowOperator>(windowDefinition, id);
-}
-
-LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createSliceCreationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                                               OperatorId id) {
-    return std::make_shared<SliceCreationOperator>(windowDefinition, id);
-}
-
-LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createWindowComputationSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                                                   OperatorId id) {
-    return std::make_shared<WindowComputationOperator>(windowDefinition, id);
-}
-
-LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createSliceMergingSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                                              OperatorId id) {
-    return std::make_shared<SliceMergingOperator>(windowDefinition, id);
 }
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOperator(

@@ -22,7 +22,6 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
@@ -92,7 +91,6 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
     auto windowDefinition =
         Windowing::LogicalWindowDefinition::create(windowAggregationDescriptors,
                                                    windowType,
-                                                   Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                    allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
@@ -158,7 +156,6 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
         Windowing::LogicalWindowDefinition::create(expressionNodes,
                                                    windowAggregationDescriptors,
                                                    windowType,
-                                                   Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                    allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 

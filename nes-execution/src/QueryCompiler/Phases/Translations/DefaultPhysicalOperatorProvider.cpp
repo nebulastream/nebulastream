@@ -30,10 +30,11 @@
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
@@ -41,7 +42,6 @@
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
@@ -518,7 +518,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorN
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
-    if (operatorNode->instanceOf<WindowLogicalOperatorNode>() || operatorNode->instanceOf<CentralWindowOperator>()) {
+    if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
         //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
         auto windowType = operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType();

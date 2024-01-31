@@ -41,7 +41,6 @@ class LogicalWindowDefinition {
     explicit LogicalWindowDefinition(std::vector<FieldAccessExpressionNodePtr> keys,
                                      std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                      WindowTypePtr windowType,
-                                     DistributionCharacteristicPtr distChar,
                                      uint64_t allowedLateness);
 
     /**
@@ -56,7 +55,6 @@ class LogicalWindowDefinition {
      */
     static LogicalWindowDefinitionPtr create(std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                              const WindowTypePtr& windowType,
-                                             const DistributionCharacteristicPtr& distChar,
                                              uint64_t allowedLateness);
 
     /**
@@ -72,7 +70,6 @@ class LogicalWindowDefinition {
     static LogicalWindowDefinitionPtr create(std::vector<FieldAccessExpressionNodePtr> keys,
                                              std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
-                                             const DistributionCharacteristicPtr& distChar,
                                              uint64_t allowedLateness);
 
     /**
@@ -80,19 +77,6 @@ class LogicalWindowDefinition {
      * @return true if keyed.
     */
     bool isKeyed();
-
-    /**
-     * @brief Setter for the distribution type (centralized or distributed).
-     * @deprecated Will be removed to an seperated operator in the future.
-     */
-    void setDistributionCharacteristic(DistributionCharacteristicPtr characteristic);
-
-    /**
-     * @brief Getter for the distribution type.
-     * @deprecated Will be removed to an seperated operator in the future.
-     * @return DistributionCharacteristicPtr
-     */
-    DistributionCharacteristicPtr getDistributionType();
 
     /**
      * @brief Getter for the number of input edges, which is used for the low watermarks.
@@ -191,7 +175,6 @@ class LogicalWindowDefinition {
     std::vector<WindowAggregationDescriptorPtr> windowAggregation;
     WindowTypePtr windowType;
     std::vector<FieldAccessExpressionNodePtr> onKey;
-    DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
     OriginId originId{};

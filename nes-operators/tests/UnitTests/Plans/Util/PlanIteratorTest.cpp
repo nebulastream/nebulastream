@@ -23,7 +23,6 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
