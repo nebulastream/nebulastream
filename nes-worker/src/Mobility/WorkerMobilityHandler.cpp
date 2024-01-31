@@ -312,6 +312,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
         //get current device waypoint
         auto currentWaypoint = locationProvider->getCurrentWaypoint();
         auto currentLocation = currentWaypoint.getLocation();
+        bool indexUpdated = false;
         if (std::dynamic_pointer_cast<LocationProviderCSV>(locationProvider)) {
 
 
@@ -329,7 +330,6 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
             lastTransmittedLocation = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentWaypoint.getLocation());
 
             //update the neighbouring worker index if necessary
-            bool indexUpdated = false;
             if (shouldUpdateNeighbouringWorkerInformation(centroidOfNeighbouringWorkerSpatialIndex, currentWaypoint)) {
                 indexUpdated = updateNeighbourWorkerInformation(currentWaypoint.getLocation(),
                                                                 neighbourWorkerIdToLocationMap,
