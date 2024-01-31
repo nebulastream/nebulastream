@@ -57,6 +57,4 @@ do
   run_experiment "fixed"
 done
 
-ansible-playbook collect.yml
-
 echo "All experiments completed."
