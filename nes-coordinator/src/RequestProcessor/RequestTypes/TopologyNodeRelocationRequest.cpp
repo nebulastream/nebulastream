@@ -85,6 +85,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
 }
 
 void TopologyNodeRelocationRequest::processRemoveTopologyLinkRequest(WorkerId upstreamNodeId, WorkerId downstreamNodeId) {
+    NES_INFO("TopologyNodeRelocatinRequest: start")
     auto upstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(upstreamNodeId);
     auto downstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(downstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
@@ -93,6 +94,7 @@ void TopologyNodeRelocationRequest::processRemoveTopologyLinkRequest(WorkerId up
         return;
     }
 
+    NES_INFO("TopologyNodeRelocatinRequest: find affected queries")
     auto upstreamSharedQueryIds = upstreamExecutionNode->getPlacedSharedQueryPlanIds();
     auto downstreamSharedQueryIds = downstreamExecutionNode->getPlacedSharedQueryPlanIds();
     //If any of the two execution nodes do not have any shared query plan placed then skip rest of the operation
@@ -101,6 +103,7 @@ void TopologyNodeRelocationRequest::processRemoveTopologyLinkRequest(WorkerId up
         return;
     }
 
+    NES_INFO("TopologyNodeRelocatinRequest: find intersection of queries")
     //compute intersection among the shared query plans placed on two nodes
     std::set<SharedQueryId> impactedSharedQueryIds;
     std::set_intersection(upstreamSharedQueryIds.begin(),
@@ -115,10 +118,12 @@ void TopologyNodeRelocationRequest::processRemoveTopologyLinkRequest(WorkerId up
         return;
     }
 
+    NES_INFO("TopologyNodeRelocatinRequest: perform re-placement")
     //Iterate over each shared query plan id and identify the operators that need to be replaced
     for (auto impactedSharedQueryId : impactedSharedQueryIds) {
         markOperatorsForReOperatorPlacement(impactedSharedQueryId, upstreamExecutionNode, downstreamExecutionNode);
     }
+    NES_INFO("TopologyNodeRelocatinRequest: done")
 }
 
 //todo #4493: call from this when all links to and from a node are removed
