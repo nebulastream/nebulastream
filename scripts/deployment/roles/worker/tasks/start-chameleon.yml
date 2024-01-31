@@ -61,4 +61,4 @@
 
 - name: Start dool monitoring
   shell: |
-    nohup numactl -N 1 -m 1 {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}/{{ dool_name }} -tTcm -C {{ worker_cores }} --net -N {{ worker_iface }} --output {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv > /dev/null 2>&1 &
+    nohup numactl -N 1 -m 1 {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ dool_name }}/{{ dool_name }} -tTcm -C {{ worker_cores }} --net -N {{ worker_iface }} --output {{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-cham-sysStat.csv > /dev/null 2>&1 &

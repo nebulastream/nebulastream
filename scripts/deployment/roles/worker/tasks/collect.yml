@@ -1,9 +1,15 @@
 ---
 # This Playbook collects and cleans all logs of all workers
 
-- name: Transfer worker logs
+- name: Transfer chameleon logs
   fetch:
-    src: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-sysStat.csv"
-    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/experiment-logs/"
+    src: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-cham-sysStat.csv"
+    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/experiment-logs/chameleon"
+    flat: true
+
+- name: Transfer nes logs
+  fetch:
+    src: "{{ worker_root_dir }}/{{ ansible_user_id | regex_replace(' ') }}/{{ ansible_hostname }}-nes/{{ ansible_hostname }}-fixed-sysStat.csv"
+    dest: "/home/{{ ansible_user_id | regex_replace(' ') }}/experiment-logs/fixed"
     flat: true
 
