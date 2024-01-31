@@ -14,6 +14,7 @@
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -22,6 +23,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
@@ -200,13 +202,41 @@ void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
 
     NES_INFO("TopologyNodeRelocationRequest: find up and downstream operators")
-    //find the pinned operators for the changelog
-    auto [upstreamOperatorIds, downstreamOperatorIds] =
-        NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
-                                                                    upstreamExecutionNode,
-                                                                    downstreamExecutionNode,
-                                                                    topology);
-    NES_INFO("TopologyNodeRelocationRequest: marm operators for new placement")
+    std::set<OperatorId> upstreamOperatorIds, downstreamOperatorIds;
+    if (coordinatorConfiguration->enableQueryReconfiguration) {
+        //find the pinned operators for the changelog
+        auto upAndDownStreamPinned =
+            NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
+                                                                        upstreamExecutionNode,
+                                                                        downstreamExecutionNode,
+                                                                        topology);
+        upstreamOperatorIds = upAndDownStreamPinned.first;
+        downstreamOperatorIds = upAndDownStreamPinned.second;
+    } else {
+        auto queryPlan = sharedQueryPlan->getQueryPlan();
+        NES_DEBUG("QueryPlacementAmendmentPhase: Perform query placement for query plan\n{}", queryPlan->toString());
+
+        //1. Fetch all upstream pinned operators
+        std::set<LogicalOperatorNodePtr> pinnedUpstreamOperators;
+        for (const auto& leafOperator : queryPlan->getLeafOperators()) {
+            pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperatorNode>());
+        };
+
+        //2. Fetch all downstream pinned operators
+        std::set<LogicalOperatorNodePtr> pinnedDownStreamOperators;
+        for (const auto& rootOperator : queryPlan->getRootOperators()) {
+            pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperatorNode>());
+        };
+
+        for (auto upstreamOperator : pinnedUpstreamOperators) {
+            upstreamOperatorIds.insert(upstreamOperator->getId());
+        }
+        for (auto downsStreamOperator : pinnedDownStreamOperators) {
+            downstreamOperatorIds.insert(downsStreamOperator->getId());
+        }
+    }
+
+    NES_INFO("TopologyNodeRelocationRequest: mark operators for new placement")
     //perform re-operator placement on the query plan
     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
 
