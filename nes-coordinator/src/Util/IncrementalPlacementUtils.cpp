@@ -37,6 +37,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     //find the pairs of source and sink operators that were using the removed link
     NES_INFO("Find affected source sink pairs")
     auto upstreamDownstreamOperatorPairs = findNetworkOperatorsForLink(sharedQueryPlanId, upstreamNode, downstreamNode);
+    NES_INFO("Find non sytem operators")
     for (auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         //replace the system generated operators with their non system up- or downstream operators
         auto upstreamLogicalOperatorId =
@@ -129,10 +130,12 @@ std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
 findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
                             const Optimizer::ExecutionNodePtr& upstreamNode,
                             const Optimizer::ExecutionNodePtr& downstreamNode) {
+    //NES_INFO(!upstreamSubPlans.empty(), "Upstream node does not host any plans of the query in question");
     const auto& upstreamSubPlans = upstreamNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
     NES_ASSERT(!upstreamSubPlans.empty(), "Upstream node does not host any plans of the query in question");
     std::unordered_map<Network::NesPartition, LogicalOperatorNodePtr> upstreamSinkMap;
     auto downstreamWorkerId = downstreamNode->getId();
+    NES_INFO("Checking sources on node {}", downstreamWorkerId);
     for (const auto& subPlan : upstreamSubPlans) {
         for (const auto& sinkOperator : subPlan->getSinkOperators()) {
             auto upstreamNetworkSinkDescriptor =
@@ -148,6 +151,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     NES_ASSERT(!downstreamSubPlans.empty(), "Downstream node does not host any plans of the query in question");
     auto upstreamWorkerId = upstreamNode->getId();
     std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>> pairs;
+    NES_INFO("Checking sinks on node {}", downstreamWorkerId);
     for (const auto& subPlan : downstreamSubPlans) {
         for (const auto& sourceOperator : subPlan->getSourceOperators()) {
             auto downNetworkSourceDescriptor =
