@@ -23,14 +23,14 @@ run_experiment() {
 
     # Send query to coordinator
     echo "Sending query on coordinator..."
-    ansible-playbook pi-avg-query.yml
+    ansible-playbook avg-query.yml
 
     echo "Sleeping for 2 mins..."
     sleep 126
 
     # Stop everything
     echo "Stopping everything..."
-    ansible-playbook stop-pi.yml
+    ansible-playbook stop.yml
 
     # Sleep for 6 seconds
     echo "Sleeping for 6 seconds..."
@@ -42,8 +42,8 @@ run_experiment() {
 # Number of iterations
 iterations=${1:-5}
 
-echo "Deploying on pis..."
-ansible-playbook deploy-pi.yml
+echo "Deploying on fat cluster..."
+ansible-playbook deploy.yml
 
 echo "Starting Chameleon iterations..."
 for (( i=1; i<=iterations; i++ ))
