@@ -309,11 +309,11 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
 
     NES_INFO("Starting loop in mobility handler")
     while (isRunning) {
+        //get current device waypoint
+        auto currentWaypoint = locationProvider->getCurrentWaypoint();
+        auto currentLocation = currentWaypoint.getLocation();
         if (std::dynamic_pointer_cast<LocationProviderCSV>(locationProvider)) {
 
-            //get current device waypoint
-            auto currentWaypoint = locationProvider->getCurrentWaypoint();
-            auto currentLocation = currentWaypoint.getLocation();
 
             //if device has not moved more than threshold, do nothing
             if (!shouldSendCurrentWaypointToCoordinator(lastTransmittedLocation, currentLocation)
