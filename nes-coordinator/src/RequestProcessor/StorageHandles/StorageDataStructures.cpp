@@ -11,17 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+
 namespace NES::RequestProcessor {
 StorageDataStructures::StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                                              TopologyPtr topology,
                                              Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                             QueryCatalogServicePtr queryCatalogService,
                                              GlobalQueryPlanPtr globalQueryPlan,
+                                             Catalogs::Query::QueryCatalogPtr queryCatalog,
                                              Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                              Catalogs::UDF::UDFCatalogPtr udfCatalog)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), topology(std::move(topology)),
-      queryCatalogService(std::move(queryCatalogService)), sourceCatalog(std::move(sourceCatalog)),
       globalExecutionPlan(std::move(globalExecutionPlan)), globalQueryPlan(std::move(globalQueryPlan)),
-      udfCatalog(std::move(udfCatalog)) {}
+      queryCatalog(std::move(queryCatalog)), sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 }// namespace NES::RequestProcessor

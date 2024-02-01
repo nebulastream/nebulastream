@@ -109,9 +109,9 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         //do not set migrating queries to deployed status
         if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING) {
-            queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::MIGRATING);
+            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::MIGRATING);
         } else {
-            queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::DEPLOYED);
+            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::DEPLOYED);
         }
     }
 
@@ -121,7 +121,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //Mark queries as running if they are not in migrating state
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::MIGRATING) {
-            queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::RUNNING);
+            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::RUNNING);
         }
     }
 
@@ -201,7 +201,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                     //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
                     //                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
                     decomposedQueryPlan->setState(QueryState::RUNNING);
-                    subplanMetaData->updateStatus(decomposedQueryPlan->getState());
+                    subplanMetaData->updateState(decomposedQueryPlan->getState());
                     completionQueues[queueForExecutionNode]++;
                     break;
                 }

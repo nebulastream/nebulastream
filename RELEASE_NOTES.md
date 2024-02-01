@@ -43,7 +43,7 @@ Query Submission
 ### - Optimizer
 Extended support for Multi-Query Optimization.
    - Added support for identifying partial sharing using different strategies [2136](https://github.com/nebulastream/nebulastream/issues/2136)
-   - Added a hybrid approach for merging queryIdAndCatalogEntryMapping [2183](https://github.com/nebulastream/nebulastream/issues/2183) 
+   - Added a hybrid approach for merging queryCatalogEntryMapping [2183](https://github.com/nebulastream/nebulastream/issues/2183) 
 
 Operator Placement
    - Integrate ILP-based Operator Placement [#2149](https://github.com/nebulastream/nebulastream/pull/2325)

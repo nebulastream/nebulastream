@@ -59,7 +59,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
     udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
-    queryCatalogService = storageHandle->getQueryCatalogServiceHandle(requestId);
+    queryCatalogService = storageHandle->getQueryCatalogHandle(requestId);
 
     //no function yet to process multiple removed links
     if (removedLinks.size() > 1) {

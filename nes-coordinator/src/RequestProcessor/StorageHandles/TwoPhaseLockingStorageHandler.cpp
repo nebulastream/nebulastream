@@ -26,11 +26,10 @@ TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(StorageDataStructur
     : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration)),
       topology(std::move(storageDataStructures.topology)),
       globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
-      queryCatalogService(std::move(storageDataStructures.queryCatalogService)),
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
-      sourceCatalog(std::move(storageDataStructures.sourceCatalog)), udfCatalog(std::move(storageDataStructures.udfCatalog)),
-      coordinatorConfigurationHolder(INVALID_REQUEST_ID), topologyHolder(INVALID_REQUEST_ID),
-      globalExecutionPlanHolder(INVALID_REQUEST_ID), queryCatalogServiceHolder(INVALID_REQUEST_ID),
+      queryCatalog(std::move(storageDataStructures.queryCatalog)), sourceCatalog(std::move(storageDataStructures.sourceCatalog)),
+      udfCatalog(std::move(storageDataStructures.udfCatalog)), coordinatorConfigurationHolder(INVALID_REQUEST_ID),
+      topologyHolder(INVALID_REQUEST_ID), globalExecutionPlanHolder(INVALID_REQUEST_ID), queryCatalogHolder(INVALID_REQUEST_ID),
       globalQueryPlanHolder(INVALID_REQUEST_ID), sourceCatalogHolder(INVALID_REQUEST_ID), udfCatalogHolder(INVALID_REQUEST_ID) {}
 
 std::shared_ptr<TwoPhaseLockingStorageHandler>
@@ -92,7 +91,7 @@ TwoPhaseLockingStorageHandler::ResourceHolderData& TwoPhaseLockingStorageHandler
     switch (resourceType) {
         case ResourceType::CoordinatorConfiguration: return coordinatorConfigurationHolder;
         case ResourceType::Topology: return topologyHolder;
-        case ResourceType::QueryCatalogService: return queryCatalogServiceHolder;
+        case ResourceType::QueryCatalogService: return queryCatalogHolder;
         case ResourceType::SourceCatalog: return sourceCatalogHolder;
         case ResourceType::GlobalExecutionPlan: return globalExecutionPlanHolder;
         case ResourceType::GlobalQueryPlan: return globalQueryPlanHolder;
@@ -133,12 +132,12 @@ TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle(const RequestId 
     return topology;
 }
 
-QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceHandle(const RequestId requestId) {
-    if (queryCatalogServiceHolder.holderId != requestId) {
+QueryCatalogHandle TwoPhaseLockingStorageHandler::getQueryCatalogHandle(const RequestId requestId) {
+    if (queryCatalogHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::QueryCatalogService);
     }
-    return queryCatalogService;
+    return queryCatalog;
 }
 
 GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle(const RequestId requestId) {

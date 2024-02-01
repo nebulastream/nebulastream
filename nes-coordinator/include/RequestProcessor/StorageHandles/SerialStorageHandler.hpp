@@ -50,7 +50,7 @@ class SerialStorageHandler : public StorageHandler {
      * @param requestId The id of the request making the call
      * @return a handle to the query catalog.
      */
-    QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) override;
+    QueryCatalogHandle getQueryCatalogHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable source catalog handle.
@@ -104,8 +104,8 @@ class SerialStorageHandler : public StorageHandler {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };

@@ -57,7 +57,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         NES_TRACE("Acquire Resources.");
         globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
         topology = storageHandler->getTopologyHandle(requestId);
-        queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
         globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
         udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
@@ -68,7 +68,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                                                        topology,
                                                                                        typeInferencePhase,
                                                                                        coordinatorConfiguration);
-        deploymentPhase = DeploymentPhase::create(queryCatalogService);
+        deploymentPhase = DeploymentPhase::create(queryCatalog);
         NES_TRACE("Phases created. Stop request initialized.");
 
         if (queryId == INVALID_SHARED_QUERY_ID) {

@@ -37,13 +37,13 @@ class DecomposedQueryPlanMetaData {
      * Update the status of the qub query
      * @param newDecomposedQueryPlanState : new state
      */
-    void updateStatus(QueryState newDecomposedQueryPlanState);
+    void updateState(QueryState newDecomposedQueryPlanState);
 
     /**
-     * Update the meta information
-     * @param metaInformation : information to update
+     * Update the termination reason
+     * @param terminationReason : information to update
      */
-    void updateMetaInformation(const std::string& metaInformation);
+    void setTerminationReason(const std::string& terminationReason);
 
     /**
      * Get status of query sub plan
@@ -67,7 +67,7 @@ class DecomposedQueryPlanMetaData {
      * @brief String rep of the meta information
      * @return meta data as string``
      */
-    const std::string& getMetaInformation() const;
+    const std::string& getTerminationReason() const;
 
     /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;
@@ -90,7 +90,9 @@ class DecomposedQueryPlanMetaData {
      */
     QueryState decomposedQueryPlanState;
 
-    /** @brief Stores a history of QueryState updates with their timestamp in milliseconds. */
+    /**
+     * @brief Stores a history of QueryState updates with their timestamp in milliseconds.
+     */
     QueryStateHistory history;
 
     /**
@@ -101,7 +103,7 @@ class DecomposedQueryPlanMetaData {
     /**
      * Any addition meta information e.g., failure reason
      */
-    std::string metaInformation;
+    std::string terminationReason;
 };
 }// namespace NES
 

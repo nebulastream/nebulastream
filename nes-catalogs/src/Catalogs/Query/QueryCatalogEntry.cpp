@@ -28,45 +28,29 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(queryPlacementStrategy),
       inputQueryPlan(std::move(inputQueryPlan)) {
     // Make sure that initial status is timestamped.
-    setQueryStatus(queryStatus);
+    setQueryState(queryStatus);
 }
 
 QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
+
+SharedQueryId QueryCatalogEntry::getSharedQueryId() const noexcept { return sharedQueryId; }
 
 std::string QueryCatalogEntry::getQueryString() const { return queryString; }
 
 QueryPlanPtr QueryCatalogEntry::getInputQueryPlan() const { return inputQueryPlan; }
 
-QueryPlanPtr QueryCatalogEntry::getExecutedQueryPlan() const { return executedQueryPlan; }
+QueryState QueryCatalogEntry::getQueryState() const { return queryState; }
 
-void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) {
-    std::unique_lock lock(mutex);
-    this->executedQueryPlan = executedQueryPlan;
-}
-
-QueryState QueryCatalogEntry::getQueryState() const {
-    std::unique_lock lock(mutex);
-    return queryState;
-}
-
-std::string QueryCatalogEntry::getQueryStatusAsString() const {
-    std::unique_lock lock(mutex);
-    return std::string(magic_enum::enum_name(queryState));
-}
-
-void QueryCatalogEntry::setQueryStatus(QueryState queryStatus) {
-    std::unique_lock lock(mutex);
+void QueryCatalogEntry::setQueryState(QueryState queryStatus) {
     this->queryState = queryStatus;
-    uint64_t usSinceEpoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    uint64_t usSinceEpoch =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     history.emplace_back(usSinceEpoch, queryStatus);
 }
 
-void QueryCatalogEntry::setMetaInformation(std::string metaInformation) {
-    std::unique_lock lock(mutex);
-    this->metaInformation = std::move(metaInformation);
-}
+void QueryCatalogEntry::setMetaInformation(std::string metaInformation) { this->terminationReason = metaInformation; }
 
-std::string QueryCatalogEntry::getMetaInformation() { return metaInformation; }
+std::string QueryCatalogEntry::getMetaInformation() { return terminationReason; }
 
 const std::string QueryCatalogEntry::getQueryPlacementStrategyAsString() const {
     return std::string(magic_enum::enum_name(queryPlacementStrategy));
@@ -75,57 +59,10 @@ const std::string QueryCatalogEntry::getQueryPlacementStrategyAsString() const {
 Optimizer::PlacementStrategy QueryCatalogEntry::getQueryPlacementStrategy() { return queryPlacementStrategy; }
 
 void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan) {
-    std::unique_lock lock(mutex);
     optimizationPhases.insert(std::pair<std::string, QueryPlanPtr>(phaseName, queryPlan));
 }
 
-std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() {
-    std::unique_lock lock(mutex);
-    return optimizationPhases;
-}
+std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() { return optimizationPhases; }
 
-bool QueryCatalogEntry::hasQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId) {
-    std::unique_lock lock(mutex);
-    return querySubPlanMetaDataMap.contains(decomposedQueryPlanId);
-}
-
-void QueryCatalogEntry::addQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId, uint64_t workerId, QueryState queryState) {
-    std::unique_lock lock(mutex);
-    if (querySubPlanMetaDataMap.find(decomposedQueryPlanId) != querySubPlanMetaDataMap.end()) {
-        throw InvalidQueryException("Query catalog entry already contains the query sub plan id "
-                                    + std::to_string(decomposedQueryPlanId));
-    }
-
-    auto subQueryMetaData = DecomposedQueryPlanMetaData::create(decomposedQueryPlanId, queryState, workerId);
-    querySubPlanMetaDataMap[decomposedQueryPlanId] = subQueryMetaData;
-}
-
-DecomposedQueryPlanMetaDataPtr QueryCatalogEntry::getQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId) {
-    std::unique_lock lock(mutex);
-    if (querySubPlanMetaDataMap.find(decomposedQueryPlanId) == querySubPlanMetaDataMap.end()) {
-        throw InvalidQueryException("Query catalog entry does not contains the input query sub pln Id "
-                                    + std::to_string(decomposedQueryPlanId));
-    }
-    return querySubPlanMetaDataMap[decomposedQueryPlanId];
-}
-
-std::vector<DecomposedQueryPlanMetaDataPtr> QueryCatalogEntry::getAllSubQueryPlanMetaData() {
-    std::unique_lock lock(mutex);
-    //Fetch all query sub plan metadata information
-    std::vector<DecomposedQueryPlanMetaDataPtr> allQuerySubPlanMetaData;
-    for (const auto& pair : querySubPlanMetaDataMap) {
-        allQuerySubPlanMetaData.emplace_back(pair.second);
-    }
-    return allQuerySubPlanMetaData;
-}
-
-void QueryCatalogEntry::removeAllQuerySubPlanMetaData() {
-    std::unique_lock lock(mutex);
-    querySubPlanMetaDataMap.clear();
-}
-
-const QueryStateHistory& QueryCatalogEntry::getHistory() const {
-    std::unique_lock lock(mutex);
-    return history;
-}
+const QueryStateHistory& QueryCatalogEntry::getHistory() const { return history; }
 }// namespace NES::Catalogs::Query

@@ -16,4 +16,5 @@ add_source_files(nes-catalogs
         QueryCatalogEntry.cpp
         DecomposedQueryPlanMetaData.cpp
         QueryCatalogService.cpp
+        SharedQueryCatalogEntry.cpp
         )
