@@ -136,7 +136,7 @@ Here we describe the APIs used for interacting with query catalog.
 
 ### Getting All Queries
 
-To get all queryIdAndCatalogEntryMapping registered at NebulaStream.
+To get all queryCatalogEntryMapping registered at NebulaStream.
 
 **API**: /queryCatalogService/allRegisteredQueries\
 **Verb**: GET\
@@ -154,9 +154,9 @@ To get all queryIdAndCatalogEntryMapping registered at NebulaStream.
 
 ### Getting Queries With Status
 
-To get all queryIdAndCatalogEntryMapping with a specific status form NebulaStream.
+To get all queryCatalogEntryMapping with a specific status form NebulaStream.
 
-API: /queryCatalogService/queryIdAndCatalogEntryMapping\
+API: /queryCatalogService/queryCatalogEntryMapping\
 Verb: GET\
 Response Code: 200 OK
 
@@ -191,7 +191,7 @@ ___
 
 ### Getting All Logical Source
 
-To get all queryIdAndCatalogEntryMapping registered at NebulaStream.
+To get all queryCatalogEntryMapping registered at NebulaStream.
 
 **API**: /sourceCatalogServicePtr/allLogicalSource\
 **Verb**: GET\

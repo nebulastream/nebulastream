@@ -77,7 +77,7 @@ class DummyStorageHandler : public StorageHandler {
 
     TopologyHandle getTopologyHandle(RequestId) override { return nullptr; };
 
-    QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId) override { return nullptr; };
+    QueryCatalogHandle getQueryCatalogHandle(RequestId) override { return nullptr; };
 
     GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId) override { return nullptr; };
 

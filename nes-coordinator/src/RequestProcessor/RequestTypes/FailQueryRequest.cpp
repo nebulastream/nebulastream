@@ -64,7 +64,7 @@ void FailQueryRequest::postExecution(const StorageHandlerPtr& storageHandler) { 
 std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
     globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
-    queryCatalogService = storageHandle->getQueryCatalogServiceHandle(requestId);
+    queryCatalogService = storageHandle->getQueryCatalogHandle(requestId);
     topology = storageHandle->getTopologyHandle(requestId);
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
     auto sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);

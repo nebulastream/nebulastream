@@ -113,7 +113,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
         auto topology = storageHandler->getTopologyHandle(requestId);
-        auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        auto queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
         auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
@@ -127,7 +127,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
         auto queryDeploymentPhase =
-            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
+            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalog, coordinatorConfiguration);
         auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);

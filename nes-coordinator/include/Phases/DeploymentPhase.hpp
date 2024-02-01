@@ -39,8 +39,10 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class DeploymentPhase;
 using DeploymentPhasePtr = std::shared_ptr<DeploymentPhase>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+namespace Catalogs::Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Catalogs::Query
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
@@ -54,9 +56,9 @@ class DeploymentPhase {
      * @brief Returns a smart pointer to the QueryDeploymentPhase
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static DeploymentPhasePtr create(const QueryCatalogServicePtr& queryCatalogService);
+    static DeploymentPhasePtr create(const Catalogs::Query::QueryCatalogPtr& queryCatalog);
 
-    explicit DeploymentPhase(const QueryCatalogServicePtr& queryCatalogService);
+    explicit DeploymentPhase(const Catalogs::Query::QueryCatalogPtr& queryCatalog);
 
     /**
      * @brief method for deploying decomposed query plans in different states
@@ -76,24 +78,19 @@ class DeploymentPhase {
      * @throws QueryDeploymentException: Error in call to Elegant acceleration service with code
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
-    void registerUnregisterDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
-
+    void registerUnregisterDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
+                                               RequestType requestType);
 
     /**
      * @brief
      * @param deploymentContexts
      * @param requestType
      */
-    void startStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
-
+    void startStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
+                                      RequestType requestType);
 
     WorkerRPCClientPtr workerRPCClient;
-    QueryCatalogServicePtr queryCatalogService;
-//    bool accelerateJavaUDFs=true;
-    std::string accelerationServiceURL;
-//    const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
-    //OpenCL payload constants
-    const std::string DEVICE_INFO_KEY = "deviceInfo";
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
 };
 }// namespace NES
 #endif// NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_

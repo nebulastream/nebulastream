@@ -25,7 +25,7 @@ Optimizer::GlobalExecutionPlanPtr StorageHandler::getGlobalExecutionPlanHandle(R
 
 TopologyHandle StorageHandler::getTopologyHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 
-QueryCatalogServiceHandle StorageHandler::getQueryCatalogServiceHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
+QueryCatalogHandle StorageHandler::getQueryCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 
 GlobalQueryPlanHandle StorageHandler::getGlobalQueryPlanHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 

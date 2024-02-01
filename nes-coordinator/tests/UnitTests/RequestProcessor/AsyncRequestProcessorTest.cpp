@@ -311,7 +311,7 @@ TEST_F(AsyncRequestProcessorTest, testWaitingForLock) {
         nextAvailableTicketQueryCatalogService++;
         while (true) {
             try {
-                twoplhandler->getQueryCatalogServiceHandle(queryId2);
+                twoplhandler->getQueryCatalogHandle(queryId2);
                 NES_DEBUG("Request {} has locked the query catalog", queryId2);
                 break;
             } catch (std::exception& e) {
@@ -555,7 +555,7 @@ TEST_F(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
         nextAvailableTicketQueryCatalogService++;
         while (true) {
             try {
-                twoplhandler->getQueryCatalogServiceHandle(queryId2);
+                twoplhandler->getQueryCatalogHandle(queryId2);
                 NES_DEBUG("Request {} has locked the query catalog", queryId2);
                 break;
             } catch (std::exception& e) {

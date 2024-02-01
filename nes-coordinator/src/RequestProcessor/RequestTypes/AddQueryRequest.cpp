@@ -167,8 +167,8 @@ void AddQueryRequest::removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e
 }
 
 void AddQueryRequest::markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler) {
-    auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
-    queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, e.what());
+    auto queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
+    queryCatalog->updateQueryStatus(queryId, QueryState::FAILED, e.what());
 }
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr exception,
@@ -180,7 +180,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
         auto topology = storageHandler->getTopologyHandle(requestId);
-        auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        auto queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
         auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);

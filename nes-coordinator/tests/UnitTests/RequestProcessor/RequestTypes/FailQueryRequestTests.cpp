@@ -286,7 +286,7 @@ TEST_F(FailQueryRequestTest, testWrongQueryStatus) {
     deployQuery();
 
     //set the query status to stopped, it should not be possible to fail a stopped query
-    queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::STOPPED);
+    queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::STOPPED);
 
     auto workerRpcClient = WorkerRPCClient::create();
     auto failQueryRequest = Experimental::FailQueryRequest::create(queryId, INVALID_DECOMPOSED_QUERY_PLAN_ID, maxRetries);

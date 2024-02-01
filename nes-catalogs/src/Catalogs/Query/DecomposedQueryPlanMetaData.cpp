@@ -28,15 +28,15 @@ DecomposedQueryPlanMetaData::DecomposedQueryPlanMetaData(DecomposedQueryPlanId q
                                                          WorkerId workerId)
     : decomposedQueryPlanId(querySubPlanId), decomposedQueryPlanState(decomposedQueryPlanState), workerId(workerId) {}
 
-void DecomposedQueryPlanMetaData::updateStatus(QueryState newDecomposedQueryPlanState) {
+void DecomposedQueryPlanMetaData::updateState(QueryState newDecomposedQueryPlanState) {
     decomposedQueryPlanState = newDecomposedQueryPlanState;
     uint64_t usSinceEpoch =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     history.emplace_back(usSinceEpoch, decomposedQueryPlanState);
 }
 
-void DecomposedQueryPlanMetaData::updateMetaInformation(const std::string& metaInformation) {
-    this->metaInformation = metaInformation;
+void DecomposedQueryPlanMetaData::setTerminationReason(const std::string& terminationReason) {
+    this->terminationReason = terminationReason;
 }
 
 DecomposedQueryPlanId DecomposedQueryPlanMetaData::getDecomposedQueryPlanId() const { return decomposedQueryPlanId; }
@@ -45,7 +45,7 @@ QueryState DecomposedQueryPlanMetaData::getDecomposedQueryPlanStatus() const { r
 
 uint64_t DecomposedQueryPlanMetaData::getWorkerId() const { return workerId; }
 
-const std::string& DecomposedQueryPlanMetaData::getMetaInformation() const { return metaInformation; }
+const std::string& DecomposedQueryPlanMetaData::getTerminationReason() const { return terminationReason; }
 
 const QueryStateHistory& DecomposedQueryPlanMetaData::getHistory() const { return history; }
 

@@ -72,6 +72,11 @@ class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
+namespace Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Query
+
 }// namespace Catalogs
 
 namespace RequestProcessor::Experimental {
@@ -151,8 +156,8 @@ class StopQueryRequest : public AbstractUniRequest {
     QueryId queryId;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
-    QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     DeploymentPhasePtr deploymentPhase;

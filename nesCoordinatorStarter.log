@@ -336,7 +336,7 @@ Value:
 Default Value: 
 
 Name: queryBatchSize
-Description: The number of queryIdAndCatalogEntryMapping to be processed together
+Description: The number of queryCatalogEntryMapping to be processed together
 Value: 1
 Default Value: 1
 
@@ -376,7 +376,7 @@ Value: 0
 Default Value: 0
 
 Name: advanceSemanticValidation
-Description: Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping. (Default: false)
+Description: Perform advance semantic validation on the incoming queryCatalogEntryMapping. (Default: false)
 Value: 0
 Default Value: 0
 

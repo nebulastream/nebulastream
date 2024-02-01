@@ -33,9 +33,12 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 using TopologyHandle = ResourceHandle<Topology>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-using QueryCatalogServiceHandle = ResourceHandle<QueryCatalogService>;
+namespace Catalogs::Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Catalogs::Query
+
+using QueryCatalogHandle = ResourceHandle<Catalogs::Query::QueryCatalog>;
 
 namespace Configurations {
 class CoordinatorConfiguration;
@@ -111,7 +114,7 @@ class StorageHandler {
      * @param requestId The id of the request which calls this function
      * @return a handle to the query catalog.
      */
-    virtual QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId);
+    virtual QueryCatalogHandle getQueryCatalogHandle(RequestId requestId);
 
     /**
      * @brief Obtain a mutable global query plan handle.

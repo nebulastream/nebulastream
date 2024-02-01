@@ -55,7 +55,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
     //test if we can obtain the resource we passed to the constructor
     ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(queryId1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get(), std::exception);
@@ -142,7 +142,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {ResourceType::Topology}));
     ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(queryId1).get());
     ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId1).get(), std::exception);
-    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId1).get(), std::exception);
+    ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(queryId1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId1).get(), std::exception);
     ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId1).get(), std::exception);
@@ -161,7 +161,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
         ASSERT_EQ(releaseCount, 1);
         ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(queryId2).get());
         ASSERT_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(queryId2).get(), std::exception);
-        ASSERT_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(queryId2).get(), std::exception);
+        ASSERT_THROW(twoPLAccessHandle->getQueryCatalogHandle(queryId2).get(), std::exception);
         ASSERT_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(queryId2).get(), std::exception);
         ASSERT_THROW(twoPLAccessHandle->getSourceCatalogHandle(queryId2).get(), std::exception);
         ASSERT_THROW(twoPLAccessHandle->getUDFCatalogHandle(queryId2).get(), std::exception);
@@ -235,7 +235,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
             }
             ASSERT_NO_THROW(twoPLAccessHandle->getTopologyHandle(i).get());
             ASSERT_NO_THROW(twoPLAccessHandle->getGlobalExecutionPlanHandle(i).get());
-            ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogServiceHandle(i).get());
+            ASSERT_NO_THROW(twoPLAccessHandle->getQueryCatalogHandle(i).get());
             ASSERT_NO_THROW(twoPLAccessHandle->getGlobalQueryPlanHandle(i).get());
             ASSERT_NO_THROW(twoPLAccessHandle->getSourceCatalogHandle(i).get());
             ASSERT_NO_THROW(twoPLAccessHandle->getUDFCatalogHandle(i).get());

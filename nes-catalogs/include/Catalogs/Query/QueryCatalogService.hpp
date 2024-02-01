@@ -54,34 +54,17 @@ class QueryCatalogService {
      * @param queryString: a user query in string form
      * @param queryPlan: a user query plan to be executed
      * @param placementStrategyName: the placement strategy (e.g. bottomUp, topDown, etc)
-     * @return query catalog entry or nullptr
+     * @return true if successful else false
      */
-    Catalogs::Query::QueryCatalogEntryPtr createNewEntry(const std::string& queryString,
-                                                         QueryPlanPtr const& queryPlan,
-                                                         const Optimizer::PlacementStrategy placementStrategyName);
-
-    /**
-     * Add sub query meta data to the query
-     * @param queryId : query id to which sub query metadata to add
-     * @param querySubPlanId : the sub query plan id
-     * @param workerId : the topology node where the sub query plan is running
-     * @param querySubPlanStatus : the state of the sub query
-     */
-    void addSubQueryMetaData(QueryId queryId, DecomposedQueryPlanId querySubPlanId, uint64_t workerId, QueryState querySubPlanStatus);
+    bool createNewEntry(const std::string& queryString,
+                        QueryPlanPtr const& queryPlan,
+                        const Optimizer::PlacementStrategy placementStrategyName);
 
     /**
      * Reset all sub query plans added to the query
      * @param queryId : the query id
      */
     void resetSubQueryMetaData(QueryId queryId);
-
-    /**
-     * Update query sub plan status
-     * @param sharedQueryId : the query id to which sub plan is added
-     * @param querySubPlanId : the query sub plan id
-     * @param querySubPlanStatus : the new sub query status
-     */
-    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId, QueryState querySubPlanStatus);
 
     /**
      * Get the entry from the query catalog for the input query id
@@ -109,37 +92,6 @@ class QueryCatalogService {
      * @return map containing query id and query catalog entry
      */
     std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> getAllQueryCatalogEntries();
-
-    /**
-     * Update query entry with new status
-     * @param queryId : query id
-     * @param queryStatus : new status
-     * @param metaInformation : additional meta information
-     * @return true if updated successfully
-     */
-    bool updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& metaInformation);
-
-    /**
-     * check and mark the query for soft stop
-     * @param sharedQueryId: the query which need to be stopped
-     * @return true if successful else false
-     */
-    bool checkAndMarkForSoftStop(SharedQueryId sharedQueryId, DecomposedQueryPlanId subPlanId, OperatorId operatorId);
-
-    /**
-     * check and mark the query for hard stop
-     * @param queryId: the query which need to be stopped
-     * @return true if successful else false
-     */
-    bool checkAndMarkForHardStop(QueryId queryId);
-
-    /**
-     * Add update query plans to the query catalog
-     * @param queryId : the query id
-     * @param step : step that produced the updated plan
-     * @param updatedQueryPlan : the updated query plan
-     */
-    void addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan);
 
     /**
      * Mapping shard query plan id to the query id
@@ -185,10 +137,9 @@ class QueryCatalogService {
      */
     bool handleSoftStop(SharedQueryId sharedQueryId, DecomposedQueryPlanId querySubPlanId, QueryState querySubPlanStatus);
 
-
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     std::recursive_mutex serviceMutex;
 };
 }// namespace NES
 
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGSERVICE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGSERVICE_HPP_
