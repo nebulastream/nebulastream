@@ -42,20 +42,28 @@ class FailQueryRequest : public AbstractUniRequest {
   public:
     /**
      * @brief Constructor
-     * @param queryId: The id of the query that failed
-     * @param failedSubPlanId: The id of the subplan that caused the failure
+     * @param sharedQueryId: The id of the query that failed
+     * @param failedDecomposedPlanId: The id of the decomposed plan that caused the failure
+     * @param failureReason: the failure reason
      * @param maxRetries: Maximum number of retry attempts for the request
      */
-    FailQueryRequest(NES::QueryId queryId, NES::DecomposedQueryPlanId failedSubPlanId, uint8_t maxRetries);
+    FailQueryRequest(QueryId sharedQueryId,
+                     DecomposedQueryPlanId failedDecomposedPlanId,
+                     const std::string& failureReason,
+                     uint8_t maxRetries);
 
     /**
     * @brief creates a new FailQueryRequest object
-    * @param queryId: The id of the query that failed
-    * @param failedSubPlanId: The id of the subplan that caused the failure
+    * @param sharedQueryId: The id of the query that failed
+    * @param failedDecomposedQueryId: The id of the decomposed plan that caused the failure
+    * @param failureReason: the failure reason
     * @param maxRetries: Maximum number of retry attempts for the request
     * @return a smart pointer to the newly created object
     */
-    static FailQueryRequestPtr create(NES::QueryId queryId, NES::DecomposedQueryPlanId failedSubPlanId, uint8_t maxRetries);
+    static FailQueryRequestPtr create(QueryId sharedQueryId,
+                                      DecomposedQueryPlanId failedDecomposedQueryId,
+                                      const std::string& failureReason,
+                                      uint8_t maxRetries);
 
   protected:
     /**
@@ -96,10 +104,11 @@ class FailQueryRequest : public AbstractUniRequest {
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override;
 
   private:
-    QueryId queryId;
-    DecomposedQueryPlanId querySubPlanId;
+    SharedQueryId sharedQueryId;
+    DecomposedQueryPlanId decomposedQueryPlanId;
+    std::string failureReason;
     GlobalQueryPlanPtr globalQueryPlan;
-    QueryCatalogServicePtr queryCatalogService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     TopologyPtr topology;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;

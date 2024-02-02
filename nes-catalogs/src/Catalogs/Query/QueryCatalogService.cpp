@@ -68,7 +68,6 @@ std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> QueryCatalogService::g
 }
 
 
-
 std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> QueryCatalogService::getAllQueryCatalogEntries() {
     std::unique_lock lock(serviceMutex);
     return queryCatalog->getAllQueryCatalogEntries();

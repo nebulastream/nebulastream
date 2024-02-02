@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -67,12 +67,12 @@ void deserializeOpenCLDeviceInfo(std::any& property,
 CoordinatorRPCServer::CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
                                            TopologyManagerServicePtr topologyManagerService,
                                            SourceCatalogServicePtr sourceCatalogService,
-                                           QueryCatalogServicePtr queryCatalogService,
+                                           Catalogs::Query::QueryCatalogPtr queryCatalog,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            QueryParsingServicePtr queryParsingService,
                                            CoordinatorHealthCheckServicePtr coordinatorHealthCheckService)
     : requestHandlerService(std::move(requestHandlerService)), topologyManagerService(std::move(topologyManagerService)),
-      sourceCatalogService(std::move(sourceCatalogService)), queryCatalogService(std::move(queryCatalogService)),
+      sourceCatalogService(std::move(sourceCatalogService)), queryCatalog(std::move(queryCatalog)),
       monitoringManager(std::move(monitoringManager)), queryParsingService(std::move(queryParsingService)),
       coordinatorHealthCheckService(std::move(coordinatorHealthCheckService)){};
 
@@ -314,10 +314,10 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
                                                                    << " from worker: " << request->workerid());
 
         auto sharedQueryId = request->queryid();
-        auto subQueryPlanId = request->subqueryid();
+        auto decomposedQueryPlanId = request->subqueryid();
 
         //Send one failure request for the shared query plan
-        if (!requestHandlerService->validateAndQueueFailQueryRequest(sharedQueryId, subQueryPlanId, request->errormsg())) {
+        if (!requestHandlerService->validateAndQueueFailQueryRequest(sharedQueryId, decomposedQueryPlanId, request->errormsg())) {
             NES_ERROR("Failed to create Query Failure request for shared query plan {}", sharedQueryId);
             return Status::CANCELLED;
         }
@@ -372,7 +372,7 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
 
     //Check with query catalog service if the request possible
     auto sourceId = request->sourceid();
-    auto softStopPossible = queryCatalogService->checkAndMarkForSoftStop(sharedQueryId, subQueryPlanId, sourceId);
+    auto softStopPossible = queryCatalog->handleDecomposedQueryPlanMarkedForSoftStop(sharedQueryId, subQueryPlanId, sourceId);
 
     //Send response
     response->set_success(softStopPossible);
@@ -389,8 +389,7 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
              sharedQueryId)
 
     //inform catalog service
-    bool success =
-        queryCatalogService->updateDecomposedQueryPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_TRIGGERED);
+    bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_TRIGGERED);
 
     //update response
     response->set_success(success);
@@ -405,8 +404,7 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
     auto querySubPlanId = request->querysubplanid();
 
     //inform catalog service
-    bool success =
-        queryCatalogService->updateDecomposedQueryPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_COMPLETED);
+    bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_COMPLETED);
 
     //update response
     response->set_success(success);

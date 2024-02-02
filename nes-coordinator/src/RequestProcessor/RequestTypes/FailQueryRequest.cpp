@@ -14,7 +14,7 @@
 
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
@@ -29,8 +29,9 @@
 
 namespace NES::RequestProcessor::Experimental {
 
-FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
-                                   const NES::DecomposedQueryPlanId failedSubPlanId,
+FailQueryRequest::FailQueryRequest(const SharedQueryId sharedQueryId,
+                                   const DecomposedQueryPlanId failedDecomposedPlanId,
+                                   const std::string& failureReason,
                                    const uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::GlobalQueryPlan,
                           ResourceType::QueryCatalogService,
@@ -40,11 +41,13 @@ FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::CoordinatorConfiguration},
                          maxRetries),
-      queryId(queryId), querySubPlanId(failedSubPlanId) {}
+      sharedQueryId(sharedQueryId), decomposedQueryPlanId(failedDecomposedPlanId), failureReason(failureReason) {}
 
-FailQueryRequestPtr
-FailQueryRequest::create(NES::QueryId queryId, NES::DecomposedQueryPlanId failedSubPlanId, uint8_t maxRetries) {
-    return std::make_shared<FailQueryRequest>(queryId, failedSubPlanId, maxRetries);
+FailQueryRequestPtr FailQueryRequest::create(SharedQueryId sharedQueryId,
+                                             DecomposedQueryPlanId failedDecomposedQueryId,
+                                             const std::string& failureReason,
+                                             uint8_t maxRetries) {
+    return std::make_shared<FailQueryRequest>(sharedQueryId, failedDecomposedQueryId, failureReason, maxRetries);
 }
 
 void FailQueryRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
@@ -64,21 +67,15 @@ void FailQueryRequest::postExecution(const StorageHandlerPtr& storageHandler) { 
 std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
     globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
-    queryCatalogService = storageHandle->getQueryCatalogHandle(requestId);
+    queryCatalog = storageHandle->getQueryCatalogHandle(requestId);
     topology = storageHandle->getTopologyHandle(requestId);
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
     auto sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
     auto udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
-    if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
-        throw Exceptions::QueryNotFoundException("Could not find a query with the id " + std::to_string(queryId)
-                                                 + " in the global query plan");
-    }
-
     //todo 4255: allow requests to skip to the front of the line
-    queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
+    queryCatalog->checkAndMarkSharedQueryForFailure(sharedQueryId, decomposedQueryPlanId);
 
     globalQueryPlan->removeQuery(sharedQueryId, RequestType::FailQuery);
 
@@ -91,17 +88,14 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
 
     //undeploy queries
     try {
-        auto deploymentPhase = DeploymentPhase::create(queryCatalogService);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
         deploymentPhase->execute(deploymentContexts, RequestType::FailQuery);
     } catch (NES::Exceptions::RuntimeException& e) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,
-                                                     "Failed to undeploy query with id " + std::to_string(queryId));
+                                                     "Failed to undeploy shared query with id " + std::to_string(sharedQueryId));
     }
 
-    //update global query plan
-    for (auto& id : globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getQueryIds()) {
-        queryCatalogService->updateQueryStatus(id, QueryState::FAILED, "Failed");
-    }
+    queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::FAILED, failureReason);
 
     //respond to the calling service which is the shared query id to the query being undeployed
     responsePromise.set_value(std::make_shared<FailQueryResponse>(sharedQueryId));
