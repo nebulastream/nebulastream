@@ -12,6 +12,6 @@
 # limitations under the License.
 
 add_source_files(
-    nes-core
+    nes-execution
     LowerPhysicalToVectorizedOperatorsPhase.cpp
 )

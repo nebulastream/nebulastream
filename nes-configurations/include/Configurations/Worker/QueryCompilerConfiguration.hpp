@@ -26,7 +26,7 @@
 #include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 #include <Configurations/Enums/QueryExecutionMode.hpp>
-#include <Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
+#include <Configurations/Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
 #include <Util/Common.hpp>
 #include <iostream>
 #include <map>

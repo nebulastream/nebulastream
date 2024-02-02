@@ -25,7 +25,7 @@ PhysicalVectorizedPipelineOperator::PhysicalVectorizedPipelineOperator(OperatorI
 
 PhysicalOperatorPtr PhysicalVectorizedPipelineOperator::create(const PhysicalOperatorPtr& vectorizableOperator) {
     auto physicalUnaryOperator = std::dynamic_pointer_cast<PhysicalUnaryOperator>(vectorizableOperator);
-    return std::make_shared<PhysicalVectorizedPipelineOperator>(Util::getNextOperatorId(), physicalUnaryOperator);
+    return std::make_shared<PhysicalVectorizedPipelineOperator>(getNextOperatorId(), physicalUnaryOperator);
 }
 
 std::string PhysicalVectorizedPipelineOperator::toString() const {

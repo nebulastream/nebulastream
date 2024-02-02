@@ -14,7 +14,8 @@
 
 #include <QueryCompiler/Phases/Experimental/Vectorization/LowerPhysicalToVectorizedOperatorsPhase.hpp>
 
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Nodes/Node.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -49,8 +50,8 @@ PipelineQueryPlanPtr LowerPhysicalToVectorizedOperatorsPhase::apply(PipelineQuer
 }
 
 OperatorPipelinePtr LowerPhysicalToVectorizedOperatorsPhase::lower(OperatorPipelinePtr operatorPipeline) {
-    auto queryPlan = operatorPipeline->getQueryPlan();
-    auto nodes = QueryPlanIterator(queryPlan).snapshot();
+    auto queryPlan = operatorPipeline->getDecomposedQueryPlan();
+    auto nodes = PlanIterator(queryPlan).snapshot();
 
     NES_DEBUG("Looking for vectorizable physical operators...");
     for (const auto& node : nodes) {
