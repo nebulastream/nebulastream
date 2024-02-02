@@ -81,7 +81,9 @@
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <fstream>
-
+#endif
+#ifdef ENABLE_KAFKA_BUILD
+#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #endif
 
 namespace NES {
@@ -1404,6 +1406,18 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     }
 #endif
+#ifdef ENABLE_KAFKA_BUILD
+    else if (sinkDescriptor.instanceOf<const KafkaSinkDescriptor>()) {
+        NES_TRACE("Serializing KafkaSinkDescriptor");
+        const auto kafkaSinkDescriptor = sinkDescriptor.as<const KafkaSinkDescriptor>();
+        SerializableOperator_SinkDetails_SerializableKafkaSinkDescriptor serializedDescriptor;
+        serializedDescriptor.set_brokers(kafkaSinkDescriptor->getBrokers());
+        serializedDescriptor.set_topic(kafkaSinkDescriptor->getTopic());
+        serializedDescriptor.set_kafkaconnecttimeout(kafkaSinkDescriptor->getTimeout());
+        sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedDescriptor);
+        sinkDetails.set_numberoforiginids(numberOfOrigins);
+    }
+#endif
     else if (sinkDescriptor.instanceOf<const Network::NetworkSinkDescriptor>()) {
         // serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
@@ -1526,6 +1540,18 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
                                           serializedSinkDescriptor.asynchronousclient(),
                                           std::string{serializedSinkDescriptor.clientid()},
                                           deserializedNumberOfOrigins);
+    }
+#endif
+#ifdef ENABLE_KAFKA_BUILD
+    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableKafkaSinkDescriptor>()) {
+        NES_TRACE("Deserializing SinkDescriptor as KafkaSinkDescriptor");
+        SerializableOperator_SinkDetails_SerializableKafkaSinkDescriptor serializedSinkDescriptor;
+        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
+        return KafkaSinkDescriptor::create("CSV_FORMAT",
+                                           std::string{serializedSinkDescriptor.topic()},
+                                           std::string{serializedSinkDescriptor.brokers()},
+                                           serializedSinkDescriptor.kafkaconnecttimeout());
+
     }
 #endif
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {

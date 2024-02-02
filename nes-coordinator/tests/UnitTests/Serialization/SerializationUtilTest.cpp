@@ -311,6 +311,16 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     }
 #endif
 
+#ifdef ENABLE_KAFKA_BUILD
+    {
+        auto sink = KafkaSinkDescriptor::create("CSV_FORMAT", "test-topic", "localhost:9092", 1234);
+        SerializableOperator_SinkDetails sinkDetails;
+        OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDetails, 0);
+        auto deserializedSinkDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(sinkDetails);
+        EXPECT_TRUE(sink->equal(deserializedSinkDescriptor));
+    };
+#endif
+
     {
         auto sink = PrintSinkDescriptor::create();
         SerializableOperator_SinkDetails sinkDescriptor;
