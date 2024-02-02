@@ -97,7 +97,7 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer) {
     auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers, bufferManager);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) pipelineContext.get()));
 
-    stagingHandler->start(pipelineContext, nullptr, 0);
+    stagingHandler->start(pipelineContext, 0);
 
     std::vector<Record::RecordFieldIdentifier> projections = {"f1", "f2"};
     auto collectMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);

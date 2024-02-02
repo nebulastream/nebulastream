@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(
-    nes-runtime
+    nes-execution
     StagingHandler.cpp
     Unvectorize.cpp
     VectorizableOperator.cpp

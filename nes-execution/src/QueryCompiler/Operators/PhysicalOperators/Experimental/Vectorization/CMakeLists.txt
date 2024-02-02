@@ -11,5 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_runtime_test(runtime-vectorize-operator-test "VectorizeOperatorTests.cpp")
-add_nes_runtime_test(runtime-unvectorize-operator-test "UnvectorizeOperatorTests.cpp")
+add_source_files(
+    nes-execution
+    PhysicalUnvectorizeOperator.cpp
+    PhysicalVectorizeOperator.cpp
+)

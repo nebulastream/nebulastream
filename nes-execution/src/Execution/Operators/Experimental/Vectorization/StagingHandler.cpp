@@ -28,7 +28,7 @@ StagingHandler::StagingHandler(uint64_t stageBufferSize, uint64_t schemaSize)
     NES_ASSERT(schemaSize < stageBufferSize, "Stage buffer is too small for schema");
 }
 
-void StagingHandler::start(Runtime::Execution::PipelineExecutionContextPtr ctx, Runtime::StateManagerPtr, uint32_t) {
+void StagingHandler::start(Runtime::Execution::PipelineExecutionContextPtr ctx, uint32_t) {
     auto bufferManager = ctx->getBufferManager();
     NES_INFO("Requesting unpooled buffer of size {} from buffer manager", stageBufferSize);
     auto bufferOpt = bufferManager->getUnpooledBuffer(stageBufferSize);

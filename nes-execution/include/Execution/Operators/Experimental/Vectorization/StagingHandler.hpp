@@ -32,7 +32,6 @@ public:
     StagingHandler(uint64_t stageBufferSize, uint64_t schemaSize);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
     void stop(Runtime::QueryTerminationType queryTerminationType,
