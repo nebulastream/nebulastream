@@ -371,8 +371,8 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
     NES_WARNING("CoordinatorRPCServer: received request for soft stopping the shared query plan id: {}", sharedQueryId)
 
     //Check with query catalog service if the request possible
-    auto sourceId = request->sourceid();
-    auto softStopPossible = queryCatalog->handleDecomposedQueryPlanMarkedForSoftStop(sharedQueryId, subQueryPlanId, sourceId);
+    auto softStopPossible =
+        queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId, subQueryPlanId, QueryState::MARKED_FOR_SOFT_STOP);
 
     //Send response
     response->set_success(softStopPossible);
@@ -431,9 +431,6 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
     //FIXME: Call the code to update the predictions
     bool success = false;
     reply->set_success(success);
-    if (success) {
-        return Status::OK;
-    }
     return Status::CANCELLED;
 }
 
