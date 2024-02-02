@@ -137,13 +137,15 @@ class QueryCatalog {
      * Add sub query meta data to the query
      * @param sharedQueryId : query id to which sub query metadata to add
      * @param decomposedQueryPlanId : the sub query plan id
+     * @param decomposedQueryPlanVersion: decomposed query plan version
      * @param workerId : the topology node where the sub query plan is running
-     * @param querySubPlanStatus : the state of the sub query
+     * @param decomposedQueryStatus : the state of the sub query
      */
     void addDecomposedQueryMetaData(QueryId sharedQueryId,
                                     DecomposedQueryPlanId decomposedQueryPlanId,
+                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                     WorkerId workerId,
-                                    QueryState querySubPlanStatus);
+                                    QueryState decomposedQueryStatus);
 
     /**
      * Update decomposed query plan status
