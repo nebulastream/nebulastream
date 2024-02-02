@@ -72,12 +72,9 @@ class QueryController : public oatpp::web::server::api::ApiController {  //Query
                     const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                     const std::string& completeRouterPrefix,
                     const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(queryService),
-          queryCatalogService(queryCatalogService), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
-          errorHandler(errorHandler) {} //：后面是初始化列表；{} 里写的函数体 为空
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
           requestHandlerService(requestHandlerService), queryCatalogService(queryCatalogService),
-          globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), errorHandler(errorHandler) {}
+          globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), errorHandler(errorHandler) {} //：后面是初始化列表；{} 里写的函数体 为空
 
     /**
      * Create a shared object of the API controller
