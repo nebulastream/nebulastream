@@ -155,7 +155,7 @@ KafkaSourceType::KafkaSourceType(const std::string& logicalSourceName, const std
                                                                 "connection time out for source, needed for: KafkaSource")),
       numberOfBuffersToProduce(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE,
-                                                                1,
+                                                                0,
                                                                 "Numbers of events pulled from the queue overall")),
 
       batchSize(
