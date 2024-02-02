@@ -63,7 +63,7 @@ KafkaSourceType::KafkaSourceType(const std::string& logicalSourceName,
     if (sourceConfigMap.find(Configurations::OFFSET_MODE_CONFIG) != sourceConfigMap.end()) {
         offsetMode->setValue(sourceConfigMap.find(Configurations::OFFSET_MODE_CONFIG)->second);
     } else {
-        NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no offset defined! Please define offset.");
+        NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no offsetMode defined! Please define offsetMode.");
     }
     if (sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
