@@ -38,9 +38,6 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 class SourceCatalogService;
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
 class CoordinatorHealthCheckService;
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
 
@@ -48,6 +45,11 @@ namespace Monitoring {
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace Monitoring
+
+namespace Catalogs::Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Catalogs::Query
 
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
@@ -62,14 +64,14 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param requestHandlerService: the instance of Query Service
      * @param topologyManagerService : the instance of the topologyManagerService
      * @param sourceCatalogService : the instance of the steam catalog service
-     * @param queryCatalogService : the instance of monitoring service
+     * @param queryCatalog : the instance of query catalog
      * @param monitoringService : the instance of monitoring service
      * @param coordinatorHealthCheckService : coordinator health check service
      */
     explicit CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
                                   TopologyManagerServicePtr topologyManagerService,
                                   SourceCatalogServicePtr sourceCatalogService,
-                                  QueryCatalogServicePtr queryCatalogService,
+                                  Catalogs::Query::QueryCatalogPtr queryCatalog,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   QueryParsingServicePtr queryParsingService,
                                   CoordinatorHealthCheckServicePtr coordinatorHealthCheckService);
@@ -263,7 +265,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     RequestHandlerServicePtr requestHandlerService;
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
-    QueryCatalogServicePtr queryCatalogService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Monitoring::MonitoringManagerPtr monitoringManager;
     QueryParsingServicePtr queryParsingService;
     CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;

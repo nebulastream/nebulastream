@@ -112,6 +112,8 @@ void DeploymentPhase::startStopDecomposedQueryPlan(const std::set<Optimizer::Dep
             case QueryState::MARKED_FOR_MIGRATION: {
                 if (requestType == RequestType::AddQuery) {
                     workerRPCClient->startQueryAsync(grpcAddress, sharedQueryId, queueForDeploymentContext);
+                    // Update decomposed query plan status
+                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId, decomposedQueryPlanId, QueryState::MIGRATING);
                 } else if (requestType == RequestType::StopQuery) {
                     workerRPCClient->stopQueryAsync(grpcAddress,
                                                     sharedQueryId,
