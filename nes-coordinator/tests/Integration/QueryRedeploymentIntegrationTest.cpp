@@ -612,6 +612,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
     auto crdWorkerDataPort = getAvailablePort();
     coordinatorConfig->worker.dataPort = *crdWorkerDataPort;
     coordinatorConfig->worker.connectSourceEventChannelsAsync.setValue(true);
+    coordinatorConfig->worker.timestampFileSinkAndWriteToTCP.setValue(false);
 
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -631,13 +632,14 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
     wrkConf1->numWorkerThreads.setValue(GetParam());
     wrkConf1->connectSinksAsync.setValue(true);
     wrkConf1->connectSourceEventChannelsAsync.setValue(true);
+    wrkConf1->timestampFileSinkAndWriteToTCP.setValue(false);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
-    wrkConf1->mobilityConfiguration.locationProviderType.setValue(
-        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY)
-                                                                    / "singleLocation.csv");
+    //wrkConf1->mobilityConfiguration.locationProviderType.setValue(
+    // NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    //    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY)
+    //                                                                    / "singleLocation.csv");
 
     wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
@@ -1040,7 +1042,9 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnecting) {
     ASSERT_TRUE(retStopCord);
 }
 
-void writeReconnectCSV(const std::vector<uint64_t>& integers, const std::vector<std::chrono::duration<double>>& durations, const std::string& filename) {
+void writeReconnectCSV(const std::vector<uint64_t>& integers,
+                       const std::vector<std::chrono::duration<double>>& durations,
+                       const std::string& filename) {
     // Open the file for writing
     std::ofstream outputFile(filename);
 
@@ -1134,16 +1138,14 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnectingPrecalculat
     string singleLocStart = "52.55227464714949, 13.351743136322877";
     crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
 
-   //write reconnect file
+    //write reconnect file
     std::string precalculated = getTestResourceFolder() / "precalculated_reconnects.csv";
     std::vector<uint64_t> parentIds = {3, 4, 5, 6, 7};
-    std::vector<std::chrono::duration<double>> durations = {
-        std::chrono::seconds(0),
-        std::chrono::seconds(1),
-        std::chrono::seconds(2),
-        std::chrono::seconds(3),
-        std::chrono::seconds(4)
-    };
+    std::vector<std::chrono::duration<double>> durations = {std::chrono::seconds(0),
+                                                            std::chrono::seconds(1),
+                                                            std::chrono::seconds(2),
+                                                            std::chrono::seconds(3),
+                                                            std::chrono::seconds(4)};
 
     writeReconnectCSV(parentIds, durations, precalculated);
 
@@ -1174,17 +1176,16 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnectingPrecalculat
     //wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv");
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(
         "/home/x/.local/share/Cryptomator/mnt/tubCloudCr/old_test_data/path1.csv");
-    wrkConf1->mobilityConfiguration.precalculatedReconnectPath.setValue(
-        precalculated);
+    wrkConf1->mobilityConfiguration.precalculatedReconnectPath.setValue(precalculated);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
     ASSERT_TRUE(waitForNodes(5, 62, topology));
 
-//    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-//        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
-//        Optimizer::PlacementStrategy::BottomUp);
+    //    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
+    //        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+    //        Optimizer::PlacementStrategy::BottomUp);
 
     auto actualParentId = topology->getParentTopologyNodeIds(wrk1->getWorkerId()).front();
     while (actualParentId != parentIds.back()) {
@@ -1200,7 +1201,7 @@ TEST_F(QueryRedeploymentIntegrationTest, testSequenceWithReconnectingPrecalculat
     std::system(ss.str().c_str());
 
     int response = remove(testFile.c_str());
-//    ASSERT_TRUE(response == 0);
+    //    ASSERT_TRUE(response == 0);
 
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk1->stop(false);
@@ -1229,9 +1230,13 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    auto schema =
-        Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("ingestion_timestamp", BasicType::UINT64))->addField(createField("processing_timestamp"
-                                                                                                                                                                                                                   "", BasicType::UINT64));
+    auto schema = Schema::create()
+                      ->addField(createField("id", BasicType::UINT64))
+                      ->addField(createField("value", BasicType::UINT64))
+                      ->addField(createField("ingestion_timestamp", BasicType::UINT64))
+                      ->addField(createField("processing_timestamp"
+                                             "",
+                                             BasicType::UINT64));
     crd->getSourceCatalog()->addLogicalSource("values", schema);
 
     auto topologyJsonPath = "/home/x/rustProjects/nes_simulation_starter_rs/stuff/3_layer_topology.json";
@@ -1299,7 +1304,8 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
         wrkConf->rpcPort.setValue(*rpcPort);
         wrkConf->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
         wrkConf->mobilityConfiguration.locationProviderConfig.setValue(configFile.path());
-        wrkConf->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+        wrkConf->mobilityConfiguration.locationProviderType.setValue(
+            NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
         wrkConf->physicalSourceTypes.add(stype);
         wrkConf->numberOfSlots.setValue(1);
         //wrkConf->locationCoordinates.setValue({elem.second[0], elem.second[1]});
@@ -1314,18 +1320,19 @@ TEST_F(QueryRedeploymentIntegrationTest, debugDublinBus) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-//    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-//        R"(Query::from("values").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
-//        Optimizer::PlacementStrategy::BottomUp);
+    //    QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
+    //        R"(Query::from("values").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+    //        Optimizer::PlacementStrategy::BottomUp);
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-        R"(Query::from("values").map(Attribute("value") = Attribute("value") * 2).sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        R"(Query::from("values").map(Attribute("value") = Attribute("value") * 2).sink(FileSinkDescriptor::create(")" + testFile
+            + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
 
-//    std::stringstream ss;
-//    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
-//    ss << std::to_string(*restPort);
-//    ss << "\"";
-//    std::system(ss.str().c_str());
+    //    std::stringstream ss;
+    //    ss << "google-chrome \"http://localhost:3000/?host=localhost&port=";
+    //    ss << std::to_string(*restPort);
+    //    ss << "\"";
+    //    std::system(ss.str().c_str());
 
     std::cin.get();
     //auto nodeMap = nodes.get<std::map<uint64, std::pair<double, double>>>();
@@ -1357,9 +1364,13 @@ TEST_F(QueryRedeploymentIntegrationTest, testSingleWorkerDublin) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    auto schema =
-        Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("ingestion_timestamp", BasicType::UINT64))->addField(createField("processing_timestamp"
-                                                                                                                                                                                                                   "", BasicType::UINT64));
+    auto schema = Schema::create()
+                      ->addField(createField("id", BasicType::UINT64))
+                      ->addField(createField("value", BasicType::UINT64))
+                      ->addField(createField("ingestion_timestamp", BasicType::UINT64))
+                      ->addField(createField("processing_timestamp"
+                                             "",
+                                             BasicType::UINT64));
     crd->getSourceCatalog()->addLogicalSource("values", schema);
 
     auto topologyJsonPath = "/home/x/rustProjects/nes_simulation_starter_rs/stuff/3_layer_topology.json";
@@ -1413,51 +1424,55 @@ TEST_F(QueryRedeploymentIntegrationTest, testSingleWorkerDublin) {
     stype->setNumberOfTuplesToProducePerBuffer(0);
     stype->setGatheringInterval(1000);
 
-//    auto mobileWorkerConfigDir = "/home/x/rustProjects/nes_simulation_starter_rs/stuff/1h_dublin_bus_nanosec";
+    //    auto mobileWorkerConfigDir = "/home/x/rustProjects/nes_simulation_starter_rs/stuff/1h_dublin_bus_nanosec";
     std::vector<NesWorkerPtr> mobileWorkers;
-//    for (const auto& configFile : std::filesystem::recursive_directory_iterator(mobileWorkerConfigDir)) {
-//        std::cout << configFile << std::endl;
-//        auto dataPort = getAvailablePort();
-//        ports.push_back(dataPort);
-//        auto rpcPort = getAvailablePort();
-//        ports.push_back(rpcPort);
-//        WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-//        wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
-//        wrkConf->dataPort.setValue(*dataPort);
-//        wrkConf->rpcPort.setValue(*rpcPort);
-//        wrkConf->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
-//        wrkConf->mobilityConfiguration.locationProviderConfig.setValue(configFile.path());
-//        wrkConf->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-//        wrkConf->physicalSourceTypes.add(stype);
-//        wrkConf->numberOfSlots.setValue(1);
-//        //wrkConf->locationCoordinates.setValue({elem.second[0], elem.second[1]});
-//        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
-//        //fieldNodes[elem.first] = wrk;
-//        mobileWorkers.push_back(wrk);
-//        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-//        ASSERT_TRUE(retStart);
-//    }
-            auto dataPort = getAvailablePort();
-            ports.push_back(dataPort);
-            auto rpcPort = getAvailablePort();
-            ports.push_back(rpcPort);
-            WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-            wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
-            wrkConf->dataPort.setValue(*dataPort);
-            wrkConf->rpcPort.setValue(*rpcPort);
-            wrkConf->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
-            wrkConf->mobilityConfiguration.locationProviderConfig.setValue("/home/x/uni/ba/experiments/nes_experiment_input/1h_dublin_bus_nanosec/vehicle33119_from1357128000000000_to1357131600000000.csv");
-            wrkConf->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-            wrkConf->mobilityConfiguration.reconnectPredictorType.setValue(NES::Spatial::Mobility::Experimental::ReconnectPredictorType::PRECALCULATED);
-            wrkConf->mobilityConfiguration.precalculatedReconnectPath.setValue("/home/x/uni/ba/experiments/nes_experiment_input/1_mobile_worker_explicit_reconnects/reconnects.csv");
-            wrkConf->physicalSourceTypes.add(stype);
-            wrkConf->numberOfSlots.setValue(1);
-            //wrkConf->locationCoordinates.setValue({elem.second[0], elem.second[1]});
-            NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
-            //fieldNodes[elem.first] = wrk;
-            mobileWorkers.push_back(wrk);
-            bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-            ASSERT_TRUE(retStart);
+    //    for (const auto& configFile : std::filesystem::recursive_directory_iterator(mobileWorkerConfigDir)) {
+    //        std::cout << configFile << std::endl;
+    //        auto dataPort = getAvailablePort();
+    //        ports.push_back(dataPort);
+    //        auto rpcPort = getAvailablePort();
+    //        ports.push_back(rpcPort);
+    //        WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    //        wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
+    //        wrkConf->dataPort.setValue(*dataPort);
+    //        wrkConf->rpcPort.setValue(*rpcPort);
+    //        wrkConf->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
+    //        wrkConf->mobilityConfiguration.locationProviderConfig.setValue(configFile.path());
+    //        wrkConf->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    //        wrkConf->physicalSourceTypes.add(stype);
+    //        wrkConf->numberOfSlots.setValue(1);
+    //        //wrkConf->locationCoordinates.setValue({elem.second[0], elem.second[1]});
+    //        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
+    //        //fieldNodes[elem.first] = wrk;
+    //        mobileWorkers.push_back(wrk);
+    //        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+    //        ASSERT_TRUE(retStart);
+    //    }
+    auto dataPort = getAvailablePort();
+    ports.push_back(dataPort);
+    auto rpcPort = getAvailablePort();
+    ports.push_back(rpcPort);
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
+    wrkConf->dataPort.setValue(*dataPort);
+    wrkConf->rpcPort.setValue(*rpcPort);
+    wrkConf->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf->mobilityConfiguration.locationProviderConfig.setValue(
+        "/home/x/uni/ba/experiments/nes_experiment_input/1h_dublin_bus_nanosec/"
+        "vehicle33119_from1357128000000000_to1357131600000000.csv");
+    wrkConf->mobilityConfiguration.locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf->mobilityConfiguration.reconnectPredictorType.setValue(
+        NES::Spatial::Mobility::Experimental::ReconnectPredictorType::PRECALCULATED);
+    wrkConf->mobilityConfiguration.precalculatedReconnectPath.setValue(
+        "/home/x/uni/ba/experiments/nes_experiment_input/1_mobile_worker_explicit_reconnects/reconnects.csv");
+    wrkConf->physicalSourceTypes.add(stype);
+    wrkConf->numberOfSlots.setValue(1);
+    //wrkConf->locationCoordinates.setValue({elem.second[0], elem.second[1]});
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
+    //fieldNodes[elem.first] = wrk;
+    mobileWorkers.push_back(wrk);
+    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart);
 
     std::string testFile = "/tmp/test_sink";
 
@@ -1467,7 +1482,8 @@ TEST_F(QueryRedeploymentIntegrationTest, testSingleWorkerDublin) {
     //        R"(Query::from("values").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
     //        Optimizer::PlacementStrategy::BottomUp);
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-        R"(Query::from("values").map(Attribute("value") = Attribute("value") * 2).sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        R"(Query::from("values").map(Attribute("value") = Attribute("value") * 2).sink(FileSinkDescriptor::create(")" + testFile
+            + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
 
     //    std::stringstream ss;
