@@ -32,11 +32,8 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
-class QueryDeploymentPhase;
-using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
-
-class QueryUndeploymentPhase;
-using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
+class DeploymentPhase;
+using DeploymentPhasePtr = std::shared_ptr<DeploymentPhase>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -70,16 +67,20 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
-namespace Catalogs::Source {
+namespace Catalogs {
+namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
-
-namespace Catalogs::UDF {
+}// namespace Source
+namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace Catalogs::UDF
-
+}// namespace UDF
+namespace Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Query
+}// namespace Catalogs
 /**
  * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queryIdAndCatalogEntryMapping requests.
  */
@@ -87,7 +88,7 @@ class RequestProcessorService {
   public:
     explicit RequestProcessorService(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                      const TopologyPtr& topology,
-                                     const QueryCatalogServicePtr& queryCatalogService,
+                                     const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                      const GlobalQueryPlanPtr& globalQueryPlan,
                                      const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                      const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
@@ -115,11 +116,10 @@ class RequestProcessorService {
     std::mutex queryProcessorStatusLock;
     bool queryProcessorRunning;
     bool queryReconfiguration;
-    QueryCatalogServicePtr queryCatalogService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementAmendmentPhase;
-    QueryDeploymentPhasePtr queryDeploymentPhase;
-    QueryUndeploymentPhasePtr queryUndeploymentPhase;
+    DeploymentPhasePtr deploymentPhase;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;

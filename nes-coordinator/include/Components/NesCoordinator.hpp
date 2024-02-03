@@ -165,7 +165,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief Get instance of query catalog
      * @return query catalog pointer
      */
-    QueryCatalogServicePtr getQueryCatalogService();
+    Catalogs::Query::QueryCatalogPtr getQueryCatalog();
 
     /**
      * @brief Return the UDF catalog.
@@ -242,7 +242,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     SourceCatalogServicePtr sourceCatalogService;
     CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    QueryCatalogServicePtr queryCatalogService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     TopologyPtr topology;

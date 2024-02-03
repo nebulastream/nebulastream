@@ -42,7 +42,7 @@ namespace NES {
 RestServer::RestServer(std::string host,
                        uint16_t port,
                        NesCoordinatorWeakPtr coordinator,
-                       QueryCatalogServicePtr queryCatalogService,
+                       Catalogs::Query::QueryCatalogPtr queryCatalog,
                        SourceCatalogServicePtr sourceCatalogService,
                        TopologyManagerServicePtr topologyManagerService,
                        Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
@@ -53,7 +53,7 @@ RestServer::RestServer(std::string host,
                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
                        std::optional<std::string> corsAllowedOrigin)
-    : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalogService(std::move(queryCatalogService)),
+    : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalog(std::move(queryCatalog)),
       globalExecutionPlan(std::move(globalExecutionPlan)), requestHandlerService(std::move(requestHandlerService)),
       globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
       topologyManagerService(std::move(topologyManagerService)), udfCatalog(std::move(udfCatalog)),
@@ -106,17 +106,13 @@ void RestServer::run() {
 
     /* Create controllers and add all of their endpoints to the router */
     auto connectivityController = REST::Controller::ConnectivityController::create(objectMapper, "/connectivity");
-    auto queryCatalogController = REST::Controller::QueryCatalogController::create(objectMapper,
-                                                                                   queryCatalogService,
-                                                                                   coordinator,
-                                                                                   globalQueryPlan,
-                                                                                   "/queryCatalog",
-                                                                                   errorHandler);
+    auto queryCatalogController =
+        REST::Controller::QueryCatalogController::create(objectMapper, queryCatalog, "/queryCatalog", errorHandler);
     auto topologyController =
         REST::Controller::TopologyController::create(objectMapper, topologyManagerService, "/topology", errorHandler);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      requestHandlerService,
-                                                                     queryCatalogService,
+                                                                     queryCatalog,
                                                                      globalQueryPlan,
                                                                      globalExecutionPlan,
                                                                      "/query",

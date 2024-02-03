@@ -338,7 +338,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     remove(outputFilePath2.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("testSourceSharing: Submit query");
 
@@ -346,13 +346,13 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
 
     QueryId queryId1 =
         requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
 
     auto query2 = Query::from("window1").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId2 =
         requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     start.set_value(true);
 
@@ -446,10 +446,10 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath2));
 
     NES_DEBUG("testSourceSharing: Remove query 1");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_DEBUG("testSourceSharing: Remove query 2");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_DEBUG("testSourceSharing: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -514,7 +514,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     EXPECT_NE(port, 0UL);
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("testSourceSharing: Submit query");
 
@@ -524,7 +524,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
 
     QueryId queryId1 =
         requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
 
     auto query2 = Query::from("window1")
                       .filter(Attribute("id") > 5)
@@ -532,7 +532,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
 
     QueryId queryId2 =
         requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     start.set_value(true);
 
@@ -626,10 +626,10 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
 
     NES_DEBUG("testSourceSharing: Remove query 1");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_DEBUG("testSourceSharing: Remove query 2");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_DEBUG("testSourceSharing: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -768,7 +768,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -778,11 +778,11 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     QueryId queryId =
         requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -827,7 +827,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -837,10 +837,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     QueryId queryId =
         requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -885,7 +885,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -895,10 +895,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     QueryId queryId =
         requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -978,7 +978,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -1032,7 +1032,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1075,10 +1075,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1147,7 +1147,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1172,10 +1172,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -1237,7 +1237,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1252,8 +1252,8 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
         requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
@@ -1262,10 +1262,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
                               "1,12,1001\n";
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService, std::chrono::seconds(5)));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService, std::chrono::seconds(5)));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -1310,7 +1310,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1323,8 +1323,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
@@ -1352,10 +1352,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1488,7 +1488,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1503,8 +1503,8 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
         requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
@@ -1513,10 +1513,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
                               "1,12,1001\n";
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService, std::chrono::seconds(5)));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService, std::chrono::seconds(5)));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -1934,7 +1934,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
 
@@ -1953,7 +1953,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
         requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
@@ -1974,7 +1974,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -2091,7 +2091,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
 
@@ -2110,7 +2110,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
         requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
@@ -2140,7 +2140,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

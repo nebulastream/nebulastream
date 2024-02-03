@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <Catalogs/Query/SharedQueryCatalogEntry.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Catalogs::Query {
 
@@ -20,5 +22,41 @@ SharedQueryCatalogEntry::SharedQueryCatalogEntry(SharedQueryId sharedQueryId,
                                                  std::vector<QueryId> queryIds,
                                                  QueryState queryState)
     : sharedQueryId(sharedQueryId), containedQueryIds(queryIds), queryState(queryState) {}
+
+QueryState SharedQueryCatalogEntry::getQueryState() const { return queryState; }
+
+void SharedQueryCatalogEntry::setQueryState(QueryState queryStatus) { this->queryState = queryStatus; }
+
+void SharedQueryCatalogEntry::setTerminationReason(std::string terminationReason) { this->terminationReason = terminationReason; }
+
+std::vector<QueryId> SharedQueryCatalogEntry::getContainedQueryIds() { return containedQueryIds; }
+
+std::vector<DecomposedQueryPlanMetaDataPtr> SharedQueryCatalogEntry::getAllDecomposedQueryPlanMetaData() {
+    std::vector<DecomposedQueryPlanMetaDataPtr> decomposedQueryPlan;
+    for (const auto& [decomposedQueryId, decomposedQueryPlanMetaDatum] : decomposedQueryPlanMetaData) {
+        decomposedQueryPlan.emplace_back(decomposedQueryPlanMetaDatum);
+    }
+    return decomposedQueryPlan;
+}
+
+DecomposedQueryPlanMetaDataPtr
+SharedQueryCatalogEntry::getDecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId) {
+    if (!decomposedQueryPlanMetaData.contains(decomposedQueryPlanId)) {
+        NES_ERROR("No decomposed query plan with id {} exists.", decomposedQueryPlanId);
+    }
+    return decomposedQueryPlanMetaData[decomposedQueryPlanId];
+}
+
+void SharedQueryCatalogEntry::addDecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+                                                             DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                                             WorkerId workerId,
+                                                             QueryState decomposedQueryPlanState) {
+
+    auto decomposedQueryPlanMetaDatum = DecomposedQueryPlanMetaData::create(decomposedQueryPlanId,
+                                                                            decomposedQueryPlanVersion,
+                                                                            decomposedQueryPlanState,
+                                                                            workerId);
+    decomposedQueryPlanMetaData[decomposedQueryPlanId] = std::move(decomposedQueryPlanMetaDatum);
+}
 
 }// namespace NES::Catalogs::Query

@@ -17,7 +17,6 @@
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -126,8 +125,6 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto queryDeploymentPhase =
-            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalog, coordinatorConfiguration);
         auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
@@ -160,13 +157,13 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         semanticQueryValidation->validate(queryPlan);
 
         // Create a new entry in the query catalog
-        queryCatalogService->createNewEntry(queryString, queryPlan, queryPlacementStrategy);
+        queryCatalog->createQueryCatalogEntry(queryString, queryPlan, queryPlacementStrategy, QueryState::REGISTERED);
 
         //1. Add the initial version of the query to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
         //2. Set query status as Optimizing
-        queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
+        queryCatalog->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
         //3. Execute type inference phase
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
@@ -181,7 +178,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryPlan = queryRewritePhase->execute(queryPlan);
 
         //6. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
         //7. Execute type inference phase on rewritten query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
@@ -196,7 +193,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
         //11. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
         //12. Perform type inference over re-written query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
@@ -209,7 +206,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
 
         //15. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
 
         //16. Add the updated query plan to the global query plan
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
@@ -258,7 +255,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         globalExecutionPlan->removeAllDecomposedQueryPlans(queryId);
 
         //26. Set query status as Explained
-        queryCatalogService->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
+        queryCatalog->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);

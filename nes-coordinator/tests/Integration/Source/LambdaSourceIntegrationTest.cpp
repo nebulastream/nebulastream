@@ -14,7 +14,6 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>

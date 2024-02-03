@@ -174,7 +174,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
 
@@ -206,12 +206,12 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToASSERT = 1;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -281,7 +281,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     // local fs
@@ -295,12 +295,12 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -354,7 +354,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
 
@@ -387,13 +387,13 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     const auto timeoutSeconds = std::chrono::seconds(120);
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true, timeoutSeconds));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -431,7 +431,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
 
@@ -459,12 +459,12 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToASSERT = 1;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -502,7 +502,7 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("static_integers_only_0", schema_integers_0);
 
@@ -530,12 +530,12 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -573,7 +573,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
@@ -611,12 +611,12 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToASSERT = 1;
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -667,7 +667,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     // local fs
@@ -690,7 +690,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
@@ -699,7 +699,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1238,7 +1238,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     // local fs
@@ -1260,7 +1260,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
@@ -1269,7 +1269,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     if (!benchmark) {
         std::ifstream ifs(filePath.c_str());
@@ -1320,7 +1320,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     // local fs
@@ -1338,7 +1338,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
@@ -1347,7 +1347,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1407,7 +1407,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     // local fs
@@ -1425,7 +1425,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
@@ -1434,7 +1434,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1488,7 +1488,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     // local fs
@@ -1512,7 +1512,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
@@ -1521,7 +1521,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1577,7 +1577,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     NES_INFO("StaticDataSourceIntegrationTest: Remote worker started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     // local fs
@@ -1595,7 +1595,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
@@ -1604,7 +1604,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1666,7 +1666,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     // local fs
@@ -1686,7 +1686,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
@@ -1695,7 +1695,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     if (!benchmark) {
         // does the join result have same number of rows as the probe table?
@@ -1815,7 +1815,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
             RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-            QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+            auto queryCatalog = crd->getQueryCatalog();
             auto sourceCatalog = crd->getSourceCatalog();
 
             // local fs
@@ -1836,7 +1836,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
             EXPECT_NE(queryId, INVALID_QUERY_ID);
             auto globalQueryPlan = crd->getGlobalQueryPlan();
-            EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+            EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
             int buffersToExpect = 1;
             EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
@@ -1846,7 +1846,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             printTotalQueryRuntime(stats);
 
             NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-            ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+            ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
             if (!benchmark) {
                 // does the join result have same number of rows as the probe table?

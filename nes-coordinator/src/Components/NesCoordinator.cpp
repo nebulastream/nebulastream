@@ -13,7 +13,6 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogService.hpp>
@@ -92,8 +91,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
-    queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
-
     z3::config cfg;
     cfg.set("timeout", 1000);
     cfg.set("model", false);
@@ -102,7 +99,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
                                                                              topology,
-                                                                             queryCatalogService,
+                                                                             queryCatalog,
                                                                              globalQueryPlan,
                                                                              sourceCatalog,
                                                                              udfCatalog,
@@ -110,30 +107,24 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                              this->coordinatorConfiguration,
                                                                              z3Context);
 
-    RequestProcessor::StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
-                                                                     topology,
-                                                                     globalExecutionPlan,
-                                                                     queryCatalogService,
-                                                                     globalQueryPlan,
-                                                                     sourceCatalog,
-                                                                     udfCatalog};
+    RequestProcessor::StorageDataStructures storageDataStructures =
+        {this->coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog};
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
     bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();
     requestHandlerService = std::make_shared<RequestHandlerService>(enableNewRequestExecutor,
-                                                                    this->coordinatorConfiguration->optimizer,
-                                                                    queryCatalogService,
                                                                     queryRequestQueue,
-                                                                    sourceCatalog,
+                                                                    this->coordinatorConfiguration->optimizer,
                                                                     queryParsingService,
+                                                                    queryCatalog,
+                                                                    sourceCatalog,
                                                                     udfCatalog,
                                                                     asyncRequestExecutor,
                                                                     z3Context);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
-    monitoringService =
-        std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalogService, enableMonitoring);
+    monitoringService = std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalog, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 }
 
@@ -141,7 +132,7 @@ NesCoordinator::~NesCoordinator() {
     stopCoordinator(true);
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     sourceCatalogService->reset();
-    queryCatalogService->clearQueries();
+    queryCatalog.reset();
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
@@ -212,7 +203,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     restServer = std::make_shared<RestServer>(restIp,
                                               restPort,
                                               this->inherited0::weak_from_this(),
-                                              queryCatalogService,
+                                              queryCatalog,
                                               sourceCatalogService,
                                               topologyManagerService,
                                               globalExecutionPlan,
@@ -319,7 +310,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     CoordinatorRPCServer service(requestHandlerService,
                                  topologyManagerService,
                                  sourceCatalogService,
-                                 queryCatalogService,
+                                 queryCatalog,
                                  monitoringService->getMonitoringManager(),
                                  queryParsingService,
                                  coordinatorHealthCheckService);
@@ -352,7 +343,7 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
 
 RequestHandlerServicePtr NesCoordinator::getRequestHandlerService() { return requestHandlerService; }
 
-QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
+Catalogs::Query::QueryCatalogPtr NesCoordinator::getQueryCatalog() { return queryCatalog; }
 
 Catalogs::UDF::UDFCatalogPtr NesCoordinator::getUDFCatalog() { return udfCatalog; }
 

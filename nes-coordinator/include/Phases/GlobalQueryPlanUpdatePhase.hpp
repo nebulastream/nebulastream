@@ -69,8 +69,10 @@ using NESRequestPtr = std::shared_ptr<Request>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+namespace Catalogs::Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Catalogs::Query
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -117,7 +119,7 @@ class GlobalQueryPlanUpdatePhase {
     /**
      * @brief Create an instance of the GlobalQueryPlanUpdatePhase
      * @param topology : the topology
-     * @param queryCatalogService : the query catalog service
+     * @param queryCatalog : the query catalog
      * @param sourceCatalog : the source catalog
      * @param globalQueryPlan : the empty global query plan
      * @param z3Context : the z3 context
@@ -127,7 +129,7 @@ class GlobalQueryPlanUpdatePhase {
      * @return the shared pointer of the global query plan update phase
      */
     static GlobalQueryPlanUpdatePhasePtr create(const TopologyPtr& topology,
-                                                const QueryCatalogServicePtr& queryCatalogService,
+                                                const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                                 const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                 const GlobalQueryPlanPtr& globalQueryPlan,
                                                 const z3::ContextPtr& z3Context,
@@ -144,7 +146,7 @@ class GlobalQueryPlanUpdatePhase {
 
   private:
     explicit GlobalQueryPlanUpdatePhase(const TopologyPtr& topology,
-                                        const QueryCatalogServicePtr& queryCatalogService,
+                                        const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                         const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                         const GlobalQueryPlanPtr& globalQueryPlan,
                                         const z3::ContextPtr& z3Context,
@@ -172,7 +174,7 @@ class GlobalQueryPlanUpdatePhase {
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
-    QueryCatalogServicePtr queryCatalogService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;

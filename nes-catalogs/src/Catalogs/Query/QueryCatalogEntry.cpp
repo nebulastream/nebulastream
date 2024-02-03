@@ -39,6 +39,10 @@ std::string QueryCatalogEntry::getQueryString() const { return queryString; }
 
 QueryPlanPtr QueryCatalogEntry::getInputQueryPlan() const { return inputQueryPlan; }
 
+QueryPlanPtr QueryCatalogEntry::getExecutedQueryPlan() const { return executedQueryPlan; }
+
+void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) { this->executedQueryPlan = executedQueryPlan; }
+
 QueryState QueryCatalogEntry::getQueryState() const { return queryState; }
 
 void QueryCatalogEntry::setQueryState(QueryState queryStatus) {

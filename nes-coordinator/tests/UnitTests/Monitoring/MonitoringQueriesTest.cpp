@@ -129,14 +129,14 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         }
 
         RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-        QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
+        auto queryCatalog = crd->getQueryCatalog(); /*register logical schema qnv*/
 
         NES_INFO("MonitoringQueriesTest: Submit query");
         auto query = createQueryString("logTestMetricStream", metricCollectorStr);
         QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
         GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
         for (auto wrk : workers) {
             EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk, queryId, globalQueryPlan, 2));
         }
@@ -145,7 +145,7 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         NES_DEBUG("MonitoringQueriesTest: Remove query");
         ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
         NES_DEBUG("MonitoringQueriesTest: Stop query");
-        ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+        ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
         auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
         // test metrics

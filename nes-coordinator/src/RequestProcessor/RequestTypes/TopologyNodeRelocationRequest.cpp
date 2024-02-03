@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -59,7 +59,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
     udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
-    queryCatalogService = storageHandle->getQueryCatalogHandle(requestId);
+    queryCatalog = storageHandle->getQueryCatalogHandle(requestId);
 
     //no function yet to process multiple removed links
     if (removedLinks.size() > 1) {
@@ -190,9 +190,12 @@ void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
     SharedQueryId sharedQueryPlanId,
     Optimizer::ExecutionNodeWLock lockedUpstreamExecutionNode,
     Optimizer::ExecutionNodeWLock lockedDownstreamExecutionNode) {
+
     //Fetch the shared query plan and update its status
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryPlanId);
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
+
+    queryCatalog->updateSharedQueryStatus(sharedQueryPlanId, QueryState::MIGRATING, "");
 
     //find the pinned operators for the changelog
     auto [upstreamOperatorIds, downstreamOperatorIds] =
@@ -212,7 +215,7 @@ void TopologyNodeRelocationRequest::markOperatorsForReOperatorPlacement(
     auto deploymentContexts = placementAmendmentPhase->execute(sharedQueryPlan);
 
     //deployment phase
-    auto deploymentPhase = DeploymentPhase::create(queryCatalogService);
+    auto deploymentPhase = DeploymentPhase::create(queryCatalog);
     deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
 
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();

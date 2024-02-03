@@ -62,6 +62,11 @@ namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
+
+namespace Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Query
 }// namespace Catalogs
 
 namespace RequestProcessor {
@@ -77,11 +82,11 @@ class RequestHandlerService {
 
   public:
     explicit RequestHandlerService(bool enableNewRequestExecutor,
-                                   Configurations::OptimizerConfiguration optimizerConfiguration,
-                                   const QueryCatalogServicePtr& queryCatalogService,
                                    const RequestQueuePtr& queryRequestQueue,
-                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                   Configurations::OptimizerConfiguration optimizerConfiguration,
                                    const QueryParsingServicePtr& queryParsingService,
+                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                    const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                    const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                                    const z3::ContextPtr& z3Context);
@@ -160,13 +165,13 @@ class RequestHandlerService {
 
     bool enableNewRequestExecutor;
     Configurations::OptimizerConfiguration optimizerConfiguration;
-    QueryCatalogServicePtr queryCatalogService;
     RequestQueuePtr queryRequestQueue;
+    QueryParsingServicePtr queryParsingService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     NES::RequestProcessor::AsyncRequestProcessorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
-    QueryParsingServicePtr queryParsingService;
 };
 
 }// namespace NES

@@ -17,7 +17,6 @@
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
@@ -193,7 +192,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto deploymentPhase = DeploymentPhase::create(queryCatalogService);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
@@ -233,17 +232,17 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        // respond to the calling service with the query id
+        // Create a new entry in the query catalog
+        queryCatalog->createQueryCatalogEntry(queryString, queryPlan, queryPlacementStrategy, QueryState::REGISTERED);
+
+        // respond to the calling service with the query id after creating an entry in the catalog
         responsePromise.set_value(std::make_shared<AddQueryResponse>(queryId));
 
-        // Create a new entry in the query catalog
-        queryCatalogService->createNewEntry(queryString, queryPlan, queryPlacementStrategy);
-
         //1. Add the initial version of the query to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
         //2. Set query status as Optimizing
-        queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
+        queryCatalog->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
         //3. Execute type inference phase
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
@@ -258,7 +257,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryPlan = queryRewritePhase->execute(queryPlan);
 
         //6. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
         //7. Execute type inference phase on rewritten query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
@@ -277,7 +276,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
         //11. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
         //12. Perform type inference over re-written query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
@@ -290,7 +289,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
 
         //15. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
 
         //16. Add the updated query plan to the global query plan
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);

@@ -44,9 +44,6 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
@@ -63,14 +60,14 @@ class QueryController : public oatpp::web::server::api::ApiController {
      */
     QueryController(const std::shared_ptr<ObjectMapper>& objectMapper,
                     const RequestHandlerServicePtr& requestHandlerService,
-                    const QueryCatalogServicePtr& queryCatalogService,
+                    const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                     const GlobalQueryPlanPtr& globalQueryPlan,
                     const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                     const std::string& completeRouterPrefix,
                     const ErrorHandlerPtr& errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          requestHandlerService(requestHandlerService), queryCatalogService(queryCatalogService),
-          globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), errorHandler(errorHandler) {}
+          requestHandlerService(requestHandlerService), queryCatalog(queryCatalog), globalQueryPlan(globalQueryPlan),
+          globalExecutionPlan(globalExecutionPlan), errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -79,7 +76,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
      */
     static std::shared_ptr<QueryController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                    const RequestHandlerServicePtr& requestHandlerService,
-                                                   const QueryCatalogServicePtr& queryCatalogService,
+                                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                                    const GlobalQueryPlanPtr& globalQueryPlan,
                                                    const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    const std::string& routerPrefixAddition,
@@ -87,7 +84,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<QueryController>(objectMapper,
                                                  requestHandlerService,
-                                                 queryCatalogService,
+                                                 queryCatalog,
                                                  globalQueryPlan,
                                                  globalExecutionPlan,
                                                  completeRouterPrefix,
@@ -97,7 +94,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/execution-plan", getExecutionPlan, QUERY(UInt64, queryId, "queryId")) {
         try {
             //throws an exception if query with the provided id does not exists
-            queryCatalogService->getEntryForQuery(queryId);
+            queryCatalog->getQueryEntry(queryId);
             //find the shared query plan id hosting the query
             auto sharedQueryPlanId = globalQueryPlan->getSharedQueryId(queryId);
             //Return the execution nodes running the shared query plan
@@ -115,10 +112,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/query-plan", getQueryPlan, QUERY(UInt64, queryId, "queryId")) {
         try {
-            const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            NES_TRACE("UtilityFunctions: Getting the json representation of the query plan");
-            auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
-            return createResponse(Status::CODE_200, basePlan.dump());
+            auto response = queryCatalog->getQueryEntry(queryId);
+            return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
         } catch (nlohmann::json::exception& e) {
@@ -130,14 +125,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/optimization-phase", getOptimizationPhase, QUERY(UInt64, queryId, "queryId")) {
         try {
-            const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
-            auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
-            nlohmann::json response;
-            for (auto const& [phaseName, queryPlan] : optimizationPhases) {
-                auto queryPlanJson = PlanJsonGenerator::getQueryPlanAsJson(queryPlan);
-                response[phaseName] = queryPlanJson;
-            }
+            auto response = queryCatalog->getQueryEntry(queryId);
             return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
@@ -153,13 +141,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         //Functionality has been duplicated for compatibility.
         try {
             NES_DEBUG("Get current status of the query");
-            const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            nlohmann::json response;
-            response["queryId"] = queryId.getValue(0);
-            response["queryString"] = catalogEntry->getQueryString();
-            response["status"] = catalogEntry->getQueryStatusAsString();
-            response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
-            response["queryMetaData"] = catalogEntry->getMetaInformation();
+            auto response = queryCatalog->getQueryEntry(queryId);
             return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
@@ -375,7 +357,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     const std::string DEFAULT_PLACEMENT_STRATEGY_TYPE = "NONE";
 
     RequestHandlerServicePtr requestHandlerService;
-    QueryCatalogServicePtr queryCatalogService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     ErrorHandlerPtr errorHandler;

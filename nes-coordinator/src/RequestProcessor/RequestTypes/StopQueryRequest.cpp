@@ -15,7 +15,7 @@
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
@@ -76,15 +76,9 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                      + ". Please enter a valid query id.");
         }
 
-        //mark single query for hard stop
-        if (!queryCatalogService->checkAndMarkForHardStop(queryId)) {
-            throw Exceptions::InvalidQueryStateException({QueryState::OPTIMIZING,
-                                                          QueryState::REGISTERED,
-                                                          QueryState::DEPLOYED,
-                                                          QueryState::RUNNING,
-                                                          QueryState::RESTARTING},
-                                                         queryCatalogService->getEntryForQuery(queryId)->getQueryState());
-        }
+        //mark query for hard stop
+        queryCatalog->updateQueryStatus(queryId, QueryState::MARKED_FOR_HARD_STOP, "Query Stop Requested");
+
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
@@ -111,9 +105,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         //  - All queries are set to stopped and the whole shared query plan is removed.
 
         //Mark all contained queries as stopped
-        for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
-            queryCatalogService->updateQueryStatus(involvedQueryIds, QueryState::STOPPED, "Hard Stopped");
-        }
+        queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::STOPPED, "Hard Stopped");
         globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         responsePromise.set_value(std::make_shared<StopQueryResponse>(true));
 
@@ -145,7 +137,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
         std::rethrow_exception(exception);
     } catch (Exceptions::QueryPlacementAmendmentException& ex) {
         failRequest.push_back(
-            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, ex.what(), MAX_RETRIES_FOR_FAILURE));
     } catch (QueryDeploymentException& ex) {
         //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
         //Happens if:
@@ -153,19 +145,19 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
         //2. QueryDeploymentException: Error in call to Elegant acceleration service with code
         //3. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
         failRequest.push_back(
-            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, ex.what(), MAX_RETRIES_FOR_FAILURE));
     } catch (InvalidQueryException& ex) {
         //Happens if:
         //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
         failRequest.push_back(
-            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, ex.what(), MAX_RETRIES_FOR_FAILURE));
     } catch (TypeInferenceException& ex) {
-        queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
+        queryCatalog->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
     } catch (Exceptions::QueryUndeploymentException& ex) {
         // In general, failures in QueryUndeploymentPhase are concerned with the current sqp id and a failure with a topology node
         // Therefore, for QueryUndeploymentException, we assume that the sqp is not running on any node, and we can set the sqp's status to stopped
         // we do this as long as there are retries present, otherwise, we fail the query
-        queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
+        queryCatalog->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
     } catch (Exceptions::QueryNotFoundException& ex) {
         //Could not find sqp in global query plan
         trySetExceptionInPromise(exception);

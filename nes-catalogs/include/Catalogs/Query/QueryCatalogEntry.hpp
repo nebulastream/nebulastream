@@ -94,12 +94,6 @@ class QueryCatalogEntry {
     [[nodiscard]] QueryState getQueryState() const;
 
     /**
-     * @brief method to get the status of the query as string
-     * @return query status: as string
-     */
-    [[nodiscard]] std::string getQueryStatusAsString() const;
-
-    /**
      * @brief method to set the status of the query
      * @param query status
      */
@@ -134,28 +128,6 @@ class QueryCatalogEntry {
      */
     std::map<std::string, QueryPlanPtr> getOptimizationPhases();
 
-    /**
-     * Add sub query plan to the query catalog
-     * @param decomposedQueryPlanId : the sub query plan id
-     * @param workerId : the worker node on which the query is running
-     * @param queryState : the state of the decomposed plan
-     */
-    void addQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId, WorkerId workerId, QueryState queryState);
-
-    /**
-     * Get sub query plan meta data
-     * @param decomposedQueryPlanId : the decomposed query plan id
-     */
-    DecomposedQueryPlanMetaDataPtr getQuerySubPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId);
-
-    /**
-     * Get all sub query plan mea data
-     * @return vector of sub query plan meta data
-     */
-    std::vector<DecomposedQueryPlanMetaDataPtr> getAllSubQueryPlanMetaData();
-
-    void removeAllQuerySubPlanMetaData();
-
     /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;
 
@@ -165,6 +137,7 @@ class QueryCatalogEntry {
     std::string queryString;
     Optimizer::PlacementStrategy queryPlacementStrategy;
     QueryPlanPtr inputQueryPlan;
+    QueryPlanPtr executedQueryPlan;
     QueryState queryState;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
     std::string terminationReason;

@@ -15,7 +15,7 @@
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
@@ -29,9 +29,8 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -46,21 +45,21 @@ namespace NES {
 
 RequestProcessorService::RequestProcessorService(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                  const TopologyPtr& topology,
-                                                 const QueryCatalogServicePtr& queryCatalogService,
+                                                 const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                                  const GlobalQueryPlanPtr& globalQueryPlan,
                                                  const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                                  const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                                  const RequestQueuePtr& queryRequestQueue,
                                                  const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
                                                  const z3::ContextPtr& z3Context)
-    : queryProcessorRunning(true), queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue),
+    : queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
       globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), udfCatalog(udfCatalog), z3Context(z3Context) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
     globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
-                                                                               queryCatalogService,
+                                                                               queryCatalog,
                                                                                sourceCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,
@@ -71,8 +70,7 @@ RequestProcessorService::RequestProcessorService(const Optimizer::GlobalExecutio
                                                                                    topology,
                                                                                    typeInferencePhase,
                                                                                    coordinatorConfiguration);
-    queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
-    queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
+    deploymentPhase = DeploymentPhase::create(queryCatalog);
 }
 
 void RequestProcessorService::start() {
@@ -110,12 +108,11 @@ void RequestProcessorService::start() {
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is new.");
 
                             //3.2.1. Perform placement of new shared query plan
-                            auto queryPlan = sharedQueryPlan->getQueryPlan();
                             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                             auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
                             //3.2.2. Perform deployment of placed shared query plan
-                            queryDeploymentPhase->execute(sharedQueryPlan);
+                            deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
 
                             //Update the shared query plan as deployed
                             sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
@@ -125,16 +122,11 @@ void RequestProcessorService::start() {
 
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is non empty and an older version is already "
                                       "running.");
-
-                            //3.3.1. First undeploy the running shared query plan with the shared query plan id
-                            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::UPDATED);
-
-                            //3.3.2. Perform placement of updated shared query plan
-                            auto queryPlan = sharedQueryPlan->getQueryPlan();
+                            //3.3.1. Perform placement of updated shared query plan
                             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
                             auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
                             //3.3.3. Perform deployment of re-placed shared query plan
-                            queryDeploymentPhase->execute(sharedQueryPlan);
+                            deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
                             //Update the shared query plan as deployed
                             sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
@@ -144,14 +136,11 @@ void RequestProcessorService::start() {
 
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is empty and an older version is already "
                                       "running.");
-
+                            auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
                             //3.4.1. Undeploy the running shared query plan
-                            queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
-
-                            //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
-                            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                                queryCatalogService->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
-                            }
+                            deploymentPhase->execute(deploymentContexts, RequestType::StopQuery);
+                            //3.4.2. Mark shared query and all contained queries as stopped
+                            queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::STOPPED, "Hard Stopped");
                         }
 
                     } else {
@@ -173,39 +162,26 @@ void RequestProcessorService::start() {
                     if (queryRequest->instanceOf<StopQueryRequest>()) {
                         auto stopQueryRequest = queryRequest->as<StopQueryRequest>();
                         auto queryId = stopQueryRequest->getQueryId();
-                        queryCatalogService->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
+                        queryCatalog->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
                     } else if (queryRequest->instanceOf<FailQueryRequest>()) {
                         auto failQueryRequest = queryRequest->as<FailQueryRequest>();
                         auto sharedQueryPlanId = failQueryRequest->getSharedQueryId();
                         auto failureReason = failQueryRequest->getFailureReason();
-                        auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryPlanId);
-                        for (const auto& queryId : queryIds) {
-                            queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, failureReason);
-                        }
+                        queryCatalog->updateSharedQueryStatus(sharedQueryPlanId, QueryState::FAILED, failureReason);
                     }
                 }
 
                 //FIXME: Proper error handling #1585
             } catch (Exceptions::QueryPlacementAdditionException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryPlacementException: {}", ex.what());
-                auto sharedQueryId = ex.getQueryId();
-                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::FAILED);
-                auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-                for (auto queryId : sharedQueryPlan->getQueryIds()) {
-                    queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
-                }
+                queryCatalog->updateSharedQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
             } catch (QueryDeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryDeploymentException: {}", ex.what());
-                auto sharedQueryId = ex.getQueryId();
-                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::FAILED);
-                auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-                for (auto queryId : sharedQueryPlan->getQueryIds()) {
-                    queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
-                }
+                queryCatalog->updateSharedQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
             } catch (TypeInferenceException& ex) {
                 NES_ERROR("QueryRequestProcessingService: TypeInferenceException: {}", ex.what());
                 auto queryId = ex.getQueryId();
-                queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
+                queryCatalog->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
             } catch (Exceptions::InvalidQueryStateException& ex) {
                 NES_ERROR("QueryRequestProcessingService: InvalidQueryStateException: {}", ex.what());
             } catch (Exceptions::QueryNotFoundException& ex) {

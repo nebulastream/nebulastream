@@ -17,16 +17,16 @@
 #include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService1.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
-QueryCatalogService::QueryCatalogService(Catalogs::Query::QueryCatalogPtr queryCatalog) : queryCatalog(std::move(queryCatalog)) {}
+QueryCatalogService1::QueryCatalogService(Catalogs::Query::QueryCatalogPtr queryCatalog) : queryCatalog(std::move(queryCatalog)) {}
 
-bool QueryCatalogService::createNewEntry(const std::string& queryString,
+bool QueryCatalogService1::createNewEntry(const std::string& queryString,
                                          const QueryPlanPtr& queryPlan,
                                          const Optimizer::PlacementStrategy placementStrategyName) {
     std::unique_lock lock(serviceMutex);

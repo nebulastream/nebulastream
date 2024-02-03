@@ -44,7 +44,7 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 /**
  * This class is responsible for interacting with query catalog to either fetch status of a query or to update it.
  */
-class QueryCatalogService {
+class QueryCatalogService1 {
 
   public:
     explicit QueryCatalogService(Catalogs::Query::QueryCatalogPtr queryCatalog);
