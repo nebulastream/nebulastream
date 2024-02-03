@@ -213,12 +213,22 @@ bool PartitionManager::addSubpartitionEventListener(NesPartition partition,
                                                     Runtime::RuntimeEventListenerPtr eventListener) {
     std::unique_lock lock(producerPartitionsMutex);
     //check if partition is present
-    if (auto it = producerPartitions.find(partition); it == producerPartitions.end()) {
+    auto it = producerPartitions.find(partition);
+    if (it == producerPartitions.end()) {
         it = producerPartitions.insert_or_assign(it, partition, PartitionProducerEntry(std::move(receiverLocation)));
         it->second.registerEventListener(eventListener);
         NES_DEBUG("PartitionManager: Registering Subpartition Event Consumer {}={}", partition.toString(), (*it).second.count());
         return true;
     }
+
+    if (eventListener.get() == it->second.getEventListener().get()) {
+        NES_DEBUG("PartitionManager: Cannot register {}", partition.toString());
+        return false;
+    }
+    it->second.registerEventListener(eventListener);
+    return true;
+
+
     NES_DEBUG("PartitionManager: Cannot register {}", partition.toString());
     return false;
 }

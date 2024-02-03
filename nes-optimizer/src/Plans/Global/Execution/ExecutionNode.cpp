@@ -94,7 +94,7 @@ bool ExecutionNode::removeDecomposedQueryPlan(SharedQueryId sharedQueryId, Decom
 
     //Check if the map contains an entry for the shared query id
     if (mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId)) {
-        auto querySubPlanMap = mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId];
+        auto& querySubPlanMap = mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId];
         //Check if query sub plan exists in the map
         if (querySubPlanMap.contains(decomposedQueryPlanId)) {
             querySubPlanMap.erase(decomposedQueryPlanId);

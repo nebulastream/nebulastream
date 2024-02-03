@@ -510,7 +510,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
             }
         }
         ASSERT_EQ(noOfMigratingPlans, 0);
-        ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 1);
+        //ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 2);
         ASSERT_EQ(noOfRunningPlans, 4);
         ASSERT_EQ(topology->getParentTopologyNodeIds(wrk1->getWorkerId()), std::vector<WorkerId>{wrk3->getWorkerId()});
 

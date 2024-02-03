@@ -635,15 +635,23 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             // 13. Record information about the query plan and worker id
                             DecomposedQueryPlanId decomposedPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
                             //todo: check all operators if they are placed, only then
+                            auto firstPlacedFound = true;
                             for (auto operatorInPlan : decomposedQueryPlan->getAllOperators()) {
                                 if (operatorInPlan->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
                                     //if (candidateOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
-                                    decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
-                                        operatorInPlan->getProperty(PLACED_DECOMPOSED_PLAN_ID));
-                                    break;
+//                                    decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
+//                                        operatorInPlan->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                                    if (firstPlacedFound) {
+                                        decomposedPlanId = PlanIdGenerator::getNextDecomposedQueryPlanId();
+                                        firstPlacedFound = false;
+                                    }
+                                    operatorInPlan->addProperty(PLACED_DECOMPOSED_PLAN_ID, decomposedPlanId);
+                                    //break;
                                 }
                             }
+                            //todo: check if we need to update the placed plan id for the operators here
 
+                            //decomposedQueryPlan->setDecomposedQueryPlanId(decomposedPlanId);
                             connectedSysSubPlanDetails.emplace_back(SysPlanMetaData(decomposedPlanId, currentWorkerId));
                             // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
@@ -889,19 +897,19 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                             if (!upstreamOperator) {
                                                 continue;
                                             }
-                                            bool foundOperatorWithEqualId = false;
-                                            //if the operator matches a placed operator that was not system generated,
-                                            //do not replace anything and leave the placed operator where it is
-                                            for (const auto& placedChild : matchingPinnedRootOperator->getChildren()) {
-                                                if (placedChild->as<OperatorNode>()->getId()
-                                                    == upstreamOperator->as<OperatorNode>()->getId()) {
-                                                    NES_DEBUG("Not modifying operator because it is a non system operator");
-                                                    foundOperatorWithEqualId = true;
-                                                }
-                                            }
-                                            if (foundOperatorWithEqualId) {
-                                                continue;
-                                            }
+//                                            bool foundOperatorWithEqualId = false;
+//                                            //if the operator matches a placed operator that was not system generated,
+//                                            //do not replace anything and leave the placed operator where it is
+//                                            for (const auto& placedChild : matchingPinnedRootOperator->getChildren()) {
+//                                                if (placedChild->as<OperatorNode>()->getId()
+//                                                    == upstreamOperator->as<OperatorNode>()->getId()) {
+//                                                    NES_DEBUG("Not modifying operator because it is a non system operator");
+//                                                    foundOperatorWithEqualId = true;
+//                                                }
+//                                            }
+//                                            if (foundOperatorWithEqualId) {
+//                                                continue;
+//                                            }
 
                                             bool mergedSource = false;
                                             if (upstreamOperator->instanceOf<SourceLogicalOperatorNode>()) {
@@ -915,7 +923,30 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                                 matchingPinnedRootOperator->addChild(upstreamOperator);
                                             }
                                         }
-                                        hostDecomposedQueryPlans.emplace(placedDecomposedQueryPlan);
+                                        for (auto sink : placedDecomposedQueryPlan->getSinkOperators()) {
+                                            auto sinkDescriptor = sink->getSinkDescriptor();
+                                            if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
+                                                auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
+                                                auto newDescriptor = Network::NetworkSinkDescriptor::create(
+                                                    networkSinkDescriptor->getNodeLocation(),
+                                                    networkSinkDescriptor->getNesPartition(),
+                                                    SINK_RETRY_WAIT,
+                                                    SINK_RETRIES,
+                                                    querySubPlanVersion,
+                                                    networkSinkDescriptor->getNumberOfOrigins(),
+                                                    getNextOperatorId());
+                                                sink->setSinkDescriptor(newDescriptor);
+                                            }
+                                        }
+                                        auto copyOfPlacedPlan = placedDecomposedQueryPlan->copy();
+                                        //copyOfPlacedPlan->setDecomposedQueryPlanId(computedDecomposedQueryPlan->getDecomposedQueryPlanId());
+                                        copyOfPlacedPlan->setDecomposedQueryPlanId(std::any_cast<OperatorId>(computedOperator->as<LogicalOperatorNode>()->getProperty(PLACED_DECOMPOSED_PLAN_ID)));
+                                        //copyOfPlacedPlan->setDecomposedQueryPlanId(PlanIdGenerator::getNextDecomposedQueryPlanId());
+                                        //hostDecomposedQueryPlans.emplace(placedDecomposedQueryPlan);
+                                        hostDecomposedQueryPlans.emplace(copyOfPlacedPlan);
+                                        placedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_MIGRATION);
+                                        executionNode->registerNewDecomposedQueryPlan(placedDecomposedQueryPlan->getSharedQueryId(),
+                                                                                      placedDecomposedQueryPlan);
                                         found = true;
                                         break;
                                     }
@@ -945,7 +976,8 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                         }
 
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
-                        updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
+                        //updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
+                        updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
                         updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
                         executionNode->registerNewDecomposedQueryPlan(updatedDecomposedQueryPlan->getSharedQueryId(),

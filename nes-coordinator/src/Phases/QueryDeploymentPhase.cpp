@@ -153,23 +153,23 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //remove subplans from global query plan if they were stopped due to migration
     //todo: why does this fail?
-//    for (auto node : executionNodes) {
-//        auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
-//        for (auto decomposedQueryPlan : allDecomposedQueryPlans) {
-//            auto subPlanStatus = decomposedQueryPlan->getState();
-//            if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
-//                NES_INFO("Removing migrated subplan with id  {} from execution node {}", decomposedQueryPlan->getDecomposedQueryPlanId(), node->getId())
-//                //globalExecutionPlan->getExecutionNodeById(node->getId())->removeDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan->getDecomposedQueryPlanId());
-//                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
-//                                                                sharedQueryId,
+    for (auto node : executionNodes) {
+        auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
+        for (auto decomposedQueryPlan : allDecomposedQueryPlans) {
+            auto subPlanStatus = decomposedQueryPlan->getState();
+            if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
+                NES_INFO("Removing migrated subplan with id  {} from execution node {}", decomposedQueryPlan->getDecomposedQueryPlanId(), node->getId())
+                //globalExecutionPlan->getExecutionNodeById(node->getId())->removeDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan->getDecomposedQueryPlanId());
+                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
+                                                                sharedQueryId,
+                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
+//                node->removeDecomposedQueryPlan(sharedQueryId,
 //                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
-////                node->removeDecomposedQueryPlan(sharedQueryId,
-////                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
 //                auto resourceAmount = Optimizer::ExecutionNode::getOccupiedResourcesForDecomposedQueryPlan(decomposedQueryPlan);
 //                node->getTopologyNode()->releaseSlots(resourceAmount);
-//            }
-//        }
-//    }
+            }
+        }
+    }
 
     NES_INFO("QueryDeploymentPhase: redeployment done");
 }
