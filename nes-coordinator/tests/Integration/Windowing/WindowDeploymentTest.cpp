@@ -326,12 +326,12 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
                                                                              Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "../../../../nes-coordinator/include/Util/PlanJsonGenerator.hpp"
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
@@ -46,7 +47,17 @@ void QueryCatalog::createSharedQueryCatalogEntry(SharedQueryId sharedQueryId,
     (*lockedSharedQueryCatalogEntryMapping)[sharedQueryId] = std::move(sharedQueryCatalogEntry);
 }
 
-bool QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason) {
+QueryState QueryCatalog::getQueryState(QueryId queryId) {
+    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+    //Check if query exists
+    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
+        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+    return (*lockedQueryCatalogEntryMapping)[queryId]->getQueryState();
+}
+
+void QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason) {
 
     auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
     //Check if query exists
@@ -63,12 +74,16 @@ bool QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, co
         case QueryState::RESTARTING:
         case QueryState::MIGRATING:
         case QueryState::DEPLOYED:
-        case QueryState::STOPPED:
         case QueryState::RUNNING:
+        case QueryState::STOPPED:
         case QueryState::FAILED: {
             queryCatalogEntry->setQueryState(queryStatus);
             queryCatalogEntry->setMetaInformation(terminationReason);
-            return true;
+            break;
+        }
+        case QueryState::MARKED_FOR_HARD_STOP: {
+            checkAndMarkQueryForHardStop(queryId);
+            break;
         }
         default:
             throw Exceptions::InvalidQueryStateException({QueryState::REGISTERED,
@@ -82,7 +97,32 @@ bool QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, co
     }
 }
 
-bool QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
+bool QueryCatalog::checkAndMarkQueryForHardStop(QueryId queryId) {
+
+    NES_INFO("QueryCatalogService: Handle hard stop request.");
+    //lock query catalog and check if query exists
+    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
+        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
+    auto currentStatus = queryCatalogEntry->getQueryState();
+    if (currentStatus == QueryState::MARKED_FOR_SOFT_STOP || currentStatus == QueryState::MARKED_FOR_HARD_STOP
+        || currentStatus == QueryState::MARKED_FOR_FAILURE || currentStatus == QueryState::DEPLOYED
+        || currentStatus == QueryState::STOPPED || currentStatus == QueryState::FAILED) {
+        NES_ERROR("QueryCatalog: Found query status already as {}. Ignoring stop query request.",
+                  magic_enum::enum_name(queryCatalogEntry->getQueryState()));
+        throw Exceptions::InvalidQueryStateException(
+            {QueryState::OPTIMIZING, QueryState::REGISTERED, QueryState::DEPLOYED, QueryState::RUNNING, QueryState::RESTARTING},
+            currentStatus);
+    }
+    NES_DEBUG("QueryCatalog: Changing query status to Mark query for stop.");
+    queryCatalogEntry->setQueryState(QueryState::MARKED_FOR_HARD_STOP);
+    return true;
+}
+
+void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
                                            QueryState queryState,
                                            const std::string& terminationReason) {
 
@@ -102,7 +142,7 @@ bool QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
         case QueryState::STOPPED:
         case QueryState::RUNNING: {
             sharedQueryCatalogEntry->setQueryState(queryState);
-            return true;
+            break;
         }
         case QueryState::FAILED: {
             sharedQueryCatalogEntry->setQueryState(queryState);
@@ -110,7 +150,7 @@ bool QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
             for (const auto& decomposedQueryPlanMetaData : sharedQueryCatalogEntry->getAllDecomposedQueryPlanMetaData()) {
                 decomposedQueryPlanMetaData->updateState(queryState);
             }
-            return true;
+            break;
         }
         default:
             throw Exceptions::InvalidQueryStateException(
@@ -150,29 +190,6 @@ void QueryCatalog::checkAndMarkSharedQueryForFailure(SharedQueryId sharedQueryId
     }
     sharedQueryCatalogEntry->setQueryState(QueryState::MARKED_FOR_FAILURE);
     NES_INFO("QueryCatalogService: Shared query id {} is marked as failed", sharedQueryId);
-}
-
-bool QueryCatalog::checkAndMarkQueryForHardStop(QueryId queryId) {
-
-    NES_INFO("QueryCatalogService: Handle hard stop request.");
-    //lock query catalog and check if query exists
-    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
-    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
-        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
-        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
-    }
-    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
-    auto currentStatus = queryCatalogEntry->getQueryState();
-    if (currentStatus == QueryState::MARKED_FOR_SOFT_STOP || currentStatus == QueryState::MARKED_FOR_HARD_STOP
-        || currentStatus == QueryState::MARKED_FOR_FAILURE || currentStatus == QueryState::DEPLOYED
-        || currentStatus == QueryState::STOPPED || currentStatus == QueryState::FAILED) {
-        NES_ERROR("QueryCatalog: Found query status already as {}. Ignoring stop query request.",
-                  queryCatalogEntry->getQueryStatusAsString());
-        return false;
-    }
-    NES_DEBUG("QueryCatalog: Changing query status to Mark query for stop.");
-    queryCatalogEntry->setQueryState(QueryState::MARKED_FOR_HARD_STOP);
-    return true;
 }
 
 bool QueryCatalog::updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
@@ -420,124 +437,99 @@ void QueryCatalog::addDecomposedQueryMetaData(SharedQueryId sharedQueryId,
 
 void QueryCatalog::addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan) {
 
-    //Check if query exists
-    if (!queryCatalog->queryExists(queryId)) {
+    //Fetch query catalogs
+    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
         NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
         throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
-    auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+    //Fetch the shared query plan
+    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
     queryCatalogEntry->addOptimizationPhase(step, updatedQueryPlan);
-
     if (step == "Executed Query Plan") {
         queryCatalogEntry->setExecutedQueryPlan(updatedQueryPlan);
     }
 }
 
-std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(const std::string& queryState) {
+QueryPlanPtr QueryCatalog::getCopyOfExecutedQueryPlan(QueryId queryId) {
+    //Fetch query catalogs
+    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
+        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    //Fetch the shared query plan
+    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
+    return queryCatalogEntry->getExecutedQueryPlan()->copy();
+}
+
+nlohmann::json QueryCatalog::getQueryEntry(NES::QueryId queryId) {
+
+    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
+        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    nlohmann::json response;
+    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
+    response["queryId"] = queryId;
+    response["queryString"] = queryCatalogEntry->getQueryString();
+    response["status"] = magic_enum::enum_name(queryCatalogEntry->getQueryState());
+    response["queryPlan"] = queryCatalogEntry->getInputQueryPlan()->toString();
+    response["queryMetaData"] = queryCatalogEntry->getMetaInformation();
+    response["history"] = queryCatalogEntry->getHistory();
+    for (auto const& [phaseName, queryPlan] : queryCatalogEntry->getOptimizationPhases()) {
+        auto queryPlanJson = PlanJsonGenerator::getQueryPlanAsJson(queryPlan);
+        response[phaseName] = queryPlanJson;
+    }
+    return response;
+}
+
+nlohmann::json QueryCatalog::getQueryEntriesWithStatus(const std::string& queryState) {
 
     auto state = magic_enum::enum_cast<QueryState>(queryState);
     if (state.has_value()) {
         NES_INFO("QueryCatalog : fetching all queryIdAndCatalogEntryMapping with status {}", queryState);
-        std::map<uint64_t, QueryCatalogEntryPtr> queries = getQueryCatalogEntries(state);
-        std::map<uint64_t, std::string> result;
-        for (auto const& [key, value] : queries) {
-            result[key] = value->getQueryString();
+        auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+        nlohmann::json response;
+        for (auto const& [queryId, queryCatalogEntry] : (*lockedQueryCatalogEntryMapping)) {
+            if (queryCatalogEntry->getQueryState() == state) {
+                nlohmann::json entry;
+                entry["queryId"] = queryId;
+                entry["queryString"] = queryCatalogEntry->getQueryString();
+                entry["queryStatus"] = magic_enum::enum_name(queryCatalogEntry->getQueryState());
+                entry["queryPlan"] = queryCatalogEntry->getInputQueryPlan()->toString();
+                entry["queryMetaData"] = queryCatalogEntry->getMetaInformation();
+                response.push_back(entry);
+            }
         }
-        NES_INFO("QueryCatalog : found {} all queryIdAndCatalogEntryMapping with status {}", result.size(), queryState);
-        return result;
+        return response;
     } else {
         NES_ERROR("No valid query status to parse");
-        throw InvalidArgumentException("QueryState", state);
+        throw InvalidArgumentException("QueryState", queryState);
     }
 }
 
-std::map<uint64_t, std::string> QueryCatalog::getAllQueries() {
+nlohmann::json QueryCatalog::getAllQueryEntries() {
     NES_INFO("QueryCatalog : get all queryIdAndCatalogEntryMapping");
-    std::map<uint64_t, QueryCatalogEntryPtr> registeredQueries = getAllQueryCatalogEntries();
-    std::map<uint64_t, std::string> result;
-    for (auto [key, value] : registeredQueries) {
-        result[key] = value->getQueryString();
-    }
-    NES_INFO("QueryCatalog : found {} queryIdAndCatalogEntryMapping in catalog.", result.size());
-    return result;
-}
-
-QueryCatalogEntryPtr QueryCatalog::createNewEntry(const std::string& queryString,
-                                                  const QueryPlanPtr& queryPlan,
-                                                  const Optimizer::PlacementStrategy placementStrategyName) {
-    QueryId queryId = queryPlan->getQueryId();
-    NES_INFO("QueryCatalog: Creating query catalog entry for query with id {}", queryId);
-    auto queryCatalogEntry =
-        std::make_shared<QueryCatalogEntry>(queryId, queryString, placementStrategyName, queryPlan, QueryState::REGISTERED);
-    queryCatalogEntryMapping[queryId] = queryCatalogEntry;
-    return queryCatalogEntry;
-}
-
-std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getAllQueryCatalogEntries() {
-    NES_TRACE("QueryCatalog: return registered queryIdAndCatalogEntryMapping={}", printQueries());
-    return queryCatalogEntryMapping;
-}
-
-QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(QueryId queryId) {
-    NES_TRACE("QueryCatalog: getQueryCatalogEntry with id {}", queryId);
-    return queryCatalogEntryMapping[queryId];
-}
-
-bool QueryCatalog::queryExists(QueryId queryId) {
-    NES_TRACE("QueryCatalog: Check if query with id {} exists.", queryId);
     auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
-    if (lockedQueryCatalogEntryMapping->contains(queryId)) {
-        NES_TRACE("QueryCatalog: query with id {} exists.", queryId);
-        return true;
+    nlohmann::json response;
+    for (auto const& [queryId, queryCatalogEntry] : (*lockedQueryCatalogEntryMapping)) {
+        nlohmann::json entry;
+        entry["queryId"] = queryId;
+        entry["queryString"] = queryCatalogEntry->getQueryString();
+        entry["queryStatus"] = magic_enum::enum_name(queryCatalogEntry->getQueryState());
+        entry["queryPlan"] = queryCatalogEntry->getQueryString();
+        entry["queryMetaData"] = queryCatalogEntry->getMetaInformation();
+        response.push_back(entry);
     }
-    NES_WARNING("QueryCatalog: query with id {} does not exist", queryId);
-    return false;
+    return response;
 }
 
-std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(QueryState requestedStatus) {
-    NES_TRACE("QueryCatalog: getQueriesWithStatus() registered queryIdAndCatalogEntryMapping={}", printQueries());
-    std::map<uint64_t, QueryCatalogEntryPtr> matchingQueries;
-    for (auto const& q : queryCatalogEntryMapping) {
-        if (q.second->getQueryState() == requestedStatus) {
-            matchingQueries.insert(q);
-        }
-    }
-    return matchingQueries;
-}
-
-void QueryCatalog::mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryCatalogEntryPtr queryCatalogEntry) {
-    // Find the shared query plan for mapping
-    if (sharedQueryCatalogEntryMapping.find(sharedQueryId) == sharedQueryCatalogEntryMapping.end()) {
-        sharedQueryCatalogEntryMapping[sharedQueryId] = {queryCatalogEntry};
-        return;
-    }
-
-    // Add the shared query id
-    auto queryCatalogEntries = sharedQueryCatalogEntryMapping[sharedQueryId];
-    queryCatalogEntries.emplace_back(queryCatalogEntry);
-    sharedQueryCatalogEntryMapping[sharedQueryId] = queryCatalogEntries;
-}
-
-std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntriesForSharedQueryId(SharedQueryId sharedQueryId) {
-    if (sharedQueryCatalogEntryMapping.find(sharedQueryId) == sharedQueryCatalogEntryMapping.end()) {
-        NES_ERROR("QueryCatalog: Unable to find shared query plan with id {}", std::to_string(sharedQueryId));
-        throw Exceptions::QueryNotFoundException("QueryCatalog: Unable to find shared query plan with id "
-                                                 + std::to_string(sharedQueryId));
-    }
-    return sharedQueryCatalogEntryMapping[sharedQueryId];
-}
-
-void QueryCatalog::removeSharedQueryPlanIdMappings(SharedQueryId sharedQueryId) {
-    if (sharedQueryCatalogEntryMapping.find(sharedQueryId) == sharedQueryCatalogEntryMapping.end()) {
-        NES_ERROR("QueryCatalog: Unable to find shared query plan with id {}", std::to_string(sharedQueryId));
-        throw Exceptions::QueryNotFoundException("QueryCatalog: Unable to find shared query plan with id "
-                                                 + std::to_string(sharedQueryId));
-    }
-    sharedQueryCatalogEntryMapping.erase(sharedQueryId);
-}
-
-void QueryCatalog::resetCatalog() {
+void QueryCatalog::reset() {
     NES_TRACE("QueryCatalog: clear query catalog");
     queryCatalogEntryMapping->clear();
     sharedQueryCatalogEntryMapping->clear();

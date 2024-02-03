@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
@@ -258,8 +258,8 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
 
 SchemaPtr TestHarness::getOutputSchema() {
     auto requestHandlerService = nesCoordinator->getRequestHandlerService();
-    auto queryCatalogService = nesCoordinator->getQueryCatalogService();
-    return queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->getSinkOperators()[0]->getOutputSchema();
+    auto queryCatalog = nesCoordinator->getQueryCatalog();
+    return queryPlan->getSinkOperators()[0]->getOutputSchema();
 }
 
 TestHarness&
@@ -269,8 +269,8 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
             "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
     }
 
-    RequestHandlerServicePtr requestHandlerService = nesCoordinator->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
+    auto requestHandlerService = nesCoordinator->getRequestHandlerService();
+    auto queryCatalog = nesCoordinator->getQueryCatalog();
 
     // local fs
     remove(filePath.c_str());
@@ -285,12 +285,12 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
                                                                      placementStrategy);
 
     // Now run the query
-    if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
+    if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
         NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
     }
 
     if (!TestUtils::checkOutputContentLengthOrTimeout(queryId,
-                                                      queryCatalogService,
+                                                      queryCatalog,
                                                       numberOfRecordsToExpect,
                                                       filePath,
                                                       testTimeoutInSeconds)) {
@@ -298,13 +298,12 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
                                 << numberOfRecordsToExpect);
     }
 
-    if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
+    if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalog)) {
         NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
     }
 
-    NES_DEBUG("TestHarness: ExecutedQueryPlan: {}",
-              queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
-    queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
+    queryPlan = queryCatalog->getCopyOfExecutedQueryPlan(queryId);
+    NES_DEBUG("TestHarness: ExecutedQueryPlan: {}", queryPlan->toString());
 
     for (const auto& worker : testHarnessWorkerConfigurations) {
         worker->getNesWorker()->stop(false);
@@ -316,9 +315,8 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
 
 std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestHarness::getOutput() {
     std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> receivedBuffers;
-    const auto queryCatalogService = nesCoordinator->getQueryCatalogService();
-    const auto schema =
-        queryCatalogService->getEntryForQuery(queryId)->getInputQueryPlan()->getSinkOperators()[0]->getOutputSchema();
+    const auto queryCatalog = nesCoordinator->getQueryCatalog();
+    const auto schema = queryPlan->getSinkOperators()[0]->getOutputSchema();
     auto tupleBuffers = TestUtils::createExpectedBuffersFromCsv(filePath, schema, bufferManager, true);
     return TestUtils::createDynamicBuffers(tupleBuffers, schema);
 }

@@ -77,7 +77,7 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     NES_INFO("MQTTSinkDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorker.out";
     remove(outputFilePath.c_str());
@@ -94,13 +94,13 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     // this function, because "default_logical" is used, uses 'DefaultSource.cpp', which create a TupleBuffer with 10 id:value
     // pairs, each being 1,1
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("MQTTSinkDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MQTTSinkDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

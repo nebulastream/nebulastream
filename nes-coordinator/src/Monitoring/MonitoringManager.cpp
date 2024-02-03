@@ -13,8 +13,8 @@
 */
 
 #include <API/Schema.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -38,28 +38,28 @@
 namespace NES::Monitoring {
 MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      RequestHandlerServicePtr requestHandlerService,
-                                     QueryCatalogServicePtr queryCatalogService)
-    : MonitoringManager(std::move(topology), std::move(requestHandlerService), std::move(queryCatalogService), true) {}
+                                     Catalogs::Query::QueryCatalogPtr queryCatalog)
+    : MonitoringManager(std::move(topology), std::move(requestHandlerService), std::move(queryCatalog), true) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      RequestHandlerServicePtr requestHandlerService,
-                                     QueryCatalogServicePtr catalogService,
+                                     Catalogs::Query::QueryCatalogPtr queryCatalog,
                                      bool enableMonitoring)
     : MonitoringManager(topology,
                         requestHandlerService,
-                        catalogService,
+                        queryCatalog,
                         std::make_shared<LatestEntriesMetricStore>(),
                         enableMonitoring) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      RequestHandlerServicePtr requestHandlerService,
-                                     QueryCatalogServicePtr catalogService,
+                                     Catalogs::Query::QueryCatalogPtr queryCatalog,
                                      MetricStorePtr metricStore,
                                      bool enableMonitoring)
     : metricStore(metricStore), workerClient(WorkerRPCClient::create()), topology(topology), enableMonitoring(enableMonitoring),
       monitoringCollectors(MonitoringPlan::defaultCollectors()) {
     this->requestHandlerService = requestHandlerService;
-    this->catalogService = catalogService;
+    this->queryCatalog = queryCatalog;
     NES_DEBUG("MonitoringManager: Init with monitoring= {} , storage= {} ",
               enableMonitoring,
               std::string(magic_enum::enum_name(metricStore->getType())));
@@ -298,13 +298,12 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for {}", queryId);
-        if (catalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::STOPPED) {
+        QueryState queryState = queryCatalog->getQueryState(queryId);
+        if (queryState == QueryState::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
-        NES_DEBUG("checkStoppedOrTimeout: status not reached for {} as status is={}",
-                  queryId,
-                  catalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+        NES_DEBUG("checkStoppedOrTimeout: status not reached for {} as status is={}", queryId, magic_enum::enum_name(queryState));
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
     NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -316,14 +315,8 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
     auto start_timestamp = std::chrono::system_clock::now();
 
     while (std::chrono::system_clock::now() < start_timestamp + timeout) {
-        auto queryCatalogEntry = catalogService->getEntryForQuery(queryId);
-        if (!queryCatalogEntry) {
-            NES_ERROR("MonitoringManager: unable to find the entry for query {} in the query catalog.", queryId);
-            return false;
-        }
-        NES_TRACE("MonitoringManager: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
-        auto queryState = queryCatalogEntry->getQueryState();
-
+        auto queryState = queryCatalog->getQueryState(queryId);
+        NES_TRACE("MonitoringManager: Query {} is now in status {}", queryId, magic_enum::enum_name(queryState));
         switch (queryState) {
             case QueryState::RUNNING: {
                 NES_DEBUG("MonitoringManager: Query is now running {}", queryId);

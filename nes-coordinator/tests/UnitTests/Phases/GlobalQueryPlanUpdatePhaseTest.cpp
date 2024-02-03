@@ -16,7 +16,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>

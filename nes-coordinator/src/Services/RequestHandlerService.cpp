@@ -14,7 +14,7 @@
 
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
@@ -43,17 +43,17 @@
 namespace NES {
 
 RequestHandlerService::RequestHandlerService(bool enableNewRequestExecutor,
-                                             Configurations::OptimizerConfiguration optimizerConfiguration,
-                                             const QueryCatalogServicePtr& queryCatalogService,
                                              const RequestQueuePtr& queryRequestQueue,
-                                             const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                             Configurations::OptimizerConfiguration optimizerConfiguration,
                                              const QueryParsingServicePtr& queryParsingService,
+                                             const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+                                             const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                              const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                             const RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
+                                             const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                                              const z3::ContextPtr& z3Context)
     : enableNewRequestExecutor(enableNewRequestExecutor), optimizerConfiguration(optimizerConfiguration),
-      queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue), asyncRequestExecutor(asyncRequestExecutor),
-      z3Context(z3Context), queryParsingService(queryParsingService) {
+      queryRequestQueue(queryRequestQueue), queryParsingService(queryParsingService), queryCatalog(queryCatalog),
+      asyncRequestExecutor(asyncRequestExecutor), z3Context(z3Context) {
     NES_DEBUG("RequestHandlerService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(this->queryParsingService);
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog,
@@ -78,22 +78,15 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
             // perform semantic validation
             semanticQueryValidation->validate(queryPlan);
 
-            Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
-                queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategy);
-            if (queryCatalogEntry) {
-                auto request = AddQueryRequest::create(queryPlan, placementStrategy);
-                queryRequestQueue->add(request);
-                return queryId;
-            }
+            queryCatalog->createQueryCatalogEntry(queryString, queryPlan, placementStrategy, QueryState::REGISTERED);
+            auto request = AddQueryRequest::create(queryPlan, placementStrategy);
+            queryRequestQueue->add(request);
+            return queryId;
+
         } catch (const InvalidQueryException& exc) {
             NES_ERROR("RequestHandlerService: {}", std::string(exc.what()));
-            auto emptyQueryPlan = QueryPlan::create();
-            emptyQueryPlan->setQueryId(queryId);
-            queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategy);
-            queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
             throw exc;
         }
-        throw Exceptions::RuntimeException("RequestHandlerService: unable to create query catalog entry");
     } else {
 
         auto addRequest = RequestProcessor::AddQueryRequest::create(queryString,
@@ -126,22 +119,14 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
             // perform semantic validation
             semanticQueryValidation->validate(queryPlan);
 
-            Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
-                queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategy);
-            if (queryCatalogEntry) {
-                auto request = AddQueryRequest::create(queryPlan, placementStrategy);
-                queryRequestQueue->add(request);
-                return queryId;
-            }
+            queryCatalog->createQueryCatalogEntry(queryString, queryPlan, placementStrategy, QueryState::REGISTERED);
+            auto request = AddQueryRequest::create(queryPlan, placementStrategy);
+            queryRequestQueue->add(request);
+            return queryId;
         } catch (const InvalidQueryException& exc) {
             NES_ERROR("RequestHandlerService: {}", std::string(exc.what()));
-            auto emptyQueryPlan = QueryPlan::create();
-            emptyQueryPlan->setQueryId(queryId);
-            queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategy);
-            queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
             throw exc;
         }
-        throw Exceptions::RuntimeException("RequestHandlerService: unable to create query catalog entry");
     } else {
         auto addRequest =
             RequestProcessor::AddQueryRequest::create(queryPlan, placementStrategy, RequestProcessor::DEFAULT_RETRIES, z3Context);
@@ -166,28 +151,24 @@ nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const 
 
 bool RequestHandlerService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
-    if (!enableNewRequestExecutor) {
-        //Check and mark query for hard stop
-        bool success = queryCatalogService->checkAndMarkForHardStop(queryId);
-
-        //If success then queue the hard stop request
-        if (success) {
+    try {
+        if (!enableNewRequestExecutor) {
+            //Check and mark query for hard stop
+            queryCatalog->updateQueryStatus(queryId, QueryState::MARKED_FOR_HARD_STOP, "Query Stop Requested");
             auto request = StopQueryRequest::create(queryId);
             return queryRequestQueue->add(request);
-        }
-        return false;
-    } else {
-        auto stopRequest = RequestProcessor::Experimental::StopQueryRequest::create(queryId, RequestProcessor::DEFAULT_RETRIES);
-        auto future = stopRequest->getFuture();
-        asyncRequestExecutor->runAsync(stopRequest);
-        try {
+        } else {
+            auto stopRequest =
+                RequestProcessor::Experimental::StopQueryRequest::create(queryId, RequestProcessor::DEFAULT_RETRIES);
+            auto future = stopRequest->getFuture();
+            asyncRequestExecutor->runAsync(stopRequest);
             auto response = future.get();
             auto success = std::static_pointer_cast<RequestProcessor::Experimental::StopQueryResponse>(response)->success;
             return success;
-        } catch (Exceptions::InvalidQueryStateException& e) {
-            //return true if the query was already stopped
-            return e.getActualState() == QueryState::STOPPED;
         }
+    } catch (Exceptions::InvalidQueryStateException& e) {
+        //return true if the query was already stopped
+        return (e.getActualState() == QueryState::STOPPED || e.getActualState() == QueryState::MARKED_FOR_HARD_STOP);
     }
 }
 
@@ -201,6 +182,7 @@ bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId share
     } else {
         auto failRequest = RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId,
                                                                                     querySubPlanId,
+                                                                                    failureReason,
                                                                                     RequestProcessor::DEFAULT_RETRIES);
         auto future = failRequest->getFuture();
         asyncRequestExecutor->runAsync(failRequest);

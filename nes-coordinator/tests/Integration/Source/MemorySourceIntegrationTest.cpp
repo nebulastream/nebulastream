@@ -51,7 +51,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
@@ -108,12 +108,12 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
         requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("MemorySourceIntegrationTest: Remove query");
     //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -156,7 +156,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
@@ -207,12 +207,12 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
         requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("MemorySourceIntegrationTest: Remove query");
     //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -257,7 +257,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
@@ -315,12 +315,12 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
         requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("MemorySourceIntegrationTest: Remove query");
     //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());

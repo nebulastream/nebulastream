@@ -31,7 +31,10 @@ using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaDa
 class DecomposedQueryPlanMetaData {
 
   public:
-    static DecomposedQueryPlanMetaDataPtr create(DecomposedQueryPlanId decomposedQueryPlanId, QueryState queryState, uint64_t workerId);
+    static DecomposedQueryPlanMetaDataPtr create(DecomposedQueryPlanId decomposedQueryPlanId,
+                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                                 QueryState decomposedQueryPlanState,
+                                                 WorkerId workerId);
 
     /**
      * Update the status of the qub query
@@ -72,7 +75,10 @@ class DecomposedQueryPlanMetaData {
     /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;
 
-    DecomposedQueryPlanMetaData(DecomposedQueryPlanId querySubPlanId, QueryState decomposedQueryPlanState, uint64_t workerId);
+    DecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+                                DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                QueryState decomposedQueryPlanState,
+                                WorkerId workerId);
 
   private:
     /**

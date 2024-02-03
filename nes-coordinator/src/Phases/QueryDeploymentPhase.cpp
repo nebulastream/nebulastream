@@ -14,7 +14,7 @@
 
 #include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -68,13 +68,13 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //Remove the old mapping of the shared query plan
     if (SharedQueryPlanStatus::MIGRATING != sharedQueryPlan->getStatus()) {
         if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
-            queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
+//            queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
         }
 
         //Reset all sub query plan metadata in the catalog
         for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
-            queryCatalogService->resetSubQueryMetaData(queryId);
-            queryCatalogService->mapSharedQueryPlanId(sharedQueryId, queryId);
+//            queryCatalogService->resetSubQueryMetaData(queryId);
+//            queryCatalogService->mapSharedQueryPlanId(sharedQueryId, queryId);
         }
     }
 
@@ -109,9 +109,9 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         //do not set migrating queries to deployed status
         if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING) {
-            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::MIGRATING);
+//            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::MIGRATING);
         } else {
-            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::DEPLOYED);
+//            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::DEPLOYED);
         }
     }
 
@@ -121,18 +121,18 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //Mark queries as running if they are not in migrating state
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::MIGRATING) {
-            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::RUNNING);
+//            queryCatalogService->getEntryForQuery(queryId)->setQueryState(QueryState::RUNNING);
         }
     }
 
     //mark subqueries that were reconfigured as running again
-    for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
-        for (const auto& subPlanMetaData : queryCatalogService->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData()) {
-            //            if (subPlanMetaData->getSubQueryStatus() == QueryState::REDEPLOYED) {
-            //                subPlanMetaData->updateStatus(QueryState::RUNNING);
-            //            }
-        }
-    }
+//    for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
+//        for (const auto& subPlanMetaData : queryCatalogService->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData()) {
+//            //            if (subPlanMetaData->getSubQueryStatus() == QueryState::REDEPLOYED) {
+//            //                subPlanMetaData->updateStatus(QueryState::RUNNING);
+//            //            }
+//        }
+//    }
 //    for (auto& executionNode : executionNodes) {
 //        const auto workerId = executionNode->getId();
 //        const auto subQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
@@ -148,7 +148,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 //    startQuery(sharedQueryId, executionNodes);
 
     //remove subplans from global query plan if they were stopped due to migration
-    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
+//    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
     /*for (const auto& node : executionNodes) {
         auto allDecomposedQueryPlans = node->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
@@ -187,9 +187,9 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
 
         completionQueues[queueForExecutionNode] = 0;
         for (const auto& decomposedQueryPlan : allDecomposedQueryPlans) {
-            auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
-            auto subplanMetaData = queryCatalogService->getEntryForQuery(singleQueryId)
-                                       ->getQuerySubPlanMetaData(decomposedQueryPlan->getDecomposedQueryPlanId());
+//            auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
+//            auto subplanMetaData = queryCatalogService->getEntryForQuery(singleQueryId)
+//                                       ->getQuerySubPlanMetaData(decomposedQueryPlan->getDecomposedQueryPlanId());
 
             switch (decomposedQueryPlan->getState()) {
                 case QueryState::DEPLOYED: {
@@ -201,7 +201,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                     //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
                     //                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
                     decomposedQueryPlan->setState(QueryState::RUNNING);
-                    subplanMetaData->updateState(decomposedQueryPlan->getState());
+//                    subplanMetaData->updateState(decomposedQueryPlan->getState());
                     completionQueues[queueForExecutionNode]++;
                     break;
                 }

@@ -26,7 +26,7 @@
 #include <iostream>
 #include <string>
 
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -224,7 +224,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -232,11 +232,11 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -290,7 +290,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -306,7 +306,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(10);
 
     NES_INFO("\n\n --------- CONTENT --------- \n\n");
@@ -316,7 +316,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

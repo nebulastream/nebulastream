@@ -18,15 +18,21 @@
 namespace NES {
 
 DecomposedQueryPlanMetaDataPtr DecomposedQueryPlanMetaData::create(DecomposedQueryPlanId decomposedQueryPlanId,
+                                                                   DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                                    QueryState decomposedQueryPlanState,
                                                                    WorkerId workerId) {
-    return std::make_shared<DecomposedQueryPlanMetaData>(decomposedQueryPlanId, decomposedQueryPlanState, workerId);
+    return std::make_shared<DecomposedQueryPlanMetaData>(decomposedQueryPlanId,
+                                                         decomposedQueryPlanVersion,
+                                                         decomposedQueryPlanState,
+                                                         workerId);
 }
 
-DecomposedQueryPlanMetaData::DecomposedQueryPlanMetaData(DecomposedQueryPlanId querySubPlanId,
+DecomposedQueryPlanMetaData::DecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+                                                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                          QueryState decomposedQueryPlanState,
                                                          WorkerId workerId)
-    : decomposedQueryPlanId(querySubPlanId), decomposedQueryPlanState(decomposedQueryPlanState), workerId(workerId) {}
+    : decomposedQueryPlanId(decomposedQueryPlanId), decomposedQueryPlanVersion(decomposedQueryPlanVersion),
+      decomposedQueryPlanState(decomposedQueryPlanState), workerId(workerId) {}
 
 void DecomposedQueryPlanMetaData::updateState(QueryState newDecomposedQueryPlanState) {
     decomposedQueryPlanState = newDecomposedQueryPlanState;

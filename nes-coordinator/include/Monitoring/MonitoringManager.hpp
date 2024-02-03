@@ -42,8 +42,10 @@ using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+namespace Catalogs::Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Catalogs::Query
 
 namespace Monitoring {
 class SourceCatalog;
@@ -63,34 +65,39 @@ class MonitoringManager {
     /**
      * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
      * @param topology the topology
+     * @param requestHandlerService request handler
+     * @param queryCatalog: the query catalog
      * @param metricStore the metric store
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
     MonitoringManager(TopologyPtr topology,
                       RequestHandlerServicePtr requestHandlerService,
-                      QueryCatalogServicePtr catalogService,
+                      Catalogs::Query::QueryCatalogPtr queryCatalog,
                       MetricStorePtr metricStore,
                       bool enableMonitoring);
 
     /**
-     * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
+     * @brief Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
      * @param topology the topology
+     * @param requestHandlerService request handler
+     * @param queryCatalog: the query catalog
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
     MonitoringManager(TopologyPtr topology,
                       RequestHandlerServicePtr requestHandlerService,
-                      QueryCatalogServicePtr catalogService,
+                      Catalogs::Query::QueryCatalogPtr queryCatalog,
                       bool enableMonitoring);
 
     /**
      * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
      * @param topology the topology
      * @param requestHandlerService: the query service
-     * @param queryCatalogService: the query catalog service
+     * @param queryCatalog: the query catalog
      */
     MonitoringManager(TopologyPtr topology,
                       RequestHandlerServicePtr requestHandlerService,
-                      QueryCatalogServicePtr queryCatalogService);
+                      Catalogs::Query::QueryCatalogPtr queryCatalog);
+
     MonitoringManager(const MonitoringManager&) = default;
     MonitoringManager(MonitoringManager&&) = default;
     //  -- Assignment --
@@ -213,7 +220,7 @@ class MonitoringManager {
     std::set<MetricCollectorType> monitoringCollectors;
     std::set<std::string> logicalMonitoringSources;
     NES::RequestHandlerServicePtr requestHandlerService;
-    NES::QueryCatalogServicePtr catalogService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
 };
 
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;

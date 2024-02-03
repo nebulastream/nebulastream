@@ -128,8 +128,8 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
     std::vector<TopologyLinkInformation> addedLinks;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    QueryCatalogServicePtr queryCatalogService;
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

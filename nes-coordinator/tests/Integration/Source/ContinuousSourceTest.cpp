@@ -80,7 +80,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());
@@ -90,12 +90,12 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
                                                                              Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
@@ -131,7 +131,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());
@@ -141,12 +141,12 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
                                                                              Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
@@ -185,7 +185,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(FileSinkDescriptor::create(outputFilePath));
@@ -194,13 +194,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
                                                                              Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -286,7 +286,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(FileSinkDescriptor::create(outputFilePath));
@@ -295,13 +295,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
                                                                              Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -395,7 +395,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("testStream").filter(Attribute("val1") < 2).sink(PrintSinkDescriptor::create());
@@ -404,13 +404,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
                                                                              Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
@@ -461,7 +461,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("testStream").filter(Attribute("val1") < 10).sink(FileSinkDescriptor::create(outputFilePath));
@@ -470,13 +470,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
                                                                              Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -540,7 +540,7 @@ TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("testStream").filter(Attribute("val1") < 10).sink(FileSinkDescriptor::create(outputFilePath, true));
@@ -549,12 +549,12 @@ TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
                                                                              Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());

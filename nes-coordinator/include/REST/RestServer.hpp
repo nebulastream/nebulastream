@@ -65,6 +65,10 @@ class UDFCatalog;
 using UdfCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
+namespace Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Query
 }// namespace Catalogs
 
 /**
@@ -78,7 +82,7 @@ class RestServer {
      * @param host
      * @param port
      * @param coordinator
-     * @param queryCatalogService
+     * @param queryCatalog
      * @param sourceCatalogService
      * @param topologyManagerService
      * @param globalExecutionPlan
@@ -93,7 +97,7 @@ class RestServer {
     RestServer(std::string host,
                uint16_t port,
                NesCoordinatorWeakPtr coordinator,
-               QueryCatalogServicePtr queryCatalogService,
+               Catalogs::Query::QueryCatalogPtr queryCatalog,
                SourceCatalogServicePtr sourceCatalogService,
                TopologyManagerServicePtr topologyManagerService,
                Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
@@ -127,7 +131,7 @@ class RestServer {
     std::string host;
     uint16_t port;
     NesCoordinatorWeakPtr coordinator;
-    QueryCatalogServicePtr queryCatalogService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     RequestHandlerServicePtr requestHandlerService;
     GlobalQueryPlanPtr globalQueryPlan;

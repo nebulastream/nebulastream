@@ -15,7 +15,7 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
@@ -84,13 +84,12 @@ TEST_F(QueryCatalogServiceTest, testAddNewPattern) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
+    queryCatalog->createQueryCatalogEntry(patternString, queryPlan, Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
 
     //Assert
-    EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    auto run = queryCatalog->getQueriesWithStatus(QueryState::REGISTERED);
+    auto run = queryCatalog->getQueryEntriesWithStatus(QueryState::REGISTERED);
     EXPECT_TRUE(run.size() == 1U);
 }
 
@@ -160,7 +159,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryWithMultipleSinks) {
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    auto run = queryCatalog->getQueriesWithStatus(QueryState::REGISTERED);
+    auto run = queryCatalog->getQueryEntriesWithStatus(QueryState::REGISTERED);
     EXPECT_TRUE(run.size() == 1U);
 }
 

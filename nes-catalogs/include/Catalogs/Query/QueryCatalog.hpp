@@ -23,6 +23,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <queue>
 #include <string>
 #include <vector>
@@ -69,13 +70,20 @@ class QueryCatalog {
     void createSharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::vector<QueryId> queryIds, QueryState queryStatus);
 
     /**
+     * @brief Get state of the input query id
+     * @param queryId : the query id
+     * @return state of the query
+     */
+    QueryState getQueryState(QueryId queryId);
+
+    /**
      * @brief Update query entry with new status
      * @param queryId : query id
      * @param queryStatus : new status
      * @param terminationReason : additional meta information
      * @return true if updated successfully
      */
-    bool updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason);
+    void updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason);
 
     /**
      * @brief Update query entry with new status
@@ -84,7 +92,7 @@ class QueryCatalog {
      * @param terminationReason : additional meta information
      * @return true if updated successfully
      */
-    bool updateSharedQueryStatus(SharedQueryId sharedQueryId, QueryState queryState, const std::string& terminationReason);
+    void updateSharedQueryStatus(SharedQueryId sharedQueryId, QueryState queryState, const std::string& terminationReason);
 
     /**
      * @brief check and mark the shared query for soft stop
@@ -102,7 +110,6 @@ class QueryCatalog {
      */
     bool handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
-
     /**
      * @brief Handle decomposed query plan soft stop triggered
      * @param sharedQueryId : the shared query id
@@ -110,13 +117,6 @@ class QueryCatalog {
      * @return true if handled or false
      */
     bool handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
-
-    /**
-     * @brief check and mark the query for hard stop
-     * @param queryId: the query which need to be stopped
-     * @return true if successful else false
-     */
-    bool checkAndMarkQueryForHardStop(QueryId queryId);
 
     /**
      * @brief Check and mark shared query for failure
@@ -157,74 +157,45 @@ class QueryCatalog {
                                          DecomposedQueryPlanId decomposedQueryPlanId,
                                          QueryState queryState);
 
-  private:
     /**
-     * @brief method to get a particular query
-     * @param id of the query
-     * @return pointer to the catalog entry
+     * @brief Get a copy of executed query plan
+     * @param queryId: the query id
+     * @return the copy of query plan ptr
      */
-    QueryCatalogEntryPtr getQueryCatalogEntry(QueryId queryId);
+    QueryPlanPtr getCopyOfExecutedQueryPlan(QueryId queryId);
 
     /**
-     * @brief Check if a query with given id registered in the catalog
-     * @param query the query id
-     * @return bool indicating if query exists (true) or not (false)
+     * @brief Get query with given id
+     * @param queryId: the input query id
+     * @return json representing query with given id
      */
-    bool queryExists(QueryId queryId);
+    nlohmann::json getQueryEntry(QueryId queryId);
 
     /**
-     * @brief method to get the queryIdAndCatalogEntryMapping in a specific state
-     * @param requestedStatus : desired query status
-     * @return this will return a COPY of the queryIdAndCatalogEntryMapping in the catalog that are running
+     * @brief Get all queries in the input state
+     * @param queryState : the input query state
+     * @return json representing queries in the given state
      */
-    std::map<uint64_t, QueryCatalogEntryPtr> getQueryCatalogEntries(QueryState requestedStatus);
-
-    /**
-     * @brief method to get the registered queryIdAndCatalogEntryMapping
-     * @note this contain all queryIdAndCatalogEntryMapping running/not running
-     * @return this will return a COPY of the queryIdAndCatalogEntryMapping in the catalog
-     */
-    std::map<uint64_t, QueryCatalogEntryPtr> getAllQueryCatalogEntries();
-
-    /**
-     * @brief method to reset the catalog
-     */
-    void resetCatalog();
-
-    /**
-    * @brief Get the queryIdAndCatalogEntryMapping in the user defined status
-    * @param status : query status
-    * @return returns map of query Id and query string
-    * @throws exception in case of invalid status
-    */
-    std::map<uint64_t, std::string> getQueriesWithStatus(QueryState status);
+    nlohmann::json getQueryEntriesWithStatus(const std::string& queryState);
 
     /**
      * @brief Get all queryIdAndCatalogEntryMapping registered in the system
      * @return map of query ids and query string with query status
      */
-    std::map<uint64_t, std::string> getAllQueries();
+    nlohmann::json getAllQueryEntries();
 
     /**
-     * map shared query plan id to the query catalog entry
-     * @param sharedQueryId : the shared query id
-     * @param queryCatalogEntry : the query catalog entry
+     * @brief method to reset the catalog
      */
-    void mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryCatalogEntryPtr queryCatalogEntry);
+    void reset();
 
+  private:
     /**
-     * @brief Get all query catalog entries mapped to the shared query plan
-     * @param sharedQueryId : the shared query plan id
-     * @return vector of query catalog entries
+     * @brief check and mark the query for hard stop
+     * @param queryId: the query which need to be stopped
+     * @return true if successful else false
      */
-    std::vector<QueryCatalogEntryPtr> getQueryCatalogEntriesForSharedQueryId(SharedQueryId sharedQueryId);
-
-    /**
-     * map shared query plan id to the input query id
-     * @param sharedQueryId : the shared query id
-     * @param queryId : the query id
-     */
-    void removeSharedQueryPlanIdMappings(SharedQueryId sharedQueryId);
+    bool checkAndMarkQueryForHardStop(QueryId queryId);
 
   private:
     folly::Synchronized<std::map<QueryId, QueryCatalogEntryPtr>> queryCatalogEntryMapping;

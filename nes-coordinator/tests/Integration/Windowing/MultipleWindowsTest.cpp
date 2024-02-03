@@ -74,7 +74,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -91,7 +91,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
@@ -102,7 +102,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 
     NES_INFO("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -161,7 +161,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -178,7 +178,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
@@ -190,7 +190,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
 
     NES_INFO("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -243,7 +243,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
@@ -262,7 +262,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
@@ -280,7 +280,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
 
     NES_INFO("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -342,7 +342,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
@@ -359,7 +359,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
@@ -377,7 +377,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 
     NES_INFO("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -425,7 +425,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -443,7 +443,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
@@ -464,7 +464,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 
     NES_INFO("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -523,7 +523,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -539,7 +539,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
@@ -559,7 +559,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
 
     NES_INFO("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -613,7 +613,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_DEBUG("MultipleWindowsTest: Submit query");
 
@@ -631,7 +631,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
                              "0,2000,4\n"
@@ -650,7 +650,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -764,7 +764,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MultipleWindowsTest: Submit query");
 
@@ -777,7 +777,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "window1window2window3$start:INTEGER(64 bits),window1window2window3$end:INTEGER(64 "
                              "bits),window1window2window3$key:INTEGER(64 bits),window1window2$"
@@ -794,7 +794,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -921,7 +921,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("MultipleWindowsTest: Submit query");
 
@@ -936,7 +936,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent =
         "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
@@ -951,7 +951,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

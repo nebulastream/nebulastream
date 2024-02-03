@@ -14,7 +14,6 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -45,15 +44,15 @@ namespace NES::Optimizer {
 
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
     const TopologyPtr& topology,
-    const QueryCatalogServicePtr& queryCatalogService,
+    const Catalogs::Query::QueryCatalogPtr& queryCatalog,
     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
     const GlobalQueryPlanPtr& globalQueryPlan,
     const z3::ContextPtr& z3Context,
     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
     const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
     const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan)
-    : topology(topology), globalExecutionPlan(globalExecutionPlan), queryCatalogService(queryCatalogService),
-      globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
+    : topology(topology), globalExecutionPlan(globalExecutionPlan), queryCatalog(queryCatalog), globalQueryPlan(globalQueryPlan),
+      z3Context(z3Context) {
 
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
     queryMergerPhase = QueryMergerPhase::create(z3Context, optimizerConfigurations);
@@ -69,7 +68,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
 
 GlobalQueryPlanUpdatePhasePtr
 GlobalQueryPlanUpdatePhase::create(const TopologyPtr& topology,
-                                   const QueryCatalogServicePtr& queryCatalogService,
+                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                    const GlobalQueryPlanPtr& globalQueryPlan,
                                    const z3::ContextPtr& z3Context,
@@ -77,7 +76,7 @@ GlobalQueryPlanUpdatePhase::create(const TopologyPtr& topology,
                                    const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                    const GlobalExecutionPlanPtr& globalExecutionPlan) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(topology,
-                                                                                   queryCatalogService,
+                                                                                   queryCatalog,
                                                                                    sourceCatalog,
                                                                                    globalQueryPlan,
                                                                                    z3Context,
@@ -136,11 +135,11 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr
     auto queryPlan = runRequest->getQueryPlan();
 
     //1. Add the initial version of the query to the query catalog
-    queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
+    queryCatalog->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
     NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query {}", queryId);
 
     //2. Set query status as Optimizing
-    queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
+    queryCatalog->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
     //3. Execute type inference phase
     NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);
@@ -155,7 +154,7 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr
     queryPlan = queryRewritePhase->execute(queryPlan);
 
     //6. Add the updated query plan to the query catalog
-    queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
+    queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
     //7. Execute type inference phase on rewritten query plan
     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -174,7 +173,7 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr
     queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
     //11. Add the updated query plan to the query catalog
-    queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
+    queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
     //12. Perform type inference over re-written query plan
     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -187,7 +186,7 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr
     queryPlan = setMemoryLayoutPhase->execute(queryPlan);
 
     //15. Add the updated query plan to the query catalog
-    queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
+    queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
 
     //16. Add the updated query plan to the global query plan
     NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);

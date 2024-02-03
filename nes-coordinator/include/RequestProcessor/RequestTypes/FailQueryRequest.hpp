@@ -42,25 +42,25 @@ class FailQueryRequest : public AbstractUniRequest {
   public:
     /**
      * @brief Constructor
-     * @param sharedQueryId: The id of the query that failed
+     * @param sharedQueryId: The id of the shared query that failed
      * @param failedDecomposedPlanId: The id of the decomposed plan that caused the failure
      * @param failureReason: the failure reason
      * @param maxRetries: Maximum number of retry attempts for the request
      */
-    FailQueryRequest(QueryId sharedQueryId,
+    FailQueryRequest(SharedQueryId sharedQueryId,
                      DecomposedQueryPlanId failedDecomposedPlanId,
                      const std::string& failureReason,
                      uint8_t maxRetries);
 
     /**
     * @brief creates a new FailQueryRequest object
-    * @param sharedQueryId: The id of the query that failed
+    * @param sharedQueryId: The id of the shared query that failed
     * @param failedDecomposedQueryId: The id of the decomposed plan that caused the failure
     * @param failureReason: the failure reason
     * @param maxRetries: Maximum number of retry attempts for the request
     * @return a smart pointer to the newly created object
     */
-    static FailQueryRequestPtr create(QueryId sharedQueryId,
+    static FailQueryRequestPtr create(SharedQueryId sharedQueryId,
                                       DecomposedQueryPlanId failedDecomposedQueryId,
                                       const std::string& failureReason,
                                       uint8_t maxRetries);
