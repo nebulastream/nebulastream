@@ -309,6 +309,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     wrkConf2->connectSourceEventChannelsAsync.setValue(true);
     wrkConf2->timestampFileSinkAndWriteToTCP.setValue(false);
     wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
+    wrkConf2->numberOfSlots.setValue(1);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart2);
@@ -509,7 +510,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
             }
         }
         ASSERT_EQ(noOfMigratingPlans, 0);
-        ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 2);
+        ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 1);
         ASSERT_EQ(noOfRunningPlans, 4);
         ASSERT_EQ(topology->getParentTopologyNodeIds(wrk1->getWorkerId()), std::vector<WorkerId>{wrk3->getWorkerId()});
 
