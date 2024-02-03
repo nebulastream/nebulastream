@@ -288,6 +288,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     wrkConf1->connectSourceEventChannelsAsync.setValue(true);
     wrkConf1->timestampFileSinkAndWriteToTCP.setValue(false);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
+    wrkConf1->numberOfSlots.setValue(1);
 
     wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
@@ -313,11 +314,27 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     ASSERT_TRUE(retStart2);
     ASSERT_TRUE(waitForNodes(5, 3, topology));
 
+    NES_INFO("start worker below crd");
+    WorkerConfigurationPtr wrkConfBelowCrd = WorkerConfiguration::create();
+    wrkConfBelowCrd->coordinatorPort.setValue(*rpcCoordinatorPort);
+    auto wrkBelowCrdDataPort = getAvailablePort();
+    wrkConfBelowCrd->dataPort = *wrkBelowCrdDataPort;
+    wrkConfBelowCrd->numWorkerThreads.setValue(GetParam());
+    wrkConfBelowCrd->connectSinksAsync.setValue(true);
+    wrkConfBelowCrd->connectSourceEventChannelsAsync.setValue(true);
+    wrkConfBelowCrd->timestampFileSinkAndWriteToTCP.setValue(false);
+    wrkConfBelowCrd->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
+    NesWorkerPtr wrkBelowCrd = std::make_shared<NesWorker>(std::move(wrkConfBelowCrd));
+    bool retStartBelowCrd = wrkBelowCrd->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStartBelowCrd);
+    ASSERT_TRUE(waitForNodes(5, 4, topology));
+
     wrk1->replaceParent(crd->getNesWorker()->getWorkerId(), wrk2->getWorkerId());
+    wrk2->replaceParent(crd->getNesWorker()->getWorkerId(), wrkBelowCrd->getWorkerId());
 
     //start query
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
     auto networkSinkWrk3Id = 31;
     auto networkSrcWrk3Id = 32;
@@ -373,11 +390,13 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         wrkConf3->connectSourceEventChannelsAsync.setValue(true);
         wrkConf3->timestampFileSinkAndWriteToTCP.setValue(false);
         wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
+        wrkConf3->numberOfSlots.setValue(1);
         NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
         bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
         ASSERT_TRUE(retStart3);
-        ASSERT_TRUE(waitForNodes(5, 4 + actualReconnects, topology));
+        ASSERT_TRUE(waitForNodes(5, 5 + actualReconnects, topology));
         reconnectParents.push_back(wrk3);
+        wrk3->replaceParent(crd->getNesWorker()->getWorkerId(), wrkBelowCrd->getWorkerId());
 
         std::string compareStringAfter;
         std::ostringstream ossAfter;
@@ -490,8 +509,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
             }
         }
         ASSERT_EQ(noOfMigratingPlans, 0);
-        ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 1);
-        ASSERT_EQ(noOfRunningPlans, 3);
+        ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 2);
+        ASSERT_EQ(noOfRunningPlans, 4);
         ASSERT_EQ(topology->getParentTopologyNodeIds(wrk1->getWorkerId()), std::vector<WorkerId>{wrk3->getWorkerId()});
 
         //check that all tuples arrived
@@ -538,6 +557,11 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     cout << "stopping worker" << endl;
     bool retStopWrk2 = wrk2->stop(false);
     ASSERT_TRUE(retStopWrk2);
+
+    auto stopSuccessBelowCrd = wrkBelowCrd->getNodeEngine()->stopQuery(sharedQueryId);
+    cout << "stopping worker" << endl;
+    bool retStopBelowCrd = wrkBelowCrd->stop(false);
+    ASSERT_TRUE(retStopBelowCrd);
 
     cout << "stopping coordinator" << endl;
     bool retStopCord = crd->stopCoordinator(false);
