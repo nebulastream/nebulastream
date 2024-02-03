@@ -68,7 +68,6 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
 
         //find all toplogy nodes that are reachable from the pinned upstream operator node
         std::set<WorkerId> reachable;
-        //todo :
         NES_INFO("Find reachable downstream nodes")
         topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
 
@@ -101,6 +100,41 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
                 const auto currentWorkerId = std::any_cast<OperatorId>(currentOperator->getProperty(Optimizer::PINNED_WORKER_ID));
                 visitedOperators.insert(currentOperator->getId());
                 upstreamPinned.erase(currentOperator->getId());
+
+                std::queue<LogicalOperatorNodePtr> childrenBFSQueue;
+                for (const auto& child : currentOperator->getChildren()) {
+                    auto nonSystemChild = child->as<LogicalOperatorNode>();
+                    childrenBFSQueue.push(nonSystemChild);
+                }
+
+                //iterate over children in bfs order and add them to upstream pinned operators only if they are located on
+                //a different node than the current one
+                while (!childrenBFSQueue.empty()) {
+                    const auto currentChild = childrenBFSQueue.front();
+                    childrenBFSQueue.pop();
+
+                    //check if the operator was already removed
+                    if (toRemove.contains(currentChild->getId())) {
+                        continue;
+                    }
+                    const auto currentChildWorkerId =
+                        std::any_cast<OperatorId>(currentChild->getProperty(Optimizer::PINNED_WORKER_ID));
+                    if (currentChildWorkerId != currentWorkerId) {
+                        upstreamPinned.insert(currentChild->getId());
+                        continue;
+                    }
+
+                    //todo: change this
+                    NES_ASSERT(!currentChild->getChildren().empty(),
+                               "No upstream pinned operator could be found and the current node does not have any children");
+
+                    toRemove.insert(currentChild->getId());
+
+                    for (const auto& child : currentChild->getChildren()) {
+                        childrenBFSQueue.push(child->as<LogicalOperatorNode>());
+                    }
+                }
+
                 if (reachable.contains(currentWorkerId)) {
                     downstreamPinned.insert(currentOperator->getId());
                 } else {
@@ -112,12 +146,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
                         queryPlanBFSQueue.push(parent->as<LogicalOperatorNode>());
                     }
                     toRemove.insert(currentOperator->getId());
-                    for (const auto& child : currentOperator->getChildren()) {
-                        auto nonSystemChild = child->as<LogicalOperatorNode>();
-                        if (!toRemove.contains(nonSystemChild->getId())) {
-                            upstreamPinned.insert(nonSystemChild->getId());
-                        }
-                    }
+                    //todo: make sure to iterate to different node
                 }
             }
         }
