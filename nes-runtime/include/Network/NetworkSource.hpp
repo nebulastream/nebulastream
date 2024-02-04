@@ -162,7 +162,7 @@ class NetworkSource : public DataSource {
     * @brief Getter for the initial version.
     * @return The version this source was started with
     */
-    DecomposedQueryPlanVersion getVersion() override;
+    //DecomposedQueryPlanVersion getVersion() override;
 
     /**
      * @brief getter for the network sinks unique id
@@ -175,7 +175,7 @@ class NetworkSource : public DataSource {
      * @param networkSourceDescriptor the new descriptor
      * @return true if the partition to be scheduled if different from the current one and the descriptor was scheduled.
      */
-    bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
+    //bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
 
     bool bind();
 
@@ -188,7 +188,7 @@ class NetworkSource : public DataSource {
     // for event channel
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    DecomposedQueryPlanVersion version;
+    [[maybe_unused]] DecomposedQueryPlanVersion version;
     const uint64_t uniqueNetworkSourceIdentifier;
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
     bool migrated = false;

@@ -323,26 +323,26 @@ void NetworkSource::markAsMigrated() {
 bool NetworkSource::tryStartingNewVersion() {
     NES_DEBUG("Updating version for network source {}", nesPartition);
     std::unique_lock lock(versionMutex);
-    if (nextSourceDescriptor) {
-        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
-        //check if the partition is still registered of if it was removed because no channels were connected
-        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-            auto newDescriptor = nextSourceDescriptor.value();
-            version = newDescriptor.getVersion();
-            sinkLocation = newDescriptor.getNodeLocation();
-            nesPartition = newDescriptor.getNesPartition();
-            nextSourceDescriptor = std::nullopt;
-            //bind the sink to the new partition
-            bind();
-            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
-                                                                 -1,
-                                                                 Runtime::ReconfigurationType::UpdateVersion,
-                                                                 Runtime::Reconfigurable::shared_from_this());
-            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
-            return true;
-        }
-        return false;
-    }
+//    if (nextSourceDescriptor) {
+//        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
+//        //check if the partition is still registered of if it was removed because no channels were connected
+//        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+//            auto newDescriptor = nextSourceDescriptor.value();
+//            version = newDescriptor.getVersion();
+//            sinkLocation = newDescriptor.getNodeLocation();
+//            nesPartition = newDescriptor.getNesPartition();
+//            nextSourceDescriptor = std::nullopt;
+//            //bind the sink to the new partition
+//            bind();
+//            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
+//                                                                 -1,
+//                                                                 Runtime::ReconfigurationType::UpdateVersion,
+//                                                                 Runtime::Reconfigurable::shared_from_this());
+//            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+//            return true;
+//        }
+//        return false;
+//    }
     if (migrated) {
         if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
             migrated = false;
@@ -354,10 +354,10 @@ bool NetworkSource::tryStartingNewVersion() {
     return false;
 }
 
-DecomposedQueryPlanVersion NetworkSource::getVersion() {
-    std::unique_lock lock(versionMutex);
-    return version;
-}
+//DecomposedQueryPlanVersion NetworkSource::getVersion() {
+//    std::unique_lock lock(versionMutex);
+//    return version;
+//}
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);
@@ -385,13 +385,13 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
 
 OperatorId NetworkSource::getUniqueId() const { return uniqueNetworkSourceIdentifier; }
 
-bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
-    std::unique_lock lock(versionMutex);
-    if (nesPartition != networkSourceDescriptor.getNesPartition()) {
-        nextSourceDescriptor = networkSourceDescriptor;
-        tryStartingNewVersion();
-        return true;
-    }
-    return false;
-}
+//bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
+//    std::unique_lock lock(versionMutex);
+//    if (nesPartition != networkSourceDescriptor.getNesPartition()) {
+//        nextSourceDescriptor = networkSourceDescriptor;
+//        tryStartingNewVersion();
+//        return true;
+//    }
+//    return false;
+//}
 }// namespace NES::Network

@@ -735,18 +735,18 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
         }
     }
     // iterate over all network sources and apply the reconfigurations
-    for (auto& source : deployedPlan->getSources()) {
-        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
-        if (networkSource != nullptr) {
-            for (auto& reconfiguredSource : reconfiguredDecomposedQueryPlan->getSourceOperators()) {
-                auto reconfiguredNetworkSourceDescriptor =
-                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
-                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
-                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
-                }
-            }
-        }
-    }
+//    for (auto& source : deployedPlan->getSources()) {
+//        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
+//        if (networkSource != nullptr) {
+//            for (auto& reconfiguredSource : reconfiguredDecomposedQueryPlan->getSourceOperators()) {
+//                auto reconfiguredNetworkSourceDescriptor =
+//                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
+//                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
+//                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
+//                }
+//            }
+//        }
+//    }
     return true;
 }
 
