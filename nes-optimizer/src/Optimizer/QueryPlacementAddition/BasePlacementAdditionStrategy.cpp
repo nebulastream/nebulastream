@@ -1073,7 +1073,8 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanV
                 SOURCE_RETRY_WAIT,
                 SOURCE_RETRIES,
                 querySubPlanVersion,
-                existingNetworkSourceDescriptor->getUniqueId());
+                //existingNetworkSourceDescriptor->getUniqueId());
+                newNetworkSourceOperator->getId()); //to fix the id conflicts in the worker context
             existingSource->setSourceDescriptor(mergedNetworkSourceDescriptor);
             auto computedParent = newNetworkSourceOperator->getParents().front();
             replacedOperator = true;
