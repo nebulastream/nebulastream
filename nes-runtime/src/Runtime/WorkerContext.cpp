@@ -183,6 +183,9 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
 std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(NES::OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
+    if (!dataChannelFutures.contains(operatorId)) {
+        return std::nullopt;
+    }
     if (!iteratorOperatorId->second.has_value()) {
         return std::nullopt;
     }
