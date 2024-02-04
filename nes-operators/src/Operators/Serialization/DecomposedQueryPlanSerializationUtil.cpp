@@ -19,8 +19,8 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -89,7 +89,8 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     DecomposedQueryPlanId decomposableQueryPlanId = serializableDecomposedQueryPlan->decomposedqueryplanid();
     SharedQueryId sharedQueryId = serializableDecomposedQueryPlan->sharedqueryplanid();
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, rootOperators);
+    auto decomposedQueryPlan =
+        DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators);
     if (serializableDecomposedQueryPlan->has_state()) {
         auto state = deserializeQueryState(serializableDecomposedQueryPlan->state());
         decomposedQueryPlan->setState(state);

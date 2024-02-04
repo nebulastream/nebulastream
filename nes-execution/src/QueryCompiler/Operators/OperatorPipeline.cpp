@@ -30,7 +30,9 @@ uint64_t getNextPipelineId() {
 }
 
 OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
-    : id(pipelineId), decomposedQueryPlan(DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID)),
+    : id(pipelineId),
+      decomposedQueryPlan(
+          DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID, INVALID_WORKER_NODE_ID)),
       pipelineType(pipelineType) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {

@@ -62,12 +62,11 @@ class QueryCatalog {
                                  QueryState queryState);
 
     /**
-     * @brief registers a new shared query into the Query catalog
-     * @param sharedQueryId: a user query in string form
-     * @param queryIds: query ids contained in the shared query plan
-     * @param queryStatus: the status of the shared query
+     * @brief Is an entry for the given query id exists
+     * @param queryId : the query id
+     * @return return true if exits else false
      */
-    void createSharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::vector<QueryId> queryIds, QueryState queryStatus);
+    bool queryCatalogEntryExists(QueryId queryId);
 
     /**
      * @brief Get state of the input query id
@@ -84,6 +83,28 @@ class QueryCatalog {
      * @return true if updated successfully
      */
     void updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason);
+
+    /**
+     * @brief registers a new shared query into the Query catalog
+     * @param sharedQueryId: a user query in string form
+     * @param queryIds: query ids contained in the shared query plan
+     * @param queryStatus: the status of the shared query
+     */
+    void createSharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::vector<QueryId> queryIds, QueryState queryStatus);
+
+    /**
+     * @brief Is an entry for the given query id exists
+     * @param sharedQueryId : the shared query id
+     * @return return true if exits else false
+     */
+    bool sharedQueryCatalogEntryExists(SharedQueryId sharedQueryId);
+
+    /**
+     * @brief Get state of the input query id
+     * @param sharedQueryId : the shared query id
+     * @return state of the query
+     */
+    QueryState getSharedQueryState(SharedQueryId sharedQueryId);
 
     /**
      * @brief Update query entry with new status
@@ -151,11 +172,15 @@ class QueryCatalog {
      * Update decomposed query plan status
      * @param sharedQueryId: the query id to which sub plan is added
      * @param decomposedQueryPlanId: the query sub plan id
-     * @param queryState : the new decomposed query plan status
+     * @param decomposedQueryPlanVersion: the decomposed query plan
+     * @param decomposedQueryState : the new decomposed query plan status
+     * @param workerId: the worker id
      */
     bool updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
                                          DecomposedQueryPlanId decomposedQueryPlanId,
-                                         QueryState queryState);
+                                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                         QueryState decomposedQueryState,
+                                         WorkerId workerId);
 
     /**
      * @brief Get a copy of executed query plan

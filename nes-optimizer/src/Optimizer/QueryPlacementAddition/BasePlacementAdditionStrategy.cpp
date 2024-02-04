@@ -402,6 +402,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                         newDecomposedQueryPlan =
                             DecomposedQueryPlan::create(existingDecomposedQueryPlan->getDecomposedQueryPlanId(),
                                                         sharedQueryId,
+                                                        pinnedWorkerId,
                                                         existingDecomposedQueryPlan->getRootOperators());
                         newDecomposedQueryPlan->addRootOperator(copyOfPinnedOperator);
                     } else {
@@ -418,6 +419,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                         newDecomposedQueryPlan =
                             DecomposedQueryPlan::create(existingDecomposedQueryPlan->getDecomposedQueryPlanId(),
                                                         sharedQueryId,
+                                                        pinnedWorkerId,
                                                         existingDecomposedQueryPlan->getRootOperators());
                     } else {
                         const auto& rootOperators = existingDecomposedQueryPlan->getRootOperators();
@@ -437,11 +439,14 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                 if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                     // Create a temporary query sub plans for the operator as it might need to be merged with another query
                     // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                    newDecomposedQueryPlan =
-                        DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, sharedQueryId, {copyOfPinnedOperator});
+                    newDecomposedQueryPlan = DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                                         sharedQueryId,
+                                                                         pinnedWorkerId,
+                                                                         {copyOfPinnedOperator});
                 } else {
                     newDecomposedQueryPlan = DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                                          sharedQueryId,
+                                                                         pinnedWorkerId,
                                                                          {copyOfPinnedOperator});
                 }
             } else if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
@@ -458,11 +463,14 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
             if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 // Create a temporary query sub plans for the operator as it might need to be merged with another query
                 // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                newDecomposedQueryPlan =
-                    DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, sharedQueryId, {copyOfPinnedOperator});
+                newDecomposedQueryPlan = DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                                     sharedQueryId,
+                                                                     pinnedWorkerId,
+                                                                     {copyOfPinnedOperator});
             } else {
                 newDecomposedQueryPlan = DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                                      sharedQueryId,
+                                                                     pinnedWorkerId,
                                                                      {copyOfPinnedOperator});
             }
             //2.2.2. Add the new query sub plan to the list
@@ -676,6 +684,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             auto newDecomposedQueryPlan =
                                 DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                             sharedQueryId,
+                                                            workerId,
                                                             {networkSinkOperator});
 
                             // 18. Record information about the query plan and worker id
@@ -748,7 +757,8 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                     if (containPinnedUpstreamOperator) {
 
                         // Record all placed query decomposed query plans that host pinned leaf operators
-                        auto decomposedQueryPlanComparator = [](const DecomposedQueryPlanPtr& first, const DecomposedQueryPlanPtr& second) {
+                        auto decomposedQueryPlanComparator = [](const DecomposedQueryPlanPtr& first,
+                                                                const DecomposedQueryPlanPtr& second) {
                             return first->getDecomposedQueryPlanId() > second->getDecomposedQueryPlanId();
                         };
                         std::set<DecomposedQueryPlanPtr, decltype(decomposedQueryPlanComparator)> hostDecomposedQueryPlans;
@@ -857,7 +867,8 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                     } else if (containPinnedDownstreamOperator) {
 
                         // Record all placed query decomposed query plans that host pinned leaf operators
-                        auto decomposedQueryPlanComparator = [](const DecomposedQueryPlanPtr& first, const DecomposedQueryPlanPtr& second) {
+                        auto decomposedQueryPlanComparator = [](const DecomposedQueryPlanPtr& first,
+                                                                const DecomposedQueryPlanPtr& second) {
                             return first->getDecomposedQueryPlanId() < second->getDecomposedQueryPlanId();
                         };
                         std::set<DecomposedQueryPlanPtr, decltype(decomposedQueryPlanComparator)> hostDecomposedQueryPlans;

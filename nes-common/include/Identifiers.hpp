@@ -37,6 +37,7 @@ static constexpr SharedQueryId INVALID_SHARED_QUERY_ID = 0;
 static constexpr OperatorId INVALID_OPERATOR_ID = 0;
 static constexpr OriginId INVALID_ORIGIN_ID = 0;
 static constexpr WorkerId INVALID_WORKER_NODE_ID = 0;
+static constexpr WorkerId INVALID_DECOMPOSED_QUERY_PLAN_VERSION = 0;
 static constexpr WorkerId INVALID_EXECUTION_NODE_ID = 0;
 static constexpr RequestId INVALID_REQUEST_ID = 0;
 
