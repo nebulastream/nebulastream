@@ -962,7 +962,7 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                                     querySubPlanVersion,
                                                     sourceId);
                                                 source->setSourceDescriptor(newDescriptor);
-                                                source->setId(sourceId);
+                                                //source->setId(sourceId);
                                             }
                                         }
 
@@ -1104,7 +1104,7 @@ bool BasePlacementAdditionStrategy::tryMergingNetworkSource(DecomposedQueryPlanV
                 //existingNetworkSourceDescriptor->getUniqueId());
                 newNetworkSourceOperator->getId()); //to fix the id conflicts in the worker context
             existingSource->setSourceDescriptor(mergedNetworkSourceDescriptor);
-            existingChild->as<OperatorNode>()->setId(newNetworkSourceOperator->getId());
+            //existingChild->as<OperatorNode>()->setId(newNetworkSourceOperator->getId());
             auto computedParent = newNetworkSourceOperator->getParents().front();
             replacedOperator = true;
             break;
