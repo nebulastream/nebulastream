@@ -226,6 +226,7 @@ bool PartitionManager::addSubpartitionEventListener(NesPartition partition,
         return false;
     }
     it->second.registerEventListener(eventListener);
+    it->second.pin();
     return true;
 
 
