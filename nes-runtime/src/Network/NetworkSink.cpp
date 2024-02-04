@@ -78,7 +78,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 
     //if async establishing of connection is in process, do not attempt to send data but buffer it instead
     //todo #4210: decrease amount of hashmap lookups
-    if (!channel) {
+    if (channel == nullptr) {
         //todo #4311: check why sometimes buffers arrive after a channel has been closed
         NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
                         "Trying to write to invalid channel while no connection is in progress");

@@ -97,6 +97,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                 case Messages::MessageType::ServerReady: {
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
+                    //todo: failure here, make this more robust?
                     NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
                     auto* serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
                     // check if server responds with a ServerReadyMessage
