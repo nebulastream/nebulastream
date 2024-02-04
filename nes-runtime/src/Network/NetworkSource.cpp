@@ -23,6 +23,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES::Network {
@@ -152,7 +153,7 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
 void NetworkSource::onEvent(Runtime::BaseEvent&) { NES_DEBUG("NetworkSource: received an event"); }
 
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
-    NES_DEBUG("NetworkSource: reconfigure() called {}", nesPartition.toString());
+    NES_INFO("NetworkSource: reconfigure() called {}, with type {}", nesPartition.toString(), magic_enum::enum_name(task.getType()));
     NES::DataSource::reconfigure(task, workerContext);
     bool isTermination = false;
     auto terminationType = Runtime::QueryTerminationType::Failure;
