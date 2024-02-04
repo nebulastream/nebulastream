@@ -69,6 +69,11 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
               inputBuffer.getOriginId(),
               inputBuffer.getSequenceNumber());
 
+//    NetworkChannel* channel = nullptr;
+//    if (workerContext.doesNetworkChannelExist(getUniqueNetworkSinkDescriptorId())) {
+//        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+//    }
+
     auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
 
     //if async establishing of connection is in process, do not attempt to send data but buffer it instead

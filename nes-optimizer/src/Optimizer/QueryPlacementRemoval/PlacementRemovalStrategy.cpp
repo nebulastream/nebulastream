@@ -273,6 +273,9 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
     for (const auto& [workerId, querySubPlanIds] : workerIdToDecomposedQueryPlanIds) {
         // 2. Fetch the query sub plan from the execution node
         auto executionNode = globalExecutionPlan->getExecutionNodeById(workerId);
+        if (!executionNode) {
+            continue;
+        }
 
         std::vector<DecomposedQueryPlanPtr> updatedDecomposedQueryPlans;
         uint32_t releasedSlots = 0;
@@ -281,6 +284,9 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
         for (const auto& querySubPlanId : querySubPlanIds) {
             // 4. Fetch the copy of Decomposed query plan to modify
             auto querySubPlanToUpdate = executionNode->getDecomposedQueryPlan(sharedQueryId, querySubPlanId);
+            if (!querySubPlanToUpdate) {
+                continue;
+            }
 
             // 5. Check if plan is a sys generated query sub plan.
             // A Sys generated plan will contain only network source and sink operators.

@@ -174,6 +174,12 @@ bool WorkerContext::releaseEventOnlyChannel(NES::OperatorId id, Runtime::QueryTe
 Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
     auto it = dataChannels.find(ownerId);// note we assume it's always available
+    if (it == dataChannels.end()) {
+        return nullptr;
+    }
+    if (!(*it).second) {
+        return nullptr;
+    }
     return (*it).second.get();
 }
 

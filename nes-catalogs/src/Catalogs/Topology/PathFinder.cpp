@@ -55,7 +55,7 @@ TopologyNodePtr PathFinder::findCommonAncestor(std::vector<TopologyNodePtr> topo
         std::vector<NodePtr> children = candidateNode->getAndFlattenAllChildren(false);
         for (auto& nodeToLook : topologyNodes) {
             auto found = std::find_if(children.begin(), children.end(), [&](const NodePtr& child) {
-                return nodeToLook->getId() == child->as<TopologyNode>()->getId();
+                return nodeToLook->getId() == child->as<TopologyNode>()->getId(); // || nodeToLook->getId() == candidateNode->getId();
             });
 
             if (found == children.end()) {

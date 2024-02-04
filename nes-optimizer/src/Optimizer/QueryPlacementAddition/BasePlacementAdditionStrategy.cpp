@@ -973,8 +973,8 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                         //hostDecomposedQueryPlans.emplace(placedDecomposedQueryPlan);
                                         hostDecomposedQueryPlans.emplace(copyOfPlacedPlan);
                                         placedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_MIGRATION);
-                                        executionNode->registerNewDecomposedQueryPlan(placedDecomposedQueryPlan->getSharedQueryId(),
-                                                                                      placedDecomposedQueryPlan);
+//                                        executionNode->registerNewDecomposedQueryPlan(placedDecomposedQueryPlan->getSharedQueryId(),
+//                                                                                      placedDecomposedQueryPlan);
                                         found = true;
                                         break;
                                     }
