@@ -177,9 +177,6 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
     if (it == dataChannels.end()) {
         return nullptr;
     }
-    if (!(*it).second) {
-        return nullptr;
-    }
     return (*it).second.get();
 }
 
