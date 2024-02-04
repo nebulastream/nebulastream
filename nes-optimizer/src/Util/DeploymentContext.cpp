@@ -22,19 +22,24 @@ DeploymentContext::create(const std::string& ipAddress, uint32_t grpcPort, const
     return std::make_shared<DeploymentContext>(ipAddress,
                                                grpcPort,
                                                decomposedQueryPlan->getSharedQueryId(),
-                                               decomposedQueryPlan->getState(),
                                                decomposedQueryPlan->getDecomposedQueryPlanId(),
+                                               decomposedQueryPlan->getVersion(),
+                                               decomposedQueryPlan->getWorkerId(),
+                                               decomposedQueryPlan->getState(),
                                                decomposedQueryPlan);
 }
 
 DeploymentContext::DeploymentContext(const std::string& ipAddress,
                                      uint32_t grpcPort,
                                      SharedQueryId sharedQueryId,
-                                     QueryState decomposedQueryState,
                                      DecomposedQueryPlanId decomposedQueryPlanId,
+                                     DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                     WorkerId workerId,
+                                     QueryState decomposedQueryState,
                                      const DecomposedQueryPlanPtr& decomposedQueryPlan)
-    : ipAddress(ipAddress), grpcPort(grpcPort), sharedQueryId(sharedQueryId), decomposedQueryState(decomposedQueryState),
-      decomposedQueryPlanId(decomposedQueryPlanId), decomposedQueryPlan(decomposedQueryPlan) {}
+    : ipAddress(ipAddress), grpcPort(grpcPort), sharedQueryId(sharedQueryId), decomposedQueryPlanId(decomposedQueryPlanId),
+      decomposedQueryPlanVersion(decomposedQueryPlanVersion), workerId(workerId), decomposedQueryState(decomposedQueryState),
+      decomposedQueryPlan(decomposedQueryPlan) {}
 
 SharedQueryId DeploymentContext::getSharedQueryId() { return sharedQueryId; }
 
@@ -45,5 +50,9 @@ DecomposedQueryPlanId DeploymentContext::getDecomposedQueryPlanId() { return dec
 std::string DeploymentContext::getGrpcAddress() const { return ipAddress + ":" + std::to_string(grpcPort); }
 
 DecomposedQueryPlanPtr DeploymentContext::getDecomposedQueryPlan() { return decomposedQueryPlan; }
+
+DecomposedQueryPlanVersion DeploymentContext::getDecomposedQueryPlanVersion() const { return decomposedQueryPlanVersion; }
+
+WorkerId DeploymentContext::getWorkerId() const { return workerId; }
 
 }// namespace NES::Optimizer

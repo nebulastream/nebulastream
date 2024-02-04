@@ -37,8 +37,10 @@ class DeploymentContext {
     DeploymentContext(const std::string& ipAddress,
                       uint32_t grpcPort,
                       SharedQueryId sharedQueryId,
-                      QueryState decomposedQueryState,
                       DecomposedQueryPlanId decomposedQueryPlanId,
+                      DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                      WorkerId workerId,
+                      QueryState decomposedQueryState,
                       const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     /**
@@ -48,16 +50,28 @@ class DeploymentContext {
     SharedQueryId getSharedQueryId();
 
     /**
-     * @brief Get the decomposed query plan state
-     * @return query plan state
-     */
-    QueryState getDecomposedQueryPlanState();
-
-    /**
      * @brief Get the id of the decomposed query plan
      * @return decomposed query plan id
      */
     DecomposedQueryPlanId getDecomposedQueryPlanId();
+
+    /**
+     * @brief Get the decomposed query plan version
+     * @return get the version
+     */
+    DecomposedQueryPlanVersion getDecomposedQueryPlanVersion() const;
+
+    /**
+     * @brief Get the worker id
+     * @return get the worker id
+     */
+    WorkerId getWorkerId() const;
+
+    /**
+     * @brief Get the decomposed query plan state
+     * @return query plan state
+     */
+    QueryState getDecomposedQueryPlanState();
 
     /**
      * @brief Get decomposed query plan to deploy
@@ -75,8 +89,10 @@ class DeploymentContext {
     std::string ipAddress;
     uint32_t grpcPort;
     SharedQueryId sharedQueryId;
-    QueryState decomposedQueryState;
     DecomposedQueryPlanId decomposedQueryPlanId;
+    DecomposedQueryPlanVersion decomposedQueryPlanVersion;
+    WorkerId workerId;
+    QueryState decomposedQueryState;
     DecomposedQueryPlanPtr decomposedQueryPlan;
 };
 }// namespace Optimizer

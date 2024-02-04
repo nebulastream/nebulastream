@@ -367,12 +367,15 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
                                              const ::RequestSoftStopMessage* request,
                                              ::StopRequestReply* response) {
     auto sharedQueryId = request->queryid();
-    auto subQueryPlanId = request->subqueryid();
+    auto decomposedQueryPlanId = request->subqueryid();
     NES_WARNING("CoordinatorRPCServer: received request for soft stopping the shared query plan id: {}", sharedQueryId)
 
     //Check with query catalog service if the request possible
-    auto softStopPossible =
-        queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId, subQueryPlanId, QueryState::MARKED_FOR_SOFT_STOP);
+    auto softStopPossible = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+                                                                          decomposedQueryPlanId,
+                                                                          INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                                                          QueryState::MARKED_FOR_SOFT_STOP,
+                                                                          INVALID_WORKER_NODE_ID);
 
     //Send response
     response->set_success(softStopPossible);
@@ -383,13 +386,17 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
                                                        const ::SoftStopTriggeredMessage* request,
                                                        ::SoftStopTriggeredReply* response) {
     auto sharedQueryId = request->queryid();
-    auto querySubPlanId = request->querysubplanid();
+    auto decomposedQueryPlanId = request->querysubplanid();
     NES_INFO("CoordinatorRPCServer: received request for soft stopping the sub pan : {}  shared query plan id:{}",
-             querySubPlanId,
+             decomposedQueryPlanId,
              sharedQueryId)
 
     //inform catalog service
-    bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_TRIGGERED);
+    bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+                                                                 decomposedQueryPlanId,
+                                                                 INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                                                 QueryState::SOFT_STOP_TRIGGERED,
+                                                                 INVALID_WORKER_NODE_ID);
 
     //update response
     response->set_success(success);
@@ -401,10 +408,14 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
                                                      ::SoftStopCompletionReply* response) {
     //Fetch the request
     auto sharedQueryId = request->queryid();
-    auto querySubPlanId = request->querysubplanid();
+    auto decomposedQueryPlanId = request->querysubplanid();
 
     //inform catalog service
-    bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_COMPLETED);
+    bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+                                                                 decomposedQueryPlanId,
+                                                                 INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                                                 QueryState::SOFT_STOP_COMPLETED,
+                                                                 INVALID_WORKER_NODE_ID);
 
     //update response
     response->set_success(success);

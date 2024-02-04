@@ -314,15 +314,22 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                sharedQueryId);
         }
 
+        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED) {
+            queryCatalog->createSharedQueryCatalogEntry(sharedQueryId, {queryId}, QueryState::OPTIMIZING);
+        } else {
+            queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::OPTIMIZING, "");
+        }
+
         //20. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
         auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //21. Perform deployment of re-placed shared query plan
         deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
-
         //22. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
+        queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::RUNNING, "");
+        queryCatalog->updateQueryStatus(queryId, QueryState::RUNNING, "");
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);
