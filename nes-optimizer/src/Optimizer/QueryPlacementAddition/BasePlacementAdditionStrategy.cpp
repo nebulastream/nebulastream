@@ -938,6 +938,34 @@ bool BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQue
                                                 sink->setSinkDescriptor(newDescriptor);
                                             }
                                         }
+
+                                        //assign a new id to all network sources that have not been changed
+                                        for (auto source : placedDecomposedQueryPlan->getSourceOperators()) {
+                                            auto sourceDescriptor = source->getSourceDescriptor();
+                                            if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
+                                                auto networkSourceDescriptor = sourceDescriptor->as<Network::NetworkSourceDescriptor>();
+
+                                                //check if the version of the descriptor has been updated
+//                                                if (networkSourceDescriptor->getVersion() == querySubPlanVersion) {
+//                                                    continue;
+//                                                }
+
+                                                //generate new operator id
+                                                auto sourceId = getNextOperatorId();
+
+                                                auto newDescriptor = Network::NetworkSourceDescriptor::create(
+                                                    networkSourceDescriptor->getSchema(),
+                                                    networkSourceDescriptor->getNesPartition(),
+                                                    networkSourceDescriptor->getNodeLocation(),
+                                                    SINK_RETRY_WAIT,
+                                                    SINK_RETRIES,
+                                                    querySubPlanVersion,
+                                                    sourceId);
+                                                source->setSourceDescriptor(newDescriptor);
+                                                source->setId(sourceId);
+                                            }
+                                        }
+
                                         auto copyOfPlacedPlan = placedDecomposedQueryPlan->copy();
                                         //copyOfPlacedPlan->setDecomposedQueryPlanId(computedDecomposedQueryPlan->getDecomposedQueryPlanId());
                                         copyOfPlacedPlan->setDecomposedQueryPlanId(std::any_cast<OperatorId>(computedOperator->as<LogicalOperatorNode>()->getProperty(PLACED_DECOMPOSED_PLAN_ID)));

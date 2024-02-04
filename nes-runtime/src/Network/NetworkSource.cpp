@@ -188,7 +188,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                                                                             localBufferManager,
                                                                                             waitTime,
                                                                                             retryTimes);
-                workerContext.storeEventChannelFuture(this->operatorId, std::move(channelFuture));
+                //workerContext.storeEventChannelFuture(this->operatorId, std::move(channelFuture));
+                workerContext.storeEventChannelFuture(uniqueNetworkSourceIdentifier, std::move(channelFuture));
                 break;
             } else {
                 auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
@@ -202,7 +203,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                 Runtime::NesThread::getId());
                     return;// partition was deleted on the other side of the channel... no point in waiting for a channel
                 }
-                workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
+                //workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
+                workerContext.storeEventOnlyChannel(uniqueNetworkSourceIdentifier, std::move(channel));
                 NES_DEBUG("NetworkSource: reconfigure() stored event-channel {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
@@ -242,15 +244,18 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         }
     }
     if (isTermination) {
-        if (!workerContext.doesEventChannelExist(this->operatorId)) {
+        if (!workerContext.doesEventChannelExist(uniqueNetworkSourceIdentifier)) {
+            //if (!workerContext.doesEventChannelExist(this->operatorId)) {
             //todo #4490: allow aborting connection here
-            auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
+            //auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
+            auto channel = workerContext.waitForAsyncConnectionEventChannel(uniqueNetworkSourceIdentifier);
             if (channel) {
                 channel->close(terminationType);
             }
             return;
         }
-        workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
+        //workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
+        workerContext.releaseEventOnlyChannel(uniqueNetworkSourceIdentifier, terminationType);
         NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
@@ -363,9 +368,11 @@ bool NetworkSource::tryStartingNewVersion() {
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
-        auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+        //auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+        auto senderChannel = workerContext.getEventOnlyNetworkChannel(uniqueNetworkSourceIdentifier);
         if (!senderChannel) {
-            auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(this->operatorId);
+            //auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(this->operatorId);
+            auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(uniqueNetworkSourceIdentifier);
             if (!senderChannelOptional) {
                 NES_DEBUG("NetworkSource::onEvent(event, wrkContext) operatorId: {}: could not send event because event "
                           "channel "
@@ -373,8 +380,10 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
                           this->operatorId);
                 return;
             }
-            workerContext.storeEventOnlyChannel(this->operatorId, std::move(senderChannelOptional.value()));
-            senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+            //workerContext.storeEventOnlyChannel(this->operatorId, std::move(senderChannelOptional.value()));
+            workerContext.storeEventOnlyChannel(uniqueNetworkSourceIdentifier, std::move(senderChannelOptional.value()));
+            //senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+            senderChannel = workerContext.getEventOnlyNetworkChannel(uniqueNetworkSourceIdentifier);
             if (!senderChannel) {
                 return;
             }
