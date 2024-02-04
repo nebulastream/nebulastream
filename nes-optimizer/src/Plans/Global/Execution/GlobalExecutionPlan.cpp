@@ -89,10 +89,18 @@ bool GlobalExecutionPlan::removeExecutionNode(ExecutionNodeId id) {
         });
         auto nodeToRemove =  idToExecutionNodeMap.at(id);
         for (const auto& parent : nodeToRemove->getParents()) {
-            parent->removeChild(nodeToRemove);
+            if (parent) {
+                parent->removeChild(nodeToRemove);
+            } else {
+                NES_WARNING("Trying to remove a parent which is nullptr")
+            }
         }
         for (const auto& child : nodeToRemove->getChildren()) {
-            child->removeParent(nodeToRemove);
+            if (child) {
+                child->removeParent(nodeToRemove);
+            } else {
+                NES_WARNING("Trying to remove a child which is nullptr");
+            }
         }
         if (found != rootNodes.end()) {
             rootNodes.erase(found);
