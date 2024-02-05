@@ -14,4 +14,5 @@
 add_source_files(
     nes-execution
     LowerPhysicalToVectorizedOperatorsPhase.cpp
+    LowerVectorizedPipelineToKernelPhase.cpp
 )

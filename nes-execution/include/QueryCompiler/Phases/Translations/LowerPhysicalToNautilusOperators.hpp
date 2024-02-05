@@ -19,8 +19,8 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Experimental/Vectorization/Kernel.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
@@ -185,7 +185,6 @@ class LowerPhysicalToNautilusOperators {
     std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
     buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators);
 
-#ifdef TFDEF
     /**
      * @brief Lowers a hash join slicing build operator
      * @param hashJoinBuildOperator

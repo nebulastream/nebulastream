@@ -66,9 +66,9 @@
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/KernelCompiler.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
@@ -87,13 +87,10 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
-<<<<<<< HEAD
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
-=======
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalKernelOperator.hpp>
->>>>>>> d8c201867a ([#3993] Lower physical Kernel operator to Nautilus operator)
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalUnvectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
@@ -444,6 +441,15 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto vectorize = std::make_shared<Runtime::Execution::Operators::Vectorize>(handlerIndex, std::move(memoryProvider));
         parentOperator->setChild(vectorize);
         return vectorize;
+    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalKernelOperator>()) {
+        auto kernelOpt = lowerKernel(operatorNode);
+        if (!kernelOpt) {
+            NES_THROW_RUNTIME_ERROR("Failed to create a Kernel operator");
+            return nullptr;
+        }
+        auto kernel = kernelOpt.value();
+        parentOperator->setChild(kernel);
+        return kernel;
     } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalUnvectorizeOperator>()) {
         auto schema = operatorNode->getOutputSchema();
         NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
@@ -454,7 +460,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return unvectorize;
     }
 
-<<<<<<< HEAD
     // Check if a plugin is registered that handles this physical operator
     for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins()) {
         auto resultOperator = plugin->lower(operatorNode, operatorHandlers);
@@ -462,38 +467,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             parentOperator->setChild(*resultOperator);
             return *resultOperator;
         }
-=======
-        auto stageBufferSize = options->getVectorizationOptions()->getStageBufferSize();
-        auto schemaSize = schema->getSchemaSizeInBytes();
-        auto handler = std::make_shared<Runtime::Execution::Operators::StagingHandler>(
-            stageBufferSize,
-            schemaSize
-        );
-        operatorHandlers.push_back(handler);
-        uint64_t handlerIndex = operatorHandlers.size() - 1;
-
-        auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-        auto vectorize = std::make_shared<Runtime::Execution::Operators::Vectorize>(handlerIndex, std::move(memoryProvider));
-        parentOperator->setChild(vectorize);
-        return vectorize;
-    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalUnvectorizeOperator>()) {
-        auto schema = operatorNode->getOutputSchema();
-        NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
-        auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
-        auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-        auto unvectorize = std::make_shared<Runtime::Execution::Operators::Unvectorize>(std::move(memoryProvider));
-        parentOperator->setChild(unvectorize);
-        return unvectorize;
-    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalKernelOperator>()) {
-        auto kernelOpt = lowerKernel(operatorNode);
-        if (!kernelOpt) {
-            NES_THROW_RUNTIME_ERROR("Failed to create a Kernel operator");
-            return nullptr;
-        }
-        auto kernel = kernelOpt.value();
-        parentOperator->setChild(kernel);
-        return kernel;
->>>>>>> d8c201867a ([#3993] Lower physical Kernel operator to Nautilus operator)
     }
 
     NES_NOT_IMPLEMENTED();
@@ -1222,38 +1195,6 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
         default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
     }
 }
-
-#ifdef TFDEF
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                                          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-
-    auto inferModelOperator = physicalOperator->as<PhysicalOperators::PhysicalInferModelOperator>();
-    auto model = inferModelOperator->getModel();
-
-    //Fetch the name of input fields
-    std::vector<std::string> inputFields;
-    for (const auto& inputField : inferModelOperator->getInputFields()) {
-        auto fieldAccessExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
-        inputFields.push_back(fieldAccessExpression->getFieldName());
-    }
-
-    //Fetch the name of output fields
-    std::vector<std::string> outputFields;
-    for (const auto& outputField : inferModelOperator->getOutputFields()) {
-        auto fieldAccessExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
-        outputFields.push_back(fieldAccessExpression->getFieldName());
-    }
-
-    //build the handler to invoke model during execution
-    auto handler = std::make_shared<Runtime::Execution::Operators::InferModelHandler>(model);
-    operatorHandlers.push_back(handler);
-    auto indexForThisHandler = operatorHandlers.size() - 1;
-
-    //build nautilus infer model operator
-    return std::make_shared<Runtime::Execution::Operators::InferModelOperator>(indexForThisHandler, inputFields, outputFields);
-}
-#endif
 
 std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
 LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator) {

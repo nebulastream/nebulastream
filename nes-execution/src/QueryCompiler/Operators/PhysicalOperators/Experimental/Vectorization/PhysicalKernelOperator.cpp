@@ -24,7 +24,7 @@ PhysicalKernelOperator::PhysicalKernelOperator(OperatorId id, const std::shared_
 }
 
 PhysicalOperatorPtr PhysicalKernelOperator::create(const std::shared_ptr<PhysicalVectorizedPipelineOperator>& vectorizedPipeline) {
-    return std::make_shared<PhysicalKernelOperator>(Util::getNextOperatorId(), vectorizedPipeline);
+    return std::make_shared<PhysicalKernelOperator>(getNextOperatorId(), vectorizedPipeline);
 }
 
 std::string PhysicalKernelOperator::toString() const {

@@ -14,7 +14,8 @@
 
 #include <QueryCompiler/Phases/Experimental/Vectorization/LowerVectorizedPipelineToKernelPhase.hpp>
 
-#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Nodes/Node.hpp>
+#include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -51,8 +52,8 @@ PipelineQueryPlanPtr LowerVectorizedPipelineToKernelPhase::apply(PipelineQueryPl
 }
 
 OperatorPipelinePtr LowerVectorizedPipelineToKernelPhase::lower(OperatorPipelinePtr operatorPipeline) {
-    auto queryPlan = operatorPipeline->getQueryPlan();
-    auto nodes = QueryPlanIterator(queryPlan).snapshot();
+    auto queryPlan = operatorPipeline->getDecomposedQueryPlan();
+    auto nodes = PlanIterator(queryPlan).snapshot();
 
     NES_DEBUG("Looking for vectorized pipelines...");
     for (const auto& node : nodes) {
