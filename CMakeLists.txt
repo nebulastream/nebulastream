@@ -435,6 +435,7 @@ if (NES_USE_GPU)
     endif ()
     set(CMAKE_CUDA_STANDARD 17)
     set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
+    add_compile_definitions(ENABLE_CUDA)
     message("CUDA dependencies OK")
 endif (NES_USE_GPU)
 

@@ -34,6 +34,7 @@ Kernel::Kernel(Descriptor descriptor)
 }
 
 void Kernel::setup(ExecutionContext& ctx) const {
+#ifdef ENABLE_CUDA
     auto desc = Nautilus::Backends::CUDA::CUDAKernelCompiler::Descriptor {
         .kernelFunctionName = "cudaKernel",
         .wrapperFunctionName = "cudaKernelWrapper",
@@ -43,6 +44,7 @@ void Kernel::setup(ExecutionContext& ctx) const {
     auto cudaKernelCompiler = Nautilus::Backends::CUDA::CUDAKernelCompiler(desc);
     auto compileOptions = descriptor.compileOptions;
     kernelExecutable = cudaKernelCompiler.compile(descriptor.pipeline, compileOptions);
+#endif
 
     Operator::setup(ctx);
     auto pipeline = descriptor.pipeline;

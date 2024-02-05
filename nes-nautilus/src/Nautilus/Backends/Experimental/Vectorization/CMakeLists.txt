@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CUDA)
+if (NES_USE_GPU)
     add_subdirectory(CUDA)
 endif ()
 
