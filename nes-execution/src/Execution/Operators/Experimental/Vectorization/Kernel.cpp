@@ -16,6 +16,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/KernelExecutable.hpp>
+#include <QueryCompiler/Experimental/Vectorization/CUDA/CUDAKernelCompiler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -33,7 +34,16 @@ Kernel::Kernel(Descriptor descriptor)
 }
 
 void Kernel::setup(ExecutionContext& ctx) const {
-    // TODO(#4148) Compile the execution trace to a kernel
+    auto desc = Nautilus::Backends::CUDA::CUDAKernelCompiler::Descriptor {
+        .kernelFunctionName = "cudaKernel",
+        .wrapperFunctionName = "cudaKernelWrapper",
+        .inputSchemaSize = descriptor.inputSchemaSize,
+        .threadsPerBlock = descriptor.threadsPerBlock,
+    };
+    auto cudaKernelCompiler = Nautilus::Backends::CUDA::CUDAKernelCompiler(desc);
+    auto compileOptions = descriptor.compileOptions;
+    kernelExecutable = cudaKernelCompiler.compile(descriptor.pipeline, compileOptions);
+
     Operator::setup(ctx);
     auto pipeline = descriptor.pipeline;
     pipeline->setup(ctx);

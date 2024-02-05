@@ -1228,77 +1228,13 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
         NES_ERROR("Failed to build a Nautilus operator pipeline");
         return std::nullopt;
     }
-
-    auto vectorizedPipeline = vectorizedPipelineOpt.value();
-    auto descriptor = Runtime::Execution::Operators::Kernel::Descriptor {
-        .pipeline = vectorizedPipeline,
-        .inputSchemaSize = *schemaSizeIt,
-    };
-    return std::make_shared<Runtime::Execution::Operators::Kernel>(descriptor);
-}
-
-std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
-LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators) {
-    if (operators.empty()) {
-        return std::nullopt;
-    }
-
-    auto op = operators.at(0);
-    if (operators.size() == 1) {
-        return op;
-    }
-
-    auto span = std::span{operators};
-    auto subspan = span.subspan(1, operators.size());
-    auto subvector = std::vector(subspan.begin(), subspan.end());
-    auto childOpOpt = buildNautilusOperatorPipeline(subvector);
-    if (childOpOpt) {
-        auto childOp = childOpOpt.value();
-        auto executableChildOp = std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(childOp);
-        op->setChild(executableChildOp);
-    }
-    return op;
-}
-
-std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
-LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator) {
-    auto physicalKernel = physicalOperator->as<PhysicalOperators::Experimental::PhysicalKernelOperator>();
-
-    auto physicalVectorizedPipeline = physicalKernel->getVectorizedPipeline();
-    auto nodes = physicalVectorizedPipeline->getPipelineOperators();
-    std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>> operators;
-    for (const auto& node : nodes) {
-        // TODO Lower physical vectorizable operators to Nautilus operators
-    }
-
-    auto schemaSizes = std::vector<uint64_t>(nodes.size());
-    std::transform(
-        nodes.cbegin(),
-        nodes.cend(),
-        schemaSizes.begin(),
-        [](const std::shared_ptr<Node>& node) {
-            auto physicalOperator = node->as<PhysicalOperators::PhysicalUnaryOperator>();
-            return physicalOperator->getInputSchema()->getSchemaSizeInBytes();
-        }
-    );
-    auto schemaSizeIt = std::min_element(schemaSizes.cbegin(), schemaSizes.cend());
-    if (schemaSizeIt != std::max_element(schemaSizes.cbegin(), schemaSizes.cend())) {
-        // TODO Handle different buffer size between input and output schema in between operators.
-        NES_NOT_IMPLEMENTED();
-    }
-
-    auto vectorizedPipelineOpt = buildNautilusOperatorPipeline(operators);
-    if (!vectorizedPipelineOpt) {
-        NES_ERROR("Failed to build a Nautilus operator pipeline");
-        return std::nullopt;
-    }
     auto vectorizedPipeline = vectorizedPipelineOpt.value();
 
     auto compileOptions = Nautilus::CompilationOptions();
     compileOptions.setIdentifier("KernelCompilation");
-    auto dumpToFile = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::FILE;
-    auto dumpToConsole = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
-    auto dumpToBoth = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+    auto dumpToFile = options->getDumpMode() == DumpMode::FILE;
+    auto dumpToConsole = options->getDumpMode() == DumpMode::CONSOLE;
+    auto dumpToBoth = options->getDumpMode() == DumpMode::FILE_AND_CONSOLE;
     compileOptions.setDumpToFile(dumpToFile || dumpToBoth);
     compileOptions.setDumpToConsole(dumpToConsole || dumpToBoth);
     compileOptions.setCUDASdkPath(options->getVectorizationOptions()->getCUDASdkPath());
