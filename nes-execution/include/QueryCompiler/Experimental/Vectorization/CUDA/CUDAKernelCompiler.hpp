@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CUDA_CUDAKERNELCOMPILER_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CUDA_CUDAKERNELCOMPILER_HPP_
 
-#include <Nautilus/Backends/Experimental/Vectorization/KernelCompiler.hpp>
+#include <QueryCompiler/Experimental/Vectorization/KernelCompiler.hpp>
 #include <Nautilus/CodeGen/CPP/Function.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 

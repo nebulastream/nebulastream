@@ -13,6 +13,5 @@
 
 add_source_files(
     nes-runtime
-    CUDAKernelCompiler.cpp
     CUDALoweringInterface.cpp
 )

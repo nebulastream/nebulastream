@@ -1260,8 +1260,6 @@ LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vecto
     return op;
 }
 
-<<<<<<< HEAD
-=======
 std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
 LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator) {
     auto physicalKernel = physicalOperator->as<PhysicalOperators::Experimental::PhysicalKernelOperator>();
@@ -1344,7 +1342,6 @@ LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vecto
     return op;
 }
 
->>>>>>> 5e3ad28ee5 ([#4148] Compile pipeline to CUDA kernel for Nautilus Kernel operator)
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 
 }// namespace NES::QueryCompilation

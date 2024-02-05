@@ -19,6 +19,10 @@ namespace NES::Runtime::Execution::Experimental::Vectorization {
 
 static constexpr auto STAGE_BUFFER_SIZE = 4096;
 
+static constexpr auto CUDA_SDK_PATH = "/usr/local/cuda";
+
+static constexpr auto CUDA_THREADS_PER_BLOCK = 32;
+
 } // namespace NES::Runtime::Execution::Experimental::Vectorization
 
 #endif // NES_RUNTIME_INCLUDE_EXPERIMENTAL_RUNTIME_DEFAULTQUERYCOMPILEROPTIONS_HPP_

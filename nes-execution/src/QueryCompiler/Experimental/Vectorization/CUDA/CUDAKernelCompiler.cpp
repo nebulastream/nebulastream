@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/Experimental/Vectorization/CUDA/CUDAKernelCompiler.hpp>
+#include <QueryCompiler/Experimental/Vectorization/CUDA/CUDAKernelCompiler.hpp>
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CPPCompiler/CUDAPlatform.hpp>

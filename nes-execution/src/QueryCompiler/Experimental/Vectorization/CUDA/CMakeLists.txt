@@ -11,15 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CUDA)
-#     add_subdirectory(CUDA)
-# endif ()
-
 add_source_files(
-    nes-runtime
-    KernelExecutable.cpp
+    nes-execution
+    CUDAKernelCompiler.cpp
 )
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CUDA)
-    add_subdirectory(CUDA)
-endif ()
