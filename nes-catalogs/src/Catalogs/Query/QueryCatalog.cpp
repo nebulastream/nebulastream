@@ -56,14 +56,6 @@ QueryState QueryCatalog::getQueryState(QueryId queryId) {
 
 void QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason) {
 
-    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
-    //Check if query exists
-    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
-        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
-        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
-    }
-
-    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
     //Handle new status of the query
     switch (queryStatus) {
         case QueryState::REGISTERED:
@@ -74,8 +66,16 @@ void QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, co
         case QueryState::RUNNING:
         case QueryState::STOPPED:
         case QueryState::FAILED: {
+            auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+            //Check if query exists
+            if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
+                NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
+                throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+            }
+
+            auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
             queryCatalogEntry->setQueryState(queryStatus);
-            queryCatalogEntry->setMetaInformation(terminationReason);
+            queryCatalogEntry->setTerminationReason(terminationReason);
             break;
         }
         case QueryState::MARKED_FOR_HARD_STOP: {
@@ -150,7 +150,10 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
                                            QueryState queryState,
                                            const std::string& terminationReason) {
 
-    auto lockedSharedQueryCatalogEntryMapping = sharedQueryCatalogEntryMapping.wlock();
+    NES_DEBUG("Updating status of the shared query plan {} to {}", sharedQueryId, magic_enum::enum_name(queryState));
+    //Fetch shared query and query catalogs
+    auto [lockedSharedQueryCatalogEntryMapping, lockedQueryCatalogEntryMapping] =
+        folly::acquireLocked(sharedQueryCatalogEntryMapping, queryCatalogEntryMapping);
     if (!lockedSharedQueryCatalogEntryMapping->contains(sharedQueryId)) {
         NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(sharedQueryId));
         throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId "
@@ -164,8 +167,17 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
         case QueryState::RESTARTING:
         case QueryState::DEPLOYED:
         case QueryState::STOPPED:
+        case QueryState::MIGRATING:
         case QueryState::RUNNING: {
             sharedQueryCatalogEntry->setQueryState(queryState);
+            auto containedQueryIds = sharedQueryCatalogEntry->getContainedQueryIds();
+            for (const auto& containedQueryId : containedQueryIds) {
+                if (lockedQueryCatalogEntryMapping->contains(containedQueryId)) {
+                    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[containedQueryId];
+                    queryCatalogEntry->setQueryState(queryState);
+                    queryCatalogEntry->setTerminationReason(terminationReason);
+                }
+            }
             break;
         }
         case QueryState::FAILED: {
@@ -173,6 +185,14 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
             sharedQueryCatalogEntry->setTerminationReason(terminationReason);
             for (const auto& decomposedQueryPlanMetaData : sharedQueryCatalogEntry->getAllDecomposedQueryPlanMetaData()) {
                 decomposedQueryPlanMetaData->updateState(queryState);
+            }
+            auto containedQueryIds = sharedQueryCatalogEntry->getContainedQueryIds();
+            for (const auto& containedQueryId : containedQueryIds) {
+                if (lockedQueryCatalogEntryMapping->contains(containedQueryId)) {
+                    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[containedQueryId];
+                    queryCatalogEntry->setQueryState(QueryState::FAILED);
+                    queryCatalogEntry->setTerminationReason(terminationReason);
+                }
             }
             break;
         }
@@ -290,23 +310,29 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId shar
     auto currentDecomposedQueryState = decomposedQueryPlanMetaData->getDecomposedQueryPlanStatus();
 
     if (currentDecomposedQueryState == QueryState::SOFT_STOP_COMPLETED) {
-        NES_ERROR("Received soft stop triggered for decomposed query with id {} for shared query {} but decomposed query is "
-                  "already marked as "
-                  "soft stop completed.",
-                  decomposedQueryPlanId,
-                  sharedQueryId);
+        NES_WARNING("Received soft stop triggered for decomposed query with id {} for shared query {} but decomposed query is "
+                    "already marked as soft stop completed.",
+                    decomposedQueryPlanId,
+                    sharedQueryId);
         NES_WARNING("Skipping remaining operation");
         return false;
     } else if (currentDecomposedQueryState == QueryState::SOFT_STOP_TRIGGERED) {
-        NES_ERROR("Received multiple soft stop triggered for decomposed query with id {} for shared query {}",
-                  decomposedQueryPlanId,
-                  sharedQueryId);
+        NES_WARNING("Received multiple soft stop triggered for decomposed query with id {} for shared query {}.",
+                    decomposedQueryPlanId,
+                    sharedQueryId);
+        NES_WARNING("Skipping remaining operation");
+        return false;
+    } else if (currentDecomposedQueryState == QueryState::MARKED_FOR_SOFT_STOP) {
+        NES_WARNING("Received soft stop triggered for decomposed query with id {} for shared query {} but decomposed query is "
+                    "already marked for soft stop. Current decomposed query plan state {}.",
+                    decomposedQueryPlanId,
+                    sharedQueryId,
+                    magic_enum::enum_name(sharedQueryCatalogEntry->getQueryState()));
         NES_WARNING("Skipping remaining operation");
         return false;
     } else {
         //Update the state of the decomposed query plan
         decomposedQueryPlanMetaData->updateState(QueryState::SOFT_STOP_TRIGGERED);
-        sharedQueryCatalogEntry->setQueryState(QueryState::SOFT_STOP_TRIGGERED);
         return true;
     }
 }
@@ -336,13 +362,20 @@ bool QueryCatalog::handleDecomposedQueryPlanMarkedForSoftStop(SharedQueryId shar
         return false;
     }
 
+    //Mark the decomposed query plan for soft stop
+    sharedQueryCatalogEntry->getDecomposedQueryPlanMetaData(decomposedQueryPlanId)->updateState(QueryState::MARKED_FOR_SOFT_STOP);
+
+    if (currentSharedQueryState == QueryState::MARKED_FOR_SOFT_STOP) {
+        NES_DEBUG("Shared query {} already marked for soft stop.", sharedQueryId);
+        return true;
+    }
+
     //Mark queries for soft stop and return
     for (const auto& containedQueryId : containedQueryIds) {
         auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[containedQueryId];
         queryCatalogEntry->setQueryState(QueryState::MARKED_FOR_SOFT_STOP);
     }
-    //Mark the decomposed query plan for soft stop
-    sharedQueryCatalogEntry->getDecomposedQueryPlanMetaData(decomposedQueryPlanId)->updateState(QueryState::MARKED_FOR_SOFT_STOP);
+
     //Mark shared query for soft stop and return
     sharedQueryCatalogEntry->setQueryState(QueryState::MARKED_FOR_SOFT_STOP);
     NES_INFO("QueryCatalogService: Shared query id {} is marked as soft stopped", sharedQueryId);
@@ -369,8 +402,7 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId shar
     auto currentSharedQueryState = sharedQueryCatalogEntry->getQueryState();
 
     //todo #4396: when query migration has its own termination type, this function will not be called during migration. remove MIGRATING below
-    if (currentSharedQueryState != QueryState::SOFT_STOP_TRIGGERED && currentSharedQueryState != QueryState::MARKED_FOR_SOFT_STOP
-        && currentSharedQueryState != QueryState::MIGRATING) {
+    if (currentSharedQueryState != QueryState::MARKED_FOR_SOFT_STOP && currentSharedQueryState != QueryState::MIGRATING) {
         NES_WARNING("Found shared query with id {} in {} but received SOFT_STOP_COMPLETED for the decomposed query with id {}",
                     sharedQueryId,
                     magic_enum::enum_name(currentSharedQueryState),
@@ -421,6 +453,7 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId shar
                        "Unexpected subplan status.");
         }
         if (queryMigrationComplete) {
+            NES_DEBUG("Migration completed. Marking shared query with id {} as running.", sharedQueryId);
             sharedQueryCatalogEntry->setQueryState(QueryState::RUNNING);
             for (auto containedQueryId : sharedQueryCatalogEntry->getContainedQueryIds()) {
                 NES_INFO("Query with id {} is now stopped", containedQueryId);

@@ -15,7 +15,6 @@
 #include <BorrowedPort.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -355,7 +354,7 @@ int main(int argc, const char* argv[]) {
                 //Setup coordinator for the experiment
                 setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum], batchSizes[configNum]);
                 NES::RequestHandlerServicePtr requestHandlerService = coordinator->getRequestHandlerService();
-                auto queryCatalogService = coordinator->getQueryCatalogService();
+                auto queryCatalog = coordinator->getQueryCatalog();
                 auto globalQueryPlan = coordinator->getGlobalQueryPlan();
                 //Sleep for fixed time before starting the experiments
                 sleep(startupSleepIntervalInSeconds);
@@ -372,11 +371,10 @@ int main(int argc, const char* argv[]) {
                                                                            Optimizer::PlacementStrategy::TopDown);
                 }
 
-                //Fetch the last query for the query catalog
-                auto lastQuery = queryCatalogService->getEntryForQuery(numOfQueries + queryIter);
                 //Wait till the status of the last query is set as running
-                while (lastQuery->getQueryState() != QueryState::RUNNING) {
-                    std::cout << "Query status " << lastQuery->getQueryState() << std::endl;
+                QueryState lastQueryState;
+                while ((lastQueryState = queryCatalog->getQueryState(numOfQueries + queryIter)) != QueryState::RUNNING) {
+                    std::cout << "Query status " << magic_enum::enum_name(lastQueryState) << std::endl;
                     //Sleep for 100 milliseconds
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }

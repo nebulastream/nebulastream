@@ -112,7 +112,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
                      .sink(NullOutputSinkDescriptor::create());
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                           query.getQueryPlan(),
                                                                           Optimizer::PlacementStrategy::BottomUp);
@@ -198,7 +198,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto query2 = Query::from("input2").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan()->toString(),
                                                                            query1.getQueryPlan(),
                                                                            Optimizer::PlacementStrategy::BottomUp);
@@ -282,7 +282,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     auto query = Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
                                                                           query.getQueryPlan(),
                                                                           Optimizer::PlacementStrategy::BottomUp);

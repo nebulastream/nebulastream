@@ -26,6 +26,9 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class TypeInferencePhase;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 }// namespace Optimizer
 
 namespace RequestProcessor::Experimental {

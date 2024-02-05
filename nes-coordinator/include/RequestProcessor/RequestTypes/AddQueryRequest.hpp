@@ -28,9 +28,6 @@ namespace NES {
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
 class QueryDeploymentPhase;
 using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
 

@@ -105,7 +105,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         //  - All queries are set to stopped and the whole shared query plan is removed.
 
         //Mark all contained queries as stopped
-        queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::STOPPED, "Hard Stopped");
+        queryCatalog->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
         globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         responsePromise.set_value(std::make_shared<StopQueryResponse>(true));
 

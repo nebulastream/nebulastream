@@ -127,6 +127,19 @@ class GlobalExecutionPlan {
     bool removeAllDecomposedQueryPlans(SharedQueryId sharedQueryId);
 
     /**
+     * @brief Remove the decomposed query plan
+     * @param executionNodeId: the execution node id
+     * @param sharedQueryId: the shared query id
+     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param decomposedQueryPlanVersion: the decomposed query plan version
+     * @return
+     */
+    bool removeDecomposedQueryPlan(ExecutionNodeId executionNodeId,
+                                   SharedQueryId sharedQueryId,
+                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                   DecomposedQueryPlanVersion decomposedQueryPlanVersion);
+
+    /**
      * Get the execution node
      * @param executionNodeId: id of the execution node
      * @return true if operation succeeds

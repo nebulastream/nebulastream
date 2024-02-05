@@ -150,7 +150,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
@@ -194,7 +194,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexFilterQuery) {
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -237,7 +237,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterMultiplexQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -279,7 +279,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterImplicitMultiplexQuer
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -330,7 +330,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleJoinQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -380,7 +380,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleBatchJoinQue
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -431,7 +431,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -498,7 +498,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -545,7 +545,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateWindowQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -582,7 +582,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -615,7 +615,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUDFQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -649,7 +649,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapPythonUDFQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -683,7 +683,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateProjectQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -717,7 +717,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateTwoSourceQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 
@@ -751,7 +751,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSinkSourceQuery) {
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, queryPlan->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
     phase->apply(decomposedQueryPlan);
     NES_DEBUG("{}", decomposedQueryPlan->toString());
 

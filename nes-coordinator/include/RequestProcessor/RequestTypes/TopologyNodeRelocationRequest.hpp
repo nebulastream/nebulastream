@@ -79,18 +79,7 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * @param upstreamNodeId the id of the upstream node of removed link
      * @param downstreamNodeId the id of the downstream node of the removed link
      */
-    void processRemoveTopologyLinkRequest(OperatorId upstreamNodeId, OperatorId downstreamNodeId);
-
-    /**
-     * @brief identify the operators of the specified shared query plan that are affected by a topology change,
-     * run an incremental placement and deploy the changes
-     * @param sharedQueryPlanId the id of the shared query plan for which the placemetn is to be updated
-     * @param upstreamNodeId the id of the upstream node of removed link
-     * @param downstreamNodeId the id of the downstream node of the removed link
-     */
-    void markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
-                                             Optimizer::ExecutionNodeWLock upstreamExecutionNode,
-                                             Optimizer::ExecutionNodeWLock downstreamExecutionNode);
+    std::set<WorkerId> identifyImpactedSharedQueries(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.

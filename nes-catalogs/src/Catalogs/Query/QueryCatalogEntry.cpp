@@ -52,7 +52,7 @@ void QueryCatalogEntry::setQueryState(QueryState queryStatus) {
     history.emplace_back(usSinceEpoch, queryStatus);
 }
 
-void QueryCatalogEntry::setMetaInformation(std::string metaInformation) { this->terminationReason = metaInformation; }
+void QueryCatalogEntry::setTerminationReason(std::string metaInformation) { this->terminationReason = metaInformation; }
 
 std::string QueryCatalogEntry::getMetaInformation() { return terminationReason; }
 

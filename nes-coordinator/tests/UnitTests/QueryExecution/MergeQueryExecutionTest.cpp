@@ -90,6 +90,7 @@ TEST_F(MergeQueryExecutionTest, mergeQuery) {
 
     auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
                                                            defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
                                                            mergedQuery.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 

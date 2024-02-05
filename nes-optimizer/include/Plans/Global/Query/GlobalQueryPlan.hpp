@@ -35,9 +35,6 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 

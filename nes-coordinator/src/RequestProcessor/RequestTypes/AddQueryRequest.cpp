@@ -328,7 +328,6 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
         //22. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
-        queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::RUNNING, "");
         queryCatalog->updateQueryStatus(queryId, QueryState::RUNNING, "");
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());

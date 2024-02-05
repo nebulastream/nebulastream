@@ -56,7 +56,6 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
     Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::TopDown;
     uint8_t ZERO_RETRIES = 0;
     std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
-    QueryCatalogServicePtr queryCatalogService;
     TopologyPtr topology;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
@@ -86,7 +85,6 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, rootNodeId);
         sourceCatalog->addPhysicalSource("default_logical", sce);
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-        queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
         globalQueryPlan = GlobalQueryPlan::create();
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
@@ -109,15 +107,15 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                  topology,
                                                                  globalExecutionPlan,
-                                                                 queryCatalogService,
                                                                  globalQueryPlan,
+                                                                 queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog});
 
     //Create new entry in query catalog service
-    queryCatalogService->createNewEntry("query string", queryPlan, Optimizer::PlacementStrategy::TopDown);
+    queryCatalog->createQueryCatalogEntry("query string", queryPlan, Optimizer::PlacementStrategy::TopDown, QueryState::REGISTERED);
 
-    EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::REGISTERED);
+    EXPECT_EQ(queryCatalog->getQueryState(queryId), QueryState::REGISTERED);
 
     // Create add request
     auto addQueryRequest = RequestProcessor::AddQueryRequest::create(queryPlan, TEST_PLACEMENT_STRATEGY, ZERO_RETRIES, z3Context);
@@ -128,8 +126,6 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
         addQueryRequest->execute(storageHandler);
     } catch (Exceptions::RPCQueryUndeploymentException& e) {
         EXPECT_EQ(e.getMode(), RpcClientModes::Register);
-        EXPECT_EQ(queryCatalogService->getAllQueryCatalogEntries().size(), 1);
-        EXPECT_EQ(queryCatalogService->getAllQueryCatalogEntries()[0]->getQueryState(), QueryState::REGISTERED);
     }
 }
 }// namespace NES::RequestProcessor::Experimental

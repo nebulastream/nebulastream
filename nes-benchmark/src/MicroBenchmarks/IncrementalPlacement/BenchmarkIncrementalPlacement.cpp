@@ -13,7 +13,6 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -387,12 +386,11 @@ int main(int argc, const char* argv[]) {
             cfg.set("type_check", false);
             auto z3Context = std::make_shared<z3::context>(cfg);
             udfCatalog = Catalogs::UDF::UDFCatalog::create();
-            Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-            QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+            auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
             auto globalQueryPlan = GlobalQueryPlan::create();
             auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
             auto globalQueryUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
-                                                                                        queryCatalogService,
+                                                                                        queryCatalog,
                                                                                         sourceCatalog,
                                                                                         globalQueryPlan,
                                                                                         z3Context,
@@ -410,10 +408,11 @@ int main(int argc, const char* argv[]) {
             for (uint64_t i = 0; i < numOfQueries; i++) {
 
                 auto queryPlan = queryObjects[i];
-                queryCatalogService->createNewEntry(
+                queryCatalog->createQueryCatalogEntry(
                     "",
                     queryPlan,
-                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value());
+                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value(),
+                    QueryState::REGISTERED);
                 Optimizer::PlacementStrategy queryPlacementStrategy =
                     magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
                 auto runQueryRequest = AddQueryRequest::create(queryPlan, queryPlacementStrategy);
@@ -424,11 +423,11 @@ int main(int argc, const char* argv[]) {
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                bool placed = queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
+                auto deploymentcontexts = queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                NES_ASSERT(placed, "Placement should be successful");
+                NES_ASSERT(!deploymentcontexts.empty(), "Placement should be successful");
                 benchmarkOutput << startTime << ",BM_Name," << placementStrategy << "," << incrementalPlacement << "," << run
                                 << "," << queryPlan->getQueryId() << "," << startTime << "," << endTime << ","
                                 << (endTime - startTime) << std::endl;
