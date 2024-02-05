@@ -17,4 +17,5 @@ add_source_files(
     Unvectorize.cpp
     VectorizableOperator.cpp
     Vectorize.cpp
+    VectorizedMap.cpp
 )

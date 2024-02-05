@@ -19,7 +19,9 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedPipelineOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -68,7 +70,14 @@ OperatorPipelinePtr LowerPhysicalToVectorizedOperatorsPhase::lower(OperatorPipel
     return operatorPipeline;
 }
 
-std::optional<PhysicalOperatorPtr> LowerPhysicalToVectorizedOperatorsPhase::tryLowerToVectorizedPipeline(const PhysicalOperatorPtr&) {
+std::optional<PhysicalOperatorPtr> LowerPhysicalToVectorizedOperatorsPhase::tryLowerToVectorizedPipeline(const PhysicalOperatorPtr& physicalOperator) {
+    auto schema = physicalOperator->getOutputSchema();
+    if (physicalOperator->instanceOf<PhysicalMapOperator>()) {
+        auto physicalMapOperator = physicalOperator->as<PhysicalMapOperator>();
+        auto vectorizedMap = PhysicalVectorizedMapOperator::create(physicalMapOperator);
+        auto vectorizedPipeline = PhysicalVectorizedPipelineOperator::create(vectorizedMap);
+        return vectorizedPipeline;
+    }
     return std::nullopt;
 }
 

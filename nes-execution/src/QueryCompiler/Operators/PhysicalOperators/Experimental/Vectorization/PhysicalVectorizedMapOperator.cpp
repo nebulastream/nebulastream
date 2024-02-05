@@ -24,7 +24,7 @@ PhysicalVectorizedMapOperator::PhysicalVectorizedMapOperator(OperatorId id, cons
 }
 
 PhysicalOperatorPtr PhysicalVectorizedMapOperator::create(const std::shared_ptr<PhysicalMapOperator>& physicalMapOperator) {
-    return std::make_shared<PhysicalVectorizedMapOperator>(Util::getNextOperatorId(), physicalMapOperator);
+    return std::make_shared<PhysicalVectorizedMapOperator>(getNextOperatorId(), physicalMapOperator);
 }
 
 std::string PhysicalVectorizedMapOperator::toString() const {
