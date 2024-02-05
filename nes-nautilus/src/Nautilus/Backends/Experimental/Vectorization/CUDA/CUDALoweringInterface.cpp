@@ -23,7 +23,7 @@ CUDALoweringInterface::CUDALoweringInterface(const RegisterFrame& frame)
 
 }
 
-std::unique_ptr<CodeGen::CodeGenerator> CUDALoweringInterface::lowerProxyCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& operation, RegisterFrame& frame) {
+std::unique_ptr<CodeGen::CodeGenerator> CUDALoweringInterface::lowerProxyCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>&, RegisterFrame&) {
     NES_NOT_IMPLEMENTED();
 }
 
