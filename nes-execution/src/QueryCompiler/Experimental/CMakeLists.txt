@@ -11,7 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(
-    nes-nautilus
-    KernelExecutable.cpp
-)
+add_subdirectory(Vectorization)

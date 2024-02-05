@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/Experimental/Vectorization/KernelCompiler.hpp>
+#include <QueryCompiler/Experimental/Vectorization/KernelCompiler.hpp>
 
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Experimental/Vectorization/VectorizableOperator.hpp>

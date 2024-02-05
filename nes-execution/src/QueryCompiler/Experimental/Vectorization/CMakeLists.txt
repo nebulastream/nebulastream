@@ -12,6 +12,6 @@
 # limitations under the License.
 
 add_source_files(
-    nes-nautilus
-    KernelExecutable.cpp
+    nes-execution
+    KernelCompiler.cpp
 )

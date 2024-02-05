@@ -17,3 +17,4 @@ add_source_files(nes-execution
         )
 add_subdirectory(Operators)
 add_subdirectory(Phases)
+add_subdirectory(Experimental)
