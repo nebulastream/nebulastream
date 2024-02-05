@@ -173,6 +173,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             break;
         }
         case Runtime::ReconfigurationType::Initialize: {
+            NES_INFO("Initializing network source with unique id {} and partition {}", uniqueNetworkSourceIdentifier, nesPartition);
             // we need to check again because between the invocations of
             // NetworkSource::start() and NetworkSource::reconfigure() the query might have
             // been stopped for some reason
@@ -180,6 +181,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                 NES_WARNING(
                     "NetworkManager shows the partition {} to be deleted, but now we should init it here, so we simply return!",
                     nesPartition.toString());
+                //todo: this will need to become allowed when ack protocol exists
                 NES_THROW_RUNTIME_ERROR("Trying to reuse deleted partition");
                 return;
             }

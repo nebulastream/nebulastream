@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
+#include <optional>
 
 namespace NES {
 
@@ -361,6 +362,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersPerWorker,
                         bool sourceSharing, bool timeStampOutputSources = true);
 
+    /**
+     * @brief get the opened tcp descriptor if there is one
+     */
+    std::optional<int> getTcpDescriptor() const;
+    void setTcpDescriptor(int tcpDescriptor);
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
@@ -384,6 +390,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     bool timestampOutPutSources;
+    std::optional<int> tcpDescriptor;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

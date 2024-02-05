@@ -41,8 +41,10 @@ FileSink::FileSink(SinkFormatPtr format,
                    bool append,
                    QueryId queryId,
                    DecomposedQueryPlanId querySubPlanId,
-                   uint64_t numberOfOrigins, bool timestampAndWriteToSocket)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins), timestampAndWriteToSocket(timestampAndWriteToSocket) {
+                   uint64_t numberOfOrigins,
+                   bool timestampAndWriteToSocket)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins),
+      timestampAndWriteToSocket(timestampAndWriteToSocket) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
@@ -83,35 +85,43 @@ FileSink::FileSink(SinkFormatPtr format,
         //        return;
         //    }
 
+        NES_INFO("Connecting to tcp socket")
+        if (!this->nodeEngine->getTcpDescriptor().has_value()) {
+            NES_INFO("No existing tcp descriptor, opening one now")
 
-        // Create a TCP socket
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd == -1) {
-            perror("socket");
-            return;
+            // Create a TCP socket
+            sockfd = socket(AF_INET, SOCK_STREAM, 0);
+            if (sockfd == -1) {
+                perror("socket");
+                return;
+            }
+
+            // Specify the address and port of the server
+            struct sockaddr_in server_addr;
+            memset(&server_addr, 0, sizeof(server_addr));
+            server_addr.sin_family = AF_INET;
+            server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");// Example IP address
+            server_addr.sin_port = htons(12345);                 // Example port number
+
+            // Connect to the server
+            if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
+                perror("connect");
+                close(sockfd);
+                return;
+            }
+            this->nodeEngine->setTcpDescriptor(sockfd);
+        } else {
+            NES_INFO("Found existing tcp descriptor")
+            sockfd = this->nodeEngine->getTcpDescriptor().value();
         }
-
-        // Specify the address and port of the server
-        struct sockaddr_in server_addr;
-        memset(&server_addr, 0, sizeof(server_addr));
-        server_addr.sin_family = AF_INET;
-        server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Example IP address
-        server_addr.sin_port = htons(12345); // Example port number
-
-        // Connect to the server
-        if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
-            perror("connect");
-            close(sockfd);
-            return;
-        }
-
     }
+    NES_INFO("Successfully connected")
 }
 
 FileSink::~FileSink() {
     NES_DEBUG("~FileSink: close file={}", filePath);
     //outputFile.close();
-    close(sockfd);
+    //close(sockfd);
 }
 
 std::string FileSink::toString() const {
@@ -127,9 +137,9 @@ void FileSink::setup() {}
 void FileSink::shutdown() {
     if (timestampAndWriteToSocket) {
         //NES_INFO("total buffers received at file sink {}", totalTupleCountreceived);
-//        for (const auto& bufferContent : receivedBuffers) {
-//            outputFile.write(bufferContent.c_str(), bufferContent.size());
-//        }
+        //        for (const auto& bufferContent : receivedBuffers) {
+        //            outputFile.write(bufferContent.c_str(), bufferContent.size());
+        //        }
         //outputFile.flush();
     }
 }
@@ -151,8 +161,8 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             return 1;
         }
 
-//        receivedBuffers.push_back(bufferContent);
-//        arrivalTimestamps.push_back(getTimestamp());
+        //        receivedBuffers.push_back(bufferContent);
+        //        arrivalTimestamps.push_back(getTimestamp());
 
         return true;
     }

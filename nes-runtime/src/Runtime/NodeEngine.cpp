@@ -376,6 +376,9 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     for (auto&& bufferManager : bufferManagers) {
         bufferManager->destroy();
     }
+    if (tcpDescriptor.has_value()) {
+        close(tcpDescriptor.value());
+    }
     nesWorker.reset();// break cycle
     return !withError;
 }
@@ -765,4 +768,13 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
 
 bool NodeEngine::getTimesStampOutputSources() { return timestampOutPutSources; }
+
+std::optional<int> NodeEngine::getTcpDescriptor() const { return tcpDescriptor; }
+
+void NodeEngine::setTcpDescriptor(int tcpDescriptor) {
+    if (this->tcpDescriptor.has_value()) {
+        NES_ERROR("NodeEngine: TCP descriptor already set");
+    }
+    this->tcpDescriptor = tcpDescriptor;
+}
 }// namespace NES::Runtime
