@@ -13,6 +13,7 @@
 */
 
 #include <Configurations/BaseConfiguration.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
 
@@ -127,7 +128,10 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
         std::string yamlValueAsString = std::to_string(workerId);
         std::string yamlConfigValue = "\n" + searchKey + yamlValueAsString;
 
-        if (!yamlFilePath.empty() && std::filesystem::exists(yamlFilePath)) {
+        if (!yamlFilePath.empty()) {
+            if (std::filesystem::exists(yamlFilePath)) {
+                NES_WARNING("Worker.yaml was not found. Creating a new file.");
+            }
             configFile >> ss.rdbuf();
             try {
                 std::ofstream output;
@@ -136,6 +140,10 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             } catch (std::exception& e) {
                 throw ConfigurationException("Exception while persisting in yaml file", e.what());
             }
+        }
+        else {
+            NES_ERROR("BaseConfiguration: yamlFilePath is empty.");
+            return false;
         }
     } else {
         ss << configFile.rdbuf();
