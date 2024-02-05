@@ -25,3 +25,5 @@ endif ()
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     add_subdirectory(CPP)
 endif ()
+
+add_subdirectory(Experimental)
