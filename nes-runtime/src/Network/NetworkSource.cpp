@@ -160,6 +160,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
 
     switch (task.getType()) {
         case Runtime::ReconfigurationType::UpdateVersion: {
+            NES_NOT_IMPLEMENTED();
             if (!networkManager->getConnectSourceEventChannelsAsync()) {
                 NES_THROW_RUNTIME_ERROR(
                     "Attempt to reconfigure a network source but asynchronous connecting of event channels is not "
@@ -179,6 +180,16 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                 NES_WARNING(
                     "NetworkManager shows the partition {} to be deleted, but now we should init it here, so we simply return!",
                     nesPartition.toString());
+                NES_THROW_RUNTIME_ERROR("Trying to reuse deleted partition");
+                return;
+            }
+
+            if (workerContext.doesEventChannelExist(uniqueNetworkSourceIdentifier)) {
+                NES_DEBUG("NetworkSource: reconfigure() channel already exists on {} Thread {}, unique id {}",
+                          nesPartition.toString(),
+                          Runtime::NesThread::getId(),
+                          uniqueNetworkSourceIdentifier);
+                NES_THROW_RUNTIME_ERROR("An channel has already been created for the source with the unique id");
                 return;
             }
 
