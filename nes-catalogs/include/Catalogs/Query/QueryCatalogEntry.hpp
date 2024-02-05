@@ -111,7 +111,7 @@ class QueryCatalogEntry {
      */
     Optimizer::PlacementStrategy getQueryPlacementStrategy();
 
-    void setMetaInformation(std::string metaInformation);
+    void setTerminationReason(std::string metaInformation);
 
     std::string getMetaInformation();
 

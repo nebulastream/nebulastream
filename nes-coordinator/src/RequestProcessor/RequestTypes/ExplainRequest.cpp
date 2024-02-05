@@ -13,30 +13,17 @@
 */
 
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
-#include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
-#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
-#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
-#include <Operators/Exceptions/SignatureComputationException.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Optimizer//Exceptions/QueryPlacementAdditionException.hpp>
-#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -47,8 +34,6 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -125,7 +110,6 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));

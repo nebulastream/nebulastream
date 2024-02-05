@@ -83,7 +83,7 @@ class E2ESingleRun {
      * @param requestHandlerService The query service to use
      * @param queryCatalog The query catalog to use
      */
-    void submitQueries(RequestHandlerServicePtr requestHandlerService, QueryCatalogServicePtr queryCatalog);
+    void submitQueries(RequestHandlerServicePtr requestHandlerService, Catalogs::Query::QueryCatalogPtr queryCatalog);
 
     /**
      * @brief starts everything necessary for running the queries and measures for a single query
@@ -133,23 +133,23 @@ class E2ESingleRun {
     /**
      * @brief This method is used for waiting until the query gets into running status or a timeout occurs
      * @param queryId: the query id to check for
-     * @param queryCatalogService: the catalog to look into for status change
+     * @param queryCatalog: the catalog to look into for status change
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
     static bool waitForQueryToStart(QueryId queryId,
-                                    const QueryCatalogServicePtr& queryCatalogService,
+                                    const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                     std::chrono::seconds timeoutInSec = defaultStartQueryTimeout);
 
     /**
      * @brief This method is used for waiting until the query gets into stopped status or a timeout occurs
      * @param queryId: the query id to check for
-     * @param queryCatalogService: the catalog to look into for status change
+     * @param queryCatalog: the catalog to look into for status change
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into stopped status else false
      */
     static bool waitForQueryToStop(QueryId queryId,
-                                   const QueryCatalogServicePtr& queryCatalogService,
+                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                    std::chrono::seconds timeoutInSec = defaultStopQueryTimeout);
 
     /**

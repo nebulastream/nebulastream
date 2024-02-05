@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
@@ -29,7 +27,9 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QueryState.hpp>
 #include <Util/TestUtils.hpp>
+#include <gtest/gtest.h>
 #include <unistd.h>
 
 using namespace std;
@@ -132,7 +132,6 @@ TEST_F(RemoteClientTest, DeployQueryTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     int64_t queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
-    ASSERT_TRUE(crd->getQueryCatalogService()->getEntryForQuery(queryId));
     ASSERT_TRUE(stopQuery(queryId));
 }
 
@@ -145,10 +144,6 @@ TEST_F(RemoteClientTest, SubmitQueryTest) {
     auto queryPlan = query.getQueryPlan();
     int64_t queryId = client->submitQuery(queryPlan);
     checkForQueryStart(queryId);
-    ASSERT_TRUE(crd->getQueryCatalogService()->getEntryForQuery(queryId));
-    auto insertedQueryPlan = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getInputQueryPlan();
-    // Expect that the query id is same as the one returned
-    EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
     ASSERT_TRUE(stopQuery(queryId));
 }
 
@@ -221,7 +216,7 @@ TEST_F(RemoteClientTest, StopQueryTest) {
     checkForQueryStart(queryId);
     auto res = client->stopQuery(queryId);
     ASSERT_TRUE(!!res);
-    ASSERT_NE(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryState(), QueryState::RUNNING);
+    ASSERT_NE(crd->getQueryCatalog()->getQueryState(queryId), QueryState::RUNNING);
 }
 
 /**

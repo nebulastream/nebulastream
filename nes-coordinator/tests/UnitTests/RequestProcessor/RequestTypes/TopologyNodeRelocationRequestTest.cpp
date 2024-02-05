@@ -60,7 +60,6 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
-    QueryCatalogServicePtr queryCatalogService;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     TopologyPtr topology;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
@@ -76,7 +75,6 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
         Testing::BaseUnitTest::SetUp();
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-        queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
         //Setup source catalog
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
@@ -107,8 +105,8 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     RequestProcessor::StorageDataStructures storageDataStructures(coordinatorConfig,
                                                                   topology,
                                                                   globalExecutionPlan,
-                                                                  queryCatalogService,
                                                                   globalQueryPlan,
+                                                                  queryCatalog,
                                                                   sourceCatalog,
                                                                   udfCatalog);
 
@@ -135,7 +133,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     std::string workerAddress = "localhost";
     std::string outputFileName = "dummy.out";
     std::string inputFileName = "dummy.in";
-    DecomposedQueryPlanPtr subPlan;
+    DecomposedQueryPlanPtr decomposedQueryPlan;
 
     //root node
     //id = 1
@@ -205,13 +203,13 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
 
     auto innerSharedQueryPlan = QueryPlan::create();
 
-    subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
+    decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     auto fileSinkOperatorId = getNextOperatorId();
     auto fileSinkDescriptor = FileSinkDescriptor::create(outputFileName, "CSV_FORMAT", "APPEND");
     auto fileSinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, fileSinkOperatorId);
     WorkerId pinnedId = 1;
     fileSinkOperatorNode->addProperty(Optimizer::PINNED_WORKER_ID, pinnedId);
-    subPlan->addRootOperator(fileSinkOperatorNode);
+    decomposedQueryPlan->addRootOperator(fileSinkOperatorNode);
     auto networkSourceId = getNextOperatorId();
     auto nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, 0, 0);
     auto networkSinkHostWorkerId = 2;
@@ -229,12 +227,12 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{1});
     sourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
     fileSinkOperatorNode->addChild(sourceLogicalOperatorNode);
-    globalExecutionPlan->getExecutionNodeById(1)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
+    globalExecutionPlan->getExecutionNodeById(1)->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
     subPlanId++;
 
     auto networkSinkId = getNextOperatorId();
     //sub plan on node 2
-    subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
+    decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(1, workerAddress, dataPort),
                                                                    nesPartition,
                                                                    WAIT_TIME,
@@ -245,7 +243,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{1});
     sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
-    subPlan->addRootOperator(sinkLogicalOperatorNode);
+    decomposedQueryPlan->addRootOperator(sinkLogicalOperatorNode);
     auto unaryOperatorId = getNextOperatorId();
     unaryOperatorNode = LogicalOperatorFactory::createFilterOperator(pred1, unaryOperatorId);
     pinnedId = 2;
@@ -267,7 +265,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
     sourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     unaryOperatorNode->addChild(sourceLogicalOperatorNode);
-    globalExecutionPlan->getExecutionNodeById(2)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
+    globalExecutionPlan->getExecutionNodeById(2)->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
     subPlanId++;
 
     //test link
@@ -286,7 +284,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
 
     networkSinkId = getNextOperatorId();
     //sub plan on node 3
-    subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
+    decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(2, workerAddress, dataPort),
                                                                    nesPartition,
                                                                    WAIT_TIME,
@@ -297,7 +295,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
     sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
-    subPlan->addRootOperator(sinkLogicalOperatorNode);
+    decomposedQueryPlan->addRootOperator(sinkLogicalOperatorNode);
     auto binaryOperatorId = getNextOperatorId();
     binaryOperatorNode = LogicalOperatorFactory::createUnionOperator(binaryOperatorId);
     pinnedId = 3;
@@ -335,12 +333,12 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     rightsourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     rightsourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
     binaryOperatorNode->addChild(rightsourceLogicalOperatorNode);
-    globalExecutionPlan->getExecutionNodeById(3)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
+    globalExecutionPlan->getExecutionNodeById(3)->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
     //first sub plan on node 6
-    subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
+    decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
         Network::NodeLocation(3, workerAddress, dataPort),
         leftsourceLogicalOperatorNode->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition(),
@@ -352,7 +350,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
-    subPlan->addRootOperator(sinkLogicalOperatorNode);
+    decomposedQueryPlan->addRootOperator(sinkLogicalOperatorNode);
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, 0, 0);
     networkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
@@ -367,12 +365,12 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
     sinkLogicalOperatorNode->addChild(sourceLogicalOperatorNode);
-    globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
+    globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
     //sub plan on node 7
-    subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
+    decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(6, workerAddress, dataPort),
                                                                    nesPartition,
                                                                    WAIT_TIME,
@@ -383,7 +381,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
-    subPlan->addRootOperator(sinkLogicalOperatorNode);
+    decomposedQueryPlan->addRootOperator(sinkLogicalOperatorNode);
     auto defaultSourceIdLeft = getNextOperatorId();
     auto csvSourceType = CSVSourceType::create("physicalName", "logicalName");
     auto defaultSourcedescriptor = CsvSourceDescriptor::create(schema, csvSourceType);
@@ -393,12 +391,12 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     copiedDefaultSourceLeft->addProperty(Optimizer::PINNED_WORKER_ID, pinnedId);
     copiedBinaryOperator->addChild(copiedDefaultSourceLeft);
     sinkLogicalOperatorNode->addChild(defaultSourceLeft);
-    globalExecutionPlan->getExecutionNodeById(7)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
+    globalExecutionPlan->getExecutionNodeById(7)->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
     //second sub plan on node 6
-    subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
+    decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
         Network::NodeLocation(3, workerAddress, dataPort),
         rightsourceLogicalOperatorNode->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition(),
@@ -410,7 +408,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
-    subPlan->addRootOperator(sinkLogicalOperatorNode);
+    decomposedQueryPlan->addRootOperator(sinkLogicalOperatorNode);
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, 0, 0);
     networkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
@@ -425,12 +423,12 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sourceLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sourceLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
     sinkLogicalOperatorNode->addChild(sourceLogicalOperatorNode);
-    globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
+    globalExecutionPlan->getExecutionNodeById(6)->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
     subPlanId++;
 
     networkSinkId = getNextOperatorId();
     //sub plan on node 8
-    subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
+    decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(6, workerAddress, dataPort),
                                                                    nesPartition,
                                                                    WAIT_TIME,
@@ -441,7 +439,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
-    subPlan->addRootOperator(sinkLogicalOperatorNode);
+    decomposedQueryPlan->addRootOperator(sinkLogicalOperatorNode);
     auto defaultSourceIdRight = getNextOperatorId();
     auto defaultSourceRight = std::make_shared<SourceLogicalOperatorNode>(defaultSourcedescriptor, defaultSourceIdRight);
     pinnedId = 8;
@@ -449,7 +447,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     copiedDefaultSourceRight->addProperty(Optimizer::PINNED_WORKER_ID, pinnedId);
     copiedBinaryOperator->addChild(copiedDefaultSourceRight);
     sinkLogicalOperatorNode->addChild(defaultSourceRight);
-    globalExecutionPlan->getExecutionNodeById(8)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
+    globalExecutionPlan->getExecutionNodeById(8)->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
     subPlanId++;
 
     //additional operators on node 3
@@ -472,7 +470,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
 
     networkSinkId = getNextOperatorId();
     //sub plan on node 8
-    subPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
+    decomposedQueryPlan = DecomposedQueryPlan::create(subPlanId, sharedQueryId);
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(3, workerAddress, dataPort),
                                                                    nesPartition,
                                                                    WAIT_TIME,
@@ -483,7 +481,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperatorNode = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperatorNode->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, 7);
     sinkLogicalOperatorNode->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, 20);
-    subPlan->addRootOperator(sinkLogicalOperatorNode);
+    decomposedQueryPlan->addRootOperator(sinkLogicalOperatorNode);
     auto secondDefaultSourceIdRight = getNextOperatorId();
     auto secondDefaultSourceRight =
         std::make_shared<SourceLogicalOperatorNode>(defaultSourcedescriptor, secondDefaultSourceIdRight);
@@ -491,7 +489,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     copiedSecondDefaultSourceRight->addProperty(Optimizer::PINNED_WORKER_ID, pinnedId);
     copiedBinaryOperator->addChild(copiedSecondDefaultSourceRight);
     sinkLogicalOperatorNode->addChild(secondDefaultSourceRight);
-    globalExecutionPlan->getExecutionNodeById(9)->registerNewDecomposedQueryPlan(sharedQueryId, subPlan);
+    globalExecutionPlan->getExecutionNodeById(9)->registerNewDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan);
     subPlanId++;
 
     auto sharedQueryPlan = SharedQueryPlan::create(innerSharedQueryPlan);

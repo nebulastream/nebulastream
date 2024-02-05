@@ -130,7 +130,7 @@ void E2ESingleRun::createSources() {
     NES_INFO("Created sources and the accommodating data generation and data providing!");
 }
 
-void E2ESingleRun::submitQueries(RequestHandlerServicePtr requestHandlerService, QueryCatalogServicePtr queryCatalog) {
+void E2ESingleRun::submitQueries(RequestHandlerServicePtr requestHandlerService, Catalogs::Query::QueryCatalogPtr queryCatalog) {
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
         for (const auto& query : configOverAllRuns.queries) {
 
@@ -157,7 +157,7 @@ void E2ESingleRun::runQueries() {
     NES_INFO("Started nesCoordinator at {}", rpcPort);
 
     auto requestHandlerService = coordinator->getRequestHandlerService();
-    auto queryCatalog = coordinator->getQueryCatalogService();
+    auto queryCatalog = coordinator->getQueryCatalog();
 
     submitQueries(requestHandlerService, queryCatalog);
 
@@ -199,7 +199,7 @@ void E2ESingleRun::runQueries() {
 void E2ESingleRun::stopQueries() {
     NES_INFO("Stopping the queries...");
     auto requestHandlerService = coordinator->getRequestHandlerService();
-    auto queryCatalog = coordinator->getQueryCatalogService();
+    auto queryCatalog = coordinator->getQueryCatalog();
 
     for (auto id : submittedIds) {
         // Sending a stop request to the coordinator with a timeout of 30 seconds
@@ -324,23 +324,15 @@ void E2ESingleRun::run() {
 }
 
 bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
-                                       const QueryCatalogServicePtr& queryCatalogService,
+                                       const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                        std::chrono::seconds timeoutInSec) {
     NES_TRACE("checkCompleteOrTimeout: Wait until the query {} is running", queryId);
-    auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-    if (!queryCatalogEntry) {
-        NES_ERROR("checkCompleteOrTimeout: Cannot find query with id = {} in the query catalog", queryId);
-        return false;
-    }
     auto startTimestamp = std::chrono::system_clock::now();
 
     while (std::chrono::system_clock::now() < startTimestamp + timeoutInSec) {
-        NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
-                  queryId,
-                  queryCatalogEntry->getQueryStatusAsString());
-        auto status = queryCatalogEntry->getQueryState();
-
-        switch (status) {
+        auto queryState = queryCatalog->getQueryState(queryId);
+        NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}", queryId, magic_enum::enum_name(queryState));
+        switch (queryState) {
             case QueryState::MARKED_FOR_HARD_STOP:
             case QueryState::MARKED_FOR_SOFT_STOP:
             case QueryState::SOFT_STOP_COMPLETED:
@@ -351,11 +343,11 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
             }
             case QueryState::FAILED: {
                 NES_ERROR("Query failed to start. Expected: Running or Optimizing but found {}",
-                          std::string(magic_enum::enum_name(status)));
+                          std::string(magic_enum::enum_name(queryState)));
                 return false;
             }
             default: {
-                NES_WARNING("Expected: Running or Scheduling but found {}", std::string(magic_enum::enum_name(status)));
+                NES_WARNING("Expected: Running or Scheduling but found {}", std::string(magic_enum::enum_name(queryState)));
                 break;
             }
         }
@@ -368,34 +360,22 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
 }
 
 bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
-                                      const QueryCatalogServicePtr& queryCatalogService,
+                                      const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                       std::chrono::seconds timeoutInSec) {
     NES_TRACE("checkCompleteOrTimeout: Wait until the query {} is stopped", queryId);
-    auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-    if (!queryCatalogEntry) {
-        NES_ERROR("checkCompleteOrTimeout: Cannot find query with id = {} in the query catalog", queryId);
-        return false;
-    }
+
     auto startTimestamp = std::chrono::system_clock::now();
-
     while (std::chrono::system_clock::now() < startTimestamp + timeoutInSec) {
-        NES_TRACE("checkCompleteOrTimeout: Query with id = {} is currently {}",
-                  queryId,
-                  queryCatalogEntry->getQueryStatusAsString());
-        auto status = queryCatalogEntry->getQueryState();
-
-        if (status == QueryState::STOPPED) {
+        auto queryState = queryCatalog->getQueryState(queryId);
+        if (queryState == QueryState::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: Status for query with id = {} is stopped", queryId);
             return true;
         }
-
         NES_DEBUG("checkStoppedOrTimeout: Query with id = {} not stopped as status is {}",
                   queryId,
-                  queryCatalogEntry->getQueryStatusAsString());
-
+                  magic_enum::enum_name(queryState));
         std::this_thread::sleep_for(sleepDuration);
     }
-
     NES_TRACE("checkCompleteOrTimeout: waitForStop expected status is not reached after timeout");
     return false;
 }

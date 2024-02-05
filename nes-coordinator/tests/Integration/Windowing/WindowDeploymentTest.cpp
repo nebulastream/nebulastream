@@ -310,7 +310,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());

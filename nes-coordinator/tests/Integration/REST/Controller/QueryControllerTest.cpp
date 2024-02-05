@@ -199,7 +199,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
     NES_DEBUG("{}", queryId);
-    auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
+    auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalog());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
                             cpr::Parameters{{"queryId", std::to_string(queryId)}});
@@ -264,7 +264,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
     NES_DEBUG("{}", queryId);
-    auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
+    auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalog());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
                             cpr::Parameters{{"queryId", std::to_string(0)}});
@@ -314,7 +314,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
     NES_DEBUG("{}", queryId);
-    auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
+    auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalog());
     EXPECT_TRUE(started);
 
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
@@ -369,7 +369,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     EXPECT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
     NES_DEBUG("{}", queryId);
-    auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
+    auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalog());
     EXPECT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
                             cpr::Parameters{{"queryId", std::to_string(0)}});

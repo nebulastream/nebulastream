@@ -285,7 +285,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
@@ -379,7 +379,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
@@ -473,7 +473,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
@@ -567,7 +567,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
@@ -755,7 +755,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));

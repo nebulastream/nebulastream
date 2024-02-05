@@ -15,7 +15,6 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
@@ -64,14 +63,12 @@ TEST_F(QueryCatalogServiceTest, testAddNewQuery) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
+    queryCatalog->createQueryCatalogEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
 
     //Assert
-    EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalogService->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalogService->getAllEntriesInStatus("REGISTERED");
+    auto allQueryEntries = queryCatalog->getQueryEntriesWithStatus("REGISTERED");
     EXPECT_TRUE(run.size() == 1U);
 }
 
@@ -84,7 +81,10 @@ TEST_F(QueryCatalogServiceTest, testAddNewPattern) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    queryCatalog->createQueryCatalogEntry(patternString, queryPlan, Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
+    queryCatalog->createQueryCatalogEntry(patternString,
+                                          queryPlan,
+                                          Optimizer::PlacementStrategy::BottomUp,
+                                          QueryState::REGISTERED);
 
     //Assert
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();

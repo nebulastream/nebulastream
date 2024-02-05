@@ -41,15 +41,14 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     auto topology = Topology::create();
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-    auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     StorageDataStructures storageDataStructures = {coordinatorConfiguration,
                                                    topology,
                                                    globalExecutionPlan,
-                                                   queryCatalogService,
                                                    globalQueryPlan,
+                                                   queryCatalog,
                                                    sourceCatalog,
                                                    udfCatalog};
     auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
@@ -57,7 +56,7 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     //test if we can obtain the resource we passed to the constructor
     ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle(requestId).get());
     ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle(requestId).get());
-    ASSERT_EQ(queryCatalogService.get(), serialAccessHandle->getQueryCatalogHandle(requestId).get());
+    ASSERT_EQ(queryCatalog.get(), serialAccessHandle->getQueryCatalogHandle(requestId).get());
     ASSERT_EQ(globalQueryPlan.get(), serialAccessHandle->getGlobalQueryPlanHandle(requestId).get());
     ASSERT_EQ(sourceCatalog.get(), serialAccessHandle->getSourceCatalogHandle(requestId).get());
     ASSERT_EQ(udfCatalog.get(), serialAccessHandle->getUDFCatalogHandle(requestId).get());

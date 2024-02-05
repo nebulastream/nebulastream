@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -24,13 +23,9 @@
 #include <Mobility/WorkerMobilityHandler.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/PartitionManager.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -322,7 +317,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
     std::vector<NesWorkerPtr> reconnectParents;
 
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalogService()));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalog()));
     SharedQueryId sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
     //reconfiguration
@@ -390,8 +385,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         RequestProcessor::StorageDataStructures storageDataStructures(coordinatorConfig,
                                                                       topology,
                                                                       crd->getGlobalExecutionPlan(),
-                                                                      crd->getQueryCatalogService(),
                                                                       crd->getGlobalQueryPlan(),
+                                                                      crd->getQueryCatalog(),
                                                                       crd->getSourceCatalog(),
                                                                       crd->getUDFCatalog());
         auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
@@ -421,9 +416,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         }
         ASSERT_NE(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition),
                   Network::PartitionRegistrationStatus::Registered);
+        auto lockedExecutionNode = crd->getGlobalExecutionPlan()->getLockedExecutionNode(wrk3->getWorkerId());
         auto networkSourceWrk3Partition =
-            std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(crd->getGlobalExecutionPlan()
-                                                                            ->getExecutionNodeById(wrk3->getWorkerId())
+            std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(lockedExecutionNode->operator*()
                                                                             ->getAllDecomposedQueryPlans(sharedQueryId)
                                                                             .front()
                                                                             ->getSourceOperators()
@@ -452,40 +447,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(queryId).front();
 
         //check that query has left migrating state and is running again
-        ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalogService()));
-        auto entries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
+        ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalog()));
+        auto entries = crd->getQueryCatalog()->getQueryEntriesWithStatus("MIGRATING");
         ASSERT_TRUE(entries.empty());
-        auto subplansAfterMigration = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
-        ASSERT_FALSE(subplansAfterMigration.empty());
-
-        //subplans should not include any migrating plans anymore but one more entry in marked as migration completed
-        noOfMigratingPlans = 0;
-        noOfCompletedMigrations = 0;
-        noOfRunningPlans = 0;
-        for (auto& plan : subplansAfterMigration) {
-            switch (plan->getSubQueryStatus()) {
-                case QueryState::MIGRATING: {
-                    noOfMigratingPlans++;
-                    break;
-                }
-                case QueryState::MIGRATION_COMPLETED: {
-                    noOfCompletedMigrations++;
-                    continue;
-                }
-                case QueryState::RUNNING: {
-                    noOfRunningPlans++;
-                    continue;
-                }
-                default: {
-                    NES_DEBUG("Found subplan in unexpected state");
-                    FAIL();
-                }
-            }
-        }
-        ASSERT_EQ(noOfMigratingPlans, 0);
-        ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 1);
-        ASSERT_EQ(noOfRunningPlans, 3);
-        ASSERT_EQ(topology->getParentTopologyNodeIds(wrk1->getWorkerId()), std::vector<WorkerId>{wrk3->getWorkerId()});
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));

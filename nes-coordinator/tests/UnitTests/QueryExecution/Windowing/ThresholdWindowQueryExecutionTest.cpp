@@ -88,7 +88,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSum) {
                      .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -126,7 +126,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMax) {
                      .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -164,7 +164,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMin) {
                      .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -202,7 +202,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithAvg) {
                      .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -240,7 +240,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCount) {
                      .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -278,7 +278,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumFloat) {
                      .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -316,7 +316,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumInt32) {
                      .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -354,7 +354,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumDouble) {
                      .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -397,7 +397,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCountAndS
             .sink(testSinkDescriptor);
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);

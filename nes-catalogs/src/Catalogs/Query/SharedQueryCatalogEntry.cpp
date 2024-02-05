@@ -25,7 +25,12 @@ SharedQueryCatalogEntry::SharedQueryCatalogEntry(SharedQueryId sharedQueryId,
 
 QueryState SharedQueryCatalogEntry::getQueryState() const { return queryState; }
 
-void SharedQueryCatalogEntry::setQueryState(QueryState queryStatus) { this->queryState = queryStatus; }
+void SharedQueryCatalogEntry::setQueryState(QueryState queryStatus) {
+    this->queryState = queryStatus;
+    uint64_t usSinceEpoch =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    history.emplace_back(usSinceEpoch, queryStatus);
+}
 
 void SharedQueryCatalogEntry::setTerminationReason(std::string terminationReason) { this->terminationReason = terminationReason; }
 
