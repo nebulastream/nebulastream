@@ -504,7 +504,7 @@ TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml) {
     NES_DEBUG("Starting coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_DEBUG("Coordinator started successfully");
 
     // start worker 1, with no configured workerId
@@ -544,7 +544,7 @@ TEST_F(MultiWorkerTest, checkPersistenceOfWorkerIdWithNonExistingConfigFile) {
     NES_DEBUG("Starting coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_DEBUG("Coordinator started successfully");
 
     // start worker 1, with no configured workerId

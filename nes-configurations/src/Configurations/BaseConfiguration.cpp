@@ -129,7 +129,7 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
         std::string yamlConfigValue = "\n" + searchKey + yamlValueAsString;
 
         if (!yamlFilePath.empty()) {
-            if (std::filesystem::exists(yamlFilePath)) {
+            if (!std::filesystem::exists(yamlFilePath)) {
                 NES_WARNING("Worker.yaml was not found. Creating a new file.");
             }
             configFile >> ss.rdbuf();
