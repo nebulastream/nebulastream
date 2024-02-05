@@ -12,10 +12,9 @@
 # limitations under the License.
 
 add_source_files(
-    nes-runtime
+    nes-nautilus
     CPPCompilationBackend.cpp
     CPPExecutable.cpp
     CPPLoweringInterface.cpp
     CPPLoweringProvider.cpp
-    CPPPipelineProvider.cpp
 )

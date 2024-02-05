@@ -13,7 +13,7 @@
 
 
 add_source_files(
-    nes-runtime
+    nes-nautilus
     IRLoweringInterface.cpp
     Segment.cpp
 )
