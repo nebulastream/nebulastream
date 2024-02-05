@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.6.32](https://github.com/nebulastream/nebulastream/tree/v0.6.32) (2024-02-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.31...v0.6.32)
+
+**Implemented enhancements:**
+
+- \[TASK\] Merge OperatorPlacement-with-Multiple-Parents-using-ILP Branch [\#4566](https://github.com/nebulastream/nebulastream/issues/4566)
+- \[TASK\] QueryPlacementAmendmentTest Disabled Tests [\#4534](https://github.com/nebulastream/nebulastream/issues/4534)
+- \[TASK\] ILPPlacement Disabled Tests [\#4532](https://github.com/nebulastream/nebulastream/issues/4532)
+- \[TASK\] Create CUDA compilation back-end [\#4148](https://github.com/nebulastream/nebulastream/issues/4148)
+- \[TASK\] Create abstract interface for generating code from NES IR operations [\#4093](https://github.com/nebulastream/nebulastream/issues/4093)
+- \[TASK\] Add Built-In CUDA Variables to Nautilus [\#3995](https://github.com/nebulastream/nebulastream/issues/3995)
+- \[TASK\] Create Compiler Pass for Compiling Vectorized Sub-Pipelines to Kernel Executables [\#3993](https://github.com/nebulastream/nebulastream/issues/3993)
+- \[TASK\] Create Compiler Pass for Inserting Vectorized Sub-Pipelines [\#3991](https://github.com/nebulastream/nebulastream/issues/3991)
+- \[TASK\] Create Operators for Reversible Query Vectorization [\#3987](https://github.com/nebulastream/nebulastream/issues/3987)
+
+### Bug Fixes 🐛
+
+- \[BUG\] KafkaSource is not deserialized [\#4522](https://github.com/nebulastream/nebulastream/issues/4522)
+
 ## [v0.6.31](https://github.com/nebulastream/nebulastream/tree/v0.6.31) (2024-01-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.30...v0.6.31)
@@ -5601,15 +5621,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
-
-## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
 
 ## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+
+## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
 
 #### Complex Event Processing
 
