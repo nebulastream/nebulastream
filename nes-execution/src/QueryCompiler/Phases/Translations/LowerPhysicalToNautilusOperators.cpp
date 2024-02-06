@@ -456,7 +456,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(unvectorize);
         return unvectorize;
     } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalKernelOperator>()) {
-        auto kernelOpt = lowerKernel(operatorNode, bufferSize);
+        auto kernelOpt = lowerKernel(operatorNode, bufferSize, operatorHandlers);
         if (!kernelOpt) {
             NES_THROW_RUNTIME_ERROR("Failed to create a Kernel operator");
             return nullptr;
@@ -466,41 +466,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return kernel;
     }
 
-<<<<<<< HEAD
     // Check if a plugin is registered that handles this physical operator
     for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins()) {
         auto resultOperator = plugin->lower(operatorNode, operatorHandlers);
         if (resultOperator.has_value()) {
             parentOperator->setChild(*resultOperator);
             return *resultOperator;
-=======
-        auto stageBufferSize = options->getVectorizationOptions()->getStageBufferSize();
-        auto schemaSize = schema->getSchemaSizeInBytes();
-        auto handler = std::make_shared<Runtime::Execution::Operators::StagingHandler>(
-            stageBufferSize,
-            schemaSize
-        );
-        operatorHandlers.push_back(handler);
-        uint64_t handlerIndex = operatorHandlers.size() - 1;
-
-        auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-        auto vectorize = std::make_shared<Runtime::Execution::Operators::Vectorize>(handlerIndex, std::move(memoryProvider));
-        parentOperator->setChild(vectorize);
-        return vectorize;
-    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalUnvectorizeOperator>()) {
-        auto schema = operatorNode->getOutputSchema();
-        NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
-        auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
-        auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-        auto unvectorize = std::make_shared<Runtime::Execution::Operators::Unvectorize>(std::move(memoryProvider));
-        parentOperator->setChild(unvectorize);
-        return unvectorize;
-    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalKernelOperator>()) {
-        auto kernelOpt = lowerKernel(operatorNode, bufferSize, operatorHandlers);
-        if (!kernelOpt) {
-            NES_THROW_RUNTIME_ERROR("Failed to create a Kernel operator");
-            return nullptr;
->>>>>>> 32fc95bd88 ([#4232] Lower physical vectorized non-keyed pre-aggregation to Nautilus operator)
         }
     }
 
@@ -1237,124 +1208,6 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
 }
 
 std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
-LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize) {
-    auto physicalKernel = physicalOperator->as<PhysicalOperators::Experimental::PhysicalKernelOperator>();
-
-    auto physicalVectorizedPipeline = physicalKernel->getVectorizedPipeline();
-    auto nodes = physicalVectorizedPipeline->getPipelineOperators();
-    std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>> operators;
-    for (const auto& node : nodes) {
-        if (node->as_if<PhysicalOperators::Experimental::PhysicalVectorizedMapOperator>()) {
-            auto physicalVectorizedMapOperator = node->as<PhysicalOperators::Experimental::PhysicalVectorizedMapOperator>();
-
-            auto outputSchema = physicalVectorizedMapOperator->getOutputSchema();
-            NES_ASSERT(outputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
-            auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(outputSchema, bufferSize);
-            auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-
-            auto inputSchemaSize = physicalVectorizedMapOperator->getInputSchema()->getSchemaSizeInBytes();
-            if (inputSchemaSize != outputSchema->getSchemaSizeInBytes()) {
-                // TODO Handle different buffer size between input and output schema.
-                NES_NOT_IMPLEMENTED();
-            }
-
-            auto physicalMapOperator = physicalVectorizedMapOperator->getPhysicalMapOperator();
-            auto loweredOperator = lowerMap(physicalMapOperator);
-            auto mapOperator = std::dynamic_pointer_cast<Runtime::Execution::Operators::Map>(loweredOperator);
-            auto vectorizedMapOperator = std::make_shared<Runtime::Execution::Operators::VectorizedMap>(mapOperator, std::move(memoryProvider));
-            operators.push_back(vectorizedMapOperator);
-        } else if (node->as_if<PhysicalOperators::Experimental::PhysicalVectorizedFilterOperator>()) {
-            auto physicalVectorizedFilterOperator = node->as<PhysicalOperators::Experimental::PhysicalVectorizedFilterOperator>();
-
-            auto inputSchema = physicalVectorizedFilterOperator->getInputSchema();
-            NES_ASSERT(inputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
-            auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(inputSchema, bufferSize);
-            auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-
-            auto physicalFilterOperator = physicalVectorizedFilterOperator->getPhysicalFilterOperator();
-            auto expression = expressionProvider->lowerExpression(physicalFilterOperator->getPredicate());
-            auto vectorizedMapOperator = std::make_shared<Runtime::Execution::Operators::VectorizedSelection>(
-                expression,
-                std::move(memoryProvider)
-            );
-            operators.push_back(vectorizedMapOperator);
-        }
-    }
-
-    auto schemaSizes = std::vector<uint64_t>(nodes.size());
-    std::transform(
-        nodes.cbegin(),
-        nodes.cend(),
-        schemaSizes.begin(),
-        [](const std::shared_ptr<Node>& node) {
-            auto physicalOperator = node->as<PhysicalOperators::PhysicalUnaryOperator>();
-            return physicalOperator->getInputSchema()->getSchemaSizeInBytes();
-        }
-    );
-    auto schemaSizeIt = std::min_element(schemaSizes.cbegin(), schemaSizes.cend());
-    if (schemaSizeIt != std::max_element(schemaSizes.cbegin(), schemaSizes.cend())) {
-        // TODO Handle different buffer size between input and output schema in between operators.
-        NES_NOT_IMPLEMENTED();
-    }
-
-    auto vectorizedPipelineOpt = buildNautilusOperatorPipeline(operators);
-    if (!vectorizedPipelineOpt) {
-        NES_ERROR("Failed to build a Nautilus operator pipeline");
-        return std::nullopt;
-    }
-    auto vectorizedPipeline = vectorizedPipelineOpt.value();
-
-    auto compileOptions = Nautilus::CompilationOptions();
-    compileOptions.setIdentifier("KernelCompilation");
-    auto dumpToFile = options->getDumpMode() == DumpMode::FILE;
-    auto dumpToConsole = options->getDumpMode() == DumpMode::CONSOLE;
-    auto dumpToBoth = options->getDumpMode() == DumpMode::FILE_AND_CONSOLE;
-    compileOptions.setDumpToFile(dumpToFile || dumpToBoth);
-    compileOptions.setDumpToConsole(dumpToConsole || dumpToBoth);
-    compileOptions.setCUDASdkPath(options->getVectorizationOptions()->getCUDASdkPath());
-
-    auto cudaEnabled = options->getVectorizationOptions()->isUsingCUDA();
-    if (!cudaEnabled) {
-        NES_ERROR("Kernel compilation was requested but CUDA is not enabled");
-        return std::nullopt;
-    }
-
-    auto cudaThreadsPerBlock = options->getVectorizationOptions()->getCUDAThreadsPerBlock();
-    auto descriptor = Runtime::Execution::Operators::Kernel::Descriptor {
-        .pipeline = vectorizedPipeline,
-        .compileOptions = compileOptions,
-        .inputSchemaSize = *schemaSizeIt,
-        .threadsPerBlock = cudaThreadsPerBlock,
-    };
-    return std::make_shared<Runtime::Execution::Operators::Kernel>(descriptor);
-}
-
-std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
-LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators) {
-    if (operators.empty()) {
-        return std::nullopt;
-    }
-
-    auto op = operators.at(0);
-    if (operators.size() == 1) {
-        return op;
-    }
-
-    auto span = std::span{operators};
-    auto subspan = span.subspan(1, operators.size());
-    auto subvector = std::vector(subspan.begin(), subspan.end());
-    auto childOpOpt = buildNautilusOperatorPipeline(subvector);
-    if (childOpOpt) {
-        auto childOp = childOpOpt.value();
-        auto executableChildOp = std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(childOp);
-        op->setChild(executableChildOp);
-    }
-    return op;
-}
-
-<<<<<<< HEAD
-=======
-std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
 LowerPhysicalToNautilusOperators::lowerKernel(
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     size_t bufferSize,
@@ -1404,28 +1257,30 @@ LowerPhysicalToNautilusOperators::lowerKernel(
         } else if (node->as_if<PhysicalOperators::Experimental::PhysicalVectorizedNonKeyedPreAggregationOperator>()) {
             auto physicalVectorizedOperator = node->as<PhysicalOperators::Experimental::PhysicalVectorizedNonKeyedPreAggregationOperator>();
 
-            NES_ASSERT(options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING, "Currently only slicing-based windowing is supported");
+            NES_ASSERT(options->getWindowingStrategy() == WindowingStrategy::SLICING, "Currently only slicing-based windowing is supported");
 
             auto inputSchema = physicalVectorizedOperator->getInputSchema();
             NES_ASSERT(inputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
             auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(inputSchema, bufferSize);
             auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
 
-            auto physicalNonKeyedPreAggregationOperator = physicalVectorizedOperator->getPhysicalNonKeyedPreAggregationOperator();
-            auto windowDefinition = physicalNonKeyedPreAggregationOperator->getWindowDefinition();
+            auto physicalSlicePreAggregationOperator = physicalVectorizedOperator->getPhysicalSlicePreAggregationOperator();
+            auto windowDefinition = physicalSlicePreAggregationOperator->getWindowDefinition();
             auto windowType = windowDefinition->getWindowType();
-            NES_ASSERT(windowType->isTimeBasedWindowType(), "Currently only time-based windows are supported");
-            auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
+            auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
+            NES_ASSERT(!timeBasedWindowType, "Currently only time-based windows are supported");
             auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic()->getType();
             NES_ASSERT(timeCharacteristic == Windowing::TimeCharacteristic::Type::IngestionTime, "Currently only ingestion time is supported");
-            auto aggregations = physicalNonKeyedPreAggregationOperator->getWindowDefinition()->getWindowAggregation();
+            auto aggregations = physicalSlicePreAggregationOperator->getWindowDefinition()->getWindowAggregation();
             auto aggregationFunctions = lowerAggregations(aggregations);
-            auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-            auto timeFunction = lowerTimeFunction(timeWindow);
+            auto timeFunction = lowerTimeFunction(timeBasedWindowType);
 
-            handler = std::get<std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>>(
-                physicalNonKeyedPreAggregationOperator->getWindowHandler()
+            handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
+                timeBasedWindowType->getSize().getTime(),
+                timeBasedWindowType->getSlide().getTime(),
+                windowDefinition->getInputOriginIds()
             );
+
             operatorHandlers.emplace_back(handler);
             auto slicePreAggregation = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(
                 operatorHandlers.size() - 1,
@@ -1466,9 +1321,9 @@ LowerPhysicalToNautilusOperators::lowerKernel(
 
     auto compileOptions = Nautilus::CompilationOptions();
     compileOptions.setIdentifier("KernelCompilation");
-    auto dumpToFile = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::FILE;
-    auto dumpToConsole = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
-    auto dumpToBoth = options->getDumpMode() == QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+    auto dumpToFile = options->getDumpMode() == DumpMode::FILE;
+    auto dumpToConsole = options->getDumpMode() == DumpMode::CONSOLE;
+    auto dumpToBoth = options->getDumpMode() == DumpMode::FILE_AND_CONSOLE;
     compileOptions.setDumpToFile(dumpToFile || dumpToBoth);
     compileOptions.setDumpToConsole(dumpToConsole || dumpToBoth);
     compileOptions.setCUDASdkPath(options->getVectorizationOptions()->getCUDASdkPath());
@@ -1513,7 +1368,6 @@ LowerPhysicalToNautilusOperators::buildNautilusOperatorPipeline(const std::vecto
     return op;
 }
 
->>>>>>> 32fc95bd88 ([#4232] Lower physical vectorized non-keyed pre-aggregation to Nautilus operator)
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 
 }// namespace NES::QueryCompilation

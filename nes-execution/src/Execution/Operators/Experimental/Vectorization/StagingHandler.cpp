@@ -13,6 +13,7 @@
 */
 
 #include <Execution/Operators/Experimental/Vectorization/StagingHandler.hpp>
+
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -44,7 +45,7 @@ void StagingHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::Pip
 }
 
 void StagingHandler::reset() {
-    currentWritePosition = 0;
+    currentWritePosition = (uint64_t) 0;
 }
 
 bool StagingHandler::full() const {
@@ -52,6 +53,10 @@ bool StagingHandler::full() const {
 }
 
 TupleBuffer* StagingHandler::getTupleBuffer() const {
+    if (currentWritePosition == 0) {
+        auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        tupleBuffer->setCreationTimestampInMS(ts);
+    }
     return tupleBuffer.get();
 }
 

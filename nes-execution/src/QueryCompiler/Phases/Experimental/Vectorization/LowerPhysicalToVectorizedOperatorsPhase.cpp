@@ -21,9 +21,11 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedNonKeyedPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedPipelineOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -82,6 +84,11 @@ std::optional<PhysicalOperatorPtr> LowerPhysicalToVectorizedOperatorsPhase::tryL
     } else if (physicalOperator->instanceOf<PhysicalFilterOperator>()) {
         auto physicalFilterOperator = physicalOperator->as<PhysicalFilterOperator>();
         auto vectorizedOperator = PhysicalVectorizedFilterOperator::create(physicalFilterOperator);
+        auto vectorizedPipeline = PhysicalVectorizedPipelineOperator::create(vectorizedOperator);
+        return vectorizedPipeline;
+    } else if (physicalOperator->instanceOf<PhysicalSlicePreAggregationOperator>()) {
+        auto physicalNonKeyedPreAggregationOperator = physicalOperator->as<PhysicalSlicePreAggregationOperator>();
+        auto vectorizedOperator = PhysicalVectorizedNonKeyedPreAggregationOperator::create(physicalNonKeyedPreAggregationOperator);
         auto vectorizedPipeline = PhysicalVectorizedPipelineOperator::create(vectorizedOperator);
         return vectorizedPipeline;
     }

@@ -24,6 +24,7 @@ public:
     explicit CUDALoweringInterface(const RegisterFrame& frame = RegisterFrame());
 
     constexpr static auto TUPLE_BUFFER_IDENTIFIER = "NES__CUDA__TupleBuffer";
+    constexpr static auto SLICE_STORE_IDENTIFIER = "NES__CUDA__SliceStore";
 
 private:
     std::unique_ptr<CodeGen::CodeGenerator> lowerProxyCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& operation, RegisterFrame& frame) override;

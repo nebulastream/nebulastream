@@ -15,7 +15,7 @@
 
 namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
-PhysicalVectorizedNonKeyedPreAggregationOperator::PhysicalVectorizedNonKeyedPreAggregationOperator(OperatorId id, const std::shared_ptr<PhysicalNonKeyedThreadLocalPreAggregationOperator>& physicalOperator)
+PhysicalVectorizedNonKeyedPreAggregationOperator::PhysicalVectorizedNonKeyedPreAggregationOperator(OperatorId id, const std::shared_ptr<PhysicalSlicePreAggregationOperator>& physicalOperator)
     : OperatorNode(id)
     , PhysicalUnaryOperator(id, physicalOperator->getInputSchema(), physicalOperator->getOutputSchema())
     , physicalOperator(physicalOperator)
@@ -23,8 +23,8 @@ PhysicalVectorizedNonKeyedPreAggregationOperator::PhysicalVectorizedNonKeyedPreA
 
 }
 
-PhysicalOperatorPtr PhysicalVectorizedNonKeyedPreAggregationOperator::create(const std::shared_ptr<PhysicalNonKeyedThreadLocalPreAggregationOperator>& physicalOperator) {
-    return std::make_shared<PhysicalVectorizedNonKeyedPreAggregationOperator>(Util::getNextOperatorId(), physicalOperator);
+PhysicalOperatorPtr PhysicalVectorizedNonKeyedPreAggregationOperator::create(const std::shared_ptr<PhysicalSlicePreAggregationOperator>& physicalOperator) {
+    return std::make_shared<PhysicalVectorizedNonKeyedPreAggregationOperator>(getNextOperatorId(), physicalOperator);
 }
 
 std::string PhysicalVectorizedNonKeyedPreAggregationOperator::toString() const {
@@ -35,7 +35,7 @@ OperatorNodePtr PhysicalVectorizedNonKeyedPreAggregationOperator::copy() {
     return std::make_shared<PhysicalVectorizedNonKeyedPreAggregationOperator>(id, physicalOperator);
 }
 
-const std::shared_ptr<PhysicalNonKeyedThreadLocalPreAggregationOperator>& PhysicalVectorizedNonKeyedPreAggregationOperator::getPhysicalNonKeyedPreAggregationOperator() {
+const std::shared_ptr<PhysicalSlicePreAggregationOperator>& PhysicalVectorizedNonKeyedPreAggregationOperator::getPhysicalSlicePreAggregationOperator() {
     return physicalOperator;
 }
 

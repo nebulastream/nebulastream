@@ -16,7 +16,7 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-#include "QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp"
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
@@ -25,18 +25,18 @@ namespace NES::QueryCompilation::PhysicalOperators::Experimental {
  */
 class PhysicalVectorizedNonKeyedPreAggregationOperator : public PhysicalUnaryOperator {
 public:
-    PhysicalVectorizedNonKeyedPreAggregationOperator(OperatorId id, const std::shared_ptr<PhysicalNonKeyedThreadLocalPreAggregationOperator>& physicalOperator);
+    PhysicalVectorizedNonKeyedPreAggregationOperator(OperatorId id, const std::shared_ptr<PhysicalSlicePreAggregationOperator>& physicalOperator);
 
-    static PhysicalOperatorPtr create(const std::shared_ptr<PhysicalNonKeyedThreadLocalPreAggregationOperator>& physicalOperator);
+    static PhysicalOperatorPtr create(const std::shared_ptr<PhysicalSlicePreAggregationOperator>& physicalOperator);
 
     std::string toString() const override;
 
     OperatorNodePtr copy() override;
 
-    const std::shared_ptr<PhysicalNonKeyedThreadLocalPreAggregationOperator>& getPhysicalNonKeyedPreAggregationOperator();
+    const std::shared_ptr<PhysicalSlicePreAggregationOperator>& getPhysicalSlicePreAggregationOperator();
 
 private:
-    std::shared_ptr<PhysicalNonKeyedThreadLocalPreAggregationOperator> physicalOperator;
+    std::shared_ptr<PhysicalSlicePreAggregationOperator> physicalOperator;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators::Experimental

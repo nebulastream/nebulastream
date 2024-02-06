@@ -21,6 +21,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+class NonKeyedSlicePreAggregationHandler;
+
 /**
  * @brief The Kernel operator is a Nautilus operator that upon calling its `execute` method executes a kernel function.
  * The kernel function is compiled into a shared library object and exposed by a wrapper function.
@@ -32,6 +34,7 @@ public:
         Nautilus::CompilationOptions compileOptions;
         uint64_t inputSchemaSize;
         uint32_t threadsPerBlock;
+        std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler> handler;
     };
 
     /**
@@ -40,14 +43,14 @@ public:
      */
     explicit Kernel(Descriptor descriptor);
 
-    void setup(ExecutionContext& executionCtx) const override;
+    void setup(ExecutionContext& ctx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
 private:
     Descriptor descriptor;
-    mutable std::unique_ptr<Backends::KernelExecutable> kernelExecutable;
+    std::unique_ptr<Backends::KernelExecutable> kernelExecutable;
 };
 
 } // namespace NES::Runtime::Execution::Operators
