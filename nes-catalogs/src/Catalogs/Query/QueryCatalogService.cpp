@@ -267,7 +267,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
         // check the query sub plan status
         auto currentStatus = querySubPlanMetaData->getQuerySubPlanStatus();
         if (currentStatus == QueryState::SOFT_STOP_COMPLETED && querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED) {
-            NES_WARNING("Received multiple soft stop completed for sub query with id {} for query {}", querySubPlanId, queryId);
+            //NES_WARNING("Received multiple soft stop completed for sub query with id {} for query {}", querySubPlanId, queryId);
             NES_WARNING("Skipping remaining operation");
             continue;
         } else if (currentStatus == QueryState::SOFT_STOP_COMPLETED && querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED) {
