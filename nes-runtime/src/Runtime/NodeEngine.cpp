@@ -670,6 +670,9 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
 
 bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan) {
     std::unique_lock lock(engineMutex);
+    NES_DEBUG("Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
+              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
+              reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
     auto deployedPlanIterator = deployedExecutableQueryPlans.find(reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
 
     //if not running sub query plan with the given id exists, return false
@@ -684,11 +687,16 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
         auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
         if (networkSink != nullptr) {
             for (auto& reconfiguredSink : reconfiguredDecomposedQueryPlan->getSinkOperators()) {
-                auto reconfiguredNetworkSink =
+                auto reconfiguredNetworkSinkDescriptor =
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
-                if (reconfiguredNetworkSink
-                    && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
-                    networkSink->scheduleNewDescriptor(*reconfiguredNetworkSink);
+                if (reconfiguredNetworkSinkDescriptor
+                    && reconfiguredNetworkSinkDescriptor->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
+                    NES_DEBUG("Reconfiguring the network sink {} with new descriptor for shared query plan {} and the decomposed "
+                              "query plan {}.",
+                              reconfiguredNetworkSinkDescriptor->getUniqueId(),
+                              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
+                              reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
+                    networkSink->scheduleNewDescriptor(*reconfiguredNetworkSinkDescriptor);
                 }
             }
         }
@@ -701,6 +709,11 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                 auto reconfiguredNetworkSourceDescriptor =
                     std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
                 if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
+                    NES_DEBUG("Reconfiguring the network source {} with new descriptor for shared query plan {} and the "
+                              "decomposed query plan {}.",
+                              reconfiguredNetworkSourceDescriptor->getUniqueId(),
+                              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
+                              reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
                     networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
                 }
             }
