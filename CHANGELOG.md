@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.36](https://github.com/nebulastream/nebulastream/tree/v0.6.36) (2024-02-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.35...v0.6.36)
+
+**Implemented enhancements:**
+
+- \[TASK\] ExternalProviderTest disabled test [\#4554](https://github.com/nebulastream/nebulastream/issues/4554)
+
 ## [v0.6.35](https://github.com/nebulastream/nebulastream/tree/v0.6.35) (2024-02-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.34...v0.6.35)
