@@ -253,6 +253,10 @@ bool GlobalExecutionPlan::removeAllDecomposedQueryPlans(SharedQueryId sharedQuer
         }
 
         if ((*lockedExecutionNode)->getAllQuerySubPlans().empty()) {
+            //Release all locks before node removal
+            lockedExecutionNode.unlock();
+            lockedExecutionNodeMap.unlock();
+            lockedSharedQueryIdToExecutionNodeIdMap.unlock();
             removeExecutionNode(executionNodeId);
         }
     }
@@ -303,6 +307,10 @@ bool GlobalExecutionPlan::removeDecomposedQueryPlan(NES::ExecutionNodeId executi
         }
 
         if ((*lockedExecutionNode)->getAllQuerySubPlans().empty()) {
+            //Release all locks before node removal
+            lockedExecutionNode.unlock();
+            lockedExecutionNodeMap.unlock();
+            lockedSharedQueryIdToExecutionNodeIdMap.unlock();
             removeExecutionNode(executionNodeId);
         }
         NES_DEBUG("Removed decomposed query plan {} for shared query {}", decomposedQueryPlanVersion, sharedQueryId);

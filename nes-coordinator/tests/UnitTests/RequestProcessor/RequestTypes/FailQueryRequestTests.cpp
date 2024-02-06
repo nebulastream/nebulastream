@@ -155,16 +155,18 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
             queryCatalog->resetSubQueryMetaData(queryId);
             queryCatalog->mapSharedQueryPlanId(sharedQueryId, queryId);
         }
-
         //Add sub query plan metadata in the catalog
         for (auto& executionNode : executionNodes) {
             auto workerId = executionNode->operator*()->getId();
             auto allDecomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
             for (auto& decomposedQueryPlan : allDecomposedQueryPlans) {
-                DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-                for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                    queryCatalog->addSubQueryMetaData(queryId, decomposedQueryPlanId, workerId, QueryState::RUNNING);
-                }
+                auto decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+                auto decomposedQueryPlanVersion = decomposedQueryPlan->getVersion();
+                queryCatalog->addDecomposedQueryMetaData(sharedQueryId,
+                                                         decomposedQueryPlanId,
+                                                         decomposedQueryPlanVersion,
+                                                         workerId,
+                                                         QueryState::RUNNING);
             }
         }
 
@@ -231,12 +233,6 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
 
             //expect the query to be marked for failure and not failed, because the deployment did not succeed
             EXPECT_EQ(queryCatalog->getQueryState(queryId), QueryState::MARKED_FOR_FAILURE);
-            auto entry = queryCatalog->getAllQueryCatalogEntries()[queryId];
-            EXPECT_EQ(entry->getQueryState(), QueryState::MARKED_FOR_FAILURE);
-            for (const auto& subQueryPlanMetaData : entry->getAllSubQueryPlanMetaData()) {
-                EXPECT_EQ(subQueryPlanMetaData->getSubQueryStatus(), QueryState::MARKED_FOR_FAILURE);
-            }
-
             EXPECT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::FAILED);
         }
     });

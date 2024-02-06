@@ -70,7 +70,8 @@ void QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, co
             //Check if query exists
             if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
                 NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
-                throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+                throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId "
+                                                         + std::to_string(queryId));
             }
 
             auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
@@ -258,7 +259,9 @@ bool QueryCatalog::updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
                                                                     newDecomposedQueryState);
             break;
         }
+        case QueryState::RUNNING:
         case QueryState::DEPLOYED:
+        case QueryState::MIGRATING:
         case QueryState::MARKED_FOR_REDEPLOYMENT:
         case QueryState::MARKED_FOR_MIGRATION: {
             auto lockedSharedQueryCatalogEntryMapping = sharedQueryCatalogEntryMapping.wlock();
@@ -450,13 +453,13 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId shar
                            || currentDecomposedQuerySubPlanStatus == QueryState::SOFT_STOP_COMPLETED
                            || currentDecomposedQuerySubPlanStatus == QueryState::MIGRATION_COMPLETED
                            || currentDecomposedQuerySubPlanStatus == QueryState::REDEPLOYED,
-                       "Unexpected subplan status.");
+                       "Unexpected decomposed query plan status.");
         }
         if (queryMigrationComplete) {
             NES_DEBUG("Migration completed. Marking shared query with id {} as running.", sharedQueryId);
             sharedQueryCatalogEntry->setQueryState(QueryState::RUNNING);
             for (auto containedQueryId : sharedQueryCatalogEntry->getContainedQueryIds()) {
-                NES_INFO("Query with id {} is now stopped", containedQueryId);
+                NES_INFO("Query with id {} is now running", containedQueryId);
                 auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[containedQueryId];
                 queryCatalogEntry->setQueryState(QueryState::RUNNING);
             }

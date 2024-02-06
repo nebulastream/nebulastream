@@ -145,9 +145,9 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
     }
 
     static std::tuple<uint64_t, GlobalExecutionPlanPtr> runPlacement(const Query& query,
-                                                                         const TopologyPtr& topology,
-                                                                         const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                         const OptimizerConfiguration& optimizerConfig) {
+                                                                     const TopologyPtr& topology,
+                                                                     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                                     const OptimizerConfiguration& optimizerConfig) {
         std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto testQueryPlan = query.getQueryPlan();
         testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
@@ -232,15 +232,15 @@ TEST_F(DistributedMatrixJoinPlacementTest, testNemoJoinPlacement) {
     auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig);
     auto queryId = std::get<0>(outputTuple);
     auto executionPlan = std::get<1>(outputTuple);
-    auto executionNodes = executionPlan->getExecutionNodesByQueryId(queryId);
-    EXPECT_EQ(executionNodes.size(), 5); // topology contains 1 coordinator, 4 workers
+    auto executionNodes = executionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
+    EXPECT_EQ(executionNodes.size(), 5);// topology contains 1 coordinator, 4 workers
 
     for (const auto& executionNode : executionNodes) {
-        std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->getAllDecomposedQueryPlans(queryId);
-        if (executionNode->getId() == 1u) {
+        std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+        if (executionNode->operator*()->getId() == 1u) {
             // coordinator should have 1 sink, 8 network sources
             verifyChildrenOfType<JoinLogicalOperatorNode>(querySubPlans, 1, 1);
-            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 2*sourceNodes.size());
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 2 * sourceNodes.size());
         } else {
             // 2x replication factor, therefore each source should have 2 network sources
             verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans, 1, 2);

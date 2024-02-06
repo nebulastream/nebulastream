@@ -109,13 +109,13 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
 void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
     NES_DEBUG("start checkAsyncResult for mode={} for {} queues", magic_enum::enum_name(mode), queues.size());
     std::vector<Exceptions::RpcFailureInformation> failedRPCCalls;
-    for (const auto& queue : queues) {
+    for (const auto& [completionQueue, numberOfRequests] : queues) {
         //wait for all deploys to come back
         void* got_tag = nullptr;
         bool ok = false;
         uint64_t queueIndex = 0;
         // Block until the next result is available in the completion queue "completionQueue".
-        while (queueIndex != queue.second && queue.first->Next(&got_tag, &ok)) {
+        while (queueIndex != numberOfRequests && completionQueue->Next(&got_tag, &ok)) {
             // The tag in this example is the memory location of the call object
             bool status = false;
             if (mode == RpcClientModes::Register) {
@@ -139,7 +139,7 @@ void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
             }
 
             if (!status) {
-                failedRPCCalls.push_back({queue.first, queueIndex});
+                failedRPCCalls.push_back({completionQueue, queueIndex});
             }
 
             // Once we're complete, deallocate the call object.

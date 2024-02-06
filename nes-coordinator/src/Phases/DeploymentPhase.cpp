@@ -115,7 +115,10 @@ void DeploymentPhase::registerUnregisterDecomposedQueryPlan(const std::set<Optim
                             magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
-        asyncRequests[queueForDeploymentContext] = 1;
+
+        if (!(decomposedQueryPlanState == QueryState::MARKED_FOR_MIGRATION && requestType == RequestType::AddQuery)) {
+            asyncRequests[queueForDeploymentContext] = 1;
+        }
     }
     workerRPCClient->checkAsyncResult(asyncRequests, RpcClientModes::Register);
     queryCatalog->updateSharedQueryStatus(sharedQueryId, sharedQueryState, "");
@@ -140,7 +143,7 @@ void DeploymentPhase::startStopDecomposedQueryPlan(const std::set<Optimizer::Dep
                 queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                               decomposedQueryPlanId,
                                                               decomposedQueryPlanVersion,
-                                                              QueryState::DEPLOYED,
+                                                              QueryState::RUNNING,
                                                               workerId);
                 break;
             }
@@ -185,7 +188,10 @@ void DeploymentPhase::startStopDecomposedQueryPlan(const std::set<Optimizer::Dep
                             magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
-        asyncRequests[queueForDeploymentContext] = 1;
+
+        if (!(decomposedQueryPlanState == QueryState::MARKED_FOR_MIGRATION && requestType == RequestType::AddQuery)) {
+            asyncRequests[queueForDeploymentContext] = 1;
+        }
     }
     workerRPCClient->checkAsyncResult(asyncRequests, RpcClientModes::Start);
 }
