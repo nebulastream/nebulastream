@@ -56,7 +56,7 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
       z3Context(z3Context) {}
 
-std::vector<DeploymentContextPtr> ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                             DecomposedQueryPlanVersion querySubPlanVersion) {

@@ -80,10 +80,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     // Create container to record all deployment contexts
-    auto deploymentContextComparator = [](const DeploymentContextPtr& first, const DeploymentContextPtr& second) {
-        return first->getDecomposedQueryPlanId() < second->getDecomposedQueryPlanId();
-    };
-    std::set<DeploymentContextPtr, decltype(deploymentContextComparator)> deploymentContexts;
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
 
     if (queryReconfiguration) {
         for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
@@ -119,8 +116,8 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                                                                         nextDecomposedQueryPlanVersion);
 
                 // Collect all deployment contexts returned by placement removal strategy
-                for (const auto& placementRemovalDeploymentContext : placementRemovalDeploymentContexts) {
-                    deploymentContexts.insert(placementRemovalDeploymentContext);
+                for (const auto& [decomposedQueryPlanId, deploymentContext] : placementRemovalDeploymentContexts) {
+                    deploymentContexts[decomposedQueryPlanId] = deploymentContext;
                 }
 
             } else {
@@ -139,8 +136,8 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                                                                          nextDecomposedQueryPlanVersion);
 
                 // Collect all deployment contexts returned by placement removal strategy
-                for (const auto& placementAdditionDeploymentContext : placementAdditionDeploymentContexts) {
-                    deploymentContexts.insert(placementAdditionDeploymentContext);
+                for (const auto& [decomposedQueryPlanId, deploymentContext] : placementAdditionDeploymentContexts) {
+                    deploymentContexts[decomposedQueryPlanId] = deploymentContext;
                 }
             } else {
                 NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
@@ -186,8 +183,8 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                                                                     nextDecomposedQueryPlanVersion);
 
             // Collect all deployment contexts returned by placement removal strategy
-            for (const auto& placementRemovalDeploymentContext : placementRemovalDeploymentContexts) {
-                deploymentContexts.insert(placementRemovalDeploymentContext);
+            for (const auto& [decomposedQueryPlanId, deploymentContext] : placementRemovalDeploymentContexts) {
+                deploymentContexts[decomposedQueryPlanId] = deploymentContext;
             }
         } else {
             NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
@@ -205,8 +202,8 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                                                                      nextDecomposedQueryPlanVersion);
 
             // Collect all deployment contexts returned by placement removal strategy
-            for (const auto& placementAdditionDeploymentContext : placementAdditionDeploymentContexts) {
-                deploymentContexts.insert(placementAdditionDeploymentContext);
+            for (const auto& [decomposedQueryPlanId, deploymentContext] : placementAdditionDeploymentContexts) {
+                deploymentContexts[decomposedQueryPlanId] = deploymentContext;
             }
         } else {
             NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
@@ -215,7 +212,11 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
     }
 
     NES_DEBUG("QueryPlacementAmendmentPhase: Update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
-    return {deploymentContexts.begin(), deploymentContexts.end()};
+    std::set<DeploymentContextPtr> computedDeploymentContexts;
+    for (const auto& [decomposedQueryPlanId, deploymentContext] : deploymentContexts) {
+        computedDeploymentContexts.emplace(deploymentContext);
+    }
+    return computedDeploymentContexts;
 }
 
 bool QueryPlacementAmendmentPhase::containsOnlyPinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators) {

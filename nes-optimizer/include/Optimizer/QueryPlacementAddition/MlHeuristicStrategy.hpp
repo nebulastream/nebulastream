@@ -42,7 +42,7 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     static const bool DEFAULT_LOW_THROUGHPUT_SOURCE = false;
     static const bool DEFAULT_ML_HARDWARE = false;
 
-    std::vector<DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion) override;

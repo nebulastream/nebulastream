@@ -69,7 +69,7 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
       serviceURL(serviceURL), timeWeight(timeWeight) {}
 
-std::vector<DeploymentContextPtr> ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+std::map<DecomposedQueryPlanId, DeploymentContextPtr> ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                                          DecomposedQueryPlanVersion querySubPlanVersion) {

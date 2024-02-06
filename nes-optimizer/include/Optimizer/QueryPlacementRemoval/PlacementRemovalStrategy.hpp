@@ -88,9 +88,9 @@ class PlacementRemovalStrategy {
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @param querySubPlanVersion: the new version of the updated query sub plans
-     * @return vector of deployment context containing updated decomposed query plans
+     * @return map of deployment context containing updated decomposed query plans
      */
-    std::vector<DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion);
@@ -135,7 +135,7 @@ class PlacementRemovalStrategy {
      * @param querySubPlanVersion: the new version of the query sub plan
      * @return vector of deployment contexts
      */
-    std::vector<DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion);
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,
