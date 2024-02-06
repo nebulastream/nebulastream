@@ -23,8 +23,6 @@
 #include <string>
 #include <unistd.h>
 
-
-
 namespace NES {
 
 class E2ECoordinatorMultiQueryTest : public Testing::BaseIntegrationTest {
