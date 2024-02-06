@@ -17,6 +17,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime {
 
@@ -117,9 +118,12 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::mi
 }
 
 TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
-    std::stringstream buffer;
-    buffer << this;
-    NES_TRACE("TupleBuffer FixedSizeBufferPool::getBufferBlocking: {}", buffer.str());
+    NES_IF_LOG_TRACE {
+        std::stringstream buffer;
+        buffer << this;
+        NES_TRACE("TupleBuffer FixedSizeBufferPool::getBufferBlocking: {}", buffer.str());
+    }
+
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     // try to get an exclusive buffer
     std::unique_lock lock(mutex);
