@@ -207,7 +207,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
     }
 }
 
-TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
+TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->enableMonitoring = true;
