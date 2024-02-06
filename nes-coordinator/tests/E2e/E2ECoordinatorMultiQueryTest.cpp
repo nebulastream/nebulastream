@@ -23,7 +23,7 @@
 #include <string>
 #include <unistd.h>
 
-#define GetCurrentDir getcwd
+
 
 namespace NES {
 
@@ -220,7 +220,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 /**
  * @brief This test starts two workers and a coordinator and submits two different queryIdAndCatalogEntryMapping
  */
-TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoQueriesWithFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     NES_INFO("start coordinator");
     std::string Qpath1 = getTestResourceFolder() / "QueryQnV1.out";
     std::string Qpath2 = getTestResourceFolder() / "QueryQnV2.out";
@@ -323,7 +323,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoQueriesWithFileOutput) {
     ASSERT_EQ(contentQ2, ASSERTedContent2);
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithTumblingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult2.txt";
@@ -431,7 +431,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithTum
     ASSERT_EQ(contentQ2, ASSERTedContent2);
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSlidingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult2.txt";
@@ -515,7 +515,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSli
                               "0,10000,12,1\n"
                               "0,10000,16,2\n"
                               "5000,15000,1,95\n"
-                              "10000,20000,1,145\n";
+                              "10000,20000,1,145\n"
+                              "15000,25000,1,126\n"
+                              "20000,30000,1,41\n";
 
     string ASSERTedContent2 = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),"
                               "window$value:INTEGER(64 bits)\n"
@@ -523,7 +525,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSli
                               "0,20000,4,1\n"
                               "0,20000,11,5\n"
                               "0,20000,12,1\n"
-                              "0,20000,16,2\n";
+                              "0,20000,16,2\n"
+                              "10000,30000,1,186\n"
+                              "20000,40000,1,41\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(ASSERTedContent1, outputFilePath));
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(ASSERTedContent2, outputFilePath2));
