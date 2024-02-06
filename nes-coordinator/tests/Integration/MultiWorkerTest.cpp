@@ -528,12 +528,12 @@ TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml) {
     // stop worker 1
     NES_DEBUG("Stopping worker 1");
     bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
+    ASSERT_TRUE(retStopWrk1);
     NES_DEBUG("Worker 1 stopped successfully");
 
     NES_DEBUG("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 TEST_F(MultiWorkerTest, checkPersistenceOfWorkerIdWithNonExistingConfigFile) {
@@ -569,12 +569,12 @@ TEST_F(MultiWorkerTest, checkPersistenceOfWorkerIdWithNonExistingConfigFile) {
     // stop worker 1
     NES_DEBUG("Stopping worker 1");
     bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
+    ASSERT_TRUE(retStopWrk1);
     NES_DEBUG("Worker 1 stopped successfully");
 
     NES_DEBUG("Stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 TEST_F(MultiWorkerTest, DISABLED_checkPersistenceOfOverwrittenWorkerIdInYaml) {
