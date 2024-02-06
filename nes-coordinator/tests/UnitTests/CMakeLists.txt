@@ -101,7 +101,7 @@ add_nes_unit_test(grpc-test "gRPC/grpcTests.cpp")
 #
 
 ### QueryCatalog Tests ###
-add_nes_unit_test(query-catalog-service-tests "Services/QueryCatalogServiceTest.cpp")
+add_nes_unit_test(query-catalog-tests "Services/QueryCatalogTest.cpp")
 
 ### LocationService Tests ###
 add_nes_unit_test(location-service-tests "Services/LocationServiceTest.cpp")

@@ -111,7 +111,8 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
                                                                             sharedQueryId,
                                                                             decomposedQueryPlanId,
                                                                             decomposedQueryPlanVersion,
-                                                                            QueryState::DEPLOYED);
+                                                                            QueryState::RUNNING);
+                        break;
                     }
                     case QueryState::MARKED_FOR_MIGRATION: {
                         globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
@@ -123,6 +124,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
                                                                        sharedQueryId,
                                                                        decomposedQueryPlanId,
                                                                        decomposedQueryPlanVersion);
+                        break;
                     }
                     default:
                         NES_WARNING("Unhandled Deployment context with status: {}",
