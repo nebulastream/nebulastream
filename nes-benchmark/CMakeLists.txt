@@ -48,6 +48,7 @@ add_nes_benchmarks(e2e-benchmark-main "src/E2E/E2EBenchmarkMain.cpp")
 include(ExternalProject)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
+
 ### Query Merger Benchmark ###
 add_nes_benchmarks(query-merger-benchmark "src/MicroBenchmarks/QueryMerger/BenchmarkQueryMerger.cpp")
 

@@ -370,8 +370,10 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     deployedExecutableQueryPlans.clear();
     sharedQueryIdToDecomposedQueryPlanIds.clear();
     queryManager->destroy();
-    networkManager->destroy();
-    partitionManager->clear();
+    if (networkManager) {
+        networkManager->destroy();
+        partitionManager->clear();
+    }
     for (auto&& bufferManager : bufferManagers) {
         bufferManager->destroy();
     }

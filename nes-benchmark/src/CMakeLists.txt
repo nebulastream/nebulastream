@@ -12,6 +12,8 @@
 
 add_subdirectory(DataGeneration)
 
+add_subdirectory(MicroBenchmarks)
+
 add_source_files(nes-benchmark
         E2E/Configurations/E2EBenchmarkConfig.cpp
         E2E/Configurations/E2EBenchmarkConfigOverAllRuns.cpp
