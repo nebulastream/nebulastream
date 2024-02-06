@@ -122,27 +122,6 @@ class CompilationOptions {
      */
     uint8_t getOptimizationLevel() const;
 
-    /**
-     * @brief Enable/disable the inclusion of CUDA.
-     */
-    void useCUDA(bool cuda);
-
-    /**
-     * @brief Indicate if we are using CUDA.
-     */
-    bool usingCUDA() const;
-
-    /**
-     * @brief Set the path to the CUDA SDK
-     * @param cudaSdkPath the CUDA SDK path
-     */
-    void setCUDASdkPath(const std::string& cudaSdkPath);
-
-    /**
-     * @brief Get the path to the CUDA SDK
-     */
-    const std::string getCUDASdkPath() const;
-
   private:
     std::string identifier;
     std::string dumpOutputPath;
@@ -153,8 +132,6 @@ class CompilationOptions {
     bool optimize = false;
     bool debug = true;
     bool proxyInlining = false;
-    bool cuda = false;
-    std::string cudaSdkPath;
     uint8_t optimizationLevel = 1;
 };
 }// namespace NES::Nautilus

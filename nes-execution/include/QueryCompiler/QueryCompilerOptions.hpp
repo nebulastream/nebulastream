@@ -178,17 +178,6 @@ class QueryCompilerOptions {
     [[nodiscard]] const DumpMode& getDumpMode() const;
     void setDumpMode(DumpMode dumpMode);
 
-    /**
-     * @brief Set the path to the CUDA SDK
-     * @param cudaSdkPath the CUDA SDK path
-     */
-    void setCUDASdkPath(const std::string& cudaSdkPath);
-
-    /**
-     * @brief Get the path to the CUDA SDK
-     */
-    const std::string getCUDASdkPath() const;
-
   protected:
     uint64_t numSourceLocalBuffers;
     OutputBufferOptimizationLevel outputBufferOptimizationLevel;
@@ -200,7 +189,6 @@ class QueryCompilerOptions {
     NautilusBackend nautilusBackend;
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;
-    std::string cudaSdkPath;
     StreamJoinStrategy joinStrategy;
 };
 }// namespace NES::QueryCompilation

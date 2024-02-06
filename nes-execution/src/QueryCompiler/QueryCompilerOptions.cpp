@@ -118,8 +118,4 @@ uint64_t QueryCompilerOptions::StreamHashJoinOptions::getTotalSizeForDataStructu
 void QueryCompilerOptions::StreamHashJoinOptions::setTotalSizeForDataStructures(uint64_t totalSizeForDataStructures) {
     this->totalSizeForDataStructures = totalSizeForDataStructures;
 }
-
-void QueryCompilerOptions::setCUDASdkPath(const std::string& cudaSdkPath) { QueryCompilerOptions::cudaSdkPath = cudaSdkPath; }
-const std::string QueryCompilerOptions::getCUDASdkPath() const { return cudaSdkPath; }
-
 }// namespace NES::QueryCompilation

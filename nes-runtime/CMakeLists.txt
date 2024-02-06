@@ -94,12 +94,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     target_link_libraries(nes-runtime PRIVATE nes-compiler)
 endif ()
 
-
-if (NES_USE_GPU)
-    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_CUDA})
-endif ()
-
-
 if (NES_USE_OPENCL)
     find_package(OpenCL REQUIRED)
     if (${OpenCL_FOUND})

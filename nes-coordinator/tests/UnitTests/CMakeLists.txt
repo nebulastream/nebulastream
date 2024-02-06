@@ -16,10 +16,8 @@ add_nes_unit_test(add-scan-and-emit-phase-tests "QueryCompiler/AddScanAndEmitPha
 ### ArrayType Test ###
 add_nes_unit_test(array-type-tests "QueryCompiler/ArrayTypeTest.cpp")
 
-
 ### DataTypeFactory Test ###
 add_nes_unit_test(data-type-factory-tests "QueryCompiler/DataTypeFactoryTests.cpp")
-
 
 ### Pipelining Tests ###
 add_nes_unit_test(pipelining-phase-tests "QueryCompiler/PipeliningPhaseTest.cpp")
