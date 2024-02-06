@@ -99,7 +99,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
                     //todo: failure here, make this more robust?
-                    if (!optRecvStatus.has_value()) {
+                    if (!optRecvStatus2.has_value()) {
                         NES_DEBUG("recv failed on network channel");
                         //return nullptr;
                         continue;
@@ -123,7 +123,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     // if server receives a message that an error occurred
                     zmq::message_t errorEnvelope;
                     auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
-                    if (!optRecvStatus.has_value()) {
+                    if (!optRecvStatus3.has_value()) {
                         NES_DEBUG("recv failed on network channel");
                         //return nullptr;
                         continue;
