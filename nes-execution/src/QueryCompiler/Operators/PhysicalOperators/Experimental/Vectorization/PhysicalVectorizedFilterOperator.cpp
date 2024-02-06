@@ -24,7 +24,7 @@ PhysicalVectorizedFilterOperator::PhysicalVectorizedFilterOperator(OperatorId id
 }
 
 PhysicalOperatorPtr PhysicalVectorizedFilterOperator::create(const std::shared_ptr<PhysicalFilterOperator>& physicalFilterOperator) {
-    return std::make_shared<PhysicalVectorizedFilterOperator>(Util::getNextOperatorId(), physicalFilterOperator);
+    return std::make_shared<PhysicalVectorizedFilterOperator>(getNextOperatorId(), physicalFilterOperator);
 }
 
 std::string PhysicalVectorizedFilterOperator::toString() const {

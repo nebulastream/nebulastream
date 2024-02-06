@@ -19,6 +19,7 @@
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/BlockIdx.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/FieldAccess.hpp>
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/ThreadIdx.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -34,13 +35,15 @@ VectorizedMap::VectorizedMap(const std::shared_ptr<Map>& mapOperator,
 }
 
 // TODO Move this method out of this source file to a more sensible place.
-Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
+static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
     auto ref = createNextValueReference(builtInVariable->getType());
     Tracing::TraceUtil::traceConstOperation(builtInVariable, ref);
     auto value = builtInVariable->getAsValue();
     value.ref = ref;
     return value;
 }
+
+static void setAsValidInMetadata(uint64_t /*recordIndex*/) {}
 
 void VectorizedMap::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto blockDim = std::make_shared<BlockDim>();
@@ -62,6 +65,9 @@ void VectorizedMap::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
     if (recordIndex < numberOfRecords) {
         auto record = memoryProvider->read(projections, bufferAddress, recordIndex);
         mapOperator->execute(ctx, record);
+        // TODO This is a workaround to support selection but not to lose support for map.
+        //      We plan to add operator-specific init and shutdown code to code generation, so this becomes unnecessary.
+        FunctionCall("setAsValidInMetadata", setAsValidInMetadata, recordIndex);
         memoryProvider->write(recordIndex, bufferAddress, record);
     }
 
