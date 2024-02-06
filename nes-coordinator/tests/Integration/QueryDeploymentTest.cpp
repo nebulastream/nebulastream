@@ -1849,6 +1849,8 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
+//TODO: this test will be enabled once the following issue is resolved
+//TODO: Distributed Window Aggregation #4557
 TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowDistributed) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -2005,6 +2007,8 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
+//TODO: this test will be enabled once the following issue is resolved
+//TODO: Distributed Window Aggregation #4557
 TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDistributed) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
