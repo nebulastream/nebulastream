@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.34](https://github.com/nebulastream/nebulastream/tree/v0.6.34) (2024-02-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.33...v0.6.34)
+
+**Implemented enhancements:**
+
+- \[TASK\] QueryDeploymentTest disabled tests [\#4542](https://github.com/nebulastream/nebulastream/issues/4542)
+
 ## [v0.6.33](https://github.com/nebulastream/nebulastream/tree/v0.6.33) (2024-02-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.32...v0.6.33)
