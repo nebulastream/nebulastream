@@ -684,7 +684,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             auto newDecomposedQueryPlan =
                                 DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                             sharedQueryId,
-                                                            workerId,
+                                                            currentWorkerId,
                                                             {networkSinkOperator});
 
                             // 18. Record information about the query plan and worker id
