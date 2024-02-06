@@ -137,6 +137,13 @@ struct LogCaller<LogLevel::LOG_WARNING> {
 // Creates a log message with log level fatal error.
 #define NES_FATAL_ERROR(...) NES_LOG(NES::LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
 
+#define NES_IF_LOG_LEVEL(level)                                                                                                  \
+    if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= magic_enum::enum_underlying(level))                                              \
+        if (NES::Logger::getInstance()->getCurrentLogLevel() >= level)
+
+#define NES_IF_LOG_TRACE NES_IF_LOG_LEVEL(NES::LogLevel::LOG_TRACE)
+#define NES_IF_LOG_DEBUG NES_IF_LOG_LEVEL(NES::LogLevel::LOG_DEBUG)
+
 /// I am aware that we do not like __ before variable names but here we need them
 /// to avoid name collions, e.g., __buffer, __stacktrace
 /// that should not be a problem because of the scope, however, better be safe than sorry :P
