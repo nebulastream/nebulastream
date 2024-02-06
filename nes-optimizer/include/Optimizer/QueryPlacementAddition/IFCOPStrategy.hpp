@@ -32,7 +32,7 @@ class IFCOPStrategy : public BasePlacementAdditionStrategy {
 
     ~IFCOPStrategy() override = default;
 
-    std::vector<DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamNodes,
                                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamNodes,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion) override;

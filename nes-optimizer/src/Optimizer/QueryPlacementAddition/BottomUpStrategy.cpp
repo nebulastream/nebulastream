@@ -40,7 +40,7 @@ BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecution
                                    PlacementAmendmentMode placementAmendmentMode)
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
-std::vector<DeploymentContextPtr>
+std::map<DecomposedQueryPlanId, DeploymentContextPtr>
 BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,

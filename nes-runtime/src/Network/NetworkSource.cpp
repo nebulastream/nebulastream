@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
-#include "Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp"
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES::Network {
@@ -86,19 +87,19 @@ bool NetworkSource::start() {
     if (running.compare_exchange_strong(expected, true)) {
         for (const auto& successor : executableSuccessors) {
             auto decomposedQueryPlanId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
-                                                                    return sink->getParentPlanId();
-                                                                },
-                                                                [](Execution::ExecutablePipelinePtr pipeline) {
-                                                                    return pipeline->getDecomposedQueryPlanId();
-                                                                }},
-                                             successor);
+                                                                           return sink->getParentPlanId();
+                                                                       },
+                                                                       [](Execution::ExecutablePipelinePtr pipeline) {
+                                                                           return pipeline->getDecomposedQueryPlanId();
+                                                                       }},
+                                                    successor);
             auto sharedQueryId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
-                                                             return sink->getSharedQueryId();
-                                                         },
-                                                         [](Execution::ExecutablePipelinePtr pipeline) {
-                                                             return pipeline->getSharedQueryId();
-                                                         }},
-                                      successor);
+                                                                   return sink->getSharedQueryId();
+                                                               },
+                                                               [](Execution::ExecutablePipelinePtr pipeline) {
+                                                                   return pipeline->getSharedQueryId();
+                                                               }},
+                                            successor);
 
             auto newReconf = ReconfigurationMessage(sharedQueryId,
                                                     decomposedQueryPlanId,
@@ -152,7 +153,9 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
 void NetworkSource::onEvent(Runtime::BaseEvent&) { NES_DEBUG("NetworkSource: received an event"); }
 
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
-    NES_DEBUG("NetworkSource: reconfigure() called {}", nesPartition.toString());
+    NES_DEBUG("NetworkSource: reconfigure() called {} for the type {}",
+              nesPartition.toString(),
+              magic_enum::enum_name(task.getType()));
     NES::DataSource::reconfigure(task, workerContext);
     bool isTermination = false;
     auto terminationType = Runtime::QueryTerminationType::Failure;

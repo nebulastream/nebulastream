@@ -57,7 +57,7 @@ PlacementRemovalStrategy::~PlacementRemovalStrategy() {
     }
 }
 
-std::vector<DeploymentContextPtr>
+std::map<DecomposedQueryPlanId, DeploymentContextPtr>
 PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId sharedQueryId,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
@@ -363,10 +363,10 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
     }
 }
 
-std::vector<DeploymentContextPtr> PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
-                                                                                 DecomposedQueryPlanVersion querySubPlanVersion) {
+std::map<DecomposedQueryPlanId, DeploymentContextPtr>
+PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion) {
 
-    std::vector<DeploymentContextPtr> deploymentContexts;
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
     NES_INFO("Releasing locks for all locked topology nodes {}.", sharedQueryId);
     for (const auto& workerId : workerIdsInBFS) {
 
@@ -458,7 +458,8 @@ std::vector<DeploymentContextPtr> PlacementRemovalStrategy::updateExecutionNodes
             const std::string& ipAddress = lockedTopologyNode->operator*()->getIpAddress();
             uint32_t grpcPort = lockedTopologyNode->operator*()->getGrpcPort();
             for (const auto& decomposedQueryPlan : updatedDecomposedQueryPlans) {
-                deploymentContexts.emplace_back(DeploymentContext::create(ipAddress, grpcPort, decomposedQueryPlan));
+                deploymentContexts[decomposedQueryPlan->getDecomposedQueryPlanId()] =
+                    DeploymentContext::create(ipAddress, grpcPort, decomposedQueryPlan->copy());
             }
 
             // 9. Release lock on the topology node

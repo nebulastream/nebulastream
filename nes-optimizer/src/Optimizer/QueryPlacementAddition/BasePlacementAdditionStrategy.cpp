@@ -710,12 +710,12 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
     }
 }
 
-std::vector<DeploymentContextPtr>
+std::map<DecomposedQueryPlanId, DeploymentContextPtr>
 BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     ComputedDecomposedQueryPlans& computedSubQueryPlans,
                                                     DecomposedQueryPlanVersion querySubPlanVersion) {
 
-    std::vector<DeploymentContextPtr> deploymentContexts;
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
 
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
@@ -729,6 +729,10 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
         } else {
             lockedTopologyNode = lockedTopologyNodeMap[workerNodeId];
         }
+
+        // Used for computing the deployment context
+        const std::string& ipAddress = lockedTopologyNode->operator*()->getIpAddress();
+        uint32_t grpcPort = lockedTopologyNode->operator*()->getGrpcPort();
 
         try {
             // 1.2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
@@ -864,6 +868,9 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
+                        // 1.7. Compute deployment context
+                        deploymentContexts[updatedDecomposedQueryPlan->getDecomposedQueryPlanId()] =
+                            DeploymentContext::create(ipAddress, grpcPort, updatedDecomposedQueryPlan->copy());
                     } else if (containPinnedDownstreamOperator) {
 
                         // Record all placed query decomposed query plans that host pinned leaf operators
@@ -953,6 +960,9 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
+                        // 1.7. Compute deployment context
+                        deploymentContexts[updatedDecomposedQueryPlan->getDecomposedQueryPlanId()] =
+                            DeploymentContext::create(ipAddress, grpcPort, updatedDecomposedQueryPlan->copy());
                     } else {
                         NES_ERROR("A decomposed query plan {} with invalid decomposed query plan id that has no pinned upstream "
                                   "or downstream operator.",
@@ -967,14 +977,10 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                     globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
                     // 1.6. Update state and properties of all operators placed on the execution node
                     markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
+                    // 1.7. Compute deployment context
+                    deploymentContexts[updatedDecomposedQueryPlan->getDecomposedQueryPlanId()] =
+                        DeploymentContext::create(ipAddress, grpcPort, updatedDecomposedQueryPlan->copy());
                 }
-            }
-
-            // 1.7. compute deployment context
-            const std::string& ipAddress = lockedTopologyNode->operator*()->getIpAddress();
-            uint32_t grpcPort = lockedTopologyNode->operator*()->getGrpcPort();
-            for (const auto& decomposedQueryPlan : computedDecomposedQueryPlans) {
-                deploymentContexts.emplace_back(DeploymentContext::create(ipAddress, grpcPort, decomposedQueryPlan));
             }
 
             // 1.8. Release lock on the topology node

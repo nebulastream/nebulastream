@@ -320,7 +320,7 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
     }*/
 }
 
-std::vector<DeploymentContextPtr> IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
+std::map<DecomposedQueryPlanId, DeploymentContextPtr> IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
                                               const std::set<LogicalOperatorNodePtr>& /*pinnedUpStreamNodes*/,
                                               const std::set<LogicalOperatorNodePtr>& /*pinnedDownStreamNodes*/,
                                               DecomposedQueryPlanVersion /*querySubPlanVersion*/) {

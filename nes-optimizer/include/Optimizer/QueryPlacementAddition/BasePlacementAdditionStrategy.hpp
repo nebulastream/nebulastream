@@ -109,7 +109,7 @@ class BasePlacementAdditionStrategy {
      * @param querySubPlanVersion: the new version of the updated query sub plans
      * @return vector of deployment contexts
      */
-    virtual std::vector<DeploymentContextPtr>
+    virtual std::map<DecomposedQueryPlanId, DeploymentContextPtr>
     updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                               const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                               const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
@@ -148,9 +148,10 @@ class BasePlacementAdditionStrategy {
      * @param querySubPlanVersion: the version of the query sub plan
      * @return vector of deployment contexts
      */
-    std::vector<DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId,
-                                                           ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                           DecomposedQueryPlanVersion querySubPlanVersion);
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr>
+    updateExecutionNodes(SharedQueryId sharedQueryId,
+                         ComputedDecomposedQueryPlans& computedSubQueryPlans,
+                         DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
      * @brief Get the Topology node with the input id

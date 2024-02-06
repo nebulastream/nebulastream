@@ -45,7 +45,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
                                            const TypeInferencePhasePtr& typeInferencePhase,
                                            PlacementAmendmentMode placementAmendmentMode);
 
-    std::vector<DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion) override;
