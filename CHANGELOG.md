@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.33](https://github.com/nebulastream/nebulastream/tree/v0.6.33) (2024-02-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.32...v0.6.33)
+
+**Implemented enhancements:**
+
+- \[TASK\]  E2ECoordinatorMultiQueryTest disabled tests [\#4539](https://github.com/nebulastream/nebulastream/issues/4539)
+- \[TASK\] Create Vectorized Map Operator [\#4159](https://github.com/nebulastream/nebulastream/issues/4159)
+
 ## [v0.6.32](https://github.com/nebulastream/nebulastream/tree/v0.6.32) (2024-02-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.31...v0.6.32)
