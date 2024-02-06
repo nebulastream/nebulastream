@@ -14,6 +14,7 @@
 add_subdirectory(Relational)
 add_subdirectory(ThresholdWindow)
 add_subdirectory(Streaming)
+add_subdirectory(Vectorization)
 
 add_nes_execution_test(execution-scan-operator-test "ScanOperatorTest.cpp")
 add_nes_execution_test(execution-emit-operator-test "EmitOperatorTest.cpp")

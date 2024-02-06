@@ -268,7 +268,18 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
 
     queryCompilationOptions->setStreamJoinStratgy(queryCompilerConfiguration.joinStrategy);
 
-    queryCompilationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
+    auto vectorizationOptions = queryCompilationOptions->getVectorizationOptions();
+    vectorizationOptions->useVectorization(queryCompilerConfiguration.useVectorization.getValue());
+    vectorizationOptions->setStageBufferSize(queryCompilerConfiguration.stageBufferSize.getValue());
+    vectorizationOptions->useCUDA(queryCompilerConfiguration.useCUDA.getValue());
+    vectorizationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
+    auto cudaThreadsPerBlock = queryCompilerConfiguration.cudaThreadsPerBlock.getValue();
+    if (!(cudaThreadsPerBlock == 32 || cudaThreadsPerBlock == 64 || cudaThreadsPerBlock == 128 || cudaThreadsPerBlock == 256)) {
+        auto defaultThreadsPerBlock = queryCompilerConfiguration.cudaThreadsPerBlock.getDefaultValue();
+        NES_WARNING("Invalid value '{}' for cudaThreadsPerBlock. Using default value {}.", cudaThreadsPerBlock, defaultThreadsPerBlock);
+        cudaThreadsPerBlock = defaultThreadsPerBlock;
+    }
+    vectorizationOptions->setCUDAThreadsPerBlock(cudaThreadsPerBlock);
 
     return queryCompilationOptions;
 }

@@ -14,6 +14,7 @@
 
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -58,14 +59,22 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
-    coordinatorConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::FILE_AND_CONSOLE;
-    coordinatorConf->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
+    coordinatorConf->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode =
+        QueryCompilation::DumpMode::FILE_AND_CONSOLE;
+    coordinatorConf->worker.queryCompiler.nautilusBackend = configPerRun.nautilusBackend->getValue();
 
     coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();
     coordinatorConf->worker.queryCompiler.numberOfPartitions = configPerRun.numberOfPartitions->getValue();
     coordinatorConf->worker.queryCompiler.preAllocPageCnt = configPerRun.preAllocPageCnt->getValue();
     coordinatorConf->worker.queryCompiler.maxHashTableSize = configPerRun.maxHashTableSize->getValue();
+
+    coordinatorConf->worker.queryCompiler.useVectorization = configPerRun.vectorize->getValue();
+    coordinatorConf->worker.queryCompiler.stageBufferSize = configPerRun.stageBufferSize->getValue();
+    coordinatorConf->worker.queryCompiler.useCUDA = configPerRun.useCuda->getValue();
+    coordinatorConf->worker.queryCompiler.cudaSdkPath = configPerRun.cudaSdkPath->getValue();
+    coordinatorConf->worker.queryCompiler.cudaThreadsPerBlock = configPerRun.cudaThreadsPerBlock->getValue();
 
     if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
         coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
@@ -269,7 +278,11 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     for (const auto& measurementsCsv :
          measurements.getMeasurementsAsCSV(schemaSizeInB, configPerRun.numberOfQueriesToDeploy->getValue())) {
         outputCsvStream << "\"" << configOverAllRuns.benchmarkName->getValue() << "\"";
-        outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
+        outputCsvStream << "," << NES_VERSION;
+        outputCsvStream << "," << magic_enum::enum_name(configPerRun.nautilusBackend->getValue());
+        outputCsvStream << "," << schemaSizeInB;
+        outputCsvStream << "," << configPerRun.stageBufferSize->getValue();
+        outputCsvStream << "," << configPerRun.cudaThreadsPerBlock->getValue();
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();

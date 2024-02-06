@@ -12,17 +12,19 @@
     limitations under the License.
 */
 
+#ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_MOKEDPIPELINECONTEXT_HPP_
+#define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_MOKEDPIPELINECONTEXT_HPP_
+
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <vector>
 #include <set>
-#ifndef NES_NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINECONTEXT_HPP_
-#define NES_NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINECONTEXT_HPP_
 
 namespace NES::Runtime::Execution {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
+    MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handlers, Runtime::BufferManagerPtr bufferManager);
     explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler);
     explicit MockedPipelineExecutionContext();
     std::vector<TupleBuffer> buffers;

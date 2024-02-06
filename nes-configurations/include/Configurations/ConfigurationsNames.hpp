@@ -115,8 +115,14 @@ const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
 const std::string CONNECT_SOURCE_ASYNC = "connectSourceEventChannelsAsync";
 
+// Vectorization options
+const std::string VECTORIZATION_ENABLED = "vectorize";
+const std::string VECTORIZATION_STAGE_BUFFER_SIZE = "stageBufferSize";
+
 // CUDA config names
+const std::string CUDA_ENABLED = "useCuda";
 const std::string CUDA_SDK_PATH = "cudaSdkPath";
+const std::string CUDA_THREADS_PER_BLOCK = "cudaThreadsPerBlock";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";

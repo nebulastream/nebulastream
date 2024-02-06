@@ -46,6 +46,13 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     hashOptions->setTotalSizeForDataStructures(NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
     options.setStreamJoinStratgy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
     options.setHashJoinOptions(hashOptions);
+
+    QueryCompilerOptions::VectorizationOptionsPtr vectorizationOptions = std::make_shared<QueryCompilerOptions::VectorizationOptions>();
+    vectorizationOptions->useVectorization(false);
+    vectorizationOptions->setStageBufferSize(NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE);
+    vectorizationOptions->useCUDA(false);
+    vectorizationOptions->setCUDASdkPath(NES::Runtime::Execution::Experimental::Vectorization::CUDA_SDK_PATH);
+    options.setVectorizationOptions(vectorizationOptions);
     return std::make_shared<QueryCompilerOptions>(options);
 }
 
@@ -119,7 +126,52 @@ void QueryCompilerOptions::StreamHashJoinOptions::setTotalSizeForDataStructures(
     this->totalSizeForDataStructures = totalSizeForDataStructures;
 }
 
-void QueryCompilerOptions::setCUDASdkPath(const std::string& cudaSdkPath) { QueryCompilerOptions::cudaSdkPath = cudaSdkPath; }
-const std::string QueryCompilerOptions::getCUDASdkPath() const { return cudaSdkPath; }
+QueryCompilerOptions::VectorizationOptionsPtr QueryCompilerOptions::getVectorizationOptions() const {
+    return vectorizationOptions;
+}
+
+void QueryCompilerOptions::setVectorizationOptions(const QueryCompilerOptions::VectorizationOptionsPtr& options) {
+    this->vectorizationOptions = options;
+}
+
+bool QueryCompilerOptions::VectorizationOptions::isUsingVectorization() const {
+    return enabled;
+}
+
+void QueryCompilerOptions::VectorizationOptions::useVectorization(bool enable) {
+    this->enabled = enable;
+}
+
+uint64_t QueryCompilerOptions::VectorizationOptions::getStageBufferSize() const {
+    return stageBufferSize;
+}
+
+void QueryCompilerOptions::VectorizationOptions::setStageBufferSize(uint64_t size) {
+    this->stageBufferSize = size;
+}
+
+bool QueryCompilerOptions::VectorizationOptions::isUsingCUDA() const {
+    return cudaEnabled;
+}
+
+void QueryCompilerOptions::VectorizationOptions::useCUDA(bool enable) {
+    this->cudaEnabled = enable;
+}
+
+void QueryCompilerOptions::VectorizationOptions::setCUDASdkPath(const std::string& cudaSdkPath) {
+    QueryCompilerOptions::VectorizationOptions::cudaSdkPath = cudaSdkPath;
+}
+
+const std::string QueryCompilerOptions::VectorizationOptions::getCUDASdkPath() const {
+    return cudaSdkPath;
+}
+
+void QueryCompilerOptions::VectorizationOptions::setCUDAThreadsPerBlock(uint32_t threadsPerBlock) {
+    QueryCompilerOptions::VectorizationOptions::cudaThreadsPerBlock = threadsPerBlock;
+}
+
+uint32_t QueryCompilerOptions::VectorizationOptions::getCUDAThreadsPerBlock() const {
+    return cudaThreadsPerBlock;
+}
 
 }// namespace NES::QueryCompilation

@@ -13,6 +13,7 @@
 */
 
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
+#include <Configurations/Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/yaml/Yaml.hpp>
 
@@ -30,6 +31,24 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     preAllocPageCnt = ConfigurationOption<uint32_t>::create("preAllocPageCnt", 1, "preAllocPageCnt in Bucket");
     numberOfPartitions = ConfigurationOption<uint32_t>::create("numberOfPartitions", 1, "numberOfPartitions in HT");
     maxHashTableSize = ConfigurationOption<uint64_t>::create("maxHashTableSize", 0, ",max hash table size");
+    nautilusBackend = ConfigurationOption<QueryCompilation::NautilusBackend>::create(
+        "nautilusBackend",
+        QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND,
+        "Nautilus back-end"
+    );
+    vectorize = ConfigurationOption<bool>::create("vectorize", false, "use vectorization");
+    stageBufferSize = ConfigurationOption<uint64_t>::create(
+        "stageBufferSize",
+        NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE,
+        "stage buffer size"
+    );
+    useCuda = ConfigurationOption<bool>::create("useCuda", false, "use CUDA back-end");
+    cudaSdkPath = ConfigurationOption<std::string>::create("cudaSdkPath", "/usr/local/cuda", "CUDA SDK path");
+    cudaThreadsPerBlock = ConfigurationOption<uint32_t>::create(
+        "cudaThreadsPerBlock",
+        NES::Runtime::Execution::Experimental::Vectorization::CUDA_THREADS_PER_BLOCK,
+        "Number of CUDA threads per block to use"
+    );
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -45,7 +64,15 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- pageSize: " << pageSize->getValueAsString() << std::endl
         << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString() << std::endl
         << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
-        << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl;
+        << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl
+        << "- nautilusBackend: " << magic_enum::enum_name(nautilusBackend->getValue()) << std::endl;
+    if (vectorize->getValue()) {
+        oss << "- vectorize: " << vectorize->getValueAsString() << std::endl
+            << "- stageBufferSize: " << stageBufferSize->getValueAsString() << std::endl
+            << "- useCuda: " << useCuda->getValueAsString() << std::endl
+            << "- cudaSdkPath: " << cudaSdkPath->getValue() << std::endl
+            << "- cudaThreadsPerBlock: " << cudaThreadsPerBlock->getValueAsString() << std::endl;
+    }
 
     std::cout << oss.str() << std::endl;
     return oss.str();
@@ -81,10 +108,43 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     auto maxHashTableSizes = Util::splitAndFillIfEmpty<uint64_t>(yamlConfig["maxHashTableSize"].As<std::string>(),
                                                                  configPerRun.maxHashTableSize->getDefaultValue());
 
+    auto nautilusBackendStr = !yamlConfig["nautilusBackend"].IsNone() ? yamlConfig["nautilusBackend"].As<std::string>() : "MLIR_COMPILER";
+    QueryCompilation::NautilusBackend nautilusBackend;
+    if (nautilusBackendStr == "INTERPRETER") {
+        nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
+    } else if (nautilusBackendStr == "MLIR_COMPILER_BACKEND") {
+        nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
+    } else if (nautilusBackendStr == "BC_INTERPRETER_BACKEND") {
+        nautilusBackend = QueryCompilation::NautilusBackend::BC_INTERPRETER_BACKEND;
+    } else if (nautilusBackendStr == "FLOUNDER_COMPILER_BACKEND") {
+        nautilusBackend = QueryCompilation::NautilusBackend::FLOUNDER_COMPILER_BACKEND;
+    } else if (nautilusBackendStr == "CPP_COMPILER_BACKEND") {
+        nautilusBackend = QueryCompilation::NautilusBackend::CPP_COMPILER_BACKEND;
+    } else {
+        NES_THROW_RUNTIME_ERROR("Failed to parse nautilusBackend. Unrecognized value '" << nautilusBackendStr << "'");
+    }
+
+    auto vectorize = !yamlConfig["vectorize"].IsNone() ? yamlConfig["vectorize"].As<bool>() : configPerRun.vectorize->getDefaultValue();
+
+    auto stageBufferSizes = Util::splitAndFillIfEmpty<uint64_t>(
+        yamlConfig["stageBufferSize"].As<std::string>(),
+        configPerRun.stageBufferSize->getDefaultValue()
+    );
+
+    auto useCuda = !yamlConfig["useCuda"].IsNone() ? yamlConfig["useCuda"].As<bool>() : configPerRun.useCuda->getDefaultValue();
+
+    auto cudaSdkPath = !yamlConfig["cudaSdkPath"].IsNone() ? yamlConfig["cudaSdkPath"].As<std::string>() : configPerRun.cudaSdkPath->getDefaultValue();
+
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
         NES_THROW_RUNTIME_ERROR("logicalSources could not been found in the yaml config file!");
     }
+
+    auto cudaThreadsPerBlockList = Util::splitAndFillIfEmpty<uint32_t>(
+        yamlConfig["cudaThreadsPerBlock"].As<std::string>(),
+        configPerRun.cudaThreadsPerBlock->getDefaultValue()
+    );
+
     allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(yamlConfig);
 
     /* Retrieving the maximum number of experiments to run */
@@ -98,6 +158,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfPartitions.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, maxHashTableSizes.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, stageBufferSizes.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, cudaThreadsPerBlockList.size());
 
     /* Padding all vectors to the desired size */
     Util::padVectorToSize<uint32_t>(numWorkerOfThreads, totalBenchmarkRuns, numWorkerOfThreads.back());
@@ -113,6 +175,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(preAllocPageCnts, totalBenchmarkRuns, preAllocPageCnts.back());
     Util::padVectorToSize<uint32_t>(numberOfPartitions, totalBenchmarkRuns, numberOfPartitions.back());
     Util::padVectorToSize<uint64_t>(maxHashTableSizes, totalBenchmarkRuns, maxHashTableSizes.back());
+    Util::padVectorToSize<uint64_t>(stageBufferSizes, totalBenchmarkRuns, stageBufferSizes.back());
+    Util::padVectorToSize<uint32_t>(cudaThreadsPerBlockList, totalBenchmarkRuns, cudaThreadsPerBlockList.back());
     Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
                                                            totalBenchmarkRuns,
                                                            allLogicalSrcToPhysicalSources.back());
@@ -129,6 +193,12 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.preAllocPageCnt->setValue(preAllocPageCnts[i]);
         e2EBenchmarkConfigPerRun.numberOfPartitions->setValue(numberOfPartitions[i]);
         e2EBenchmarkConfigPerRun.maxHashTableSize->setValue(maxHashTableSizes[i]);
+        e2EBenchmarkConfigPerRun.nautilusBackend->setValue(nautilusBackend);
+        e2EBenchmarkConfigPerRun.vectorize->setValue(vectorize);
+        e2EBenchmarkConfigPerRun.stageBufferSize->setValue(stageBufferSizes[i]);
+        e2EBenchmarkConfigPerRun.useCuda->setValue(useCuda);
+        e2EBenchmarkConfigPerRun.cudaSdkPath->setValue(cudaSdkPath);
+        e2EBenchmarkConfigPerRun.cudaThreadsPerBlock->setValue(cudaThreadsPerBlockList[i]);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);

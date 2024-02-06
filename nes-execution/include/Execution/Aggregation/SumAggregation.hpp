@@ -26,6 +26,12 @@ class SumAggregationFunction : public AggregationFunction {
                            const Expressions::ExpressionPtr& inputExpression,
                            const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
+    SumAggregationFunction(const PhysicalTypePtr& inputType,
+                           const PhysicalTypePtr& resultType,
+                           const Expressions::ExpressionPtr& inputExpression,
+                           const Nautilus::Record::RecordFieldIdentifier& inputFieldIdentifier,
+                           const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
+
     void lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) override;
     void combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) override;
     void lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRe) override;

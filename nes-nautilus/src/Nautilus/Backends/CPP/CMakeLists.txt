@@ -11,8 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-nautilus
-        CPPCompilationBackend.cpp
-        CPPExecutable.cpp
-        CPPLoweringProvider.cpp
-        )
+add_source_files(
+    nes-nautilus
+    CPPCompilationBackend.cpp
+    CPPExecutable.cpp
+    CPPLoweringInterface.cpp
+    CPPLoweringProvider.cpp
+)

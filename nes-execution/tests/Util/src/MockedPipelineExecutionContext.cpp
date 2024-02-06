@@ -16,11 +16,11 @@
 #include <utility>
 namespace NES::Runtime::Execution {
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext()
+MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handlers, Runtime::BufferManagerPtr bufferManager)
     : PipelineExecutionContext(
         -1,// mock pipeline id
         0, // mock query id
-        nullptr,
+        bufferManager,
         1,
         [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
             if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
@@ -36,33 +36,21 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext()
               this->seenSeqNumbers.insert(buffer.getSequenceNumber());
               this->buffers.emplace_back(std::move(buffer));
         },
-        {}){
-        // nop
-    };
+        handlers)
+{
 
+}
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler)
-    : PipelineExecutionContext(
-        -1,// mock pipeline id
-        0, // mock query id
-        nullptr,
-        1,
-        [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-              if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
-                  NES_FATAL_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
-              }
-              this->seenSeqNumbers.insert(buffer.getSequenceNumber());
-              this->buffers.emplace_back(std::move(buffer));
-        },
-        [this](TupleBuffer& buffer) {
-              if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
-                  NES_FATAL_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
-              }
-              this->seenSeqNumbers.insert(buffer.getSequenceNumber());
-              this->buffers.emplace_back(std::move(buffer));
-        },
-        std::move(handler)){
-        // nop
-    };
+MockedPipelineExecutionContext::MockedPipelineExecutionContext()
+    : MockedPipelineExecutionContext({}, nullptr)
+{
+
+}
+
+MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handlers)
+    : MockedPipelineExecutionContext(handlers, nullptr)
+{
+
+}
 
 }// namespace NES::Runtime::Execution

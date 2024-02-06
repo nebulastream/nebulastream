@@ -185,15 +185,18 @@ class ConfigurationOption {
     T defaultValue;
 };
 
-using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
-using LongConfigOption = std::shared_ptr<ConfigurationOption<uint64_t>>;
-using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
-using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
-using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
-using CharConfigOption = std::shared_ptr<ConfigurationOption<char>>;
-using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
-using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode>>;
-using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
+template <typename T>
+using ConfigurationOptionPtr = std::shared_ptr<ConfigurationOption<T>>;
+
+using IntConfigOption = ConfigurationOptionPtr<uint32_t>;
+using LongConfigOption = ConfigurationOptionPtr<uint64_t>;
+using StringConfigOption = ConfigurationOptionPtr<std::string>;
+using BoolConfigOption = ConfigurationOptionPtr<bool>;
+using FloatConfigOption = ConfigurationOptionPtr<float>;
+using CharConfigOption = ConfigurationOptionPtr<char>;
+using InputFormatConfigOption = ConfigurationOptionPtr<InputFormat>;
+using GatheringModeConfigOption = ConfigurationOptionPtr<GatheringMode>;
+using TCPDecideMessageSizeConfigOption = ConfigurationOptionPtr<TCPDecideMessageSize>;
 
 }// namespace NES::Configurations
 

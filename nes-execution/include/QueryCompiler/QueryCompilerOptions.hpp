@@ -100,6 +100,73 @@ class QueryCompilerOptions {
 
     using StreamHashJoinOptionsPtr = std::shared_ptr<StreamHashJoinOptions>;
 
+    class VectorizationOptions {
+    public:
+        /**
+         * @return Whether the query compiler should use compiler passes for enabling vectorized execution
+         */
+        bool isUsingVectorization() const;
+
+        /**
+         * @brief Specify if the query compiler should use vectorization
+         * @param enable
+         */
+        void useVectorization(bool enable);
+
+        /**
+         * @return The stage buffer size used for materializing tuples
+         */
+        uint64_t getStageBufferSize() const;
+
+        /**
+         * @brief Set the stage buffer size.
+         * @param size
+         */
+        void setStageBufferSize(uint64_t size);
+
+        /**
+         * @return Whether the query compiler should use the CUDA back-end for vectorization
+         */
+        bool isUsingCUDA() const;
+
+        /**
+         * @brief Specify if the query compiler should use the CUDA back-end
+         * @param enable
+         */
+        void useCUDA(bool enable);
+
+        /**
+        * @brief Set the path to the CUDA SDK
+        * @param cudaSdkPath the CUDA SDK path
+        */
+        void setCUDASdkPath(const std::string& cudaSdkPath);
+
+        /**
+        * @brief Get the path to the CUDA SDK
+        */
+        const std::string getCUDASdkPath() const;
+
+        /**
+        * @brief Set the CUDA threads per block
+        * @param  the threads per block
+        */
+        void setCUDAThreadsPerBlock(uint32_t threadsPerBlock);
+
+        /**
+        * @brief Get the number of CUDA threads per block
+        */
+        uint32_t getCUDAThreadsPerBlock() const;
+
+    private:
+        bool enabled;
+        uint64_t stageBufferSize;
+        bool cudaEnabled;
+        std::string cudaSdkPath;
+        uint32_t cudaThreadsPerBlock;
+    };
+
+    using VectorizationOptionsPtr = std::shared_ptr<VectorizationOptions>;
+
     /**
      * @brief Creates the default options.
      * @return QueryCompilerOptionsPtr
@@ -179,15 +246,15 @@ class QueryCompilerOptions {
     void setDumpMode(DumpMode dumpMode);
 
     /**
-     * @brief Set the path to the CUDA SDK
-     * @param cudaSdkPath the CUDA SDK path
+     * @brief Return vectorization options
      */
-    void setCUDASdkPath(const std::string& cudaSdkPath);
+    VectorizationOptionsPtr getVectorizationOptions() const;
 
     /**
-     * @brief Get the path to the CUDA SDK
+     * @brief Set vectorization options
+     * @param options the vectorization options
      */
-    const std::string getCUDASdkPath() const;
+    void setVectorizationOptions(const VectorizationOptionsPtr& options);
 
   protected:
     uint64_t numSourceLocalBuffers;
@@ -200,8 +267,8 @@ class QueryCompilerOptions {
     NautilusBackend nautilusBackend;
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;
-    std::string cudaSdkPath;
     StreamJoinStrategy joinStrategy;
+    VectorizationOptionsPtr vectorizationOptions;
 };
 }// namespace NES::QueryCompilation
 

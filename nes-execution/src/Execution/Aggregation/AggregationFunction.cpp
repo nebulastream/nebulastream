@@ -17,12 +17,35 @@
 #include <utility>
 
 namespace NES::Runtime::Execution::Aggregation {
+
+AggregationFunction::AggregationFunction(PhysicalTypePtr inputType,
+                                         PhysicalTypePtr resultType,
+                                         Expressions::ExpressionPtr inputExpression,
+                                         Nautilus::Record::RecordFieldIdentifier inputFieldIdentifier,
+                                         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    : inputType(std::move(inputType))
+    , resultType(std::move(resultType))
+    , inputExpression(std::move(inputExpression))
+    , inputFieldIdentifier(std::move(inputFieldIdentifier))
+    , resultFieldIdentifier(std::move(resultFieldIdentifier))
+{
+
+}
+
 AggregationFunction::AggregationFunction(PhysicalTypePtr inputType,
                                          PhysicalTypePtr resultType,
                                          Expressions::ExpressionPtr inputExpression,
                                          Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
-    : inputType(std::move(inputType)), resultType(std::move(resultType)), inputExpression(std::move(inputExpression)),
-      resultFieldIdentifier(std::move(resultFieldIdentifier)) {}
+    : AggregationFunction(
+        std::move(inputType),
+        std::move(resultType),
+        std::move(inputExpression),
+        "<empty>",
+        std::move(resultFieldIdentifier)
+    )
+{
+
+}
 
 Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref,
                                                       const PhysicalTypePtr& physicalType) {
@@ -223,6 +246,10 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
                   typeString.str());
         NES_NOT_IMPLEMENTED();
     }
+}
+
+const Nautilus::Record::RecordFieldIdentifier& AggregationFunction::getInputFieldIdentifier() {
+    return inputFieldIdentifier;
 }
 
 AggregationFunction::~AggregationFunction() = default;

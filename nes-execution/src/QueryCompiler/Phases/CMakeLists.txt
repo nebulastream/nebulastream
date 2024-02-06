@@ -21,4 +21,5 @@ add_source_files(nes-execution
 
 add_subdirectory(Pipelining)
 add_subdirectory(Translations)
+add_subdirectory(Experimental)
 

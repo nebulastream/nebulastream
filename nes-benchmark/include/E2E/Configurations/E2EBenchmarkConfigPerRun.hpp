@@ -16,6 +16,7 @@
 #define NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGPERRUN_HPP_
 
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <vector>
 
@@ -66,6 +67,12 @@ class E2EBenchmarkConfigPerRun {
     Configurations::IntConfigOption preAllocPageCnt;
     Configurations::IntConfigOption numberOfPartitions;
     Configurations::LongConfigOption maxHashTableSize;
+    Configurations::ConfigurationOptionPtr<QueryCompilation::NautilusBackend> nautilusBackend;
+    Configurations::BoolConfigOption vectorize;
+    Configurations::LongConfigOption stageBufferSize;
+    Configurations::BoolConfigOption useCuda;
+    Configurations::StringConfigOption cudaSdkPath;
+    Configurations::IntConfigOption cudaThreadsPerBlock;
 };
 }// namespace NES::Benchmark
 

@@ -20,3 +20,4 @@ add_source_files(nes-execution
 add_subdirectory(Relational)
 add_subdirectory(ThresholdWindow)
 add_subdirectory(Streaming)
+add_subdirectory(Experimental)

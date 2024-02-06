@@ -26,6 +26,7 @@
 #include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 #include <Configurations/Enums/QueryExecutionMode.hpp>
+#include <Configurations/Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
 #include <Util/Common.hpp>
 #include <iostream>
 #include <map>
@@ -137,10 +138,30 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         "Indicates the windowingStrategy"
         "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
+    BoolOption useVectorization = {VECTORIZATION_ENABLED, false, "Enable query compiler passes for vectorized execution"};
+
+    UIntOption stageBufferSize = {
+        VECTORIZATION_STAGE_BUFFER_SIZE,
+        NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE,
+        "Size of the stage buffer"
+    };
+
     /**
      * @brief Sets the path to the locally installed CUDA SDK.
      */
-    StringOption cudaSdkPath = {CUDA_SDK_PATH, "/usr/local/cuda", "Path to CUDA SDK."};
+    StringOption cudaSdkPath = {
+        CUDA_SDK_PATH,
+        NES::Runtime::Execution::Experimental::Vectorization::CUDA_SDK_PATH,
+        "Path to the CUDA SDK"
+    };
+
+    BoolOption useCUDA = {CUDA_ENABLED, false, "Enable the CUDA back-end of the query compiler"};
+
+    UIntOption cudaThreadsPerBlock = {
+        CUDA_THREADS_PER_BLOCK,
+        NES::Runtime::Execution::Experimental::Vectorization::CUDA_THREADS_PER_BLOCK,
+        "Set the number of CUDA threads to use per block"
+    };
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
@@ -155,9 +176,13 @@ class QueryCompilerConfiguration : public BaseConfiguration {
             &numberOfPartitions,
             &pageSize,
             &preAllocPageCnt,
-            &cudaSdkPath,
             &maxHashTableSize,
             &joinStrategy,
+            &useVectorization,
+            &stageBufferSize,
+            &useCUDA,
+            &cudaSdkPath,
+            &cudaThreadsPerBlock,
         };
     }
 };

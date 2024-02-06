@@ -21,6 +21,12 @@ class LowerPhysicalToNautilusOperators;
 using LowerPhysicalToNautilusOperatorsPtr = std::shared_ptr<LowerPhysicalToNautilusOperators>;
 class NautilusCompilationPhase;
 using NautilusCompilationPhasePtr = std::shared_ptr<NautilusCompilationPhase>;
+namespace Experimental {
+class LowerPhysicalToVectorizedOperatorsPhase;
+using LowerPhysicalToVectorizedOperatorsPhasePtr = std::shared_ptr<LowerPhysicalToVectorizedOperatorsPhase>;
+class LowerVectorizedPipelineToKernelPhase;
+using LowerVectorizedPipelineToKernelPhasePtr = std::shared_ptr<LowerVectorizedPipelineToKernelPhase>;
+};
 
 /**
  * @brief A QueryCompiler which uses the nautilus operators for code generations.
@@ -48,6 +54,8 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler {
     QueryCompilation::LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
     QueryCompilation::PipeliningPhasePtr pipeliningPhase;
     QueryCompilation::AddScanAndEmitPhasePtr addScanAndEmitPhase;
+    QueryCompilation::Experimental::LowerPhysicalToVectorizedOperatorsPhasePtr lowerPhysicalToVectorizedOperatorsPhase;
+    QueryCompilation::Experimental::LowerVectorizedPipelineToKernelPhasePtr lowerVectorizedPipelineToKernelPhase;
     bool sourceSharing;
 };
 
