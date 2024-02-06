@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.35](https://github.com/nebulastream/nebulastream/tree/v0.6.35) (2024-02-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.34...v0.6.35)
+
+**Implemented enhancements:**
+
+- \[TASK\] E2ERunnerTest disabled test [\#4555](https://github.com/nebulastream/nebulastream/issues/4555)
+
 ## [v0.6.34](https://github.com/nebulastream/nebulastream/tree/v0.6.34) (2024-02-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.33...v0.6.34)
