@@ -14,6 +14,7 @@
 
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -59,9 +60,9 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
     coordinatorConf->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConf->worker.queryCompiler.queryCompilerDumpMode =
-        QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+        QueryCompilation::DumpMode::FILE_AND_CONSOLE;
     coordinatorConf->worker.queryCompiler.nautilusBackend = configPerRun.nautilusBackend->getValue();
 
     coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();

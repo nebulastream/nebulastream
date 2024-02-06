@@ -13,7 +13,7 @@
 */
 
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
-#include <Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
+#include <Configurations/Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/yaml/Yaml.hpp>
 
@@ -31,9 +31,9 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     preAllocPageCnt = ConfigurationOption<uint32_t>::create("preAllocPageCnt", 1, "preAllocPageCnt in Bucket");
     numberOfPartitions = ConfigurationOption<uint32_t>::create("numberOfPartitions", 1, "numberOfPartitions in HT");
     maxHashTableSize = ConfigurationOption<uint64_t>::create("maxHashTableSize", 0, ",max hash table size");
-    nautilusBackend = ConfigurationOption<QueryCompilation::QueryCompilerOptions::NautilusBackend>::create(
+    nautilusBackend = ConfigurationOption<QueryCompilation::NautilusBackend>::create(
         "nautilusBackend",
-        QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER,
+        QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND,
         "Nautilus back-end"
     );
     vectorize = ConfigurationOption<bool>::create("vectorize", false, "use vectorization");
@@ -109,17 +109,17 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
                                                                  configPerRun.maxHashTableSize->getDefaultValue());
 
     auto nautilusBackendStr = !yamlConfig["nautilusBackend"].IsNone() ? yamlConfig["nautilusBackend"].As<std::string>() : "MLIR_COMPILER";
-    QueryCompilation::QueryCompilerOptions::NautilusBackend nautilusBackend;
+    QueryCompilation::NautilusBackend nautilusBackend;
     if (nautilusBackendStr == "INTERPRETER") {
-        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::INTERPRETER;
-    } else if (nautilusBackendStr == "MLIR_COMPILER") {
-        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
-    } else if (nautilusBackendStr == "BC_INTERPRETER") {
-        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::BC_INTERPRETER;
-    } else if (nautilusBackendStr == "FLOUNDER_COMPILER") {
-        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::FLOUNDER_COMPILER;
-    } else if (nautilusBackendStr == "CPP_COMPILER") {
-        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::CPP_COMPILER;
+        nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
+    } else if (nautilusBackendStr == "MLIR_COMPILER_BACKEND") {
+        nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
+    } else if (nautilusBackendStr == "BC_INTERPRETER_BACKEND") {
+        nautilusBackend = QueryCompilation::NautilusBackend::BC_INTERPRETER_BACKEND;
+    } else if (nautilusBackendStr == "FLOUNDER_COMPILER_BACKEND") {
+        nautilusBackend = QueryCompilation::NautilusBackend::FLOUNDER_COMPILER_BACKEND;
+    } else if (nautilusBackendStr == "CPP_COMPILER_BACKEND") {
+        nautilusBackend = QueryCompilation::NautilusBackend::CPP_COMPILER_BACKEND;
     } else {
         NES_THROW_RUNTIME_ERROR("Failed to parse nautilusBackend. Unrecognized value '" << nautilusBackendStr << "'");
     }
