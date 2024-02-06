@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.37](https://github.com/nebulastream/nebulastream/tree/v0.6.37) (2024-02-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.36...v0.6.37)
+
+**Implemented enhancements:**
+
+-  \[TASK\] E2EMonitoringTest [\#4540](https://github.com/nebulastream/nebulastream/issues/4540)
+
 ## [v0.6.36](https://github.com/nebulastream/nebulastream/tree/v0.6.36) (2024-02-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.35...v0.6.36)
