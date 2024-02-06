@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.38](https://github.com/nebulastream/nebulastream/tree/v0.6.38) (2024-02-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.37...v0.6.38)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create Vectorized Selection Operator [\#4231](https://github.com/nebulastream/nebulastream/issues/4231)
+
+### Bug Fixes 🐛
+
+- \[BUG\] While persisting workerId we do not report if the config file path is empty [\#4529](https://github.com/nebulastream/nebulastream/issues/4529)
+
 ## [v0.6.37](https://github.com/nebulastream/nebulastream/tree/v0.6.37) (2024-02-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.36...v0.6.37)
