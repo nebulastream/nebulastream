@@ -23,6 +23,9 @@ namespace NES::Optimizer {
  * @brief Struct to store sub plan id and worker id that stores a sys generated query plan
  */
 struct SysPlanMetaData {
+    SysPlanMetaData(DecomposedQueryPlanId querySubPlanId, WorkerId worker_id)
+        : querySubPlanId(querySubPlanId), workerId(worker_id) {
+    }
     DecomposedQueryPlanId querySubPlanId;
     WorkerId workerId;
 };

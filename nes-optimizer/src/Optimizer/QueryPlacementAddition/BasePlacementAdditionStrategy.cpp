@@ -638,8 +638,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                 decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(candidateOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
                             }
 
-                            connectedSysSubPlanDetails.emplace_back(
-                                SysPlanMetaData(decomposedPlanId, currentWorkerId));
+                            connectedSysSubPlanDetails.emplace_back(decomposedPlanId, currentWorkerId);
                             // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
@@ -678,8 +677,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                                             {networkSinkOperator});
 
                             // 18. Record information about the query plan and worker id
-                            connectedSysSubPlanDetails.emplace_back(
-                                SysPlanMetaData(newDecomposedQueryPlan->getDecomposedQueryPlanId(), currentWorkerId));
+                            connectedSysSubPlanDetails.emplace_back(newDecomposedQueryPlan->getDecomposedQueryPlanId(), currentWorkerId);
 
                             // 19. add the new query plan
                             if (computedDecomposedQueryPlans.contains(currentWorkerId)) {
