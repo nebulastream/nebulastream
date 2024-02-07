@@ -63,7 +63,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-runtime REUSE_FROM nes-common)
 endif ()
 
-target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 #target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
 
