@@ -1,11 +1,41 @@
 # Changelog
 
+## [v0.6.39](https://github.com/nebulastream/nebulastream/tree/v0.6.39) (2024-02-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-kafka...v0.6.39)
+
+**Implemented enhancements:**
+
+- \[TASK\] E2ECoordinatorSingleWorkerTest disabled tests [\#4537](https://github.com/nebulastream/nebulastream/issues/4537)
+
+### Miscellaneous Issues ✌️
+
+- Add endpoint/listener for exchanging messages with ICCS planner [\#4166](https://github.com/nebulastream/nebulastream/issues/4166)
+
+## [elegant-v0.6.19-kafka](https://github.com/nebulastream/nebulastream/tree/elegant-v0.6.19-kafka) (2024-02-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.32...elegant-v0.6.19-kafka)
+
+**Implemented enhancements:**
+
+- \[TASK\] Rebase & Integrate GPU Code Compilation [\#4514](https://github.com/nebulastream/nebulastream/issues/4514)
+
+## [elegant-v0.6.32](https://github.com/nebulastream/nebulastream/tree/elegant-v0.6.32) (2024-02-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.38...elegant-v0.6.32)
+
+**Implemented enhancements:**
+
+- \[TASK\] Support Vectorized Execution in E2E Benchmark Setup [\#4205](https://github.com/nebulastream/nebulastream/issues/4205)
+- \[FEATURE\] Vectorized Query Execution [\#3835](https://github.com/nebulastream/nebulastream/issues/3835)
+
 ## [v0.6.38](https://github.com/nebulastream/nebulastream/tree/v0.6.38) (2024-02-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.37...v0.6.38)
 
 **Implemented enhancements:**
 
+- \[TASK\] Create Vectorized Non-Keyed Windowed Aggregation Operator [\#4232](https://github.com/nebulastream/nebulastream/issues/4232)
 - \[TASK\] Create Vectorized Selection Operator [\#4231](https://github.com/nebulastream/nebulastream/issues/4231)
 
 ### Bug Fixes 🐛
