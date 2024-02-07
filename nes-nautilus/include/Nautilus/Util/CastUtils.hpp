@@ -75,7 +75,7 @@ class Typed {
     Typed(const TypeIdentifier* typeIdentifier);
     inline const TypeIdentifier* getTypeIdentifier() const { return typeIdentifier; };
 
-    template<HasTypeIdentifier T>
+    template<typename T>
     bool isType() const {
         return &T::type == typeIdentifier;
     }
@@ -84,17 +84,17 @@ class Typed {
     const TypeIdentifier* typeIdentifier;
 };
 
-template<HasTypeIdentifier T>
+template<typename T>
 T* cast(Typed* typed) {
     return static_cast<T*>(typed);
 };
 
-template<HasTypeIdentifier T>
+template<typename T>
 T* cast(Typed& typed) {
     return static_cast<T*>(&typed);
 };
 
-template<HasTypeIdentifier T, IsTyped U>
+template<typename T, typename U>
 std::shared_ptr<T> cast(std::shared_ptr<U> typed) {
     return std::static_pointer_cast<T>(typed);
 };
@@ -111,7 +111,7 @@ struct is_shared_ptr : std::false_type {};
 template<class T>
 struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
 
-template<HasTypeIdentifier T, IsTyped U>
+template<typename T, typename U>
 bool isa(U& typed) {
     if constexpr (is_unique_ptr<U>::value) {
         return &T::type == typed->getTypeIdentifier();
@@ -124,8 +124,8 @@ bool isa(U& typed) {
     }
 };
 
-template<HasTypeIdentifier T>
-T* cast_if(Typed* typed) {
+template<typename T, typename U>
+T* cast_if(U* typed) {
     if (isa<T>(typed)) {
         return cast<T>(typed);
     }
