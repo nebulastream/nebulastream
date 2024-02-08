@@ -60,10 +60,15 @@ class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 }// namespace Spatial::Mobility::Experimental
 
-enum class RpcClientModes : uint8_t { Register, Unregister, Start, Stop };
+enum class RpcClientMode : uint8_t { Register, Unregister, Start, Stop };
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
+
+struct RpcAsyncRequest {
+    CompletionQueuePtr completionQueue;
+    RpcClientMode rpcClientMode;
+};
 
 class WorkerRPCClient {
   public:
@@ -200,12 +205,11 @@ class WorkerRPCClient {
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return
-     * @param queues
-     * @param mode
+     * @param rpcAsyncRequests: rpc requests made
      * @return true if all calls returned
      * @throws RpcException: Creates RPC exception with failedRPCCalls and mode
      */
-    void checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
+    void checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAsyncRequests);
 
     /**
      * @brief method to propagate new epoch timestamp to source
