@@ -16,6 +16,7 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_H
 
 #include <Nautilus/Interface/Record.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <API/Schema.hpp>
 
 namespace NES::Nautilus::Interface {

@@ -26,7 +26,7 @@ class PagedVectorVarSized {
     static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
-     * @brief TODO
+     * @brief Constructor
      * @param bufferManager
      * @param schema
      * @param pageSize
@@ -34,21 +34,35 @@ class PagedVectorVarSized {
     PagedVectorVarSized(Runtime::BufferManagerPtr  bufferManager, SchemaPtr  schema, uint64_t pageSize = PAGE_SIZE);
 
     /**
-     * @brief TODO
+     * @brief Appends a new page to the pages vector
      */
     void appendPage();
 
     /**
-     * @brief TODO
+     * @brief Appends a new page to the varSizedDataPages vector
      */
     void appendVarSizedDataPage();
 
     /**
-     * @brief TODO
+     * @brief Stores text of the given length in the varSizedDataPages. If the current page is full, a new page is appended.
      * @param text
      * @param length
      */
     void storeText(const char* text, uint64_t length);
+
+    /**
+     * @brief Loads text from the varSizedDataPages by retrieving the pointer to the text from the page at the given entryPos.
+     * @param textPtr
+     * @param length
+     * @return std::string
+     */
+    std::string loadText(uint8_t *textPtr, uint32_t length);
+
+    /**
+     * @brief Get the pages object
+     * @return std::vector<Runtime::TupleBuffer>&
+     */
+    std::vector<Runtime::TupleBuffer>& getPages();
 
   private:
     friend PagedVectorVarSizedRef;
@@ -57,7 +71,6 @@ class PagedVectorVarSized {
     uint64_t entrySize;
     uint64_t pageSize;
     uint64_t capacityPerPage;
-    // TODO alternatively use FunctionCall to get pages.size()
     uint64_t totalNumberOfEntries;
     std::vector<Runtime::TupleBuffer> pages;
     Runtime::TupleBuffer currPage;

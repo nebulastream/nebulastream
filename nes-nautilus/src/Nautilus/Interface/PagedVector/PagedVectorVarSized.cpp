@@ -48,7 +48,6 @@ void PagedVectorVarSized::appendPage() {
     auto page = bufferManager->getUnpooledBuffer(pageSize);
     if (page.has_value()) {
         pages.emplace_back(page.value());
-        currPage = page.value();
     } else {
         NES_THROW_RUNTIME_ERROR("Couldn't get unpooled buffer!");
     }

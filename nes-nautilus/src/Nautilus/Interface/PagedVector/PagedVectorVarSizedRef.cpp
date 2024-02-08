@@ -17,41 +17,32 @@
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <API/AttributeField.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<NES::Nautilus::MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
+PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
     : pagedVectorVarSizedRef(pagedVectorVarSizedRef), schema(std::move(schema)) {}
+
+void* getPageProxy(void* pagedVectorVarSizedPtr, uint64_t pagePos) {
+    auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
+    return pagedVectorVarSized->getPages()[pagePos].getBuffer();
+}
 
 void allocateNewPageProxy(void* pagedVectorVarSizedPtr) {
     auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
     pagedVectorVarSized->appendPage();
 }
 
-void storeTextProxy(void* pagedVectorVarSizedPtr, Nautilus::TextValue* textValue) {
+void storeTextProxy(void* pagedVectorVarSizedPtr, TextValue* textValue) {
     auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
-    pagedVectorVarSized->storeText(textValue->str(), textValue->length());
+    pagedVectorVarSized->storeText(textValue->c_str(), textValue->length());
 }
 
-uint64_t getNoTuplesProxy(void* tupleBufferPtr) {
-    auto* tupleBuffer = (Runtime::TupleBuffer*) tupleBufferPtr;
-    return tupleBuffer->getNumberOfTuples();
-}
-
-void setNoTuplesProxy(void* tupleBufferPtr, uint64_t noTuples) {
-    auto* tupleBuffer = (Runtime::TupleBuffer*) tupleBufferPtr;
-    tupleBuffer->setNumberOfTuples(noTuples);
-}
-
-void* getBufferProxy(void* tupleBufferPtr) {
-    auto* tupleBuffer = (Runtime::TupleBuffer*) tupleBufferPtr;
-    return tupleBuffer->getBuffer();
-}
-
-Value<MemRef> PagedVectorVarSizedRef::getCurrentPage() {
-    return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, currPage).load<MemRef>();
+TextValue* loadTextProxy(void* pagedVectorVarSizedPtr, void* textValuePtr, uint32_t textLength) {
+    auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
+    return TextValue::create(pagedVectorVarSized->loadText(static_cast<uint8_t*>(textValuePtr), textLength));
 }
 
 Value<UInt64> PagedVectorVarSizedRef::getCapacityPerPage() {
@@ -75,25 +66,29 @@ void PagedVectorVarSizedRef::setTotalNumberOfEntries(const Value<>& val) {
 }
 
 void PagedVectorVarSizedRef::writeRecord(Record record) {
-    auto currPage = getCurrentPage();
-    auto noTuples = Nautilus::FunctionCall("getNoTuplesProxy", getNoTuplesProxy, currPage);
+    auto capacityPerPage = getCapacityPerPage();
+    auto totalNumberOfEntries = getTotalNumberOfEntries();
+    auto pagePos = (totalNumberOfEntries / capacityPerPage).as<UInt64>();
+    auto tuplesOnPage = (totalNumberOfEntries - pagePos * capacityPerPage).as<UInt64>();
 
-    if (noTuples >= getCapacityPerPage()) {
+    if (tuplesOnPage >= capacityPerPage) {
         Nautilus::FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorVarSizedRef);
-        currPage = getCurrentPage();
+        pagePos = (pagePos + 1_u64).as<UInt64>();
+        tuplesOnPage = (tuplesOnPage - capacityPerPage).as<UInt64>();
     }
-    auto pageBase = Nautilus::FunctionCall("getBufferProxy", getBufferProxy, currPage);
-    auto pageEntry = pageBase + (noTuples * getEntrySize());
+    auto pageBase = Nautilus::FunctionCall("getPageProxy", getPageProxy, pagedVectorVarSizedRef, pagePos);
+    auto pageEntry = pageBase + (tuplesOnPage * getEntrySize());
 
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : schema->fields) {
+        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         auto const fieldName = field->getName();
         auto const fieldValue = record.read(fieldName);
-        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 
         if (fieldType->type->isText()) {
+            // TODO check sizeof operator
             pageEntry.as<MemRef>().store(getCurrentVarSizedDataEntry());
-            pageEntry = pageEntry + sizeof(UInt8*);
+            pageEntry = pageEntry + sizeof(MemRef);
             pageEntry.as<MemRef>().store(fieldValue.as<Text>()->length());
             pageEntry = pageEntry + sizeof(UInt32);
 
@@ -103,9 +98,7 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
             pageEntry = pageEntry + fieldType->size();
         }
     }
-    auto newNoTuples = (noTuples + 1_u64).as<UInt64>();
-    Nautilus::FunctionCall("setNoTuplesProxy", setNoTuplesProxy, currPage, newNoTuples);
-    setTotalNumberOfEntries(getTotalNumberOfEntries() + 1_u64);
+    setTotalNumberOfEntries(totalNumberOfEntries + 1_u64);
 }
 
 Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
