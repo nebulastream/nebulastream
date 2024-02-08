@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include "../../../../nes-coordinator/include/Util/PlanJsonGenerator.hpp"
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/SharedQueryCatalogEntry.hpp>
+#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,6 +52,31 @@ QueryState QueryCatalog::getQueryState(QueryId queryId) {
         throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
     return (*lockedQueryCatalogEntryMapping)[queryId]->getQueryState();
+}
+
+void QueryCatalog::linkSharedQuery(NES::QueryId queryId, NES::SharedQueryId sharedQueryId) {
+    //Fetch shared query and query catalogs
+    auto [lockedSharedQueryCatalogEntryMapping, lockedQueryCatalogEntryMapping] =
+        folly::acquireLocked(sharedQueryCatalogEntryMapping, queryCatalogEntryMapping);
+
+    //Check if query exists
+    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
+        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    //Check if shared query exists
+    if (!lockedSharedQueryCatalogEntryMapping->contains(sharedQueryId)) {
+        NES_ERROR("QueryCatalogService: Shared Query Catalog does not contains the input shared queryId {}",
+                  std::to_string(sharedQueryId));
+        throw Exceptions::QueryNotFoundException("Shared Query Catalog does not contains the input shared queryId "
+                                                 + std::to_string(sharedQueryId));
+    }
+
+    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
+    queryCatalogEntry->setSharedQueryId(sharedQueryId);
+    auto sharedQueryCatalogEntry = (*lockedSharedQueryCatalogEntryMapping)[sharedQueryId];
+    sharedQueryCatalogEntry->addQueryId(queryId);
 }
 
 void QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason) {
@@ -121,7 +146,7 @@ bool QueryCatalog::checkAndMarkQueryForHardStop(QueryId queryId) {
 }
 
 void QueryCatalog::createSharedQueryCatalogEntry(SharedQueryId sharedQueryId,
-                                                 std::vector<QueryId> queryIds,
+                                                 std::set<QueryId> queryIds,
                                                  QueryState queryStatus) {
     NES_INFO("Create shared query catalog entry for the shared query with id {}", sharedQueryId);
     auto sharedQueryCatalogEntry = std::make_shared<SharedQueryCatalogEntry>(sharedQueryId, queryIds, queryStatus);
@@ -167,7 +192,6 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
     switch (queryState) {
         case QueryState::RESTARTING:
         case QueryState::DEPLOYED:
-        case QueryState::STOPPED:
         case QueryState::MIGRATING:
         case QueryState::RUNNING: {
             sharedQueryCatalogEntry->setQueryState(queryState);
@@ -176,11 +200,11 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
                 if (lockedQueryCatalogEntryMapping->contains(containedQueryId)) {
                     auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[containedQueryId];
                     queryCatalogEntry->setQueryState(queryState);
-                    queryCatalogEntry->setTerminationReason(terminationReason);
                 }
             }
             break;
         }
+        case QueryState::STOPPED:
         case QueryState::FAILED: {
             sharedQueryCatalogEntry->setQueryState(queryState);
             sharedQueryCatalogEntry->setTerminationReason(terminationReason);
@@ -191,7 +215,7 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
             for (const auto& containedQueryId : containedQueryIds) {
                 if (lockedQueryCatalogEntryMapping->contains(containedQueryId)) {
                     auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[containedQueryId];
-                    queryCatalogEntry->setQueryState(QueryState::FAILED);
+                    queryCatalogEntry->setQueryState(queryState);
                     queryCatalogEntry->setTerminationReason(terminationReason);
                 }
             }
@@ -260,8 +284,11 @@ bool QueryCatalog::updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
             break;
         }
         case QueryState::RUNNING:
+        case QueryState::FAILED:
         case QueryState::DEPLOYED:
         case QueryState::MIGRATING:
+        case QueryState::MARKED_FOR_HARD_STOP:
+        case QueryState::MARKED_FOR_FAILURE:
         case QueryState::MARKED_FOR_REDEPLOYMENT:
         case QueryState::MARKED_FOR_MIGRATION: {
             auto lockedSharedQueryCatalogEntryMapping = sharedQueryCatalogEntryMapping.wlock();

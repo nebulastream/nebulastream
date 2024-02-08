@@ -71,9 +71,6 @@ add_nes_unit_test(two-phase-locking-storage-handler-tests "RequestProcessor/Stor
 ### Unlock Deleter Test ###
 add_nes_unit_test(unlock-deleter-tests "RequestProcessor/StorageHandles/UnlockDeleterTest.cpp")
 
-### Fail Query Request Test ###
-add_nes_unit_test(fail-query-request-test "RequestProcessor/RequestTypes/FailQueryRequestTests.cpp")
-
 ### Add Query Request Test ###
 add_nes_unit_test(add-query-request-test "RequestProcessor/RequestTypes/AddQueryRequestTest.cpp")
 

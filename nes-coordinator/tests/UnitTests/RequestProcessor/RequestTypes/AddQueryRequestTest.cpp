@@ -125,7 +125,7 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     try {
         addQueryRequest->execute(storageHandler);
     } catch (Exceptions::RPCQueryUndeploymentException& e) {
-        EXPECT_EQ(e.getMode(), RpcClientModes::Register);
+        EXPECT_EQ(e.getMode(), RpcClientMode::Register);
     }
 }
 }// namespace NES::RequestProcessor::Experimental

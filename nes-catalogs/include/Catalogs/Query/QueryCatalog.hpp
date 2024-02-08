@@ -25,6 +25,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <queue>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -85,12 +86,19 @@ class QueryCatalog {
     void updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason);
 
     /**
+     * @brief link query catalog entry to the shared query catalog entry
+     * @param queryId the query id
+     * @param sharedQueryId the shared query id
+     */
+    void linkSharedQuery(QueryId queryId, SharedQueryId sharedQueryId);
+
+    /**
      * @brief registers a new shared query into the Query catalog
      * @param sharedQueryId: a user query in string form
      * @param queryIds: query ids contained in the shared query plan
      * @param queryStatus: the status of the shared query
      */
-    void createSharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::vector<QueryId> queryIds, QueryState queryStatus);
+    void createSharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::set<QueryId> queryIds, QueryState queryStatus);
 
     /**
      * @brief Is an entry for the given query id exists

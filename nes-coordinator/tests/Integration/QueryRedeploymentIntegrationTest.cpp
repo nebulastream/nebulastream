@@ -482,12 +482,10 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
 
-    auto stopSuccess = wrk1->getNodeEngine()->stopQuery(sharedQueryId);
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
 
-    auto stopSuccess2 = wrk2->getNodeEngine()->stopQuery(sharedQueryId);
     cout << "stopping worker" << endl;
     bool retStopWrk2 = wrk2->stop(false);
     ASSERT_TRUE(retStopWrk2);

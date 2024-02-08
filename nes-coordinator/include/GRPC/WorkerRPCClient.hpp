@@ -113,50 +113,63 @@ class WorkerRPCClient {
 
     /**
      * @brief ungregisters a query
-     * @param queryId to unregister query
+     * @param sharedQueryId to unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(const std::string& address, QueryId queryId);
+    bool unregisterQuery(const std::string& address, SharedQueryId sharedQueryId);
 
     /**
      * @brief ungregisters a query asynchronously
-     * @param queryId to unregister query
+     * @param sharedQueryId to unregister query
      */
-    void unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    void unregisterQueryAsync(const std::string& address, SharedQueryId sharedQueryId, const CompletionQueuePtr& cq);
 
     /**
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
-     * @param queryId to start
+     * @param sharedQueryId to start
+     * @param decomposedQueryPlanId to start
      * @return bool indicating success
      */
-    bool startQuery(const std::string& address, QueryId queryId);
+    bool startQuery(const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
       * @brief method to start a already deployed query asynchronously
       * @note if query is not deploy, false is returned
-      * @param queryId to start
+      * @param address the address of the worker
+      * @param sharedQueryId to start
+      * @param decomposedQueryPlanId to start
+      * @param cq the completion queue
       */
-    void startQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    void startQueryAsync(const std::string& address,
+                         SharedQueryId sharedQueryId,
+                         DecomposedQueryPlanId decomposedQueryPlanId,
+                         const CompletionQueuePtr& cq);
 
     /**
      * @brief method to stop a query
      * @param address address of the new worker
-     * @param queryId to stop
+     * @param sharedQueryId to stop
+     * @param decomposedQueryPlanId to stop
      * @param terminationType termination type of the query
      * @return bool indicating success
      */
-    bool stopQuery(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType);
+    bool stopQuery(const std::string& address,
+                   SharedQueryId sharedQueryId,
+                   DecomposedQueryPlanId decomposedQueryPlanId,
+                   Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief method to stop a query asynchronously
      * @param address : address of the worker
-     * @param queryId to stop
+     * @param sharedQueryId to stop
+     * @param decomposedQueryPlanId to stop
      * @param terminationType: the termination type
      * @param cq: completion queue of grpc requests
      */
     void stopQueryAsync(const std::string& address,
-                        QueryId queryId,
+                        SharedQueryId sharedQueryId,
+                        DecomposedQueryPlanId decomposedQueryPlanId,
                         Runtime::QueryTerminationType terminationType,
                         const CompletionQueuePtr& cq);
 

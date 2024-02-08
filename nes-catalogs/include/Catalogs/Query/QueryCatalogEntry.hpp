@@ -128,8 +128,16 @@ class QueryCatalogEntry {
      */
     std::map<std::string, QueryPlanPtr> getOptimizationPhases();
 
-    /** @brief Retrieve a timestamped history of query status changes. */
+    /**
+     * @brief Retrieve a timestamped history of query status changes.
+     */
     const QueryStateHistory& getHistory() const;
+
+    /**
+     * @brief Set the shared query id
+     * @param sharedQueryId : the input shared query id
+     */
+    void setSharedQueryId(SharedQueryId sharedQueryId);
 
   private:
     QueryId queryId;

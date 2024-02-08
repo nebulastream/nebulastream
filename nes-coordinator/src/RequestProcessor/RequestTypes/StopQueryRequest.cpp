@@ -24,12 +24,15 @@
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <string>
 #include <utility>
 
@@ -96,6 +99,39 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
         deploymentPhase->execute(deploymentContexts, RequestType::StopQuery);
 
+        // Iterate over deployment context and update execution plan
+        for (const auto& deploymentContext : deploymentContexts) {
+            auto executionNodeId = deploymentContext->getWorkerId();
+            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+            switch (decomposedQueryPlanState) {
+                case QueryState::MARKED_FOR_REDEPLOYMENT:
+                case QueryState::MARKED_FOR_DEPLOYMENT: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::RUNNING);
+                    break;
+                }
+                case QueryState::MARKED_FOR_MIGRATION: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::STOPPED);
+                    globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                                                                   sharedQueryId,
+                                                                   decomposedQueryPlanId,
+                                                                   decomposedQueryPlanVersion);
+                    break;
+                }
+                default:
+                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+            }
+        }
+
         //FIXME: #3742 This may not work well when shared query plan contains more than one queries:
         // 1. The query merging feature is enabled.
         // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queries.
@@ -108,7 +144,6 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         queryCatalog->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
         globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
         responsePromise.set_value(std::make_shared<StopQueryResponse>(true));
-
     } catch (RequestExecutionException& e) {
         NES_ERROR("{}", e.what());
         auto requests = handleError(std::current_exception(), storageHandler);

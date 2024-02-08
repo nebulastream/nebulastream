@@ -18,9 +18,7 @@
 
 namespace NES::Catalogs::Query {
 
-SharedQueryCatalogEntry::SharedQueryCatalogEntry(SharedQueryId sharedQueryId,
-                                                 std::vector<QueryId> queryIds,
-                                                 QueryState queryState)
+SharedQueryCatalogEntry::SharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::set<QueryId> queryIds, QueryState queryState)
     : sharedQueryId(sharedQueryId), containedQueryIds(queryIds), queryState(queryState) {}
 
 QueryState SharedQueryCatalogEntry::getQueryState() const { return queryState; }
@@ -34,7 +32,9 @@ void SharedQueryCatalogEntry::setQueryState(QueryState queryStatus) {
 
 void SharedQueryCatalogEntry::setTerminationReason(std::string terminationReason) { this->terminationReason = terminationReason; }
 
-std::vector<QueryId> SharedQueryCatalogEntry::getContainedQueryIds() { return containedQueryIds; }
+std::set<QueryId> SharedQueryCatalogEntry::getContainedQueryIds() { return containedQueryIds; }
+
+void SharedQueryCatalogEntry::addQueryId(NES::QueryId queryId) { containedQueryIds.emplace(queryId); }
 
 std::vector<DecomposedQueryPlanMetaDataPtr> SharedQueryCatalogEntry::getAllDecomposedQueryPlanMetaData() {
     std::vector<DecomposedQueryPlanMetaDataPtr> decomposedQueryPlan;
@@ -63,5 +63,11 @@ void SharedQueryCatalogEntry::addDecomposedQueryPlanMetaData(DecomposedQueryPlan
                                                                             workerId);
     decomposedQueryPlanMetaData[decomposedQueryPlanId] = std::move(decomposedQueryPlanMetaDatum);
 }
+
+SharedQueryId SharedQueryCatalogEntry::getSharedQueryId() const noexcept { return sharedQueryId; }
+
+const QueryStateHistory& SharedQueryCatalogEntry::getHistory() const { return history; }
+
+std::string SharedQueryCatalogEntry::getTerminationReason() { return terminationReason; }
 
 }// namespace NES::Catalogs::Query

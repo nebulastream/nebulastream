@@ -19,6 +19,7 @@
 #include <Util/QueryState.hpp>
 #include <Util/QueryStateHistory.hpp>
 #include <map>
+#include <set>
 #include <memory>
 
 namespace NES {
@@ -33,7 +34,7 @@ namespace Catalogs::Query {
  */
 class SharedQueryCatalogEntry {
   public:
-    explicit SharedQueryCatalogEntry(SharedQueryId queryId, std::vector<QueryId> queryIds, QueryState queryState);
+    explicit SharedQueryCatalogEntry(SharedQueryId queryId, std::set<QueryId> queryIds, QueryState queryState);
 
     /**
      * @brief method to get the id of the query
@@ -51,7 +52,13 @@ class SharedQueryCatalogEntry {
      * @brief get contained query ids
      * @return vector of query ids
      */
-    [[nodiscard]] std::vector<QueryId> getContainedQueryIds();
+    [[nodiscard]] std::set<QueryId> getContainedQueryIds();
+
+    /**
+     * @brief Add a new query id tot he catalog entry
+     * @param queryId : id to add
+     */
+    void addQueryId(QueryId queryId);
 
     /**
      * @brief method to set the status of the query
@@ -70,13 +77,6 @@ class SharedQueryCatalogEntry {
      * @return string representing termination reason
      */
     std::string getTerminationReason();
-
-    /**
-     * @brief Check if metadata exists for a specific subplan
-     * @param decomposedQueryPlanId id of the decomposed plan to check
-     * @return true if metadata has already been created
-     */
-    bool hasDecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * Add decomposed query plan metadata
@@ -102,8 +102,6 @@ class SharedQueryCatalogEntry {
      */
     std::vector<DecomposedQueryPlanMetaDataPtr> getAllDecomposedQueryPlanMetaData();
 
-    void removeAllQuerySubPlanMetaData();
-
     /**
      * @brief Retrieve a timestamped history of query status changes.
      */
@@ -111,7 +109,7 @@ class SharedQueryCatalogEntry {
 
   private:
     SharedQueryId sharedQueryId;
-    std::vector<QueryId> containedQueryIds;
+    std::set<QueryId> containedQueryIds;
     QueryState queryState;
     std::map<DecomposedQueryPlanId, DecomposedQueryPlanMetaDataPtr> decomposedQueryPlanMetaData;
     std::string terminationReason;
