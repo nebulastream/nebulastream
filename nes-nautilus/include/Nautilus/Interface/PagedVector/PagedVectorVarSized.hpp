@@ -57,6 +57,8 @@ class PagedVectorVarSized {
     uint64_t entrySize;
     uint64_t pageSize;
     uint64_t capacityPerPage;
+    // TODO alternatively use FunctionCall to get pages.size()
+    uint64_t totalNumberOfEntries;
     std::vector<Runtime::TupleBuffer> pages;
     Runtime::TupleBuffer currPage;
     std::vector<Runtime::TupleBuffer> varSizedDataPages;

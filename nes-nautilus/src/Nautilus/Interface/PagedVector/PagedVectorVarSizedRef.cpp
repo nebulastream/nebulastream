@@ -15,13 +15,11 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <API/AttributeField.hpp>
-#include <utility>
 
 namespace NES::Nautilus::Interface {
 PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<NES::Nautilus::MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
@@ -68,6 +66,14 @@ Value<UInt64> PagedVectorVarSizedRef::getEntrySize() {
     return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, entrySize).load<UInt64>();
 }
 
+Value<UInt64> PagedVectorVarSizedRef::getTotalNumberOfEntries() {
+    return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, totalNumberOfEntries).load<UInt64>();
+}
+
+void PagedVectorVarSizedRef::setTotalNumberOfEntries(const Value<>& val) {
+    getMember(pagedVectorVarSizedRef, PagedVectorVarSized, totalNumberOfEntries).store(val);
+}
+
 void PagedVectorVarSizedRef::writeRecord(Record record) {
     auto currPage = getCurrentPage();
     auto noTuples = Nautilus::FunctionCall("getNoTuplesProxy", getNoTuplesProxy, currPage);
@@ -99,6 +105,7 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
     }
     auto newNoTuples = (noTuples + 1_u64).as<UInt64>();
     Nautilus::FunctionCall("setNoTuplesProxy", setNoTuplesProxy, currPage, newNoTuples);
+    setTotalNumberOfEntries(getTotalNumberOfEntries() + 1_u64);
 }
 
 Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
@@ -110,5 +117,65 @@ Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
     // else -> copy value to record
     return record;
 }
+
+PagedVectorVarSizedRefIter PagedVectorVarSizedRef::begin() { return at(0_u64); }
+
+PagedVectorVarSizedRefIter PagedVectorVarSizedRef::at(Value<UInt64> pos) {
+    PagedVectorVarSizedRefIter pagedVectorVarSizedRefIter(*this);
+    pagedVectorVarSizedRefIter.setPos(pos);
+    return pagedVectorVarSizedRefIter;
+}
+
+PagedVectorVarSizedRefIter PagedVectorVarSizedRef::end() { return at(this->getTotalNumberOfEntries()); }
+
+bool PagedVectorVarSizedRef::operator==(const PagedVectorVarSizedRef& other) const {
+    if (this == &other) {
+        return true;
+    }
+
+    return schema == other.schema && pagedVectorVarSizedRef == other.pagedVectorVarSizedRef;
+}
+
+PagedVectorVarSizedRefIter::PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef& pagedVectorVarSized)
+    : pos(0_u64), pagedVectorVarSized(pagedVectorVarSized) {}
+
+PagedVectorVarSizedRefIter::PagedVectorVarSizedRefIter(const PagedVectorVarSizedRefIter& it)
+    : pos(it.pos), pagedVectorVarSized(it.pagedVectorVarSized) {}
+
+PagedVectorVarSizedRefIter& PagedVectorVarSizedRefIter::operator=(const PagedVectorVarSizedRefIter& it) {
+    if (this == &it) {
+        return *this;
+    }
+
+    pos = it.pos;
+    // TODO schema has no copy assignment operator
+    pagedVectorVarSized = it.pagedVectorVarSized;
+    return *this;
+}
+
+Record PagedVectorVarSizedRefIter::operator*() { return pagedVectorVarSized.readRecord(pos); }
+
+PagedVectorVarSizedRefIter& PagedVectorVarSizedRefIter::operator++() {
+    pos = pos + 1;
+    return *this;
+}
+
+PagedVectorVarSizedRefIter PagedVectorVarSizedRefIter::operator++(int) {
+    PagedVectorVarSizedRefIter copy = *this;
+    pos = pos + 1;
+    return copy;
+}
+
+bool PagedVectorVarSizedRefIter::operator==(const PagedVectorVarSizedRefIter& other) const {
+    if (this == &other) {
+        return true;
+    }
+
+    return pos == other.pos && pagedVectorVarSized == other.pagedVectorVarSized;
+}
+
+bool PagedVectorVarSizedRefIter::operator!=(const PagedVectorVarSizedRefIter& other) const { return !(*this == other); }
+
+void PagedVectorVarSizedRefIter::setPos(Value<UInt64> newValue) { pos = newValue; }
 
 } //NES::Nautilus::Interface

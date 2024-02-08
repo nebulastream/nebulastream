@@ -26,6 +26,7 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
     : bufferManager(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize) {
     appendPage();
     appendVarSizedDataPage();
+    totalNumberOfEntries = 0;
     entrySize = 0;
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : schema->fields) {
