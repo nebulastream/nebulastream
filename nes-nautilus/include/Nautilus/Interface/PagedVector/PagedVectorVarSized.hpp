@@ -43,15 +43,24 @@ class PagedVectorVarSized {
      */
     void appendVarSizedDataPage();
 
+    /**
+     * @brief TODO
+     * @param text
+     * @param length
+     */
+    void storeText(const char* text, uint64_t length);
+
   private:
+    friend PagedVectorVarSizedRef;
     Runtime::BufferManagerPtr bufferManager;
     SchemaPtr schema;
     uint64_t entrySize;
     uint64_t pageSize;
+    uint64_t capacityPerPage;
     std::vector<Runtime::TupleBuffer> pages;
-    std::vector<Runtime::TupleBuffer> varSizedData;
     Runtime::TupleBuffer currPage;
-    Runtime::TupleBuffer currVarSizedData;
+    std::vector<Runtime::TupleBuffer> varSizedDataPages;
+    uint8_t* currVarSizedDataEntry;
 };
 } //NES::Nautilus::Interface
 

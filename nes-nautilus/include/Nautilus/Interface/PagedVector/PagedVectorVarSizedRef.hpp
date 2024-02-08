@@ -16,16 +16,17 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_H
 
 #include <Nautilus/Interface/Record.hpp>
+#include <API/Schema.hpp>
 
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedRefIter;
 class PagedVectorVarSizedRef {
   public:
-    PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef);
+    PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema);
 
     void writeRecord(Record record);
 
-    Record readRecord();
+    Record readRecord(const Value<UInt64>& pos);
 
     PagedVectorVarSizedRefIter begin();
 
@@ -34,7 +35,13 @@ class PagedVectorVarSizedRef {
     PagedVectorVarSizedRefIter end();
 
   private:
+    Value<MemRef> getCurrentPage();
+    Value<UInt64> getCapacityPerPage();
+    Value<MemRef> getCurrentVarSizedDataEntry();
+    Value<UInt64> getEntrySize();
+
     Value<MemRef> pagedVectorVarSizedRef;
+    const SchemaPtr schema;
 };
 } //namespace NES::Nautilus::Interface
 

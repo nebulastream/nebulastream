@@ -31,13 +31,14 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
     for (auto& field : schema->fields) {
         auto fieldType = field->getDataType();
         if (fieldType->isText()) {
-            auto varSizedDataPtrSize = sizeof(uint64_t);
-            auto varSizedDataSize = sizeof(uint64_t);
+            auto varSizedDataPtrSize = sizeof(uint8_t*);
+            auto varSizedDataSize = sizeof(uint32_t);
             entrySize += varSizedDataPtrSize + varSizedDataSize;
         } else {
             entrySize += physicalDataTypeFactory.getPhysicalType(fieldType)->size();
         }
     }
+    capacityPerPage = entrySize / pageSize;
     NES_ASSERT2_FMT(entrySize > 0, "EntrySize for a pagedVector has to be larger than 0!");
     NES_ASSERT2_FMT((entrySize / pageSize) > 0, "At least one tuple has to fit on a page!");
 }
@@ -55,10 +56,26 @@ void PagedVectorVarSized::appendPage() {
 void PagedVectorVarSized::appendVarSizedDataPage(){
     auto page = bufferManager->getUnpooledBuffer(pageSize);
     if (page.has_value()) {
-        varSizedData.emplace_back(page.value());
-        currVarSizedData = page.value();
+        varSizedDataPages.emplace_back(page.value());
+        currVarSizedDataEntry = page.value().getBuffer();
     } else {
         NES_THROW_RUNTIME_ERROR("Couldn't get unpooled buffer!");
+    }
+}
+
+void PagedVectorVarSized::storeText(const char* text, uint64_t length) {
+    while (length > 0) {
+        auto remainingSpace = pageSize - (currVarSizedDataEntry - varSizedDataPages.back().getBuffer());
+        if (remainingSpace >= length) {
+            std::memcpy(currVarSizedDataEntry, text, length);
+            currVarSizedDataEntry += length;
+            length = 0;
+        } else {
+            std::memcpy(currVarSizedDataEntry, text, remainingSpace);
+            length -= remainingSpace;
+            text += remainingSpace;
+            appendVarSizedDataPage();
+        }
     }
 }
 
