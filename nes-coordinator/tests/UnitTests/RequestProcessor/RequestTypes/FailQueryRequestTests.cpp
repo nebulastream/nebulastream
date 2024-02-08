@@ -155,6 +155,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
             queryCatalog->resetSubQueryMetaData(queryId);
             queryCatalog->mapSharedQueryPlanId(sharedQueryId, queryId);
         }
+
         //Add sub query plan metadata in the catalog
         for (auto& executionNode : executionNodes) {
             auto workerId = executionNode->operator*()->getId();

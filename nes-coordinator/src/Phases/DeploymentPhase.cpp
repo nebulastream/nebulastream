@@ -44,7 +44,7 @@ void DeploymentPhase::registerUnregisterDecomposedQueryPlan(const std::set<Optim
 
     QueryState sharedQueryState;
     SharedQueryId sharedQueryId;
-    std::map<CompletionQueuePtr, uint64_t> asyncRequests;
+    std::vector<RpcAsyncRequest> asyncRequests;
     for (const auto& deploymentContext : deploymentContexts) {
         auto queueForDeploymentContext = std::make_shared<CompletionQueue>();
         auto grpcAddress = deploymentContext->getGrpcAddress();
@@ -74,6 +74,7 @@ void DeploymentPhase::registerUnregisterDecomposedQueryPlan(const std::set<Optim
                                                               decomposedQueryPlanVersion,
                                                               decomposedQueryPlanState,
                                                               workerId);
+                asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Register});
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
@@ -94,6 +95,7 @@ void DeploymentPhase::registerUnregisterDecomposedQueryPlan(const std::set<Optim
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::MARKED_FOR_HARD_STOP,
                                                                   workerId);
+                    asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Unregister});
                 } else if (requestType == RequestType::FailQuery) {
                     sharedQueryState = QueryState::FAILED;
                     // Unregister the decomposed query plan
@@ -104,6 +106,7 @@ void DeploymentPhase::registerUnregisterDecomposedQueryPlan(const std::set<Optim
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::MARKED_FOR_FAILURE,
                                                                   workerId);
+                    asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Register});
                 } else {
                     NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
                               magic_enum::enum_name(requestType));
@@ -115,18 +118,14 @@ void DeploymentPhase::registerUnregisterDecomposedQueryPlan(const std::set<Optim
                             magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
-
-        if (!(decomposedQueryPlanState == QueryState::MARKED_FOR_MIGRATION && requestType == RequestType::AddQuery)) {
-            asyncRequests[queueForDeploymentContext] = 1;
-        }
     }
-    workerRPCClient->checkAsyncResult(asyncRequests, RpcClientModes::Register);
+    workerRPCClient->checkAsyncResult(asyncRequests);
     queryCatalog->updateSharedQueryStatus(sharedQueryId, sharedQueryState, "");
 }
 
 void DeploymentPhase::startStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
                                                    NES::RequestType requestType) {
-    std::map<CompletionQueuePtr, uint64_t> asyncRequests;
+    std::vector<RpcAsyncRequest> asyncRequests;
     for (const auto& deploymentContext : deploymentContexts) {
         auto queueForDeploymentContext = std::make_shared<CompletionQueue>();
         auto grpcAddress = deploymentContext->getGrpcAddress();
@@ -145,6 +144,7 @@ void DeploymentPhase::startStopDecomposedQueryPlan(const std::set<Optimizer::Dep
                                                               decomposedQueryPlanVersion,
                                                               QueryState::RUNNING,
                                                               workerId);
+                asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Start});
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
@@ -166,6 +166,7 @@ void DeploymentPhase::startStopDecomposedQueryPlan(const std::set<Optimizer::Dep
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::STOPPED,
                                                                   workerId);
+                    asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Stop});
                 } else if (requestType == RequestType::FailQuery) {
                     workerRPCClient->stopQueryAsync(grpcAddress,
                                                     sharedQueryId,
@@ -177,6 +178,7 @@ void DeploymentPhase::startStopDecomposedQueryPlan(const std::set<Optimizer::Dep
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::FAILED,
                                                                   workerId);
+                    asyncRequests.emplace_back(RpcAsyncRequest{queueForDeploymentContext, RpcClientMode::Stop});
                 } else {
                     NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
                               magic_enum::enum_name(requestType));
@@ -188,12 +190,8 @@ void DeploymentPhase::startStopDecomposedQueryPlan(const std::set<Optimizer::Dep
                             magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
-
-        if (!(decomposedQueryPlanState == QueryState::MARKED_FOR_MIGRATION && requestType == RequestType::AddQuery)) {
-            asyncRequests[queueForDeploymentContext] = 1;
-        }
     }
-    workerRPCClient->checkAsyncResult(asyncRequests, RpcClientModes::Start);
+    workerRPCClient->checkAsyncResult(asyncRequests);
 }
 
 }// namespace NES

@@ -22,10 +22,6 @@ namespace NES {
 using CompletionQueuePtr = std::shared_ptr<grpc::CompletionQueue>;
 
 namespace Exceptions {
-struct RpcFailureInformation {
-    CompletionQueuePtr completionQueue;
-    uint64_t count;
-};
 
 /**
  * @brief This exception indicates the failure of an rpc
@@ -35,11 +31,9 @@ class RpcException : public RequestExecutionException {
     /**
      * @brief Constructor
      * @param message a human readable message describing the error
-     * @param failedRpcs information about the failed rpcs containing pointers to the completion queues of the failed
-     * calls and the count of performed calls
-     * @param mode the mode of the rpc operation
+     * @param failedRpcRequests information about the failed RPC requests
      */
-    explicit RpcException(const std::string& message, std::vector<RpcFailureInformation> failedRpcs, RpcClientModes mode);
+    explicit RpcException(const std::string& message, std::vector<RpcAsyncRequest> failedRpcRequests);
 
     [[nodiscard]] const char* what() const noexcept override;
 
@@ -48,18 +42,11 @@ class RpcException : public RequestExecutionException {
      * @return a list of structs containing a pointer to the completion queue and the count of operations performed in
      * that queue
      */
-    std::vector<RpcFailureInformation> getFailedCalls();
-
-    /**
-     * @brief get the mode of the failed operation
-     * @return register, unregister, stop or start
-     */
-    RpcClientModes getMode();
+    std::vector<RpcAsyncRequest> getFailedCalls();
 
   private:
     std::string message;
-    std::vector<RpcFailureInformation> failedRpcs;
-    RpcClientModes mode;
+    std::vector<RpcAsyncRequest> failedRpcs;
 };
 }// namespace Exceptions
 }// namespace NES

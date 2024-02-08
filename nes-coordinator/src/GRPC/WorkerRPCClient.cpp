@@ -106,50 +106,46 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
-    NES_DEBUG("start checkAsyncResult for mode={} for {} queues", magic_enum::enum_name(mode), queues.size());
-    std::vector<Exceptions::RpcFailureInformation> failedRPCCalls;
-    for (const auto& [completionQueue, numberOfRequests] : queues) {
+void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAsyncRequests) {
+    NES_DEBUG("start checkAsyncResult for {} requests", rpcAsyncRequests.size());
+    std::vector<RpcAsyncRequest> failedRPCCalls;
+    for (const auto& rpcAsyncRequest : rpcAsyncRequests) {
         //wait for all deploys to come back
         void* got_tag = nullptr;
         bool ok = false;
-        uint64_t queueIndex = 0;
         // Block until the next result is available in the completion queue "completionQueue".
-        while (queueIndex != numberOfRequests && completionQueue->Next(&got_tag, &ok)) {
-            // The tag in this example is the memory location of the call object
-            bool status = false;
-            if (mode == RpcClientModes::Register) {
-                auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
-                status = call->status.ok();
-                delete call;
-            } else if (mode == RpcClientModes::Unregister) {
-                auto* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
-                status = call->status.ok();
-                delete call;
-            } else if (mode == RpcClientModes::Start) {
-                auto* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
-                status = call->status.ok();
-                delete call;
-            } else if (mode == RpcClientModes::Stop) {
-                auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
-                status = call->status.ok();
-                delete call;
-            } else {
-                NES_NOT_IMPLEMENTED();
-            }
+        rpcAsyncRequest.completionQueue->Next(&got_tag, &ok);
+        // The tag in this example is the memory location of the call object
+        bool status;
+        auto requestClientMode = rpcAsyncRequest.rpcClientMode;
+        if (requestClientMode == RpcClientMode::Register) {
+            auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
+        } else if (requestClientMode == RpcClientMode::Unregister) {
+            auto* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
+        } else if (requestClientMode == RpcClientMode::Start) {
+            auto* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
+        } else if (requestClientMode == RpcClientMode::Stop) {
+            auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
 
-            if (!status) {
-                failedRPCCalls.push_back({completionQueue, queueIndex});
-            }
-
-            // Once we're complete, deallocate the call object.
-            queueIndex++;
+        if (!status) {
+            failedRPCCalls.push_back(rpcAsyncRequest);
         }
     }
     if (!failedRPCCalls.empty()) {
-        throw Exceptions::RpcException("Some RPCs did not succeed", failedRPCCalls, mode);
+        throw Exceptions::RpcException("Some RPCs did not succeed", failedRPCCalls);
     }
-    NES_DEBUG("checkAsyncResult for mode={} succeed", magic_enum::enum_name(mode));
+    NES_DEBUG("All rpc async requests succeeded");
 }
 
 void WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
