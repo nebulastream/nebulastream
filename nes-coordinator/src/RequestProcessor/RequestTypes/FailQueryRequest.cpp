@@ -20,12 +20,16 @@
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
+#include <Util/DeploymentContext.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -100,6 +104,37 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     //respond to the calling service which is the shared query id to the query being undeployed
     responsePromise.set_value(std::make_shared<FailQueryResponse>(sharedQueryId));
 
+    // Iterate over deployment context and update execution plan
+    for (const auto& deploymentContext : deploymentContexts) {
+        auto executionNodeId = deploymentContext->getWorkerId();
+        auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+        auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+        auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+        switch (decomposedQueryPlanState) {
+            case QueryState::MARKED_FOR_REDEPLOYMENT:
+            case QueryState::MARKED_FOR_DEPLOYMENT: {
+                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                    sharedQueryId,
+                                                                    decomposedQueryPlanId,
+                                                                    decomposedQueryPlanVersion,
+                                                                    QueryState::RUNNING);
+                break;
+            }
+            case QueryState::MARKED_FOR_MIGRATION: {
+                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                    sharedQueryId,
+                                                                    decomposedQueryPlanId,
+                                                                    decomposedQueryPlanVersion,
+                                                                    QueryState::STOPPED);
+                globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                                                               sharedQueryId,
+                                                               decomposedQueryPlanId,
+                                                               decomposedQueryPlanVersion);
+                break;
+            }
+            default: NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+        }
+    }
     //no follow up requests
     return {};
     //todo #3727: catch exceptions for error handling

@@ -605,8 +605,10 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
 
         ASSERT_TRUE(f1.get());
         ASSERT_TRUE(f2.get());
-        ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getSharedQueryId()));
-        ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getSharedQueryId()));
+        ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getSharedQueryId(),
+                                                 builderGeneratorQEP->getDecomposedQueryPlanId()));
+        ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getSharedQueryId(),
+                                                   builderReceiverQEP->getDecomposedQueryPlanId()));
     }
 
     ASSERT_EQ(numQueries, finalSinks.size());
@@ -966,8 +968,10 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     auto future = networkSink->completed.get_future();
 
-    ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getSharedQueryId()));
-    ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getSharedQueryId()));
+    ASSERT_TRUE(
+        nodeEngineSender->startQuery(builderGeneratorQEP->getSharedQueryId(), builderGeneratorQEP->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(
+        nodeEngineReceiver->startQuery(builderReceiverQEP->getSharedQueryId(), builderReceiverQEP->getDecomposedQueryPlanId()));
 
     ASSERT_TRUE(future.get());
 

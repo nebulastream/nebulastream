@@ -82,8 +82,8 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryReq
 }
 
 Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* request, StartQueryReply* reply) {
-    NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->queryid());
-    bool success = nodeEngine->startQuery(request->queryid());
+    NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->sharedqueryid());
+    bool success = nodeEngine->startQuery(request->sharedqueryid(), request->decomposedqueryid());
     if (success) {
         NES_DEBUG("WorkerRPCServer::StartQuery: success");
         reply->set_success(true);
@@ -95,12 +95,12 @@ Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* requ
 }
 
 Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* request, StopQueryReply* reply) {
-    NES_DEBUG("WorkerRPCServer::StopQuery: got request for {}", request->queryid());
+    NES_DEBUG("WorkerRPCServer::StopQuery: got request for {}", request->sharedqueryid());
     auto terminationType = Runtime::QueryTerminationType(request->queryterminationtype());
     NES_ASSERT2_FMT(terminationType != Runtime::QueryTerminationType::Graceful
                         && terminationType != Runtime::QueryTerminationType::Invalid,
                     "Invalid termination type requested");
-    bool success = nodeEngine->stopQuery(request->queryid(), terminationType);
+    bool success = nodeEngine->stopQuery(request->sharedqueryid(), request->decomposedqueryid(), terminationType);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);

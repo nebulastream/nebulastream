@@ -23,7 +23,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PlanJsonGenerator.hpp>
+#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <memory>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>

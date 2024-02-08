@@ -78,7 +78,7 @@ class DeploymentPhase {
      * @throws QueryDeploymentException: Error in call to Elegant acceleration service with code
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
-    void registerUnregisterDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
+    void registerOrStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
                                                RequestType requestType);
 
     /**
@@ -86,8 +86,8 @@ class DeploymentPhase {
      * @param deploymentContexts
      * @param requestType
      */
-    void startStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
-                                      RequestType requestType);
+    void startOrUnregisterDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
+                                              NES::RequestType requestType);
 
     WorkerRPCClientPtr workerRPCClient;
     Catalogs::Query::QueryCatalogPtr queryCatalog;

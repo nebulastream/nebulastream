@@ -57,6 +57,7 @@
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <string>
@@ -317,6 +318,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED) {
             queryCatalog->createSharedQueryCatalogEntry(sharedQueryId, {queryId}, QueryState::OPTIMIZING);
         } else {
+            queryCatalog->linkSharedQuery(queryId, sharedQueryId);
             queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::OPTIMIZING, "");
         }
 
@@ -328,7 +330,39 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
         //22. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
-        queryCatalog->updateQueryStatus(queryId, QueryState::RUNNING, "");
+
+        // Iterate over deployment context and update execution plan
+        for (const auto& deploymentContext : deploymentContexts) {
+            auto executionNodeId = deploymentContext->getWorkerId();
+            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+            switch (decomposedQueryPlanState) {
+                case QueryState::MARKED_FOR_REDEPLOYMENT:
+                case QueryState::MARKED_FOR_DEPLOYMENT: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::RUNNING);
+                    break;
+                }
+                case QueryState::MARKED_FOR_MIGRATION: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::STOPPED);
+                    globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                                                                   sharedQueryId,
+                                                                   decomposedQueryPlanId,
+                                                                   decomposedQueryPlanVersion);
+                    break;
+                }
+                default:
+                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+            }
+        }
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);

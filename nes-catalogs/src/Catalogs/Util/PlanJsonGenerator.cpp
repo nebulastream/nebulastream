@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
@@ -26,11 +27,8 @@
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PlanJsonGenerator.hpp>
 
 namespace NES {
 

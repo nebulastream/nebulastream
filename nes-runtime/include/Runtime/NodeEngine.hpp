@@ -97,9 +97,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief undeploy stops and undeploy a query
      * @param sharedQueryId to undeploy
+     * @param decomposedQueryPlanId to undeploy
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool undeployQuery(SharedQueryId sharedQueryId);
+    [[nodiscard]] bool undeployQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief registers a query
@@ -126,17 +127,20 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
      * @param sharedQueryId to start
+     * @param decomposedQueryPlanId the decomposed query plan to start
      * @return bool indicating success
      */
-    [[nodiscard]] bool startQuery(SharedQueryId sharedQueryId);
+    [[nodiscard]] bool startQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief method to stop a query
      * @param sharedQueryId to stop
+     * @param decomposedQueryPlanId to stop
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
     [[nodiscard]] bool stopQuery(SharedQueryId sharedQueryId,
+                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                  Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**

@@ -52,6 +52,10 @@ void QueryCatalogEntry::setQueryState(QueryState queryStatus) {
     history.emplace_back(usSinceEpoch, queryStatus);
 }
 
+void QueryCatalogEntry::setSharedQueryId(SharedQueryId sharedQueryId){
+    this->sharedQueryId = sharedQueryId;
+}
+
 void QueryCatalogEntry::setTerminationReason(std::string metaInformation) { this->terminationReason = metaInformation; }
 
 std::string QueryCatalogEntry::getMetaInformation() { return terminationReason; }

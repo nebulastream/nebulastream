@@ -128,7 +128,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
                     }
                     default:
                         NES_WARNING("Unhandled Deployment context with status: {}",
-                                    magic_enum::enum_name(QueryState::MARKED_FOR_MIGRATION));
+                                    magic_enum::enum_name(decomposedQueryPlanState));
                 }
             }
         }
