@@ -89,6 +89,8 @@ FileSink::FileSink(SinkFormatPtr format,
         if (!this->nodeEngine->getTcpDescriptor().has_value()) {
             NES_INFO("No existing tcp descriptor, opening one now")
 
+            auto port = std::stoi(filePath);
+
             // Create a TCP socket
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
             if (sockfd == -1) {
@@ -101,7 +103,7 @@ FileSink::FileSink(SinkFormatPtr format,
             memset(&server_addr, 0, sizeof(server_addr));
             server_addr.sin_family = AF_INET;
             server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");// Example IP address
-            server_addr.sin_port = htons(12345);                 // Example port number
+            server_addr.sin_port = htons(port);                 // Example port number
 
             // Connect to the server
             if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
