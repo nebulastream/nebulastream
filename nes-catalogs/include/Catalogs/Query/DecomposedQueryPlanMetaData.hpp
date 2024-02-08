@@ -75,6 +75,12 @@ class DecomposedQueryPlanMetaData {
     /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;
 
+    /**
+     * @brief Get decomposed query plan version
+     * @return decomposed query plan version
+     */
+    DecomposedQueryPlanVersion getDecomposedQueryPlanVersion() const;
+
     DecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                 QueryState decomposedQueryPlanState,

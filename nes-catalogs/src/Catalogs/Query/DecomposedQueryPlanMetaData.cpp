@@ -55,4 +55,8 @@ const std::string& DecomposedQueryPlanMetaData::getTerminationReason() const { r
 
 const QueryStateHistory& DecomposedQueryPlanMetaData::getHistory() const { return history; }
 
+DecomposedQueryPlanVersion DecomposedQueryPlanMetaData::getDecomposedQueryPlanVersion() const {
+    return decomposedQueryPlanVersion;
+}
+
 }// namespace NES
