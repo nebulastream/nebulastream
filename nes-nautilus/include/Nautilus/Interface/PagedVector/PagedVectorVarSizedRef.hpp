@@ -23,18 +23,49 @@ namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedRefIter;
 class PagedVectorVarSizedRef {
   public:
+    /**
+     * @brief Constructor
+     * @param pagedVectorVarSizedRef
+     * @param schema
+     */
     PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema);
 
+    /**
+     * @brief Writes a new record to the PagedVectorVarSizedRef
+     * @param record
+     */
     void writeRecord(Record record);
 
+    /**
+     * @brief Reads a record from the PagedVectorVarSizedRef
+     * @param pos
+     * @return Record
+     */
     Record readRecord(const Value<UInt64>& pos);
 
+    /**
+     * @brief Returns the total number of entries in the PagedVectorVarSizedRef
+     * @return UInt64
+     */
     Value<UInt64> getTotalNumberOfEntries();
 
+    /**
+     * @brief Creates a PageVectorVarSizedRefIter that points to the first entry in the PagedVectorVarSizedRef
+     * @return PagedVectorVarSizedRefIter
+     */
     PagedVectorVarSizedRefIter begin();
 
+    /**
+     * @brief Creates a PageVectorVarSizedRefIter that points to the entry at the given position in the PagedVectorVarSizedRef
+     * @param pos
+     * @return PagedVectorVarSizedRefIter
+     */
     PagedVectorVarSizedRefIter at(Value<UInt64> pos);
 
+    /**
+     * @brief Creates a PageVectorVarSizedRefIter that points to the end of the PagedVectorVarSizedRef
+     * @return PagedVectorVarSizedRefIter
+     */
     PagedVectorVarSizedRefIter end();
 
     /**
@@ -45,11 +76,37 @@ class PagedVectorVarSizedRef {
     bool operator==(const PagedVectorVarSizedRef& other) const;
 
   private:
-    Value<MemRef> getCurrentPage();
+    /**
+     * @brief Returns the capacity per page
+     * @return UInt64
+     */
     Value<UInt64> getCapacityPerPage();
+
+    /**
+     * @brief Returns a pointer to the current var sized data entry
+     * @return
+     */
     Value<MemRef> getCurrentVarSizedDataEntry();
+
+    /**
+     * @brief Returns the entry size
+     * @return UInt64
+     */
     Value<UInt64> getEntrySize();
+
+    /**
+     * @brief Sets the total number of entries to the given value
+     * @param val
+     */
     void setTotalNumberOfEntries(const Value<>& val);
+
+    /**
+     * @brief Loads a basic type from a given field reference
+     * @param type
+     * @param fieldReference
+     * @return Value<>
+     */
+    static Value<> loadBasicType(const PhysicalTypePtr& type, Value<MemRef> fieldReference);
 
     Value<MemRef> pagedVectorVarSizedRef;
     const SchemaPtr schema;

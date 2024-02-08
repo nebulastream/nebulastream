@@ -79,4 +79,12 @@ void PagedVectorVarSized::storeText(const char* text, uint64_t length) {
     }
 }
 
+std::string PagedVectorVarSized::loadText(uint8_t* textPtr, uint32_t length) {
+    std::string result;
+    result.append(reinterpret_cast<char*>(textPtr), length);
+    return result;
+}
+
+std::vector<Runtime::TupleBuffer>& PagedVectorVarSized::getPages() { return pages; }
+
 } //NES::Nautilus::Interface

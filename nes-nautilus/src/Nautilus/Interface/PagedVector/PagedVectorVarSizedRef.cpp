@@ -103,11 +103,35 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
 
 Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
     Record record;
-    // get memref to entry at pos
-    // use schema fields to retrieve values from entry
-    // use schema fields to get fieldName
-    // if text -> get varSizedData from the ptr and size in entry and copy to record
-    // else -> copy value to record
+
+    auto capacityPerPage = getCapacityPerPage();
+    auto totalNumberOfEntries = getTotalNumberOfEntries();
+    auto pagePos = (pos / capacityPerPage).as<UInt64>();
+    auto positionOnPage = (pos - pagePos * capacityPerPage).as<UInt64>();
+
+    auto pageBase = Nautilus::FunctionCall("getPageProxy", getPageProxy, pagedVectorVarSizedRef, pagePos);
+    auto pageEntry = pageBase + positionOnPage * getEntrySize();
+
+    DefaultPhysicalTypeFactory physicalDataTypeFactory;
+    for (auto& field : schema->fields) {
+        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        auto const fieldName = field->getName();
+
+        if (fieldType->type->isText()) {
+            // TODO check sizeof operator
+            auto textPtr = pageEntry.as<MemRef>().load<MemRef>();
+            pageEntry = pageEntry + sizeof(MemRef);
+            auto textLength = pageEntry.as<MemRef>().load<UInt32>();
+            pageEntry = pageEntry + sizeof(UInt32);
+
+            auto text = Nautilus::FunctionCall("loadTextProxy", loadTextProxy, pagedVectorVarSizedRef, textPtr, textLength);
+            record.write(fieldName, text);
+        } else {
+            auto fieldValue = loadBasicType(fieldType, pageEntry.as<MemRef>());
+            record.write(fieldName, fieldValue);
+            pageEntry = pageEntry + fieldType->size();
+        }
+    }
     return record;
 }
 
@@ -127,6 +151,59 @@ bool PagedVectorVarSizedRef::operator==(const PagedVectorVarSizedRef& other) con
     }
 
     return schema == other.schema && pagedVectorVarSizedRef == other.pagedVectorVarSizedRef;
+}
+
+Value<> PagedVectorVarSizedRef::loadBasicType(const PhysicalTypePtr& type,
+                                                        Value<MemRef> fieldReference) {
+    if (type->isBasicType()) {
+        auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
+        switch (basicType->nativeType) {
+            case BasicPhysicalType::NativeType::BOOLEAN: {
+                return fieldReference.load<Nautilus::Boolean>();
+            };
+            case BasicPhysicalType::NativeType::INT_8: {
+                return fieldReference.load<Nautilus::Int8>();
+            };
+            case BasicPhysicalType::NativeType::INT_16: {
+                return fieldReference.load<Nautilus::Int16>();
+            };
+            case BasicPhysicalType::NativeType::INT_32: {
+                return fieldReference.load<Nautilus::Int32>();
+            };
+            case BasicPhysicalType::NativeType::INT_64: {
+                return fieldReference.load<Nautilus::Int64>();
+            };
+            case BasicPhysicalType::NativeType::UINT_8: {
+                return fieldReference.load<Nautilus::UInt8>();
+            };
+            case BasicPhysicalType::NativeType::UINT_16: {
+                return fieldReference.load<Nautilus::UInt16>();
+            };
+            case BasicPhysicalType::NativeType::UINT_32: {
+                return fieldReference.load<Nautilus::UInt32>();
+            };
+            case BasicPhysicalType::NativeType::UINT_64: {
+                return fieldReference.load<Nautilus::UInt64>();
+            };
+            case BasicPhysicalType::NativeType::FLOAT: {
+                return fieldReference.load<Nautilus::Float>();
+            };
+            case BasicPhysicalType::NativeType::DOUBLE: {
+                return fieldReference.load<Nautilus::Double>();
+            };
+            case BasicPhysicalType::NativeType::TEXT: {
+                // TODO implement here or in readRecord?
+                NES_ERROR("PagedVectorVarSizedRef::loadBasicType: Physical Type: {} should be handled elsewhere",
+                          type->toString());
+            };
+            default: {
+                NES_ERROR("PagedVectorVarSizedRef::loadBasicType: Physical Type: {} is currently not supported",
+                          type->toString());
+                NES_NOT_IMPLEMENTED();
+            };
+        }
+    }
+    NES_NOT_IMPLEMENTED();
 }
 
 PagedVectorVarSizedRefIter::PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef& pagedVectorVarSized)
