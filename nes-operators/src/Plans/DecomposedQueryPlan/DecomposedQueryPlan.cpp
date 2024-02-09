@@ -207,58 +207,72 @@ std::set<OperatorNodePtr> DecomposedQueryPlan::getAllOperators() {
 }
 
 DecomposedQueryPlanPtr DecomposedQueryPlan::copy() {
-    NES_INFO("QueryPlan: make copy of this query plan");
+    NES_INFO("DecomposedQueryPlan: make copy.");
     // 1. We start by copying the root operators of this query plan to the queue of operators to be processed
-    std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
+    std::map<OperatorId, OperatorNodePtr> operatorIdToOperatorMap;
     std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
     while (!operatorsToProcess.empty()) {
         auto operatorNode = operatorsToProcess.front()->as<OperatorNode>();
         operatorsToProcess.pop_front();
-        uint64_t operatorId = operatorNode->getId();
+        OperatorId operatorId = operatorNode->getId();
         // 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
         // 3. We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
         if (operatorIdToOperatorMap[operatorId]) {
-            NES_TRACE("QueryPlan: Operator was processed previously");
+            NES_TRACE("DecomposedQueryPlan: Operator was processed previously");
             operatorNode = operatorIdToOperatorMap[operatorId];
         } else {
-            NES_TRACE("QueryPlan: Adding the operator into map");
+            NES_TRACE("DecomposedQueryPlan: Adding the operator into map");
             operatorIdToOperatorMap[operatorId] = operatorNode->copy();
         }
 
         // 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
         for (const auto& parentNode : operatorNode->getParents()) {
             auto parentOperator = parentNode->as<OperatorNode>();
-            uint64_t parentOperatorId = parentOperator->getId();
+            OperatorId parentOperatorId = parentOperator->getId();
             if (operatorIdToOperatorMap.contains(parentOperatorId)) {
-                NES_TRACE("QueryPlan: Found the parent operator. Adding as parent to the current operator.");
+                NES_TRACE("DecomposedQueryPlan: Found the parent operator. Adding as parent to the current operator.");
                 parentOperator = operatorIdToOperatorMap[parentOperatorId];
                 auto copyOfOperatorNode = operatorIdToOperatorMap[operatorNode->getId()];
                 copyOfOperatorNode->addParent(parentOperator);
             } else {
-                NES_ERROR("QueryPlan: unable to find the parent operator. This should not have occurred!");
-                return nullptr;
+                NES_ASSERT(false, "DecomposedQueryPlan: Copying the plan failed because parent operator not found.");
             }
         }
 
-        NES_TRACE("QueryPlan: add the child global query nodes for further processing.");
+        NES_TRACE("DecomposedQueryPlan: add the child global query nodes for further processing.");
         // 5. We push the children operators to the queue of operators to be processed.
         for (const auto& childrenOperator : operatorNode->getChildren()) {
-            operatorsToProcess.push_back(childrenOperator);
+
+            //Check if all parents were processed
+            auto parentOperators = childrenOperator->getParents();
+            bool processedAllParent = true;
+            for (const auto& parentOperator : parentOperators) {
+                if (!operatorIdToOperatorMap.contains(parentOperator->as<OperatorNode>()->getId())) {
+                    processedAllParent = false;
+                    break;
+                }
+            }
+
+            // Add child only if all parents were processed
+            if (processedAllParent) {
+                operatorsToProcess.push_back(childrenOperator);
+            }
         }
     }
 
     std::vector<OperatorNodePtr> duplicateRootOperators;
     for (const auto& rootOperator : rootOperators) {
-        NES_TRACE("QueryPlan: Finding the operator with same id in the map.");
+        NES_TRACE("DecomposedQueryPlan: Finding the operator with same id in the map.");
         duplicateRootOperators.push_back(operatorIdToOperatorMap[rootOperator->getId()]);
     }
     operatorIdToOperatorMap.clear();
 
     // Create the duplicated decomposed query plan
-    auto newQueryPlan = DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId, workerId, duplicateRootOperators);
-    newQueryPlan->setState(currentState);
-    newQueryPlan->setVersion(decomposedQueryPlanVersion);
-    return newQueryPlan;
+    auto copiedDecomposedQueryPlan =
+        DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId, workerId, duplicateRootOperators);
+    copiedDecomposedQueryPlan->setState(currentState);
+    copiedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
+    return copiedDecomposedQueryPlan;
 }
 
 std::string DecomposedQueryPlan::toString() const {

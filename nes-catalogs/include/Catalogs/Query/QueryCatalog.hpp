@@ -93,6 +93,12 @@ class QueryCatalog {
     void linkSharedQuery(QueryId queryId, SharedQueryId sharedQueryId);
 
     /**
+     * @brief Get linked shared query id
+     * @param queryId the query id
+     */
+    SharedQueryId getLinkedSharedQueryId(QueryId queryId);
+
+    /**
      * @brief registers a new shared query into the Query catalog
      * @param sharedQueryId: a user query in string form
      * @param queryIds: query ids contained in the shared query plan

@@ -188,18 +188,6 @@ bool GlobalExecutionPlan::addExecutionNodeAsRoot(ExecutionNodeId executionNodeId
     return true;
 }
 
-ExecutionNodeWLock GlobalExecutionPlan::createAndGetLockedExecutionNode(const TopologyNodeWLock& lockedTopologyNode) {
-    ExecutionNodeId executionNodeId = lockedTopologyNode->operator*()->getId();
-    NES_DEBUG("Added Execution node with id  {}", executionNodeId);
-    auto lockedExecutionNodeMap = idToExecutionNodeMap.wlock();
-    if (lockedExecutionNodeMap->contains(executionNodeId)) {
-        NES_DEBUG("Execution node {} already present.", executionNodeId);
-        return getLockedExecutionNode(executionNodeId);
-    }
-
-    return nullptr;
-}
-
 bool GlobalExecutionPlan::removeExecutionNode(ExecutionNodeId executionNodeId) {
     NES_DEBUG("Removing Execution node with id  {}", executionNodeId);
     //Lock execution node map and root execution node id
