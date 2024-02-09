@@ -25,4 +25,4 @@ class NotImplementedException : public RuntimeException {
 
 }// namespace NES::Exceptions
 
-#endif // NES_COMMON_INCLUDE_EXCEPTIONS_NOTIMPLEMENTEDEXCEPTION_HPP_
+#endif// NES_COMMON_INCLUDE_EXCEPTIONS_NOTIMPLEMENTEDEXCEPTION_HPP_

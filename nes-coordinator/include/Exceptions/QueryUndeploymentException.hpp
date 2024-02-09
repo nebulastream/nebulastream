@@ -37,4 +37,4 @@ class QueryUndeploymentException : public RequestExecutionException {
     [[nodiscard]] const char* what() const noexcept override;
 };
 }// namespace NES::Exceptions
-#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
+#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

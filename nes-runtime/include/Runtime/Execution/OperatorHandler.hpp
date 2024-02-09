@@ -80,4 +80,4 @@ class OperatorHandler : public Reconfigurable {
 
 }// namespace NES::Runtime::Execution
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_

@@ -48,4 +48,4 @@ class QueryStateHistoryEntry {
 
 }// namespace NES
 
-#endif // NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_

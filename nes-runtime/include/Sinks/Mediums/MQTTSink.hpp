@@ -162,4 +162,4 @@ using MQTTSinkPtr = std::shared_ptr<MQTTSink>;
 
 }// namespace NES
 #endif
-#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MQTTSINK_HPP_
+#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MQTTSINK_HPP_

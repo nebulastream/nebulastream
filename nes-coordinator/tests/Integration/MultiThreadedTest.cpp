@@ -84,7 +84,8 @@ class MultiThreadedTest : public Testing::BaseIntegrationTest,
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
         auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                               defaultSharedQueryId, INVALID_WORKER_NODE_ID,
+                                                               defaultSharedQueryId,
+                                                               INVALID_WORKER_NODE_ID,
                                                                query.getQueryPlan()->getRootOperators());
         auto queryPlan = executionEngine->submitQuery(decomposedQueryPlan);
 

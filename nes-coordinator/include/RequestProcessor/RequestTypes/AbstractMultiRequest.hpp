@@ -84,4 +84,4 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
     StorageHandlerPtr storageHandle;
 };
 }// namespace NES::RequestProcessor
-#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_

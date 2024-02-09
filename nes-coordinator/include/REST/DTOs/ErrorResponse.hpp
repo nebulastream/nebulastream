@@ -40,4 +40,4 @@ class ErrorResponse : public oatpp::DTO {
 
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
-#endif // NES_COORDINATOR_INCLUDE_REST_DTOS_ERRORRESPONSE_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REST_DTOS_ERRORRESPONSE_HPP_

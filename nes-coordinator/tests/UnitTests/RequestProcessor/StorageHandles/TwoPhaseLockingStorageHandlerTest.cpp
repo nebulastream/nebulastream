@@ -97,13 +97,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                    topology,
-                                                                    globalExecutionPlan,
-                                                                    globalQueryPlan,
-                                                                    queryCatalog,
-                                                                    sourceCatalog,
-                                                                    udfCatalog});
+    auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
         ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2,
                                                             {ResourceType::Topology,
@@ -190,13 +185,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
     auto reverseResourceVector = resourceVector;
     std::reverse(reverseResourceVector.begin(), reverseResourceVector.end());
 
-    auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                    topology,
-                                                                    globalExecutionPlan,
-                                                                    globalQueryPlan,
-                                                                    queryCatalog,
-                                                                    sourceCatalog,
-                                                                    udfCatalog});
+    auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     std::vector<std::thread> threads;
     threads.reserve(numThreads);
     for (uint64_t i = 1; i < numThreads; ++i) {

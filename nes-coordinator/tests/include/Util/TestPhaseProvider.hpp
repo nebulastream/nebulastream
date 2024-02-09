@@ -27,4 +27,4 @@ class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
 };
 }// namespace NES::TestUtils
 
-#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
+#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_

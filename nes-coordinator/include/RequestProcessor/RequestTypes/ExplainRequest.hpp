@@ -235,4 +235,4 @@ class ExplainRequest : public AbstractUniRequest {
 }// namespace RequestProcessor::Experimental
 }// namespace NES
 
-#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_

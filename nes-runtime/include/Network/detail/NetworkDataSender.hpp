@@ -114,4 +114,4 @@ class NetworkDataSender : public BaseChannelType {
 };
 
 }// namespace NES::Network::detail
-#endif // NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKDATASENDER_HPP_
+#endif// NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKDATASENDER_HPP_

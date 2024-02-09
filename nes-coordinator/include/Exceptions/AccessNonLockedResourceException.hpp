@@ -37,4 +37,4 @@ class AccessNonLockedResourceException : public RequestExecutionException {
 };
 }// namespace Exceptions
 }// namespace NES
-#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
+#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
