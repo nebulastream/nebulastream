@@ -55,6 +55,8 @@ class CSVSource : public DataSource {
                        const std::string& physicalSourceName,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors, bool addTimestampsAndReadOnStartup = true);
 
+    virtual ~CSVSource();
+
     /**
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available

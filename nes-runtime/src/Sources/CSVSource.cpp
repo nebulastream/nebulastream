@@ -354,4 +354,8 @@ SourceType CSVSource::getType() const { return SourceType::CSV_SOURCE; }
 std::string CSVSource::getFilePath() const { return filePath; }
 
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
+
+CSVSource::~CSVSource() {
+    ::close(sockfd);
+}
 }// namespace NES
