@@ -435,6 +435,18 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
     EXPECT_EQ(sinkOperators2.size(), 1U);
 }
 
+SinkDescriptorPtr DatabaseSink() {
+
+}
+
+TEST_F(QueryAPITest, SensorTest) {
+    Query::from("sensors")
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)))
+        .apply(Avg(Attribute("value"))->as("average_temperature"))
+        .filter(Attribute("average_temperature") > 90)
+        .sink(DatabaseSink());
+}
+
 TEST_F(QueryAPITest, NexMarkQ5) {
     Query::from("bid")
         .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(2)))

@@ -69,8 +69,7 @@ target_include_directories(pipeline-test PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
 )
 
-
-
+add_subdirectory(benchmarks)
 
 # Get a list of files matching the pattern
 file(GLOB PIPELINE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline*.hpp)
