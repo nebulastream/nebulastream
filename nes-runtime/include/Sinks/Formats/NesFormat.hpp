@@ -63,4 +63,4 @@ class NesFormat : public SinkFormat {
 };
 
 }// namespace NES
-#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_
+#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_

@@ -286,18 +286,18 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, const DataSinkPtr& sink)
         : PipelineExecutionContext(
-              -1,// mock pipeline id
-              0, // mock query id
-              queryManager->getBufferManager(),
-              queryManager->getNumberOfWorkerThreads(),
-              [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
-                  sink->writeData(buffer, worker);
-              },
-              [sink](TupleBuffer&) {
-              },
-              std::vector<Runtime::Execution::OperatorHandlerPtr>{}){
-              // nop
-          };
+            -1,// mock pipeline id
+            0, // mock query id
+            queryManager->getBufferManager(),
+            queryManager->getNumberOfWorkerThreads(),
+            [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
+                sink->writeData(buffer, worker);
+            },
+            [sink](TupleBuffer&) {
+            },
+            std::vector<Runtime::Execution::OperatorHandlerPtr>{}){
+            // nop
+        };
 };
 
 auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& outPath) {

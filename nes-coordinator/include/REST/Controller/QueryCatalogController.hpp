@@ -15,13 +15,13 @@
 #define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
-#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
@@ -56,8 +56,8 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                            const NesCoordinatorWeakPtr& coordinator,
                            const oatpp::String& completeRouterPrefix,
                            const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryCatalog(queryCatalog), coordinator(coordinator),
-          errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryCatalog(queryCatalog),
+          coordinator(coordinator), errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -74,7 +74,11 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                                                           const std::string& routerPrefixAddition,
                                                           const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<QueryCatalogController>(objectMapper, queryCatalog, coordinator, completeRouterPrefix, errorHandler);
+        return std::make_shared<QueryCatalogController>(objectMapper,
+                                                        queryCatalog,
+                                                        coordinator,
+                                                        completeRouterPrefix,
+                                                        errorHandler);
     }
 
     ENDPOINT("GET", "/allRegisteredQueries", getAllRegisteredQueires) {
@@ -152,4 +156,4 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
 #include OATPP_CODEGEN_END(ApiController)
 
-#endif // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_

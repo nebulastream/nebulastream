@@ -38,4 +38,4 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
 
 }// namespace NES::TestUtils
 
-#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERYCOMPILER_HPP_
+#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERYCOMPILER_HPP_

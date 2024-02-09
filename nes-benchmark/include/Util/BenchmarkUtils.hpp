@@ -15,8 +15,8 @@
 #ifndef NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_
 #define NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_
 
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Identifiers.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Common.hpp>
@@ -78,4 +78,4 @@ static void createRangeVectorPowerOfTwo(std::vector<T>& vector, T start, T stop)
 }
 
 }// namespace NES::Benchmark::Util
-#endif // NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_
+#endif// NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_

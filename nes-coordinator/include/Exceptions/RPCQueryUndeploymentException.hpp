@@ -54,4 +54,4 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
     RpcClientMode mode;
 };
 }// namespace NES::Exceptions
-#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_
+#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_

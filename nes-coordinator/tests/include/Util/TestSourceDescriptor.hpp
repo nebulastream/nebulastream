@@ -93,4 +93,4 @@ class TestSourceDescriptor : public SourceDescriptor {
 
 }// namespace NES::TestUtils
 
-#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_
+#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_

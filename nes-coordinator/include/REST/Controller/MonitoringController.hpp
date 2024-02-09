@@ -15,6 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
 
+#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
@@ -23,7 +24,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <memory>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
@@ -170,4 +170,4 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
 }// namespace REST::Controller
 }// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
-#endif // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_

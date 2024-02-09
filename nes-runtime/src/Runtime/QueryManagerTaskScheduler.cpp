@@ -39,15 +39,15 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
   public:
     explicit ReconfigurationPipelineExecutionContext(DecomposedQueryPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
-              -1,// this is a dummy pipelineID
-              queryExecutionPlanId,
-              queryManager->getBufferManager(),
-              queryManager->getNumberOfWorkerThreads(),
-              [](TupleBuffer&, NES::Runtime::WorkerContext&) {
-              },
-              [](TupleBuffer&) {
-              },
-              std::vector<Execution::OperatorHandlerPtr>()) {
+            -1,// this is a dummy pipelineID
+            queryExecutionPlanId,
+            queryManager->getBufferManager(),
+            queryManager->getNumberOfWorkerThreads(),
+            [](TupleBuffer&, NES::Runtime::WorkerContext&) {
+            },
+            [](TupleBuffer&) {
+            },
+            std::vector<Execution::OperatorHandlerPtr>()) {
         // nop
     }
 };

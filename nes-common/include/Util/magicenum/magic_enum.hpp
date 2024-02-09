@@ -1587,4 +1587,4 @@ constexpr E& operator^=(E& lhs, E rhs) noexcept {
 #endif
 
 // clang-format on
-#endif // NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_HPP_

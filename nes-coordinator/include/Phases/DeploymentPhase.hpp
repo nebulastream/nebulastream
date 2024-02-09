@@ -79,7 +79,7 @@ class DeploymentPhase {
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
     void registerOrStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
-                                               RequestType requestType);
+                                           RequestType requestType);
 
     /**
      * @brief
@@ -93,4 +93,4 @@ class DeploymentPhase {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
 };
 }// namespace NES
-#endif // NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_
+#endif// NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_

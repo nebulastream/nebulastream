@@ -61,4 +61,4 @@ class ZipfianDataGenerator : public DataGenerator {
     uint64_t maxValue;
 };
 }// namespace NES::Benchmark::DataGeneration
-#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_
+#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_

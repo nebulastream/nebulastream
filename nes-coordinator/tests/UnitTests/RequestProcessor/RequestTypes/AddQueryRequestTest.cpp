@@ -16,7 +16,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -104,16 +103,14 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan->getSinkOperators()[0];
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
 
     //Create new entry in query catalog service
-    queryCatalog->createQueryCatalogEntry("query string", queryPlan, Optimizer::PlacementStrategy::TopDown, QueryState::REGISTERED);
+    queryCatalog->createQueryCatalogEntry("query string",
+                                          queryPlan,
+                                          Optimizer::PlacementStrategy::TopDown,
+                                          QueryState::REGISTERED);
 
     EXPECT_EQ(queryCatalog->getQueryState(queryId), QueryState::REGISTERED);
 

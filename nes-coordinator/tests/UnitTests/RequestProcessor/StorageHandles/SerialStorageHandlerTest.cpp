@@ -14,7 +14,6 @@
 
 #include <BaseUnitTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -44,13 +43,8 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    StorageDataStructures storageDataStructures = {coordinatorConfiguration,
-                                                   topology,
-                                                   globalExecutionPlan,
-                                                   globalQueryPlan,
-                                                   queryCatalog,
-                                                   sourceCatalog,
-                                                   udfCatalog};
+    StorageDataStructures storageDataStructures =
+        {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog};
     auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
 
     //test if we can obtain the resource we passed to the constructor
