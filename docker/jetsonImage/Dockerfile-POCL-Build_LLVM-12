@@ -1,0 +1,50 @@
+FROM --platform=linux/arm64/v8 nvcr.io/nvidia/l4t-base:r32.3.1
+
+# Update to Ubuntu 20.04
+ENV DEBIAN_FRONTEND "noninteractive"
+RUN cd /etc/apt && \
+    mv sources.list sources.list.old && \
+    sed -e 's/bionic/focal/g' < sources.list.old > sources.list && \
+    for PUBKEY in $(apt-get update 2>&1 | grep NO_PUBKEY | awk '{print $NF}'); do wget -q "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${PUBKEY}" -O - | sed -n '/BEGIN/,/END/p' | apt-key add - 2>/dev/null; done && \
+    apt-get -y update && \
+    apt-get -y -o Dpkg::Options::="--force-overwrite" install util-linux && \
+    apt-get -y upgrade && \
+    apt-get -y autoremove && \
+    apt-get -y autoclean
+
+# Build POCL
+RUN apt-get -y update && \
+    apt-get -y install \
+      apt-utils \
+      clang-12 \
+      clinfo \
+      cmake \
+      dialog \
+      g++-7 \
+      gcc-7 \
+      git \
+      libclang-12-dev \
+      libclang-cpp12 \
+      libclang-cpp12-dev \
+      libhwloc-dev \
+      libncurses5 \
+      libxml2-dev \
+      llvm-12 \
+      llvm-12-dev \
+      make \
+      ninja-build \
+      ocl-icd-dev \
+      ocl-icd-libopencl1 \
+      ocl-icd-opencl-dev \
+      pkg-config \
+      zlib1g \
+      zlib1g-dev
+RUN apt-get -y remove gcc-9 g++-9
+RUN update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-7 1000
+RUN update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-7 1000
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 1000
+ENV CUDA_PATH /usr/local/cuda-10.2
+ENV LD_LIBRARY_PATH ""
+
+ADD entrypoint-build-pocl.sh /entrypoint-build-pocl.sh
+#ENTRYPOINT /build-pocl.sh

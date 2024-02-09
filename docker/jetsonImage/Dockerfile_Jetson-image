@@ -1,0 +1,28 @@
+FROM --platform=linux/arm64/v8 nvcr.io/nvidia/l4t-base:r32.3.1
+
+# Update to Ubuntu 20.04
+ENV DEBIAN_FRONTEND "noninteractive"
+RUN cd /etc/apt && \
+    mv sources.list sources.list.old && \
+    sed -e 's/bionic/focal/g' < sources.list.old > sources.list && \
+    for PUBKEY in $(apt-get update 2>&1 | grep NO_PUBKEY | awk '{print $NF}'); do wget -q "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${PUBKEY}" -O - | sed -n '/BEGIN/,/END/p' | apt-key add - 2>/dev/null; done && \
+    apt-get -y update && \
+    apt-get -y -o Dpkg::Options::="--force-overwrite" install util-linux && \
+    apt-get -y upgrade && \
+    apt-get -y autoremove && \
+    apt-get -y autoclean
+
+# Install POCL
+COPY pocl-1.7~.-Linux-dev.deb pocl-1.7~.-Linux-icd.deb pocl-1.7~.-Linux-lib.deb pocl-1.7~.-Linux-poclcc.deb /tmp/
+WORKDIR /tmp
+RUN apt-get -y update && apt-get -y install ./pocl-1.7~.-Linux-dev.deb ./pocl-1.7~.-Linux-icd.deb ./pocl-1.7~.-Linux-lib.deb ./pocl-1.7~.-Linux-poclcc.deb
+RUN mkdir -p /etc/OpenCL/vendors
+RUN echo "/usr/local/pocl/lib/libpocl.so" > /etc/OpenCL/vendors/pocl.icd
+
+# Install NebulaStream
+COPY nes-arm64.deb /tmp/nes-arm64.deb
+WORKDIR /tmp 
+RUN apt-get -y install openjdk-17-jre libatomic1 /tmp/nes-arm64.deb 
+RUN ln -s /usr/bin/clang-12 /usr/local/bin/clang
+RUN rm -rf nes-arm64.deb 
+RUN apt-get -y autoclean
