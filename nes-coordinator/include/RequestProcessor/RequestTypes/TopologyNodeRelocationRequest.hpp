@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
-#define NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_TOPOLOGYNODERELOCATIONREQUEST_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_TOPOLOGYNODERELOCATIONREQUEST_HPP_
 
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
@@ -122,4 +122,4 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES
-#endif//NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_TOPOLOGYNODERELOCATIONREQUEST_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SHAREDQUERYCATALOGENTRY_HPP
-#define NES_SHAREDQUERYCATALOGENTRY_HPP
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_
 
 #include <Identifiers.hpp>
 #include <Util/QueryState.hpp>
@@ -118,4 +118,4 @@ class SharedQueryCatalogEntry {
 }// namespace Catalogs::Query
 }// namespace NES
 
-#endif//NES_SHAREDQUERYCATALOGENTRY_HPP
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_SHAREDQUERYCATALOGENTRY_HPP_

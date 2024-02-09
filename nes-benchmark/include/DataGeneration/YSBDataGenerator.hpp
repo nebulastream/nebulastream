@@ -33,4 +33,4 @@ class YSBDataGenerator : public DataGenerator {
 
 }// namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_YSBDATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_YSBDATAGENERATOR_HPP_

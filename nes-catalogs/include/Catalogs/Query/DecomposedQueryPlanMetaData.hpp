@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
-#define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_DECOMPOSEDQUERYPLANMETADATA_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_DECOMPOSEDQUERYPLANMETADATA_HPP_
 
 #include <Identifiers.hpp>
 #include <Util/QueryState.hpp>
@@ -103,7 +103,7 @@ class DecomposedQueryPlanMetaData {
     QueryState decomposedQueryPlanState;
 
     /**
-     * @brief Stores a history of QueryState updates with their timestamp in milliseconds.
+     * @brief Stores a history of QueryState updates with their timestamp in microseconds.
      */
     QueryStateHistory history;
 
@@ -119,4 +119,4 @@ class DecomposedQueryPlanMetaData {
 };
 }// namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYSUBPLANMETADATA_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_DECOMPOSEDQUERYPLANMETADATA_HPP_

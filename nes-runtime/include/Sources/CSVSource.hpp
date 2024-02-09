@@ -109,4 +109,4 @@ class CSVSource : public DataSource {
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_

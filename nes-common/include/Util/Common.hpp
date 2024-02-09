@@ -262,4 +262,4 @@ uint64_t countLines(std::istream& stream);
 
 }// namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_COMMON_HPP_

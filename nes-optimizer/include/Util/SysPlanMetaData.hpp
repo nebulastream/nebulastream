@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SYSPLANMETADATA_HPP
-#define NES_SYSPLANMETADATA_HPP
+#ifndef NES_OPTIMIZER_INCLUDE_UTIL_SYSPLANMETADATA_HPP_
+#define NES_OPTIMIZER_INCLUDE_UTIL_SYSPLANMETADATA_HPP_
 
 #include <Identifiers.hpp>
 
@@ -28,4 +28,4 @@ struct SysPlanMetaData {
 };
 }// namespace NES::Optimizer
 
-#endif//NES_SYSPLANMETADATA_HPP
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_SYSPLANMETADATA_HPP_

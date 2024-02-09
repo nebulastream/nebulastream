@@ -56,7 +56,7 @@ void QueryCatalogEntry::setSharedQueryId(SharedQueryId sharedQueryId){
     this->sharedQueryId = sharedQueryId;
 }
 
-void QueryCatalogEntry::setTerminationReason(std::string metaInformation) { this->terminationReason = metaInformation; }
+void QueryCatalogEntry::setTerminationReason(std::string terminationReason) { this->terminationReason = terminationReason; }
 
 std::string QueryCatalogEntry::getMetaInformation() { return terminationReason; }
 

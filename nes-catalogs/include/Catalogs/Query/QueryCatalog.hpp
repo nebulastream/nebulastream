@@ -63,13 +63,6 @@ class QueryCatalog {
                                  QueryState queryState);
 
     /**
-     * @brief Is an entry for the given query id exists
-     * @param queryId : the query id
-     * @return return true if exits else false
-     */
-    bool queryCatalogEntryExists(QueryId queryId);
-
-    /**
      * @brief Get state of the input query id
      * @param queryId : the query id
      * @return state of the query
@@ -105,20 +98,6 @@ class QueryCatalog {
      * @param queryStatus: the status of the shared query
      */
     void createSharedQueryCatalogEntry(SharedQueryId sharedQueryId, std::set<QueryId> queryIds, QueryState queryStatus);
-
-    /**
-     * @brief Is an entry for the given query id exists
-     * @param sharedQueryId : the shared query id
-     * @return return true if exits else false
-     */
-    bool sharedQueryCatalogEntryExists(SharedQueryId sharedQueryId);
-
-    /**
-     * @brief Get state of the input query id
-     * @param sharedQueryId : the shared query id
-     * @return state of the query
-     */
-    QueryState getSharedQueryState(SharedQueryId sharedQueryId);
 
     /**
      * @brief Update query entry with new status
@@ -167,20 +146,6 @@ class QueryCatalog {
      * @param updatedQueryPlan : the updated query plan
      */
     void addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan);
-
-    /**
-     * Add sub query meta data to the query
-     * @param sharedQueryId : query id to which sub query metadata to add
-     * @param decomposedQueryPlanId : the sub query plan id
-     * @param decomposedQueryPlanVersion: decomposed query plan version
-     * @param workerId : the topology node where the sub query plan is running
-     * @param decomposedQueryStatus : the state of the sub query
-     */
-    void addDecomposedQueryMetaData(QueryId sharedQueryId,
-                                    DecomposedQueryPlanId decomposedQueryPlanId,
-                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                                    WorkerId workerId,
-                                    QueryState decomposedQueryStatus);
 
     /**
      * Update decomposed query plan status
@@ -244,4 +209,4 @@ class QueryCatalog {
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace Catalogs::Query
 }// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_

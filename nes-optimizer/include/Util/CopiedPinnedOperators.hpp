@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COPIEDPINNEDOPERATORS_HPP
-#define NES_COPIEDPINNEDOPERATORS_HPP
+#ifndef NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_
+#define NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_
 
 #include <memory>
 #include <queue>
@@ -54,4 +54,4 @@ class CopiedPinnedOperators {
 }// namespace Optimizer
 }// namespace NES
 
-#endif//NES_COPIEDPINNEDOPERATORS_HPP
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_COPIEDPINNEDOPERATORS_HPP_

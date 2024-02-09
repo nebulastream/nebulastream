@@ -142,4 +142,4 @@ class ExecutionNode : public Node {
 }// namespace Optimizer
 }// namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_

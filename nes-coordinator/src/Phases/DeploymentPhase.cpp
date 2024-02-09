@@ -121,7 +121,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                 break;
             }
             default: {
-                NES_WARNING("Can not hande decomposed query plan in the state {}",
+                NES_WARNING("Can not handle decomposed query plan in the state {}",
                             magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
@@ -189,7 +189,7 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
                 break;
             }
             default: {
-                NES_WARNING("Can not hande decomposed query plan in the state {}",
+                NES_WARNING("Can not handle decomposed query plan in the state {}",
                             magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
