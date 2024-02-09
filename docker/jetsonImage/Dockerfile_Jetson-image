@@ -15,14 +15,17 @@ RUN cd /etc/apt && \
 # Install POCL
 COPY pocl-1.7~.-Linux-dev.deb pocl-1.7~.-Linux-icd.deb pocl-1.7~.-Linux-lib.deb pocl-1.7~.-Linux-poclcc.deb /tmp/
 WORKDIR /tmp
-RUN apt-get -y update && apt-get -y install ./pocl-1.7~.-Linux-dev.deb ./pocl-1.7~.-Linux-icd.deb ./pocl-1.7~.-Linux-lib.deb ./pocl-1.7~.-Linux-poclcc.deb
-RUN mkdir -p /etc/OpenCL/vendors
-RUN echo "/usr/local/pocl/lib/libpocl.so" > /etc/OpenCL/vendors/pocl.icd
+RUN apt-get -y update && \
+    apt-get -y install ./pocl-1.7~.-Linux-dev.deb ./pocl-1.7~.-Linux-icd.deb ./pocl-1.7~.-Linux-lib.deb ./pocl-1.7~.-Linux-poclcc.deb && \
+    rm -rf /tmp/pocl*deb && \
+    mkdir -p /etc/OpenCL/vendors && \
+    echo "/usr/local/pocl/lib/libpocl.so" > /etc/OpenCL/vendors/pocl.icd
 
 # Install NebulaStream
 COPY nes-arm64.deb /tmp/nes-arm64.deb
 WORKDIR /tmp 
-RUN apt-get -y install openjdk-17-jre libatomic1 /tmp/nes-arm64.deb 
-RUN ln -s /usr/bin/clang-12 /usr/local/bin/clang
-RUN rm -rf nes-arm64.deb 
-RUN apt-get -y autoclean
+RUN apt-get -y update && \
+    apt-get -y install openjdk-17-jre libatomic1 /tmp/nes-arm64.deb && \
+    ln -s /usr/bin/clang-12 /usr/local/bin/clang && \
+    rm -rf /tmp/nes-arm64.deb && \
+    apt-get -y autoclean
