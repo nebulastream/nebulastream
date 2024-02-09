@@ -58,4 +58,4 @@ class DistributedMatrixJoinRule : public BaseRewriteRule {
     Configurations::OptimizerConfiguration configuration;
 };
 }// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_

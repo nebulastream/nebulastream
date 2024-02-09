@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYSUBPLAN_HPP
-#define NES_QUERYSUBPLAN_HPP
+#ifndef NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
+#define NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 
 #include <Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
@@ -257,4 +257,4 @@ class DecomposedQueryPlan {
 };
 }// namespace NES
 
-#endif//NES_QUERYSUBPLAN_HPP
+#endif // NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_

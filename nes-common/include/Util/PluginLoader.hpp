@@ -41,4 +41,4 @@ class PluginLoader {
 
 }// namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_

@@ -39,4 +39,4 @@ class ResourceLockingException : public RequestExecutionException {
 };
 }// namespace Exceptions
 }// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_

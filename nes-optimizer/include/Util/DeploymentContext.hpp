@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DEPLOYMENTCONTEXT_HPP
-#define NES_DEPLOYMENTCONTEXT_HPP
+#ifndef NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
+#define NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
 
 #include <Identifiers.hpp>
 #include <memory>
@@ -97,4 +97,4 @@ class DeploymentContext {
 };
 }// namespace Optimizer
 }// namespace NES
-#endif//NES_DEPLOYMENTCONTEXT_HPP
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_

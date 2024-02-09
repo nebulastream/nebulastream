@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
-#define NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_TPCSOURCE_OLD_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_TPCSOURCE_OLD_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -126,4 +126,4 @@ class TCPSource : public DataSource {
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 }// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_TPCSOURCE_OLD_HPP_

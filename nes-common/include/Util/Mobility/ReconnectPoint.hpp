@@ -37,4 +37,4 @@ struct ReconnectPoint {
 };
 }// namespace Spatial::Mobility::Experimental
 }// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_
