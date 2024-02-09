@@ -33,6 +33,8 @@ bool startsWith(const std::string& fullString, const std::string& ending) { retu
 
 Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType){};
 
+Schema::Schema(const NES::Schema& it) : layoutType(it.layoutType) { copyFields(it.copy()); }
+
 SchemaPtr Schema::create(MemoryLayoutType layoutType) { return std::make_shared<Schema>(layoutType); }
 
 uint64_t Schema::getSize() const { return fields.size(); }
@@ -357,6 +359,14 @@ SchemaPtr Schema::updateSourceName(const std::string& srcName) {
         field->setName(newName.str());
     }
     return copy();
+}
+
+Schema& Schema::operator=(const Schema& other) {
+    if (this != &other) {
+        copyFields(other.copy());
+        layoutType = other.layoutType;
+    }
+    return *this;
 }
 
 }// namespace NES
