@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.40](https://github.com/nebulastream/nebulastream/tree/v0.6.40) (2024-02-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.39...v0.6.40)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor Global Execution Plan to make it thread safe [\#4497](https://github.com/nebulastream/nebulastream/issues/4497)
+- \[TASK\] Use placement amendment strategy for Stop and Fail request [\#4483](https://github.com/nebulastream/nebulastream/issues/4483)
+
 ## [v0.6.39](https://github.com/nebulastream/nebulastream/tree/v0.6.39) (2024-02-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-kafka...v0.6.39)
