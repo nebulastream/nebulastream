@@ -28,4 +28,8 @@ docker run --rm -it -v /tmp/build-tmp/pocl_build_dir:/build_dir -v /tmp/build-tm
 cp /tmp/build-tmp/pocl_build_dir/*deb .
 
 # Build NebulaStream Jetson image
-docker build -t nes-elegant-image:0.6.19-jetson -f docker/jetsonImage/Dockerfile_Jetson-image docker/jetsonImage
+docker build -t nebulastream/nes-elegant-image:0.6.19-jetson -f docker/jetsonImage/Dockerfile_Jetson-image .
+
+# Build and push to Docker Hub
+docker push nebulastream/nes-elegant-image:0.6.19-jetson
+
