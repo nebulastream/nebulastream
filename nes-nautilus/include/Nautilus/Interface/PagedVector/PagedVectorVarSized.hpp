@@ -73,8 +73,7 @@ class PagedVectorVarSized {
     uint64_t capacityPerPage;
     uint64_t totalNumberOfEntries;
     std::vector<Runtime::TupleBuffer> pages;
-    // TODO loadText only works for text that was written into one TupleBuffer. If the text is split across multiple TupleBuffers,
-    // the loadText function will not work correctly.
+    // TODO currently the varSizedData must fit into one single page
     std::vector<Runtime::TupleBuffer> varSizedDataPages;
     uint8_t* currVarSizedDataEntry;
 };

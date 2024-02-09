@@ -64,22 +64,19 @@ void PagedVectorVarSized::appendVarSizedDataPage(){
 }
 
 void PagedVectorVarSized::storeText(const char* text, uint64_t length) {
-    while (length > 0) {
-        auto remainingSpace = pageSize - (currVarSizedDataEntry - varSizedDataPages.back().getBuffer());
-        if (remainingSpace >= length) {
-            std::memcpy(currVarSizedDataEntry, text, length);
-            currVarSizedDataEntry += length;
-            length = 0;
-        } else {
-            std::memcpy(currVarSizedDataEntry, text, remainingSpace);
-            length -= remainingSpace;
-            text += remainingSpace;
-            appendVarSizedDataPage();
-        }
+    NES_ASSERT2_FMT(length > 0, "Length of text has to be larger than 0!");
+    NES_ASSERT2_FMT(length <= pageSize, "Length of text has to be smaller than the page size!");
+
+    if (currVarSizedDataEntry + length > varSizedDataPages.back().getBuffer() + pageSize) {
+        appendVarSizedDataPage();
     }
+    std::memcpy(currVarSizedDataEntry, text, length);
 }
 
 std::string PagedVectorVarSized::loadText(uint8_t* textPtr, uint32_t length) {
+    NES_ASSERT2_FMT(length > 0, "Length of text has to be larger than 0!");
+    NES_ASSERT2_FMT(length <= pageSize, "Length of text has to be smaller than the page size!");
+
     std::string result;
     result.append(reinterpret_cast<char*>(textPtr), length);
     return result;
