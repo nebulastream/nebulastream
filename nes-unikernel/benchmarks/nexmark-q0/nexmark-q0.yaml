@@ -1,0 +1,34 @@
+query: |
+  Query::from("bid")
+    .sink(NullOutputSinkDescriptor::create());
+topology:
+  sink:
+    node:
+      ip: 127.0.0.1
+      port: 8085
+      resources: 1
+  workers:
+    - node:
+        ip: 127.0.0.1
+        port: 8080
+        resources: 90
+      sources:
+        - name: bid
+          tcp:
+            ip: 127.0.0.1
+            port: 8091
+          schema:
+            type: MANUAL
+            fields:
+              - name: creationTS
+                type: UINT64
+              - name: auctionId
+                type: UINT64
+              - name: bidderId
+                type: UINT64
+              - name: timestamp
+                type: UINT64
+              - name: price
+                type: FLOAT64
+      links:
+        - sink
