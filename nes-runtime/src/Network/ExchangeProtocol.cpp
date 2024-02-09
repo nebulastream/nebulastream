@@ -140,7 +140,13 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         NES_TRACE("lastEOS {}", lastEOS);
         if (lastEOS) {
             const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
+            auto wait_cycles = 0;
             while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
+                //todo: this needs to be handled properly
+                if (wait_cycles == 10) {
+                    break;
+                }
+                wait_cycles++;
                 NES_DEBUG("Current message sequence number {} is less than expected max {} for partition {}",
                           (*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue(),
                           eosMessageMaxSeqNumber,
