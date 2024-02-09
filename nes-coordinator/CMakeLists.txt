@@ -88,6 +88,7 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/include/nebulastream
         COMPONENT nesHeaders
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
+message(status "LLVM_VERSION: ${LLVM_VERSION}")
 install(DIRECTORY ${CLANG_INCLUDE_DIR}
         COMPONENT nesHeaders
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/clang/${LLVM_VERSION_MAJOR}/include/)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/clang/${LLVM_VERSION}/include/)
