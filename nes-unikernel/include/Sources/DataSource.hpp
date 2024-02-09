@@ -102,7 +102,7 @@ class DataSource {
         }
 
         NES_DEBUG("DataSource  {} : start source", Config::OperatorId);
-        worker.emplace([this](const std::stop_token& stoken) {
+        worker = std::jthread([this](const std::stop_token& stoken) {
             try {
                 NES_DEBUG("DataSource {} call open", Config::OperatorId);
                 if (!open()) {
@@ -213,12 +213,12 @@ class DataSource {
             NES_WARNING("Data Source {} was stopped, but it was not running", Config::OperatorId);
             return;
         }
-        NES_ASSERT(worker->get_id() != std::this_thread::get_id(), "Worker tries to stop himself");
+        NES_ASSERT(worker.get_id() != std::this_thread::get_id(), "Worker tries to stop himself");
 
         terminationType.store(type);
-        worker->request_stop();
-        worker->join();
-        isRunning = false;
+        worker.request_stop();
+        worker.join();
+        NES_ASSERT(!isRunning, "Expected thread to mark thread as stopped");
     }
 
   private:
@@ -282,7 +282,7 @@ class DataSource {
     std::atomic<Runtime::QueryTerminationType> terminationType = Runtime::QueryTerminationType::Invalid;
     uint64_t maxSequenceNumber = 0;
 
-    std::optional<std::jthread> worker;
+    std::jthread worker;
     std::atomic<uint64_t> generatedTuples{0};
     std::atomic<uint64_t> generatedBuffers{0};
     bool isRunning = false;
