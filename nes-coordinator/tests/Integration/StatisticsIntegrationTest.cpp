@@ -122,7 +122,7 @@ TEST_F(StatisticsIntegrationTest, createTest) {
 
     auto statCollectorStorage = wrk1->getStatisticManager()->getStatisticCollectorStorage();
 
-    std::vector<std::vector<uint64_t>> data(depth, std::vector<uint64_t>(width, 0));
+    std::vector<uint64_t> data(depth * width, 0);
 
     for (auto physicalSourceName : physicalSourceNames) {
         auto statCollectorIdentifier =
@@ -132,7 +132,7 @@ TEST_F(StatisticsIntegrationTest, createTest) {
                                                                                           defaultFieldName,
                                                                                           statisticCollectorType);
 
-        data[0][0] += 1;
+        data[0] += 1;
 
         std::shared_ptr<Experimental::Statistics::Statistic> statistic =
             std::make_shared<Experimental::Statistics::CountMin>(width,

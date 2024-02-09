@@ -58,7 +58,7 @@ std::vector<StatisticPtr> CountMinFormat::readFromBuffer(Runtime::MemoryLayouts:
         auto width = dynBuffer[rowIdx][WIDTH].read<uint64_t>();
 
         // convert Text back to array
-        std::vector<std::vector<uint64_t>> data(depth, std::vector<uint64_t>(width));
+        std::vector<uint64_t> data(depth * width, 0);
         memcpy(data.data(), synopsesText.data(), synopsesText.size());
 
         // create sketch and add it to the vector of sketches

@@ -16,26 +16,23 @@
 #define NES_NES_RUNTIME_INCLUDE_STATISTICS_STATISTICS_COUNTMIN_HPP_
 
 #include <vector>
-
 #include <Statistics/Statistic.hpp>
 
 namespace NES::Experimental::Statistics {
 
 /**
  * @brief this class stores the 2D array of a CountMin sketches,
- * its meta data and provides the functionalities associated with Count-Min Sketches
+ * its meta data and provides the functionalities associated with Count-Min Sketches.
  */
 class CountMin : public Statistic {
   public:
     CountMin(uint64_t width,
-             const std::vector<std::vector<uint64_t>>& data,
+             const std::vector<uint64_t>& data,
              StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
-             const uint64_t observedTuples,
-             const uint64_t depth,
-             const uint64_t startTime,
-             const uint64_t endTime)
-        : Statistic(std::move(statisticCollectorIdentifier), observedTuples, depth, startTime, endTime), width(width),
-          error(calcError(width)), probability(calcProbability(depth)), data(data) {}
+             uint64_t observedTuples,
+             uint64_t depth,
+             uint64_t startTime,
+             uint64_t endTime);
 
     /**
      * @brief calculates the error that the Count-Min will most often guarantee
@@ -50,13 +47,6 @@ class CountMin : public Statistic {
      * @return the probability
      */
     double calcProbability(uint64_t depth);
-
-    /**
-     * @brief receives a depth and a width and increments the counter in that location
-     * @param row the row where the counter is increased by 1
-     * @param column the column where the counter is increased by 1
-     */
-    void increment(uint64_t row, uint64_t column);
 
     /**
      * @return returns the width of the Count-Min Sketch
@@ -76,13 +66,32 @@ class CountMin : public Statistic {
     /**
      * @return the sketch data as a vector of vectors
      */
-    [[nodiscard]] const std::vector<std::vector<uint64_t>>& getData() const;
+    [[nodiscard]] const std::vector<uint64_t>& getData() const;
+
+    /**
+     * @brief given a std::string that encodes the array of a Count-Min sketch, a depth, and a width, this function creates a basic
+     * CountMin object with information about the (data) origin (logicalSourceName, physicalSourceName, etc.) omitted
+     * @param cmString the string encoding the array of the sketch
+     * @param depth the depth of the sketch
+     * @param width the width of the sketch
+     * @return a basic CountMin object, where not all fields are initilized
+     */
+    static CountMin createFromString(void* cmString, uint64_t depth, uint64_t width);
+
+    /**
+     * @brief increments the counter a 1D array that represents a flattened 2D CountMin Sketch
+     * @param data the pointer to the flattened array
+     * @param rowId the row in which to increase the counter
+     * @param width the width of the sketch
+     * @param columnId the column in which to increase the counter
+     */
+    static void incrementCounter(uint64_t* data, uint64_t rowId, uint64_t width, uint64_t columnId);
 
   private:
     uint64_t width;
     double error;
     double probability;
-    std::vector<std::vector<uint64_t>> data;
+    std::vector<uint64_t> data;
 };
 }// namespace NES::Experimental::Statistics
 #endif//NES_NES_RUNTIME_INCLUDE_STATISTICS_STATISTICS_COUNTMIN_HPP_

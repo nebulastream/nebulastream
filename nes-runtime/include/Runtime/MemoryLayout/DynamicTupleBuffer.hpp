@@ -286,6 +286,11 @@ class DynamicTupleBuffer {
     void setNumberOfTuples(uint64_t value);
 
     /**
+     * @brief Set the sequence number of to the underling tuple buffer.
+     */
+    void setSequenceNumber(uint64_t value);
+
+    /**
      * @brief Accesses an individual tuple in the buffer.
      * @param tupleIndex the index of the record.
      * @throws BufferAccessException if index is larger then buffer capacity

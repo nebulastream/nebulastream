@@ -42,7 +42,7 @@ double StatisticCollectorStorage::probeStatistic(const StatisticCollectorIdentif
         if (nullptr != dynamic_cast<CountMin*>(statistic)) {
             auto cm = dynamic_cast<CountMin*>(statistic);
             auto cmData = cm->getData();
-            return cmData[0][0];
+            return cmData[0];
         }
         // ToDo: add probe logic
         return 1.0;

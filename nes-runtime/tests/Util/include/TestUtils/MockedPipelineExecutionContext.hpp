@@ -23,6 +23,8 @@ namespace NES::Runtime::Execution {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler);
+    explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler,
+                                            Runtime::BufferManagerPtr bufferManager);
     explicit MockedPipelineExecutionContext();
     std::vector<TupleBuffer> buffers;
 };

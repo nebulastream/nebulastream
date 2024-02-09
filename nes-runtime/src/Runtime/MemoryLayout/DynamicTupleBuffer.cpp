@@ -164,6 +164,8 @@ uint64_t DynamicTupleBuffer::getNumberOfTuples() const { return buffer.getNumber
 
 void DynamicTupleBuffer::setNumberOfTuples(uint64_t value) { buffer.setNumberOfTuples(value); }
 
+void DynamicTupleBuffer::setSequenceNumber(uint64_t value) { buffer.setSequenceNumber(value); }
+
 DynamicTuple DynamicTupleBuffer::operator[](std::size_t tupleIndex) const {
     if (tupleIndex >= getCapacity()) {
         throw BufferAccessException("index " + std::to_string(tupleIndex) + " is out of bound for capacity"

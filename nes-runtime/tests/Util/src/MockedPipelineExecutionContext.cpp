@@ -47,4 +47,21 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<Opera
         // nop
     };
 
+MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler,
+                                                               Runtime::BufferManagerPtr bufferManager)
+    : PipelineExecutionContext(
+        -1,// mock pipeline id
+        0, // mock query id
+        bufferManager,
+        1,
+        [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+            this->buffers.emplace_back(std::move(buffer));
+        },
+        [this](TupleBuffer& buffer) {
+            this->buffers.emplace_back(std::move(buffer));
+        },
+        handler){
+        // nop
+    };
+
 }// namespace NES::Runtime::Execution

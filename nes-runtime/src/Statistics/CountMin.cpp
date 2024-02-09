@@ -12,26 +12,42 @@
     limitations under the License.
 */
 
+#include <Statistics/CountMin.hpp>
 #include <cmath>
 #include <vector>
 
-#include <Statistics/CountMin.hpp>
-
 namespace NES::Experimental::Statistics {
+
+CountMin::CountMin(uint64_t width,
+                   const std::vector<uint64_t>& data,
+                   StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
+                   const uint64_t observedTuples,
+                   const uint64_t depth,
+                   const uint64_t startTime,
+                   const uint64_t endTime)
+    : Statistic(std::move(statisticCollectorIdentifier), observedTuples, depth, startTime, endTime), width(width),
+      error(calcError(width)), probability(calcProbability(depth)), data(data) {}
 
 double CountMin::calcError(const uint64_t width) { return 1.0 / (double) width; }
 
 double CountMin::calcProbability(const uint64_t depth) { return exp(-1.0 * (double) depth); }
 
-const std::vector<std::vector<uint64_t>>& CountMin::getData() const { return data; }
-
-void CountMin::increment(uint64_t row, uint64_t column) {
-    data[row][column] += 1;
-}
+const std::vector<uint64_t>& CountMin::getData() const { return data; }
 
 uint64_t CountMin::getWidth() const { return width; }
 
 double CountMin::getError() const { return error; }
 
 double CountMin::getProbability() const { return probability; }
+
+CountMin CountMin::createFromString(void* cmString, uint64_t depth, uint64_t width) {
+    auto* rawData = static_cast<uint64_t*>(cmString);
+    std::vector<uint64_t> cmData(rawData, rawData + depth * width);
+
+    return {width, cmData, nullptr, 0, depth, 0, 0};
 }
+
+void CountMin::incrementCounter(uint64_t* data, uint64_t rowId, uint64_t width, uint64_t columnId) {
+    data[rowId * width + columnId] += 1;
+}
+}// namespace NES::Experimental::Statistics

@@ -17,11 +17,25 @@
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <memory>
 #include <vector>
 
 namespace NES {
+
+namespace Runtime::Execution {
+class RecordBuffer;
+
+namespace Operators {
+class TimeFunction;
+using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
+}// namespace Operators
+}// namespace Runtime::Execution
+
+namespace Runtime::Execution::MemoryProvider {
+class MemoryProvider;
+using MemoryProviderPtr = std::unique_ptr<MemoryProvider>;
+}// namespace Runtime::Execution::MemoryProvider
+
 namespace Nautilus::Interface {
 class HashFunction;
 }
@@ -40,7 +54,7 @@ class CountMinBuildOperator : public Runtime::Execution::Operators::ExecutableOp
      * @param onField the field name from which the CountMinBuildOperator reads the data
      * @param keySizeInBits the size of the keys in bits
      * @param timeFunction the function defining which time is used (event or ingestion)
-     * @param h3Seeds the seeds for the H3 hash functions
+     * @param schema used to create the RowMemoryProvider, which allows us to read and write tuples from and to RecordBuffers
      */
     CountMinBuildOperator(uint64_t operatorHandlerIndex,
                           uint64_t width,
@@ -48,14 +62,28 @@ class CountMinBuildOperator : public Runtime::Execution::Operators::ExecutableOp
                           const std::string& onField,
                           uint64_t keySizeInBits,
                           Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-                          std::vector<uint64_t> h3Seeds);
+                          SchemaPtr schema);
 
     /**
-     * @brief takes a record and modifies a sketch accordingly
+     * @brief gets the BufferManager from the execution context and sets it for the CountMinOperatorHandler
      * @param ctx the execution context
-     * @param record the record that is used to modify the CountMin sketch
      */
-    void execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const override;
+    void setup(Runtime::Execution::ExecutionContext& ctx) const override;
+
+    /**
+     * @brief takes a incomingRecord and modifies a sketch accordingly
+     * @param ctx the execution context
+     * @param incomingRecord the incomingRecord that is used to modify the CountMin sketch
+     */
+    void execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& incomingRecord) const override;
+
+    /**
+     * @brief is called for each RecordBuffer that is processed. The watermark is extracted and the finished windows constructing
+     * CountMin records are dispatched to the next operator in the pipeline as TupleBuffers
+     * @param ctx the execution context
+     * @param recordBuffer the record buffer that has been fully processed
+     */
+    void close(Runtime::Execution::ExecutionContext& ctx, Runtime::Execution::RecordBuffer& recordBuffer) const override;
 
   private:
     const uint64_t operatorHandlerIndex;
@@ -64,7 +92,6 @@ class CountMinBuildOperator : public Runtime::Execution::Operators::ExecutableOp
     const std::string onField;
     const uint64_t keySizeInBits;
     const Runtime::Execution::Operators::TimeFunctionPtr timeFunction;
-    const std::vector<uint64_t> h3Seeds;
     const Runtime::Execution::MemoryProvider::MemoryProviderPtr memoryProvider;
 };
 }// namespace Experimental::Statistics
