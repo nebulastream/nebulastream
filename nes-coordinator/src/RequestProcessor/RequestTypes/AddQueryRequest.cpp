@@ -318,9 +318,10 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED) {
             queryCatalog->createSharedQueryCatalogEntry(sharedQueryId, {queryId}, QueryState::OPTIMIZING);
         } else {
-            queryCatalog->linkSharedQuery(queryId, sharedQueryId);
             queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::OPTIMIZING, "");
         }
+        //Link both catalogs
+        queryCatalog->linkSharedQuery(queryId, sharedQueryId);
 
         //20. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");

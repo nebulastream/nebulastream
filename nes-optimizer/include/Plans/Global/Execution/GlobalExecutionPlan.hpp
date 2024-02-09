@@ -106,13 +106,6 @@ class GlobalExecutionPlan {
                                                                          SharedQueryId sharedQueryId);
 
     /**
-     * @brief create and get locked execution node and automatically add parent child relation ship with existing execution nodes.
-     * @param lockedTopologyNode: the locked topology node
-     * @return locked execution node
-     */
-    ExecutionNodeWLock createAndGetLockedExecutionNode(const TopologyNodeWLock& lockedTopologyNode);
-
-    /**
      * Add execution node as root of the execution graph
      * @param executionNodeId : the id of the execution node
      * @return true if operation succeeds
@@ -165,30 +158,6 @@ class GlobalExecutionPlan {
      * @return a JSON object representing the execution plan
      */
     nlohmann::json getAsJson(SharedQueryId sharedQueryId);
-
-    //    /**
-    //     * Add execution node to the collection of execution nodes to schedule
-    //     * @param executionNode : execution node to schedule
-    //     */
-    //    void scheduleExecutionNode(const ExecutionNodePtr& executionNode);
-
-    //    /**
-    //     * @brief Get the map of topology node id to the amount of resources occupied by the query
-    //     * @param sharedQueryId : the id of the query
-    //     * @return a map of topology node id to resources occupied
-    //     */
-    //    std::map<uint64_t, uint32_t> getMapOfWorkerIdToOccupiedResource(SharedQueryId sharedQueryId);
-
-    /*    *//**
-     * @brief removes a decomposed query plan if it exists at a specific node
-     * @param executionNodeId the id of the node hosting the decomposed query plan
-     * @param sharedQueryId the id of the shared query
-     * @param decomposedQueryPlanId the id of the decomposed query plan
-     * @return true if the decomposed was found and removed, false if it could not be found
-     *//*
-    bool removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId,
-                                    SharedQueryId sharedQueryId,
-                                    DecomposedQueryPlanId decomposedQueryPlanId);*/
 
   private:
     /**

@@ -79,6 +79,20 @@ void QueryCatalog::linkSharedQuery(NES::QueryId queryId, NES::SharedQueryId shar
     sharedQueryCatalogEntry->addQueryId(queryId);
 }
 
+SharedQueryId QueryCatalog::getLinkedSharedQueryId(NES::QueryId queryId) {
+    //Fetch shared query and query catalogs
+    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+
+    //Check if query exists
+    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
+        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
+    return queryCatalogEntry->getSharedQueryId();
+}
+
 void QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, const std::string& terminationReason) {
 
     //Handle new status of the query

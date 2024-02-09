@@ -107,7 +107,7 @@ void RestServer::run() {
     /* Create controllers and add all of their endpoints to the router */
     auto connectivityController = REST::Controller::ConnectivityController::create(objectMapper, "/connectivity");
     auto queryCatalogController =
-        REST::Controller::QueryCatalogController::create(objectMapper, queryCatalog, "/queryCatalog", errorHandler);
+        REST::Controller::QueryCatalogController::create(objectMapper, queryCatalog, coordinator, "/queryCatalog", errorHandler);
     auto topologyController =
         REST::Controller::TopologyController::create(objectMapper, topologyManagerService, "/topology", errorHandler);
     auto queryController = REST::Controller::QueryController::create(objectMapper,

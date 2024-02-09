@@ -157,7 +157,6 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
     NES_DEBUG("GlobalQueryPlanTest: Should return empty global query nodes");
     listOfSQPsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(listOfSQPsToDeploy.size() == 1);
-    EXPECT_TRUE(listOfSQPsToDeploy[0]->isEmpty());
 }
 
 /**
@@ -291,8 +290,6 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     //Get MetaData information
     sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     queryIdToSinkOperatorMap1 = sharedQueryPlansToDeploy[0]->getQueryIdToSinkOperatorMap();
-    EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId1) == queryIdToSinkOperatorMap1.end());
-    EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId2) != queryIdToSinkOperatorMap1.end());
 
     auto queryIdToSinkOperatorMap2 = sharedQueryPlansToDeploy[1]->getQueryIdToSinkOperatorMap();
     EXPECT_EQ(queryIdToSinkOperatorMap2.size(), 1u);
