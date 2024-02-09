@@ -209,10 +209,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     nlohmann::json response2;
     ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     EXPECT_EQ(response2.size(), 1);
-    for (auto executionNode : response2["executionNodes"]) {
-        EXPECT_EQ(coordinator->getTopology()->getRootTopologyNodeId(), executionNode["topologyNodeId"].get<uint64_t>());
-        EXPECT_EQ(coordinatorConfig->coordinatorIp.getValue(), executionNode["topologyNodeIpAddress"].get<std::string>());
-        EXPECT_TRUE(executionNode["ScheduledQueries"].size() != 0);
+    for (auto executionNode : response2["ExecutionNodes"]) {
+        EXPECT_EQ(coordinator->getTopology()->getRootTopologyNodeId(), executionNode["ExecutionNodeId"].get<uint64_t>());
+        EXPECT_TRUE(executionNode["ScheduledDecomposedQueries"].size() != 0);
     }
 
     auto f3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
