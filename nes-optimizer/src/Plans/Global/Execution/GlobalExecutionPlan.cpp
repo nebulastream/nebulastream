@@ -401,7 +401,7 @@ nlohmann::json GlobalExecutionPlan::getAsJson(SharedQueryId sharedQueryId) {
     for (const auto& executionNodeId : executionNodeIds) {
         nlohmann::json currentExecutionNodeJsonValue{};
         auto lockedExecutionNode = (*lockedExecutionNodeMap)[executionNodeId].wlock();
-        currentExecutionNodeJsonValue["executionNodeId"] = executionNodeId;
+        currentExecutionNodeJsonValue["ExecutionNodeId"] = executionNodeId;
         auto allDecomposedQueryPlans = (*lockedExecutionNode)->getAllDecomposedQueryPlans(sharedQueryId);
         if (allDecomposedQueryPlans.empty()) {
             continue;
@@ -417,20 +417,20 @@ nlohmann::json GlobalExecutionPlan::getAsJson(SharedQueryId sharedQueryId) {
             nlohmann::json currentQuerySubPlan{};
 
             // id of current query sub plan
-            currentQuerySubPlan["decomposedQueryPlanId"] = decomposedQueryPlan->getDecomposedQueryPlanId();
+            currentQuerySubPlan["DecomposedQueryPlanId"] = decomposedQueryPlan->getDecomposedQueryPlanId();
 
             // add the string containing operator to the json object of current query sub plan
-            currentQuerySubPlan["decomposedQueryPlan"] = decomposedQueryPlan->toString();
+            currentQuerySubPlan["DecomposedQueryPlan"] = decomposedQueryPlan->toString();
 
             scheduledSubQueries.push_back(currentQuerySubPlan);
         }
-        sharedQueryPlanToDecomposedQueryPlans["decomposedQueryPlans"] = scheduledSubQueries;
-        currentExecutionNodeJsonValue["ScheduledQueries"] = sharedQueryPlanToDecomposedQueryPlans;
+        sharedQueryPlanToDecomposedQueryPlans["DecomposedQueryPlans"] = scheduledSubQueries;
+        currentExecutionNodeJsonValue["ScheduledDecomposedQueries"] = sharedQueryPlanToDecomposedQueryPlans;
         nodes.push_back(currentExecutionNodeJsonValue);
     }
 
     // add `executionNodes` JSON array to the final JSON result
-    executionPlanJson["executionNodes"] = nodes;
+    executionPlanJson["ExecutionNodes"] = nodes;
     return executionPlanJson;
 }
 
