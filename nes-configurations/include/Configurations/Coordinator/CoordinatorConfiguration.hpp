@@ -70,11 +70,6 @@ class CoordinatorConfiguration : public BaseConfiguration {
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
 
     /**
-     * @brief Indicates if new request execution module is to be used
-     */
-    BoolOption enableNewRequestExecutor = {ENABLE_NEW_REQUEST_EXECUTOR_CONFIG, true, "Enable New Request Executor"};
-
-    /**
      * @brief Indicates the number of request executor threads
      */
     UIntOption requestExecutorThreads = {REQUEST_EXECUTOR_THREAD_CONFIG, 1, "Number of request executor thread"};

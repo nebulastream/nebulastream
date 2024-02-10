@@ -41,12 +41,6 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
-class RequestQueue;
-using RequestQueuePtr = std::shared_ptr<RequestQueue>;
-
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
@@ -81,9 +75,7 @@ using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 class RequestHandlerService {
 
   public:
-    explicit RequestHandlerService(bool enableNewRequestExecutor,
-                                   const RequestQueuePtr& queryRequestQueue,
-                                   Configurations::OptimizerConfiguration optimizerConfiguration,
+    explicit RequestHandlerService(Configurations::OptimizerConfiguration optimizerConfiguration,
                                    const QueryParsingServicePtr& queryParsingService,
                                    const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                    const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
@@ -103,14 +95,11 @@ class RequestHandlerService {
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryString : queryIdAndCatalogEntryMapping in string format
      * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategy : Name of the placement strategy
      * @return query id
      */
-    QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
-                                            const QueryPlanPtr& queryPlan,
-                                            const Optimizer::PlacementStrategy placementStrategy);
+    QueryId validateAndQueueAddQueryRequest(const QueryPlanPtr& queryPlan, const Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -163,9 +152,7 @@ class RequestHandlerService {
      */
     void assignOperatorIds(QueryPlanPtr queryPlan);
 
-    bool enableNewRequestExecutor;
     Configurations::OptimizerConfiguration optimizerConfiguration;
-    RequestQueuePtr queryRequestQueue;
     QueryParsingServicePtr queryParsingService;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;

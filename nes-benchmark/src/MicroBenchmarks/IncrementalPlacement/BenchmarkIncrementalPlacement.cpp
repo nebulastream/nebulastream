@@ -28,11 +28,8 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -389,15 +386,6 @@ int main(int argc, const char* argv[]) {
             auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
             auto globalQueryPlan = GlobalQueryPlan::create();
             auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
-            auto globalQueryUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
-                                                                                        queryCatalog,
-                                                                                        sourceCatalog,
-                                                                                        globalQueryPlan,
-                                                                                        z3Context,
-                                                                                        coordinatorConfiguration,
-                                                                                        udfCatalog,
-                                                                                        globalExecutionPlan);
-
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
             auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                                 topology,

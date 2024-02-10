@@ -45,10 +45,8 @@
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/RequestHandlerService.hpp>
-#include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/server_builder.h>
@@ -88,7 +86,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     coordinatorHealthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
                                                                                     HEALTH_SERVICE_NAME,
                                                                                     this->coordinatorConfiguration);
-    queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
     z3::config cfg;
@@ -97,24 +94,11 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     cfg.set("type_check", false);
     auto z3Context = std::make_shared<z3::context>(cfg);
 
-    queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
-                                                                             topology,
-                                                                             queryCatalog,
-                                                                             globalQueryPlan,
-                                                                             sourceCatalog,
-                                                                             udfCatalog,
-                                                                             queryRequestQueue,
-                                                                             this->coordinatorConfiguration,
-                                                                             z3Context);
-
     RequestProcessor::StorageDataStructures storageDataStructures =
         {this->coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog};
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
-    bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();
-    requestHandlerService = std::make_shared<RequestHandlerService>(enableNewRequestExecutor,
-                                                                    queryRequestQueue,
-                                                                    this->coordinatorConfiguration->optimizer,
+    requestHandlerService = std::make_shared<RequestHandlerService>(this->coordinatorConfiguration->optimizer,
                                                                     queryParsingService,
                                                                     queryCatalog,
                                                                     sourceCatalog,
@@ -147,14 +131,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes coordinator");
     }
-
-    queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {
-        setThreadName("RqstProc");
-
-        NES_INFO("NesCoordinator: started queryRequestProcessor");
-        queryRequestProcessorService->start();
-        NES_WARNING("NesCoordinator: finished queryRequestProcessor");
-    }));
 
     std::shared_ptr<std::promise<bool>> promRPC = std::make_shared<std::promise<bool>>();
 
@@ -269,16 +245,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             restThread->join();
         } else {
             NES_ERROR("NesCoordinator: rest thread not joinable");
-            NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
-        }
-
-        queryRequestProcessorService->shutDown();
-        if (queryRequestProcessorThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join queryRequestProcessorThread");
-            queryRequestProcessorThread->join();
-            NES_DEBUG("NesCoordinator: joined queryRequestProcessorThread");
-        } else {
-            NES_ERROR("NesCoordinator: query processor thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 

@@ -53,9 +53,6 @@ using RestServerPtr = std::shared_ptr<RestServer>;
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
-class RequestProcessorService;
-using QueryRequestProcessorServicePtr = std::shared_ptr<RequestProcessorService>;
-
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
@@ -233,7 +230,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     uint16_t rpcPort;
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
-    std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
@@ -245,7 +241,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
     std::atomic<bool> isRunning{false};
-    QueryRequestProcessorServicePtr queryRequestProcessorService;
     RequestHandlerServicePtr requestHandlerService;
     MonitoringServicePtr monitoringService;
     QueryParsingServicePtr queryParsingService;

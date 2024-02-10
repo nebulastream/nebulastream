@@ -91,12 +91,6 @@ class TestHarness {
                          uint64_t memSrcNumBuffToProcess = 1);
 
     /**
-     * @brief Enable new request executor
-     * @return self
-     */
-    TestHarness& enableNewRequestExecutor();
-
-    /**
      * @brief Sets the join strategy
      * @param joinStrategy
      * @return Self

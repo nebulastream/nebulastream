@@ -26,8 +26,6 @@
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
@@ -43,7 +41,6 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>

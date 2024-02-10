@@ -206,7 +206,7 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(FileSinkDescriptor::create(outputFilePath));
 
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalog));
 }
 

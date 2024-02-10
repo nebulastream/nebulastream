@@ -231,9 +231,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 }
             }
 
-            std::string* queryString = protobufMessage->mutable_querystring();
             auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(*queryString, queryPlan, placementStrategy);
+            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(queryPlan, placementStrategy);
 
             //Prepare the response
             nlohmann::json response;

@@ -14,5 +14,4 @@
 add_source_files(nes-coordinator
         DeploymentPhase.cpp
         SampleCodeGenerationPhase.cpp
-        GlobalQueryPlanUpdatePhase.cpp
 )

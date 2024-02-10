@@ -112,9 +112,8 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
                             Count()->as(Attribute("count_value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 

@@ -51,11 +51,6 @@ TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName,
     return *this;
 }
 
-TestHarness& TestHarness::enableNewRequestExecutor() {
-    useNewRequestExecutor = true;
-    return *this;
-}
-
 TestHarness& TestHarness::setJoinStrategy(QueryCompilation::StreamJoinStrategy& newJoinStrategy) {
     this->joinStrategy = newJoinStrategy;
     return *this;
@@ -280,7 +275,7 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     queryId = INVALID_QUERY_ID;
 
     auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
+    queryId = requestHandlerService->validateAndQueueAddQueryRequest(
                                                                      query.getQueryPlan(),
                                                                      placementStrategy);
 
@@ -331,10 +326,6 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;
-
-    if (useNewRequestExecutor) {
-        coordinatorConfiguration->enableNewRequestExecutor = true;
-    }
 
     coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
     coordinatorConfiguration->worker.queryCompiler.windowingStrategy = windowingStrategy;

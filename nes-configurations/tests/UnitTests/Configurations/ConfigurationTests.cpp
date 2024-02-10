@@ -86,8 +86,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
               coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(),
               coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
-              coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
               coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersPerEpoch.getValue(),
@@ -143,9 +141,6 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
               coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(),
               coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
-
-    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
-              coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
               coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
 }

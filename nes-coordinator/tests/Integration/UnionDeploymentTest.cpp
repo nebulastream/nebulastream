@@ -61,7 +61,6 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
     const auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("car", schemaCarTruck)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceCar)
                                   .addLogicalSource("truck", schemaCarTruck)
@@ -96,7 +95,6 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
     const auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("car", schemaCarTruck)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceCar)
                                   .addLogicalSource("truck", schemaCarTruck)
@@ -138,7 +136,6 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
                                           .map(Attribute("timestamp") = 2)
                                           .filter(Attribute("id") > 4));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
@@ -181,7 +178,6 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
                                           .map(Attribute("timestamp") = 2)
                                           .filter(Attribute("value") > 3));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
@@ -226,7 +222,6 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
                                           .filter(Attribute("value") > 3)
                                           .filter(Attribute("value") < 6));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
