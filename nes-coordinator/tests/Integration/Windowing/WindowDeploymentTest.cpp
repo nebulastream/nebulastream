@@ -321,9 +321,8 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));

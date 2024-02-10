@@ -93,7 +93,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
                      .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
+
                                   .addLogicalSource("QnV1", schema)
                                   .attachWorkerWithCSVSourceToCoordinator(srcConf1);
 
@@ -137,7 +137,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
                      .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
+
                                   .addLogicalSource("QnV1", schema)
                                   .attachWorkerWithCSVSourceToCoordinator(srcConf1)
                                   .validate()
@@ -182,7 +182,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
                      .project(Attribute("timestamp"), Attribute("NewVelocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
+
                                   .addLogicalSource("QnV1", schema)
                                   .attachWorkerWithCSVSourceToCoordinator(srcConf1)
                                   .validate()

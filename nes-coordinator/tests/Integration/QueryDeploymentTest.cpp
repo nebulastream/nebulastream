@@ -345,13 +345,13 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     auto query1 = Query::from("window1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
 
     auto query2 = Query::from("window1").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     start.set_value(true);
@@ -523,7 +523,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
                       .sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
 
     auto query2 = Query::from("window1")
@@ -531,7 +531,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
                       .sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     start.set_value(true);
@@ -776,7 +776,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
                      .filter(Attribute("id") < 5)
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
@@ -835,7 +835,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
                      .filter(Attribute("id") < 5)
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
@@ -893,7 +893,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
                      .filter(Attribute("id") < 5)
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
@@ -987,7 +987,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
     EXPECT_THROW(
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp),
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp),
         InvalidQueryException);
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
@@ -1043,10 +1043,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("default_logical").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     auto query2 = Query::from("default_logical").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
@@ -1155,11 +1155,11 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
@@ -1245,11 +1245,11 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
@@ -1496,11 +1496,11 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
@@ -1950,7 +1950,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -2107,7 +2107,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));

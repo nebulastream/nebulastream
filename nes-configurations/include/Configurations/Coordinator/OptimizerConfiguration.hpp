@@ -36,13 +36,6 @@ class OptimizerConfiguration : public BaseConfiguration {
     OptimizerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
 
     /**
-     * @brief The number of queryIdAndCatalogEntryMapping to be processed together.
-     */
-    IntOption queryBatchSize = {QUERY_BATCH_SIZE_CONFIG,
-                                1,
-                                "The number of queryIdAndCatalogEntryMapping to be processed together"};
-
-    /**
      * @brief The rule to be used for performing query merging.
      * Valid options are:
      * SyntaxBasedCompleteQueryMergerRule,
@@ -147,8 +140,7 @@ class OptimizerConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&queryBatchSize,
-                &queryMergerRule,
+        return {&queryMergerRule,
                 &memoryLayoutPolicy,
                 &performOnlySourceOperatorExpansion,
                 &performDistributedWindowOptimization,
@@ -164,4 +156,4 @@ class OptimizerConfiguration : public BaseConfiguration {
 
 }// namespace NES::Configurations
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_

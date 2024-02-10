@@ -243,7 +243,7 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
                      .sink(FileSinkDescriptor::create(outputFilePath, true));
 
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));

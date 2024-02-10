@@ -14,7 +14,6 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_TOPOLOGYNODERELOCATIONREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_TOPOLOGYNODERELOCATIONREQUEST_HPP_
 
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 #include <folly/Synchronized.h>
