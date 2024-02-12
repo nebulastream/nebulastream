@@ -76,7 +76,7 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(TopologyTimelineTest, DISABLED_testNoChangesPresent) {
+TEST_F(TopologyTimelineTest, testNoChangesPresent) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     int rootNodeId = 1;
@@ -97,6 +97,9 @@ TEST_F(TopologyTimelineTest, DISABLED_testNoChangesPresent) {
     ASSERT_NE(changedTopology, topology);
 }
 
+/*
+ * TODO: enable this test when #4602 is solved
+ */
 TEST_F(TopologyTimelineTest, DISABLED_testUpdatingMultiplePredictions) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
