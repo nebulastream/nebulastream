@@ -184,7 +184,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
 
     return detail::processGenericRpc<bool, RegisterPhysicalSourcesRequest, RegisterPhysicalSourcesReply>(
         request,
-        rpcRetryAttemps,
+        rpcRetryAttempts,
         rpcBackoff,
         [this](ClientContext* context, const RegisterPhysicalSourcesRequest& callRequest, RegisterPhysicalSourcesReply* reply) {
             return coordinatorStub->RegisterPhysicalSource(context, callRequest, reply);
@@ -213,7 +213,7 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
 
     return detail::processGenericRpc<bool, RegisterLogicalSourceRequest, RegisterLogicalSourceReply>(
         request,
-        rpcRetryAttemps,
+        rpcRetryAttempts,
         rpcBackoff,
         [this](ClientContext* context, const RegisterLogicalSourceRequest& callRequest, RegisterLogicalSourceReply* reply) {
             return coordinatorStub->RegisterLogicalSource(context, callRequest, reply);
@@ -237,7 +237,7 @@ bool CoordinatorRPCClient::unregisterPhysicalSource(const std::vector<PhysicalSo
 
         bool success = detail::processGenericRpc<bool, UnregisterPhysicalSourceRequest, UnregisterPhysicalSourceReply>(
             request,
-            rpcRetryAttemps,
+            rpcRetryAttempts,
             rpcBackoff,
             [this](ClientContext* context,
                    const UnregisterPhysicalSourceRequest& callRequest,
@@ -263,7 +263,7 @@ bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSou
 
     return detail::processGenericRpc<bool, UnregisterLogicalSourceRequest, UnregisterLogicalSourceReply>(
         request,
-        rpcRetryAttemps,
+        rpcRetryAttempts,
         rpcBackoff,
         [this](ClientContext* context, const UnregisterLogicalSourceRequest& callRequest, UnregisterLogicalSourceReply* reply) {
             return coordinatorStub->UnregisterLogicalSource(context, callRequest, reply);
@@ -280,7 +280,7 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
 
     return detail::processGenericRpc<bool, AddParentRequest, AddParentReply>(
         request,
-        rpcRetryAttemps,
+        rpcRetryAttempts,
         rpcBackoff,
         [this](ClientContext* context, const AddParentRequest& callRequest, AddParentReply* reply) {
             return coordinatorStub->AddParent(context, callRequest, reply);
@@ -326,7 +326,7 @@ bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParen
 
     auto listener = ReplaceParentListener{coordinatorStub};
 
-    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+    return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
 uint64_t CoordinatorRPCClient::getId() const { return workerId; }
@@ -365,7 +365,7 @@ bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
 
     auto listener = RemoveParentListener{coordinatorStub};
 
-    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+    return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
 bool CoordinatorRPCClient::unregisterNode() {
@@ -402,7 +402,7 @@ bool CoordinatorRPCClient::unregisterNode() {
 
     auto listener = UnRegisterNodeListener{coordinatorStub};
 
-    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+    return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
 bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrationRequest) {
@@ -444,7 +444,7 @@ bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrat
     };
 
     auto listener = RegisterWorkerListener{workerId, coordinatorStub};
-    return detail::processRpc(registrationRequest, rpcRetryAttemps, rpcBackoff, listener);
+    return detail::processRpc(registrationRequest, rpcRetryAttempts, rpcBackoff, listener);
 }
 
 bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
@@ -485,7 +485,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
 
     auto listener = NotifyQueryFailureListener{coordinatorStub};
 
-    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+    return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
 std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>>

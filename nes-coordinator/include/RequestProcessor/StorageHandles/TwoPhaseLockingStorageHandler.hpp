@@ -31,6 +31,7 @@ static constexpr TicketId MAX_TICKET = std::numeric_limits<TicketId>::max();
  */
 class TwoPhaseLockingStorageHandler : public StorageHandler {
     struct ResourceHolderData {
+        ResourceHolderData(RequestId requestId): holderId(requestId){};
         RequestId holderId{INVALID_REQUEST_ID};
         TicketId nextAvailableTicket = 0;
         TicketId currentTicket = 0;
