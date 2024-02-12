@@ -515,9 +515,13 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
     auto inputArguments = std::vector<NES::Nautilus::IR::Operations::OperationWPtr>{};
     auto functionCallTarget = std::get<FunctionCallTarget>(operation.input[0]);
 
+    std::stringstream uniqueFunctionSymbol;
+    uniqueFunctionSymbol << functionCallTarget.mangledName;
+
     for (uint32_t i = 1; i < operation.input.size(); i++) {
         auto input = frame.getValue(createValueIdentifier(operation.input[i]));
         inputArguments.emplace_back(input);
+        uniqueFunctionSymbol << input->getStamp()->toString();
     }
 
     auto resultType = std::holds_alternative<None>(operation.result) ? NES::Nautilus::IR::Types::StampFactory::createVoidStamp()
@@ -525,7 +529,7 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto proxyCallOperation = std::make_shared<NES::Nautilus::IR::Operations::ProxyCallOperation>(
         NES::Nautilus::IR::Operations::ProxyCallOperation::ProxyCallType::Other,
-        functionCallTarget.mangledName,
+        uniqueFunctionSymbol.str(),
         functionCallTarget.functionPtr,
         resultIdentifier,
         inputArguments,
