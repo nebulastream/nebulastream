@@ -169,7 +169,7 @@ struct Schema {
     static constexpr std::array<size_t, sizeof...(T) + 1> _array = cumulative_sum<T::size...>();
     using TupleType = std::tuple<typename T::ctype...>;
     static constexpr size_t TupleSize = (T::size + ...);
-    static constexpr static const char* csvFormat = CSVFormat::detail::CSVSchemaFormat<T...>::fmt;
+    static constexpr const char* csvFormat = CSVFormat::detail::CSVSchemaFormat<T...>::fmt;
 
     static void writeTupleAtBufferAddress(std::span<uint8_t> memoryLocation, TupleType tuple, NES::Runtime::TupleBuffer& tb) {
         std::apply(
