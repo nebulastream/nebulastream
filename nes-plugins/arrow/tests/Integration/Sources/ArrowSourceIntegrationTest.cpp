@@ -97,9 +97,8 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
 
     // register query
     auto query = Query::from("arrow_data").sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
