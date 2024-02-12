@@ -18,12 +18,15 @@
 #include <string>
 #include <cpr/cprtypes.h>
 #include <cpr/timeout.h>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES::ELEGANT {
 
 class ElegantAccelerationServiceClient {
 public:
-    ElegantAccelerationServiceClient(const std::string_view& baseUrl);
+    ElegantAccelerationServiceClient(
+        const std::string_view& baseUrl,
+        const Catalogs::UDF::JavaUdfDescriptorPtr& udfDescriptor);
     const std::string retrieveOpenCLKernel() const;
 private:
     unsigned executeSubmitRequest() const;
@@ -33,6 +36,7 @@ private:
     void waitForRequestCompletion(unsigned requestId) const;
     cpr::Url baseUrl;
     cpr::Timeout timeout{3000};
+    const Catalogs::UDF::JavaUdfDescriptorPtr& udfDescriptor;
 };
 
 } // NES::ELEGANT

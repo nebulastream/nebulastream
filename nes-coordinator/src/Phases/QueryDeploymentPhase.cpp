@@ -226,7 +226,7 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
         // }
 
         try {
-            ELEGANT::ElegantAccelerationServiceClient client{accelerationServiceURL};
+            ELEGANT::ElegantAccelerationServiceClient client{accelerationServiceURL, openCLOperator->getJavaUDFDescriptor()};
             auto openCLCode = client.retrieveOpenCLKernel();
             openCLOperator->setOpenClCode(openCLCode);
             auto openCLDevice = std::any_cast<int32_t>(executionNode->getTopologyNode()->getNodeProperty(Worker::Configuration::DEFAULT_OPENCL_DEVICE));

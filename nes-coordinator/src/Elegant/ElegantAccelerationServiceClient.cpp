@@ -15,12 +15,16 @@
 #include <unistd.h>
 #include <Elegant/ElegantAccelerationServiceClient.hpp>
 #include <Exceptions/ElegantServiceException.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <cpr/cpr.h>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ELEGANT {
-ElegantAccelerationServiceClient::ElegantAccelerationServiceClient(const std::string_view& baseUrl)
-    : baseUrl(cpr::Url{baseUrl.data(), baseUrl.size()} + "/api/acceleration")
+ElegantAccelerationServiceClient::ElegantAccelerationServiceClient(
+    const std::string_view& baseUrl,
+    const Catalogs::UDF::JavaUdfDescriptorPtr& udfDescriptor)
+    : baseUrl(cpr::Url{baseUrl.data(), baseUrl.size()} + "/api/acceleration"),
+      udfDescriptor(udfDescriptor)
 { }
 
 const std::string ElegantAccelerationServiceClient::retrieveOpenCLKernel() const {
