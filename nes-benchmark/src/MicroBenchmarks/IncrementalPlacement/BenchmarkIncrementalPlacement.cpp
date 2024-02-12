@@ -413,9 +413,6 @@ int main(int argc, const char* argv[]) {
                     queryPlan,
                     magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value(),
                     QueryState::REGISTERED);
-                Optimizer::PlacementStrategy queryPlacementStrategy =
-                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
-                auto runQueryRequest = AddQueryRequest::create(queryPlan, queryPlacementStrategy);
 
                 globalQueryUpdatePhase->execute({runQueryRequest});
                 auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();

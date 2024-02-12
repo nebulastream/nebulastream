@@ -12,3 +12,7 @@
 
 
 add_subdirectory(DumpHandler)
+
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    add_subdirectory(JNI)
+endif ()
