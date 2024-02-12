@@ -14,6 +14,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #ifndef TESTSOURCE_HPP
 #define TESTSOURCE_HPP
+#include <variant>
 namespace NES::Unikernel {
 
 // helper type for the visitor #4

@@ -20,3 +20,4 @@ endfunction()
 
 
 unikernel_benchmark(nexmark-q0)
+unikernel_benchmark(nexmark-q5)
