@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.42](https://github.com/nebulastream/nebulastream/tree/v0.6.42) (2024-02-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.41...v0.6.42)
+
+**Implemented enhancements:**
+
+- \[TASK\] Removing Node from Empty Topology Test [\#4565](https://github.com/nebulastream/nebulastream/issues/4565)
+- \[TASK\] replace RequestProcessorService with request executor for the new request types [\#3740](https://github.com/nebulastream/nebulastream/issues/3740)
+
 ## [v0.6.41](https://github.com/nebulastream/nebulastream/tree/v0.6.41) (2024-02-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.40...v0.6.41)
@@ -5728,15 +5737,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
-
-## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
 
 ## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+
+## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
 
 #### Complex Event Processing
 
