@@ -68,6 +68,7 @@ struct TestSourceImpl final {
             return std::visit(overloaded{[&buffer](const TupleBufferHolder& tb) -> std::optional<NES::Runtime::TupleBuffer> {
                                              NES_ASSERT(tb.bufferToHold.getBufferSize() == 8192, "Expected Buffer Size");
                                              std::memcpy(buffer.getBuffer().getBuffer(), tb.bufferToHold.getBuffer(), 8192);
+                                             buffer.getBuffer().setNumberOfTuples(tb.bufferToHold.getNumberOfTuples());
                                              return buffer.getBuffer();
                                          },
                                          [](const bool& /*bool*/) -> std::optional<NES::Runtime::TupleBuffer> {
