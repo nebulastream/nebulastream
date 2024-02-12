@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.6.41](https://github.com/nebulastream/nebulastream/tree/v0.6.41) (2024-02-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.40...v0.6.41)
+
+**Implemented enhancements:**
+
+- \[TASK\] MQTTTSinkTest disabled tests. [\#4546](https://github.com/nebulastream/nebulastream/issues/4546)
+- \[TASK\] MQTTSinkDeploymentTest disabled test. [\#4543](https://github.com/nebulastream/nebulastream/issues/4543)
+- \[TASK\] Build NebulaStream without LLVM on Ubuntu 20.04 [\#4523](https://github.com/nebulastream/nebulastream/issues/4523)
+- \[TASK\] Restructure query catalog to avoid data duplication [\#4452](https://github.com/nebulastream/nebulastream/issues/4452)
+
+### Bug Fixes 🐛
+
+- \[BUG\] JavaUDF tests failing due to misconfigured cmake file [\#4597](https://github.com/nebulastream/nebulastream/issues/4597)
+
 ## [v0.6.40](https://github.com/nebulastream/nebulastream/tree/v0.6.40) (2024-02-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.39...v0.6.40)
