@@ -42,5 +42,4 @@ TEST_F(ThreadNamingTest, testThreadNaming) {
     EXPECT_TRUE(std::strcmp(threadName, "NES-0") == 0);
 #endif
 }
-
 }// namespace NES
