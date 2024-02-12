@@ -59,7 +59,6 @@ unsigned ElegantAccelerationServiceClient::executeSubmitRequest() const {
     NES_DEBUG("Parsed request ID: {}", parsedRequestId);
     return std::stoi(parsedRequestId);
 #else
-#error "Not implemented"
     // nlohmann::json payload;
     // payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<Runtime::OpenCLDeviceInfo>>(
     //     executionNode->getTopologyNode()->getNodeProperty(Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
@@ -78,6 +77,39 @@ unsigned ElegantAccelerationServiceClient::executeSubmitRequest() const {
     //                                    cpr::Header{{"Content-Type", "multipart/form-data"}},
     //                                    multipartPayload,
     //                                    cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
+
+    // Store Java classes in filesystem
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << "nes-udf." << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S");
+    const auto tmpDir = std::filesystem::temp_directory_path() / ss.str();
+    NES_ASSERT(std::filesystem::create_directory(tmpDir), "Could not create temporary directory for decompiling Java UDF classes: " << tmpDir);
+    const auto classesDir = tmpDir / "classes";
+    NES_ASSERT(std::filesystem::create_directory(classesDir), "Could not create temporary directory for storing Java UDF classes: " << classesDir);
+    for (const auto& [name, bytecode] : udfDescriptor->getByteCodeList()) {
+        size_t start = 0, end = 0;
+        auto classFileDir = classesDir;
+        while (true) {
+            end = name.find(".", start);
+            if (end == std::string::npos) {
+                break;
+            }
+            classFileDir = classFileDir / name.substr(start, end - start);
+            if (!std::filesystem::exists(classFileDir)) {
+                NES_ASSERT(std::filesystem::create_directory(classFileDir), "Could not create Java UDF class directory: " << classFileDir);
+            }
+            start = end + 1;
+        }
+        auto classFileName = name.substr(start) + ".class";
+        auto classFilePath = classFileDir / classFileName;
+        NES_DEBUG("Storing Java UDF class file: class = {}, path = {}", name, classFilePath.c_str());
+        std::ofstream classFile{classFilePath, std::ofstream::binary};
+        classFile.write(bytecode.data(), bytecode.size());
+        classFile.close();
+    }
+
+    return 0;
 #endif
 }
 
@@ -113,7 +145,7 @@ void ElegantAccelerationServiceClient::executeDeleteRequest([[maybe_unused]] uns
         throw new ElegantServiceException("Deleting request ELEGANT acceleration service failed");
     }
 #else
-#error "Not implemented"
+// #error "Not implemented"
 #endif
 }
 
