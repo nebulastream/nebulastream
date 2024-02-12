@@ -168,7 +168,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
 /**
  *  Remove a non-existing node.
  */
-TEST_F(TopologyTest, DISABLED_removeNodeFromEmptyTopology) {
+TEST_F(TopologyTest, removeNodeFromEmptyTopology) {
     TopologyPtr topology = Topology::create();
 
     int node1Id = 1;
@@ -180,7 +180,8 @@ TEST_F(TopologyTest, DISABLED_removeNodeFromEmptyTopology) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     topology->registerTopologyNode(node1Id, node1Address, grpcPort, dataPort, resources, properties);
 
-    EXPECT_FALSE(topology->removeTopologyNode(node1Id));
+    EXPECT_TRUE(topology->removeTopologyNode(node1Id));
+    EXPECT_FALSE(topology->nodeWithWorkerIdExists(node1Id));
 }
 
 /* Create a new link. */
