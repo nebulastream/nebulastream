@@ -414,7 +414,6 @@ int main(int argc, const char* argv[]) {
                     magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value(),
                     QueryState::REGISTERED);
 
-                globalQueryUpdatePhase->execute({runQueryRequest});
                 auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
                 NES_ASSERT(sharedQueryPlansToDeploy.size() == 1, "Shared Query Plan to deploy has to be one");
                 auto startTime =
