@@ -70,25 +70,6 @@ target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 # Add Private Dependencies
 target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ})
 
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    target_link_libraries(nes-runtime PUBLIC ${JNI_LIBRARIES})
-    # Define map java udf utils class file
-    SET(NES_JAVA_UTILS_SRC_PATH "src/Execution/Operators/Relational/JavaUDF")
-    if (NES_JAVA_UDF_UTILS_PATH)
-        # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
-        SET(JAVA_UDF_UTILS_JAR "${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}/JavaUtils.jar")
-        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS_JAR="${JAVA_UDF_UTILS_JAR}")
-        message(STATUS "Setting JAR with Java helpers to: ${JAVA_UDF_UTILS_JAR}")
-        # Install Java Utils JAR
-        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/JavaUtils.jar" DESTINATION ${NES_JAVA_UDF_UTILS_PATH})
-    else ()
-        # Use Java helpers from test directory when working in CLion.
-        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS_JAR="${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/JavaUtils.jar")
-    endif()
-endif()
-
-
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
     target_link_libraries(nes-runtime PRIVATE nes-compiler)

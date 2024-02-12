@@ -16,11 +16,6 @@ add_source_files(nes-runtime
         Core.cpp
 )
 
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_subdirectory(JNI)
-endif ()
-
 if (NES_USE_MQTT)
     add_source_files(nes-runtime
             MQTTClientWrapper.cpp
