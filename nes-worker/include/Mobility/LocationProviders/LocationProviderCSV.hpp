@@ -41,7 +41,6 @@ class LocationProviderCSV : public LocationProvider {
      * most recent of the timestamps lying in the past
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    //todo: #2951: change return type
     [[nodiscard]] DataTypes::Experimental::Waypoint getCurrentWaypoint() override;
 
   private:

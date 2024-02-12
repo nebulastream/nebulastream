@@ -49,7 +49,6 @@ using NodeIdToGeoLocationMap = std::unordered_map<uint64_t, GeoLocation>;
 namespace Spatial::Mobility::Experimental {
 
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 class ReconnectSchedulePredictor;
 using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 
@@ -60,7 +59,7 @@ using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor
  */
 class ReconnectSchedulePredictor {
   public:
-    ReconnectSchedulePredictor(
+    explicit ReconnectSchedulePredictor(
         const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
     /**

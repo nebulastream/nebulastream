@@ -44,8 +44,7 @@ void WorkerHealthCheckService::startHealthCheck() {
         while (isRunning) {
             NES_TRACE("NesWorker::healthCheck for worker id=  {}", coordinatorRpcClient->getId());
 
-            bool isAlive = coordinatorRpcClient->checkCoordinatorHealth(healthServiceName);
-            if (isAlive) {
+            if (coordinatorRpcClient->checkCoordinatorHealth(healthServiceName)) {
                 NES_TRACE("NesWorker::healthCheck: for worker id={} is alive", coordinatorRpcClient->getId());
             } else {
                 NES_ERROR("NesWorker::healthCheck: for worker id={} coordinator went down so shutting down the worker with ip",
@@ -55,7 +54,7 @@ void WorkerHealthCheckService::startHealthCheck() {
             {
                 std::unique_lock<std::mutex> lk(cvMutex);
                 cv.wait_for(lk, waitTime, [this] {
-                    return isRunning == false;
+                    return !isRunning;
                 });
             }
         }
@@ -87,6 +86,6 @@ void WorkerHealthCheckService::stopHealthCheck() {
         NES_ERROR("HealthCheckService: health thread not joinable");
         NES_THROW_RUNTIME_ERROR("Error while stopping healthCheckingThread->join");
     }
-};
+}
 
 }// namespace NES

@@ -36,7 +36,7 @@ class CallData {
      * @param service server to listen on
      * @param cq queue to listen on
      */
-    CallData(WorkerRPCServer& service, grpc::ServerCompletionQueue* cq);
+    CallData(WorkerRPCServer& service);
 
     /**
     * @brief Run method to process the call data through it different stages
@@ -48,12 +48,9 @@ class CallData {
     // server.
     WorkerRPCServer& service;
 
-    // The producer-consumer queue where for asynchronous server notifications.
-    [[maybe_unused]] grpc::ServerCompletionQueue* completionQueue;
-
     // Let's implement a tiny state machine with the following states.
     enum class CallStatus : uint8_t { CREATE, PROCESS, FINISH };
-    CallStatus status;// The current serving state.
+    CallStatus status = CallStatus::CREATE;// The current serving state.
 };
 
 }// namespace NES

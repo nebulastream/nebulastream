@@ -192,7 +192,7 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(
 
 bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconnectionRoutine(uint64_t& currentParentId,
                                                                                              uint64_t newParentId) {
-    //todo #4283: trigger buffering of sinks before reoconnect happens
+    //todo #4283: trigger buffering of sinks before reconnect happens
 
     auto workerId = nodeEngine->getNodeId();
     TopologyLinkInformation removedLink(workerId, currentParentId);

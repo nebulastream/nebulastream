@@ -47,8 +47,6 @@ class ReconnectSchedulePredictor;
 using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
-
 struct ReconnectPoint;
 
 /**

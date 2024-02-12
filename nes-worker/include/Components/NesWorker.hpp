@@ -29,17 +29,14 @@
 namespace grpc {
 class Server;
 class ServerCompletionQueue;
-};// namespace grpc
+}// namespace grpc
 
 namespace NES {
 
 class WorkerHealthCheckService;
 
-class WorkerHealthCheckService;
-
 namespace Spatial::Index::Experimental {
 class Location;
-using LocationPtr = std::shared_ptr<Location>;
 }// namespace Spatial::Index::Experimental
 
 namespace Spatial::Mobility::Experimental {
@@ -84,7 +81,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @brief default constructor which creates a sensor node with a metric store
      * @note this will create the worker actor using the default worker config
      */
-    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
+    explicit NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
 
     /**
      * @brief default dtor
@@ -122,7 +119,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     * @param physicalSources vector of configured physical sources
      * @return bool indicating success
     */
-    bool unregisterPhysicalSource(std::vector<PhysicalSourceTypePtr> physicalSources);
+    bool unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr>& physicalSources);
 
     /**
     * @brief method add new parent to this node
@@ -210,12 +207,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     */
     uint64_t getWorkerId();
 
-    /**
-     * @brief Method to get numberOfBuffersPerEpoch
-     * @return numberOfBuffersPerEpoch
-    */
-    uint64_t getNumberOfBuffersPerEpoch();
-
     const Configurations::WorkerConfigurationPtr& getWorkerConfiguration() const;
 
     /**
@@ -255,6 +246,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr getTrajectoryPredictor();
 
+    //TODO: add docu
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
   private:
@@ -279,7 +271,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     void handleRpcs(WorkerRPCServer& service);
 
     const Configurations::WorkerConfigurationPtr workerConfig;
-    std::atomic<uint16_t> localWorkerRpcPort;
+    std::atomic<uint64_t> localWorkerRpcPort;
     std::string rpcAddress;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
@@ -297,7 +289,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     Monitoring::MetricStorePtr metricStore;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     std::atomic<bool> connected{false};
-    uint32_t parentId;
+    uint64_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
     Util::PluginLoader pluginLoader = Util::PluginLoader();
 };

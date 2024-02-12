@@ -49,7 +49,7 @@ using namespace std;
 volatile sig_atomic_t flag = 0;
 
 void termFunc(int) {
-    cout << "termfunc" << endl;
+    cout << "terminating worker" << endl;
     flag = 1;
 }
 
@@ -57,27 +57,32 @@ namespace NES {
 
 constexpr uint64_t NES_COORDINATOR_ID = 1;
 
-NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore)
-    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_WORKER_NODE_ID),
+NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& pWorkerConfig, Monitoring::MetricStorePtr metricStore)
+    : workerConfig(std::move(pWorkerConfig)), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_WORKER_NODE_ID),
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
           workerConfig->mobilityConfiguration)) {
     setThreadName("NesWorker");
+    workerId = INVALID_WORKER_NODE_ID;
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
 }
 
-NesWorker::~NesWorker() { stop(true); }
+NesWorker::~NesWorker() {
+    try {
+        stop(true);
+    } catch (std::exception& err) {
+        NES_ERROR("NesWorker: Error occurred in destructor while stopping");
+        throw Exceptions::RuntimeException("NesWorker error while stopping node engine");
+    }
+}
 
 void NesWorker::handleRpcs(WorkerRPCServer& service) {
-    //TODO: somehow we need this although it is not called at all
-    // Spawn a new CallData instance to serve new clients.
-
-    CallData call(service, completionQueue.get());
+    CallData call(service);
     call.proceed();
     void* tag = nullptr;// uniquely identifies a request.
-    bool ok = 0;        //
+    bool ok = false;    //
     while (true) {
         // Block waiting to read the next event from the completion queue. The
         // event is uniquely identified by its tag, which in this case is the
@@ -166,7 +171,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}",
               rpcAddress,
               localWorkerRpcPort.load());
-    std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
+    auto promRPC = std::make_shared<std::promise<int>>();
 
     if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Experimental::SpatialType::NO_LOCATION) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
@@ -242,7 +247,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                 flag = 0;
                 break;
             }
-            //cout << "NesWorker wait" << endl;
+            cout << "NesWorker wait" << endl;
             sleep(5);
         }
     }
@@ -333,7 +338,6 @@ bool NesWorker::connect() {
     registrationRequest.set_bandwidthinmbps(workerConfig->bandwidth.getValue());
     registrationRequest.set_latencyinms(workerConfig->latency.getValue());
     registrationRequest.mutable_registrationmetrics()->Swap(monitoringAgent->getRegistrationMetrics().serialize().get());
-    //todo: what about this?
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::SpatialTypeUtility::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
@@ -443,7 +447,7 @@ bool NesWorker::disconnect() {
     return false;
 }
 
-bool NesWorker::unregisterPhysicalSource(std::vector<PhysicalSourceTypePtr> physicalSources) {
+bool NesWorker::unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr>& physicalSources) {
     bool success = coordinatorRpcClient->unregisterPhysicalSource(physicalSources);
     NES_DEBUG("NesWorker::unregisterPhysicalSource success={}", success);
     return success;
@@ -462,11 +466,11 @@ bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>
     return success;
 }
 
-bool NesWorker::addParent(uint64_t parentId) {
+bool NesWorker::addParent(uint64_t pParentId) {
     bool con = waitForConnect();
 
     NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->addParent(parentId);
+    bool success = coordinatorRpcClient->addParent(pParentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success={}", success);
     return success;
 }
@@ -483,11 +487,11 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     return success;
 }
 
-bool NesWorker::removeParent(uint64_t parentId) {
+bool NesWorker::removeParent(uint64_t pParentId) {
     bool con = waitForConnect();
 
     NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->removeParent(parentId);
+    bool success = coordinatorRpcClient->removeParent(pParentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success={}", success);
     return success;
 }
@@ -566,11 +570,11 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
     return success;
 }
 
-bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
+bool NesWorker::notifyErrors(uint64_t pWorkerId, std::string errorMsg) {
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
-    NES_DEBUG("NesWorker::sendErrors worker {} going to send error={}", workerId, errorMsg);
-    bool success = coordinatorRpcClient->sendErrors(workerId, errorMsg);
+    NES_DEBUG("NesWorker::sendErrors worker {} going to send error={}", pWorkerId, errorMsg);
+    bool success = coordinatorRpcClient->sendErrors(pWorkerId, errorMsg);
     NES_DEBUG("NesWorker::sendErrors success={}", success);
     return success;
 }

@@ -46,7 +46,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
               decomposedQueryPlan->getSharedQueryId(),
               decomposedQueryPlan->getDecomposedQueryPlanId(),
               decomposedQueryPlan->toString());
-    bool success = 0;
+    bool success = false;
     try {
         //check if the plan is reconfigured
         if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_REDEPLOYMENT) {
@@ -58,6 +58,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
         NES_ERROR("Register query crashed: {}", error.what());
         success = false;
     }
+
     if (success) {
         NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
@@ -70,8 +71,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
 
 Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for {}", request->queryid());
-    bool success = nodeEngine->unregisterQuery(request->queryid());
-    if (success) {
+    if (nodeEngine->unregisterQuery(request->queryid())) {
         NES_DEBUG("WorkerRPCServer::UnregisterQuery: success");
         reply->set_success(true);
         return Status::OK;
