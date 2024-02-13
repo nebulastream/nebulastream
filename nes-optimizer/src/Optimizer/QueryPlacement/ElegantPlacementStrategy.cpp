@@ -296,8 +296,17 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             nlohmann::json node;
             node[OPERATOR_ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_WORKER_ID);
-            node[CONSTRAINT_KEY] =
-                pinnedNodeId.has_value() ? std::to_string(std::any_cast<WorkerId>(pinnedNodeId)) : EMPTY_STRING;
+            bool isPinned = pinnedNodeId.has_value();
+            bool isCPUOnly = !logicalOperator->instanceOf<MapUDFLogicalOperatorNode>();
+            if (isPinned && isCPUOnly) {
+                node[CONSTRAINT_KEY] = std::to_string(std::any_cast<WorkerId>(pinnedNodeId)) + "-CPU";
+            } else if (isPinned) {
+                node[CONSTRAINT_KEY] = std::to_string(std::any_cast<WorkerId>(pinnedNodeId));
+            } else if (isCPUOnly) {
+                node[CONSTRAINT_KEY] = "CPU";
+            } else {
+                node[CONSTRAINT_KEY] = EMPTY_STRING;
+            }
             auto sourceCode = logicalOperator->getProperty(sourceCodeKey);
             node[sourceCodeKey] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
