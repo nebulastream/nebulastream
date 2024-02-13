@@ -33,6 +33,8 @@ struct SinkConfig3 {
     constexpr static size_t OutputSchemaSizeInBytes = 40;
 };
 
+using sources = std::tuple<SourceConfig35>;
+
 using SubQueryPlan3 = SubQuery<UnikernelSink<SinkConfig3>, Pipeline<UnikernelSource<SourceConfig35>>>;
 using QueryPlan = UnikernelExecutionPlan<SubQueryPlan3>;
 }// namespace NES::Unikernel
