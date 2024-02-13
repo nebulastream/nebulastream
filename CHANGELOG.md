@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.44](https://github.com/nebulastream/nebulastream/tree/v0.6.44) (2024-02-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.43...v0.6.44)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Worker fails to start when one of the core is offline [\#4604](https://github.com/nebulastream/nebulastream/issues/4604)
+
 ## [v0.6.43](https://github.com/nebulastream/nebulastream/tree/v0.6.43) (2024-02-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.42...v0.6.43)
@@ -5746,15 +5754,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
-
-## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
 
 ## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+
+## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
 
 #### Complex Event Processing
 
