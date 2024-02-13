@@ -53,3 +53,18 @@ install(TARGETS nes-optimizer
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)
+
+if (NES_ELEGANT_DECOMPILE_JAVA_UDF_CLASSES)
+    SET(NES_ELEGANT_UTILS_SRC_PATH "src/Optimizer/QueryPlacement")
+    if (NES_ELEGANT_DECOMPILER_PATH)
+        # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
+        SET(FERNFLOWER_DECOMPILER_JAR "${CMAKE_INSTALL_PREFIX}/${NES_ELEGANT_DECOMPILER_PATH}/java-decompiler-engine.jar")
+        # Install Java Utils JAR
+        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/${NES_ELEGANT_UTILS_SRC_PATH}/java-decompiler-engine.jar" DESTINATION ${NES_ELEGANT_DECOMPILER_PATH})
+    else ()
+        # Use Java helpers from test directory when working in CLion.
+        SET(FERNFLOWER_DECOMPILER_JAR "${CMAKE_CURRENT_BINARY_DIR}/${NES_ELEGANT_UTILS_SRC_PATH}/java-decompiler-engine.jar")
+    endif()
+    target_compile_definitions(nes-optimizer PUBLIC PLANNER_FERNFLOWER_DECOMPILER_JAR="${FERNFLOWER_DECOMPILER_JAR}")
+    message(STATUS "Setting JAR with Fernflower decompiler to: ${FERNFLOWER_DECOMPILER_JAR}")
+endif()

@@ -32,6 +32,99 @@
 #include <queue>
 #include <utility>
 
+namespace NES::ELEGANT {
+JavaUdfDecompiler::JavaUdfDecompiler(const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor)
+    : javaUdfDescriptor(javaUdfDescriptor),
+      tmpDir(createTemporaryPath()),
+      classesDir(tmpDir / "classes"),
+      sourcesDir(tmpDir / "sources") {
+    NES_ASSERT(std::filesystem::create_directory(tmpDir),
+               "Could not create temporary directory for decompiling Java UDF classes: " << tmpDir);
+    NES_ASSERT(std::filesystem::create_directory(classesDir),
+               "Could not create temporary directory for storing Java UDF classes: " << classesDir);
+    NES_ASSERT(std::filesystem::create_directory(sourcesDir),
+               "Could not create temporary directory for storing Java UDF sources: " << sourcesDir);
+}
+
+JavaUdfDecompiler::~JavaUdfDecompiler() {
+    if (std::filesystem::exists(tmpDir)) {
+        std::filesystem::remove_all(tmpDir);
+    }
+}
+
+const std::string JavaUdfDecompiler::getSourceCode() const {
+    storeUdfJavaClasses();
+    decompileUdfJavaClasses();
+    return readJavaUdfSource();
+}
+
+const std::filesystem::path JavaUdfDecompiler::createTemporaryPath() {
+    auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::stringstream ss;
+    ss << "nes-udf." << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S");
+    return std::filesystem::temp_directory_path() / ss.str();
+}
+
+void JavaUdfDecompiler::storeUdfJavaClasses() const
+{
+    for (const auto& [name, bytecode] : javaUdfDescriptor->getByteCodeList()) {
+        size_t start = 0, end = 0;
+        auto classFileDir = classesDir;
+        while (true) {
+            end = name.find(".", start);
+            if (end == std::string::npos) {
+                break;
+            }
+            classFileDir = classFileDir / name.substr(start, end - start);
+            if (!std::filesystem::exists(classFileDir)) {
+                NES_ASSERT(std::filesystem::create_directory(classFileDir),
+                           "Could not create Java UDF class directory: " << classFileDir);
+            }
+            start = end + 1;
+        }
+        auto classFileName = name.substr(start) + ".class";
+        auto classFilePath = classFileDir / classFileName;
+        NES_DEBUG("Storing Java UDF class file: class = {}, path = {}", name, classFilePath.c_str());
+        std::ofstream classFile{classFilePath, std::ofstream::binary};
+        classFile.write(bytecode.data(), bytecode.size());
+        classFile.close();
+    }
+}
+
+void JavaUdfDecompiler::decompileUdfJavaClasses() const {
+    std::stringstream cmdline;
+    cmdline << "java -jar " << PLANNER_FERNFLOWER_DECOMPILER_JAR << " " << classesDir.c_str() << " " << sourcesDir.c_str();
+    NES_DEBUG("Decompiling Java UDF classes with Fernflower decompiler: {}", cmdline.str());
+    FILE* fp = popen(cmdline.str().c_str(), "r");
+    if (fp == nullptr) {
+        NES_ERROR("Failed to run Java UDF classes decompiler");
+        throw std::runtime_error("Failed to run Java UDF classes decompiler");
+    }
+    std::stringstream output;
+    char buffer[8192];
+    while (fgets(buffer, sizeof(buffer), fp) != nullptr) {
+        output << buffer;
+    }
+    auto returnCode = pclose(fp);
+    if (returnCode != 0) {
+        NES_ERROR("Decompilation of Java UDF classes failed: {}", output.str());
+        throw std::runtime_error("Failed to decompile Java UDF classes");
+    }
+}
+
+std::string JavaUdfDecompiler::readJavaUdfSource() const {
+    auto javaUdfSourceFileName = javaUdfDescriptor->getClassName();
+    std::replace(javaUdfSourceFileName.begin(), javaUdfSourceFileName.end(), '.', '/');
+    javaUdfSourceFileName += ".java";
+    auto javaUdfSourceFilePath = sourcesDir / javaUdfSourceFileName;
+    NES_DEBUG("Reading Java UDF sources for class; className = {}, sources = {}", javaUdfDescriptor->getClassName(), javaUdfSourceFilePath.c_str())
+    std::ifstream javaUdfSourceFile{javaUdfSourceFilePath};
+    std::string javaUdfSources(std::istreambuf_iterator<char>{javaUdfSourceFile}, {});
+    return javaUdfSources;
+}
+
+}
+
 namespace NES::Optimizer {
 
 const std::string ElegantPlacementStrategy::sourceCodeKey = "sourceCode";
@@ -144,6 +237,19 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
     }
 }
 
+void ElegantPlacementStrategy::addJavaUdfSourceCode(const OperatorNodePtr& logicalOperator, nlohmann::json& node) {
+    if (logicalOperator->instanceOf<MapUDFLogicalOperatorNode>()
+        || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
+        const auto udfDescriptor =
+            std::dynamic_pointer_cast<Catalogs::UDF::JavaUDFDescriptor>(
+                logicalOperator->as<UDFLogicalOperator>()->getUDFDescriptor());
+        ELEGANT::JavaUdfDecompiler decompiler{udfDescriptor};
+        node[JAVA_UDF_FIELD_KEY] = decompiler.getSourceCode();
+    } else {
+        node[JAVA_UDF_FIELD_KEY] = "";
+    }
+}
+
 void ElegantPlacementStrategy::addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node) {
     if (logicalOperator->instanceOf<MapUDFLogicalOperatorNode>()
         || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
@@ -195,7 +301,8 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             auto sourceCode = logicalOperator->getProperty(sourceCodeKey);
             node[sourceCodeKey] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
-            addJavaUdfByteCodeField(logicalOperator, node);
+            // addJavaUdfByteCodeField(logicalOperator, node);
+            addJavaUdfSourceCode(logicalOperator, node);
 
             auto found = std::find_if(pinnedUpStreamOperators.begin(),
                                       pinnedUpStreamOperators.end(),

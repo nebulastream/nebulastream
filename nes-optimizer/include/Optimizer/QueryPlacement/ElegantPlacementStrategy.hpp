@@ -16,9 +16,30 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ELEGANTPLACEMENTSTRATEGY_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <cpr/response.h>
 #include <nlohmann/json.hpp>
+
+namespace NES::ELEGANT {
+class JavaUdfDecompiler {
+public:
+ JavaUdfDecompiler(const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor);
+ JavaUdfDecompiler(const JavaUdfDecompiler&) = delete;
+ JavaUdfDecompiler& operator=(const JavaUdfDecompiler&) = delete;
+ ~JavaUdfDecompiler();
+ const std::string getSourceCode() const;
+private:
+ static const std::filesystem::path createTemporaryPath();
+ void storeUdfJavaClasses() const;
+ void decompileUdfJavaClasses() const;
+ std::string readJavaUdfSource() const;
+ const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor;
+ const std::filesystem::path tmpDir;
+ const std::filesystem::path classesDir;
+ const std::filesystem::path sourcesDir;
+};
+}
 
 namespace NES::Optimizer {
 
@@ -90,11 +111,18 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                            cpr::Response& response) const;
 
     /**
-     * @brief Add a base64-transformed Java bytecode list to the JSON representation of the operator, if the operator is a MapUDFLogicalOperatorNode or FlatMapUDFLogicalOperatorNode. Otherwise, add an empty field.
+     * @brief Add source code of the Java UDF to the JSON representation of the operator, if the operator is a MapUDFLogicalOperatorNode or FlatMapUDFLogicalOperatorNode. Otherwise, add an empty field.
      * @param logicalOperator The logical operator that is processed.
      * @param node Target JSON operator.
      */
     void addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node);
+
+    /**
+     * @brief Add a base64-transformed Java bytecode list to the JSON representation of the operator, if the operator is a MapUDFLogicalOperatorNode or FlatMapUDFLogicalOperatorNode. Otherwise, add an empty field.
+     * @param logicalOperator The logical operator that is processed.
+     * @param node Target JSON operator.
+     */
+    void addJavaUdfSourceCode(const OperatorNodePtr& logicalOperator, nlohmann::json& node);
 
     std::string serviceURL;
     float timeWeight;

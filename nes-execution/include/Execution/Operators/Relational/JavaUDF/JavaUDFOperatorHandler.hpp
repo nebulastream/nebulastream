@@ -192,8 +192,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const SchemaPtr operatorOutputSchema;
     const std::optional<std::string> javaPath;
     jni::jmethodID udfMethodId;
-    jni::jobject udfInstance;
-    jni::jobject classLoader;
+    jni::jobject udfInstance = nullptr;
+    jni::jobject classLoader = nullptr;
     jni::jmethodID injectClassMethod;
     jni::jmethodID loadClassMethod;
     Timer<> jniTimer{"Java UDF execution (JNI calls)"};

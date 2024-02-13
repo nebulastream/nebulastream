@@ -20,3 +20,5 @@ add_source_files(nes-optimizer
 		ILPStrategy.cpp
         ElegantPlacementStrategy.cpp
 )
+
+file(COPY_FILE java-decompiler-engine-233.14015.106.jar ${CMAKE_CURRENT_BINARY_DIR}/java-decompiler-engine.jar)
