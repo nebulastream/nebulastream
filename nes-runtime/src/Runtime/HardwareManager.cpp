@@ -73,13 +73,11 @@ void readCpuConfig(uint32_t& numa_nodes_count,
                 splits.push_back(s);
             }
         }
-        unsigned long cpu = std::stoi(splits[0]);
-        unsigned long node = std::stoi(splits[1]);
+
+        //First check if the CPU is online
 #if defined(__x86_64__) || defined(_M_X64)
-        unsigned long core = std::stoi(splits[3]);
         bool online = splits[5] == "yes";
 #elif defined(__aarch64__)
-        unsigned long core = std::stoi(splits[2]);
         bool online = splits[3] == "yes";
 #else
 #error "Invalid architecture"
@@ -87,6 +85,16 @@ void readCpuConfig(uint32_t& numa_nodes_count,
         if (!online) {
             continue;
         }
+
+        unsigned long cpu = std::stoi(splits[0]);
+        unsigned long node = std::stoi(splits[1]);
+#if defined(__x86_64__) || defined(_M_X64)
+        unsigned long core = std::stoi(splits[3]);
+#elif defined(__aarch64__)
+        unsigned long core = std::stoi(splits[2]);
+#else
+#error "Invalid architecture"
+#endif
         if (auto it = cpuMapping.find(node); it != cpuMapping.end()) {
             cpuMapping[node] = HardwareManager::NumaDescriptor(node);
         }
