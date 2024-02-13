@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.45](https://github.com/nebulastream/nebulastream/tree/v0.6.45) (2024-02-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.44...v0.6.45)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Failure when using Min twice with different data types in windows [\#4370](https://github.com/nebulastream/nebulastream/issues/4370)
+
 ## [v0.6.44](https://github.com/nebulastream/nebulastream/tree/v0.6.44) (2024-02-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.43...v0.6.44)
