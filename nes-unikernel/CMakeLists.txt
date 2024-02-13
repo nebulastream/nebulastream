@@ -1,12 +1,14 @@
 add_subdirectory(src)
 
 get_source(unikernel-lib NES_UNIKERNEL_LIB_SOURCE_FILES)
-set(UNIKERNEL_COMPILE_OPTIONS "-DUNIKERNEL_LIB=1")
+set(UNIKERNEL_COMPILE_OPTIONS "-DUNIKERNEL_LIB=1 -gdwarf-4")
 set(UNIKERNEL_LINK_OPTIONS "-fuse-ld=lld")
 SET(UNIKERNEL_USE_UBSAN "OFF")
 SET(UNIKERNEL_TRACE_PROXY_FUNCTIONS "OFF")
 SET(UNIKERNEL_TRACE_PIPELINE_EXECUTION "OFF")
-SET(UNIKERNEL_USE_LIB_DWARF "ON")
+SET(UNIKERNEL_USE_LIB_DWARF "OFF")
+SET(UNIKERNEL_USE_LTO "ON")
+SET(UNIKERNEL_USE_KAFKA "OFF")
 
 if (UNIKERNEL_USE_TSAN)
     set(UNIKERNEL_LINK_OPTIONS ${UNIKERNEL_LINK_OPTIONS} "-fsanitize=thread")
@@ -31,15 +33,24 @@ if (UNIKERNEL_USE_LIB_DWARF)
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUSE_LIB_DWARF")
 endif ()
 
+if (UNIKERNEL_USE_KAFKA)
+    SET(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} cppkafka::cppkafka RdKafka::rdkafka RdKafka::rdkafka++)
+    SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUSE_KAFKA")
+endif ()
+
 FetchContent_Declare(
         scnlib
         GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
-        GIT_TAG        bca530899335775139d866855b4c59eb0c22abc9 # 2.0.0
+        GIT_TAG        d026afb7c0d42675e066a7e8fe253c46716f3f70 # 2.0.1
 )
 
 FetchContent_MakeAvailable(scnlib)
 
 add_library(unikernel-lib STATIC ${NES_UNIKERNEL_LIB_SOURCE_FILES})
+if (UNIKERNEL_USE_LTO)
+    set_property(TARGET unikernel-lib PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()
+
 target_include_directories(unikernel-lib PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
@@ -52,7 +63,7 @@ target_include_directories(unikernel-lib PRIVATE
 target_compile_options(unikernel-lib PRIVATE ${UNIKERNEL_COMPILE_OPTIONS}
         -Wno-error=unused-parameter
 )
-target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork Folly::folly cppkafka::cppkafka RdKafka::rdkafka RdKafka::rdkafka++ scn::scn)
+target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork Folly::folly scn::scn ${UNIKERNEL_LIBS})
 
 
 add_executable(pipeline-test tests/pipelineTest.cpp)
@@ -84,6 +95,11 @@ foreach (PIPELINE_FILE ${PIPELINE_FILES})
     file(GLOB OPERATOR_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/operators/node${PIPELINE_NUMBER}/*.cpp)
     # Create an executable for each pipeline
     add_executable(unikernel${PIPELINE_NUMBER} src/main.cpp ${OPERATOR_SOURCES})
+
+    if (UNIKERNEL_USE_LTO)
+        set_property(TARGET unikernel${PIPELINE_NUMBER} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif ()
+
     set_target_properties(unikernel${PIPELINE_NUMBER} PROPERTIES OUTPUT_NAME "unikernel${PIPELINE_NUMBER}")
     target_compile_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline${PIPELINE_NUMBER}.hpp")
     target_link_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_LINK_OPTIONS})
