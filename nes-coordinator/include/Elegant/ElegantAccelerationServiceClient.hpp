@@ -15,10 +15,12 @@
 #ifndef ELEGANTACCELERATIONSERVICECLIENT_HPP
 #define ELEGANTACCELERATIONSERVICECLIENT_HPP
 
+#include <filesystem>
 #include <string>
 #include <cpr/cprtypes.h>
 #include <cpr/timeout.h>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Runtime/OpenCLDeviceInfo.hpp>
 
 namespace NES::ELEGANT {
 
@@ -26,9 +28,17 @@ class ElegantAccelerationServiceClient {
 public:
     ElegantAccelerationServiceClient(
         const std::string_view& baseUrl,
-        const Catalogs::UDF::JavaUdfDescriptorPtr& udfDescriptor);
+        const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor,
+        const Runtime::OpenCLDeviceInfo& openCLDeviceInfo);
+    ElegantAccelerationServiceClient(const ElegantAccelerationServiceClient&) = delete;
+    ElegantAccelerationServiceClient& operator=(const ElegantAccelerationServiceClient&) = delete;
+    ~ElegantAccelerationServiceClient();
     const std::string retrieveOpenCLKernel() const;
 private:
+    static const std::filesystem::path createTemporaryPath();
+    void storeUdfJavaClasses() const;
+    void decompileUdfJavaClasses() const;
+    std::string readJavaUdfSource() const;
     unsigned executeSubmitRequest() const;
     const std::string executeStateRequest(unsigned requestId) const;
     const std::string executeRetrieveRequest(unsigned requestId) const;
@@ -36,7 +46,11 @@ private:
     void waitForRequestCompletion(unsigned requestId) const;
     cpr::Url baseUrl;
     cpr::Timeout timeout{3000};
-    const Catalogs::UDF::JavaUdfDescriptorPtr& udfDescriptor;
+    const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor;
+    const Runtime::OpenCLDeviceInfo& openCLDeviceInfo;
+    const std::filesystem::path tmpDir;
+    const std::filesystem::path classesDir;
+    const std::filesystem::path sourcesDir;
 };
 
 } // NES::ELEGANT

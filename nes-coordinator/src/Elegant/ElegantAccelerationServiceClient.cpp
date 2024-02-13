@@ -18,14 +18,35 @@
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <cpr/cpr.h>
 #include <Util/Logger/Logger.hpp>
+#include <sstream>
+#include <Phases/QueryDeploymentPhase.hpp>
+#include <nlohmann/json.hpp>
 
 namespace NES::ELEGANT {
+
 ElegantAccelerationServiceClient::ElegantAccelerationServiceClient(
     const std::string_view& baseUrl,
-    const Catalogs::UDF::JavaUdfDescriptorPtr& udfDescriptor)
+    const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor,
+    const Runtime::OpenCLDeviceInfo& openCLDeviceInfo)
     : baseUrl(cpr::Url{baseUrl.data(), baseUrl.size()} + "/api/acceleration"),
-      udfDescriptor(udfDescriptor)
-{ }
+      javaUdfDescriptor(javaUdfDescriptor),
+      openCLDeviceInfo(openCLDeviceInfo),
+      tmpDir(createTemporaryPath()),
+      classesDir(tmpDir / "classes"),
+      sourcesDir(tmpDir / "sources") {
+    NES_ASSERT(std::filesystem::create_directory(tmpDir),
+               "Could not create temporary directory for decompiling Java UDF classes: " << tmpDir);
+    NES_ASSERT(std::filesystem::create_directory(classesDir),
+               "Could not create temporary directory for storing Java UDF classes: " << classesDir);
+    NES_ASSERT(std::filesystem::create_directory(sourcesDir),
+               "Could not create temporary directory for storing Java UDF sources: " << sourcesDir);
+}
+
+ElegantAccelerationServiceClient::~ElegantAccelerationServiceClient() {
+    if (std::filesystem::exists(tmpDir)) {
+        std::filesystem::remove_all(tmpDir);
+    }
+}
 
 const std::string ElegantAccelerationServiceClient::retrieveOpenCLKernel() const {
     const auto requestId = executeSubmitRequest();
@@ -33,6 +54,71 @@ const std::string ElegantAccelerationServiceClient::retrieveOpenCLKernel() const
     std::string openCLCode = executeRetrieveRequest(requestId);
     executeDeleteRequest(requestId);
     return openCLCode;
+}
+
+const std::filesystem::path ElegantAccelerationServiceClient::createTemporaryPath() {
+    auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::stringstream ss;
+    ss << "nes-udf." << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S");
+    return std::filesystem::temp_directory_path() / ss.str();
+}
+
+void ElegantAccelerationServiceClient::storeUdfJavaClasses() const
+{
+    for (const auto& [name, bytecode] : javaUdfDescriptor->getByteCodeList()) {
+        size_t start = 0, end = 0;
+        auto classFileDir = classesDir;
+        while (true) {
+            end = name.find(".", start);
+            if (end == std::string::npos) {
+                break;
+            }
+            classFileDir = classFileDir / name.substr(start, end - start);
+            if (!std::filesystem::exists(classFileDir)) {
+                NES_ASSERT(std::filesystem::create_directory(classFileDir),
+                           "Could not create Java UDF class directory: " << classFileDir);
+            }
+            start = end + 1;
+        }
+        auto classFileName = name.substr(start) + ".class";
+        auto classFilePath = classFileDir / classFileName;
+        NES_DEBUG("Storing Java UDF class file: class = {}, path = {}", name, classFilePath.c_str());
+        std::ofstream classFile{classFilePath, std::ofstream::binary};
+        classFile.write(bytecode.data(), bytecode.size());
+        classFile.close();
+    }
+}
+
+void ElegantAccelerationServiceClient::decompileUdfJavaClasses() const {
+    std::stringstream cmdline;
+    cmdline << "java -jar " << FERNFLOWER_DECOMPILER_JAR << " " << classesDir.c_str() << " " << sourcesDir.c_str();
+    NES_DEBUG("Decompiling Java UDF classes with Fernflower decompiler: {}", cmdline.str());
+    FILE* fp = popen(cmdline.str().c_str(), "r");
+    if (fp == nullptr) {
+        NES_ERROR("Failed to run Java UDF classes decompiler");
+        throw std::runtime_error("Failed to run Java UDF classes decompiler");
+    }
+    std::stringstream output;
+    char buffer[8192];
+    while (fgets(buffer, sizeof(buffer), fp) != nullptr) {
+        output << buffer;
+    }
+    auto returnCode = pclose(fp);
+    if (returnCode != 0) {
+        NES_ERROR("Decompilation of Java UDF classes failed: {}", output.str());
+        throw std::runtime_error("Failed to decompile Java UDF classes");
+    }
+}
+
+std::string ElegantAccelerationServiceClient::readJavaUdfSource() const {
+    auto javaUdfSourceFileName = javaUdfDescriptor->getClassName();
+    std::replace(javaUdfSourceFileName.begin(), javaUdfSourceFileName.end(), '.', '/');
+    javaUdfSourceFileName += ".java";
+    auto javaUdfSourceFilePath = sourcesDir / javaUdfSourceFileName;
+    NES_DEBUG("Reading Java UDF sources for class; className = {}, sources = {}", javaUdfDescriptor->getClassName(), javaUdfSourceFilePath.c_str())
+    std::ifstream javaUdfSourceFile{javaUdfSourceFilePath};
+    std::string javaUdfSources(std::istreambuf_iterator<char>{javaUdfSourceFile}, {});
+    return javaUdfSources;
 }
 
 unsigned ElegantAccelerationServiceClient::executeSubmitRequest() const {
@@ -78,36 +164,14 @@ unsigned ElegantAccelerationServiceClient::executeSubmitRequest() const {
     //                                    multipartPayload,
     //                                    cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
 
-    // Store Java classes in filesystem
-    auto now = std::chrono::system_clock::now();
-    auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << "nes-udf." << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S");
-    const auto tmpDir = std::filesystem::temp_directory_path() / ss.str();
-    NES_ASSERT(std::filesystem::create_directory(tmpDir), "Could not create temporary directory for decompiling Java UDF classes: " << tmpDir);
-    const auto classesDir = tmpDir / "classes";
-    NES_ASSERT(std::filesystem::create_directory(classesDir), "Could not create temporary directory for storing Java UDF classes: " << classesDir);
-    for (const auto& [name, bytecode] : udfDescriptor->getByteCodeList()) {
-        size_t start = 0, end = 0;
-        auto classFileDir = classesDir;
-        while (true) {
-            end = name.find(".", start);
-            if (end == std::string::npos) {
-                break;
-            }
-            classFileDir = classFileDir / name.substr(start, end - start);
-            if (!std::filesystem::exists(classFileDir)) {
-                NES_ASSERT(std::filesystem::create_directory(classFileDir), "Could not create Java UDF class directory: " << classFileDir);
-            }
-            start = end + 1;
-        }
-        auto classFileName = name.substr(start) + ".class";
-        auto classFilePath = classFileDir / classFileName;
-        NES_DEBUG("Storing Java UDF class file: class = {}, path = {}", name, classFilePath.c_str());
-        std::ofstream classFile{classFilePath, std::ofstream::binary};
-        classFile.write(bytecode.data(), bytecode.size());
-        classFile.close();
-    }
+    storeUdfJavaClasses();
+    decompileUdfJavaClasses();
+    // prepare request payload
+    nlohmann::json jsonFile;
+    jsonFile["deviceInfo"] = openCLDeviceInfo;
+    jsonFile["functionCode"] = javaUdfDescriptor->getMethodName();
+    cpr::Multipart{{"jsonFile", nlohmann::to_string(jsonFile)},
+                {"codeFile", readJavaUdfSource()}};
 
     return 0;
 #endif
@@ -118,7 +182,9 @@ const std::string ElegantAccelerationServiceClient::executeStateRequest(const un
     NES_DEBUG("Submitting request to ELEGANT acceleration service; url = {}", url.c_str());
     auto response = cpr::Get(url, timeout);
     if (response.status_code != 200) {
-        NES_DEBUG("ELEGANT acceleration service returned error response; status_code = {}, message = {}", response.status_code, response.text);
+        NES_DEBUG("ELEGANT acceleration service returned error response; status_code = {}, message = {}",
+                  response.status_code,
+                  response.text);
         throw new ElegantServiceException("Retrieving ELEGANT acceleration service request state failed");
     }
     return response.text;
@@ -129,7 +195,9 @@ const std::string ElegantAccelerationServiceClient::executeRetrieveRequest(const
     NES_DEBUG("Submitting request to ELEGANT acceleration service; url = {}", url.c_str());
     auto response = cpr::Get(url, timeout);
     if (response.status_code != 200) {
-        NES_DEBUG("ELEGANT acceleration service returned error response; status_code = {}, message = {}", response.status_code, response.text);
+        NES_DEBUG("ELEGANT acceleration service returned error response; status_code = {}, message = {}",
+                  response.status_code,
+                  response.text);
         throw new ElegantServiceException("Retrieving OpenCL kernel from ELEGANT acceleration service failed");
     }
     return response.text;
@@ -145,7 +213,7 @@ void ElegantAccelerationServiceClient::executeDeleteRequest([[maybe_unused]] uns
         throw new ElegantServiceException("Deleting request ELEGANT acceleration service failed");
     }
 #else
-// #error "Not implemented"
+    // #error "Not implemented"
 #endif
 }
 
@@ -158,7 +226,10 @@ void ElegantAccelerationServiceClient::waitForRequestCompletion(const unsigned r
     std::string state = executeStateRequest(requestId);
     while (state != completed && tries <= 7) {
         tries += 1;
-        NES_DEBUG("ELEGANT acceleration request is not completed, retrying; state = {}; tries = {}, delay = {}", state, tries, delay);
+        NES_DEBUG("ELEGANT acceleration request is not completed, retrying; state = {}; tries = {}, delay = {}",
+                  state,
+                  tries,
+                  delay);
         sleep(delay);
         state = executeStateRequest(requestId);
         delay *= 2;
@@ -169,4 +240,4 @@ void ElegantAccelerationServiceClient::waitForRequestCompletion(const unsigned r
     }
 }
 
-} // NES::ELEGANT
+}// NES::ELEGANT
