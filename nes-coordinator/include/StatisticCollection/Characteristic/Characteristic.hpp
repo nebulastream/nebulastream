@@ -30,5 +30,5 @@ class Characteristic {
     Metric type;
 };
 
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_HPP_

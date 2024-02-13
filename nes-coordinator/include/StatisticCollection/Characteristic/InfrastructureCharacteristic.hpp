@@ -14,8 +14,8 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_
-#include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Identifiers.hpp>
+#include <StatisticCollection/Characteristic/Characteristic.hpp>
 namespace NES::Statistic {
 
 /**
@@ -39,6 +39,6 @@ class InfrastructureStatistic : public Characteristic {
   private:
     WorkerId nodeId;
 };
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_

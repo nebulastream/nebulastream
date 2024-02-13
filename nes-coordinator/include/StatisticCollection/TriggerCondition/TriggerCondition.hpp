@@ -42,6 +42,6 @@ class NeverTrigger : public TriggerCondition {
   public:
     bool shallTrigger(const Statistic&) override { return false; }
 };
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_TRIGGERCONDITION_TRIGGERCONDITION_HPP_

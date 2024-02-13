@@ -48,6 +48,6 @@ class WorkloadCharacteristic : public Characteristic {
     QueryId queryId;
     OperatorId operatorId;
 };
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_WORKLOADCHARACTERISTIC_HPP_

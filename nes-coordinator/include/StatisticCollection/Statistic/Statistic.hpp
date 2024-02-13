@@ -30,6 +30,6 @@ class Statistic {
      */
     virtual StatisticValue<> getStatisticValue(const Characteristic& characteristic) const = 0;
 };
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_

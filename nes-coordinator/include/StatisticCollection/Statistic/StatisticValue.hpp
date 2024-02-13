@@ -47,5 +47,5 @@ class ProbeResult {
     std::vector<StatisticValue<StatType>> probeItems;
 };
 
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTICVALUE_HPP_

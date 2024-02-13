@@ -41,8 +41,9 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const Characteristic& charact
                                                    const Windowing::TimeMeasure& period,
                                                    const Windowing::TimeMeasure& granularity,
                                                    const bool& estimationAllowed) {
-    return probeStatistic(characteristic, period, granularity, estimationAllowed,
-                          [] (const ProbeResult<>& probeResult) { return probeResult; });
+    return probeStatistic(characteristic, period, granularity, estimationAllowed, [](const ProbeResult<>& probeResult) {
+        return probeResult;
+    });
 }
 
-} // namespace NES::Statistic
+}// namespace NES::Statistic

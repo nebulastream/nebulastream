@@ -54,5 +54,5 @@ class MinVal : public Metric {
     explicit MinVal(const std::string& fieldName) : fieldName(fieldName) {}
     const std::string fieldName;
 };
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICTYPE_STATISTICTYPE_HPP_
