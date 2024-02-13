@@ -16,7 +16,9 @@
 
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
+#ifdef UNIKERNEL_USE_KAFKA
 #include <Sinks/Mediums/KafkaSink.hpp>
+#endif
 extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 namespace {
 using namespace std::chrono_literals;
@@ -47,9 +49,11 @@ class UnikernelSinkImpl {
             // TODO: Figure out if we need the event channel
             // sink->preSetup();
             sink->setup();
+#ifdef UNIKERNEL_USE_KAFKA
         } else if constexpr (std::is_same_v<typename Config::SinkType, NES::KafkaSink<Config>>) {
             NES_INFO("Calling Setup for KafkaSink");
             UnikernelSinkImpl::sink.emplace(1, Config::Broker, Config::Topic, Config::QueryId, Config::QuerySubplanId);
+#endif
         } else {
             // Test Sink
             UnikernelSinkImpl::sink.emplace(1);

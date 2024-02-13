@@ -21,6 +21,9 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
+#include <UnikernelStage.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <proxy/common.hpp>
 

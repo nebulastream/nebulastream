@@ -18,6 +18,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <SchemaBuffer.hpp>
+#include <Sinks/Formats/CsvFormat.hpp>
 #ifdef USE_MMAP_CIRCBUFFER
 #include <Util/MMapCircularBuffer.hpp>
 #else
