@@ -189,15 +189,15 @@ const std::string ElegantAccelerationServiceClient::executeRetrieveRequest(const
 void ElegantAccelerationServiceClient::executeDeleteRequest([[maybe_unused]] unsigned requestId) const {
 #ifdef USE_DUMMY_OPENCL_KERNEL
     auto url = baseUrl + "/delete_prebuilt/" + std::to_string(requestId);
+#else
+    auto url = baseUrl + "/delete/" + std::to_string(requestId);
+#endif
     NES_DEBUG("Submitting request to ELEGANT acceleration service; url = {}", url.c_str());
     auto response = cpr::Delete(url, timeout);
     if (response.status_code != 200) {
         NES_DEBUG("ELEGANT acceleration service returned error response; status_code = {}, message = {}", response.status_code, response.text);
         throw new ElegantServiceException("Deleting request ELEGANT acceleration service failed");
     }
-#else
-    // #error "Not implemented"
-#endif
 }
 
 void ElegantAccelerationServiceClient::waitForRequestCompletion(const unsigned requestId) const {

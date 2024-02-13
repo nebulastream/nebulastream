@@ -47,7 +47,7 @@ private:
     cpr::Url baseUrl;
     cpr::Timeout timeout{3000};
     const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor;
-    const Runtime::OpenCLDeviceInfo& openCLDeviceInfo;
+    [[maybe_unused]] const Runtime::OpenCLDeviceInfo& openCLDeviceInfo;
     const std::filesystem::path tmpDir;
     const std::filesystem::path classesDir;
     const std::filesystem::path sourcesDir;
