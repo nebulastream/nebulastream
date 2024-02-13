@@ -3,6 +3,10 @@ function(unikernel_benchmark arg1)
     file(GLOB OPERATOR_SOURCES ${arg1}/operators/*.cpp)
     add_executable(${arg1} main.cpp ${OPERATOR_SOURCES})
 
+    if (UNIKERNEL_USE_LTO)
+        set_property(TARGET ${arg1} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif ()
+
     target_compile_options(${arg1} PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
     target_link_options(${arg1} PRIVATE ${UNIKERNEL_LINK_OPTIONS})
     target_link_libraries(${arg1} PRIVATE unikernel-lib)
