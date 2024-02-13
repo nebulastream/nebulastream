@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.43](https://github.com/nebulastream/nebulastream/tree/v0.6.43) (2024-02-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.42...v0.6.43)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement Interface for Statistic Framework [\#4585](https://github.com/nebulastream/nebulastream/issues/4585)
+- \[TASK\] Concurrent processing of add query requests [\#4383](https://github.com/nebulastream/nebulastream/issues/4383)
+
 ## [v0.6.42](https://github.com/nebulastream/nebulastream/tree/v0.6.42) (2024-02-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.41...v0.6.42)
