@@ -125,7 +125,21 @@ unsigned ElegantAccelerationServiceClient::executeSubmitRequest() const {
 #ifdef USE_DUMMY_OPENCL_KERNEL
     auto url = baseUrl + "/submit_prebuilt";
     NES_DEBUG("Submitting request to ELEGANT acceleration service; url = {}", url.c_str());
-    auto response = cpr::Post(url, cpr::Header{{"Content-Type", "application/json"}}, timeout);
+    cpr::Response response = cpr::Post(url, cpr::Header{{"Content-Type", "application/json"}}, timeout);
+#else
+    storeUdfJavaClasses();
+    decompileUdfJavaClasses();
+    auto javaUdfSources = readJavaUdfSource();
+    nlohmann::json jsonFile;
+    jsonFile["deviceInfo"] = openCLDeviceInfo;
+    jsonFile["functionCode"] = javaUdfDescriptor->getMethodName();
+    auto jsonFilePayload = nlohmann::to_string(jsonFile);
+    auto url = baseUrl + "/submit";
+    cpr::Multipart payload{{"jsonFile", jsonFilePayload},
+                           {"codeFile", javaUdfSources}};
+    NES_DEBUG("Submitting request to ELEGANT acceleration service; url = {}, jsonFile = {}, codeFile = {}", url.c_str(), nlohmann::to_string(jsonFile), javaUdfSources);
+    cpr::Response response = cpr::Post(url, cpr::Header{{"Content-Type", "multipart/form-data"}}, payload, timeout);
+#endif
     if (response.status_code != 202) {
         NES_DEBUG("ELEGANT acceleration service returned error response; status_code = {}, message = {}", response.status_code, response.text);
         throw new ElegantServiceException("Submission to ELEGANT acceleration service failed");
@@ -144,37 +158,6 @@ unsigned ElegantAccelerationServiceClient::executeSubmitRequest() const {
     auto parsedRequestId = response.text.substr(start_pos, end_pos - start_pos);
     NES_DEBUG("Parsed request ID: {}", parsedRequestId);
     return std::stoi(parsedRequestId);
-#else
-    // nlohmann::json payload;
-    // payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<Runtime::OpenCLDeviceInfo>>(
-    //     executionNode->getTopologyNode()->getNodeProperty(Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
-    // payload["functionCode"] = openCLOperator->getJavaUDFDescriptor()->getMethodName();
-    //
-    // // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
-    // jni::JavaByteCode javaByteCode = openCLOperator->getJavaUDFDescriptor()->getClassByteCode(openCLOperator->getJavaUDFDescriptor()->getClassName()).value();
-    //
-    // //5. Prepare the multi-part message
-    // cpr::Part part1 = {"jsonFile", to_string(payload)};
-    // cpr::Part part2 = {"codeFile", base64_encode(reinterpret_cast<unsigned char const*>(javaByteCode.data()), javaByteCode.size())};
-    // cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
-    //
-    // //6. Make Acceleration Service Call
-    // cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL + "/api/acceleration/submit"},
-    //                                    cpr::Header{{"Content-Type", "multipart/form-data"}},
-    //                                    multipartPayload,
-    //                                    cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
-
-    storeUdfJavaClasses();
-    decompileUdfJavaClasses();
-    // prepare request payload
-    nlohmann::json jsonFile;
-    jsonFile["deviceInfo"] = openCLDeviceInfo;
-    jsonFile["functionCode"] = javaUdfDescriptor->getMethodName();
-    cpr::Multipart{{"jsonFile", nlohmann::to_string(jsonFile)},
-                {"codeFile", readJavaUdfSource()}};
-
-    return 0;
-#endif
 }
 
 const std::string ElegantAccelerationServiceClient::executeStateRequest(const unsigned requestId) const {

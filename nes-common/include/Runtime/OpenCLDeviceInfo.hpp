@@ -66,7 +66,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OpenCLDeviceInfo,
                                    deviceAddressBits,
                                    deviceType,
                                    deviceExtensions,
-                                   availableProcessors);
+                                   availableProcessors,
+                                   globalMemory);
 
 }// namespace NES::Runtime
 
