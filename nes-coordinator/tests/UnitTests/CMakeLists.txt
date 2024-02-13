@@ -53,6 +53,9 @@ add_nes_integration_test(network-stack-test "Network/NetworkStackTest.cpp")
 ### Location Tests ###
 add_nes_unit_test(location-unit-tests "Spatial/DataTypes/LocationUnitTest.cpp")
 
+### Statistic Test ###
+add_nes_unit_test(statistic-unit-test "Statistic/StatisticTest.cpp")
+
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "Runtime/AsyncTaskExecutorTest.cpp")
 
