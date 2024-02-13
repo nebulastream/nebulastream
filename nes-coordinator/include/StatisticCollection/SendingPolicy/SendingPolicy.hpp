@@ -15,7 +15,6 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_SENDINGPOLICY_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_SENDINGPOLICY_HPP_
 
-
 namespace NES::Statistic {
 /**
  * @brief This class acts as an abstract class for all possible SendingPolicies
@@ -42,6 +41,6 @@ class SendingPolicyLazy : public SendingPolicy {};
  */
 class SendingPolicyAdaptive : public SendingPolicy {};
 
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_SENDINGPOLICY_HPP_

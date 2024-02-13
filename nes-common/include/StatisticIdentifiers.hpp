@@ -25,6 +25,6 @@ namespace NES::Statistic {
  */
 static const std::string INGESTION_RATE_FIELD_NAME = "INGESTION_RATE_FIELD_NAME";
 static const std::string BUFFER_RATE_FIELD_NAME = "BUFFER_RATE_FIELD_NAME";
-}
+}// namespace NES::Statistic
 
 #endif//NES_NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_

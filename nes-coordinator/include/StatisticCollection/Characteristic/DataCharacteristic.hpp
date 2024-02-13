@@ -31,7 +31,8 @@ class DataCharacteristic : public Characteristic {
      * @param logicalStreamName: Logical stream name to collect the statistics
      * @param physicalStreamNames: If set to {}, then all physical streams are being selected
      */
-    DataCharacteristic(Metric type, const std::string& logicalStreamName,
+    DataCharacteristic(Metric type,
+                       const std::string& logicalStreamName,
                        const std::initializer_list<std::string>& physicalStreamNames = {})
         : Characteristic(type), logicalStreamName(logicalStreamName), physicalStreamNames(physicalStreamNames) {}
 
@@ -51,6 +52,6 @@ class DataCharacteristic : public Characteristic {
     std::string logicalStreamName;
     std::vector<std::string> physicalStreamNames;
 };
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_DATACHARACTERISTIC_HPP_

@@ -17,8 +17,8 @@
 
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
-#include <StatisticCollection/Statistic/StatisticValue.hpp>
 #include <StatisticCollection/SendingPolicy/SendingPolicy.hpp>
+#include <StatisticCollection/Statistic/StatisticValue.hpp>
 #include <StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <functional>
 

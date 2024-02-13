@@ -56,9 +56,8 @@ class StatisticCoordinator : public StatisticInterface {
                                  const Windowing::TimeMeasure& period,
                                  const Windowing::TimeMeasure& granularity,
                                  const bool& estimationAllowed);
-
 };
 
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_

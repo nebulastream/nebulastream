@@ -17,16 +17,15 @@
 #include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
 #include <StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
+#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
-
 
 class StatisticTest : public Testing::BaseUnitTest {
   public:
@@ -36,9 +35,7 @@ class StatisticTest : public Testing::BaseUnitTest {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
-        NES::Testing::BaseUnitTest::SetUp();
-    }
+    void SetUp() override { NES::Testing::BaseUnitTest::SetUp(); }
 
     static void TearDownTestCase() {}
 
@@ -53,56 +50,51 @@ TEST_F(StatisticTest, simpleTest) {
     constexpr auto nodeId = 1;
 
     //----------------------- Tracking
-    statCoordinator.trackStatistic(DataCharacteristic(Selectivity(Attribute("f1") > 4), "car",
-                                                      {"car_1", "car_2", "car_3"}),
+    statCoordinator.trackStatistic(DataCharacteristic(Selectivity(Attribute("f1") > 4), "car", {"car_1", "car_2", "car_3"}),
                                    SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
     statCoordinator.trackStatistic(WorkloadCharacteristic(Selectivity(Attribute("f2") == 42), queryId, operatorId),
-                                       SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
-
+                                   SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
 
     statCoordinator.trackStatistic(WorkloadCharacteristic(Cardinality("f2"), queryId, operatorId),
-                                       TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
-                                       SENDING_ADAPTIVE);
+                                   TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
+                                   SENDING_ADAPTIVE);
 
     statCoordinator.trackStatistic(WorkloadCharacteristic(MinVal("f2"), queryId, operatorId),
-                                       TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
-                                       SENDING_LAZY);
+                                   TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
+                                   SENDING_LAZY);
 
     statCoordinator.trackStatistic(WorkloadCharacteristic(Cardinality("f2"), queryId, operatorId),
-                                       TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
-                                       SENDING_ASAP);
-
+                                   TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
+                                   SENDING_ASAP);
 
     statCoordinator.trackStatistic(InfrastructureStatistic(IngestionRate(), nodeId),
-                                       TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)));
-
-
+                                   TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)));
 
     //----------------------- Probing
     const bool estimationAllowed = true;
     const bool estimationNOTAllowed = false;
 
     auto probeResult = statCoordinator.probeStatistic(DataCharacteristic(Cardinality("f2"), "car", {"car_2"}),
-                                                          Hours(24),
-                                                          Seconds(2),
-                                                          estimationAllowed);
+                                                      Hours(24),
+                                                      Seconds(2),
+                                                      estimationAllowed);
 
-    auto anotherProbeResult = statCoordinator.probeStatistic(WorkloadCharacteristic(Selectivity(Attribute("f1") > 4),
-                                                                                        queryId, operatorId),
-                                                                 Hours(1),
-                                                                 Seconds(10),
-                                                                 estimationAllowed);
+    auto anotherProbeResult =
+        statCoordinator.probeStatistic(WorkloadCharacteristic(Selectivity(Attribute("f1") > 4), queryId, operatorId),
+                                       Hours(1),
+                                       Seconds(10),
+                                       estimationAllowed);
 
     auto yetAnotherProbeResult = statCoordinator.probeStatistic(InfrastructureStatistic(IngestionRate(), nodeId),
                                                                 Minutes(1),
                                                                 Milliseconds(10),
                                                                 estimationNOTAllowed,
-                                                                [] (const ProbeResult<>& probeResult) {
+                                                                [](const ProbeResult<>& probeResult) {
                                                                     return probeResult;
                                                                 });
-    ((void)probeResult);
-    ((void)anotherProbeResult);
-    ((void)yetAnotherProbeResult);
+    ((void) probeResult);
+    ((void) anotherProbeResult);
+    ((void) yetAnotherProbeResult);
 }
 
-} // namespace NES
+}// namespace NES
