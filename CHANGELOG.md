@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.47](https://github.com/nebulastream/nebulastream/tree/v0.6.47) (2024-02-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.46...v0.6.47)
+
+**Implemented enhancements:**
+
+- \[TASK\] Support for multiple buffers in the MemorySource  [\#4519](https://github.com/nebulastream/nebulastream/issues/4519)
+
 ## [v0.6.46](https://github.com/nebulastream/nebulastream/tree/v0.6.46) (2024-02-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.45...v0.6.46)
