@@ -172,7 +172,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto tmpBuffers =
+        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }

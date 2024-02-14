@@ -77,7 +77,9 @@ MemorySource::MemorySource(SchemaPtr schema,
     numberOfTuplesToProduce = memoryAreaSize / schemaSize;
 
     NES_DEBUG("MemorySource() numberOfTuplesToProduce= {}  memoryAreaSize= {} numberOfBuffersToProduce = {}",
-              numberOfTuplesToProduce, memoryAreaSize, numberOfBuffersToProduce);
+              numberOfTuplesToProduce,
+              memoryAreaSize,
+              numberOfBuffersToProduce);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
