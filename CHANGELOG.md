@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.46](https://github.com/nebulastream/nebulastream/tree/v0.6.46) (2024-02-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.45...v0.6.46)
+
+**Implemented enhancements:**
+
+- \[TASK\] Topology Disabled Tests [\#4533](https://github.com/nebulastream/nebulastream/issues/4533)
+
 ## [v0.6.45](https://github.com/nebulastream/nebulastream/tree/v0.6.45) (2024-02-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.44...v0.6.45)
