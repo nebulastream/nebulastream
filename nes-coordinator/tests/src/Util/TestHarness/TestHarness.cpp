@@ -238,7 +238,8 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
         memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
     }
 
-    memSrcNumBuffToProcess = std::ceil(static_cast<double>(memAreaSize) / workerConf->getWorkerConfiguration()->bufferSizeInBytes);
+    memSrcNumBuffToProcess =
+        std::ceil(static_cast<double>(memAreaSize) / workerConf->getWorkerConfiguration()->bufferSizeInBytes);
     NES_DEBUG("memSrcNumBuffToProcess = {} currentSourceNumOfRecords = {}", memSrcNumBuffToProcess, currentSourceNumOfRecords);
 
     auto memorySourceType = MemorySourceType::create(logicalSourceName,
