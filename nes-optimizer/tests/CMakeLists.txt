@@ -59,6 +59,6 @@ add_nes_unit_test(change-log-test "UnitTests/Plans/ChangeLog/ChangeLogTest.cpp")
 ### ChangeLogEntry Test ###
 add_nes_unit_test(change-log-entry-test "UnitTests/Plans/ChangeLog/ChangeLogEntryTest.cpp")
 
-if (NES_USE_TF)
+if (NES_BUILD_PLUGIN_TENSORFLOW)
     add_nes_unit_test(ml-heuristic-placement-test "UnitTests/Optimizer/QueryPlacement/MlHeuristicPlacementTest.cpp")
 endif ()

@@ -97,6 +97,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
     uint64_t currentPositionInBytes;
     uint64_t schemaSize;
     uint64_t bufferSize;
+    uint64_t noTuplesPerBuffer;
 };
 
 using MemorySourcePtr = std::shared_ptr<MemorySource>;

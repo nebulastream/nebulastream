@@ -244,8 +244,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 
 /// This test checks that a deployed MemorySource can write M records stored in N+1 buffers
 /// with the invariant that the N+1-th buffer is half full
-
-TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
+TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -278,14 +277,17 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     wrkConf->coordinatorPort = port;
     wrkConf->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
-    constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
-    constexpr auto memAreaSize = bufferSizeInNodeEngine * 64 + (bufferSizeInNodeEngine / 2);
-    constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
+    // We want to test here, if 1.5 buffers can be send.
+    const auto bufferSizeInNodeEngine = wrkConf->bufferSizeInBytes.getValue();
+    const auto memAreaSize = bufferSizeInNodeEngine + (bufferSizeInNodeEngine / 2);
+    const auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
     auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
     auto* records = reinterpret_cast<Record*>(memArea);
-    size_t recordSize = schema->getSchemaSizeInBytes();
-    size_t numRecords = memAreaSize / recordSize;
+    const auto recordSize = schema->getSchemaSizeInBytes();
+    const auto numRecords = memAreaSize / recordSize;
+    const auto bufferCapacity = bufferSizeInNodeEngine / recordSize;
+    NES_DEBUG("Creating {} records and a capacity of {} records...", numRecords, bufferCapacity);
     for (auto i = 0U; i < numRecords; ++i) {
         records[i].key = i;
         records[i].timestamp = i;
@@ -319,15 +321,11 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("MemorySourceIntegrationTest: Remove query");
-    //ASSERT_TRUE(requestHandlerService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(filePath.c_str());
     ASSERT_TRUE(ifs.good());
-
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    NES_INFO("MemorySourceIntegrationTest: content={}", content);
+    const std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
     ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
@@ -335,8 +333,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     std::size_t lineCnt = 0;
     while (std::getline(infile, line)) {
         if (lineCnt > 0) {
-            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
-            NES_DEBUG(" line={} expected={}", line, expectedString);
+            const auto expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
             ASSERT_EQ(line, expectedString);
         }
         lineCnt++;

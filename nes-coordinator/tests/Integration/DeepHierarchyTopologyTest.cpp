@@ -755,6 +755,4 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
-
-//TODO:add join once it is implemented correctly
 }// namespace NES

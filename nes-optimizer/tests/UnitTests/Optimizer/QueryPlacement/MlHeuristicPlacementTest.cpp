@@ -181,7 +181,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     NES_DEBUG("MlHeuristicPlacementTest: query plan \n{}", globalExecutionPlan->getAsString());
     NES_DEBUG("MlHeuristicPlacementTest: shared plan \n{}", sharedQueryPlan->getQueryPlan()->toString());
 
-    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
     ASSERT_EQ(executionNodes.size(), 13U);
 
     // Index represents the id of the execution node
@@ -212,9 +212,9 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
                                                      totalQuerySubPlansOnNode12,
                                                      totalQuerySubPlansOnNode13};
     for (const auto& executionNode : executionNodes) {
-        auto querySubPlans = executionNode->getAllDecomposedQueryPlans(queryId);
-        NES_INFO("Worker Id {} ", executionNode->getId());
-        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->getId() - 1]);
+        auto querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+        NES_INFO("Worker Id {} ", executionNode->operator*()->getId());
+        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->operator*()->getId() - 1]);
         auto querySubPlan = querySubPlans[0];
         std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
         EXPECT_EQ(actualRootOperators.size(), 1U);
