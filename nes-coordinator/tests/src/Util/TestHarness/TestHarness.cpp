@@ -238,9 +238,9 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
         memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
     }
 
-    NES_ASSERT2_FMT(bufferSize >= schema->getSchemaSizeInBytes() * currentSourceNumOfRecords,
-                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
-                        << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
+    memSrcNumBuffToProcess = std::ceil(static_cast<double>(memAreaSize) / workerConf->getWorkerConfiguration()->bufferSizeInBytes);
+    NES_DEBUG("memSrcNumBuffToProcess = {} currentSourceNumOfRecords = {}", memSrcNumBuffToProcess, currentSourceNumOfRecords);
+
     auto memorySourceType = MemorySourceType::create(logicalSourceName,
                                                      workerConf->getPhysicalSourceName(),
                                                      memArea,

@@ -39,7 +39,8 @@ MemorySourceType::MemorySourceType(const std::string& logicalSourceName, const s
       memoryAreaSize(memoryAreaSize), numberOfBufferToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
-MemorySourceTypePtr MemorySourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
+MemorySourceTypePtr MemorySourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName,
+                                             uint8_t* memoryArea,
                                              size_t memoryAreaSize,
                                              uint64_t numBuffersToProcess,
                                              uint64_t gatheringValue,

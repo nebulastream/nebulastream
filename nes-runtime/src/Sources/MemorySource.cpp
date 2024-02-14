@@ -69,32 +69,22 @@ MemorySource::MemorySource(SchemaPtr schema,
     this->sourceAffinity = sourceAffinity;
     schemaSize = this->schema->getSchemaSizeInBytes();
     bufferSize = localBufferManager->getBufferSize();
+    noTuplesPerBuffer = bufferSize / schemaSize;
 
     this->sourceAffinity = sourceAffinity;
     this->taskQueueId = taskQueueId;
 
-    //if the memory area is smaller than a buffer
-    if (memoryAreaSize <= bufferSize) {
-        numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schemaSize));
-    } else {
-        //if the memory area spans multiple buffers
-        auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schemaSize;
-        auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->schemaSize));
-        if (restTuples > numberOfTuplesPerBuffer) {
-            numberOfTuplesToProduce = numberOfTuplesPerBuffer;
-        } else {
-            numberOfTuplesToProduce = restTuples;
-        }
-    }
+    numberOfTuplesToProduce = memoryAreaSize / schemaSize;
 
-    NES_DEBUG("MemorySource() numBuffersToProcess= {}  memoryAreaSize= {}", numBuffersToProcess, memoryAreaSize);
+    NES_DEBUG("MemorySource() numberOfTuplesToProduce= {}  memoryAreaSize= {} numberOfBuffersToProduce = {}",
+              numberOfTuplesToProduce, memoryAreaSize, numberOfBuffersToProduce);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId={}", operatorId);
     if (memoryAreaSize > bufferSize) {
-        if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
+        if (currentPositionInBytes > memoryAreaSize) {
             if (numberOfBuffersToProduce != 0) {
                 NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
                 currentPositionInBytes = 0;
@@ -105,17 +95,13 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
     }
 
-    NES_ASSERT2_FMT(numberOfTuplesToProduce * schemaSize <= bufferSize, "value to write is larger than the buffer");
-
-    Runtime::TupleBuffer buffer = bufferManager->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
+    const auto bytesLeftInMemoryArea = memoryAreaSize - currentPositionInBytes;
+    const auto tupleCapacityOfMemoryArea = bytesLeftInMemoryArea / schemaSize;
+    const auto numTuplesToWrite = std::min(tupleCapacityOfMemoryArea, noTuplesPerBuffer);
     memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
-
-    if (memoryAreaSize > bufferSize) {
-        NES_TRACE("MemorySource::receiveData: add offset={} to currentpos={}", bufferSize, currentPositionInBytes);
-        currentPositionInBytes += bufferSize;
-    }
-
-    buffer.setNumberOfTuples(numberOfTuplesToProduce);
+    buffer.setNumberOfTuples(numTuplesToWrite);
+    currentPositionInBytes += bufferSize;
 
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;

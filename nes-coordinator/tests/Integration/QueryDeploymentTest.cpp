@@ -148,35 +148,31 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
         Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
-
+    auto workerConfig = WorkerConfiguration::create();
     auto query = Query::from("test");
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("test");
+                                  .attachWorkerWithMemorySourceToWorkerWithId("test", 1, workerConfig);
 
-    for (uint32_t i = 0; i < 10; ++i) {
-        testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-9
+    const auto noTuplesInBuffer = workerConfig->bufferSizeInBytes / defaultLogicalSchema->getSchemaSizeInBytes();
+    const auto tuplesForThreeBuffers = noTuplesInBuffer * 3;
+    for (uint32_t i = 0; i < tuplesForThreeBuffers; ++i) {
+        testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-(noTuplesInBuffer * 3)
     }
     testHarness.validate().setupTopology();
 
     // Expected output
-    const auto expectedOutput = "1, 0\n"
-                                "1, 1\n"
-                                "1, 2\n"
-                                "1, 3\n"
-                                "1, 4\n"
-                                "1, 5\n"
-                                "1, 6\n"
-                                "1, 7\n"
-                                "1, 8\n"
-                                "1, 9\n";
+    std::ostringstream expectedOutput;
+    for (auto rec = 0_u64; rec < tuplesForThreeBuffers; ++rec) {
+        expectedOutput << "1, " << rec << std::endl;
+    }
 
     // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput.str())).getOutput();
 
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
