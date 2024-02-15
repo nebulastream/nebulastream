@@ -59,14 +59,21 @@ class PagedVectorVarSized {
     std::string loadText(uint8_t *textPtr, uint32_t length);
 
     /**
-     * @brief Get the pages object
+     * @brief Getter for the pages object.
      * @return std::vector<Runtime::TupleBuffer>&
      */
     std::vector<Runtime::TupleBuffer>& getPages();
 
+    /**
+     * @brief Returns the number of pages.
+     * @return uint64_t
+     */
+    uint64_t getNumberOfPages();
+
   private:
     friend PagedVectorVarSizedRef;
     Runtime::BufferManagerPtr bufferManager;
+    // TODO do we really need the schema here?
     SchemaPtr schema;
     uint64_t entrySize;
     uint64_t pageSize;

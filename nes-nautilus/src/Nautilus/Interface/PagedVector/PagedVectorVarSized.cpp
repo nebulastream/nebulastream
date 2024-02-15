@@ -32,7 +32,7 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
     for (auto& field : schema->fields) {
         auto fieldType = field->getDataType();
         if (fieldType->isText()) {
-            auto varSizedDataPtrSize = sizeof(uint8_t*);
+            auto varSizedDataPtrSize = sizeof(int8_t*);
             auto varSizedDataSize = sizeof(uint32_t);
             entrySize += varSizedDataPtrSize + varSizedDataSize;
         } else {
@@ -84,5 +84,7 @@ std::string PagedVectorVarSized::loadText(uint8_t* textPtr, uint32_t length) {
 }
 
 std::vector<Runtime::TupleBuffer>& PagedVectorVarSized::getPages() { return pages; }
+
+uint64_t PagedVectorVarSized::getNumberOfPages() { return pages.size(); }
 
 } //NES::Nautilus::Interface
