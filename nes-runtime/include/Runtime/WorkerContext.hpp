@@ -26,6 +26,7 @@
 #include <memory>
 #include <optional>
 #include <queue>
+#include <optional>
 #include <unordered_map>
 
 namespace NES::Runtime {
