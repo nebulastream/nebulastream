@@ -24,6 +24,7 @@
 #include <folly/ThreadLocal.h>
 #include <memory>
 #include <queue>
+#include <optional>
 #include <unordered_map>
 
 namespace NES::Runtime {
