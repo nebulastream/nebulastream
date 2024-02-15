@@ -13,6 +13,7 @@
 */
 
 #include <BaseIntegrationTest.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -23,13 +24,11 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Services/QueryService.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/TestUtils.hpp>
-
 #include <Util/TestSink.hpp>
 #include <gtest/gtest.h>
 #include <thread>
+#include <Util/TestUtils.hpp>
 
 using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;
@@ -173,7 +172,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                                      this->nodeEngine->getQueryManager(),
                                                      this->nodeEngine->getBufferManager());
     EXPECT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
-    EXPECT_TRUE(this->nodeEngine->startQuery(queryId));
+    EXPECT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(queryId), ExecutableQueryPlanStatus::Running);
     sink->waitTillCompleted(numberOfBuffers * numberOfTuplesToProcess);
     auto theThing = sink->getResult();
