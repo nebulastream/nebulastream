@@ -833,7 +833,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
     ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
-    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1));
@@ -881,7 +881,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
     ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
-    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
@@ -1873,7 +1873,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
         R"(Query::from("input1").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
