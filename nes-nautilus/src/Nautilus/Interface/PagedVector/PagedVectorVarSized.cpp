@@ -71,6 +71,7 @@ void PagedVectorVarSized::storeText(const char* text, uint64_t length) {
         appendVarSizedDataPage();
     }
     std::memcpy(currVarSizedDataEntry, text, length);
+    currVarSizedDataEntry += length;
 }
 
 std::string PagedVectorVarSized::loadText(uint8_t* textPtr, uint32_t length) {

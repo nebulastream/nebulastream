@@ -31,7 +31,7 @@ class PagedVectorVarSized {
      * @param schema
      * @param pageSize
      */
-    PagedVectorVarSized(Runtime::BufferManagerPtr  bufferManager, SchemaPtr  schema, uint64_t pageSize = PAGE_SIZE);
+    PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
 
     /**
      * @brief Appends a new page to the pages vector

@@ -86,13 +86,15 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
         auto const fieldValue = record.read(fieldName);
 
         if (fieldType->type->isText()) {
-            // TODO check sizeof operator
-            pageEntry.as<MemRef>().store(getCurrentVarSizedDataEntry());
-            pageEntry = pageEntry + sizeof(MemRef);
-            pageEntry.as<MemRef>().store(fieldValue.as<Text>()->length());
-            pageEntry = pageEntry + sizeof(UInt32);
-
             Nautilus::FunctionCall("storeTextProxy", storeTextProxy, pagedVectorVarSizedRef, fieldValue.as<Text>()->getReference());
+
+            // TODO check sizeof operator
+            auto textLength = fieldValue.as<Text>()->length();
+            auto textPtr = (getCurrentVarSizedDataEntry() - textLength).as<MemRef>();
+            pageEntry.as<MemRef>().store(textPtr);
+            pageEntry = pageEntry + sizeof(MemRef);
+            pageEntry.as<MemRef>().store(textLength);
+            pageEntry = pageEntry + sizeof(UInt32);
         } else {
             pageEntry.as<MemRef>().store(fieldValue);
             pageEntry = pageEntry + fieldType->size();
