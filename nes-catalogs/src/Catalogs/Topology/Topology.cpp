@@ -940,4 +940,8 @@ std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::ve
     return predictions.begin()->second;
 }
 
+void Topology::removeNextPrediction() {
+    predictions.erase(predictions.begin());
+}
+
 }// namespace NES

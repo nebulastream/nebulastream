@@ -77,6 +77,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     //todo: make if else condition here checking if proactive deployment is in progress
     auto nextPrediction = topology->getNextPrediction();
     if (nextPrediction) {
+        topology->removeNextPrediction();
         auto [delta, impactedPlans] = nextPrediction.value();
         //todo: we currently assume perfect predicitons
         NES_ASSERT(delta.getAdded() == addedLinks, "Prediction does not match");
@@ -85,7 +86,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
         auto queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
         //todo: only execute partial deployment here
         for (auto sharedQueryPlan : impactedPlans) {
-            queryDeploymentPhase->execute(sharedQueryPlan, PROACTIVE_PHASE_1);
+            queryDeploymentPhase->execute(sharedQueryPlan, PROACTIVE_PHASE_2);
             globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
         }
     } else {
@@ -96,13 +97,13 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
         for (const auto& [addedUp, addedDown] : addedLinks) {
             topology->addTopologyNodeAsChild(addedDown, addedUp);
         }
+        if (!removedLinks.empty()) {
+            //identify operators to be replaced
+            auto [upstreamId, downstreamId] = removedLinks.front();
+            processRemoveTopologyLinkRequest(upstreamId, downstreamId);
+        }
     }
 
-    if (!removedLinks.empty()) {
-        //identify operators to be replaced
-        auto [upstreamId, downstreamId] = removedLinks.front();
-        processRemoveTopologyLinkRequest(upstreamId, downstreamId);
-    }
 
     if (!expectedRemovedLinks.empty()) {
         NES_ASSERT(!expectedAddedLinks.empty(), "We currently expect exactly one parent for moving devices");

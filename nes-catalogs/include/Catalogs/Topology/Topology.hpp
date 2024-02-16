@@ -355,6 +355,7 @@ class Topology {
      */
      std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> getNextPrediction();
 
+    void removeNextPrediction();
   private:
     explicit Topology();
 
