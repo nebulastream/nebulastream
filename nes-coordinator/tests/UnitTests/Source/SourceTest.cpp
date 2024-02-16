@@ -182,8 +182,8 @@ class MockDataSource : public DataSource {
                      gatheringMode,
                      "defaultPhysicalStreamName",
                      executableSuccessors){
-              // nop
-          };
+            // nop
+        };
 
     static auto create(const SchemaPtr& schema,
                        Runtime::BufferManagerPtr bufferManager,
@@ -477,16 +477,16 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, DataSinkPtr sink)
         : PipelineExecutionContext(
-              -1,// mock pipeline id
-              0, // mock query id
-              queryManager->getBufferManager(),
-              queryManager->getNumberOfWorkerThreads(),
-              [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
-                  sink->writeData(buffer, worker);
-              },
-              [sink](Runtime::TupleBuffer&) {
-              },
-              std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
+            -1,// mock pipeline id
+            0, // mock query id
+            queryManager->getBufferManager(),
+            queryManager->getNumberOfWorkerThreads(),
+            [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
+                sink->writeData(buffer, worker);
+            },
+            [sink](Runtime::TupleBuffer&) {
+            },
+            std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
 };
 
 class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineStage {
