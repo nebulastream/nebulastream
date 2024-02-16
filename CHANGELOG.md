@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.49](https://github.com/nebulastream/nebulastream/tree/v0.6.49) (2024-02-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.48...v0.6.49)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable `TCP_SOURCE` PhysicalSource [\#4459](https://github.com/nebulastream/nebulastream/issues/4459)
+
 ## [v0.6.48](https://github.com/nebulastream/nebulastream/tree/v0.6.48) (2024-02-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-java-sources...v0.6.48)
@@ -5790,15 +5798,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
-
-## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
 
 ## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+
+## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
 
 #### Complex Event Processing
 
