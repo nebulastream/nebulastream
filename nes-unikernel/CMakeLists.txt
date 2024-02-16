@@ -142,3 +142,19 @@ target_include_directories(compile-time-schema-test PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
 )
+
+find_package(benchmark REQUIRED)
+add_executable(csv-parsing-benchmark tests/csvParsing.cpp)
+target_link_libraries(csv-parsing-benchmark PRIVATE unikernel-lib benchmark::benchmark)
+target_compile_options(csv-parsing-benchmark PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
+target_link_options(csv-parsing-benchmark PRIVATE ${UNIKERNEL_LINK_OPTIONS})
+set_property(TARGET csv-parsing-benchmark PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
+target_include_directories(csv-parsing-benchmark PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
+)
