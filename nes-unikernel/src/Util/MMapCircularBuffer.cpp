@@ -14,6 +14,7 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/MMapCircularBuffer.hpp>
+#include <unistd.h>
 #include <sys/mman.h>
 
 MMapCircularBuffer::MMapCircularBuffer(size_t capacity) : capacity_(capacity) {
