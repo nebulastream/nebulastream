@@ -152,7 +152,7 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoi
             ReconnectPoint currentReconnectPoint(Spatial::DataTypes::Experimental::GeoLocation(), parentId, time);
             std::optional<ReconnectPoint> expectedReconnectPoint;
             if (upcomingReconnectPairOptional) {
-                auto [expectedParentId, expectedTime] = currentReconnectPairOptional.value();
+                auto [expectedParentId, expectedTime] = upcomingReconnectPairOptional.value();
                 expectedReconnectPoint = {Spatial::DataTypes::Experimental::GeoLocation(), expectedParentId, expectedTime};
             }
             //return ReconnectPoint(Spatial::DataTypes::Experimental::GeoLocation(), parentId, time);

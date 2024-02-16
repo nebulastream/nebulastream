@@ -1019,7 +1019,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
     coordinatorConfig->enableQueryReconfiguration.setValue(true);
-    coordinatorConfig->enableQueryProactiveDeployment.setValue(true);
+    coordinatorConfig->enableProactiveDeployment.setValue(true);
     auto crdWorkerDataPort = getAvailablePort();
     coordinatorConfig->worker.dataPort = *crdWorkerDataPort;
     coordinatorConfig->worker.connectSourceEventChannelsAsync.setValue(true);

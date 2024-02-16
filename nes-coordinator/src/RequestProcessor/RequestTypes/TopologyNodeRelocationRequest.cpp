@@ -77,7 +77,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     //todo: make if else condition here checking if proactive deployment is in progress
 
     std::optional<std::pair<::NES::Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> nextPrediction = std::nullopt;
-    if (coordinatorConfiguration->enableQueryProactiveDeployment.getValue()) {
+    if (coordinatorConfiguration->enableProactiveDeployment.getValue()) {
         nextPrediction = topology->getNextPrediction();
     }
     if (nextPrediction) {
@@ -111,7 +111,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     }
 
 
-    if (!expectedRemovedLinks.empty() && coordinatorConfiguration->enableQueryProactiveDeployment) {
+    if (!expectedRemovedLinks.empty() && coordinatorConfiguration->enableProactiveDeployment) {
         NES_ASSERT(!expectedAddedLinks.empty(), "We currently expect exactly one parent for moving devices");
         NES_ASSERT(expectedTime != 0, "Invalid expected timestamp");
         NES_ASSERT(expectedAddedLinks.size() == 1, "Too many expected added links, multiple parents not supported");
