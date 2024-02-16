@@ -26,16 +26,16 @@ namespace NES {
  */
 class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator {
   public:
-    explicit LogicalJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition,
+    explicit LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDescriptor,
                                      OperatorId id,
                                      OriginId originId = INVALID_ORIGIN_ID);
     ~LogicalJoinOperator() override = default;
 
     /**
-    * @brief get join definition.
+    * @brief get join Descriptor.
     * @return JoinDescriptor
     */
-    Join::LogicalJoinDefinitionPtr getJoinDefinition() const;
+    Join::LogicalJoinDescriptorPtr getJoinDescriptor() const;
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
@@ -76,7 +76,7 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
                                        const std::string& windowKeyFieldName);
 
   private:
-    const Join::LogicalJoinDefinitionPtr joinDefinition;
+    const Join::LogicalJoinDescriptorPtr joinDescriptor;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
     std::string windowKeyFieldName;

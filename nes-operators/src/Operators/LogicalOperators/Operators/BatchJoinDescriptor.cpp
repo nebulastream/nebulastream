@@ -32,7 +32,7 @@ BatchJoinDescriptor::BatchJoinDescriptor(FieldAccessExpressionNodePtr keyTypeBui
     NES_ASSERT(this->numberOfInputEdgesProbe > 0, "Invalid number of right edges");
 }
 
-LogicalBatchJoinDefinitionPtr BatchJoinDescriptor::create(const FieldAccessExpressionNodePtr& keyTypeBuild,
+LogicalBatchJoinDescriptorPtr BatchJoinDescriptor::create(const FieldAccessExpressionNodePtr& keyTypeBuild,
                                                                  const FieldAccessExpressionNodePtr& keyTypeProbe,
                                                                  uint64_t numberOfInputEdgesLeft,
                                                                  uint64_t numberOfInputEdgesRight) {
@@ -59,7 +59,7 @@ void BatchJoinDescriptor::updateInputSchemas(SchemaPtr buildSchema, SchemaPtr pr
     this->probeSchema = std::move(probeSchema);
 }
 
-void BatchJoinDescriptor::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
+void BatchJoinDescriptor::updateOutputDescriptor(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
 
 SchemaPtr BatchJoinDescriptor::getOutputSchema() const { return outputSchema; }
 void BatchJoinDescriptor::setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft) {

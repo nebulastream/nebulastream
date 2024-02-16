@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDEFINITION_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDEFINITION_HPP_
+#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
+#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
 
 #include <Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
@@ -23,7 +23,7 @@
 namespace NES::Join {
 
 /**
- * @brief Runtime definition of a join operator
+ * @brief Runtime Descriptor of a join operator
  * @experimental
  */
 class JoinDescriptor {
@@ -44,7 +44,7 @@ class JoinDescriptor {
      */
     enum class JoinType : uint8_t { INNER_JOIN, CARTESIAN_PRODUCT };
 
-    static LogicalJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
+    static LogicalJoinDescriptorPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
                                            const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                            const Windowing::WindowTypePtr& windowType,
                                            const Windowing::DistributionCharacteristicPtr& distributionType,
@@ -122,7 +122,7 @@ class JoinDescriptor {
      * @brief Update the output source type upon type inference
      * @param outputSchema the type of the output source
      */
-    void updateOutputDefinition(SchemaPtr outputSchema);
+    void updateOutputDescriptor(SchemaPtr outputSchema);
 
     /**
      * @brief Getter of the output source schema
@@ -166,6 +166,6 @@ class JoinDescriptor {
     OriginId originId;
 };
 
-using LogicalJoinDefinitionPtr = std::shared_ptr<JoinDescriptor>;
+using LogicalJoinDescriptorPtr = std::shared_ptr<JoinDescriptor>;
 }// namespace NES::Join
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDEFINITION_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_

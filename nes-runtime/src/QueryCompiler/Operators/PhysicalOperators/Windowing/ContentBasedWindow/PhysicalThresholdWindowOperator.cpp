@@ -22,17 +22,17 @@ namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalThresholdWindowOperator::PhysicalThresholdWindowOperator(OperatorId id,
                                                                  SchemaPtr inputSchema,
                                                                  SchemaPtr outputSchema,
-                                                                 Windowing::LogicalWindowDefinitionPtr windowDefinition)
+                                                                 Windowing::LogicalWindowDescriptorPtr windowDescriptor)
     : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-      windowDefinition(std::move(windowDefinition)) {}
+      windowDescriptor(std::move(windowDescriptor)) {}
 std::shared_ptr<PhysicalThresholdWindowOperator>
 PhysicalThresholdWindowOperator::create(SchemaPtr inputSchema,
                                         SchemaPtr outputSchema,
-                                        Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
+                                        Windowing::LogicalWindowDescriptorPtr windowDescriptor) {
+    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), inputSchema, outputSchema, windowDescriptor);
 }
 
-Windowing::LogicalWindowDefinitionPtr PhysicalThresholdWindowOperator::getWindowDefinition() { return windowDefinition; }
+Windowing::LogicalWindowDescriptorPtr PhysicalThresholdWindowOperator::getWindowDescriptor() { return windowDescriptor; }
 
 std::string PhysicalThresholdWindowOperator::toString() const {
     std::stringstream out;
@@ -42,6 +42,6 @@ std::string PhysicalThresholdWindowOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalThresholdWindowOperator::copy() { return create(inputSchema, outputSchema, windowDefinition); }
+OperatorNodePtr PhysicalThresholdWindowOperator::copy() { return create(inputSchema, outputSchema, windowDescriptor); }
 
 }//namespace NES::QueryCompilation::PhysicalOperators

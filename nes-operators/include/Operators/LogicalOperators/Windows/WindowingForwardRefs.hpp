@@ -66,7 +66,7 @@ using ExecutableSliceAggregationTriggerActionPtr =
     std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
 class LogicalWindowDescriptor;
-using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDescriptor>;
+using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 
 class WindowAggregationDescriptor;
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;

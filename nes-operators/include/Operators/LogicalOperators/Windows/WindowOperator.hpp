@@ -26,18 +26,18 @@ class WindowOperator;
 using WindowOperatorNodePtr = std::shared_ptr<WindowOperator>;
 
 /**
- * @brief Window operator, which defines the window definition.
+ * @brief Window operator, which defines the window Descriptor.
  */
 class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator {
   public:
-    WindowOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+    WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDescriptor,
                        OperatorId id,
                        OriginId originId = INVALID_ORIGIN_ID);
     /**
-    * @brief Gets the window definition of the window operator.
-    * @return LogicalWindowDefinitionPtr
+    * @brief Gets the window Descriptor of the window operator.
+    * @return LogicalWindowDescriptorPtr
     */
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() const;
+    Windowing::LogicalWindowDescriptorPtr getWindowDescriptor() const;
 
     /**
      * @brief Gets the output origin ids from this operator
@@ -46,13 +46,13 @@ class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOpe
     const std::vector<OriginId> getOutputOriginIds() const override;
 
     /**
-     * @brief Sets the new origin id also to the window definition
+     * @brief Sets the new origin id also to the window Descriptor
      * @param originId
      */
     void setOriginId(OriginId originId) override;
 
   protected:
-    const Windowing::LogicalWindowDefinitionPtr windowDefinition;
+    const Windowing::LogicalWindowDescriptorPtr windowDescriptor;
 };
 
 }// namespace NES

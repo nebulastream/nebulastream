@@ -51,7 +51,7 @@ using JoinLogicalOperatorNodePtr = std::shared_ptr<LogicalJoinOperator>;
 
 namespace Join {
 class JoinDescriptor;
-using LogicalJoinDefinitionPtr = std::shared_ptr<JoinDescriptor>;
+using LogicalJoinDescriptorPtr = std::shared_ptr<JoinDescriptor>;
 
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
@@ -61,7 +61,7 @@ using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 namespace Windowing {
 
 class LogicalWindowDescriptor;
-using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDescriptor>;
+using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 
 class WindowOperatorHandler;
 using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;

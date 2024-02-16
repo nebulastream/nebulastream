@@ -24,9 +24,9 @@
 
 namespace NES {
 
-LogicalJoinOperator::LogicalJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id, OriginId originId)
+LogicalJoinOperator::LogicalJoinOperator(Join::LogicalJoinDescriptorPtr joinDescriptor, OperatorId id, OriginId originId)
     : OperatorNode(id), LogicalBinaryOperator(id), OriginIdAssignmentOperator(id, originId),
-      joinDefinition(std::move(joinDefinition)) {}
+      joinDescriptor(std::move(joinDescriptor)) {}
 
 bool LogicalJoinOperator::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<LogicalJoinOperator>()->getId() == id;
@@ -38,7 +38,7 @@ std::string LogicalJoinOperator::toString() const {
     return ss.str();
 }
 
-Join::LogicalJoinDefinitionPtr LogicalJoinOperator::getJoinDefinition() const { return joinDefinition; }
+Join::LogicalJoinDescriptorPtr LogicalJoinOperator::getJoinDescriptor() const { return joinDescriptor; }
 
 bool LogicalJoinOperator::inferSchema() {
 
@@ -80,7 +80,7 @@ bool LogicalJoinOperator::inferSchema() {
     };
 
     //Find the schema for left join key
-    const auto leftJoinKey = joinDefinition->getLeftJoinKey();
+    const auto leftJoinKey = joinDescriptor->getLeftJoinKey();
     const auto leftJoinKeyName = leftJoinKey->getFieldName();
     const auto foundLeftKey = findSchemaInDinstinctSchemas(*leftJoinKey, leftInputSchema);
     NES_ASSERT_THROW_EXCEPTION(foundLeftKey,
@@ -88,7 +88,7 @@ bool LogicalJoinOperator::inferSchema() {
                                "LogicalJoinOperator: Unable to find left join key " + leftJoinKeyName + " in schemas.");
 
     //Find the schema for right join key
-    const auto rightJoinKey = joinDefinition->getRightJoinKey();
+    const auto rightJoinKey = joinDescriptor->getRightJoinKey();
     const auto rightJoinKeyName = rightJoinKey->getFieldName();
     const auto foundRightKey = findSchemaInDinstinctSchemas(*rightJoinKey, rightInputSchema);
     NES_ASSERT_THROW_EXCEPTION(foundRightKey,
@@ -119,8 +119,8 @@ bool LogicalJoinOperator::inferSchema() {
                                TypeInferenceException,
                                "LogicalJoinOperator: Found both left and right input schema to be same.");
 
-    //Infer stamp of window definition
-    const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+    //Infer stamp of window Descriptor
+    const auto windowType = joinDescriptor->getWindowType()->as<Windowing::TimeBasedWindowType>();
     windowType->inferStamp(leftInputSchema);
 
     //Reset output schema and add fields from left and right input schema
@@ -146,13 +146,13 @@ bool LogicalJoinOperator::inferSchema() {
     }
 
     NES_DEBUG("Outputschema for join={}", outputSchema->toString());
-    joinDefinition->updateOutputDefinition(outputSchema);
-    joinDefinition->updateSourceTypes(leftInputSchema, rightInputSchema);
+    joinDescriptor->updateOutputDescriptor(outputSchema);
+    joinDescriptor->updateSourceTypes(leftInputSchema, rightInputSchema);
     return true;
 }
 
 OperatorNodePtr LogicalJoinOperator::copy() {
-    auto copy = LogicalOperatorFactory::createJoinOperator(joinDefinition, id)->as<LogicalJoinOperator>();
+    auto copy = LogicalOperatorFactory::createJoinOperator(joinDescriptor, id)->as<LogicalJoinOperator>();
     copy->setLeftInputOriginIds(leftInputOriginIds);
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
@@ -170,12 +170,12 @@ OperatorNodePtr LogicalJoinOperator::copy() {
 bool LogicalJoinOperator::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<LogicalJoinOperator>()) {
         auto rhsJoin = rhs->as<LogicalJoinOperator>();
-        return joinDefinition->getWindowType()->equal(rhsJoin->joinDefinition->getWindowType())
-            && joinDefinition->getLeftJoinKey()->equal(rhsJoin->joinDefinition->getLeftJoinKey())
-            && joinDefinition->getRightJoinKey()->equal(rhsJoin->joinDefinition->getRightJoinKey())
-            && joinDefinition->getOutputSchema()->equals(rhsJoin->joinDefinition->getOutputSchema())
-            && joinDefinition->getRightSourceType()->equals(rhsJoin->joinDefinition->getRightSourceType())
-            && joinDefinition->getLeftSourceType()->equals(rhsJoin->joinDefinition->getLeftSourceType());
+        return joinDescriptor->getWindowType()->equal(rhsJoin->joinDescriptor->getWindowType())
+            && joinDescriptor->getLeftJoinKey()->equal(rhsJoin->joinDescriptor->getLeftJoinKey())
+            && joinDescriptor->getRightJoinKey()->equal(rhsJoin->joinDescriptor->getRightJoinKey())
+            && joinDescriptor->getOutputSchema()->equals(rhsJoin->joinDescriptor->getOutputSchema())
+            && joinDescriptor->getRightSourceType()->equals(rhsJoin->joinDescriptor->getRightSourceType())
+            && joinDescriptor->getLeftSourceType()->equals(rhsJoin->joinDescriptor->getLeftSourceType());
     }
     return false;
 }
@@ -190,9 +190,9 @@ void LogicalJoinOperator::inferStringSignature() {
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    signatureStream << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
-    signatureStream << "RIGHT-KEY=" << joinDefinition->getRightJoinKey()->toString() << ",";
-    signatureStream << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
+    signatureStream << "JOIN(LEFT-KEY=" << joinDescriptor->getLeftJoinKey()->toString() << ",";
+    signatureStream << "RIGHT-KEY=" << joinDescriptor->getRightJoinKey()->toString() << ",";
+    signatureStream << "WINDOW-Descriptor=" << joinDescriptor->getWindowType()->toString() << ",";
 
     auto rightChildSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
     auto leftChildSignature = children[1]->as<LogicalOperator>()->getHashBasedSignature();
@@ -210,7 +210,7 @@ const std::vector<OriginId> LogicalJoinOperator::getOutputOriginIds() const {
 
 void LogicalJoinOperator::setOriginId(OriginId originId) {
     OriginIdAssignmentOperator::setOriginId(originId);
-    joinDefinition->setOriginId(originId);
+    joinDescriptor->setOriginId(originId);
 }
 
 const std::string& LogicalJoinOperator::getWindowStartFieldName() const { return windowStartFieldName; }

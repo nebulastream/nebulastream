@@ -27,8 +27,8 @@ using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
 // We use a vector for JavaUDFByteCodeList because we need to insert the classes into the JVM in a well-defined order
 // that is provided by the Java client.
-using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
-using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
+using JavaClassDescriptor = std::pair<std::string, JavaByteCode>;
+using JavaUDFByteCodeList = std::vector<JavaClassDescriptor>;
 }// namespace NES::jni
 
 namespace NES::Catalogs::UDF {

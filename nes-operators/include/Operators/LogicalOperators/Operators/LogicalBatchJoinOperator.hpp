@@ -26,14 +26,14 @@ namespace NES::Experimental {
  */
 class LogicalBatchJoinOperator : public LogicalBinaryOperator {
   public:
-    explicit LogicalBatchJoinOperator(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition, OperatorId id);
+    explicit LogicalBatchJoinOperator(Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDescriptor, OperatorId id);
     ~LogicalBatchJoinOperator() override = default;
 
     /**
-    * @brief get join definition.
+    * @brief get join Descriptor.
     * @return JoinDescriptor
     */
-    Join::Experimental::LogicalBatchJoinDefinitionPtr getBatchJoinDefinition() const;
+    Join::Experimental::LogicalBatchJoinDescriptorPtr getBatchJoinDescriptor() const;
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
@@ -44,7 +44,7 @@ class LogicalBatchJoinOperator : public LogicalBinaryOperator {
     void inferStringSignature() override;
 
   private:
-    Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition;
+    Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDescriptor;
 };
 }// namespace NES::Experimental
 #endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_

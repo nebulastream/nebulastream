@@ -25,8 +25,8 @@ namespace NES::jni {
 
 using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
-using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
-using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
+using JavaClassDescriptor = std::pair<std::string, JavaByteCode>;
+using JavaUDFByteCodeList = std::vector<JavaClassDescriptor>;
 
 /**
  * @brief Checks for a pending exception in the JNI environment and throws a runtime error if one is found.

@@ -36,19 +36,19 @@ class PhysicalThresholdWindowOperator : public PhysicalUnaryOperator {
     PhysicalThresholdWindowOperator(OperatorId id,
                                     SchemaPtr inputSchema,
                                     SchemaPtr outputSchema,
-                                    Windowing::LogicalWindowDefinitionPtr windowDefinition);
+                                    Windowing::LogicalWindowDescriptorPtr windowDescriptor);
 
     static std::shared_ptr<PhysicalThresholdWindowOperator>
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDescriptor);
 
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
+    Windowing::LogicalWindowDescriptorPtr getWindowDescriptor();
 
     std::string toString() const override;
 
     OperatorNodePtr copy() override;
 
   private:
-    Windowing::LogicalWindowDefinitionPtr windowDefinition;
+    Windowing::LogicalWindowDescriptorPtr windowDescriptor;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

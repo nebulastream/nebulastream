@@ -21,13 +21,13 @@
 namespace NES::Join::Experimental {
 
 /**
- * @brief Runtime definition of a join operator
+ * @brief Runtime Descriptor of a join operator
  * @experimental
  */
 class BatchJoinDescriptor {// todo jm its dumb that this is in the windowing dir
 
   public:
-    static LogicalBatchJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& keyTypeBuild,
+    static LogicalBatchJoinDescriptorPtr create(const FieldAccessExpressionNodePtr& keyTypeBuild,
                                                 const FieldAccessExpressionNodePtr& keyTypeProbe,
                                                 uint64_t numberOfInputEdgesLeft,
                                                 uint64_t numberOfInputEdgesRight);
@@ -81,7 +81,7 @@ class BatchJoinDescriptor {// todo jm its dumb that this is in the windowing dir
      * @brief Update the output stream type upon type inference
      * @param outputSchema the type of the output stream
      */
-    void updateOutputDefinition(SchemaPtr outputSchema);
+    void updateOutputDescriptor(SchemaPtr outputSchema);
 
     /**
      * @brief Getter of the output stream schema
@@ -102,6 +102,6 @@ class BatchJoinDescriptor {// todo jm its dumb that this is in the windowing dir
     uint64_t numberOfInputEdgesProbe;
 };
 
-using LogicalBatchJoinDefinitionPtr = std::shared_ptr<BatchJoinDescriptor>;
+using LogicalBatchJoinDescriptorPtr = std::shared_ptr<BatchJoinDescriptor>;
 }// namespace NES::Join::Experimental
 #endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDEFINITION_HPP_
