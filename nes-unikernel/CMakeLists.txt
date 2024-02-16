@@ -60,7 +60,8 @@ add_subdirectory(src)
 get_source(unikernel-lib NES_UNIKERNEL_LIB_SOURCE_FILES)
 add_library(unikernel-lib STATIC ${NES_UNIKERNEL_LIB_SOURCE_FILES})
 if (UNIKERNEL_USE_LTO)
-    SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-flto")
+    MESSAGE("-- Using LTO")
+    SET_PROPERTY(TARGET unikernel-lib PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
 endif ()
 
 target_include_directories(unikernel-lib PRIVATE
@@ -109,7 +110,7 @@ foreach (PIPELINE_FILE ${PIPELINE_FILES})
     add_executable(unikernel${PIPELINE_NUMBER} src/main.cpp ${OPERATOR_SOURCES})
 
     if (UNIKERNEL_USE_LTO)
-        SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-flto")
+        SET_PROPERTY(TARGET unikernel-lib PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
     endif ()
 
     set_target_properties(unikernel${PIPELINE_NUMBER} PROPERTIES OUTPUT_NAME "unikernel${PIPELINE_NUMBER}")
