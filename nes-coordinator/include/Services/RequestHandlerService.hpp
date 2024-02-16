@@ -27,6 +27,7 @@ using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES {
+using Timestamp = uint64_t;
 namespace Optimizer {
 class SyntacticQueryValidation;
 using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
