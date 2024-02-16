@@ -17,6 +17,7 @@
 
 #include <Identifiers.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <any>
 #include <folly/Synchronized.h>
 #include <map>
@@ -28,6 +29,11 @@
 #include <vector>
 
 namespace NES {
+using Timestamp = uint64_t;
+class TopologyLinkInformation;
+namespace Experimental::TopologyPrediction {
+class TopologyDelta;
+}
 
 namespace Spatial {
 
@@ -333,6 +339,12 @@ class Topology {
                                 std::set<WorkerId>& reachableDownstreamNodes,
                                 std::vector<WorkerId> targetNodes);
 
+    /**
+     * @brief insert a predicted change into the list of predictions
+     */
+    void insertPrediction(const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
+                          const std::vector<TopologyLinkInformation>& expectedAddedLinks, Timestamp expectedTime);
+
   private:
     explicit Topology();
 
@@ -384,6 +396,7 @@ class Topology {
     WorkerId rootWorkerId;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
+    std::map<Timestamp, Experimental::TopologyPrediction::TopologyDelta> predictions;
     static constexpr int BASE_MULTIPLIER = 10000;
 };
 }// namespace NES

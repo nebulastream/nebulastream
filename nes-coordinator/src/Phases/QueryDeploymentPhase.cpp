@@ -53,7 +53,7 @@ QueryDeploymentPhase::create(const Optimizer::GlobalExecutionPlanPtr& globalExec
                                                                        coordinatorConfiguration->elegant.accelerationServiceURL));
 }
 
-void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
+void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan, DeploymentType deploymentType) {
     NES_INFO("QueryDeploymentPhase: deploy the query");
 
     auto sharedQueryId = sharedQueryPlan->getId();
@@ -84,6 +84,22 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         const auto subQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getDecomposedQueryPlanId();
+
+            switch (deploymentType) {
+                case REACTIVE: break;
+                case PROACTIVE_PHASE_1: {
+                    switch (subQueryPlan->getState()) {
+                        case QueryState::MARKED_FOR_REDEPLOYMENT: continue;
+                        case QueryState::MARKED_FOR_MIGRATION: continue;
+                        default: break;
+                    }
+                }
+                case PROACTIVE_PHASE_2: {
+                    //we do not neet to do any special handling here as all the operators we deployed before are already marked as
+                    //migrating and will therefore be ignored
+                }
+            }
+
             NES_INFO("Updating state of decomposed query plan {} with old state {}", subQueryPlan->getDecomposedQueryPlanId(), magic_enum::enum_name(subQueryPlan->getState()))
             switch (subQueryPlan->getState()) {
                 case QueryState::MARKED_FOR_DEPLOYMENT: subQueryPlan->setState(QueryState::DEPLOYED); break;

@@ -220,9 +220,15 @@ void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
 }
 
 bool RequestHandlerService::validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                                                  const std::vector<TopologyLinkInformation>& addedLinks) {
+                                                                  const std::vector<TopologyLinkInformation>& addedLinks,
+                                                                  const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
+                                                                  const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                                                                  Timestamp expectedTime) {
     auto changeRequest = RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks,
                                                                                                addedLinks,
+                                                                                               expectedRemovedLinks,
+                                                                                               expectedAddedLinks,
+                                                                                               expectedTime,
                                                                                                RequestProcessor::DEFAULT_RETRIES);
     auto future = changeRequest->getFuture();
     asyncRequestExecutor->runAsync(changeRequest);

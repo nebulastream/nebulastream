@@ -53,6 +53,12 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
+enum DeploymentType {
+    REACTIVE,
+    PROACTIVE_PHASE_1,
+    PROACTIVE_PHASE_2
+};
+
 /**
  * @brief The query deployment phase is responsible for deploying the query plan for a query to respective worker nodes.
  */
@@ -74,7 +80,7 @@ class QueryDeploymentPhase {
      * @param queryId : the query Id of the query to be deployed and started
      * @throws ExecutionNodeNotFoundException: Unable to find ExecutionNodes where the query {sharedQueryId} is deployed
      */
-    void execute(const SharedQueryPlanPtr& sharedQueryPlan);
+    void execute(const SharedQueryPlanPtr& sharedQueryPlan, DeploymentType deploymentType = REACTIVE);
 
   private:
     explicit QueryDeploymentPhase(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,

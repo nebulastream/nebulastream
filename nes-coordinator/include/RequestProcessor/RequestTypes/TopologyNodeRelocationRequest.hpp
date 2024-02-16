@@ -17,7 +17,9 @@
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 
+
 namespace NES {
+using Timestamp = uint64_t;
 
 namespace Optimizer {
 class GlobalExecutionPlan;
@@ -49,6 +51,9 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      */
     TopologyNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
                                   const std::vector<TopologyLinkInformation>& addedLinks,
+                                  const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
+                                  const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                                  Timestamp expectedTime,
                                   uint8_t maxRetries);
 
     /**
@@ -60,6 +65,9 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      */
     static TopologyNodeRelocationRequestPtr create(const std::vector<TopologyLinkInformation>& removedLinks,
                                                    const std::vector<TopologyLinkInformation>& addedLinks,
+                                                   const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
+                                                   const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                                                   Timestamp expectedTime,
                                                    uint8_t maxRetries);
 
     /**
@@ -116,16 +124,25 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      */
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 
+    void markOperatorsForProactivePlacement(
+        SharedQueryId sharedQueryPlanId,
+        const Optimizer::ExecutionNodePtr& upstreamExecutionNode,
+        const Optimizer::ExecutionNodePtr& downstreamExecutionNode);
+
   private:
     TopologyPtr topology;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     std::vector<TopologyLinkInformation> removedLinks;
     std::vector<TopologyLinkInformation> addedLinks;
+    std::vector<TopologyLinkInformation> expectedRemovedLinks;
+    std::vector<TopologyLinkInformation> expectedAddedLinks;
+    Timestamp expectedTime;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     QueryCatalogServicePtr queryCatalogService;
+    void proactiveDeployment(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

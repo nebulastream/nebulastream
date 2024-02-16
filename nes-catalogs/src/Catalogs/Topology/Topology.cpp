@@ -921,4 +921,15 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
     return nodeInfo;
 }
 
+void Topology::insertPrediction(const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
+                                const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                                Timestamp expectedTime) {
+    (void) expectedRemovedLinks;
+    (void) expectedAddedLinks;
+    if (predictions.contains(expectedTime)) {
+        //todo: merge delta
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
 }// namespace NES

@@ -149,7 +149,10 @@ class RequestHandlerService {
      * @return true on success
      */
     bool validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                               const std::vector<TopologyLinkInformation>& addedLinks);
+                                               const std::vector<TopologyLinkInformation>& addedLinks,
+                                               const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
+                                               const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                                               Timestamp expectedTime);
 
   private:
     /**

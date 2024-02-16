@@ -483,7 +483,18 @@ CoordinatorRPCServer::RelocateTopologyNode(ServerContext*, const NodeRelocationR
     for (const auto& addedTopologyLink : request->addedlinks()) {
         addedLinks.push_back(TopologyLinkInformation(addedTopologyLink.upstream(), addedTopologyLink.downstream()));
     }
-    auto success = requestHandlerService->validateAndQueueNodeRelocationRequest(removedLinks, addedLinks);
+    std::vector<TopologyLinkInformation> expectedRemovedLinks;
+    expectedRemovedLinks.reserve(request->expectedremovedlinks_size());
+    for (const auto& removedTopologyLink : request->expectedremovedlinks()) {
+        expectedRemovedLinks.push_back(TopologyLinkInformation(removedTopologyLink.upstream(), removedTopologyLink.downstream()));
+    }
+    std::vector<TopologyLinkInformation> expectedAddedLinks;
+    expectedAddedLinks.reserve((request->expectedaddedlinks_size()));
+    for (const auto& addedTopologyLink : request->expectedaddedlinks()) {
+        expectedAddedLinks.push_back(TopologyLinkInformation(addedTopologyLink.upstream(), addedTopologyLink.downstream()));
+    }
+    auto expectedTime = request->expectedaddedtime();
+    auto success = requestHandlerService->validateAndQueueNodeRelocationRequest(removedLinks, addedLinks, expectedRemovedLinks, expectedAddedLinks, expectedTime);
     reply->set_success(success);
     if (success) {
         return Status::OK;

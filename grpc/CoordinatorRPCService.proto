@@ -295,6 +295,9 @@ message GetParentsReply {
 message NodeRelocationRequest {
   repeated TopologyLink removedLinks = 1;
   repeated TopologyLink addedLinks = 2;
+  repeated TopologyLink expectedRemovedLinks = 3;
+  repeated TopologyLink expectedAddedLinks = 4;
+  uint64 expectedAddedTime = 5;
 }
 
 message NodeRelocationReply {
