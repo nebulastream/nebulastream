@@ -14,10 +14,10 @@
 #ifndef NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 #define NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 
+#include <Identifiers.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <Identifiers.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -100,7 +100,10 @@ class WorkerMobilityHandler {
      *  which contains each workers location.
      * @return true if the reconnect was successful
      */
-    bool triggerReconnectionRoutine(uint64_t& currentParentId, uint64_t newParentId);
+    bool triggerReconnectionRoutine(uint64_t& currentParentId,
+                                    uint64_t newParentId,
+                                    std::optional<uint64_t> predictedNextParent,
+                                    std::optional<Timestamp> predictedNextReconnectTime);
 
   private:
     /**

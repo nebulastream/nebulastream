@@ -426,7 +426,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         std::vector<TopologyLinkInformation> addedLinks = {{wrk1->getWorkerId(), wrk3->getWorkerId()}};
         std::string coordinatorAddress = coordinatorConfig->coordinatorIp.getValue() + ":" + std::to_string(*rpcCoordinatorPort);
         auto coordinatorRPCClient = CoordinatorRPCClient(coordinatorAddress);
-        coordinatorRPCClient.relocateTopologyNode(removedLinks, addedLinks);
+        //todo: adjust here for prediction tests
+        coordinatorRPCClient.relocateTopologyNode(removedLinks, addedLinks, {}, {}, 0);
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
         waitForFinalCount = false;
@@ -785,7 +786,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
         // auto coordinatorRPCClient = CoordinatorRPCClient(coordinatorAddress);
         // coordinatorRPCClient.relocateTopologyNode(removedLinks, addedLinks);
         auto currentParent = oldWorker->getWorkerId();
-        wrk1->getMobilityHandler()->triggerReconnectionRoutine(currentParent, wrk3->getWorkerId());
+        //todo: adjust here for predicted test
+        wrk1->getMobilityHandler()->triggerReconnectionRoutine(currentParent, wrk3->getWorkerId(), std::nullopt, std::nullopt);
         ASSERT_EQ(currentParent, wrk3->getWorkerId());
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer

@@ -239,7 +239,10 @@ class CoordinatorRPCClient {
      * @return true on success
      */
     bool relocateTopologyNode(std::vector<TopologyLinkInformation> removedTopologyLinks,
-                              std::vector<TopologyLinkInformation> addedTopologyLinks);
+                              std::vector<TopologyLinkInformation> addedTopologyLinks,
+                              std::vector<TopologyLinkInformation> expectedRemovedTopologyLinks,
+                              std::vector<TopologyLinkInformation> expectedAddedTopologyLinks,
+                              Timestamp expectedTime);
 
   private:
     uint64_t workerId;

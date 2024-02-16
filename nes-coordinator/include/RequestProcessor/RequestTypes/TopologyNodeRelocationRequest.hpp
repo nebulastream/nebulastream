@@ -20,6 +20,8 @@
 
 namespace NES {
 using Timestamp = uint64_t;
+class SharedQueryPlan;
+using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
 namespace Optimizer {
 class GlobalExecutionPlan;

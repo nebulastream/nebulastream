@@ -234,12 +234,22 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(
 #endif
 
 bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconnectionRoutine(uint64_t& currentParentId,
-                                                                                             uint64_t newParentId) {
+                                                                                             uint64_t newParentId,
+                                                                                             std::optional<uint64_t> predictedNextParent,
+                                                                                             std::optional<Timestamp> predictedNextReconnectTime) {
     auto workerId = nodeEngine->getNodeId();
     TopologyLinkInformation removedLink(workerId, currentParentId);
     TopologyLinkInformation addedLink(workerId, newParentId);
     nodeEngine->bufferOutgoingTuples(currentParentId);
-    bool success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink});
+    bool success = false;
+    if (predictedNextParent) {
+        NES_ASSERT(predictedNextReconnectTime.has_value(), "predicted reconnect provided but no time provided");
+        TopologyLinkInformation expectedRemovedLink(workerId, newParentId);
+        TopologyLinkInformation expectedAddedLink(workerId, predictedNextParent.value());
+        success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink}, {expectedRemovedLink}, {expectedAddedLink}, predictedNextReconnectTime.value());
+    } else {
+        success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink}, {}, {}, 0);
+    }
     if (success) {
         //update locally saved information about parent
         currentParentId = newParentId;
@@ -378,7 +388,8 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
 
         //perform reconnect if needed
         if (nextReconnectPoint.has_value()) {
-            triggerReconnectionRoutine(currentParentId, nextReconnectPoint.value().newParentId);
+            //todo: pass prediction here
+            triggerReconnectionRoutine(currentParentId, nextReconnectPoint.value().newParentId, std::nullopt, std::nullopt);
             currentParentLocation = getNodeGeoLocation(currentParentId, neighbourWorkerIdToLocationMap);
         }
 

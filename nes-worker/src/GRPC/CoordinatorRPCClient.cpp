@@ -572,7 +572,9 @@ bool CoordinatorRPCClient::notifySourceStopTriggered(QueryId queryId,
                                                      OperatorId sourceId,
                                                      Runtime::QueryTerminationType queryTermination) {
     //todo #4506: once there is a dedicated call for drain messages, only accept graceful here
-    NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful || queryTermination == Runtime::QueryTerminationType::Drain, "Wrong termination requested");
+    NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful
+                        || queryTermination == Runtime::QueryTerminationType::Drain,
+                    "Wrong termination requested");
 
     //Build request
     SoftStopTriggeredMessage softStopTriggeredMessage;
@@ -672,22 +674,36 @@ std::vector<WorkerId> CoordinatorRPCClient::getParents(WorkerId workerId) {
 }
 
 bool CoordinatorRPCClient::relocateTopologyNode(std::vector<TopologyLinkInformation> removedTopologyLinks,
-                                                std::vector<TopologyLinkInformation> addedTopologyLinks) {
-    ClientContext context;
-    NodeRelocationRequest request;
-    NodeRelocationReply reply;
+                                                std::vector<TopologyLinkInformation> addedTopologyLinks,
+                                                std::vector<TopologyLinkInformation> expectedRemovedTopologyLinks,
+                                                std::vector<TopologyLinkInformation> expectedAddedTopologyLinks,
+                                                Timestamp expectedTime) {
+ClientContext context;
+NodeRelocationRequest request;
+NodeRelocationReply reply;
 
-    for (const auto& removedLink : removedTopologyLinks) {
-        auto removed = request.add_removedlinks();
-        removed->set_upstream(removedLink.upstreamTopologyNode);
-        removed->set_downstream(removedLink.downstreamTopologyNode);
-    }
-    for (const auto& addedLink : addedTopologyLinks) {
-        auto added = request.add_addedlinks();
-        added->set_upstream(addedLink.upstreamTopologyNode);
-        added->set_downstream(addedLink.downstreamTopologyNode);
-    }
-    coordinatorStub->RelocateTopologyNode(&context, request, &reply);
-    return reply.success();
+for (const auto& removedLink : removedTopologyLinks) {
+    auto removed = request.add_removedlinks();
+    removed->set_upstream(removedLink.upstreamTopologyNode);
+    removed->set_downstream(removedLink.downstreamTopologyNode);
+}
+for (const auto& addedLink : addedTopologyLinks) {
+    auto added = request.add_addedlinks();
+    added->set_upstream(addedLink.upstreamTopologyNode);
+    added->set_downstream(addedLink.downstreamTopologyNode);
+}
+for (const auto& removedLink : expectedRemovedTopologyLinks) {
+    auto removed = request.add_expectedremovedlinks();
+    removed->set_upstream(removedLink.upstreamTopologyNode);
+    removed->set_downstream(removedLink.downstreamTopologyNode);
+}
+for (const auto& addedLink : expectedAddedTopologyLinks) {
+    auto added = request.add_expectedaddedlinks();
+    added->set_upstream(addedLink.upstreamTopologyNode);
+    added->set_downstream(addedLink.downstreamTopologyNode);
+}
+request.set_expectedaddedtime(expectedTime);
+coordinatorStub->RelocateTopologyNode(&context, request, &reply);
+return reply.success();
 }
 }// namespace NES
