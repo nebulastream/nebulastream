@@ -18,6 +18,7 @@
 #include <Identifiers.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
+//#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <any>
 #include <folly/Synchronized.h>
 #include <map>
@@ -29,6 +30,8 @@
 #include <vector>
 
 namespace NES {
+class SharedQueryPlan;
+using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 using Timestamp = uint64_t;
 class TopologyLinkInformation;
 namespace Experimental::TopologyPrediction {
@@ -343,7 +346,14 @@ class Topology {
      * @brief insert a predicted change into the list of predictions
      */
     void insertPrediction(const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
-                          const std::vector<TopologyLinkInformation>& expectedAddedLinks, Timestamp expectedTime);
+                          const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                          std::vector<SharedQueryPlanPtr> affectedQueryPlans,
+                          Timestamp expectedTime);
+
+    /**
+     * @brief retrieve the next scheduled topology change
+     */
+     std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> getNextPrediction();
 
   private:
     explicit Topology();
@@ -396,7 +406,7 @@ class Topology {
     WorkerId rootWorkerId;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
-    std::map<Timestamp, Experimental::TopologyPrediction::TopologyDelta> predictions;
+    std::map<Timestamp, std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> predictions;
     static constexpr int BASE_MULTIPLIER = 10000;
 };
 }// namespace NES

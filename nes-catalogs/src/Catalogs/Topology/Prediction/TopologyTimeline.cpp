@@ -14,7 +14,7 @@
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Catalogs/Topology/Prediction/TopologyTimeline.hpp>
-#include <Catalogs/Topology/Topology.hpp>
+//#include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>

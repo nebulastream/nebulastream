@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "../../../../nes-optimizer/include/Plans/Global/Query/SharedQueryPlan.hpp"
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -923,13 +924,20 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
 
 void Topology::insertPrediction(const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
                                 const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                                std::vector<SharedQueryPlanPtr> affectedQueryPlans,
                                 Timestamp expectedTime) {
-    (void) expectedRemovedLinks;
-    (void) expectedAddedLinks;
     if (predictions.contains(expectedTime)) {
         //todo: merge delta
         NES_NOT_IMPLEMENTED();
     }
+    Experimental::TopologyPrediction::TopologyDelta delta(expectedAddedLinks, expectedRemovedLinks);
+    predictions.insert({expectedTime, {std::move(delta), affectedQueryPlans}});
+}
+std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> Topology::getNextPrediction() {
+    if (predictions.empty()) {
+        return std::nullopt;
+    }
+    return predictions.begin()->second;
 }
 
 }// namespace NES

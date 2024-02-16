@@ -142,7 +142,7 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     QueryCatalogServicePtr queryCatalogService;
-    void proactiveDeployment(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
+    std::vector<SharedQueryPlanPtr> proactiveDeployment(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

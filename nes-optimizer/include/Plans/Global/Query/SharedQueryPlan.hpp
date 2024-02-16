@@ -19,6 +19,7 @@
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>
+#include <map>
 #include <queue>
 #include <set>
 #include <vector>

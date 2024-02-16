@@ -75,13 +75,27 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     }
 
     //todo: make if else condition here checking if proactive deployment is in progress
-
-    //make modifications to topology
-    for (const auto& [removedUp, removedDown] : removedLinks) {
-        topology->removeTopologyNodeAsChild(removedDown, removedUp);
-    }
-    for (const auto& [addedUp, addedDown] : addedLinks) {
-        topology->addTopologyNodeAsChild(addedDown, addedUp);
+    auto nextPrediction = topology->getNextPrediction();
+    if (nextPrediction) {
+        auto [delta, impactedPlans] = nextPrediction.value();
+        //todo: we currently assume perfect predicitons
+        NES_ASSERT(delta.getAdded() == addedLinks, "Prediction does not match");
+        NES_ASSERT(delta.getRemoved() == removedLinks, "Prediction does not match");
+        //deployment phase
+        auto queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
+        //todo: only execute partial deployment here
+        for (auto sharedQueryPlan : impactedPlans) {
+            queryDeploymentPhase->execute(sharedQueryPlan, PROACTIVE_PHASE_1);
+            globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
+        }
+    } else {
+        //make modifications to topology
+        for (const auto& [removedUp, removedDown] : removedLinks) {
+            topology->removeTopologyNodeAsChild(removedDown, removedUp);
+        }
+        for (const auto& [addedUp, addedDown] : addedLinks) {
+            topology->addTopologyNodeAsChild(addedDown, addedUp);
+        }
     }
 
     if (!removedLinks.empty()) {
@@ -95,30 +109,31 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
         NES_ASSERT(expectedTime != 0, "Invalid expected timestamp");
         NES_ASSERT(expectedAddedLinks.size() == 1, "Too many expected added links, multiple parents not supported");
         NES_ASSERT(expectedRemovedLinks.size() == 1, "Too many expected removed links, multiple parents not supported");
+
         //make modifications to topology
-        for (const auto& [removedUp, removedDown] : removedLinks) {
+        for (const auto& [removedUp, removedDown] : expectedRemovedLinks) {
             topology->removeTopologyNodeAsChild(removedDown, removedUp);
         }
-        for (const auto& [addedUp, addedDown] : addedLinks) {
+        for (const auto& [addedUp, addedDown] : expectedAddedLinks) {
             topology->addTopologyNodeAsChild(addedDown, addedUp);
         }
         auto [upstreamId, downstreamId] = expectedRemovedLinks.front();
-        proactiveDeployment(upstreamId, downstreamId);
+        auto impactedPlans = proactiveDeployment(upstreamId, downstreamId);
+        topology->insertPrediction(expectedRemovedLinks, expectedAddedLinks, impactedPlans, expectedTime);
     }
 
     responsePromise.set_value(std::make_shared<TopologyNodeRelocationRequestResponse>(true));
     return {};
 }
 
-
-void TopologyNodeRelocationRequest::proactiveDeployment(WorkerId upstreamNodeId, WorkerId downstreamNodeId) {
+std::vector<SharedQueryPlanPtr> TopologyNodeRelocationRequest::proactiveDeployment(WorkerId upstreamNodeId, WorkerId downstreamNodeId) {
     NES_INFO("Proactive deployment: start")
     auto upstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(upstreamNodeId);
     auto downstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(downstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
     if (!upstreamExecutionNode || !downstreamExecutionNode) {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
-        return;
+        return {};
     }
 
     NES_INFO("Proactive Deployment: find affected queries")
@@ -127,7 +142,7 @@ void TopologyNodeRelocationRequest::proactiveDeployment(WorkerId upstreamNodeId,
     //If any of the two execution nodes do not have any shared query plan placed then skip rest of the operation
     if (upstreamSharedQueryIds.empty() || downstreamSharedQueryIds.empty()) {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
-        return;
+        return {};
     }
 
     NES_INFO("Proactive Deployment: find intersection of queries")
@@ -142,14 +157,17 @@ void TopologyNodeRelocationRequest::proactiveDeployment(WorkerId upstreamNodeId,
     //If no common shared query plan was found to be placed on two nodes then skip rest of the operation
     if (impactedSharedQueryIds.empty()) {
         NES_INFO("Found no shared query plan that was using the removed link");
-        return;
+        return {};
     }
 
     NES_INFO("TopologyNodeRelocatinRequest: perform re-placement")
     //Iterate over each shared query plan id and identify the operators that need to be replaced
+    std::vector<SharedQueryPlanPtr> impactedPlans;
     for (auto impactedSharedQueryId : impactedSharedQueryIds) {
         markOperatorsForProactivePlacement(impactedSharedQueryId, upstreamExecutionNode, downstreamExecutionNode);
+        impactedPlans.push_back(globalQueryPlan->getSharedQueryPlan(impactedSharedQueryId));
     }
+    return impactedPlans;
     NES_INFO("TopologyNodeRelocatinRequest: done")
 }
 
