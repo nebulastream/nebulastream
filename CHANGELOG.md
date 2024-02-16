@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.50](https://github.com/nebulastream/nebulastream/tree/v0.6.50) (2024-02-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.49...v0.6.50)
+
+### Bug Fixes 🐛
+
+- \[BUG\] EXPLAIN request crashes coordinator [\#4622](https://github.com/nebulastream/nebulastream/issues/4622)
+
 ## [v0.6.49](https://github.com/nebulastream/nebulastream/tree/v0.6.49) (2024-02-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.48...v0.6.49)
