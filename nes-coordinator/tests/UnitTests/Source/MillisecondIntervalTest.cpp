@@ -13,7 +13,6 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Services/RequestHandlerService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -24,11 +23,12 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestSink.hpp>
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <thread>
-#include <Util/TestUtils.hpp>
 
 using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;

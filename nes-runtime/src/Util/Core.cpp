@@ -190,7 +190,7 @@ std::string Util::trim(const std::string& str) {
 // to keep the usual functionality __wrap_read just calls __real_read which is the real read function.
 // However this allows to mock calls to read (e.g. TCPSourceTest)
 extern "C" ssize_t __real_read(int fd, void* data, size_t size);
-__attribute__(( weak )) extern "C" ssize_t __wrap_read(int fd, void* data, size_t size) { return __real_read(fd, data, size); }
+__attribute__((weak)) extern "C" ssize_t __wrap_read(int fd, void* data, size_t size) { return __real_read(fd, data, size); }
 #endif
 
 }// namespace NES
