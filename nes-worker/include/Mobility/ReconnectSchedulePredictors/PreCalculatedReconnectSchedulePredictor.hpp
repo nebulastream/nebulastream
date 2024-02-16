@@ -30,7 +30,8 @@ class PreCalculatedReconnectSchedulePredictor : public ReconnectSchedulePredicto
                                                           bool isIndexUpdted);
 
     virtual ~PreCalculatedReconnectSchedulePredictor();
-    std::optional<std::pair<NES::WorkerId, NES::Timestamp>> getReconnect(WorkerId currentParent);
+    std::pair<std::optional<std::pair<NES::WorkerId, NES::Timestamp>>, std::optional<std::pair<NES::WorkerId, NES::Timestamp>>>
+    getReconnect(WorkerId currentParent);
   private:
     void loadReconnectSimulationDataFromFile();
     Timestamp startTime;

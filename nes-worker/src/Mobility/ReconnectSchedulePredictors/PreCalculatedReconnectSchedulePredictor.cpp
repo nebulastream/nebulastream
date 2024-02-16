@@ -14,7 +14,7 @@ NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::g
     return {};
 }
 
-std::optional<std::pair<NES::WorkerId, NES::Timestamp>>
+std::pair<std::optional<std::pair<NES::WorkerId, NES::Timestamp>>, std::optional<std::pair<NES::WorkerId, NES::Timestamp>>>
 NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::getReconnect(WorkerId currentParent) {
     NES_INFO("Checking for precalculated reconnect");
     if (reconnects.empty()) {
@@ -33,19 +33,22 @@ NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::g
     std::pair<WorkerId, Timestamp> reconnectPoint;
     //Check if next waypoint is still initialized as 0.
     //Set the current waypoint as the first location in the csv file
-    if (nextReconnectIndex == 0) {
-         reconnectPoint = reconnects.at(nextReconnectIndex);
-    }
+//    if (nextReconnectIndex == 0) {
+//         reconnectPoint = reconnects.at(nextReconnectIndex);
+//    }
 
     //find the last point behind us on the way
     auto currentReconnectPointIndex = nextReconnectIndex - 1;
     reconnectPoint = reconnects.at(currentReconnectPointIndex);
 
     if (reconnectPoint.first != currentParent) {
-        return reconnectPoint;
+        if (nextReconnectIndex < reconnects.size()) {
+            auto expectedReconnectPoint = reconnects.at(nextReconnectIndex);
+            return {reconnectPoint, expectedReconnectPoint};
+        }
+        return {reconnectPoint, {}};
     }
-    return std::nullopt;
-
+    return {{}, {}};
 }
 
 NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::PreCalculatedReconnectSchedulePredictor(

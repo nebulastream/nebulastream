@@ -179,7 +179,7 @@ class WorkerMobilityHandler {
      * potential new parents
      * @return nothing if no reconnection point is available else returns the new reconnection point
      */
-    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>
+    std::pair<std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>, std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>>
     getNextReconnectPoint(std::optional<ReconnectSchedule>& reconnectSchedule,
                           const DataTypes::Experimental::GeoLocation& currentOwnLocation,
                           const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,

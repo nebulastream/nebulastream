@@ -75,11 +75,17 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     }
 
     //todo: make if else condition here checking if proactive deployment is in progress
-    auto nextPrediction = topology->getNextPrediction();
+
+    std::optional<std::pair<::NES::Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> nextPrediction = std::nullopt;
+    if (coordinatorConfiguration->enableQueryProactiveDeployment.getValue()) {
+        nextPrediction = topology->getNextPrediction();
+    }
     if (nextPrediction) {
         topology->removeNextPrediction();
         auto [delta, impactedPlans] = nextPrediction.value();
         //todo: we currently assume perfect predicitons
+        //todo: match prediction for expected and if not, remove it
+        //todo: to do that we need a map on node ids and not only timestamps
         NES_ASSERT(delta.getAdded() == addedLinks, "Prediction does not match");
         NES_ASSERT(delta.getRemoved() == removedLinks, "Prediction does not match");
         //deployment phase
@@ -105,7 +111,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     }
 
 
-    if (!expectedRemovedLinks.empty()) {
+    if (!expectedRemovedLinks.empty() && coordinatorConfiguration->enableQueryProactiveDeployment) {
         NES_ASSERT(!expectedAddedLinks.empty(), "We currently expect exactly one parent for moving devices");
         NES_ASSERT(expectedTime != 0, "Invalid expected timestamp");
         NES_ASSERT(expectedAddedLinks.size() == 1, "Too many expected added links, multiple parents not supported");

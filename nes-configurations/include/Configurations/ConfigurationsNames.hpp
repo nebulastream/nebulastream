@@ -80,6 +80,7 @@ const std::string PLACEMENT_AMENDMENT_MODE_CONFIG = "placementAmendmentMode";
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
 const std::string ENABLE_QUERY_RECONFIGURATION = "enableQueryReconfiguration";
+const std::string ENABLE_PROACTIVE_DEPLOYMENT = "enableProactiveDeployment";
 const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
 const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
 const std::string ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK = "allowExhaustiveContainmentCheck";

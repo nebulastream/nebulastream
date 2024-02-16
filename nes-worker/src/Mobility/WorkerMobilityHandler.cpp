@@ -130,7 +130,7 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::sendNextPredic
 }
 
 #ifdef S2DEF
-std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>
+std::pair<std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>, std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>>
 NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoint(
     std::optional<ReconnectSchedule>& reconnectSchedule,
     const DataTypes::Experimental::GeoLocation& currentOwnLocation,
@@ -139,28 +139,43 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoi
     WorkerId currentParentId) {
     (void) reconnectSchedule;
 
+    (void) currentOwnLocation;
+    (void) currentParentLocation;
+    (void) neighbourWorkerSpatialIndex;
+
     if (reconnectPredictorType == ReconnectPredictorType::PRECALCULATED) {
-        auto reconnectPairOptional =
+        auto [currentReconnectPairOptional, upcomingReconnectPairOptional] =
             std::dynamic_pointer_cast<PreCalculatedReconnectSchedulePredictor>(reconnectSchedulePredictor)
                 ->getReconnect(currentParentId);
-        if (reconnectPairOptional) {
-            auto [parentId, time] = reconnectPairOptional.value();
-            return ReconnectPoint(Spatial::DataTypes::Experimental::GeoLocation(), parentId, time);
+        if (currentReconnectPairOptional) {
+            auto [parentId, time] = currentReconnectPairOptional.value();
+            ReconnectPoint currentReconnectPoint(Spatial::DataTypes::Experimental::GeoLocation(), parentId, time);
+            std::optional<ReconnectPoint> expectedReconnectPoint;
+            if (upcomingReconnectPairOptional) {
+                auto [expectedParentId, expectedTime] = currentReconnectPairOptional.value();
+                expectedReconnectPoint = {Spatial::DataTypes::Experimental::GeoLocation(), expectedParentId, expectedTime};
+            }
+            //return ReconnectPoint(Spatial::DataTypes::Experimental::GeoLocation(), parentId, time);
+            return {currentReconnectPoint, expectedReconnectPoint};
         }
-        return std::nullopt;
+//        return std::nullopt;
+        return {{}, {}};
     }
 
-    auto closesNodeId = getClosestNodeId(currentOwnLocation, defaultCoverageRadiusAngle, neighbourWorkerSpatialIndex);
-    if (!currentParentLocation.has_value()) {
-        if (closesNodeId) {
-            return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
-        } else {
-            return std::nullopt;
-        }
-    } else if (closesNodeId != currentParentId) {
-        return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
-    }
-    return std::nullopt;
+    //todo: fix this to allow live prediction
+//    auto closesNodeId = getClosestNodeId(currentOwnLocation, defaultCoverageRadiusAngle, neighbourWorkerSpatialIndex);
+//    if (!currentParentLocation.has_value()) {
+//        if (closesNodeId) {
+//            return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
+//        } else {
+//            return std::nullopt;
+//        }
+//    } else if (closesNodeId != currentParentId) {
+//        return NES::Spatial::Mobility::Experimental::ReconnectPoint{{}, closesNodeId.value(), 0};
+//    }
+//    return std::nullopt;
+    return {{}, {}};
+
 
     //    //if the current parent location is not known, try reconnecting to the closest node
     //    if (!currentParentLocation.has_value()) {
@@ -380,7 +395,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
 
         NES_INFO("Mobility Handler checking for next reconnect")
         //get the reconnect if it is to be performed now
-        auto nextReconnectPoint = getNextReconnectPoint(currentReconnectSchedule,
+        auto [nextReconnectPoint, predictedReconnectPoint] = getNextReconnectPoint(currentReconnectSchedule,
                                                         currentLocation,
                                                         currentParentLocation,
                                                         neighbourWorkerSpatialIndex,
@@ -389,7 +404,13 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
         //perform reconnect if needed
         if (nextReconnectPoint.has_value()) {
             //todo: pass prediction here
-            triggerReconnectionRoutine(currentParentId, nextReconnectPoint.value().newParentId, std::nullopt, std::nullopt);
+            std::optional<WorkerId> predictedParentId = std::nullopt;
+            std::optional<Timestamp> predictedReconnectTime = std::nullopt;
+            if (predictedReconnectPoint.has_value()) {
+                predictedParentId = predictedReconnectPoint.value().newParentId;
+                predictedReconnectTime = predictedReconnectPoint.value().expectedTime;
+            }
+            triggerReconnectionRoutine(currentParentId, nextReconnectPoint.value().newParentId, predictedParentId, predictedReconnectTime);
             currentParentLocation = getNodeGeoLocation(currentParentId, neighbourWorkerIdToLocationMap);
         }
 

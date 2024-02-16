@@ -94,6 +94,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
                                              false,
                                              "Enable reconfiguration of running query plans. (Default: false)"};
 
+    BoolOption enableQueryProactiveDeployment = {ENABLE_PROACTIVE_DEPLOYMENT,
+                                             false,
+                                             "Enable proactive deployment of migrated sub query plans. (Default: false)"};
+
     /**
      * @brief Configures different properties for the query optimizer.
      */
