@@ -62,7 +62,8 @@ namespace NES::Benchmark::DataProvision {
      * @brief This test should not be run on the CI, as here we use a sleep to generate x amount of buffers and then
      * compare to an expected. This might fail randomly as the CI is not fast enough to produce large amounts of buffers
      */
-    TEST_F(ExternalProviderTest, uniformIngestionRateTest) {
+    // Enable when fixing #4625
+    TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
         size_t sourceId = 0;
