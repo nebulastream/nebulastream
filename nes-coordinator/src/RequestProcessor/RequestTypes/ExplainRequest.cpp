@@ -217,7 +217,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+        queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //22. Fetch configurations for elegant optimizations
         auto accelerateJavaUdFs = coordinatorConfiguration->elegant.accelerateJavaUDFs;
@@ -234,9 +234,13 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         //24. respond to the calling service with the query id
         responsePromise.set_value(std::make_shared<ExplainResponse>(response));
 
-        //25. clean up the data structure
+        //25. clean up the global query plan by marking it for removal
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-        globalExecutionPlan->removeAllDecomposedQueryPlans(queryId);
+        //26. Get the shared query plan for the added query
+        sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+        //27. Perform placement removal of updated shared query plan
+        NES_DEBUG("Performing Operator placement for shared query plan");
+        queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //26. Set query status as Explained
         queryCatalog->updateQueryStatus(queryId, QueryState::EXPLAINED, "");

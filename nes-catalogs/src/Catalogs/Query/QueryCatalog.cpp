@@ -96,6 +96,7 @@ void QueryCatalog::updateQueryStatus(QueryId queryId, QueryState queryStatus, co
         case QueryState::MIGRATING:
         case QueryState::DEPLOYED:
         case QueryState::RUNNING:
+        case QueryState::EXPLAINED:
         case QueryState::STOPPED:
         case QueryState::FAILED: {
             auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
