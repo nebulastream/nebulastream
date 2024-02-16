@@ -118,6 +118,9 @@ add_nes_integration_test(query-failure-test "QueryFailureTest.cpp")
 ### Query Redeployment Integration Test ###
 add_nes_integration_test(query-redeployment-integration-tests "QueryRedeploymentIntegrationTest.cpp")
 
+### Explain Integration Test ###
+add_nes_integration_test(explain-request-integration-test "ExplainRequestIntegrationTest.cpp")
+
 ### Location Integration Test ###
 # Enabled with issue #4270
 #add_nes_integration_test(location-integration-tests "LocationIntegrationTests.cpp")
