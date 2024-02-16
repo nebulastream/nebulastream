@@ -48,6 +48,7 @@
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <cpr/cpr.h>
@@ -88,8 +89,6 @@ std::vector<AbstractRequestPtr> ExplainRequest::rollBack([[maybe_unused]] std::e
 
 void ExplainRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr ex,
                                         [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
-
-void ExplainRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
 std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
     try {
@@ -231,21 +230,55 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                              accelerationServiceURL,
                                                              sampleCodeGenerationPhase);
 
-        //24. respond to the calling service with the query id
-        responsePromise.set_value(std::make_shared<ExplainResponse>(response));
-
-        //25. clean up the global query plan by marking it for removal
+        //24. clean up the global query plan by marking it for removal
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-        //26. Get the shared query plan for the added query
+        //25. Get the shared query plan for the added query
         sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-        //27. Perform placement removal of updated shared query plan
+        //26. Perform placement removal of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-        //26. Set query status as Explained
+        //27. Set query status as Explained
         queryCatalog->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
+
+        //28. Iterate over deployment context and update execution plan
+        for (const auto& deploymentContext : deploymentContexts) {
+            auto executionNodeId = deploymentContext->getWorkerId();
+            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+            switch (decomposedQueryPlanState) {
+                case QueryState::MARKED_FOR_REDEPLOYMENT:
+                case QueryState::MARKED_FOR_DEPLOYMENT: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::RUNNING);
+                    break;
+                }
+                case QueryState::MARKED_FOR_MIGRATION: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::STOPPED);
+                    globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                                                                   sharedQueryId,
+                                                                   decomposedQueryPlanId,
+                                                                   decomposedQueryPlanVersion);
+                    break;
+                }
+                default:
+                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+            }
+        }
+
+        //29. respond to the calling service with the query id
+        responsePromise.set_value(std::make_shared<ExplainResponse>(response));
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
+        responsePromise.set_value(std::make_shared<ExplainResponse>(""));
         handleError(std::current_exception(), storageHandler);
     }
     return {};
