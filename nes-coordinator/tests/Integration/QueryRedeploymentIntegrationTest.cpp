@@ -739,8 +739,30 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
         crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
     Network::NesPartition networkSourceCrdPartition(queryId, coordinatorSource->getOperatorId(), 0, 0);
 
+    for (uint64_t i = 0; i < numberOfReconnectsToPerform; ++i) {
+        NES_INFO("start reconnect parent {}", i);
+        WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
+        wrkConf3->coordinatorPort.setValue(*rpcCoordinatorPort);
+        auto wrk3DataPort = getAvailablePort();
+        wrkConf3->dataPort = *wrk3DataPort;
+        wrkConf3->numWorkerThreads.setValue(GetParam());
+        wrkConf3->connectSinksAsync.setValue(true);
+        wrkConf3->connectSourceEventChannelsAsync.setValue(true);
+        wrkConf3->timestampFileSinkAndWriteToTCP.setValue(false);
+        wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
+        wrkConf3->numberOfSlots.setValue(1);
+        NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+        bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+        ASSERT_TRUE(retStart3);
+        ASSERT_TRUE(waitForNodes(5, 5 + i, topology));
+        reconnectParents.push_back(wrk3);
+        wrk3->replaceParent(crd->getNesWorker()->getWorkerId(), wrkBelowCrd->getWorkerId());
+
+    }
+
     auto oldWorker = wrk2;
     while (actualReconnects < numberOfReconnectsToPerform) {
+        auto wrk3 = reconnectParents[actualReconnects];
         subPlanIdWrk3++;
 
         //wait for data to be written
@@ -758,23 +780,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
         compareStringBefore = oss.str();
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
         waitForFinalCount = false;
-        NES_INFO("start reconnect parent {}", actualReconnects);
-        WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
-        wrkConf3->coordinatorPort.setValue(*rpcCoordinatorPort);
-        auto wrk3DataPort = getAvailablePort();
-        wrkConf3->dataPort = *wrk3DataPort;
-        wrkConf3->numWorkerThreads.setValue(GetParam());
-        wrkConf3->connectSinksAsync.setValue(true);
-        wrkConf3->connectSourceEventChannelsAsync.setValue(true);
-        wrkConf3->timestampFileSinkAndWriteToTCP.setValue(false);
-        wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
-        wrkConf3->numberOfSlots.setValue(1);
-        NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
-        bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-        ASSERT_TRUE(retStart3);
-        ASSERT_TRUE(waitForNodes(5, 5 + actualReconnects, topology));
-        reconnectParents.push_back(wrk3);
-        wrk3->replaceParent(crd->getNesWorker()->getWorkerId(), wrkBelowCrd->getWorkerId());
 
         std::string compareStringAfter;
         std::ostringstream ossAfter;
