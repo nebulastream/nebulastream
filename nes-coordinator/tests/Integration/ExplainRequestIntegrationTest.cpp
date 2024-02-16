@@ -23,10 +23,8 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <nlohmann/json.hpp>
 
 using namespace std;
 namespace NES {
@@ -72,14 +70,22 @@ TEST_F(ExplainRequestIntegrationTest, executeExplainRequest) {
     EXPECT_TRUE(retStart1);
     NES_INFO("worker1 started successfully");
 
-    // Send an explain request
+    // Send first explain request
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto query = Query::from("test_source").project(Attribute("id")).sink(NullOutputSinkDescriptor::create());
-    auto response =
-        requestHandlerService->validateAndQueueExplainQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    auto query1 = Query::from("test_source").project(Attribute("id")).sink(NullOutputSinkDescriptor::create());
+    auto response1 =
+        requestHandlerService->validateAndQueueExplainQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    //Assertion
+    NES_INFO("Explain Request Output: {}", response1.dump());
+    ASSERT_FALSE(response1.empty());
 
-    NES_INFO("Explain Request Output: {}", response.dump());
-    ASSERT_FALSE(response.empty());
+    // Send Second explain request
+    auto query2 = Query::from("test_source").project(Attribute("id")).sink(NullOutputSinkDescriptor::create());
+    auto response2 =
+        requestHandlerService->validateAndQueueExplainQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    //Assertion
+    NES_INFO("Explain Request Output: {}", response2.dump());
+    ASSERT_FALSE(response2.empty());
 
     NES_INFO("stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);

@@ -162,12 +162,6 @@ class ExplainRequest : public AbstractUniRequest {
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
-     * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
-     * @param storageHandler: The storage access handle used by the request
-     */
-    void postExecution(const StorageHandlerPtr& storageHandler) override;
-
-    /**
      * @brief Executes the request logic.
      * @param storageHandler: a handle to access the coordinators data structures which might be needed for executing the
      * request
