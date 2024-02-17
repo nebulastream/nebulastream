@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.51](https://github.com/nebulastream/nebulastream/tree/v0.6.51) (2024-02-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.50...v0.6.51)
+
+**Implemented enhancements:**
+
+- \[TASK\] Equality Operator of ExpressionNode [\#4621](https://github.com/nebulastream/nebulastream/issues/4621)
+
 ## [v0.6.50](https://github.com/nebulastream/nebulastream/tree/v0.6.50) (2024-02-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.49...v0.6.50)
@@ -5806,15 +5814,15 @@
 
 ## [v0.1.1](https://github.com/nebulastream/nebulastream/tree/v0.1.1) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.1.1)
-
-## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.583...v0.1.1)
 
 ## [v0.0.583](https://github.com/nebulastream/nebulastream/tree/v0.0.583) (2021-12-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.0.583)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.1.0...v0.0.583)
+
+## [v0.1.0](https://github.com/nebulastream/nebulastream/tree/v0.1.0) (2021-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.0.582...v0.1.0)
 
 #### Complex Event Processing
 
