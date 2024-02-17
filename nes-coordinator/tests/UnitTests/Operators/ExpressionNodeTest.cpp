@@ -26,13 +26,13 @@
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
