@@ -353,9 +353,9 @@ class Topology {
     /**
      * @brief retrieve the next scheduled topology change
      */
-     std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> getNextPrediction();
+     std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> getPrediction(WorkerId id);
 
-    void removeNextPrediction();
+    void removePrediction(WorkerId id);
   private:
     explicit Topology();
 
@@ -407,7 +407,7 @@ class Topology {
     WorkerId rootWorkerId;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
-    std::map<Timestamp, std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> predictions;
+    std::map<WorkerId, std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> predictions;
     static constexpr int BASE_MULTIPLIER = 10000;
 };
 }// namespace NES

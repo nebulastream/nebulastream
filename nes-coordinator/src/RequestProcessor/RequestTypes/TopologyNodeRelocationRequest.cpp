@@ -78,10 +78,10 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
 
     std::optional<std::pair<::NES::Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> nextPrediction = std::nullopt;
     if (coordinatorConfiguration->enableProactiveDeployment.getValue()) {
-        nextPrediction = topology->getNextPrediction();
+        nextPrediction = topology->getPrediction(removedLinks.front().upstreamTopologyNode);
     }
     if (nextPrediction) {
-        topology->removeNextPrediction();
+        topology->removePrediction(removedLinks.front().upstreamTopologyNode);
         auto [delta, impactedPlans] = nextPrediction.value();
         //todo: we currently assume perfect predicitons
         //todo: match prediction for expected and if not, remove it
@@ -126,7 +126,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
         }
         auto [upstreamId, downstreamId] = expectedRemovedLinks.front();
         auto impactedPlans = proactiveDeployment(upstreamId, downstreamId);
-        topology->insertPrediction(expectedRemovedLinks, expectedAddedLinks, impactedPlans, expectedTime);
+        topology->insertPrediction(expectedRemovedLinks, expectedAddedLinks, impactedPlans, removedLinks.front().upstreamTopologyNode);
     }
 
     responsePromise.set_value(std::make_shared<TopologyNodeRelocationRequestResponse>(true));

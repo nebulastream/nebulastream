@@ -925,23 +925,23 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
 void Topology::insertPrediction(const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
                                 const std::vector<TopologyLinkInformation>& expectedAddedLinks,
                                 std::vector<SharedQueryPlanPtr> affectedQueryPlans,
-                                Timestamp expectedTime) {
-    if (predictions.contains(expectedTime)) {
+                                WorkerId id) {
+    if (predictions.contains(id)) {
         //todo: merge delta
         NES_NOT_IMPLEMENTED();
     }
     Experimental::TopologyPrediction::TopologyDelta delta(expectedAddedLinks, expectedRemovedLinks);
-    predictions.insert({expectedTime, {std::move(delta), affectedQueryPlans}});
+    predictions.insert({id, {std::move(delta), affectedQueryPlans}});
 }
-std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> Topology::getNextPrediction() {
-    if (predictions.empty()) {
+std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> Topology::getPrediction(WorkerId id) {
+    if (!predictions.contains(id)) {
         return std::nullopt;
     }
-    return predictions.begin()->second;
+    return predictions.at(id);
 }
 
-void Topology::removeNextPrediction() {
-    predictions.erase(predictions.begin());
+void Topology::removePrediction(WorkerId id) {
+    predictions.erase(id);
 }
 
 }// namespace NES
