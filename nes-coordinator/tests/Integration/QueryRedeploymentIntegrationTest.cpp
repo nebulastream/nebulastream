@@ -335,7 +335,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
     //start query
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")"
+            + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
     auto networkSinkWrk3Id = 31;
     auto networkSrcWrk3Id = 32;
@@ -712,7 +713,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
 
     //start query
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")"
+            + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
     auto networkSinkWrk3Id = 31;
     auto networkSrcWrk3Id = 32;
@@ -757,7 +759,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
         ASSERT_TRUE(waitForNodes(5, 5 + i, topology));
         reconnectParents.push_back(wrk3);
         wrk3->replaceParent(crd->getNesWorker()->getWorkerId(), wrkBelowCrd->getWorkerId());
-
     }
 
     auto oldWorker = wrk2;
@@ -979,32 +980,32 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
     std::atomic<bool> waitForReconnect = false;
     std::atomic<bool> waitForFinalCount = false;
     auto lambdaSourceFunction = [&bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount, &actualReconnects](
-        NES::Runtime::TupleBuffer& buffer,
-        uint64_t numberOfTuplesToProduce) {
-      struct Record {
-          uint64_t value;
-      };
-      auto currentCount = ++bufferCount;
-      if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle)) {
-          //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-          while (!waitForReconfig)
-              ;
-      }
-      if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering
-                         + (actualReconnects * buffersToProducePerReconnectCycle)) {
-          //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
-          waitForReconnect = true;
-      }
-      if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
-                         + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
-          while (!waitForFinalCount)
-              ;
-      }
-      auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-      auto* records = buffer.getBuffer<Record>();
-      for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-          records[u].value = valCount + u;
-      }
+                                    NES::Runtime::TupleBuffer& buffer,
+                                    uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t value;
+        };
+        auto currentCount = ++bufferCount;
+        if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle)) {
+            //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
+            while (!waitForReconfig)
+                ;
+        }
+        if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering
+                + (actualReconnects * buffersToProducePerReconnectCycle)) {
+            //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
+            waitForReconnect = true;
+        }
+        if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
+                + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
+            while (!waitForFinalCount)
+                ;
+        }
+        auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
+        auto* records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].value = valCount + u;
+        }
     };
     auto lambdaSourceType = LambdaSourceType::create("seq",
                                                      "test_stream",
@@ -1094,7 +1095,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
 
     //start query
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(
-        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        R"(Query::from("seq").map(Attribute("value") = Attribute("value") * 1).map(Attribute("value") = Attribute("value") * 1).sink(FileSinkDescriptor::create(")"
+            + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
         Optimizer::PlacementStrategy::BottomUp);
     auto networkSinkWrk3Id = 31;
     auto networkSrcWrk3Id = 32;
@@ -1139,7 +1141,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
         ASSERT_TRUE(waitForNodes(5, 5 + i, topology));
         reconnectParents.push_back(wrk3);
         wrk3->replaceParent(crd->getNesWorker()->getWorkerId(), wrkBelowCrd->getWorkerId());
-
     }
 
     auto oldWorker = wrk2;
@@ -1155,7 +1156,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
                                   + (actualReconnects
                                      * (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
                                         + numBuffersToProduceWhileBuffering)))
-                                 * tuplesPerBuffer;
+                 * tuplesPerBuffer;
              ++i) {
             oss << std::to_string(i) << std::endl;
         }
@@ -1178,6 +1179,22 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
         int noOfCompletedMigrations = 0;
         int noOfRunningPlans = 0;
 
+        //get partition here already
+        Network::NesPartition networkSourceWrk3Partition{0, 0, 0, 0};
+        if (actualReconnects != 0) {
+            networkSourceWrk3Partition =
+                std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(crd->getGlobalExecutionPlan()
+                                                                                ->getExecutionNodeById(wrk3->getWorkerId())
+                                                                                ->getAllDecomposedQueryPlans(sharedQueryId)
+                                                                                .front()
+                                                                                ->getSourceOperators()
+                                                                                .front()
+                                                                                ->getSourceDescriptor())
+                    ->getNesPartition();
+            //            ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
+            //                      Network::PartitionRegistrationStatus::Registered);
+        }
+
         RequestProcessor::StorageDataStructures storageDataStructures(coordinatorConfig,
                                                                       topology,
                                                                       crd->getGlobalExecutionPlan(),
@@ -1196,9 +1213,15 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
         if (actualReconnects < numberOfReconnectsToPerform - 1) {
             nextWorkerId = reconnectParents[actualReconnects + 1]->getWorkerId();
             auto fakeTimestamp = actualReconnects + 1;
-            wrk1->getMobilityHandler()->triggerReconnectionRoutine(currentParent, wrk3->getWorkerId(), nextWorkerId, fakeTimestamp);
+            wrk1->getMobilityHandler()->triggerReconnectionRoutine(currentParent,
+                                                                   wrk3->getWorkerId(),
+                                                                   nextWorkerId,
+                                                                   fakeTimestamp);
         } else {
-            wrk1->getMobilityHandler()->triggerReconnectionRoutine(currentParent, wrk3->getWorkerId(), std::nullopt, std::nullopt);
+            wrk1->getMobilityHandler()->triggerReconnectionRoutine(currentParent,
+                                                                   wrk3->getWorkerId(),
+                                                                   std::nullopt,
+                                                                   std::nullopt);
         }
         ASSERT_EQ(currentParent, wrk3->getWorkerId());
 
@@ -1224,20 +1247,25 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
                   Network::PartitionRegistrationStatus::Registered);
         //todo: we cannot get the partition here, because the source is already removed from the plan
         //todo: move this up
-//        auto networkSourceWrk3Partition =
-//            std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(crd->getGlobalExecutionPlan()
-//                                                                            ->getExecutionNodeById(wrk3->getWorkerId())
-//                                                                            ->getAllDecomposedQueryPlans(sharedQueryId)
-//                                                                            .front()
-//                                                                            ->getSourceOperators()
-//                                                                            .front()
-//                                                                            ->getSourceDescriptor())
-//                ->getNesPartition();
-//        ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
-//                  Network::PartitionRegistrationStatus::Registered);
-        EXPECT_NE(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
-                  Network::PartitionRegistrationStatus::Registered);
-//        currentWrk1TargetPartition = networkSourceWrk3Partition;
+
+        //        auto networkSourceWrk3Partition =
+        //            std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(crd->getGlobalExecutionPlan()
+        //                                                                            ->getExecutionNodeById(wrk3->getWorkerId())
+        //                                                                            ->getAllDecomposedQueryPlans(sharedQueryId)
+        //                                                                            .front()
+        //                                                                            ->getSourceOperators()
+        //                                                                            .front()
+        //                                                                            ->getSourceDescriptor())
+        //                ->getNesPartition();
+
+        if (actualReconnects != 0) {
+            ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
+                      Network::PartitionRegistrationStatus::Registered);
+            EXPECT_NE(
+                oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
+                Network::PartitionRegistrationStatus::Registered);
+            currentWrk1TargetPartition = networkSourceWrk3Partition;
+        }
 
         //verify that query has been undeployed from old parent
         while (oldWorker->getNodeEngine()->getQueryStatus(queryId) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
@@ -1251,8 +1279,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
 
         oldWorker = wrk3;
         //todo: this check does not work anymore are we uncommented the updatign of the partition to check above
-//        EXPECT_EQ(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
-//                  Network::PartitionRegistrationStatus::Registered);
+        //        EXPECT_EQ(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
+        //                  Network::PartitionRegistrationStatus::Registered);
         oldSubplanId = oldWorker->getNodeEngine()->getDecomposedQueryIds(queryId).front();
 
         //check that query has left migrating state and is running again
