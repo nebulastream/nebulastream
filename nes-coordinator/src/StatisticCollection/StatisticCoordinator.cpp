@@ -13,31 +13,32 @@
 */
 
 #include <StatisticCollection/StatisticCoordinator.hpp>
+#include <StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 namespace NES::Statistic {
-void StatisticCoordinator::trackStatistic(const Characteristic&,
+void StatisticCoordinator::trackStatistic(const CharacteristicPtr&,
                                           const Windowing::WindowTypePtr&,
                                           const TriggerCondition&,
                                           const SendingPolicy&,
-                                          std::function<void(Characteristic)>&&) {}
+                                          std::function<void(CharacteristicPtr)>&&) {}
 
-void StatisticCoordinator::trackStatistic(const Characteristic& characteristic, const Windowing::WindowTypePtr& window) {
+void StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic, const Windowing::WindowTypePtr& window) {
     trackStatistic(characteristic, window, SENDING_LAZY);
 }
 
-void StatisticCoordinator::trackStatistic(const Characteristic& characteristic,
+void StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
                                           const Windowing::WindowTypePtr& window,
                                           const SendingPolicy& sendingPolicy) {
     trackStatistic(characteristic, window, NeverTrigger(), sendingPolicy, nullptr);
 }
 
-ProbeResult<> StatisticCoordinator::probeStatistic(const Characteristic&,
+ProbeResult<> StatisticCoordinator::probeStatistic(const CharacteristicPtr&,
                                                    const Windowing::TimeMeasure&,
                                                    const Windowing::TimeMeasure&,
                                                    const bool&,
                                                    std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) {
     return aggFunction(ProbeResult<>());
 }
-ProbeResult<> StatisticCoordinator::probeStatistic(const Characteristic& characteristic,
+ProbeResult<> StatisticCoordinator::probeStatistic(const CharacteristicPtr& characteristic,
                                                    const Windowing::TimeMeasure& period,
                                                    const Windowing::TimeMeasure& granularity,
                                                    const bool& estimationAllowed) {

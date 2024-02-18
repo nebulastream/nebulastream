@@ -23,27 +23,27 @@ class StatisticCoordinator : public StatisticInterface {
     /**
      * @brief Implements trackStatistic from StatisticInterface
      */
-    void trackStatistic(const Characteristic&,
+    void trackStatistic(const CharacteristicPtr&,
                         const Windowing::WindowTypePtr&,
                         const TriggerCondition&,
                         const SendingPolicy&,
-                        std::function<void(Characteristic)>&&) override;
+                        std::function<void(CharacteristicPtr)>&&) override;
     /**
      * @brief Calling trackStatistic(characteristic, window, SENDING_LAZY)
      */
-    void trackStatistic(const Characteristic& characteristic, const Windowing::WindowTypePtr& window);
+    void trackStatistic(const CharacteristicPtr& characteristic, const Windowing::WindowTypePtr& window);
 
     /**
      * @brief Calling trackStatistic(characteristic, window, NeverTrigger(), sendingPolicy, nullptr)
      */
-    void trackStatistic(const Characteristic& characteristic,
+    void trackStatistic(const CharacteristicPtr& characteristic,
                         const Windowing::WindowTypePtr& window,
                         const SendingPolicy& sendingPolicy);
 
     /**
      * @brief Implements probeStatistic from StatisticInterface
      */
-    ProbeResult<> probeStatistic(const Characteristic&,
+    ProbeResult<> probeStatistic(const CharacteristicPtr&,
                                  const Windowing::TimeMeasure&,
                                  const Windowing::TimeMeasure&,
                                  const bool&,
@@ -52,7 +52,7 @@ class StatisticCoordinator : public StatisticInterface {
     /**
      * @brief Calling probeStatistic with an aggregation function that does not change the ProbeResult
      */
-    ProbeResult<> probeStatistic(const Characteristic& characteristic,
+    ProbeResult<> probeStatistic(const CharacteristicPtr& characteristic,
                                  const Windowing::TimeMeasure& period,
                                  const Windowing::TimeMeasure& granularity,
                                  const bool& estimationAllowed);

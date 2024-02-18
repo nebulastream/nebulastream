@@ -56,7 +56,7 @@ bool ThresholdWindow::inferStamp(const SchemaPtr& schema) {
     return true;
 }
 
-std::string ThresholdWindow::toString() {
+std::string ThresholdWindow::toString() const {
     std::stringstream ss;
     ss << "Threshold Window: predicate ";
     ss << predicate->toString();

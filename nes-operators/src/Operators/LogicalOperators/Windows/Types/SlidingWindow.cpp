@@ -31,7 +31,7 @@ TimeMeasure SlidingWindow::getSize() { return size; }
 
 TimeMeasure SlidingWindow::getSlide() { return slide; }
 
-std::string SlidingWindow::toString() {
+std::string SlidingWindow::toString() const {
     std::stringstream ss;
     ss << "SlidingWindow: size=" << size.getTime();
     ss << " slide=" << slide.getTime();

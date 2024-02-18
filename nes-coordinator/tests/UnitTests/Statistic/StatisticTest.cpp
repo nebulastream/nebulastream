@@ -20,6 +20,10 @@
 #include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
 #include <StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
+#include <StatisticCollection/Statistic/Metric/Selectivity.hpp>
+#include <StatisticCollection/Statistic/Metric/MinVal.hpp>
+#include <StatisticCollection/Statistic/Metric/IngestionRate.hpp>
+#include <StatisticCollection/Statistic/Metric/Cardinality.hpp>
 #include <StatisticCollection/StatisticCoordinator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -50,42 +54,42 @@ TEST_F(StatisticTest, simpleTest) {
     constexpr auto nodeId = 1;
 
     //----------------------- Tracking
-    statCoordinator.trackStatistic(DataCharacteristic(Selectivity(Attribute("f1") > 4), "car", {"car_1", "car_2", "car_3"}),
+    statCoordinator.trackStatistic(DataCharacteristic::create(Selectivity::create(Attribute("f1") > 4), "car", {"car_1", "car_2", "car_3"}),
                                    SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
-    statCoordinator.trackStatistic(WorkloadCharacteristic(Selectivity(Attribute("f2") == 42), queryId, operatorId),
+    statCoordinator.trackStatistic(WorkloadCharacteristic::create(Selectivity::create(Attribute("f2") == 42), queryId, operatorId),
                                    SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
 
-    statCoordinator.trackStatistic(WorkloadCharacteristic(Cardinality("f2"), queryId, operatorId),
+    statCoordinator.trackStatistic(WorkloadCharacteristic::create(Cardinality::create("f2"), queryId, operatorId),
                                    TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
                                    SENDING_ADAPTIVE);
 
-    statCoordinator.trackStatistic(WorkloadCharacteristic(MinVal("f2"), queryId, operatorId),
+    statCoordinator.trackStatistic(WorkloadCharacteristic::create(MinVal::create("f2"), queryId, operatorId),
                                    TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
                                    SENDING_LAZY);
 
-    statCoordinator.trackStatistic(WorkloadCharacteristic(Cardinality("f2"), queryId, operatorId),
+    statCoordinator.trackStatistic(WorkloadCharacteristic::create(Cardinality::create("f2"), queryId, operatorId),
                                    TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
                                    SENDING_ASAP);
 
-    statCoordinator.trackStatistic(InfrastructureStatistic(IngestionRate(), nodeId),
+    statCoordinator.trackStatistic(InfrastructureStatistic::create(IngestionRate::create(), nodeId),
                                    TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)));
 
     //----------------------- Probing
     const bool estimationAllowed = true;
     const bool estimationNOTAllowed = false;
 
-    auto probeResult = statCoordinator.probeStatistic(DataCharacteristic(Cardinality("f2"), "car", {"car_2"}),
+    auto probeResult = statCoordinator.probeStatistic(DataCharacteristic::create(Cardinality::create("f2"), "car", {"car_2"}),
                                                       Hours(24),
                                                       Seconds(2),
                                                       estimationAllowed);
 
     auto anotherProbeResult =
-        statCoordinator.probeStatistic(WorkloadCharacteristic(Selectivity(Attribute("f1") > 4), queryId, operatorId),
+        statCoordinator.probeStatistic(WorkloadCharacteristic::create(Selectivity::create(Attribute("f1") > 4), queryId, operatorId),
                                        Hours(1),
                                        Seconds(10),
                                        estimationAllowed);
 
-    auto yetAnotherProbeResult = statCoordinator.probeStatistic(InfrastructureStatistic(IngestionRate(), nodeId),
+    auto yetAnotherProbeResult = statCoordinator.probeStatistic(InfrastructureStatistic::create(IngestionRate::create(), nodeId),
                                                                 Minutes(1),
                                                                 Milliseconds(10),
                                                                 estimationNOTAllowed,

@@ -16,6 +16,9 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_TRIGGERCONDITION_TRIGGERCONDITION_HPP_
 #include <StatisticCollection/Statistic/Statistic.hpp>
 namespace NES::Statistic {
+
+class TriggerCondition;
+using TriggerConditionPtr = std::shared_ptr<TriggerCondition>;
 class TriggerCondition {
   public:
     /**
@@ -24,23 +27,57 @@ class TriggerCondition {
      * @return True or false
      */
     virtual bool shallTrigger(const Statistic& curStatistic) = 0;
-};
 
-/**
- * @brief Checks if the latest statistic is above a threshold
- */
-template<typename T>
-class ThresholdTrigger : public TriggerCondition {
-  private:
-    const T threshold;
-};
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if equal otherwise false
+     */
+    virtual bool operator==(const TriggerCondition& rhs) const = 0;
 
-/**
- * @brief Never triggers. Used as a default, if the user does not provide a trigger
- */
-class NeverTrigger : public TriggerCondition {
-  public:
-    bool shallTrigger(const Statistic&) override { return false; }
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if NOT equal otherwise false
+     */
+    virtual bool operator!=(const TriggerCondition& rhs) const = 0;
+
+    /**
+     * @brief Checks if the current TriggerCondition is of type TriggerConditionType
+     * @tparam TriggerCondition
+     * @return bool true if node is of TriggerCondition
+     */
+    template<class TriggerCondition>
+    bool instanceOf()  {
+        if (dynamic_cast<TriggerCondition*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    /**
+     * @brief Checks if the current TriggerCondition is of type const TriggerConditionType
+     * @tparam TriggerCondition
+     * @return bool true if node is of TriggerCondition
+     */
+    template<class TriggerCondition>
+    bool instanceOf() const {
+        if (dynamic_cast<const TriggerCondition*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    /**
+     * @brief Creates a string representation
+     * @return std::string
+     */
+    [[nodiscard]] virtual std::string toString() const = 0;
+
+    /**
+     * @brief Virtual deconstructor
+     */
+    virtual ~TriggerCondition() = default;
 };
 }// namespace NES::Statistic
 

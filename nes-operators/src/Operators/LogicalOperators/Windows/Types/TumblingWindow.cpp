@@ -33,7 +33,7 @@ TimeMeasure TumblingWindow::getSize() { return size; }
 
 TimeMeasure TumblingWindow::getSlide() { return getSize(); }
 
-std::string TumblingWindow::toString() {
+std::string TumblingWindow::toString() const {
     std::stringstream ss;
     ss << "TumblingWindow: size=" << size.getTime();
     ss << " timeCharacteristic=" << timeCharacteristic->toString();
