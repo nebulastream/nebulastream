@@ -81,6 +81,7 @@ bool ZmqServer::start() {
     uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
     uint16_t numHandlerThreads = numNetworkThreads / 2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
+    zmqContext->set(zmq::ctxopt::max_sockets, MAX_ZMQ_SOCKET);
     NES_INFO("zmq max sockets configured {}", zmqContext->get(zmq::ctxopt::max_sockets));
     NES_INFO("zmq max sockets should be {}", MAX_ZMQ_SOCKET);
     NES_ASSERT(MAX_ZMQ_SOCKET == zmqContext->get(zmq::ctxopt::max_sockets), "Cannot set max num of sockets");
