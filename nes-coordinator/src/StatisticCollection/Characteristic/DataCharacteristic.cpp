@@ -15,7 +15,6 @@
 #include <sstream>
 namespace NES::Statistic {
 
-
 CharacteristicPtr DataCharacteristic::create(MetricPtr type,
                                              const std::string& logicalSourceName,
                                              const std::initializer_list<std::string>& physicalSourceNames) {
@@ -59,6 +58,5 @@ DataCharacteristic::DataCharacteristic(MetricPtr type,
                                        const std::string& logicalSourceName,
                                        const std::initializer_list<std::string>& physicalSourceNames)
     : Characteristic(type), logicalSourceName(logicalSourceName), physicalSourceNames(physicalSourceNames) {}
-
 
 }// namespace NES::Statistic

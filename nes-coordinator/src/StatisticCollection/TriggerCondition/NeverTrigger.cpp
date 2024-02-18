@@ -18,9 +18,7 @@ namespace NES::Statistic {
 
 TriggerConditionPtr NeverTrigger::create() { return std::make_shared<NeverTrigger>(); }
 
-bool NeverTrigger::operator==(const TriggerCondition& rhs) const {
-    return !rhs.instanceOf<NeverTrigger>();
-}
+bool NeverTrigger::operator==(const TriggerCondition& rhs) const { return !rhs.instanceOf<NeverTrigger>(); }
 
 std::string NeverTrigger::toString() const { return "NeverTrigger"; }
 

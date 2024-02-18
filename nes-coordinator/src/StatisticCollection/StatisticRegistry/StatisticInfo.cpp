@@ -34,11 +34,11 @@ std::string StatisticInfo::toString() const {
     std::ostringstream oss;
     oss << "TriggerCondition: " << triggerCondition->toString() << " "
         << "QueryId: " << queryId << " ";
-        if (callBack != nullptr) {
-            oss << "Callback: " << callBack.target_type().name() << std::endl;
-        } else {
-            oss << "Callback: nullptr" << std::endl;
-        }
+    if (callBack != nullptr) {
+        oss << "Callback: " << callBack.target_type().name() << std::endl;
+    } else {
+        oss << "Callback: nullptr" << std::endl;
+    }
     return oss.str();
 }
 

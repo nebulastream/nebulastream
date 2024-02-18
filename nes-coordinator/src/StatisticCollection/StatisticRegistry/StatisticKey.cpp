@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 #include <API/QueryAPI.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 
@@ -39,8 +39,6 @@ std::string StatisticKey::toString() const {
     return oss.str();
 }
 
-std::size_t StatisticKey::hash() const {
-    return characteristic->hash() ^ window->hash();
-}
+std::size_t StatisticKey::hash() const { return characteristic->hash() ^ window->hash(); }
 
-} // NES::Statistic
+}// namespace NES::Statistic

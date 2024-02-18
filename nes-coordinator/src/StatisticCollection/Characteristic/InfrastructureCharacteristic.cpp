@@ -29,9 +29,7 @@ bool InfrastructureStatistic::operator==(const Characteristic& rhs) const {
 
 size_t InfrastructureStatistic::hash() const { return std::hash<WorkerId>()(nodeId); }
 
-std::string InfrastructureStatistic::toString() const {
-    return "{ NodeId: " + std::to_string(nodeId) + " }";
-}
+std::string InfrastructureStatistic::toString() const { return "{ NodeId: " + std::to_string(nodeId) + " }"; }
 
 WorkerId InfrastructureStatistic::getNodeId() const { return nodeId; }
 

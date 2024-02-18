@@ -23,7 +23,6 @@ namespace NES::Statistic {
  */
 class InfrastructureStatistic : public Characteristic {
   public:
-
     /**
      * @brief Creates a InfrastructureStatistic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...

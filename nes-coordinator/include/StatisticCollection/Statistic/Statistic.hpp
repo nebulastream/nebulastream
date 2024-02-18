@@ -15,8 +15,8 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
 
-#include <StatisticCollection/Statistic/StatisticValue.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
+#include <StatisticCollection/Statistic/StatisticValue.hpp>
 namespace NES::Statistic {
 
 /**

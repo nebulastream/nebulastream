@@ -15,15 +15,14 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_HPP_
 
-#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 #include <StatisticCollection/TriggerCondition/TriggerCondition.hpp>
+#include <folly/Synchronized.h>
 #include <functional>
 #include <map>
-#include <folly/Synchronized.h>
 
 namespace NES::Statistic {
-
 
 /**
  * @brief This registry stores StatisticInfo for each StatisticKey
@@ -70,7 +69,8 @@ class StatisticRegistry {
     bool isRunning(const StatisticKey statisticKey) const;
 
   private:
-    folly::Synchronized<std::unordered_map<StatisticKey, folly::Synchronized<StatisticInfo>, StatisticKeyHash>> keyToStatisticInfo;
+    folly::Synchronized<std::unordered_map<StatisticKey, folly::Synchronized<StatisticInfo>, StatisticKeyHash>>
+        keyToStatisticInfo;
 };
 
 }// namespace NES::Statistic
