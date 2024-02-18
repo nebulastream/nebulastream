@@ -56,6 +56,9 @@ add_nes_unit_test(location-unit-tests "Spatial/DataTypes/LocationUnitTest.cpp")
 ### Statistic Test ###
 add_nes_unit_test(statistic-unit-test "Statistic/StatisticTest.cpp")
 
+### StatisticRegistry Test ###
+add_nes_unit_test(statistic-registry-unit-test "Statistic/StatisticRegistryTest.cpp")
+
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "Runtime/AsyncTaskExecutorTest.cpp")
 

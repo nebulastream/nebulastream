@@ -16,18 +16,81 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_HPP_
 
 #include <Identifiers.hpp>
-#include <StatisticCollection/Statistic/Metric.hpp>
+#include <StatisticCollection/Statistic/Metric/Metric.hpp>
 namespace NES::Statistic {
+class Characteristic;
+using CharacteristicPtr = std::shared_ptr<Characteristic>;
 
 /**
  * @brief Parent class for all different statistic characteristic, e.g., workload, data, infrastructure.
  */
 class Characteristic {
   public:
-    explicit Characteristic(Metric type) : type(type) {}
+    /**
+     * @brief Constructor for a Characteristic
+     * @param type
+     */
+    explicit Characteristic(MetricPtr type) : type(std::move(type)) {}
+
+    /**
+     * @brief Checks if the current Characteristic is of type CharacteristicType
+     * @tparam Characteristic
+     * @return bool true if node is of Characteristic
+     */
+    template<class Characteristic>
+    bool instanceOf() {
+        if (dynamic_cast<Characteristic*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    /**
+     * @brief Checks if the current Characteristic is of type const CharacteristicType
+     * @tparam Characteristic
+     * @return bool true if node is of Characteristic
+     */
+    template<class Characteristic>
+    bool instanceOf() const {
+        if (dynamic_cast<const Characteristic*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if equal otherwise false
+     */
+    virtual bool operator==(const Characteristic& rhs) const { return (*type) == (*rhs.type); };
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if NOT equal otherwise false
+     */
+    virtual bool operator!=(const Characteristic& rhs) const { return !(*this == rhs); };
+
+    /**
+     * @brief Computes a hash for this characteristic
+     * @return std::size_t
+     */
+    virtual std::size_t hash() const = 0;
+
+    /**
+     * @brief Creates a string representation
+     * @return std::string
+     */
+    virtual std::string toString() const = 0;
+
+    /**
+     * @brief Virtual deconstructor
+     */
+    virtual ~Characteristic() = default;
 
   protected:
-    Metric type;
+    MetricPtr type;
 };
 
 }// namespace NES::Statistic

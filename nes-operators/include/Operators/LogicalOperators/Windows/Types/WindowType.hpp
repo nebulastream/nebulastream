@@ -54,7 +54,7 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
         return nullptr;
     }
 
-    virtual std::string toString() = 0;
+    virtual std::string toString() const = 0;
 
     /**
      * @brief Check equality of this window type with the input window type
@@ -69,6 +69,12 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
      * @return true if success else false
      */
     virtual bool inferStamp(const SchemaPtr& schema) = 0;
+
+    // TODO this will be implemented for all window types with issue #4624
+    virtual std::size_t hash() const {
+        const auto str = toString();
+        return std::hash<std::string>()(str);
+    };
 };
 
 }// namespace NES::Windowing

@@ -23,20 +23,48 @@ namespace NES::Statistic {
  */
 class InfrastructureStatistic : public Characteristic {
   public:
+
     /**
-     * @brief Creates an InfrastructureCharacteristic
-     * @param type
-     * @param nodeId
+     * @brief Creates a InfrastructureStatistic
+     * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
+     * @param nodeId: Id of the node to collect the statistic
+     * @return CharacteristicPtr
      */
-    InfrastructureStatistic(Metric type, WorkerId nodeId) : Characteristic(type), nodeId(nodeId) {}
+    static CharacteristicPtr create(MetricPtr type, WorkerId nodeId);
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if equal otherwise false
+     */
+    bool operator==(const Characteristic& rhs) const override;
+
+    /**
+     * @brief Implementing a hash method
+     * @return Hash
+     */
+    size_t hash() const override;
+
+    /**
+     * @brief Creates a string representation
+     * @return std::string
+     */
+    std::string toString() const override;
 
     /**
      * @brief Gets the nodeId
      * @return WorkerId
      */
-    WorkerId getNodeId() const { return nodeId; }
+    WorkerId getNodeId() const;
 
   private:
+    /**
+     * @brief Creates an InfrastructureCharacteristic
+     * @param type
+     * @param nodeId
+     */
+    InfrastructureStatistic(const MetricPtr type, const WorkerId nodeId);
+
     WorkerId nodeId;
 };
 }// namespace NES::Statistic

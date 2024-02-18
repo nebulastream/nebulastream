@@ -25,26 +25,53 @@ class WorkloadCharacteristic : public Characteristic {
   public:
     /**
      * @brief Creates a WorkloadCharacteristic
-     * @param type
-     * @param queryId
-     * @param operatorId
+     * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
+     * @param queryId: Query to collect the statistics for
+     * @param operatorId: Operator to collect the statistics for
+     * @return CharacteristicPtr
      */
-    WorkloadCharacteristic(Metric type, QueryId queryId, OperatorId operatorId)
-        : Characteristic(type), queryId(queryId), operatorId(operatorId) {}
+    static CharacteristicPtr create(MetricPtr type, QueryId queryId, OperatorId operatorId);
 
     /**
      * @brief Gets the queryId
      * @return QueryId
      */
-    QueryId getQueryId() const { return queryId; }
+    QueryId getQueryId() const;
 
     /**
      * @brief Gets the operatorId
      * @return OperatorId
      */
-    OperatorId getOperatorId() const { return operatorId; }
+    OperatorId getOperatorId() const;
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if equal otherwise false
+     */
+    bool operator==(const Characteristic& rhs) const override;
+
+    /**
+     * @brief Implementing a hash method
+     * @return Hash
+     */
+    size_t hash() const override;
+
+    /**
+     * @brief Creates a string representation
+     * @return std::string
+     */
+    std::string toString() const override;
 
   private:
+    /**
+     * @brief Creates a WorkloadCharacteristic
+     * @param type
+     * @param queryId
+     * @param operatorId
+     */
+    WorkloadCharacteristic(MetricPtr type, QueryId queryId, OperatorId operatorId);
+
     QueryId queryId;
     OperatorId operatorId;
 };

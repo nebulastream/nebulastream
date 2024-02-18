@@ -36,7 +36,7 @@ class SlidingWindow : public TimeBasedWindowType {
     */
     TimeMeasure getSlide() override;
 
-    std::string toString() override;
+    std::string toString() const override;
 
     bool equal(WindowTypePtr otherWindowType) override;
 

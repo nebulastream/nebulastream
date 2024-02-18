@@ -11,11 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Characteristic)
-add_subdirectory(Statistic)
-add_subdirectory(StatisticRegistry)
-add_subdirectory(TriggerCondition)
-
 add_source_files(nes-coordinator
-        StatisticCoordinator.cpp
+        BufferRate.cpp
+        Cardinality.cpp
+        IngestionRate.cpp
+        MinVal.cpp
+        Selectivity.cpp
 )

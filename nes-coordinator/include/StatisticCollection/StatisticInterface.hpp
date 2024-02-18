@@ -35,11 +35,11 @@ class StatisticInterface {
      * @param sendingPolicy
      * @param callBack
      */
-    virtual void trackStatistic(const Characteristic& characteristic,
+    virtual void trackStatistic(const CharacteristicPtr& characteristic,
                                 const Windowing::WindowTypePtr& window,
                                 const TriggerCondition& triggerCondition,
                                 const SendingPolicy& sendingPolicy,
-                                std::function<void(Characteristic)>&& callBack) = 0;
+                                std::function<void(CharacteristicPtr)>&& callBack) = 0;
 
     /**
      * @brief Creates a request to probe a specific statistic and returns the statistic in a ProbeResult
@@ -50,7 +50,7 @@ class StatisticInterface {
      * @param aggFunction
      * @return ProbeResult
      */
-    virtual ProbeResult<> probeStatistic(const Characteristic& characteristic,
+    virtual ProbeResult<> probeStatistic(const CharacteristicPtr& characteristic,
                                          const Windowing::TimeMeasure& period,
                                          const Windowing::TimeMeasure& granularity,
                                          const bool& estimationAllowed,

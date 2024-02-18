@@ -25,32 +25,63 @@ namespace NES::Statistic {
  */
 class DataCharacteristic : public Characteristic {
   public:
+
     /**
      * @brief Creates a DataCharacteristic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
-     * @param logicalStreamName: Logical stream name to collect the statistics
-     * @param physicalStreamNames: If set to {}, then all physical streams are being selected
+     * @param logicalSourceName: Logical stream name to collect the statistics
+     * @param physicalSourceNames: If set to {}, then all physical streams are being selected
+     * @return CharacteristicPtr
      */
-    DataCharacteristic(Metric type,
-                       const std::string& logicalStreamName,
-                       const std::initializer_list<std::string>& physicalStreamNames = {})
-        : Characteristic(type), logicalStreamName(logicalStreamName), physicalStreamNames(physicalStreamNames) {}
+    static CharacteristicPtr create(MetricPtr type,
+                                    const std::string& logicalSourceName,
+                                    const std::initializer_list<std::string>& physicalSourceNames = {});
 
     /**
      * @brief Gets the logical stream name
      * @return std::string
      */
-    std::string getLogicalStreamName() const { return logicalStreamName; }
+    std::string getLogicalSourceName() const;
 
     /**
      * @brief Gets the physical stream names
      * @return std::vector<std::string>
      */
-    std::vector<std::string> getPhysicalStreamNames() const { return physicalStreamNames; }
+    std::vector<std::string> getPhysicalSourceNames() const;
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if equal otherwise false
+     */
+    bool operator==(const Characteristic& rhs) const override;
+
+    /**
+     * @brief Creates a string representation
+     * @return std::string
+     */
+    std::string toString() const override;
+
+    /**
+     * @brief Implementing a hash method
+     * @return Hash
+     */
+    size_t hash() const override;
 
   private:
-    std::string logicalStreamName;
-    std::vector<std::string> physicalStreamNames;
+    /**
+     * @brief Creates a DataCharacteristic
+     * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
+     * @param logicalSourceName: Logical stream name to collect the statistics
+     * @param physicalSourceNames: If set to {}, then all physical streams are being selected
+     */
+    DataCharacteristic(MetricPtr type,
+                       const std::string& logicalSourceName,
+                       const std::initializer_list<std::string>& physicalSourceNames = {});
+
+
+    std::string logicalSourceName;
+    std::vector<std::string> physicalSourceNames;
 };
 }// namespace NES::Statistic
 
