@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.52](https://github.com/nebulastream/nebulastream/tree/v0.6.52) (2024-02-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.51...v0.6.52)
+
+**Implemented enhancements:**
+
+- \[TASK\] Statistic Registry [\#4607](https://github.com/nebulastream/nebulastream/issues/4607)
+
 ## [v0.6.51](https://github.com/nebulastream/nebulastream/tree/v0.6.51) (2024-02-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.50...v0.6.51)
