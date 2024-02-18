@@ -45,13 +45,11 @@ void StatisticRegistry::queryStopped(const StatisticKey statisticKey) {
     (*lockedMap)[statisticKey]->stoppedQuery();
 }
 
-void StatisticRegistry::clear() {
-    (*keyToStatisticInfo.wlock()).clear();
-}
+void StatisticRegistry::clear() { (*keyToStatisticInfo.wlock()).clear(); }
 
 bool StatisticRegistry::isRunning(const StatisticKey statisticKey) const {
     auto lockedMap = keyToStatisticInfo.rlock();
     return (*lockedMap).at(statisticKey)->isRunning();
 }
 
-} // namespace NES::Statistic
+}// namespace NES::Statistic

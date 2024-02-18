@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <StatisticCollection/Statistic/Metric/Selectivity.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
+#include <StatisticCollection/Statistic/Metric/Selectivity.hpp>
 
 namespace NES::Statistic {
 MetricPtr Selectivity::create(const ExpressionNodePtr& expressionNode) {

@@ -26,15 +26,12 @@ OperatorId WorkloadCharacteristic::getOperatorId() const { return operatorId; }
 bool WorkloadCharacteristic::operator==(const Characteristic& rhs) const {
     if (this->Characteristic::operator==(rhs) && rhs.instanceOf<WorkloadCharacteristic>()) {
         auto rhsWorkloadCharacteristic = dynamic_cast<const WorkloadCharacteristic&>(rhs);
-        return queryId == rhsWorkloadCharacteristic.queryId
-            && operatorId == rhsWorkloadCharacteristic.operatorId;
+        return queryId == rhsWorkloadCharacteristic.queryId && operatorId == rhsWorkloadCharacteristic.operatorId;
     }
     return false;
 }
 
-size_t WorkloadCharacteristic::hash() const {
-    return std::hash<QueryId>{}(queryId) ^ std::hash<OperatorId>{}(operatorId);
-}
+size_t WorkloadCharacteristic::hash() const { return std::hash<QueryId>{}(queryId) ^ std::hash<OperatorId>{}(operatorId); }
 
 std::string WorkloadCharacteristic::toString() const {
     return "{ QueryId: " + std::to_string(queryId) + " OperatorId: " + std::to_string(operatorId) + " }";

@@ -52,7 +52,6 @@ class MinVal : public Metric {
     const std::string fieldName;
 };
 
-
 }// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_

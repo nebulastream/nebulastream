@@ -45,7 +45,7 @@ class Metric {
      * @return bool true if node is of Metric
      */
     template<class Metric>
-    bool instanceOf()  {
+    bool instanceOf() {
         if (dynamic_cast<Metric*>(this)) {
             return true;
         }

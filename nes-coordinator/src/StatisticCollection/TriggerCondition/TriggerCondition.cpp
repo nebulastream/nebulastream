@@ -13,8 +13,4 @@
 */
 #include <StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 
-namespace NES::Statistic {
-
-
-
-} // namespace NES::Statistic
+namespace NES::Statistic {}// namespace NES::Statistic

@@ -16,9 +16,7 @@
 
 namespace NES::Statistic {
 
-MetricPtr Cardinality::create(const std::string& fieldName) {
-    return std::make_shared<Cardinality>(Cardinality(fieldName));
-}
+MetricPtr Cardinality::create(const std::string& fieldName) { return std::make_shared<Cardinality>(Cardinality(fieldName)); }
 
 bool Cardinality::operator==(const Metric& rhs) const {
     if (rhs.instanceOf<Cardinality>()) {

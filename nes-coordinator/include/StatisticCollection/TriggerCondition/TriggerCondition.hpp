@@ -48,7 +48,7 @@ class TriggerCondition {
      * @return bool true if node is of TriggerCondition
      */
     template<class TriggerCondition>
-    bool instanceOf()  {
+    bool instanceOf() {
         if (dynamic_cast<TriggerCondition*>(this)) {
             return true;
         }

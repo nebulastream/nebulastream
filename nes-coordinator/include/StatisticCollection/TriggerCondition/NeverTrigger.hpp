@@ -19,7 +19,6 @@
 
 namespace NES::Statistic {
 
-
 /**
  * @brief Never triggers. Used as a default, if the user does not provide a trigger
  */

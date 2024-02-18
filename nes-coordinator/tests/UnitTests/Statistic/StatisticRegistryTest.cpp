@@ -14,9 +14,9 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/Statistic/Metric/IngestionRate.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -33,9 +33,7 @@ class StatisticRegistryTest : public Testing::BaseUnitTest {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
-        NES::Testing::BaseUnitTest::SetUp();
-    }
+    void SetUp() override { NES::Testing::BaseUnitTest::SetUp(); }
 
     static void TearDownTestCase() {}
 };
@@ -52,13 +50,10 @@ std::vector<Statistic::StatisticKey> createRandomStatisticKey(const uint64_t num
 std::vector<Statistic::StatisticInfo> createRandomStatisticInfo(const uint64_t numberOfInfos) {
     std::vector<Statistic::StatisticInfo> randomInfos;
     for (auto i = 0_u64; i < numberOfInfos; ++i) {
-        randomInfos.emplace_back(Statistic::NeverTrigger::create(),
-                                 nullptr, rand());
+        randomInfos.emplace_back(Statistic::NeverTrigger::create(), nullptr, rand());
     }
     return randomInfos;
 }
-
-
 
 /**
  * @brief This tests checks, if we can insert and retrieve one statistic
@@ -97,34 +92,34 @@ TEST_F(StatisticRegistryTest, multipleStatisticsTest) {
 /**
  * @brief This tests checks, if we can insert and retrieve multiple statistics concurrently.
  */
- TEST_F(StatisticRegistryTest, complexConcurrentStatisticsTest) {
-     constexpr auto NUMBER_OF_ENTRIES = 10000;
-     constexpr auto NUMBER_OF_THREADS = 16;
+TEST_F(StatisticRegistryTest, complexConcurrentStatisticsTest) {
+    constexpr auto NUMBER_OF_ENTRIES = 10000;
+    constexpr auto NUMBER_OF_THREADS = 16;
 
-     auto statisticKeys = createRandomStatisticKey(NUMBER_OF_ENTRIES);
-     auto statisticInfos = createRandomStatisticInfo(NUMBER_OF_ENTRIES);
-     Statistic::StatisticRegistry statisticRegistry;
+    auto statisticKeys = createRandomStatisticKey(NUMBER_OF_ENTRIES);
+    auto statisticInfos = createRandomStatisticInfo(NUMBER_OF_ENTRIES);
+    Statistic::StatisticRegistry statisticRegistry;
 
-     std::vector<std::thread> allThreads;
-     std::atomic<uint64_t> currentPos = 0;
-     for (auto threadId = 0; threadId < NUMBER_OF_THREADS; ++threadId) {
+    std::vector<std::thread> allThreads;
+    std::atomic<uint64_t> currentPos = 0;
+    for (auto threadId = 0; threadId < NUMBER_OF_THREADS; ++threadId) {
         allThreads.emplace_back([&currentPos, &statisticKeys, &statisticRegistry, &statisticInfos]() {
             auto nextUpdatePos = 0_u64;
             while ((nextUpdatePos = currentPos++) < NUMBER_OF_ENTRIES) {
                 statisticRegistry.insert(statisticKeys[nextUpdatePos], statisticInfos[nextUpdatePos]);
             }
-         });
-     }
+        });
+    }
 
-     // Waiting till all threads are done
-     for (auto& thread : allThreads) {
-         thread.join();
-     }
+    // Waiting till all threads are done
+    for (auto& thread : allThreads) {
+        thread.join();
+    }
 
-     // Comparing output
-     for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i) {
-         auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(statisticKeys[i]);
-         ASSERT_EQ((**returnedStatisticInfo), statisticInfos[i]);
-     }
- }
-} // namespace NES
+    // Comparing output
+    for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i) {
+        auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(statisticKeys[i]);
+        ASSERT_EQ((**returnedStatisticInfo), statisticInfos[i]);
+    }
+}
+}// namespace NES

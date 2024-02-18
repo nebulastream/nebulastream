@@ -25,7 +25,6 @@ namespace NES::Statistic {
  */
 class DataCharacteristic : public Characteristic {
   public:
-
     /**
      * @brief Creates a DataCharacteristic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
@@ -78,7 +77,6 @@ class DataCharacteristic : public Characteristic {
     DataCharacteristic(MetricPtr type,
                        const std::string& logicalSourceName,
                        const std::initializer_list<std::string>& physicalSourceNames = {});
-
 
     std::string logicalSourceName;
     std::vector<std::string> physicalSourceNames;

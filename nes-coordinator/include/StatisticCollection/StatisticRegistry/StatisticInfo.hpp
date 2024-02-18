@@ -16,11 +16,10 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICINFO_HPP_
 
 #include <Identifiers.hpp>
-#include <StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
-#include <functional>
+#include <StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <folly/Synchronized.h>
-
+#include <functional>
 
 namespace NES::Statistic {
 
@@ -37,7 +36,8 @@ class StatisticInfo {
      * @param callBack
      * @param queryId
      */
-    StatisticInfo(const TriggerConditionPtr triggerCondition, const std::function<void(CharacteristicPtr)>&& callBack,
+    StatisticInfo(const TriggerConditionPtr triggerCondition,
+                  const std::function<void(CharacteristicPtr)>&& callBack,
                   const QueryId& queryId);
 
     /**
@@ -101,7 +101,6 @@ class StatisticInfo {
     QueryId queryId;
 };
 using StatisticInfoWLock = std::shared_ptr<folly::Synchronized<StatisticInfo>::WLockedPtr>;
-
 
 }// namespace NES::Statistic
 

@@ -69,7 +69,6 @@ class StatisticKey {
      */
     std::string toString() const;
 
-
   private:
     const CharacteristicPtr characteristic;
     const Windowing::WindowTypePtr window;
@@ -79,11 +78,9 @@ class StatisticKey {
  * @brief Necessary for unordered_map with StatisticKey as the key
  */
 struct StatisticKeyHash {
-    std::size_t operator()(const StatisticKey& key) const {
-        return key.hash();
-    }
+    std::size_t operator()(const StatisticKey& key) const { return key.hash(); }
 };
 
-}// NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICKEY_HPP_
