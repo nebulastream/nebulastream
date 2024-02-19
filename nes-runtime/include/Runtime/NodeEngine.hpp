@@ -384,6 +384,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     OpenCLManagerPtr openCLManager;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;
+    mutable std::recursive_mutex compilationMutex;
     [[maybe_unused]] uint64_t nodeEngineId;
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;

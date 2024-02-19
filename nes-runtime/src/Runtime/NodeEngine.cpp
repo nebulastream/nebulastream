@@ -105,7 +105,6 @@ bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr
 }
 
 bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
-    std::unique_lock lock(engineMutex);
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
 
@@ -113,6 +112,7 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
              sharedQueryId,
              decomposedQueryPlanId);
 
+    std::unique_lock lock(compilationMutex);
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, inherited1::shared_from_this());
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
