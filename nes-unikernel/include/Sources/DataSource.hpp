@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
 
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
