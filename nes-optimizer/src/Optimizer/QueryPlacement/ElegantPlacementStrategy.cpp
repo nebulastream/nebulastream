@@ -298,7 +298,8 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             node[OPERATOR_ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_WORKER_ID);
             bool isPinned = pinnedNodeId.has_value();
-            bool isCPUOnly = !logicalOperator->instanceOf<MapUDFLogicalOperatorNode>();
+            bool isCPUOnly = !logicalOperator->instanceOf<MapUDFLogicalOperatorNode>() &&
+                !logicalOperator->instanceOf<OpenCLLogicalOperatorNode>();
             if (isPinned && isCPUOnly) {
                 node[CONSTRAINT_KEY] = std::to_string(std::any_cast<WorkerId>(pinnedNodeId)) + "-CPU";
             } else if (isPinned) {
