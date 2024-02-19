@@ -263,8 +263,8 @@ Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventCh
         return nullptr;
     }
     //blocking wait on get
-    auto channel = iteratorOperatorId->second.first.get();
     iteratorOperatorId->second.second.set_value(true);
+    auto channel = iteratorOperatorId->second.first.get();
     reverseEventChannelFutures.erase(iteratorOperatorId);
     return channel;
 }
