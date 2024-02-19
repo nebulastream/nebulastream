@@ -97,7 +97,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
                 properties["ml_hardware"] = true;
             }
 
-            topology->registerTopologyNode(workerId, "localhost", 123, 124, resources[i], properties);
+            topology->registerWorker(workerId, "localhost", 123, 124, resources[i], properties, 0, 0);
             if (i == 0) {
                 topology->setRootTopologyNodeId(workerId);
             } else {

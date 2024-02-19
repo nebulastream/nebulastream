@@ -18,7 +18,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -52,7 +51,6 @@ using std::filesystem::directory_iterator;
 std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
 
-TopologyManagerServicePtr topologyManagerService;
 TopologyPtr topology;
 SourceCatalogServicePtr sourceCatalogService;
 Catalogs::Source::SourceCatalogPtr sourceCatalog;
@@ -158,15 +156,14 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     topology = Topology::create();
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
     //Register root worker
-    topologyManagerService
+    topology
         ->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties, bandwidthInMbps, latencyInMs);
     //register child workers
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID,
+        topology->registerWorker(INVALID_WORKER_NODE_ID,
                                                std::to_string(i),
                                                0,
                                                0,
@@ -176,18 +173,18 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
                                                latencyInMs);
     }
 
-    topologyManagerService->addLinkProperty(1, 2, 512, 100);
-    topologyManagerService->addLinkProperty(2, 3, 512, 100);
-    topologyManagerService->addLinkProperty(3, 4, 512, 100);
-    topologyManagerService->addLinkProperty(4, 5, 512, 100);
-    topologyManagerService->addTopologyNodeAsChild(3, 2);
-    topologyManagerService->removeTopologyNodeAsChild(3, 1);
+    topology->addLinkProperty(1, 2, 512, 100);
+    topology->addLinkProperty(2, 3, 512, 100);
+    topology->addLinkProperty(3, 4, 512, 100);
+    topology->addLinkProperty(4, 5, 512, 100);
+    topology->addTopologyNodeAsChild(3, 2);
+    topology->removeTopologyNodeAsChild(3, 1);
 
-    topologyManagerService->addTopologyNodeAsChild(4, 3);
-    topologyManagerService->removeTopologyNodeAsChild(4, 1);
+    topology->addTopologyNodeAsChild(4, 3);
+    topology->removeTopologyNodeAsChild(4, 1);
 
-    topologyManagerService->addTopologyNodeAsChild(5, 4);
-    topologyManagerService->removeTopologyNodeAsChild(5, 1);
+    topology->addTopologyNodeAsChild(5, 4);
+    topology->removeTopologyNodeAsChild(5, 1);
 }
 
 /**

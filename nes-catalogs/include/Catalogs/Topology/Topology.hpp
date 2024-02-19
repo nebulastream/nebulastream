@@ -88,14 +88,18 @@ class Topology {
      * @param dataPort : data post
      * @param numberOfSlots : number of slots
      * @param workerProperties : the properties
-     * @return true if successful
+     * @param bandwidthInMbps: bandwidth in Mbps
+     * @param latencyInMs: latency in ms
+     * @return worker id
      */
-    bool registerTopologyNode(WorkerId workerId,
-                              const std::string& address,
-                              const int64_t grpcPort,
-                              const int64_t dataPort,
-                              const uint16_t numberOfSlots,
-                              std::map<std::string, std::any> workerProperties);
+    WorkerId registerWorker(WorkerId workerId,
+                                  const std::string& address,
+                                  const int64_t grpcPort,
+                                  const int64_t dataPort,
+                                  const uint16_t numberOfSlots,
+                                  std::map<std::string, std::any> workerProperties,
+                                  uint32_t bandwidthInMbps,
+                                  uint32_t latencyInMs);
 
     /**
      * @brief returns a vector of parent topology node ids connected to the specified topology node
@@ -118,7 +122,7 @@ class Topology {
      * @param topologyNodeId : the node to be removed
      * @return true if successful
      */
-    bool removeTopologyNode(WorkerId topologyNodeId);
+    bool unregisterWorker(WorkerId topologyNodeId);
 
     /**
      * @brief Remove links between two nodes
@@ -248,13 +252,6 @@ class Topology {
     NES::Spatial::Experimental::SpatialType getSpatialType(WorkerId workerId);
 
     /**
-     * Remove geolocation of worker node
-     * @param workerId : worker id whose location is to be removed
-     * @return true if successful
-     */
-    bool removeGeoLocation(WorkerId workerId);
-
-    /**
      * @brief: Prepare the topology payload for the elegant placement service
      * @param json representing the payload
      */
@@ -380,11 +377,18 @@ class Topology {
     TopologyNodePtr
     find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<WorkerId, TopologyNodePtr>& uniqueNodes);
 
+    /**
+     * @brief method to generate the next (monotonically increasing) topology node id
+     * @return next topology node id
+     */
+    WorkerId getNextWorkerId();
+
     //TODO: At present we assume that we have only one root node
     WorkerId rootWorkerId;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
+    std::atomic_uint64_t topologyNodeIdCounter = 0;
 };
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

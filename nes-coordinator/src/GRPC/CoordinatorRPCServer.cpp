@@ -14,7 +14,7 @@
 
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
@@ -65,13 +65,13 @@ void deserializeOpenCLDeviceInfo(std::any& property,
 }
 
 CoordinatorRPCServer::CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
-                                           TopologyManagerServicePtr topologyManagerService,
+                                           TopologyPtr topology,
                                            SourceCatalogServicePtr sourceCatalogService,
                                            Catalogs::Query::QueryCatalogPtr queryCatalog,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            QueryParsingServicePtr queryParsingService,
                                            CoordinatorHealthCheckServicePtr coordinatorHealthCheckService)
-    : requestHandlerService(std::move(requestHandlerService)), topologyManagerService(std::move(topologyManagerService)),
+    : requestHandlerService(std::move(requestHandlerService)), topology(std::move(topology)),
       sourceCatalogService(std::move(sourceCatalogService)), queryCatalog(std::move(queryCatalog)),
       monitoringManager(std::move(monitoringManager)), queryParsingService(std::move(queryParsingService)),
       coordinatorHealthCheckService(std::move(coordinatorHealthCheckService)){};
@@ -106,20 +106,20 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
         NES_TRACE("TopologyManagerService::registerWorker: node with worker id {} is re-registering", configWorkerId);
         coordinatorHealthCheckService->removeNodeFromHealthCheck(configWorkerId);
         // Remove the old topology node
-        topologyManagerService->removeTopologyNode(configWorkerId);
+        topology->unregisterWorker(configWorkerId);
     } else {
         configWorkerId = INVALID_WORKER_NODE_ID;
     }
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
     WorkerId workerId =
-        topologyManagerService
+        topology
             ->registerWorker(configWorkerId, address, grpcPort, dataPort, slots, workerProperties, bandwidthInMbps, latencyInMs);
 
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
                                                                    registrationRequest->waypoint().geolocation().lng());
 
-    if (!topologyManagerService->addGeoLocation(workerId, std::move(geoLocation))) {
+    if (!topology->addGeoLocation(workerId, std::move(geoLocation))) {
         NES_ERROR("Unable to update geo location of the topology");
         reply->set_workerid(0);
         return Status::CANCELLED;
@@ -152,27 +152,21 @@ CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerReq
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request ={}", request->DebugString());
 
     google::protobuf::uint64 workerId = request->workerid();
-    if (topologyManagerService->topologyNodeWithIdExists(workerId)) {
-        if (!topologyManagerService->unregisterNode(workerId)) {
-            NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
-            reply->set_success(false);
-            return Status::CANCELLED;
-        }
-
-        if (coordinatorHealthCheckService) {
-            //remove node to health check
-            coordinatorHealthCheckService->removeNodeFromHealthCheck(workerId);
-        }
-
-        monitoringManager->removeMonitoringNode(workerId);
-        NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
-        reply->set_success(true);
-        return Status::OK;
-    } else {
-        NES_ERROR("CoordinatorRPCServer::UnregisterNode: Node with id {} does not exists.", workerId);
+    if (!topology->unregisterWorker(workerId)) {
+        NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
         reply->set_success(false);
         return Status::CANCELLED;
     }
+
+    if (coordinatorHealthCheckService) {
+        //remove node to health check
+        coordinatorHealthCheckService->removeNodeFromHealthCheck(workerId);
+    }
+
+    monitoringManager->removeMonitoringNode(workerId);
+    NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
+    reply->set_success(true);
+    return Status::OK;
 }
 
 Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
@@ -250,7 +244,7 @@ Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
 Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* request, AddParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::AddParent: request = {}", request->DebugString());
 
-    bool success = topologyManagerService->addTopologyNodeAsChild(request->parentid(), request->childid());
+    bool success = topology->addTopologyNodeAsChild(request->parentid(), request->childid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::AddParent success");
         reply->set_success(true);
@@ -264,10 +258,10 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request = {}", request->DebugString());
 
-    bool success = topologyManagerService->removeTopologyNodeAsChild(request->oldparent(), request->childid());
+    bool success = topology->removeTopologyNodeAsChild(request->oldparent(), request->childid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::ReplaceParent success removeAsParent");
-        bool success2 = topologyManagerService->addTopologyNodeAsChild(request->newparent(), request->childid());
+        bool success2 = topology->addTopologyNodeAsChild(request->newparent(), request->childid());
         if (success2) {
             NES_DEBUG("CoordinatorRPCServer::ReplaceParent success addParent topo=");
             reply->set_success(true);
@@ -287,7 +281,7 @@ Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRe
 Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequest* request, RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request = {}", request->DebugString());
 
-    bool success = topologyManagerService->removeTopologyNodeAsChild(request->parentid(), request->childid());
+    bool success = topology->removeTopologyNodeAsChild(request->parentid(), request->childid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
         reply->set_success(true);
@@ -333,9 +327,8 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
     std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>> inRange =
-        topologyManagerService->getTopologyNodeIdsInRange(
-            NES::Spatial::DataTypes::Experimental::GeoLocation(request->geolocation()),
-            request->radius());
+        topology->getTopologyNodeIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation(request->geolocation()),
+                                            request->radius());
 
     for (auto elem : inRange) {
         NES::Spatial::Protobuf::WorkerLocationInfo* workerInfo = reply->add_nodes();
@@ -456,7 +449,7 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
               timestamp);
     //todo #2862: update coordinator trajectory prediction
     auto geoLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates);
-    if (!topologyManagerService->updateGeoLocation(request->workerid(), std::move(geoLocation))) {
+    if (!topology->updateGeoLocation(request->workerid(), std::move(geoLocation))) {
         reply->set_success(true);
         return Status::OK;
     }
@@ -466,9 +459,9 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
 
 Status CoordinatorRPCServer::GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) {
     auto nodeId = request->nodeid();
-    if (topologyManagerService->topologyNodeWithIdExists(nodeId)) {
+    auto parentIds = topology->getParentTopologyNodeIds(nodeId);
+    if (parentIds.empty()) {
         auto replyParents = reply->mutable_parentids();
-        auto parentIds = topologyManagerService->getParentTopologyNodeIds(nodeId);
         replyParents->Reserve(parentIds.size());
         for (const auto& parentId : parentIds) {
             auto newId = replyParents->Add();

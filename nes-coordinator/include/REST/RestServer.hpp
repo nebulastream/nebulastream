@@ -84,7 +84,7 @@ class RestServer {
      * @param coordinator
      * @param queryCatalog
      * @param sourceCatalogService
-     * @param topologyManagerService
+     * @param topology
      * @param globalExecutionPlan
      * @param requestHandlerService
      * @param monitoringService
@@ -99,7 +99,7 @@ class RestServer {
                NesCoordinatorWeakPtr coordinator,
                Catalogs::Query::QueryCatalogPtr queryCatalog,
                SourceCatalogServicePtr sourceCatalogService,
-               TopologyManagerServicePtr topologyManagerService,
+               TopologyPtr topology,
                Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                RequestHandlerServicePtr requestHandlerService,
                MonitoringServicePtr monitoringService,
@@ -136,7 +136,7 @@ class RestServer {
     RequestHandlerServicePtr requestHandlerService;
     GlobalQueryPlanPtr globalQueryPlan;
     SourceCatalogServicePtr sourceCatalogService;
-    TopologyManagerServicePtr topologyManagerService;
+    TopologyPtr topology;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     MonitoringServicePtr monitoringService;
     QueryParsingServicePtr queryParsingService;

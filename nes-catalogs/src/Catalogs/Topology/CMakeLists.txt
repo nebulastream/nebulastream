@@ -14,7 +14,6 @@
 add_source_files(nes-catalogs
         AbstractHealthCheckService.cpp
         PathFinder.cpp
-        TopologyManagerService.cpp
         TopologyNode.cpp
         Topology.cpp
 )

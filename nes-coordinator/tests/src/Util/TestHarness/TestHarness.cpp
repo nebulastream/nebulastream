@@ -15,7 +15,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -378,12 +378,12 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         workerConf->setQueryStatusListener(nesWorker);
     }
 
-    auto topologyManagerService = nesCoordinator->getTopologyManagerService();
+    auto topology = nesCoordinator->getTopology();
 
     auto start_timestamp = std::chrono::system_clock::now();
 
     for (const auto& workerId : workerIds) {
-        while (!topologyManagerService->topologyNodeWithIdExists(workerId)) {
+        while (!topology->nodeWithWorkerIdExists(workerId)) {
             if (std::chrono::system_clock::now() > start_timestamp + SETUP_TIMEOUT_IN_SEC) {
                 NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find setup topology in given timeout.");
             }

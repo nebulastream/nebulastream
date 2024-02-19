@@ -73,7 +73,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
         int rootNodeId = 1;
         topology = Topology::create();
-        topology->registerTopologyNode(rootNodeId, "localhost", 4000, 4002, 4, properties);
+        topology->registerWorker(rootNodeId, "localhost", 4000, 4002, 4, properties, 0, 0);
         topology->setRootTopologyNodeId(rootNodeId);
         auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
         auto physicalSource = PhysicalSource::create(defaultSourceType);

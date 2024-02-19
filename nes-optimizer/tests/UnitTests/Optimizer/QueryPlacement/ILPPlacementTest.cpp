@@ -91,17 +91,17 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         properties["slots"] = 100;
 
         WorkerId rootNodeId = 1;
-        topologyForILP->registerTopologyNode(rootNodeId, "localhost", 123, 124, 100, properties);
+        topologyForILP->registerWorker(rootNodeId, "localhost", 123, 124, 100, properties, 0,0);
         topologyForILP->setRootTopologyNodeId(rootNodeId);
 
         WorkerId middleNodeId = 2;
         properties["slots"] = 10;
-        topologyForILP->registerTopologyNode(middleNodeId, "localhost", 123, 124, 10, properties);
+        topologyForILP->registerWorker(middleNodeId, "localhost", 123, 124, 10, properties, 0,0);
         topologyForILP->addTopologyNodeAsChild(rootNodeId, middleNodeId);
 
         WorkerId srcNodeId = 3;
         properties["slots"] = 1;
-        topologyForILP->registerTopologyNode(srcNodeId, "localhost", 123, 124, 1, properties);
+        topologyForILP->registerWorker(srcNodeId, "localhost", 123, 124, 1, properties, 0,0);
         topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
         topologyForILP->addLinkProperty(middleNodeId, srcNodeId, 512, 100);
