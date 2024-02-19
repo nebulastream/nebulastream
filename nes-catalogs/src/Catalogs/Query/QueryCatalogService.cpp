@@ -309,7 +309,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                     }
                     NES_ASSERT(querySubPlanStatus == QueryState::RUNNING || querySubPlanStatus == QueryState::SOFT_STOP_COMPLETED
                                    || querySubPlanStatus == QueryState::MIGRATION_COMPLETED
-                                   || querySubPlanStatus == QueryState::REDEPLOYED || querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED,
+                                   || querySubPlanStatus == QueryState::REDEPLOYED || querySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED || querySubPlanStatus == QueryState::DEPLOYED,
                                "Unexpected subplan status: " << magic_enum::enum_name(querySubPlanStatus));
                 }
                 if (queryMigrationComplete) {
