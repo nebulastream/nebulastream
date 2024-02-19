@@ -196,12 +196,12 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             }
 
             if (networkManager->getConnectSourceEventChannelsAsync()) {
-//                auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
-//                                                                                            nesPartition,
-//                                                                                            localBufferManager,
-//                                                                                            waitTime,
-//                                                                                            retryTimes);
-//                workerContext.storeEventChannelFuture(uniqueNetworkSourceIdentifier, std::move(channelFuture));
+                auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
+                                                                                            nesPartition,
+                                                                                            localBufferManager,
+                                                                                            waitTime,
+                                                                                            retryTimes);
+                workerContext.storeEventChannelFuture(uniqueNetworkSourceIdentifier, std::move(channelFuture));
                 break;
             } else {
                 auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
@@ -258,10 +258,10 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     if (isTermination) {
         if (!workerContext.doesEventChannelExist(uniqueNetworkSourceIdentifier)) {
             //todo #4490: allow aborting connection here
-//            auto channel = workerContext.waitForAsyncConnectionEventChannel(uniqueNetworkSourceIdentifier);
-//            if (channel) {
-//                channel->close(terminationType);
-//            }
+            auto channel = workerContext.waitForAsyncConnectionEventChannel(uniqueNetworkSourceIdentifier);
+            if (channel) {
+                channel->close(terminationType);
+            }
             return;
         }
         //workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
