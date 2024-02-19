@@ -251,8 +251,8 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId
     }
     auto& [futureReference, promiseReference] = iteratorOperatorId->second.value();
     //blocking wait on get
-    auto channel = futureReference.get();
     promiseReference.set_value(true);
+    auto channel = futureReference.get();
     dataChannelFutures.erase(iteratorOperatorId);
     return channel;
 }
