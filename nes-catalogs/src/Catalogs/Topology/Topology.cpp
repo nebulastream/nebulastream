@@ -68,6 +68,7 @@ WorkerId Topology::registerWorker(WorkerId workerId,
             TopologyNode::create(workerId, address, grpcPort, dataPort, numberOfSlots, workerProperties);
         NES_INFO("Adding New Node {} to the catalog of nodes.", newTopologyNode->toString());
         (*lockedWorkerIdToTopologyNodeMap)[workerId] = newTopologyNode;
+        lockedWorkerIdToTopologyNodeMap.unlock();
         NES_DEBUG("TopologyManagerService::registerWorker: register node");
         auto rootTopologyNodeId = getRootTopologyNodeId();
         if (rootTopologyNodeId == INVALID_WORKER_NODE_ID) {
@@ -78,7 +79,6 @@ WorkerId Topology::registerWorker(WorkerId workerId,
             addTopologyNodeAsChild(rootTopologyNodeId, workerId);
             addLinkProperty(rootTopologyNodeId, workerId, bandwidthInMbps, latencyInMs);
         }
-
         NES_DEBUG("TopologyManagerService::registerWorker: topology after insert {} ", toString());
         return workerId;
     }
