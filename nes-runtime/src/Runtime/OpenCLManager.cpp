@@ -186,6 +186,7 @@ OpenCLManager::OpenCLManager() {
             auto [platformVendor, platformName] = retrieveOpenCLPlatformInfo(platformId);
             NES_DEBUG("Found OpenCL platform: {} {}", platformVendor, platformName);
             auto devices = retrieveOpenCLDevices(platformId);
+            unsigned deviceId = 0;
             for (const auto& device : devices) {
                 auto deviceName = retrieveOpenCLDeviceInfo<char[], std::string>(device, CL_DEVICE_NAME, "CL_DEVICE_NAME");
                 auto deviceAddressBits =
@@ -218,7 +219,8 @@ OpenCLManager::OpenCLManager() {
                          globalMemory);
                 this->devices.emplace_back(platformId,
                                            device,
-                                           OpenCLDeviceInfo(platformVendor,
+                                           OpenCLDeviceInfo(deviceId,
+                                                            platformVendor,
                                                             platformName,
                                                             deviceName,
                                                             doubleFPSupport,
@@ -228,6 +230,7 @@ OpenCLManager::OpenCLManager() {
                                                             deviceExtensions,
                                                             availableProcessors,
                                                             globalMemory));
+                ++deviceId;
             }
         }
     } catch (OpenCLInitializationException e) {

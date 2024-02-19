@@ -26,7 +26,8 @@ namespace NES::Runtime {
  */
 struct OpenCLDeviceInfo {
   public:
-    OpenCLDeviceInfo(const std::string& platformVendor,
+    OpenCLDeviceInfo(const unsigned deviceId,
+                     const std::string& platformVendor,
                      const std::string& platformName,
                      const std::string& deviceName,
                      bool doubleFPSupport,
@@ -36,7 +37,8 @@ struct OpenCLDeviceInfo {
                      const std::string& deviceExtensions,
                      unsigned availableProcessors,
                      unsigned long globalMemory)
-        : platformVendor(platformVendor), platformName(platformName), deviceName(deviceName), doubleFPSupport(doubleFPSupport),
+        : deviceId(deviceId), platformVendor(platformVendor), platformName(platformName), deviceName(deviceName),
+          doubleFPSupport(doubleFPSupport),
           maxWorkItems(maxWorkItems), deviceAddressBits(deviceAddressBits), deviceType(deviceType),
           deviceExtensions(deviceExtensions), availableProcessors(availableProcessors), globalMemory(globalMemory) {}
 
@@ -44,6 +46,7 @@ struct OpenCLDeviceInfo {
     constexpr static unsigned GRID_DIMENSIONS = 3;
 
   public:
+    unsigned deviceId;
     std::string platformVendor;
     std::string platformName;
     std::string deviceName;
@@ -58,6 +61,7 @@ struct OpenCLDeviceInfo {
 
 // Define helper methods to convert OpenCLDeviceInfo to JSON and back.
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OpenCLDeviceInfo,
+                                   deviceId,
                                    platformVendor,
                                    platformName,
                                    deviceName,
