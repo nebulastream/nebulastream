@@ -93,6 +93,21 @@ target_include_directories(pipeline-test PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
 )
 
+
+add_executable(kafka-test tests/kafkaTest.cpp)
+target_compile_options(kafka-test PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-DUNIKERNEL_USE_KAFKA")
+target_link_options(kafka-test PRIVATE ${UNIKERNEL_LINK_OPTIONS})
+target_link_libraries(kafka-test PRIVATE unikernel-lib cppkafka::cppkafka RdKafka::rdkafka RdKafka::rdkafka++)
+target_include_directories(kafka-test PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
+)
+
 add_subdirectory(benchmarks)
 
 # Get a list of files matching the pattern
