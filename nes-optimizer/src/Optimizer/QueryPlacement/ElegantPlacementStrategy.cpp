@@ -239,7 +239,8 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
 
 void ElegantPlacementStrategy::addJavaUdfSourceCode(const OperatorNodePtr& logicalOperator, nlohmann::json& node) {
     if (logicalOperator->instanceOf<MapUDFLogicalOperatorNode>()
-        || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
+        || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()
+        || logicalOperator->instanceOf<OpenCLLogicalOperatorNode>()) {
         const auto udfDescriptor =
             std::dynamic_pointer_cast<Catalogs::UDF::JavaUDFDescriptor>(
                 logicalOperator->as<UDFLogicalOperator>()->getUDFDescriptor());
