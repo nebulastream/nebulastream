@@ -79,13 +79,13 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
 
             zmq::message_t recvHeaderMsg;
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
-            if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+            //if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
                 if (!optRecvStatus.has_value()) {
                     NES_DEBUG("recv failed on network channel");
                     //return nullptr;
                     continue;
                 }
-            }
+            //}
             NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
 
             auto* recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
