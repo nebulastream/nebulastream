@@ -16,6 +16,7 @@
 #include <Network/NetworkMessage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NesThread.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <future>
 
 namespace NES::Network {
@@ -83,7 +84,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                 auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
                 //if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
                 if (!optRecvStatus.has_value()) {
-                    NES_DEBUG("recv failed on network channel");
+                    NES_DEBUG("recv failed on network channel {}", magic_enum::enum_name(mode));
                     //return nullptr;
                     continue;
                 }
