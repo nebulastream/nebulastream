@@ -14,11 +14,14 @@
 
 #ifndef NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#include "DataSource.hpp"
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Sinks/Formats/CsvFormat.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <cppkafka/configuration.h>
+#include <cppkafka/consumer.h>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -29,112 +32,79 @@ class Message;
 
 namespace NES {
 
-class KafkaSource : public DataSource {
+template<typename T>
+concept KafkaConfig = requires(T* t) {
+    DataSourceConfig<T>;
+    { T::Broker } -> std::same_as<const char* const&>;
+    { T::Topic } -> std::same_as<const char* const&>;
+    { T::GroupId } -> std::same_as<const int&>;
+    { T::BatchSize } -> std::same_as<const size_t&>;
+    { T::BufferFlushInterval } -> std::same_as<const std::chrono::milliseconds&>;
+};
+
+template<KafkaConfig Config>
+class KafkaSource {
   public:
-    /**
-   * @brief constructor for a kafka source
-   * @param schema schema of the elements
-   * @param bufferManager pointer to the buffer manager
-   * @param queryManager pointer to the query manager
-   * @param numberOfBuffersToProduce the number of buffers to be produced by the source
-   * @param brokers list of brokers
-   * @param topic the kafka topic which organizes tuples of the same entity. Usually the name of a data stream
-   * @param groupId the ID of a logical group which consumes messages from one or more kafka topics
-   * @param autoCommit bool indicating if offset has to be committed automatically or not
-   * @param kafkaConsumerTimeout the timeperiod after which a timeout is issued
-   * @param offsetMode instructs the broker from which point of a topic a consumer wants consume messages from
-   * @param kafkaSourceType
-   * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-   * @param operatorId current operator id
-   * @param numSourceLocalBuffers the number of buffers allocated to a source
-   * @param batchSize the maximum amount of data (in bytes) that a Kafka producer can accumulate before sending a batch of messages to the Kafka
-   * @param physicalSourceName the name and unique identifier of a physical source
-   * @param successors the subsequent operators in the pipeline to which the data is pushed
-   * @return
-   */
-    KafkaSource(SchemaPtr schema,
-                Runtime::BufferManagerPtr bufferManager,
-                Runtime::QueryManagerPtr queryManager,
-                uint64_t numberOfBuffersToProduce,
-                std::string brokers,
-                std::string topic,
-                std::string groupId,
-                bool autoCommit,
-                uint64_t kafkaConsumerTimeout,
-                std::string offsetMode,
-                const KafkaSourceTypePtr& kafkaSourceType,
-                OriginId originId,
-                OperatorId operatorId,
-                size_t numSourceLocalBuffers,
-                uint64_t batchSize,
-                const std::string& physicalSourceName,
-                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+    using BufferType = NES::Unikernel::SchemaBuffer<typename Config::Schema, 8192>;
+    constexpr static NES::SourceType SourceType = NES::SourceType::TCP_SOURCE;
+    constexpr static bool NeedsBuffer = true;
 
-    /**
-     * @brief Get source type
-     */
-    SourceType getType() const override;
-    ~KafkaSource() override;
-    std::optional<Runtime::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData(const std::stop_token& stoken, BufferType schemaBuffer) {
+        try {
+            if (stoken.stop_requested()) {
+                return std::nullopt;
+            }
+            if (!fillBuffer(schemaBuffer, stoken)) {
+                return std::nullopt;
+            }
+        } catch (const std::exception& e) {
+            NES_ERROR("TCPSource<Schema>::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
+            throw e;
+        }
+        return schemaBuffer.getBuffer();
+    }
 
-    /**
-     * @brief override the toString method for the kafka source
-     * @return returns string describing the kafka source
-     */
-    std::string toString() const override;
+    bool fillBuffer(BufferType& tupleBuffer, std::stop_token stoken) {
+        using namespace std::chrono_literals;
+        //init timer for flush interval
+        auto flushIntervalTimerStart = std::chrono::system_clock::now();
+        //init flush interval value
+        bool flushIntervalPassed = false;
+        while (!tupleBuffer.isFull() && !(flushIntervalPassed || stoken.stop_requested())) {
+            auto messages = consumer->poll_batch(Config::BatchSize);
+            for (const auto& message : messages) {
+                if (message.get_error()) {
+                    if (!message.is_eof()) {
+                        NES_ERROR("KafkaSource received error notification: {}", message.get_error().to_string());
+                        throw message.get_error();
+                    }
+                    NES_DEBUG("KafkaSource reached end of topic");
+                    return false;
+                }
+                auto& payload = message.get_payload();
+                auto dataSpan = std::span{reinterpret_cast<const char*>(payload.get_data()), payload.get_size()};
+                Unikernel::parseCSVIntoBuffer(dataSpan, tupleBuffer);
+            }
 
-    /**
-     * @brief Get kafka brokers
-     */
-    std::string getBrokers() const;
+            if (!tupleBuffer.isEmpty() && Config::BufferFlushInterval > 0ms
+                && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+                                                                         - flushIntervalTimerStart)
+                    >= Config::BufferFlushInterval) {
+                NES_DEBUG("TCPSource<Schema>::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
+                          "TupleBuffer.");
+                flushIntervalPassed = true;
+            }
+        }
 
-    /**
-     * @brief Get kafka topic
-     */
-    std::string getTopic() const;
+        return true;
+    }
 
-    /**
-     * @brief Get kafka offset
-     */
-    std::string getOffsetMode() const;
-
-    /**
-     * @brief Get kafka group id
-     */
-    std::string getGroupId() const;
-
-    /**
-     * @brief Get kafka batch size
-     */
-    uint64_t getBatchSize() const;
-
-    /**
-     * @brief If kafka offset is to be committed automatically
-     */
-    bool isAutoCommit() const;
-
-    /**
-     * @brief Get kafka connection timeout
-     */
-    const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
-
-    /**
-     * @brief get physicalTypes
-     * @return physicalTypes
-     */
-    std::vector<PhysicalTypePtr> getPhysicalTypes() const;
-
-    /**
-     * @brief getter for source config
-     * @return mqttSourceType
-     */
-    const KafkaSourceTypePtr& getSourceConfigPtr() const;
-
-    /**
-     * @brief fill buffer tuple by tuple using the appropriate parser
-     * @param tupleBuffer buffer to be filled
-     */
-    bool fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
+    bool open() { return connect(); }
+    bool close(Runtime::QueryTerminationType /*type*/) {
+        NES_ASSERT(connected, "Calling close without ever establishing a connection");
+        consumer.reset();
+        return true;
+    }
 
   private:
     /**
@@ -142,30 +112,51 @@ class KafkaSource : public DataSource {
      * check if already connected, if not connect try to connect, if already connected return
      * @return bool indicating if connection could be established
      */
-    bool connect();
+    bool connect() {
+        using namespace std::chrono_literals;
+        if (!connected) {
 
-    std::string brokers;
-    std::string topic;
-    std::string groupId;
-    bool autoCommit;
-    cppkafka::Configuration config;
-    KafkaSourceTypePtr sourceConfig;
+            // Create the consumer
+            consumer = std::make_unique<cppkafka::Consumer>(cppkafka::Configuration{{"metadata.broker.list", Config::Broker},
+                                                                                    {"group.id", Config::GroupId},
+                                                                                    {"auto.offset.reset", "earliest"},
+                                                                                    // Disable auto commit
+                                                                                    {"enable.auto.commit", false}});
+
+            // Print the assigned partitions on assignment
+            consumer->set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
+                // TODO do we want to keep this way as a work around for missing toString methods for cppkafka:: ?
+                std::stringstream s;
+                s << partitions;
+                std::string partitionsAsString = s.str();
+                NES_DEBUG("KafkaSource Got assigned {}", partitionsAsString);
+            });
+
+            // Print the revoked partitions on revocation
+            consumer->set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
+                // TODO do we want to keep this way as a work around for missing toString methods for cppkafka:: ?
+                std::stringstream s;
+                s << partitions;
+                std::string partitionsAsString = s.str();
+                NES_DEBUG("KafkaSource Got revoked {}", partitionsAsString);
+            });
+
+            // Subscribe to the topic
+            consumer->set_timeout(1s);
+            consumer->set_log_level(cppkafka::LogLevel::LogInfo);
+            consumer->subscribe({Config::Topic});
+            NES_DEBUG("kafka source={} connect to topic={} partition={}", Config::OperatorId, Config::Topic, Config::GroupId);
+
+            NES_DEBUG("kafka source starts producing");
+
+            connected = true;
+        }
+        return connected;
+    }
     bool connected{false};
-    std::chrono::milliseconds kafkaConsumerTimeout;
-    std::string offsetMode;
     std::unique_ptr<cppkafka::Consumer> consumer;
-    uint64_t bufferProducedCnt = 0;
-    uint64_t batchSize = 1;
-    uint64_t numberOfTuplesPerBuffer = 1;
-    std::vector<cppkafka::Message> messages;
-    uint64_t successFullPollCnt = 0;
-    uint64_t failedFullPollCnt = 0;
-    uint32_t bufferFlushIntervalMs = 500;
-    std::unique_ptr<Parser> inputParser;
-    std::vector<PhysicalTypePtr> physicalTypes;
 };
 
-typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #endif// NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_

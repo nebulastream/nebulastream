@@ -29,9 +29,10 @@ class MessageBuilder;
 }// namespace cppkafka
 namespace NES {
 
-template<typename Schema>
+template<typename Config>
 class KafkaSink : public SinkMedium {
     constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
+    using Schema = typename Config::Schema;
 
   public:
     /**
