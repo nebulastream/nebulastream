@@ -69,7 +69,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     auto topology = Topology::create();
     auto topologyNodeId = 1;
-    topology->registerTopologyNode(topologyNodeId, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(topologyNodeId, "localhost", 3200, 3300, 10, properties, 0, 0);
 
     //create execution node
 
@@ -127,7 +127,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     auto topology = Topology::create();
     auto topologyNodeId = 1;
-    topology->registerTopologyNode(topologyNodeId, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(topologyNodeId, "localhost", 3200, 3300, 10, properties, 0, 0);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor1 = PrintSinkDescriptor::create();
@@ -194,7 +194,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     auto topology = Topology::create();
     auto topologyNodeId = 1;
-    topology->registerTopologyNode(topologyNodeId, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(topologyNodeId, "localhost", 3200, 3300, 10, properties, 0, 0);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
     auto printSinkDescriptor1 = PrintSinkDescriptor::create();
@@ -262,7 +262,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     auto topology = Topology::create();
     auto topologyNodeId = 1;
-    topology->registerTopologyNode(topologyNodeId, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(topologyNodeId, "localhost", 3200, 3300, 10, properties, 0, 0);
 
     //query sub plans for query 1
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
@@ -372,10 +372,10 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     //create execution node
     auto topology = Topology::create();
     uint64_t node1Id = 1;
-    topology->registerTopologyNode(node1Id, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(node1Id, "localhost", 3200, 3300, 10, properties, 0, 0);
     //create execution node
     uint64_t node2Id = 2;
-    topology->registerTopologyNode(node2Id, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(node2Id, "localhost", 3200, 3300, 10, properties, 0, 0);
     //Add parent child relationship among topology nodes
     topology->addTopologyNodeAsChild(node1Id, node2Id);
 
@@ -451,13 +451,13 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     //Create topology nodes
     auto topology = Topology::create();
     uint64_t node1Id = 1;
-    topology->registerTopologyNode(node1Id, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(node1Id, "localhost", 3200, 3300, 10, properties, 0, 0);
     uint64_t node2Id = 2;
-    topology->registerTopologyNode(node2Id, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(node2Id, "localhost", 3200, 3300, 10, properties, 0, 0);
     uint64_t node3Id = 3;
-    topology->registerTopologyNode(node3Id, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(node3Id, "localhost", 3200, 3300, 10, properties, 0, 0);
     uint64_t node4Id = 4;
-    topology->registerTopologyNode(node4Id, "localhost", 3200, 3300, 10, properties);
+    topology->registerWorker(node4Id, "localhost", 3200, 3300, 10, properties, 0, 0);
 
     //Add parent child relationship
     topology->addTopologyNodeAsChild(node1Id, node2Id);

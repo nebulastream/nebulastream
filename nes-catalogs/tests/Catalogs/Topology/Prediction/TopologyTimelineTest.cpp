@@ -80,13 +80,13 @@ TEST_F(TopologyTimelineTest, testNoChangesPresent) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     int rootNodeId = 1;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     int middleNodeId = 2;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     int srcNodeId1 = 3;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(srcNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
     int srcNodeId2 = 4;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(srcNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
 
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
@@ -104,13 +104,13 @@ TEST_F(TopologyTimelineTest, DISABLED_testUpdatingMultiplePredictions) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     int rootNodeId = 1;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     int middleNodeId = 2;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     int srcNodeId1 = 3;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(srcNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
     int srcNodeId2 = 4;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(srcNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
 
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId1);

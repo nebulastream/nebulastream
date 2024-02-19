@@ -71,9 +71,6 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class SourceCatalogService;
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 
-class TopologyManagerService;
-using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
-
 class CoordinatorHealthCheckService;
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
 
@@ -197,12 +194,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     SourceCatalogServicePtr getSourceCatalogService() const;
 
     /**
-     * getter for the topologyManagerService
-     * @return
-     */
-    TopologyManagerServicePtr getTopologyManagerService() const;
-
-    /**
      * getter for the locationService
      * @return
      */
@@ -231,7 +222,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     NesWorkerPtr worker;
-    TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
     CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;

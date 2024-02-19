@@ -136,48 +136,48 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
 
     //root node
     //id = 1
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->setRootTopologyNodeId(workerIdCounter);
     workerIdCounter++;
 
     //id = 2
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->addTopologyNodeAsChild(1, workerIdCounter);
     workerIdCounter++;
 
     //id = 3
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->addTopologyNodeAsChild(2, workerIdCounter);
     workerIdCounter++;
 
     //id = 4
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->addTopologyNodeAsChild(2, workerIdCounter);
     workerIdCounter++;
 
     //id = 5
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->addTopologyNodeAsChild(3, workerIdCounter);
     workerIdCounter++;
 
     //id = 6
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->addTopologyNodeAsChild(4, workerIdCounter);
     workerIdCounter++;
 
     //id = 7
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->addTopologyNodeAsChild(5, workerIdCounter);
     topology->addTopologyNodeAsChild(6, workerIdCounter);
     workerIdCounter++;
 
     //id = 8
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->addTopologyNodeAsChild(6, workerIdCounter);
     workerIdCounter++;
 
     //id = 9
-    topology->registerTopologyNode(workerIdCounter, workerAddress, restPort, dataPort, 1, {});
+    topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
     topology->addTopologyNodeAsChild(3, workerIdCounter);
 
     std::cout << topology->toString() << std::endl;

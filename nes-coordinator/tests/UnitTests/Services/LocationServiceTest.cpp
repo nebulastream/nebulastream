@@ -15,7 +15,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -47,7 +46,7 @@ class LocationServiceTest : public Testing::BaseIntegrationTest {
     static void TearDownTestCase(){NES_INFO("Tear down LocationServiceTest test class")}
 
     NES::LocationServicePtr locationService;
-    NES::TopologyManagerServicePtr topologyManagerService;
+    NES::TopologyPtr topology;
 };
 
 TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
@@ -59,8 +58,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     nlohmann::json locationJson;
 
     //create topology and services
-    TopologyPtr topology = Topology::create();
-    topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology);
+    topology = Topology::create();
 
     //create node without location
     std::map<std::string, std::any> properties;
@@ -69,33 +67,33 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
     auto node1Id =
-        topologyManagerService
+        topology
             ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create fixed location node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
     auto node2Id =
-        topologyManagerService
+        topology
             ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties, bandwidthInMbps, latencyInMs);
-    topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
+    topology->addGeoLocation(node2Id, {13.4, -23});
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id =
-        topologyManagerService
+        topology
             ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties, bandwidthInMbps, latencyInMs);
-    topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
+    topology->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     // test querying for node which does not exist in the system
-    ASSERT_EQ(topologyManagerService->requestNodeLocationDataAsJson(1234), nullptr);
+    ASSERT_EQ(topology->requestNodeLocationDataAsJson(1234), nullptr);
 
     //test getting location of node which does not have a location
-    nodeLocationInfoJson = topologyManagerService->requestNodeLocationDataAsJson(node1Id);
+    nodeLocationInfoJson = topology->requestNodeLocationDataAsJson(node1Id);
     EXPECT_EQ(nodeLocationInfoJson["id"], node1Id);
     ASSERT_TRUE(nodeLocationInfoJson["location"].empty());
 
     //test getting location of field node
-    nodeLocationInfoJson = topologyManagerService->requestNodeLocationDataAsJson(node2Id);
+    nodeLocationInfoJson = topology->requestNodeLocationDataAsJson(node2Id);
     auto entry = nodeLocationInfoJson.get<std::map<std::string, nlohmann::json>>();
     EXPECT_EQ(entry.at("id").get<uint64_t>(), node2Id);
     locationJson = nodeLocationInfoJson.at("location");
@@ -103,7 +101,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     EXPECT_EQ(locationJson["longitude"], -23);
 
     //test getting location of a mobile node
-    nodeLocationInfoJson = topologyManagerService->requestNodeLocationDataAsJson(node3Id);
+    nodeLocationInfoJson = topology->requestNodeLocationDataAsJson(node3Id);
     ASSERT_EQ(nodeLocationInfoJson["id"], node3Id);
     locationJson = nodeLocationInfoJson.at("location");
     EXPECT_EQ(locationJson["latitude"], 52.55227464714949);
@@ -119,11 +117,10 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     nlohmann::json locationJson;
 
     //create topology and services
-    TopologyPtr topology = Topology::create();
-    topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology);
+    topology = Topology::create();
 
     //get mobile node info
-    auto response = topologyManagerService->requestLocationAndParentDataFromAllMobileNodes().get<allMobileResponse>();
+    auto response = topology->requestLocationAndParentDataFromAllMobileNodes().get<allMobileResponse>();
 
     //check that the json does not contain any nodes or edges
     ASSERT_EQ(response["nodes"].size(), 0);
@@ -136,40 +133,40 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
     auto node1Id =
-        topologyManagerService
+        topology
             ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk1, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create fixed location node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
     auto node2Id =
-        topologyManagerService
+        topology
             ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk2, 0, 0, properties, bandwidthInMbps, latencyInMs);
-    topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
+    topology->addGeoLocation(node2Id, {13.4, -23});
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id =
-        topologyManagerService
+        topology
             ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk3, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //create mobile node
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node4Id =
-        topologyManagerService
+        topology
             ->registerWorker(INVALID_WORKER_NODE_ID, "127.0.0.1", *rpcPortWrk4, 0, 0, properties, bandwidthInMbps, latencyInMs);
 
     //get mobile node info
-    response = topologyManagerService->requestLocationAndParentDataFromAllMobileNodes().get<allMobileResponse>();
+    response = topology->requestLocationAndParentDataFromAllMobileNodes().get<allMobileResponse>();
 
     //while no location is known, the mobile nodes should not appear in the list
     ASSERT_EQ(response["nodes"].size(), 0);
     ASSERT_EQ(response["edges"].size(), 0);
 
     //update the location of node 3
-    topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
+    topology->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     //get mobile node locations
-    auto response1 = topologyManagerService->requestLocationAndParentDataFromAllMobileNodes();
+    auto response1 = topology->requestLocationAndParentDataFromAllMobileNodes();
     auto getLocResp1 = response1.get<allMobileResponse>();
 
     //verify that the object contains 2 entries (list of nodes and list of edges)
@@ -201,10 +198,10 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     EXPECT_EQ(edge.at("target"), 1);
 
     //update the location of node 4
-    topologyManagerService->updateGeoLocation(node4Id, {53.55227464714949, -13.351743136322877});
+    topology->updateGeoLocation(node4Id, {53.55227464714949, -13.351743136322877});
 
     //verify that the object contains 2 entries (list of nodes and list of edges)
-    auto response2 = topologyManagerService->requestLocationAndParentDataFromAllMobileNodes();
+    auto response2 = topology->requestLocationAndParentDataFromAllMobileNodes();
     auto getLocResp2 = response2.get<allMobileResponse>();
     ASSERT_EQ(getLocResp2.size(), 2);
 

@@ -95,15 +95,15 @@ class QueryPlacementAmendmentTest : public Testing::BaseUnitTest {
         properties["tf_installed"] = true;
 
         int rootNodeId = 1;
-        topology->registerTopologyNode(rootNodeId, "localhost", 123, 124, resources[0], properties);
+        topology->registerWorker(rootNodeId, "localhost", 123, 124, resources[0], properties, 0, 0);
         topology->setRootTopologyNodeId(rootNodeId);
 
         int sourceNode1Id = 2;
-        topology->registerTopologyNode(sourceNode1Id, "localhost", 123, 124, resources[1], properties);
+        topology->registerWorker(sourceNode1Id, "localhost", 123, 124, resources[1], properties, 0, 0);
         topology->addTopologyNodeAsChild(rootNodeId, sourceNode1Id);
 
         int sourceNode2Id = 3;
-        topology->registerTopologyNode(sourceNode2Id, "localhost", 123, 124, resources[2], properties);
+        topology->registerWorker(sourceNode2Id, "localhost", 123, 124, resources[2], properties, 0, 0);
         topology->addTopologyNodeAsChild(rootNodeId, sourceNode2Id);
 
         auto carSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
@@ -869,15 +869,15 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testIFCOPPlacement) {
     TopologyPtr topology = Topology::create();
 
     int rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 4, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 4, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
 
     int middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
 
     int sourceNodeId = 2;
-    topology->registerTopologyNode(sourceNodeId, "localhost", 4002, 5002, 4, properties);
+    topology->registerWorker(sourceNodeId, "localhost", 4002, 5002, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, sourceNodeId);
 
     // Prepare the source and schema
@@ -995,23 +995,23 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testIFCOPPlacementOnBranchedTopolog
     TopologyPtr topology = Topology::create();
 
     int rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 4, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 4, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
 
     int middleNodeId1 = 1;
-    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId1);
 
     int middleNodeId2 = 2;
-    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId2);
 
     int sourceNodeId1 = 3;
-    topology->registerTopologyNode(sourceNodeId1, "localhost", 4002, 5002, 4, properties);
+    topology->registerWorker(sourceNodeId1, "localhost", 4002, 5002, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId1, sourceNodeId1);
 
     int sourceNodeId2 = 4;
-    topology->registerTopologyNode(sourceNodeId2, "localhost", 4002, 5002, 4, properties);
+    topology->registerWorker(sourceNodeId2, "localhost", 4002, 5002, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId2, sourceNodeId2);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -1149,13 +1149,13 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementOfSelfJoinQuery) {
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 14, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 4, properties);
+    topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -1270,13 +1270,13 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementOfSelfJoinQuery) {
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 14, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 4, properties);
+    topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -1386,13 +1386,13 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementWthTightResourcesConstra
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 1, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 2, properties);
+    topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 2, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -1501,13 +1501,13 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 1, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 1, properties);
+    topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -1619,16 +1619,16 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 5, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 5, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId1 = 2;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4003, 5003, 1, properties);
+    topology->registerWorker(srcNodeId1, "localhost", 4003, 5003, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
     WorkerId srcNodeId2 = 3;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4003, 5003, 1, properties);
+    topology->registerWorker(srcNodeId2, "localhost", 4003, 5003, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
 
     NES_INFO("Topology:\n{}", topology->toString());
@@ -2352,13 +2352,13 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 1, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 2, properties);
+    topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 2, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -2593,13 +2593,13 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 1, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 2, properties);
+    topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 2, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
@@ -2817,13 +2817,13 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQuer
     TopologyPtr topology = Topology::create();
 
     WorkerId rootNodeId = 0;
-    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 1, properties);
+    topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
     WorkerId middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 1, properties);
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
     WorkerId srcNodeId = 2;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 2, properties);
+    topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 2, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());

@@ -18,7 +18,6 @@
 #include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -82,10 +81,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
-    coordinatorHealthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
-                                                                                    HEALTH_SERVICE_NAME,
-                                                                                    this->coordinatorConfiguration);
+    coordinatorHealthCheckService =
+        std::make_shared<CoordinatorHealthCheckService>(topology, HEALTH_SERVICE_NAME, this->coordinatorConfiguration);
     globalQueryPlan = GlobalQueryPlan::create();
 
     z3::config cfg;
@@ -181,7 +178,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               this->inherited0::weak_from_this(),
                                               queryCatalog,
                                               sourceCatalogService,
-                                              topologyManagerService,
+                                              topology,
                                               globalExecutionPlan,
                                               requestHandlerService,
                                               monitoringService,
@@ -271,10 +268,10 @@ bool NesCoordinator::stopCoordinator(bool force) {
 void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     grpc::ServerBuilder builder;
     NES_ASSERT(sourceCatalogService, "null sourceCatalogService");
-    NES_ASSERT(topologyManagerService, "null topologyManagerService");
+    NES_ASSERT(topology, "null topology");
 
     CoordinatorRPCServer service(requestHandlerService,
-                                 topologyManagerService,
+                                 topology,
                                  sourceCatalogService,
                                  queryCatalog,
                                  monitoringService->getMonitoringManager(),
@@ -322,8 +319,6 @@ void NesCoordinator::onFatalError(int, std::string) {}
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
 
 SourceCatalogServicePtr NesCoordinator::getSourceCatalogService() const { return sourceCatalogService; }
-
-TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
 
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 
