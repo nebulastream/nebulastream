@@ -176,6 +176,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
             if (port != 0) {
                 //init flush interval value
                 bool flushIntervalPassed = false;
+                auto flushIntervalTimerStart = std::chrono::system_clock::now();
 
                 //init tuple count for buffer
                 uint64_t tupleCount = 0;
@@ -211,6 +212,11 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         //todo: this was new
                         //tupleCount = byteOffset / incomingTupleSize;
                         //todo: flush interval
+                             if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
+                                    .count() >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(10)).count()) {
+                            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+                            flushIntervalPassed = true;
+                        }
                     }
                 }
 //                if (tupleCount <= 0) {
