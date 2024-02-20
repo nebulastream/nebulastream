@@ -174,74 +174,117 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         //if port was set, use tcp as input
         if (numberOfTuplesToProducePerBuffer == 0) {
             if (port != 0) {
+                //init flush interval value
+                bool flushIntervalPassed = false;
+
+                //init tuple count for buffer
+                uint64_t tupleCount = 0;
                 //todo: do not hardcode
                 auto valueSize = sizeof(uint64_t);
-                auto incomingTupleSize = valueSize *3;
-
+                auto incomingTupleSize = valueSize * 3;
                 //todo: move to beginning
                 incomingBuffer.reserve(incomingTupleSize * generatedTuplesThisPass);
                 leftOverBytes.reserve(incomingTupleSize);
-                //NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
-
-
-                // Read data from the socket
-                int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
-                if (bytesRead <= 0) {
-                    return std::nullopt;
+                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
+                    incomingBuffer[i] = leftOverBytes[i];
                 }
+                //auto writePostion = &incomingBuffer[leftoverByteCount];
+                auto byteOffset = leftoverByteCount;
+                auto bytesPerBuffer =  generatedTuplesThisPass * incomingTupleSize;
+                //todo: this was new
+                //while (tupleCount < generatedTuplesThisPass) {
+                while (byteOffset < bytesPerBuffer) {
+
+                    //NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
+
+                    // Read data from the socket
+                    //int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
+                    int bytesRead = read(sockfd, &incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
+                    byteOffset += bytesRead;
+                    //todo: this was new
+                    //tupleCount = byteOffset / incomingTupleSize;
+                    //todo: flush interval
+                }
+//                if (tupleCount <= 0) {
+//                    return std::nullopt;
+//                }
+                uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
+                for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
+                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[i]);
+                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[i + valueSize]);
+                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[i + 2 * valueSize]);
+                    //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+                    records[i].id = *id;
+                    records[i].value = *seqenceNr;
+                    records[i].ingestionTimestamp = *ingestionTime;
+                    records[i].processingTimestamp = getTimestamp();
+                    //totalTupleCount++;
+                }
+                auto bytesOfCompleteTuples = incomingTupleSize * numCompleteTuplesRead;
+                for (uint64_t i = 0; i < bytesPerBuffer; ++i) {
+                    leftOverBytes[i] = incomingBuffer[i + bytesOfCompleteTuples];
+                }
+
+                buffer.setNumberOfTuples(numCompleteTuplesRead);
+                leftoverByteCount = numCompleteTuplesRead % incomingTupleSize;
+                generatedTuples += numCompleteTuplesRead;
+                generatedBuffers++;
+                return buffer.getBuffer();
+
+
 
                 //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
 
-                uint16_t bytesToJoinWithLeftover = 0;
-
-
-                auto additionalTupleRead = 0;
-                if (leftoverByteCount != 0) {
-                    bytesToJoinWithLeftover = incomingTupleSize - leftoverByteCount;
-                    //NES_INFO("Copying {} bytes to complete leftover tuple", bytesToJoinWithLeftover)
-                    for (uint16_t i = leftoverByteCount; i < incomingTupleSize; ++i) {
-                        leftOverBytes[i] = incomingBuffer[i - leftoverByteCount];
-                    }
-                    additionalTupleRead = 1;
-                    auto id = reinterpret_cast<uint64_t*>(&leftOverBytes[0]);
-                    auto seqenceNr = reinterpret_cast<uint64_t*>(&leftOverBytes[valueSize]);
-                    auto ingestionTime = reinterpret_cast<uint64_t*>(&leftOverBytes[2 * valueSize]);
-                    records[0].id = *id;
-                    records[0].value = *seqenceNr;
-                    records[0].ingestionTimestamp = *ingestionTime;
-                    records[0].processingTimestamp = getTimestamp();
-                    //totalTupleCount++;
-                    //std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
-                }
-
-                //auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
-                // Calculate the number of tuples read
-                auto newTupleBytesRead = bytesRead - bytesToJoinWithLeftover;
-                uint64_t numCompleteTuplesRead = newTupleBytesRead / incomingTupleSize;
-                for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
-                    auto index = i * incomingTupleSize + bytesToJoinWithLeftover;
-                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
-                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
-                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
-                    //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
-                    auto writeIndex = i + additionalTupleRead;
-                    records[writeIndex].id = *id;
-                    records[writeIndex].value = *seqenceNr;
-                    records[writeIndex].ingestionTimestamp = *ingestionTime;
-                    records[writeIndex].processingTimestamp = getTimestamp();
-                    //totalTupleCount++;
-                }
-
-                leftoverByteCount = newTupleBytesRead % incomingTupleSize;
-                auto processedBytes = numCompleteTuplesRead * incomingTupleSize + bytesToJoinWithLeftover;
+//                uint16_t bytesToJoinWithLeftover = 0;
+//
+//
+//                auto additionalTupleRead = 0;
 //                if (leftoverByteCount != 0) {
-//                    NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
+//                    bytesToJoinWithLeftover = incomingTupleSize - leftoverByteCount;
+//                    //NES_INFO("Copying {} bytes to complete leftover tuple", bytesToJoinWithLeftover)
+//                    for (uint16_t i = leftoverByteCount; i < incomingTupleSize; ++i) {
+//                        leftOverBytes[i] = incomingBuffer[i - leftoverByteCount];
+//                    }
+//                    additionalTupleRead = 1;
+//                    auto id = reinterpret_cast<uint64_t*>(&leftOverBytes[0]);
+//                    auto seqenceNr = reinterpret_cast<uint64_t*>(&leftOverBytes[valueSize]);
+//                    auto ingestionTime = reinterpret_cast<uint64_t*>(&leftOverBytes[2 * valueSize]);
+//                    records[0].id = *id;
+//                    records[0].value = *seqenceNr;
+//                    records[0].ingestionTimestamp = *ingestionTime;
+//                    records[0].processingTimestamp = getTimestamp();
+//                    //totalTupleCount++;
+//                    //std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
 //                }
-                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
-                    leftOverBytes[i] = incomingBuffer[i + processedBytes];
-                }
-                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead);
-                //NES_INFO("TotalTupleCount {}", totalTupleCount)
+//
+//                //auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
+//                // Calculate the number of tuples read
+//                auto newTupleBytesRead = bytesRead - bytesToJoinWithLeftover;
+//                uint64_t numCompleteTuplesRead = newTupleBytesRead / incomingTupleSize;
+//                for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
+//                    auto index = i * incomingTupleSize + bytesToJoinWithLeftover;
+//                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
+//                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
+//                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
+//                    //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+//                    auto writeIndex = i + additionalTupleRead;
+//                    records[writeIndex].id = *id;
+//                    records[writeIndex].value = *seqenceNr;
+//                    records[writeIndex].ingestionTimestamp = *ingestionTime;
+//                    records[writeIndex].processingTimestamp = getTimestamp();
+//                    //totalTupleCount++;
+//                }
+//
+//                leftoverByteCount = newTupleBytesRead % incomingTupleSize;
+//                auto processedBytes = numCompleteTuplesRead * incomingTupleSize + bytesToJoinWithLeftover;
+////                if (leftoverByteCount != 0) {
+////                    NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
+////                }
+//                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
+//                    leftOverBytes[i] = incomingBuffer[i + processedBytes];
+//                }
+//                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead);
+//                //NES_INFO("TotalTupleCount {}", totalTupleCount)
 
             } else {
                 uint64_t valCount = 0;
