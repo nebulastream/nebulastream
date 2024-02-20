@@ -229,12 +229,12 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     //totalTupleCount++;
                 }
                 auto bytesOfCompleteTuples = incomingTupleSize * numCompleteTuplesRead;
-                for (uint64_t i = 0; i < bytesPerBuffer; ++i) {
+                leftoverByteCount = byteOffset % incomingTupleSize;
+                for (uint64_t i = 0; i < leftoverByteCount; ++i) {
                     leftOverBytes[i] = incomingBuffer[i + bytesOfCompleteTuples];
                 }
 
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
-                leftoverByteCount = byteOffset % incomingTupleSize;
                 generatedTuples += numCompleteTuplesRead;
                 generatedBuffers++;
                 return buffer.getBuffer();
