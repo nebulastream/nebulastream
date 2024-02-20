@@ -192,18 +192,20 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto byteOffset = leftoverByteCount;
                 auto bytesPerBuffer =  generatedTuplesThisPass * incomingTupleSize;
                 //todo: this was new
-                //while (tupleCount < generatedTuplesThisPass) {
-                while (byteOffset < bytesPerBuffer) {
+                while (byteOffset < incomingTupleSize) {
+                    //while (tupleCount < generatedTuplesThisPass) {
+                    while (byteOffset < bytesPerBuffer) {
 
-                    //NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
+                        //NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
 
-                    // Read data from the socket
-                    //int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
-                    int bytesRead = read(sockfd, &incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
-                    byteOffset += bytesRead;
-                    //todo: this was new
-                    //tupleCount = byteOffset / incomingTupleSize;
-                    //todo: flush interval
+                        // Read data from the socket
+                        //int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
+                        int bytesRead = read(sockfd, &incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
+                        byteOffset += bytesRead;
+                        //todo: this was new
+                        //tupleCount = byteOffset / incomingTupleSize;
+                        //todo: flush interval
+                    }
                 }
 //                if (tupleCount <= 0) {
 //                    return std::nullopt;
