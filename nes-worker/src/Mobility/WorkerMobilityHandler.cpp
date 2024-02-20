@@ -344,7 +344,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
             //if device has not moved more than threshold, do nothing
             if (!shouldSendCurrentWaypointToCoordinator(lastTransmittedLocation, currentLocation)
                 && reconnectPredictorType != ReconnectPredictorType::PRECALCULATED) {
-                NES_DEBUG("device has not moved further than threshold, location will not be transmitted");
+                //NES_DEBUG("device has not moved further than threshold, location will not be transmitted");
                 std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
                 continue;
             }

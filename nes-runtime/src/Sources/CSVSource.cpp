@@ -183,14 +183,14 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto valueSize = sizeof(uint64_t);
                 auto incomingTupleSize = valueSize * 3;
                 //todo: move to beginning
-                incomingBuffer.reserve(incomingTupleSize * generatedTuplesThisPass);
+                auto bytesPerBuffer =  generatedTuplesThisPass * incomingTupleSize;
+                incomingBuffer.reserve(bytesPerBuffer);
                 leftOverBytes.reserve(incomingTupleSize);
                 for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
                     incomingBuffer[i] = leftOverBytes[i];
                 }
                 //auto writePostion = &incomingBuffer[leftoverByteCount];
                 auto byteOffset = leftoverByteCount;
-                auto bytesPerBuffer =  generatedTuplesThisPass * incomingTupleSize;
                 //todo: this was new
                 while (byteOffset < incomingTupleSize) {
                     //while (tupleCount < generatedTuplesThisPass) {
@@ -201,6 +201,12 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         // Read data from the socket
                         //int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
                         int bytesRead = read(sockfd, &incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
+                        if (bytesRead < 0) {
+                            if (byteOffset < incomingTupleSize) {
+                                return std::nullopt;
+                            }
+                            break;
+                        }
                         byteOffset += bytesRead;
                         //todo: this was new
                         //tupleCount = byteOffset / incomingTupleSize;
@@ -228,7 +234,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 }
 
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
-                leftoverByteCount = numCompleteTuplesRead % incomingTupleSize;
+                leftoverByteCount = byteOffset % incomingTupleSize;
                 generatedTuples += numCompleteTuplesRead;
                 generatedBuffers++;
                 return buffer.getBuffer();
