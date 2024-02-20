@@ -195,7 +195,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 //todo: this was new
                 while (byteOffset < incomingTupleSize) {
                     //while (tupleCount < generatedTuplesThisPass) {
-                    while (byteOffset < bytesPerBuffer) {
+                    while (byteOffset < bytesPerBuffer && !flushIntervalPassed) {
 
                         //NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
 
