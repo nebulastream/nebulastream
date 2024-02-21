@@ -55,28 +55,28 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
 
     auto nesPartition = msg.getChannelId().getNesPartition();
     auto version = msg.getVersion();
-//    {
-//        auto maxSeqNumberPerNesPartitionLocked = maxSeqNumberPerNesPartition.wlock();
-//        auto foundVersionWaitingForDrain = false;
-//        for (auto& [version, info] : (*maxSeqNumberPerNesPartitionLocked)[nesPartition]) {
-//            if (info.expected) {
-//                foundVersionWaitingForDrain = true;
-//            }
-//        }
-//        if (foundVersionWaitingForDrain) {
-//            NES_WARNING("ExchangeProtocol: ClientAnnouncement received for {}, there are still versions waiting for drain", msg.getChannelId().toString());
-//            protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError));
-//            return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
-//
-//        }
-//        if (!(*maxSeqNumberPerNesPartitionLocked)[nesPartition].contains(version)) {
-//            //std::pair<Util::NonBlockingMonotonicSeqQueue<uint64_t>, std::optional<uint64_t>> pair{Util::NonBlockingMonotonicSeqQueue<uint64_t>(), std::nullopt};
-//            SequenceInfo info{Util::NonBlockingMonotonicSeqQueue<uint64_t>(), std::nullopt, 1};
-//            (*maxSeqNumberPerNesPartitionLocked)[nesPartition][version] = info;
-//        } else {
-//            (*maxSeqNumberPerNesPartitionLocked)[nesPartition][version].counter++;
-//        }
-//    }
+    {
+        auto maxSeqNumberPerNesPartitionLocked = maxSeqNumberPerNesPartition.wlock();
+        auto foundVersionWaitingForDrain = false;
+        for (auto& [version, info] : (*maxSeqNumberPerNesPartitionLocked)[nesPartition]) {
+            if (info.expected) {
+                foundVersionWaitingForDrain = true;
+            }
+        }
+        if (foundVersionWaitingForDrain) {
+            NES_WARNING("ExchangeProtocol: ClientAnnouncement received for {}, there are still versions waiting for drain", msg.getChannelId().toString());
+            protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError));
+            return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
+
+        }
+        if (!(*maxSeqNumberPerNesPartitionLocked)[nesPartition].contains(version)) {
+            //std::pair<Util::NonBlockingMonotonicSeqQueue<uint64_t>, std::optional<uint64_t>> pair{Util::NonBlockingMonotonicSeqQueue<uint64_t>(), std::nullopt};
+            SequenceInfo info{Util::NonBlockingMonotonicSeqQueue<uint64_t>(), std::nullopt, 1};
+            (*maxSeqNumberPerNesPartitionLocked)[nesPartition][version] = info;
+        } else {
+            (*maxSeqNumberPerNesPartitionLocked)[nesPartition][version].counter++;
+        }
+    }
 
     // check if identity is registered
     if (isDataChannel) {
@@ -123,15 +123,15 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer&
         (void) sinkVersion;
         (void) messageSequenceNumber;
         //(*maxSeqNumberPerNesPartition.wlock())[nesPartition][sinkVersion].queue.emplace(messageSequenceNumber, messageSequenceNumber);
-//        {
-//            auto lockedQueue = maxSeqNumberPerNesPartition.wlock();
-//            //(*lockedQueue)[nesPartition][sinkVersion].queue.emplace(messageSequenceNumber, messageSequenceNumber);
-//            auto& info = (*lockedQueue)[nesPartition][sinkVersion];
-//            info.queue.emplace(messageSequenceNumber, messageSequenceNumber);
-//            if (info.expected && info.expected.value() == messageSequenceNumber) {
-//                (*lockedQueue)[nesPartition].erase(sinkVersion);
-//            }
-//        }
+        {
+            auto lockedQueue = maxSeqNumberPerNesPartition.wlock();
+            //(*lockedQueue)[nesPartition][sinkVersion].queue.emplace(messageSequenceNumber, messageSequenceNumber);
+            auto& info = (*lockedQueue)[nesPartition][sinkVersion];
+            info.queue.emplace(messageSequenceNumber, messageSequenceNumber);
+            if (info.expected && info.expected.value() == messageSequenceNumber) {
+                (*lockedQueue)[nesPartition].erase(sinkVersion);
+            }
+        }
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
     } else {
@@ -167,52 +167,52 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                         "Received EOS for data channel on event channel for consumer " << eosChannelId.toString());
 
         //decrease the counter for the version, if it bacomes 0 check if all tuples arrived and delete or mark for deletion
-//        {
-//            auto locked = maxSeqNumberPerNesPartition.wlock();
-//            auto& info = (*locked)[eosNesPartition][version];
-//            NES_ASSERT(info.counter > 0, "Sequence counter user count is 0 but still accessed");
-//            info.counter--;
-//            if (info.counter == 0) {
-//                const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
-//
-//                //if all tuples are received for this version, remove the entry
-//                if (eosMessageMaxSeqNumber == info.queue.getCurrentValue()) {
-//                    (*locked)[eosNesPartition].erase(version);
-//                } else {
-//                    //set the expected count, the queue will be deleted on buffer arrivel
-//                    NES_ASSERT(eosMessageMaxSeqNumber > info.queue.getCurrentValue(), "Sequence number is bigger than expected");
-//                    info.expected = eosMessageMaxSeqNumber;
-//                }
-//            }
-//        }
+        {
+            auto locked = maxSeqNumberPerNesPartition.wlock();
+            auto& info = (*locked)[eosNesPartition][version];
+            NES_ASSERT(info.counter > 0, "Sequence counter user count is 0 but still accessed");
+            info.counter--;
+            if (info.counter == 0) {
+                const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
+
+                //if all tuples are received for this version, remove the entry
+                if (eosMessageMaxSeqNumber == info.queue.getCurrentValue()) {
+                    (*locked)[eosNesPartition].erase(version);
+                } else {
+                    //set the expected count, the queue will be deleted on buffer arrivel
+                    NES_ASSERT(eosMessageMaxSeqNumber > info.queue.getCurrentValue(), "Sequence number is bigger than expected");
+                    info.expected = eosMessageMaxSeqNumber;
+                }
+            }
+        }
 
         const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
 
         //if this is the last eos,
-//        if (lastEOS) {
-//            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
-//            while (true) {
-//                auto locked = maxSeqNumberPerNesPartition.wlock();
-//                auto foundVersionWaitingForDrain = false;
-//                for (auto& [version, info] : (*locked)[eosNesPartition]) {
-//                    if (info.expected) {
-//                        foundVersionWaitingForDrain = true;
-//                    }
-//                }
-//                if (!foundVersionWaitingForDrain) {
-//                    NES_DEBUG("No more versions waiting for drain");
-//                    if ((*locked)[eosNesPartition].empty()) {
-//                        NES_DEBUG("No more versions active for this partiion, erasing");
-//                        (*locked).erase(eosNesPartition);
-//                    }
-//                    break;
-//                }
-//
-//                NES_DEBUG("Waiting for version to drain");
-//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-//            }
-//            NES_DEBUG("Waited for all buffers for the last EOS!");
-//        }
+        if (lastEOS) {
+            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
+            while (true) {
+                auto locked = maxSeqNumberPerNesPartition.wlock();
+                auto foundVersionWaitingForDrain = false;
+                for (auto& [version, info] : (*locked)[eosNesPartition]) {
+                    if (info.expected) {
+                        foundVersionWaitingForDrain = true;
+                    }
+                }
+                if (!foundVersionWaitingForDrain) {
+                    NES_DEBUG("No more versions waiting for drain");
+                    if ((*locked)[eosNesPartition].empty()) {
+                        NES_DEBUG("No more versions active for this partiion, erasing");
+                        (*locked).erase(eosNesPartition);
+                    }
+                    break;
+                }
+
+                NES_DEBUG("Waiting for version to drain");
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+            NES_DEBUG("Waited for all buffers for the last EOS!");
+        }
 
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
         auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads();
