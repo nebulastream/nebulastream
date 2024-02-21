@@ -100,11 +100,15 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan, De
                 }
             }
 
-            NES_INFO("Updating state of decomposed query plan {} with old state {}", subQueryPlan->getDecomposedQueryPlanId(), magic_enum::enum_name(subQueryPlan->getState()))
+            NES_INFO("Updating state of decomposed query plan {} with old state {}",
+                     subQueryPlan->getDecomposedQueryPlanId(),
+                     magic_enum::enum_name(subQueryPlan->getState()))
             switch (subQueryPlan->getState()) {
                 case QueryState::MARKED_FOR_DEPLOYMENT: subQueryPlan->setState(QueryState::DEPLOYED); break;
                 case QueryState::MARKED_FOR_REDEPLOYMENT: subQueryPlan->setState(QueryState::REDEPLOYED); break;
-                case QueryState::MARKED_FOR_MIGRATION: subQueryPlan->setState(QueryState::MIGRATING); break;
+                case QueryState::MARKED_FOR_MIGRATION:
+                    subQueryPlan->setState(QueryState::MIGRATING);
+                    break;
                     //todo: the following condition is needed only because of bug in cleanup
                 case QueryState::MIGRATING: subQueryPlan->setState(QueryState::MIGRATION_COMPLETED); break;
 
@@ -174,15 +178,17 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan, De
         for (auto decomposedQueryPlan : allDecomposedQueryPlans) {
             auto subPlanStatus = decomposedQueryPlan->getState();
             if (subPlanStatus == QueryState::MIGRATING || subPlanStatus == QueryState::MIGRATION_COMPLETED) {
-                NES_INFO("Removing migrated subplan with id  {} from execution node {}", decomposedQueryPlan->getDecomposedQueryPlanId(), node->getId())
+                NES_INFO("Removing migrated subplan with id  {} from execution node {}",
+                         decomposedQueryPlan->getDecomposedQueryPlanId(),
+                         node->getId())
                 //globalExecutionPlan->getExecutionNodeById(node->getId())->removeDecomposedQueryPlan(sharedQueryId, decomposedQueryPlan->getDecomposedQueryPlanId());
                 globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(),
                                                                 sharedQueryId,
                                                                 decomposedQueryPlan->getDecomposedQueryPlanId());
-//                node->removeDecomposedQueryPlan(sharedQueryId,
-//                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
-//                auto resourceAmount = Optimizer::ExecutionNode::getOccupiedResourcesForDecomposedQueryPlan(decomposedQueryPlan);
-//                node->getTopologyNode()->releaseSlots(resourceAmount);
+                //                node->removeDecomposedQueryPlan(sharedQueryId,
+                //                                                                decomposedQueryPlan->getDecomposedQueryPlanId());
+                //                auto resourceAmount = Optimizer::ExecutionNode::getOccupiedResourcesForDecomposedQueryPlan(decomposedQueryPlan);
+                //                node->getTopologyNode()->releaseSlots(resourceAmount);
             }
         }
     }
@@ -307,6 +313,31 @@ void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Optimiz
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
 
+        //        std::vector<DecomposedQueryPlanId> migratingPlanIds;
+        //        for (const auto& subPlan : executionNode->getAllDecomposedQueryPlans(queryId)) {
+        //            if (subPlan->getState() == QueryState::MIGRATING) {
+        //                migratingPlanIds.push_back(subPlan->getDecomposedQueryPlanId());
+        //            }
+        //        }
+        //        //todo: make async call also for migrating
+        //        if (!migratingPlanIds.empty()) {
+        //            workerRPCClient->migrateSubplans(rpcAddress, migratingPlanIds);
+        //        }
+
+        //enable this for sync calls
+        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
+        workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
+        completionQueues[queueForExecutionNode] = 1;
+    }
+    workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
+    for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+        const auto& nesNode = executionNode->getTopologyNode();
+        auto ipAddress = nesNode->getIpAddress();
+        auto grpcPort = nesNode->getGrpcPort();
+        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
+
         std::vector<DecomposedQueryPlanId> migratingPlanIds;
         for (const auto& subPlan : executionNode->getAllDecomposedQueryPlans(queryId)) {
             if (subPlan->getState() == QueryState::MIGRATING) {
@@ -317,13 +348,7 @@ void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Optimiz
         if (!migratingPlanIds.empty()) {
             workerRPCClient->migrateSubplans(rpcAddress, migratingPlanIds);
         }
-
-        //enable this for sync calls
-        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
-        workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
-        completionQueues[queueForExecutionNode] = 1;
     }
-    workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
     NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id {}", queryId);
 }
 
