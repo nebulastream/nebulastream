@@ -45,7 +45,7 @@ class NetworkDataSender : public BaseChannelType {
      * @param the sequence number of this message
      * @return true if send was successful, else false
      */
-    bool sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize, uint64_t messageSequenceNumber) {
+    bool sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize, uint64_t messageSequenceNumber, uint64_t version) {
         auto numOfTuples = inputBuffer.getNumberOfTuples();
         auto originId = inputBuffer.getOriginId();
         auto watermark = inputBuffer.getWatermark();
@@ -65,6 +65,7 @@ class NetworkDataSender : public BaseChannelType {
                                                                creationTimestamp,
                                                                sequenceNumber,
                                                                messageSequenceNumber,
+                                                               version,
                                                                numOfChildren);
 
         bool res = true;

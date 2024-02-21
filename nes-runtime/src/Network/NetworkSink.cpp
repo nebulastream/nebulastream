@@ -96,7 +96,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     }
 
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
-    return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
+    return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber, version);
 }
 
 void NetworkSink::preSetup() {
@@ -187,13 +187,13 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ReconfigurationType::BufferOutGoingTuples: {
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
+                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId(), version);
             }
             workerContext.doNotTryConnectingDataChannel(getUniqueNetworkSinkDescriptorId());
             workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                 Runtime::QueryTerminationType::Drain,
                                                 queryManager->getNumberOfWorkerThreads(),
-                                                messageSequenceNumber);
+                                                messageSequenceNumber, version);
             workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             break;
         }
@@ -208,7 +208,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
 
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
+                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId(), version);
             }
 
             clearOldAndConnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition, newVersion);
@@ -257,7 +257,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                                 terminationType,
                                                                 queryManager->getNumberOfWorkerThreads(),
-                                                                messageSequenceNumber),
+                                                                messageSequenceNumber, version),
                             "Cannot remove network channel " << nesPartition.toString());
             /* store a nullptr in place of the released channel, in case another write happens afterwards, that will prevent crashing and
             allow throwing an error instead */
@@ -362,7 +362,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
     workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                         Runtime::QueryTerminationType::Drain,
                                         queryManager->getNumberOfWorkerThreads(),
-                                        messageSequenceNumber);
+                                        messageSequenceNumber, version);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
 }
 

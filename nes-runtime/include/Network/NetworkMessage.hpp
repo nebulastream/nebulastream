@@ -157,9 +157,9 @@ class EndOfStreamMessage : public ExchangeMessage {
                                 ChannelType channelType,
                                 Runtime::QueryTerminationType terminationType,
                                 uint16_t numSendingThreads,
-                                uint64_t maxMessageSequenceNumber)
+                                uint64_t maxMessageSequenceNumber, uint64_t version)
         : ExchangeMessage(channelId), channelType(channelType), terminationType(terminationType),
-          numSendingThreads(numSendingThreads), maxMessageSequenceNumber(maxMessageSequenceNumber) {}
+          numSendingThreads(numSendingThreads), maxMessageSequenceNumber(maxMessageSequenceNumber), version(version) {}
 
     [[nodiscard]] Runtime::QueryTerminationType getQueryTerminationType() const { return terminationType; }
 
@@ -169,13 +169,16 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] uint16_t getNumberOfSendingThreads() const { return numSendingThreads; }
 
-    [[nodiscard]] uint16_t getMaxMessageSequenceNumber() const { return maxMessageSequenceNumber; }
+    [[nodiscard]] uint64_t getMaxMessageSequenceNumber() const { return maxMessageSequenceNumber; }
+
+    [[nodiscard]] uint64_t getVersion() const { return version; }
 
   private:
     ChannelType channelType;
     Runtime::QueryTerminationType terminationType;
     uint16_t numSendingThreads;
     uint64_t maxMessageSequenceNumber;
+    uint64_t version;
 };
 
 /**
@@ -236,10 +239,11 @@ class DataBufferMessage {
                                       uint64_t creationTimestamp,
                                       uint64_t sequenceNumber,
                                       uint64_t messageSequenceNumber,
+                                      uint64_t sinkVersion,
                                       uint32_t numOfChildren = 0) noexcept
         : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark),
           creationTimestamp(creationTimestamp), sequenceNumber(sequenceNumber), messageSequenceNumber(messageSequenceNumber),
-          numOfChildren(numOfChildren) {}
+          numOfChildren(numOfChildren), sinkVersion(sinkVersion) {}
 
     uint32_t const payloadSize;
     uint32_t const numOfRecords;
@@ -249,6 +253,7 @@ class DataBufferMessage {
     uint64_t const sequenceNumber;
     uint64_t const messageSequenceNumber;
     uint32_t const numOfChildren;
+    uint32_t const sinkVersion;
 };
 
 }// namespace NES::Network::Messages

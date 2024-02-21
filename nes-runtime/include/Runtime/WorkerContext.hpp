@@ -189,7 +189,7 @@ class WorkerContext {
     bool releaseNetworkChannel(NES::OperatorId id,
                                Runtime::QueryTerminationType type,
                                uint16_t sendingThreadCount,
-                               uint64_t currentMessageSequenceNumber);
+                               uint64_t currentMessageSequenceNumber, uint64_t version);
 
     /**
      * @brief This stores a network channel for an operator
@@ -268,7 +268,7 @@ class WorkerContext {
      * @brief stop a connection process which is currently in progress
      * @param operatorId the id of the operator that started the connection process
      */
-    void abortConnectionProcess(OperatorId operatorId);
+    void abortConnectionProcess(OperatorId operatorId, uint64_t version);
 
     /**
      * @brief check if a network channel exists for the sink in question

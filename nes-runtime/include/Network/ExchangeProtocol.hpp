@@ -58,7 +58,7 @@ class ExchangeProtocol {
      * @param id of the buffer
      * @param buffer content
      */
-    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber);
+    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber, uint64_t sinkVersion);
 
     /**
      * @brief Reaction of the zmqServer after an error occurs.
@@ -94,7 +94,7 @@ class ExchangeProtocol {
   private:
     std::shared_ptr<PartitionManager> partitionManager{nullptr};
     std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
-    folly::Synchronized<std::unordered_map<NesPartition, Util::NonBlockingMonotonicSeqQueue<uint64_t>>>
+    folly::Synchronized<std::unordered_map<std::pair<NesPartition, uint64_t>, std::pair<uint64_t, Util::NonBlockingMonotonicSeqQueue<uint64_t>>>>
         maxSeqNumberPerNesPartition;
 };
 

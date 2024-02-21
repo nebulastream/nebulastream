@@ -358,7 +358,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                         NES_ASSERT2_FMT(idx >= 0, "Invalid child index: " << idx);
                     }
 
-                    exchangeProtocol.onBuffer(*nesPartition, buffer, bufferHeader->messageSequenceNumber);
+                    exchangeProtocol.onBuffer(*nesPartition, buffer, bufferHeader->messageSequenceNumber, bufferHeader->sinkVersion);
                     break;
                 }
                 case MessageType::EventBuffer: {

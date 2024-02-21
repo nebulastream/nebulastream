@@ -142,11 +142,11 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
 bool WorkerContext::releaseNetworkChannel(NES::OperatorId id,
                                           Runtime::QueryTerminationType terminationType,
                                           uint16_t sendingThreadCount,
-                                          uint64_t currentMessageSequenceNumber) {
+                                          uint64_t currentMessageSequenceNumber, uint64_t version) {
     NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
-            channel->close(terminationType, sendingThreadCount, currentMessageSequenceNumber);
+            channel->close(terminationType, sendingThreadCount, currentMessageSequenceNumber, version);
         }
         dataChannels.erase(it);
         return true;
@@ -269,7 +269,7 @@ Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventCh
     return channel;
 }
 
-void WorkerContext::abortConnectionProcess(NES::OperatorId operatorId) {
+void WorkerContext::abortConnectionProcess(NES::OperatorId operatorId, uint64_t version) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
     if (!iteratorOperatorId->second.has_value()) {
         dataChannelFutures.erase(iteratorOperatorId);
@@ -281,7 +281,9 @@ void WorkerContext::abortConnectionProcess(NES::OperatorId operatorId) {
     //wait for the future to be set so we can make sure that channel is closed in case it has already been created
     auto channel = future.get();
     if (channel) {
-        channel->close(QueryTerminationType::Failure);
+        uint16_t numSendingThreads = 0;
+        uint16_t currentMessageSequenceNumber = 0;
+        channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber, version);
     }
     dataChannelFutures.erase(iteratorOperatorId);
 }

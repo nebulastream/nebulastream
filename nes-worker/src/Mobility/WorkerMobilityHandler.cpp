@@ -393,7 +393,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
             currentReconnectSchedule = newReconnectSchedule;
         }
 
-        NES_INFO("Mobility Handler checking for next reconnect")
+        //NES_INFO("Mobility Handler checking for next reconnect")
         //get the reconnect if it is to be performed now
         auto [nextReconnectPoint, predictedReconnectPoint] = getNextReconnectPoint(currentReconnectSchedule,
                                                         currentLocation,

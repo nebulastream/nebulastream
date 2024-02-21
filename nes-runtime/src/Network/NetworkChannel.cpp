@@ -205,8 +205,8 @@ NetworkChannel::~NetworkChannel() { NES_ASSERT2_FMT(this->isClosed, "Destroying 
 
 void NetworkChannel::close(Runtime::QueryTerminationType terminationType,
                            uint16_t numSendingThreads,
-                           uint64_t currentMessageSequenceNumber) {
-    inherited::close(canSendEvent && !canSendData, terminationType, numSendingThreads, currentMessageSequenceNumber);
+                           uint64_t currentMessageSequenceNumber, uint64_t version) {
+    inherited::close(canSendEvent && !canSendData, terminationType, version, numSendingThreads, currentMessageSequenceNumber);
 }
 
 NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
@@ -243,7 +243,7 @@ EventOnlyNetworkChannel::~EventOnlyNetworkChannel() { NES_ASSERT2_FMT(this->isCl
 
 void EventOnlyNetworkChannel::close(Runtime::QueryTerminationType terminationType) {
     NES_DEBUG("Closing EventOnlyNetworkChannel {}", channelId);
-    inherited::close(canSendEvent && !canSendData, terminationType);
+    inherited::close(canSendEvent && !canSendData, terminationType, 0, 0, 0);
 }
 
 EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,

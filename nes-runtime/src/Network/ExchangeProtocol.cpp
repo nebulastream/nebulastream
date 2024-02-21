@@ -53,10 +53,14 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
              (isDataChannel ? "Data" : "EventOnly"));
 
     auto nesPartition = msg.getChannelId().getNesPartition();
+    auto version = msg.getVersion();
     {
         auto maxSeqNumberPerNesPartitionLocked = maxSeqNumberPerNesPartition.wlock();
-        if (!maxSeqNumberPerNesPartitionLocked->contains(nesPartition)) {
-            (*maxSeqNumberPerNesPartitionLocked)[nesPartition] = Util::NonBlockingMonotonicSeqQueue<uint64_t>();
+        if (!maxSeqNumberPerNesPartitionLocked->contains({nesPartition, version})) {
+            std::pair<uint64_t, Util::NonBlockingMonotonicSeqQueue<uint64_t>> pair{1, Util::NonBlockingMonotonicSeqQueue<uint64_t>()};
+            (*maxSeqNumberPerNesPartitionLocked)[{nesPartition, version}] = pair;
+        } else {
+            (*maxSeqNumberPerNesPartitionLocked)[{nesPartition, version}].first++;
         }
     }
 
@@ -100,9 +104,9 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     return Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError);
 }
 
-void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber) {
+void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber, uint64_t sinkVersion) {
     if (partitionManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Registered) {
-        (*maxSeqNumberPerNesPartition.wlock())[nesPartition].emplace(messageSequenceNumber, messageSequenceNumber);
+        (*maxSeqNumberPerNesPartition.wlock())[{nesPartition, sinkVersion}].second.emplace(messageSequenceNumber, messageSequenceNumber);
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
     } else {
@@ -137,18 +141,26 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                         "Received EOS for data channel on event channel for consumer " << eosChannelId.toString());
 
         const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
-        NES_TRACE("lastEOS {}", lastEOS);
-        if (lastEOS) {
+        auto lastEOSForVersion = false;
+        {
+            auto lockedCounter = (*maxSeqNumberPerNesPartition.rlock()).at({eosNesPartition, endOfStreamMessage.getVersion()});
+            NES_ASSERT(lockedCounter.first > 0, "Sequence counter user count is 0 but still accessed");
+            lockedCounter.first--;
+            lastEOSForVersion = lockedCounter.first == 0;
+            NES_TRACE("lastEOS {}", lastEOSForVersion);
+        }
+        if (lastEOSForVersion) {
+        //if (lastEOS) {
             const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
-            auto wait_cycles = 0;
-            while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
-                //todo: this needs to be handled properly
-                if (wait_cycles == 10) {
-                    break;
-                }
-                wait_cycles++;
+//            auto wait_cycles = 0;
+            while ((*maxSeqNumberPerNesPartition.rlock()).at({eosNesPartition, endOfStreamMessage.getVersion()}).second.getCurrentValue() < eosMessageMaxSeqNumber) {
+//                //todo: this needs to be handled properly
+//                if (wait_cycles == 10) {
+//                    break;
+//                }
+//                wait_cycles++;
                 NES_DEBUG("Current message sequence number {} is less than expected max {} for partition {}",
-                          (*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue(),
+                          (*maxSeqNumberPerNesPartition.rlock()).at({eosNesPartition, endOfStreamMessage.getVersion()}).second.getCurrentValue(),
                           eosMessageMaxSeqNumber,
                           eosNesPartition);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -156,7 +168,8 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
             NES_DEBUG("Waited for all buffers for the last EOS!");
 
             // Cleaning up and resetting for this partition, so that we can reuse the partition later on
-            (*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Util::NonBlockingMonotonicSeqQueue<uint64_t>();
+            //(*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Util::NonBlockingMonotonicSeqQueue<uint64_t>();
+            (*maxSeqNumberPerNesPartition.wlock()).erase({eosNesPartition, endOfStreamMessage.getVersion()});
         }
 
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())

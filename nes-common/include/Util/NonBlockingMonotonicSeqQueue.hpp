@@ -83,6 +83,12 @@ class NonBlockingMonotonicSeqQueue {
         return *this;
     }
 
+    //todo: make this a move constructor instead
+    NonBlockingMonotonicSeqQueue(const NonBlockingMonotonicSeqQueue& other) {
+        this->head = other.head;
+        this->currentSeq = other.currentSeq.load();
+    }
+
     /**
      * @brief Emplace a new element to the queue.
      * This method can be called concurrently.
@@ -94,7 +100,7 @@ class NonBlockingMonotonicSeqQueue {
     void emplace(uint64_t sequenceNumber, T value) {
         if (sequenceNumber <= currentSeq) {
             //todo: this needs to be fixed
-            //NES_FATAL_ERROR("Invalid sequence number {} as it is <= {}", sequenceNumber, currentSeq);
+            NES_FATAL_ERROR("Invalid sequence number {} as it is <= {}", sequenceNumber, currentSeq);
             // TODO add exception, currently tests fail
             // throw Exceptions::RuntimeException("Invalid sequence number " + std::to_string(sequenceNumber)
             //                                   + " as it is <= " + std::to_string(currentSeq));
