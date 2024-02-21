@@ -142,7 +142,8 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
 bool WorkerContext::releaseNetworkChannel(NES::OperatorId id,
                                           Runtime::QueryTerminationType terminationType,
                                           uint16_t sendingThreadCount,
-                                          uint64_t currentMessageSequenceNumber, uint64_t version) {
+                                          uint64_t currentMessageSequenceNumber,
+                                          uint64_t version) {
     NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
@@ -223,7 +224,8 @@ bool WorkerContext::isAsyncConnectionInProgress(OperatorId operatorId) {
 bool WorkerContext::doNotTryConnectingDataChannel(OperatorId operatorId) {
     if (dataChannelFutures.contains(operatorId)) {
         NES_DEBUG("Cannot set the data channel for operator {}, to buffer without trying to connect, because a connection "
-                  "attempt is still ongoing", operatorId);
+                  "attempt is still ongoing",
+                  operatorId);
         return false;
     }
     dataChannelFutures[operatorId] = std::nullopt;
@@ -240,7 +242,7 @@ LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolT
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
 
-Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId operatorId) {
+Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId operatorId, uint64_t retries) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
     if (iteratorOperatorId == dataChannelFutures.end()) {
         return nullptr;
@@ -250,8 +252,16 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId
         return nullptr;
     }
     auto& [futureReference, promiseReference] = iteratorOperatorId->second.value();
+    Network::NetworkChannelPtr channel = nullptr;
+    for (uint64_t i = 0; i < retries; ++i) {
+        if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            channel = futureReference.get();
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     //blocking wait on get
-    auto channel = futureReference.get();
+    //auto channel = futureReference.get();
     promiseReference.set_value(true);
     dataChannelFutures.erase(iteratorOperatorId);
     return channel;

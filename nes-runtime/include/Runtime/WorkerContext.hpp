@@ -227,7 +227,7 @@ class WorkerContext {
      * @param operatorId id of the operator which will use the network channel
      * @return a pointer to the network channel or nullptr if the connection timed out
      */
-    Network::NetworkChannelPtr waitForAsyncConnection(NES::OperatorId operatorId);
+    Network::NetworkChannelPtr waitForAsyncConnection(NES::OperatorId operatorId, uint64_t retries);
 
     /**
      * @brief check if an async connection that was started by the operator with the specified id is currently in progress
