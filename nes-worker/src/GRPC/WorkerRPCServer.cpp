@@ -19,6 +19,7 @@
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Statistics/StatisticCollectorStorage.hpp>
@@ -221,16 +222,22 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
 Status WorkerRPCServer::ProbeStatistic(grpc::ServerContext*, const ProbeStatisticRequest* request, ProbeStatisticReply* reply) {
 
     auto logicalSourceName = request->logicalsourcename();
-    auto grpcAllPhysicalSourceNames = request->allphysicalsourcenames();
-    std::vector<std::string> allPhysicalSourceNames(grpcAllPhysicalSourceNames.begin(), grpcAllPhysicalSourceNames.end());
     auto fieldName = request->fieldname();
     auto statisticCollectorType = (Experimental::Statistics::StatisticCollectorType) request->statisticcollectortype();
+    auto serializedProbeExpression = request->expression();
+    auto probeExpression = ExpressionSerializationUtil::deserializeExpression(serializedProbeExpression);
+    auto grpcAllPhysicalSourceNames = request->allphysicalsourcenames();
+    std::vector<std::string> allPhysicalSourceNames(grpcAllPhysicalSourceNames.begin(), grpcAllPhysicalSourceNames.end());
+    time_t startTime = request->starttime();
+    time_t endTime = request->endtime();
 
     statisticManager->probeStatistic(logicalSourceName,
-                                     allPhysicalSourceNames,
-                                     nodeEngine->getNodeId(),
                                      fieldName,
                                      statisticCollectorType,
+                                     probeExpression,
+                                     allPhysicalSourceNames,
+                                     startTime,
+                                     endTime,
                                      reply);
 
     return Status::OK;
@@ -243,9 +250,16 @@ WorkerRPCServer::DeleteStatistic(grpc::ServerContext*, const DeleteStatisticRequ
     auto grpcAllPhysicalSourceNames = request->allphysicalsourcenames();
     std::vector<std::string> allPhysicalSourceNames(grpcAllPhysicalSourceNames.begin(), grpcAllPhysicalSourceNames.end());
     auto fieldName = request->fieldname();
+    auto startTime = request->starttime();
+    auto endTime = request->endtime();
     auto statisticCollectorType = (Experimental::Statistics::StatisticCollectorType) request->statisticcollectortype();
 
-    auto success = statisticManager->deleteStatistic(logicalSourceName, allPhysicalSourceNames, nodeEngine->getNodeId(), fieldName, statisticCollectorType);
+    auto success = statisticManager->deleteStatistic(logicalSourceName,
+                                                     allPhysicalSourceNames,
+                                                     fieldName,
+                                                     startTime,
+                                                     endTime,
+                                                     statisticCollectorType);
     if (success == true) {
         reply->set_success(true);
         return Status::OK;

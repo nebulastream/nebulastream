@@ -31,16 +31,9 @@ std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryL
         auto physicalSourceName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
             dynBuffer[rowIdx][PHYSICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
-        auto workerId = dynBuffer[rowIdx][WORKER_ID].read<uint64_t>();
         auto fieldName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
             dynBuffer[rowIdx][FIELD_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
-
-        auto statisticCollectorIdentifier = std::make_shared<StatisticCollectorIdentifier>(logicalSourceName,
-                                                                                           physicalSourceName,
-                                                                                           workerId,
-                                                                                           fieldName,
-                                                                                           StatisticCollectorType::RESERVOIR);
 
         // read other general statisticCollector fields
         auto observedTuples = dynBuffer[rowIdx][OBSERVED_TUPLES].read<uint64_t>();
@@ -48,7 +41,14 @@ std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryL
         auto startTime = dynBuffer[rowIdx][START_TIME].read<uint64_t>();
         auto endTime = dynBuffer[rowIdx][END_TIME].read<uint64_t>();
 
-        // read sketch data
+        auto statisticCollectorIdentifier = std::make_shared<StatisticCollectorIdentifier>(logicalSourceName,
+                                                                                           physicalSourceName,
+                                                                                           fieldName,
+                                                                                           startTime,
+                                                                                           endTime,
+                                                                                           StatisticCollectorType::RESERVOIR);
+
+        // read reservoir data
         auto synopsesText =
             Runtime::MemoryLayouts::readVarSizedData(dynBuffer.getBuffer(),
                                                      dynBuffer[rowIdx][DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
@@ -59,7 +59,7 @@ std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryL
 
         // create sketch and add it to the vector of sketches
         auto reservoir =
-            std::make_shared<ReservoirSample>(data, statisticCollectorIdentifier, observedTuples, depth, startTime, endTime);
+            std::make_shared<ReservoirSample>(data, statisticCollectorIdentifier, observedTuples, depth);
         allStatisticCollectors.push_back(reservoir);
     }
 

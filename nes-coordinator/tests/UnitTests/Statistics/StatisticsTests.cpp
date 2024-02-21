@@ -27,6 +27,9 @@
 #include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <Util/StatisticCollectorType.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <API/QueryAPI.hpp>
 
 namespace NES {
 
@@ -46,7 +49,7 @@ TEST_F(StatisticsTest, requestsTest) {
     std::vector<std::string> physicalSourceNames(10, "defaultPhysicalSourceName");
     std::string defaultFieldName = "defaultFieldName";
     auto statisticCollectorType = Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
-    std::string probeExpression = "x == 15";
+    auto expressionNodePtr = (Attribute("defaultFieldName") == 1);
     time_t startTime = 100;
     time_t endTime = 10;
 
@@ -56,7 +59,7 @@ TEST_F(StatisticsTest, requestsTest) {
     auto probeObj = Experimental::Statistics::StatisticProbeRequest(defaultLogicalSourceName,
                                                                     defaultFieldName,
                                                                     statisticCollectorType,
-                                                                    probeExpression,
+                                                                    expressionNodePtr,
                                                                     physicalSourceNames,
                                                                     startTime,
                                                                     endTime);
@@ -76,7 +79,7 @@ TEST_F(StatisticsTest, requestsTest) {
     EXPECT_EQ(createObj.getStatisticCollectorType(), statisticCollectorType);
     EXPECT_EQ(probeObj.getStatisticCollectorType(), statisticCollectorType);
     EXPECT_EQ(deleteObj.getStatisticCollectorType(), statisticCollectorType);
-    EXPECT_EQ(probeObj.getProbeExpression(), probeExpression);
+    EXPECT_TRUE(expressionNodePtr->instanceOf<EqualsExpressionNode>());
     EXPECT_EQ(probeObj.getStartTime(), startTime);
     EXPECT_EQ(probeObj.getEndTime(), endTime);
     EXPECT_EQ(deleteObj.getEndTime(), endTime);

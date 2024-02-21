@@ -41,6 +41,21 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <API/Expressions/Expressions.hpp>
+#include <API/QueryAPI.hpp>
+
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+
+#include <Util/StatisticUtil.hpp>
+
 
 using namespace std;
 
@@ -63,13 +78,16 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest {
 TEST_F(StatisticsIntegrationTest, createTest) {
     auto defaultLogicalSourceName = "defaultLogicalSourceName";
     std::vector<std::string> physicalSourceNames(1, "defaultPhysicalSourceName");
-    auto defaultFieldName = "defaultFieldName";
+    auto defaultFieldName = "f1";
     auto statisticCollectorType = Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
-    auto probeExpression = "x == 15";
-    auto startTime = 100;
-    auto endTime = 10;
-    auto depth = 2;
-    auto width = 5;
+    auto startTime = 0;
+    auto endTime = 5000;
+    auto depth = 3;
+    auto width = 8;
+    auto observedTuples = 5;
+
+    auto expressionNodePtr = (Attribute("f1") == 1);
+    EXPECT_EQ(expressionNodePtr->instanceOf<EqualsExpressionNode>(), true);
 
     auto createObj =
         Experimental::Statistics::StatisticCreateRequest(defaultLogicalSourceName,
@@ -79,7 +97,7 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     auto probeObj = Experimental::Statistics::StatisticProbeRequest(defaultLogicalSourceName,
                                                                     defaultFieldName,
                                                                     Experimental::Statistics::StatisticCollectorType::COUNT_MIN,
-                                                                    probeExpression,
+                                                                    expressionNodePtr,
                                                                     physicalSourceNames,
                                                                     startTime,
                                                                     endTime);
@@ -122,33 +140,31 @@ TEST_F(StatisticsIntegrationTest, createTest) {
 
     auto statCollectorStorage = wrk1->getStatisticManager()->getStatisticCollectorStorage();
 
-    std::vector<uint64_t> data(depth * width, 0);
+    std::string filename = std::filesystem::path(TEST_DATA_DIRECTORY) / "countmin.csv";
+    auto manualCMSketch = Experimental::Statistics::StatisticUtil::readFlattenedVectorFromCsvFile(filename);
 
     for (auto physicalSourceName : physicalSourceNames) {
         auto statCollectorIdentifier =
             std::make_shared<NES::Experimental::Statistics::StatisticCollectorIdentifier>(defaultLogicalSourceName,
                                                                                           physicalSourceName,
-                                                                                          wrk1->getWorkerId(),
                                                                                           defaultFieldName,
+                                                                                          startTime,
+                                                                                          endTime,
                                                                                           statisticCollectorType);
-
-        data[0] += 1;
 
         std::shared_ptr<Experimental::Statistics::Statistic> statistic =
             std::make_shared<Experimental::Statistics::CountMin>(width,
-                                                                 data,
+                                                                 manualCMSketch,
                                                                  statCollectorIdentifier,
-                                                                 1,
-                                                                 depth,
-                                                                 startTime,
-                                                                 endTime);
+                                                                 observedTuples,
+                                                                 depth);
 
         statCollectorStorage->addStatistic(*(statCollectorIdentifier.get()), statistic);
     }
 
     auto stats = statCoordinator->probeStatistic(probeObj);
 
-    EXPECT_EQ(stats[0], 1);
+    EXPECT_EQ(stats[0], 0.2);
 
     success = statCoordinator->deleteStatistic(deleteObj);
 

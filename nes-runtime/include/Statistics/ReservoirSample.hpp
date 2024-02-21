@@ -20,25 +20,23 @@
 namespace NES::Experimental::Statistics {
 
 /**
- * @brief
+ * @brief this class stores the 1D array of a Reservoir-Sample,
+ * its meta data and provides the functionalities associated with a reservoir.
  */
 class ReservoirSample : public Statistic {
   public:
     /**
-     * @brief
-     * @param data
-     * @param statisticCollectorIdentifier
-     * @param observedTuples
-     * @param depth
-     * @param startTime
-     * @param endTime
+     * @param data the data of the sketch
+     * @param statisticCollectorIdentifier the key of the sketch
+     * @param observedTuples the number of observedTuples of the sketch
+     * @param depth the depth of the sketch
      */
     ReservoirSample(const std::vector<uint64_t>& data,
                     StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
-                    const uint64_t observedTuples,
-                    const uint64_t depth,
-                    const uint64_t startTime,
-                    const uint64_t endTime);
+                    uint64_t observedTuples,
+                    uint64_t depth);
+
+    double probe(StatisticProbeParameterPtr& probeParameters) override;
 
     /**
      * @return a vector containing the data of the sample

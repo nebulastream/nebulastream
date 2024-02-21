@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
-#include <limits>
-
 #include <Statistics/StatisticCollectorStorage.hpp>
 #include <Statistics/StatisticManager/StatisticManager.hpp>
+#include <Statistics/SynopsisProbeParameter/CountMinProbeParameter.hpp>
+#include <Statistics/SynopsisProbeParameter/StatisticProbeParameter.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/StatisticCollectorIdentifier.hpp>
+#include <limits>
 
 namespace NES::Experimental::Statistics {
 
@@ -25,19 +27,34 @@ StatisticManager::StatisticManager() : statisticCollectorStorage(std::make_share
 StatisticCollectorStoragePtr StatisticManager::getStatisticCollectorStorage() { return statisticCollectorStorage; }
 
 void StatisticManager::probeStatistic(const std::string& logicalSourceName,
-                                      const std::vector<std::string>& allPhyicalSourceNames,
-                                      WorkerId workerId,
                                       const std::string& fieldName,
                                       StatisticCollectorType statisticCollectorType,
+                                      ExpressionNodePtr& expression,
+                                      const std::vector<std::string>& allPhyicalSourceNames,
+                                      const time_t startTime,
+                                      const time_t endTime,
                                       ProbeStatisticReply* allStatistics) {
 
     double statistic;
+    StatisticProbeParameterPtr probeParams = nullptr;
 
-    for (auto physicalSourceName : allPhyicalSourceNames) {
-        auto statCollectorIdentifier =
-            StatisticCollectorIdentifier(logicalSourceName, physicalSourceName, workerId, fieldName, statisticCollectorType);
+    switch (statisticCollectorType) {
+        case StatisticCollectorType::COUNT_MIN: probeParams = std::make_shared<CountMinProbeParameter>(expression);
+        case StatisticCollectorType::DDSKETCH: NES_ERROR("Sketch not yet implemented");
+        case StatisticCollectorType::HYPER_LOG_LOG: NES_ERROR("Sketch not yet implemented");
+        case StatisticCollectorType::RESERVOIR: NES_ERROR("Reservoir not yet implemented");
+        default: NES_ERROR("StatisticCollectorType not implemented!")
+    }
 
-        statistic = statisticCollectorStorage->probeStatistic(statCollectorIdentifier);
+    for (const auto& physicalSourceName : allPhyicalSourceNames) {
+        auto statisticCollectorIdentifier = StatisticCollectorIdentifier(logicalSourceName,
+                                                                         physicalSourceName,
+                                                                         fieldName,
+                                                                         startTime,
+                                                                         endTime,
+                                                                         statisticCollectorType);
+
+        statistic = statisticCollectorStorage->probeStatistic(statisticCollectorIdentifier, probeParams);
         // ToDo: add try catch block
         if (statistic != std::numeric_limits<double>::quiet_NaN()) {
             allStatistics->add_statistics(statistic);
@@ -46,25 +63,25 @@ void StatisticManager::probeStatistic(const std::string& logicalSourceName,
             return;
         }
     }
-    return;
 }
 
 bool StatisticManager::deleteStatistic(const std::string& logicalSourceName,
                                        const std::vector<std::string>& allPhysicalSourceNames,
-                                       WorkerId workerId,
                                        const std::string& fieldName,
+                                       const time_t startTime,
+                                       const time_t endTime,
                                        StatisticCollectorType statisticCollectorType) {
 
-    for (auto physicalSourceName : allPhysicalSourceNames) {
+    for (const auto& physicalSourceName : allPhysicalSourceNames) {
         auto statisticCollectorIdentifier = StatisticCollectorIdentifier(logicalSourceName,
                                                                          physicalSourceName,
-                                                                         workerId,
                                                                          fieldName,
+                                                                         startTime,
+                                                                         endTime,
                                                                          statisticCollectorType);
 
         statisticCollectorStorage->deleteStatistic(statisticCollectorIdentifier);
     }
     return true;
 }
-
 }// namespace NES::Experimental::Statistics

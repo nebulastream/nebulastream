@@ -159,6 +159,9 @@ add_nes_unit_test(buffer-storage-tests "Runtime/BufferStorageTest.cpp")
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)
 
+### Statistic Sink Tests ###
+add_nes_unit_test(statistic-sink-tests "Sink/StatisticSinkTest.cpp" Sink/StatisticSinkTest.cpp)
+
 ### Statistic Tests ###
 add_nes_unit_test(statistic-tests "Statistics/StatisticsTests.cpp")
 

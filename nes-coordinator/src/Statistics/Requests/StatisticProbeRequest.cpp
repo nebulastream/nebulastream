@@ -13,21 +13,22 @@
 */
 
 #include <Statistics/Requests/StatisticProbeRequest.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
 
 namespace NES::Experimental::Statistics {
 
 StatisticProbeRequest::StatisticProbeRequest(const std::string& logicalSourceName,
                                              const std::string& fieldName,
                                              const StatisticCollectorType statisticCollectorType,
-                                             const std::string& probeExpression,
+                                             ExpressionNodePtr expression,
                                              const std::vector<std::string>& physicalSourceNames,
                                              const time_t startTime,
                                              const time_t endTime,
                                              const bool merge)
-    : StatisticRequest(logicalSourceName, fieldName, statisticCollectorType), probeExpression(probeExpression),
+    : StatisticRequest(logicalSourceName, fieldName, statisticCollectorType), expression(expression),
       physicalSourceNames(physicalSourceNames), startTime(startTime), endTime(endTime), merge(merge) {}
 
-const std::string& StatisticProbeRequest::getProbeExpression() const { return probeExpression; }
+const ExpressionNodePtr& StatisticProbeRequest::getExpression() const { return expression; }
 
 const std::vector<std::string>& StatisticProbeRequest::getPhysicalSourceNames() const { return physicalSourceNames; }
 

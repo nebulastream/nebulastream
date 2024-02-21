@@ -32,6 +32,7 @@ class ConvertLogicalToPhysicalSink {
     /**
      * @brief This method is responsible for creating the physical sink from logical sink descriptor
      * @param sinkDescriptor: logical sink descriptor
+     * @param schema the input schema of the sink
      * @param nodeEngine: the running node engine where the sink is deployed
      * @param querySubPlanId: the id of the owning subplan
      * @return Data sink pointer representing the physical sink

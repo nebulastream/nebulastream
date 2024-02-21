@@ -69,5 +69,4 @@ std::vector<std::vector<uint64_t>> StatisticUtil::read2DVectorFromCsvFile(const 
 
     return csvData;
 }
-
-}// namespace NES
+}// namespace NES::Experimental::Statistics

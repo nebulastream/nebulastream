@@ -56,7 +56,8 @@ void DynamicTuple::writeVarSized(std::variant<const uint64_t, const std::string>
     if (childBuffer.has_value()) {
         auto& childBufferVal = childBuffer.value();
         *childBufferVal.getBuffer<uint32_t>() = valueLength;
-        std::strncpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
+        std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
+//        std::strncpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
         auto index = buffer.storeChildBuffer(childBufferVal);
         std::visit(
             [this, index](const auto& key) {

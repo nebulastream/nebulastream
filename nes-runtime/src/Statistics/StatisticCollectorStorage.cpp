@@ -12,10 +12,13 @@
     limitations under the License.
 */
 
+#include <Operators/Expressions/ExpressionNode.hpp>
 #include <Statistics/CountMin.hpp>
 #include <Statistics/ReservoirSample.hpp>
 #include <Statistics/Statistic.hpp>
 #include <Statistics/StatisticCollectorStorage.hpp>
+#include <Statistics/SynopsisProbeParameter/StatisticProbeParameter.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/StatisticCollectorIdentifier.hpp>
 
 namespace NES::Experimental::Statistics {
@@ -35,17 +38,13 @@ void StatisticCollectorStorage::addStatistics(std::vector<StatisticPtr> allStati
     }
 }
 
-double StatisticCollectorStorage::probeStatistic(const StatisticCollectorIdentifier& statisticCollectorIdentifier) {
+double StatisticCollectorStorage::probeStatistic(const StatisticCollectorIdentifier& statisticCollectorIdentifier,
+                                                 StatisticProbeParameterPtr& probeParameter) {
+
     auto statIt = trackedStatistics.find(statisticCollectorIdentifier);
     if (statIt != trackedStatistics.end()) {
         auto statistic = statIt->second.get();
-        if (nullptr != dynamic_cast<CountMin*>(statistic)) {
-            auto cm = dynamic_cast<CountMin*>(statistic);
-            auto cmData = cm->getData();
-            return cmData[0];
-        }
-        // ToDo: add probe logic
-        return 1.0;
+        return statistic->probe(probeParameter);
     } else {
         // ToDo create Statistic object to return instead. Issue:4354
         return -1.0;
@@ -54,4 +53,19 @@ double StatisticCollectorStorage::probeStatistic(const StatisticCollectorIdentif
 void StatisticCollectorStorage::deleteStatistic(const StatisticCollectorIdentifier& statisticCollectorIdentifier) {
     trackedStatistics.erase(statisticCollectorIdentifier);
 }
+
+StatisticPtr StatisticCollectorStorage::getStatistic(StatisticCollectorIdentifier& statisticCollectorIdentifier) {
+    auto statisticIt = trackedStatistics.find(statisticCollectorIdentifier);
+    if (statisticIt != trackedStatistics.end()) {
+        return statisticIt->second;
+    } else {
+        NES_ERROR("No statistic found for StatisticCollectorIdentifier with LogicalSourceName: {} PhysicalSourceName: {} Built "
+                  "on Field: {}\n",
+                  statisticCollectorIdentifier.getLogicalSourceName(),
+                  statisticCollectorIdentifier.getPhysicalSourceName(),
+                  statisticCollectorIdentifier.getFieldName());
+        return nullptr;
+    }
+}
+
 }// namespace NES::Experimental::Statistics

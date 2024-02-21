@@ -20,10 +20,24 @@
 
 namespace NES::Experimental::Statistics {
 
+/**
+ * @brief a class with basic utility functions for statistics
+ */
 class StatisticUtil {
   public:
+
+    /**
+     * @brief loads a csv file and writes the data to a 1D vector
+     * @param filename the name of the csv file
+     * @return a 1D vector containing the data from a csv file
+     */
     static std::vector<uint64_t> readFlattenedVectorFromCsvFile(const std::string& filename);
 
+    /**
+     * @brief loads a csv file and writes the data to a 2D vector
+     * @param filename the name of the csv file
+     * @return a 1D vector containing the data from a csv file
+     */
     static std::vector<std::vector<uint64_t>> read2DVectorFromCsvFile(const std::string& filename);
 };
 }// namespace NES::Experimental::Statistics

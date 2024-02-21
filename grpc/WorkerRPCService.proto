@@ -13,6 +13,7 @@
 */
 
 syntax = "proto3";
+import "SerializableExpression.proto";
 import "SerializableQueryPlan.proto";
 import "WorkerLocation.proto";
 
@@ -189,7 +190,7 @@ message ProbeStatisticRequest {
   repeated string allPhysicalSourceNames = 2;
   string fieldName = 3;
   int32 statisticCollectorType = 4;
-  string probeExpression = 5;
+  NES.SerializableExpression expression = 5;
   uint64 startTime = 6;
   uint64 endTime = 7;
 }
@@ -203,7 +204,8 @@ message DeleteStatisticRequest {
   repeated string allPhysicalSourceNames = 2;
   string FieldName = 3;
   int32 statisticCollectorType = 4;
-  uint64 endTime = 5;
+  uint64 startTime = 5;
+  uint64 endTime = 6;
 }
 
 message DeleteStatisticReply {

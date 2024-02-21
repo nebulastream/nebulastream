@@ -232,6 +232,8 @@ DataSinkPtr createStatisticCollectorStorageSink(const SchemaPtr& schema,
                                                 NES::QuerySubPlanId querySubPlanId,
                                                 uint64_t numberOfOrigins) {
     SinkFormatPtr sinkFormat = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+    auto statManager = nodeEngine->getStatisticManager();
+    auto statStorage = statManager->getStatisticCollectorStorage();
     return std::make_shared<NES::Experimental::Statistics::StatisticSink>(
         nodeEngine->getStatisticManager()->getStatisticCollectorStorage(),
         statisticCollectorType,

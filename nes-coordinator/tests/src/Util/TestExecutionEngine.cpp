@@ -121,4 +121,6 @@ bool TestExecutionEngine::stop() { return nodeEngine->stop(); }
 
 Runtime::BufferManagerPtr TestExecutionEngine::getBufferManager() const { return nodeEngine->getBufferManager(); }
 
+const Runtime::NodeEnginePtr& TestExecutionEngine::getNodeEngine() const { return nodeEngine; }
+
 }// namespace NES::Testing

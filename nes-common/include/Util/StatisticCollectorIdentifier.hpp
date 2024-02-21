@@ -32,14 +32,16 @@ class StatisticCollectorIdentifier {
     /**
      * @param logicalSourceName the logical source over which the statistic is generated
      * @param physicalSourceName the physicalSource over which the statistic is generated
-     * @param workerId the id of the node on which the statistic was generated
      * @param fieldName the fieldName over which the statistic is generated
+     * @param startTime the start time of the time period over which the statistic was constructed
+     * @param endTime the end time of the time period over which the statistic was constructed
      * @param statisticCollectorType the Type of statisticCollector that is used/the statistic that is generated
      */
     StatisticCollectorIdentifier(const std::string& logicalSourceName,
                                  const std::string& physicalSourceName,
-                                 const WorkerId& workerId,
                                  const std::string& fieldName,
+                                 const time_t startTime,
+                                 const time_t endTime,
                                  const StatisticCollectorType statisticCollectorType);
 
     /**
@@ -53,11 +55,6 @@ class StatisticCollectorIdentifier {
     [[nodiscard]] const std::string& getPhysicalSourceName() const;
 
     /**
-     * @return returns the node on which the statistic was created
-     */
-    [[nodiscard]] const WorkerId& getWorkerId() const;
-
-    /**
      * @return returns the fieldName over which the statistic is generated
      */
     [[nodiscard]] const std::string& getFieldName() const;
@@ -66,6 +63,16 @@ class StatisticCollectorIdentifier {
      * @return returns the StatisticCollectorFormat type aka the type of statistic
      */
     [[nodiscard]] const StatisticCollectorType& getStatisticCollectorType() const;
+
+    /**
+     * @return returns the startTime of the time period over which the statistic was constructed
+     */
+    [[nodiscard]] time_t getStartTime() const;
+
+    /**
+     * @return returns the endTime of the time period over which the statistic was constructed
+     */
+    [[nodiscard]] time_t getEndTime() const;
 
     /**
      * @param statisticCollectorType a object that allows for the identification of
@@ -83,8 +90,9 @@ class StatisticCollectorIdentifier {
             std::size_t hashValue = 0;
             hashValue ^= std::hash<std::string>()(identifier.logicalSourceName);
             hashValue ^= std::hash<std::string>()(identifier.physicalSourceName);
-            hashValue ^= std::hash<uint64_t>()(identifier.workerId);
             hashValue ^= std::hash<std::string>()(identifier.fieldName);
+            hashValue ^= std::hash<time_t>()(identifier.startTime);
+            hashValue ^= std::hash<time_t>()(identifier.endTime);
             hashValue ^= static_cast<std::size_t>(identifier.statisticCollectorType);
             return hashValue;
         }
@@ -93,8 +101,9 @@ class StatisticCollectorIdentifier {
   private:
     std::string logicalSourceName;
     std::string physicalSourceName;
-    WorkerId workerId;
     std::string fieldName;
+    time_t startTime;
+    time_t endTime;
     StatisticCollectorType statisticCollectorType;
 };
 }// namespace NES::Experimental::Statistics

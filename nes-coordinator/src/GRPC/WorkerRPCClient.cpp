@@ -18,13 +18,15 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Statistics/Requests/StatisticDeleteRequest.hpp>
+#include <Statistics/Requests/StatisticProbeRequest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
-#include <Statistics/Requests/StatisticDeleteRequest.hpp>
-#include <Statistics/Requests/StatisticProbeRequest.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
@@ -504,6 +506,10 @@ std::vector<double> WorkerRPCClient::probeStatistic(const std::string& destAddre
     }
     request.set_fieldname(probeRequest.getFieldName());
     request.set_statisticcollectortype((int32_t) probeRequest.getStatisticCollectorType());
+    auto expressionDetails = request.mutable_expression();
+    ExpressionSerializationUtil::serializeExpression(probeRequest.getExpression(), expressionDetails);
+    request.set_starttime(probeRequest.getStartTime());
+    request.set_endtime(probeRequest.getEndTime());
 
     ProbeStatisticReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());

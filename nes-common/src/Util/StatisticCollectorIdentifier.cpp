@@ -18,16 +18,18 @@ namespace NES::Experimental::Statistics {
 
 StatisticCollectorIdentifier::StatisticCollectorIdentifier(const std::string& logicalSourceName,
                                                            const std::string& physicalSourceName,
-                                                           const WorkerId& workerId,
                                                            const std::string& fieldName,
+                                                           const time_t startTime,
+                                                           const time_t endTime,
                                                            const StatisticCollectorType statisticCollectorType)
-    : logicalSourceName(logicalSourceName), physicalSourceName(physicalSourceName), workerId(workerId), fieldName(fieldName),
-      statisticCollectorType(statisticCollectorType) {}
+    : logicalSourceName(logicalSourceName), physicalSourceName(physicalSourceName), fieldName(fieldName), startTime(startTime),
+      endTime(endTime), statisticCollectorType(statisticCollectorType) {}
 
 bool StatisticCollectorIdentifier::operator==(const StatisticCollectorIdentifier& statisticCollectorIdentifier) const {
     return logicalSourceName == statisticCollectorIdentifier.getLogicalSourceName()
         && physicalSourceName == statisticCollectorIdentifier.getPhysicalSourceName()
-        && workerId == statisticCollectorIdentifier.getWorkerId() && fieldName == statisticCollectorIdentifier.getFieldName()
+        && fieldName == statisticCollectorIdentifier.getFieldName() && startTime == statisticCollectorIdentifier.getStartTime()
+        && endTime == statisticCollectorIdentifier.getEndTime()
         && statisticCollectorType == statisticCollectorIdentifier.getStatisticCollectorType();
 }
 
@@ -35,10 +37,12 @@ const std::string& StatisticCollectorIdentifier::getLogicalSourceName() const { 
 
 const std::string& StatisticCollectorIdentifier::getPhysicalSourceName() const { return physicalSourceName; }
 
-const WorkerId& StatisticCollectorIdentifier::getWorkerId() const { return workerId; }
-
 const std::string& StatisticCollectorIdentifier::getFieldName() const { return fieldName; }
 
 const StatisticCollectorType& StatisticCollectorIdentifier::getStatisticCollectorType() const { return statisticCollectorType; }
+
+time_t StatisticCollectorIdentifier::getStartTime() const { return startTime; }
+
+time_t StatisticCollectorIdentifier::getEndTime() const { return endTime; }
 
 }// namespace NES::Experimental::Statistics

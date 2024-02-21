@@ -23,6 +23,7 @@ add_source_files(nes-common
         SpatialUtils.cpp
         StacktraceLoader.cpp
         StatisticCollectorIdentifier.cpp
+        StatisticUtil.cpp
         ThreadNaming.cpp
         TimeMeasurement.cpp
         QueryStateHistory.cpp

@@ -885,5 +885,13 @@ void writeWaypointsToCsv(const std::string& csvPath,
  */
 uint64_t countOccurrences(const std::string& searchString, const std::string& targetString);
 
+
+/**
+ * @brief
+ * @param csvPath
+ * @return
+ */
+std::vector<uint64_t> createVectorFromCSV(const std::string& csvPath);
+
 }// namespace NES
 #endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTUTILS_HPP_

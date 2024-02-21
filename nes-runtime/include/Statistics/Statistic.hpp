@@ -19,20 +19,33 @@
 
 namespace NES::Experimental::Statistics {
 
+class StatisticProbeParameter;
+using StatisticProbeParameterPtr = std::shared_ptr<StatisticProbeParameter>;
+
 class StatisticCollectorIdentifier;
 using StatisticCollectorIdentifierPtr = std::shared_ptr<StatisticCollectorIdentifier>;
 /**
- * @brief
+ * @brief this class defines the general interface for all statistics such as count-min and the reservoir sample
  */
 class Statistic {
   public:
+    /**
+     * @param statisticCollectorIdentifier the key that identifies a statistic
+     * @param observedTuples the number of observed tuples by a statistic
+     * @param depth the depth of the statistic
+     */
     Statistic(StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
               uint64_t observedTuples,
-              uint64_t depth,
-              uint64_t startTime,
-              uint64_t endTime);
+              uint64_t depth);
 
     virtual ~Statistic() = default;
+
+    /**
+     * @brief a probe function that all statistics have to implement, defining how statistics are obtained from them
+     * @param probeParameters a parameter defining the probe operation
+     * @return a statistic
+     */
+    virtual double probe(StatisticProbeParameterPtr& probeParameters) = 0;
 
     /**
      * @return returns the identifier of the StatisticCollectorFormat, which holds information about where is was built and what kind of statistic obj it is
@@ -63,8 +76,6 @@ class Statistic {
     StatisticCollectorIdentifierPtr statisticCollectorIdentifier;
     uint64_t observedTuples;
     uint64_t depth;
-    uint64_t startTime;
-    uint64_t endTime;
 };
 }// namespace NES::Experimental::Statistics
 #endif//NES_NES_RUNTIME_INCLUDE_STATISTICS_STATISTICS_STATISTIC_HPP_

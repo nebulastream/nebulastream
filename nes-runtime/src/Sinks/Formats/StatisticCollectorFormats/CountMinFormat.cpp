@@ -32,22 +32,22 @@ std::vector<StatisticPtr> CountMinFormat::readFromBuffer(Runtime::MemoryLayouts:
         auto physicalSourceName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
             dynBuffer[rowIdx][PHYSICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
-        auto workerId = dynBuffer[rowIdx][WORKER_ID].read<uint64_t>();
         auto fieldName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
             dynBuffer[rowIdx][FIELD_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
-
-        auto statisticCollectorIdentifier = std::make_shared<StatisticCollectorIdentifier>(logicalSourceName,
-                                                                                           physicalSourceName,
-                                                                                           workerId,
-                                                                                           fieldName,
-                                                                                           StatisticCollectorType::COUNT_MIN);
 
         // read other general statisticCollector fields
         auto observedTuples = dynBuffer[rowIdx][OBSERVED_TUPLES].read<uint64_t>();
         auto depth = dynBuffer[rowIdx][DEPTH].read<uint64_t>();
         auto startTime = dynBuffer[rowIdx][START_TIME].read<uint64_t>();
         auto endTime = dynBuffer[rowIdx][END_TIME].read<uint64_t>();
+
+        auto statisticCollectorIdentifier = std::make_shared<StatisticCollectorIdentifier>(logicalSourceName,
+                                                                                           physicalSourceName,
+                                                                                           fieldName,
+                                                                                           startTime,
+                                                                                           endTime,
+                                                                                           StatisticCollectorType::COUNT_MIN);
 
         // read sketch data
         auto synopsesText =
@@ -63,7 +63,7 @@ std::vector<StatisticPtr> CountMinFormat::readFromBuffer(Runtime::MemoryLayouts:
 
         // create sketch and add it to the vector of sketches
         auto countMin =
-            std::make_shared<CountMin>(width, data, statisticCollectorIdentifier, observedTuples, depth, startTime, endTime);
+            std::make_shared<CountMin>(width, data, statisticCollectorIdentifier, observedTuples, depth);
         statisticCollectors.push_back(countMin);
     }
 

@@ -26,6 +26,9 @@ using StatisticPtr = std::shared_ptr<Statistic>;
 class StatisticCollectorIdentifier;
 using StatisticCollectorIdentifierPtr = std::shared_ptr<StatisticCollectorIdentifier>;
 
+class StatisticProbeParameter;
+using StatisticProbeParameterPtr = std::shared_ptr<StatisticProbeParameter>;
+
 class StatisticCollectorStorage {
   public:
     /**
@@ -49,9 +52,10 @@ class StatisticCollectorStorage {
     /**
      * @brief given a unique identifier, the hash-map searches for the specific statistic and if available returns it
      * @param statisticCollectorIdentifier the unique identifier, specifying the statistic
+     * @param probeExpression
      * @return a statistic
      */
-    double probeStatistic(const StatisticCollectorIdentifier& statisticCollectorIdentifier);
+    double probeStatistic(const StatisticCollectorIdentifier& statisticCollectorIdentifier, StatisticProbeParameterPtr& probeParameter);
 
     /**
      * @brief given a unique statistic identifier, the according statistic is deleted from the hash-map, if it is found
@@ -59,9 +63,15 @@ class StatisticCollectorStorage {
      */
     void deleteStatistic(const StatisticCollectorIdentifier& statisticCollectorIdentifier);
 
+    /**
+     * @param the key with which we identify the statistic that we want
+     * @return a statistic object 
+     */
+    StatisticPtr getStatistic(StatisticCollectorIdentifier& statisticCollectorIdentifier);
+
   private:
     std::unordered_map<StatisticCollectorIdentifier, StatisticPtr, StatisticCollectorIdentifier::Hash> trackedStatistics;
 };
-}
+}// namespace NES::Experimental::Statistics
 
 #endif//NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICMANAGER_STATISTICCOLLECTORSTORAGE_HPP_

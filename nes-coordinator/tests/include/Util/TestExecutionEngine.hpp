@@ -103,6 +103,11 @@ class TestExecutionEngine {
 
     Runtime::BufferManagerPtr getBufferManager() const;
 
+    /**
+     * @return the node engine
+     */
+    const Runtime::NodeEnginePtr& getNodeEngine() const;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Optimizer::DistributeWindowRulePtr distributeWindowRule;

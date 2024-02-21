@@ -21,26 +21,41 @@
 #include <string>
 #include <vector>
 
-namespace NES::Experimental::Statistics {
+namespace NES {
+
+class ExpressionNode;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+
+namespace Experimental::Statistics {
 
 /**
- * @brief the inherited class that defines what is needed to probe Statistics
- */
+* @brief the inherited class that defines what is needed to probe Statistics
+*/
 class StatisticProbeRequest : public StatisticRequest {
   public:
+    /**
+     * @param logicalSourceName the logical source name of the data that is to be probed
+     * @param fieldName the field name of the data that is to be probed
+     * @param statisticCollectorType the type of statistic
+     * @param expression the expression describing the statistic that is to be probed
+     * @param physicalSourceNames the physical source name of the data that is to be probed
+     * @param startTime the startTime of the Statistic that is to be probed
+     * @param endTime the endTime of the statistic that is to be probed
+     * @param merge whether we merge multiple local statistics
+     */
     StatisticProbeRequest(const std::string& logicalSourceName,
                           const std::string& fieldName,
                           const StatisticCollectorType statisticCollectorType,
-                          const std::string& probeExpression,
+                          ExpressionNodePtr expression,
                           const std::vector<std::string>& physicalSourceNames,
                           const time_t startTime,
                           const time_t endTime,
                           const bool merge = false);
 
     /**
-     * @return returns the expression that is used to define what statistic(s) are to be queried
+     * @return returns the expression for which want to generate a statistic
      */
-    [[nodiscard]] const std::string& getProbeExpression() const;
+    const ExpressionNodePtr& getExpression() const;
 
     /**
      * @return returns the physicalSourceNames over which the statisticCollectors were generated that we wish to probe/query
@@ -74,12 +89,13 @@ class StatisticProbeRequest : public StatisticRequest {
     [[nodiscard]] const bool& getMerge() const;
 
   private:
-    std::string probeExpression;
+    ExpressionNodePtr expression;
     std::vector<std::string> physicalSourceNames;
     time_t startTime;
     time_t endTime;
     bool merge;
 };
-}// namespace NES::Experimental::Statistics
+}// namespace Experimental::Statistics
+}// namespace NES
 
 #endif//NES_NES_WORKER_INCLUDE_STATISTICS_REQUESTS_STATISTICPROBEREQUEST_HPP_

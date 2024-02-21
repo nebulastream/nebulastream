@@ -13,16 +13,14 @@
 */
 
 #include <Statistics/Statistic.hpp>
+#include <Util/StatisticCollectorIdentifier.hpp>
 
 namespace NES::Experimental::Statistics {
 
 Statistic::Statistic(StatisticCollectorIdentifierPtr statisticCollectorIdentifier,
                      const uint64_t observedTuples,
-                     const uint64_t depth,
-                     const uint64_t startTime,
-                     const uint64_t endTime)
-    : statisticCollectorIdentifier(statisticCollectorIdentifier), observedTuples(observedTuples), depth(depth),
-      startTime(startTime), endTime(endTime) {}
+                     const uint64_t depth)
+    : statisticCollectorIdentifier(statisticCollectorIdentifier), observedTuples(observedTuples), depth(depth) {}
 
 StatisticCollectorIdentifierPtr Statistic::getStatisticCollectorIdentifier() const { return statisticCollectorIdentifier; }
 
@@ -30,8 +28,8 @@ uint64_t Statistic::getObservedTuples() const { return observedTuples; }
 
 uint64_t Statistic::getDepth() const { return depth; }
 
-uint64_t Statistic::getStartTime() const { return startTime; }
+uint64_t Statistic::getStartTime() const { return statisticCollectorIdentifier->getStartTime(); }
 
-uint64_t Statistic::getEndTime() const { return endTime; }
+uint64_t Statistic::getEndTime() const { return statisticCollectorIdentifier->getEndTime(); }
 
 }// namespace NES::Experimental::Statistics
