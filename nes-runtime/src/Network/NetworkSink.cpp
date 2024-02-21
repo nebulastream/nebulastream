@@ -242,10 +242,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                           Runtime::NesThread::getId());
                 //todo #4309: make sure this function times out
                 //the following call blocks until the channel has been established
-                NES_ASSERT(false,
-                           "Trap for "
-                               << nesPartition.toString() << " receiver node " << receiverLocation.getNodeId() << "with uri "
-                               << receiverLocation.createZmqURI() << " before eos of type" << magic_enum::enum_name(terminationType));
                 auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId(), 100);
                 if (channel) {
                     NES_DEBUG("NetworkSink: reconfigure() established connection for operator {} Thread {}",
