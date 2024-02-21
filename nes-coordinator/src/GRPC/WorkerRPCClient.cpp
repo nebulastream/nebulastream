@@ -116,10 +116,12 @@ void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
         uint64_t queueIndex = 0;
         // Block until the next result is available in the completion queue "completionQueue".
         while (queueIndex != queue.second && queue.first->Next(&got_tag, &ok)) {
+            NES_DEBUG("Getting result {}", queueIndex);
             // The tag in this example is the memory location of the call object
             bool status = false;
             if (mode == RpcClientModes::Register) {
                 auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
+                NES_DEBUG("Unregister result {}", call->reply.success());
                 status = call->status.ok();
                 delete call;
             } else if (mode == RpcClientModes::Unregister) {
