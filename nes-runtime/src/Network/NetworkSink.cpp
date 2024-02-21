@@ -81,8 +81,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     if (channel == nullptr) {
         //this check
         //todo: reactivate this check when resetting of sequence count is implemented
-//        NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
-//                        "Trying to write to invalid channel while no connection is in progress");
+        NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
+                        "Trying to write to invalid channel while no connection is in progress");
 
         //check if connection was established and buffer it is has not yest been established
         if (!retrieveNewChannelAndUnbuffer(workerContext)) {
