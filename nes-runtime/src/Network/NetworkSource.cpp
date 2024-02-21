@@ -327,6 +327,7 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
 
 void NetworkSource::onDrainMessage() {
     std::unique_lock lock(versionMutex);
+    receivedDrain = true;
     tryStartingNewVersion();
 }
 
@@ -360,8 +361,10 @@ bool NetworkSource::tryStartingNewVersion() {
 //        return false;
 //    }
     if (migrated) {
-        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+        //we have to check receive drian here, because otherwise we might migrate the source before the upstream has connected at all
+        if (receivedDrain && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
             migrated = false;
+            receivedDrain = false;
             onEndOfStream(Runtime::QueryTerminationType::Drain);
             return true;
         }

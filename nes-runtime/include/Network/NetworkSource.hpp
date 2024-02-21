@@ -192,6 +192,7 @@ class NetworkSource : public DataSource {
     const uint64_t uniqueNetworkSourceIdentifier;
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
     bool migrated = false;
+    bool receivedDrain = false;
     std::recursive_mutex versionMutex;
 };
 

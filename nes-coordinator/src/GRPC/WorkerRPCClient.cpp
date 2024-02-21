@@ -121,7 +121,7 @@ void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
             bool status = false;
             if (mode == RpcClientModes::Register) {
                 auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
-                NES_DEBUG("Unregister result {}", call->reply.success());
+                NES_DEBUG("Register result {}", call->reply.success());
                 status = call->status.ok();
                 delete call;
             } else if (mode == RpcClientModes::Unregister) {
