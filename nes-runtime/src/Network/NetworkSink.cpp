@@ -22,6 +22,7 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Network {
 
@@ -69,10 +70,10 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
               inputBuffer.getOriginId(),
               inputBuffer.getSequenceNumber());
 
-//    NetworkChannel* channel = nullptr;
-//    if (workerContext.doesNetworkChannelExist(getUniqueNetworkSinkDescriptorId())) {
-//        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
-//    }
+    //    NetworkChannel* channel = nullptr;
+    //    if (workerContext.doesNetworkChannelExist(getUniqueNetworkSinkDescriptorId())) {
+    //        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
+    //    }
 
     auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
 
@@ -193,7 +194,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                 Runtime::QueryTerminationType::Drain,
                                                 queryManager->getNumberOfWorkerThreads(),
-                                                messageSequenceNumber, version);
+                                                messageSequenceNumber,
+                                                version);
             workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             break;
         }
@@ -247,7 +249,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                               Runtime::NesThread::getId());
                     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel));
                 } else {
-                    NES_ASSERT(false, "Could not connect to channel with partition " << nesPartition.toString() << " before eos");
+                    NES_ASSERT(false,
+                               "Could not connect to channel with partition "
+                                   << nesPartition.toString() << " receiver node " << receiverLocation.getNodeId() << "with uri "
+                                   << receiverLocation.createZmqURI() << " before eos of type" << magic_enum::enum_name(terminationType));
                     networkManager->unregisterSubpartitionProducer(nesPartition);
                     //do not release network channel in the next step because none was established
                     return;
@@ -258,7 +263,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                                 terminationType,
                                                                 queryManager->getNumberOfWorkerThreads(),
-                                                                messageSequenceNumber, version),
+                                                                messageSequenceNumber,
+                                                                version),
                             "Cannot remove network channel " << nesPartition.toString());
             /* store a nullptr in place of the released channel, in case another write happens afterwards, that will prevent crashing and
             allow throwing an error instead */
@@ -363,7 +369,8 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
     workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                         Runtime::QueryTerminationType::Drain,
                                         queryManager->getNumberOfWorkerThreads(),
-                                        messageSequenceNumber, version);
+                                        messageSequenceNumber,
+                                        version);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
 }
 
@@ -441,7 +448,5 @@ bool NetworkSink::startBuffering() {
     return queryManager->addReconfigurationMessage(nesPartition.getQueryId(), decomposedQueryPlanId, message, false);
 }
 
-WorkerId NetworkSink::getReceiverId() {
-    return receiverLocation.getNodeId();
-}
+WorkerId NetworkSink::getReceiverId() { return receiverLocation.getNodeId(); }
 }// namespace NES::Network

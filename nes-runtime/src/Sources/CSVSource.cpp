@@ -205,6 +205,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         if (bytesRead < 0) {
                             if (byteOffset < incomingTupleSize) {
                                 return std::nullopt;
+//                                buffer.setNumberOfTuples(0);
+//                                return buffer.getBuffer();
                             }
                             break;
                         }
