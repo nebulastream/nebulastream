@@ -224,9 +224,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 //                }
                 uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
                 for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
-                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[i]);
-                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[i + valueSize]);
-                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[i + 2 * valueSize]);
+                    auto index = i * incomingTupleSize;
+                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
+                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
+                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
                     //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
                     records[i].id = *id;
                     records[i].value = *seqenceNr;
