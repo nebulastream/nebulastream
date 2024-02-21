@@ -72,6 +72,7 @@ TEST_F(TopologyTest, removeRootNode) {
     uint64_t resources = 4;
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = Spatial::Experimental::SpatialType::NO_LOCATION;
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->setRootTopologyNodeId(node1Id);
     bool success = topology->unregisterWorker(node1Id);
@@ -104,10 +105,7 @@ TEST_F(TopologyTest, removeAnExistingNode) {
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
 
-    bool success = topology->addTopologyNodeAsChild(node1Id, node2Id);
-    EXPECT_TRUE(success);
-
-    success = topology->unregisterWorker(node2Id);
+    bool success = topology->unregisterWorker(node2Id);
     EXPECT_TRUE(success);
 }
 
@@ -137,9 +135,6 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
 
-    bool success = topology->addTopologyNodeAsChild(node1Id, node2Id);
-    ASSERT_TRUE(success);
-
     int node3Id = 3;
     std::string node3Address = "localhost";
     grpcPort++;
@@ -148,6 +143,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
 
     bool success2 = topology->addTopologyNodeAsChild(node2Id, node3Id);
     ASSERT_TRUE(success2);
+    topology->removeTopologyNodeAsChild(node1Id, node3Id);
 
     int node4Id = 4;
     std::string node4Address = "localhost";
@@ -157,8 +153,9 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
 
     bool success3 = topology->addTopologyNodeAsChild(node2Id, node4Id);
     ASSERT_TRUE(success3);
+    topology->removeTopologyNodeAsChild(node1Id, node4Id);
 
-    success = topology->unregisterWorker(node4Id);
+    bool success = topology->unregisterWorker(node4Id);
     EXPECT_TRUE(success);
 
     TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(4u);
@@ -178,6 +175,7 @@ TEST_F(TopologyTest, removeNodeFromEmptyTopology) {
     uint64_t resources = 4;
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
 
     EXPECT_TRUE(topology->unregisterWorker(node1Id));
@@ -195,6 +193,7 @@ TEST_F(TopologyTest, createLink) {
     uint64_t resources = 4;
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->setRootTopologyNodeId(node1Id);
 
@@ -203,15 +202,13 @@ TEST_F(TopologyTest, createLink) {
     grpcPort++;
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
-    bool success = topology->addTopologyNodeAsChild(node1Id, node2Id);
-    EXPECT_TRUE(success);
 
     int node3Id = 3;
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
     topology->registerWorker(node3Id, node3Address, grpcPort, dataPort, resources, properties, 0, 0);
-    success = topology->addTopologyNodeAsChild(node2Id, node3Id);
+    bool success = topology->addTopologyNodeAsChild(node2Id, node3Id);
     EXPECT_TRUE(success);
 }
 
@@ -235,8 +232,6 @@ TEST_F(TopologyTest, createExistingLink) {
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
     bool success = topology->addTopologyNodeAsChild(node1Id, node2Id);
-    EXPECT_TRUE(success);
-    success = topology->addTopologyNodeAsChild(node1Id, node2Id);
     EXPECT_FALSE(success);
 }
 
@@ -252,17 +247,15 @@ TEST_F(TopologyTest, removeLink) {
     uint64_t resources = 4;
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
+    node1Id = topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->setRootTopologyNodeId(node1Id);
 
     int node2Id = 2;
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
-    topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
-    bool success = topology->addTopologyNodeAsChild(node1Id, node2Id);
-    EXPECT_TRUE(success);
-    success = topology->removeTopologyNodeAsChild(node1Id, node2Id);
+    node2Id = topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
+    bool success = topology->removeTopologyNodeAsChild(node1Id, node2Id);
     EXPECT_TRUE(success);
 }
 
@@ -277,6 +270,7 @@ TEST_F(TopologyTest, removeNonExistingLink) {
     uint64_t resources = 4;
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
     topology->setRootTopologyNodeId(node1Id);
 
@@ -285,7 +279,7 @@ TEST_F(TopologyTest, removeNonExistingLink) {
     grpcPort++;
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
-    bool success = topology->removeTopologyNodeAsChild(node1Id, node2Id);
+    bool success = topology->removeTopologyNodeAsChild(node2Id, node1Id);
     EXPECT_FALSE(success);
 }
 
@@ -378,14 +372,14 @@ TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     grpcPort++;
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
-    bool success = topology->addTopologyNodeAsChild(node1Id, node2Id);
-    EXPECT_TRUE(success);
 
     WorkerId node3Id = 3;
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
     topology->registerWorker(node3Id, node3Address, grpcPort, dataPort, resources, properties, 0, 0);
+    bool success = topology->removeTopologyNodeAsChild(node1Id, node3Id);
+    EXPECT_TRUE(success);
     success = topology->addTopologyNodeAsChild(node2Id, node3Id);
     EXPECT_TRUE(success);
 
@@ -461,17 +455,17 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     grpcPort++;
     dataPort++;
     topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
-    bool success = topology->addTopologyNodeAsChild(node1Id, node2Id);
-    EXPECT_TRUE(success);
 
     int node3Id = 3;
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
     topology->registerWorker(node3Id, node3Address, grpcPort, dataPort, resources, properties, 0, 0);
-    success = topology->addTopologyNodeAsChild(node2Id, node3Id);
+    bool success = topology->addTopologyNodeAsChild(node2Id, node3Id);
     EXPECT_TRUE(success);
 
+    success = topology->removeTopologyNodeAsChild(node1Id, node3Id);
+    EXPECT_TRUE(success);
     success = topology->removeTopologyNodeAsChild(node2Id, node3Id);
     EXPECT_TRUE(success);
 
@@ -495,8 +489,8 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
-        topologyNodeIds.emplace_back(i);
+        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -504,9 +498,6 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     topology->setRootTopologyNodeId(topologyNodeIds.at(0));
 
     // link each worker with its neighbor
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(1));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(2));
-
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
 
@@ -518,6 +509,17 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
 
     topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(8));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(9));
+
+    //Remove the registration of connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(5));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(6));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(7));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(8));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(9));
+
+    NES_INFO("Updated Topology {}", topology->toString());
 
     std::vector<WorkerId> sourceNodes{topologyNodeIds.at(8), topologyNodeIds.at(9)};
     std::vector<WorkerId> destinationNodes{topologyNodeIds.at(0)};
@@ -560,8 +562,8 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
-        topologyNodeIds.emplace_back(i);
+        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -569,20 +571,21 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     topology->setRootTopologyNodeId(topologyNodeIds.at(0));
 
     // link each worker with its neighbor
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(1));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(2));
-
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(5));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(6));
-
     topology->addTopologyNodeAsChild(topologyNodeIds.at(4), topologyNodeIds.at(7));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(7));
-
     topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(8));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(9));
+
+    //Remove the registration of connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(6));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(7));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(8));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(9));
 
     std::vector<WorkerId> sourceNodes{topologyNodeIds.at(8)};
     std::vector<WorkerId> destinationNodes{topologyNodeIds.at(0)};
@@ -785,26 +788,23 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i <= 6; ++i) {
-        topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
-        topologyNodeIds.emplace_back(i + 1);
+        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
 
     topology->setRootTopologyNodeId(topologyNodeIds.at(0));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(1));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(2));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
-
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(5));
-
     topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(4));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(5));
-
     topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(4));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(5));
+
+    //Remove the registration of connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(5));
 
     topology->print();
 
@@ -855,8 +855,8 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i < 9; ++i) {
-        topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
-        topologyNodeIds.emplace_back(i);
+        auto workerId = topology->registerWorker(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -864,9 +864,6 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     topology->setRootTopologyNodeId(topologyNodeIds.at(0));
 
     // link each worker with its neighbor
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(1));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(2));
-
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(5));
 
@@ -883,6 +880,16 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
 
     topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(8));
 
+    //Remove the registration of connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(5));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(6));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(7));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(8));
+
+    topology->print();
+
     //Idea: Subquery deployed on 5 with Child Operators on nodes 7 and 8. Parent Operators on nodes 1 and 2
     //try to find a new node onto which we could potentially migrate the subqueries on node 5.
     //this node must be reachable from node 7 and 8 as well as 1 and 2.
@@ -898,8 +905,8 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
 
     auto commonAncestor = pathFinder.findCommonAncestor(copyTopology);
     auto commonChild = pathFinder.findCommonAncestor(copyTopology);
-    EXPECT_TRUE(commonAncestor->getId() == 3);
-    EXPECT_TRUE(commonAncestor->getId() == commonChild->getId());
+    EXPECT_EQ(commonAncestor->getId(), 4);
+    EXPECT_EQ(commonAncestor->getId(), commonChild->getId());
 
     auto path = topology->findPathBetween(childNodes, parentNodes);
     EXPECT_TRUE(path.size() != 0);

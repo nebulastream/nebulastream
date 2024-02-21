@@ -124,7 +124,7 @@ bool Topology::addTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWor
     auto children = (*lockedParent)->getChildren();
     for (const auto& child : children) {
         if (child->as<TopologyNode>()->getId() == childWorkerId) {
-            NES_ERROR("TopologyManagerService::AddParent: nodes {} and {} already exists", childWorkerId, parentWorkerId);
+            NES_ERROR("TopologyManagerService::AddParent: parent relationship between nodes {} and {} already exists", childWorkerId, parentWorkerId);
             return false;
         }
     }
@@ -152,7 +152,10 @@ bool Topology::unregisterWorker(WorkerId topologyNodeId) {
     auto lockedTopologyNode = (*lockedWorkerIdToTopologyNodeMap)[topologyNodeId].wlock();
     if ((*lockedTopologyNode)->getSpatialNodeType() == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         auto lockedLocationIndex = locationIndex.wlock();
-        return (*lockedLocationIndex)->removeNodeFromSpatialIndex(topologyNodeId);
+        if(!(*lockedLocationIndex)->removeNodeFromSpatialIndex(topologyNodeId)){
+            NES_ERROR("Unable to remove the topology node from the spatial index.");
+            return false;
+        }
     }
 
     (*lockedTopologyNode)->removeAllParent();
