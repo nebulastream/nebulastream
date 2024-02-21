@@ -88,6 +88,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
                         return nullptr;
                     }
+                    backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
                     continue;
                 }
                 //}
@@ -109,6 +110,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                             if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
                                 return nullptr;
                             }
+                            backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
                             continue;
                         }
                         NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
@@ -138,6 +140,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                             if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
                                 return nullptr;
                             }
+                            backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
                             continue;
                         }
                         NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
