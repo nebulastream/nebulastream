@@ -187,30 +187,30 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
 
         //if this is the last eos,
-        if (lastEOS) {
-            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
-            while (true) {
-                auto locked = maxSeqNumberPerNesPartition.wlock();
-                auto foundVersionWaitingForDrain = false;
-                for (auto& [version, info] : (*locked)[eosNesPartition]) {
-                    if (info.expected) {
-                        foundVersionWaitingForDrain = true;
-                    }
-                }
-                if (!foundVersionWaitingForDrain) {
-                    NES_DEBUG("No more versions waiting for drain");
-                    if ((*locked)[eosNesPartition].empty()) {
-                        NES_DEBUG("No more versions active for this partiion, erasing");
-                        (*locked).erase(eosNesPartition);
-                    }
-                    break;
-                }
-
-                NES_DEBUG("Waiting for version to drain");
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
-            NES_DEBUG("Waited for all buffers for the last EOS!");
-        }
+//        if (lastEOS) {
+//            const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
+//            while (true) {
+//                auto locked = maxSeqNumberPerNesPartition.wlock();
+//                auto foundVersionWaitingForDrain = false;
+//                for (auto& [version, info] : (*locked)[eosNesPartition]) {
+//                    if (info.expected) {
+//                        foundVersionWaitingForDrain = true;
+//                    }
+//                }
+//                if (!foundVersionWaitingForDrain) {
+//                    NES_DEBUG("No more versions waiting for drain");
+//                    if ((*locked)[eosNesPartition].empty()) {
+//                        NES_DEBUG("No more versions active for this partiion, erasing");
+//                        (*locked).erase(eosNesPartition);
+//                    }
+//                    break;
+//                }
+//
+//                NES_DEBUG("Waiting for version to drain");
+//                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//            }
+//            NES_DEBUG("Waited for all buffers for the last EOS!");
+//        }
 
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
         auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads();
