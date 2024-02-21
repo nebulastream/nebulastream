@@ -100,11 +100,9 @@ class QueryPlacementAmendmentTest : public Testing::BaseUnitTest {
 
         int sourceNode1Id = 2;
         topology->registerWorker(sourceNode1Id, "localhost", 123, 124, resources[1], properties, 0, 0);
-        topology->addTopologyNodeAsChild(rootNodeId, sourceNode1Id);
 
         int sourceNode2Id = 3;
         topology->registerWorker(sourceNode2Id, "localhost", 123, 124, resources[2], properties, 0, 0);
-        topology->addTopologyNodeAsChild(rootNodeId, sourceNode2Id);
 
         auto carSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         const std::string carSourceName = "car";
@@ -1136,9 +1134,6 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testIFCOPPlacementOnBranchedTopolog
  * Query: SinkOp---join---SourceOp(A)
  *                    \
  *                     -----SourceOp(A)
- *
- *
- *
  */
 TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementOfSelfJoinQuery) {
     // Setup the topology
@@ -1148,15 +1143,15 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementOfSelfJoinQuery) {
 
     TopologyPtr topology = Topology::create();
 
-    WorkerId rootNodeId = 0;
+    WorkerId rootNodeId = 1;
     topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 14, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
-    WorkerId middleNodeId = 1;
+    WorkerId middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
-    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
-    WorkerId srcNodeId = 2;
+    WorkerId srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1229,17 +1224,17 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementOfSelfJoinQuery) {
 
             // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
             if (root->as<SinkLogicalOperatorNode>()->getId() == testQueryPlan->getSinkOperators()[0]->getId()) {
-                isSinkPlacementValid = executionNode->operator*()->getId() == 0;
+                isSinkPlacementValid = executionNode->operator*()->getId() == 1;
             }
 
             auto sourceOperators = decomposedQueryPlan->getSourceOperators();
 
             for (const auto& sourceOperator : sourceOperators) {
                 if (sourceOperator->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
-                    isSource1PlacementValid = executionNode->operator*()->getId() == 2;
+                    isSource1PlacementValid = executionNode->operator*()->getId() == 3;
                 } else if (sourceOperator->as<SourceLogicalOperatorNode>()->getId()
                            == testQueryPlan->getSourceOperators()[1]->getId()) {
-                    isSource2PlacementValid = executionNode->operator*()->getId() == 2;
+                    isSource2PlacementValid = executionNode->operator*()->getId() == 3;
                 }
             }
         }
@@ -1269,15 +1264,15 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     TopologyPtr topology = Topology::create();
 
-    WorkerId rootNodeId = 0;
+    WorkerId rootNodeId = 1;
     topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 14, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
-    WorkerId middleNodeId = 1;
+    WorkerId middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
-    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
-    WorkerId srcNodeId = 2;
+    WorkerId srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 4, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1350,17 +1345,17 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementOfSelfJoinQuery) {
 
             // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
             if (root->as<SinkLogicalOperatorNode>()->getId() == testQueryPlan->getSinkOperators()[0]->getId()) {
-                isSinkPlacementValid = executionNode->operator*()->getId() == 0;
+                isSinkPlacementValid = executionNode->operator*()->getId() == 1;
             }
 
             auto sourceOperators = decomposedQueryPlan->getSourceOperators();
 
             for (const auto& sourceOperator : sourceOperators) {
                 if (sourceOperator->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
-                    isSource1PlacementValid = executionNode->operator*()->getId() == 2;
+                    isSource1PlacementValid = executionNode->operator*()->getId() == 3;
                 } else if (sourceOperator->as<SourceLogicalOperatorNode>()->getId()
                            == testQueryPlan->getSourceOperators()[1]->getId()) {
-                    isSource2PlacementValid = executionNode->operator*()->getId() == 2;
+                    isSource2PlacementValid = executionNode->operator*()->getId() == 3;
                 }
             }
         }
@@ -1385,15 +1380,15 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementWthTightResourcesConstra
 
     TopologyPtr topology = Topology::create();
 
-    WorkerId rootNodeId = 0;
+    WorkerId rootNodeId = 1;
     topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
-    WorkerId middleNodeId = 1;
+    WorkerId middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
-    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
-    WorkerId srcNodeId = 2;
+    WorkerId srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 2, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1455,18 +1450,18 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementWthTightResourcesConstra
         for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
             auto ops = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(ops.size(), 1);
-            if (executionNode->operator*()->getId() == 0) {
+            if (executionNode->operator*()->getId() == 1) {
                 ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                 ASSERT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-            } else if (executionNode->operator*()->getId() == 1) {
+            } else if (executionNode->operator*()->getId() == 2) {
                 auto sink = ops[0];
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto filter = sink->getChildren()[0];
                 ASSERT_TRUE(filter->instanceOf<FilterLogicalOperatorNode>());
                 ASSERT_EQ(filter->as<FilterLogicalOperatorNode>()->getId(),
                           testQueryPlan->getRootOperators()[0]->getChildren()[0]->as<FilterLogicalOperatorNode>()->getId());
-            } else if (executionNode->operator*()->getId() == 2) {
+            } else if (executionNode->operator*()->getId() == 3) {
                 auto sink = ops[0];
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto source = sink->getChildren()[0];
@@ -1500,15 +1495,15 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
 
     TopologyPtr topology = Topology::create();
 
-    WorkerId rootNodeId = 0;
+    WorkerId rootNodeId = 1;
     topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
-    WorkerId middleNodeId = 1;
+    WorkerId middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
-    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
-    WorkerId srcNodeId = 2;
+    WorkerId srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1572,18 +1567,18 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
         for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
             auto ops = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(ops.size(), 1);
-            if (executionNode->operator*()->getId() == 0) {
+            if (executionNode->operator*()->getId() == 1) {
                 ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                 ASSERT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-            } else if (executionNode->operator*()->getId() == 1) {
+            } else if (executionNode->operator*()->getId() == 2) {
                 auto sink = ops[0];
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto filter = sink->getChildren()[0];
                 ASSERT_TRUE(filter->instanceOf<FilterLogicalOperatorNode>());
                 ASSERT_EQ(filter->as<FilterLogicalOperatorNode>()->getId(),
                           testQueryPlan->getRootOperators()[0]->getChildren()[0]->as<FilterLogicalOperatorNode>()->getId());
-            } else if (executionNode->operator*()->getId() == 2) {
+            } else if (executionNode->operator*()->getId() == 3) {
                 auto sink = ops[0];
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto source = sink->getChildren()[0];
@@ -1618,18 +1613,19 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
 
     TopologyPtr topology = Topology::create();
 
-    WorkerId rootNodeId = 0;
+    WorkerId rootNodeId = 1;
     topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
-    WorkerId middleNodeId = 1;
+    WorkerId middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 5, properties, 0, 0);
-    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
-    WorkerId srcNodeId1 = 2;
+    WorkerId srcNodeId1 = 3;
     topology->registerWorker(srcNodeId1, "localhost", 4003, 5003, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
-    WorkerId srcNodeId2 = 3;
+    WorkerId srcNodeId2 = 4;
     topology->registerWorker(srcNodeId2, "localhost", 4003, 5003, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId1);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId2);
 
     NES_INFO("Topology:\n{}", topology->toString());
 
@@ -1719,11 +1715,11 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
         for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
             auto ops = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(ops.size(), 1);
-            if (executionNode->operator*()->getId() == 0) {
+            if (executionNode->operator*()->getId() == 1) {
                 ASSERT_EQ(ops[0]->getId(), sink->getId());
                 ASSERT_EQ(ops[0]->getChildren().size(), 1);
                 EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-            } else if (executionNode->operator*()->getId() == 1) {
+            } else if (executionNode->operator*()->getId() == 2) {
                 auto placedSink = ops[0];
                 ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
                 auto placedJoin = placedSink->getChildren()[0];
@@ -1737,13 +1733,13 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
                 auto placedWatermark2 = placedJoin->getChildren()[1];
                 ASSERT_TRUE(placedWatermark2->instanceOf<WatermarkAssignerLogicalOperatorNode>());
                 ASSERT_EQ(placedWatermark2->as<WatermarkAssignerLogicalOperatorNode>()->getId(), watermark2->getId());
-            } else if (executionNode->operator*()->getId() == 2) {
+            } else if (executionNode->operator*()->getId() == 3) {
                 auto placedSink = ops[0];
                 ASSERT_TRUE(placedSink->instanceOf<SinkLogicalOperatorNode>());
                 auto placedSource = placedSink->getChildren()[0];
                 ASSERT_TRUE(placedSource->instanceOf<SourceLogicalOperatorNode>());
                 ASSERT_EQ(placedSource->as<SourceLogicalOperatorNode>()->getId(), source1->getId());
-            } else if (executionNode->operator*()->getId() == 3) {
+            } else if (executionNode->operator*()->getId() == 4) {
                 auto placedSink = ops[0];
                 ASSERT_TRUE(placedSink->instanceOf<SinkLogicalOperatorNode>());
                 auto placedSource = placedSink->getChildren()[0];
@@ -2351,15 +2347,16 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
 
     TopologyPtr topology = Topology::create();
 
-    WorkerId rootNodeId = 0;
+    WorkerId rootNodeId = 1;
     topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
-    WorkerId middleNodeId = 1;
+    WorkerId middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
     topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
-    WorkerId srcNodeId = 2;
+    WorkerId srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 2, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -2428,7 +2425,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
             for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
                 auto ops = decomposedQueryPlan->getRootOperators();
                 ASSERT_EQ(ops.size(), 1);
-                if (executionNode->operator*()->getId() == 0) {
+                if (executionNode->operator*()->getId() == 1) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                     ASSERT_EQ(ops[0]->getChildren().size(), 1);
@@ -2439,7 +2436,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                 ->getSourceDescriptor()
                                                                 ->as<Network::NetworkSourceDescriptor>()
                                                                 ->getNesPartition();
-                } else if (executionNode->operator*()->getId() == 1) {
+                } else if (executionNode->operator*()->getId() == 2) {
                     auto sink = ops[0];
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
@@ -2459,7 +2456,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                 ->as<Network::NetworkSourceDescriptor>()
                                                                 ->getNesPartition();
                     subPlanIdToRemoveInNextIteration = decomposedQueryPlan->getDecomposedQueryPlanId();
-                } else if (executionNode->operator*()->getId() == 2) {
+                } else if (executionNode->operator*()->getId() == 3) {
                     auto sink = ops[0];
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
@@ -2514,7 +2511,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                 executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
             for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
                 auto ops = decomposedQueryPlan->getRootOperators();
-                if (executionNode->operator*()->getId() == 0) {
+                if (executionNode->operator*()->getId() == 1) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
@@ -2526,10 +2523,10 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                ->getSourceDescriptor()
                                                                ->as<Network::NetworkSourceDescriptor>()
                                                                ->getNesPartition();
-                } else if (executionNode->operator*()->getId() == 1
+                } else if (executionNode->operator*()->getId() == 2
                            && decomposedQueryPlan->getDecomposedQueryPlanId() == subPlanIdToRemoveInNextIteration) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
-                } else if (executionNode->operator*()->getId() == 1
+                } else if (executionNode->operator*()->getId() == 2
                            && decomposedQueryPlan->getDecomposedQueryPlanId() != subPlanIdToRemoveInNextIteration) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
@@ -2548,7 +2545,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                ->getSourceDescriptor()
                                                                ->as<Network::NetworkSourceDescriptor>()
                                                                ->getNesPartition();
-                } else if (executionNode->operator*()->getId() == 2) {
+                } else if (executionNode->operator*()->getId() == 3) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     auto sink = ops[0];
@@ -2592,15 +2589,15 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
 
     TopologyPtr topology = Topology::create();
 
-    WorkerId rootNodeId = 0;
+    WorkerId rootNodeId = 1;
     topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
-    WorkerId middleNodeId = 1;
+    WorkerId middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
-    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
-    WorkerId srcNodeId = 2;
+    WorkerId srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 2, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -2666,7 +2663,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
             for (const auto& decomposedQueryPlan : executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId)) {
                 auto ops = decomposedQueryPlan->getRootOperators();
                 EXPECT_EQ(ops.size(), 1);
-                if (executionNode->operator*()->getId() == 0) {
+                if (executionNode->operator*()->getId() == 1) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                     EXPECT_EQ(ops[0]->getChildren().size(), 1);
@@ -2677,7 +2674,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                                                                 ->getSourceDescriptor()
                                                                 ->as<Network::NetworkSourceDescriptor>()
                                                                 ->getNesPartition();
-                } else if (executionNode->operator*()->getId() == 1) {
+                } else if (executionNode->operator*()->getId() == 2) {
                     auto sink = ops[0];
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
@@ -2692,7 +2689,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                                                                 ->as<Network::NetworkSourceDescriptor>()
                                                                 ->getNesPartition();
                     planIdToRemoveInNextIteration = decomposedQueryPlan->getDecomposedQueryPlanId();
-                } else if (executionNode->operator*()->getId() == 2) {
+                } else if (executionNode->operator*()->getId() == 3) {
                     auto sink = ops[0];
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
@@ -2744,7 +2741,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                 executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
             for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
                 auto ops = decomposedQueryPlan->getRootOperators();
-                if (executionNode->operator*()->getId() == 0) {
+                if (executionNode->operator*()->getId() == 1) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     EXPECT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
@@ -2756,10 +2753,10 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                                                                ->getSourceDescriptor()
                                                                ->as<Network::NetworkSourceDescriptor>()
                                                                ->getNesPartition();
-                } else if (executionNode->operator*()->getId() == 1
+                } else if (executionNode->operator*()->getId() == 2
                            && decomposedQueryPlan->getDecomposedQueryPlanId() == planIdToRemoveInNextIteration) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
-                } else if (executionNode->operator*()->getId() == 1
+                } else if (executionNode->operator*()->getId() == 2
                            && decomposedQueryPlan->getDecomposedQueryPlanId() != planIdToRemoveInNextIteration) {
                     EXPECT_EQ(ops.size(), 1);
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
@@ -2775,7 +2772,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                                                                ->getSourceDescriptor()
                                                                ->as<Network::NetworkSourceDescriptor>()
                                                                ->getNesPartition();
-                } else if (executionNode->operator*()->getId() == 2) {
+                } else if (executionNode->operator*()->getId() == 3) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     auto sink = ops[0];
@@ -2816,15 +2813,15 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQuer
 
     TopologyPtr topology = Topology::create();
 
-    WorkerId rootNodeId = 0;
+    WorkerId rootNodeId = 1;
     topology->registerWorker(rootNodeId, "localhost", 4000, 5000, 1, properties, 0, 0);
     topology->setRootTopologyNodeId(rootNodeId);
-    WorkerId middleNodeId = 1;
+    WorkerId middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 1, properties, 0, 0);
-    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
-    WorkerId srcNodeId = 2;
+    WorkerId srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4003, 5003, 2, properties, 0, 0);
     topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
+    topology->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -2890,11 +2887,11 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQuer
             executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
         for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
             auto ops = decomposedQueryPlan->getRootOperators();
-            if (executionNode->operator*()->getId() == 0) {
-                EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
-            } else if (executionNode->operator*()->getId() == 1) {
+            if (executionNode->operator*()->getId() == 1) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
             } else if (executionNode->operator*()->getId() == 2) {
+                EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
+            } else if (executionNode->operator*()->getId() == 3) {
                 EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
             }
             NES_INFO("Sub Plan: {}", decomposedQueryPlan->toString());

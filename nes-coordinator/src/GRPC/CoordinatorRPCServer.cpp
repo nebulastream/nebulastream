@@ -460,7 +460,7 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
 Status CoordinatorRPCServer::GetParents(ServerContext*, const GetParentsRequest* request, GetParentsReply* reply) {
     auto nodeId = request->nodeid();
     auto parentIds = topology->getParentTopologyNodeIds(nodeId);
-    if (parentIds.empty()) {
+    if (!parentIds.empty()) {
         auto replyParents = reply->mutable_parentids();
         replyParents->Reserve(parentIds.size());
         for (const auto& parentId : parentIds) {

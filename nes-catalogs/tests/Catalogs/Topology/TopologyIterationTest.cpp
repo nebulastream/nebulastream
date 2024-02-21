@@ -65,15 +65,15 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    int rootWorkerId = 0;
+    int rootWorkerId = 1;
     topology->registerWorker(rootWorkerId, "localhost", 4000, 5000, 4, properties, 0, 0);
-    int middleNodeId = 1;
+    int middleNodeId = 2;
     topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     int srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4004, 5004, 4, properties, 0, 0);
 
     topology->setRootTopologyNodeId(rootWorkerId);
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId, srcNodeId));
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
@@ -118,7 +118,8 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
 
     topology->setRootTopologyNodeId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
 
@@ -169,7 +170,9 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
 
     topology->setRootTopologyNodeId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId2));
@@ -225,7 +228,9 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
 
     topology->setRootTopologyNodeId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
@@ -286,7 +291,10 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
 
     topology->setRootTopologyNodeId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId3));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId3));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId1));
@@ -359,8 +367,10 @@ TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
 
     topology->setRootTopologyNodeId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId3));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId4));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId3));

@@ -32,10 +32,10 @@
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 #include <Services/RequestHandlerService.hpp>
@@ -97,13 +97,16 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
                 properties["ml_hardware"] = true;
             }
 
-            topology->registerWorker(workerId, "localhost", 123, 124, resources[i], properties, 0, 0);
+            workerId = topology->registerWorker(workerId, "localhost", 123, 124, resources[i], properties, 0, 0);
             if (i == 0) {
                 topology->setRootTopologyNodeId(workerId);
-            } else {
+            } else if (i > 1) {
                 topology->addTopologyNodeAsChild(workerId - 1, workerId);
+                topology->removeTopologyNodeAsChild(1, workerId);
             }
         }
+
+        topology->print();
 
         auto irisSchema = Schema::create()
                               ->addField(createField("id", BasicType::UINT64))
@@ -173,8 +176,10 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getId();
-    auto queryPlacementAmendmentPhase =
-        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                        topology,
+                                                                                        typeInferencePhase,
+                                                                                        coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     NES_DEBUG("MlHeuristicPlacementTest: topology: \n{}", topology->toString());

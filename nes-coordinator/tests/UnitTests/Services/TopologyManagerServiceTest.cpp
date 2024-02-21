@@ -70,7 +70,7 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     TopologyPtr topology = Topology::create();
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
     uint64_t nodeId =

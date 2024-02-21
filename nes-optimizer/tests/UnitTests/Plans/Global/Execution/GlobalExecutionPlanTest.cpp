@@ -460,7 +460,8 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     topology->registerWorker(node4Id, "localhost", 3200, 3300, 10, properties, 0, 0);
 
     //Add parent child relationship
-    topology->addTopologyNodeAsChild(node1Id, node2Id);
+    topology->removeTopologyNodeAsChild(node1Id, node3Id);
+    topology->removeTopologyNodeAsChild(node1Id, node4Id);
     topology->addTopologyNodeAsChild(node2Id, node3Id);
     topology->addTopologyNodeAsChild(node3Id, node4Id);
 
