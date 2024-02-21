@@ -85,7 +85,9 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                 //if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
                 if (!optRecvStatus.has_value()) {
                     NES_DEBUG("recv failed on network channel {}", magic_enum::enum_name(mode));
-                    //return nullptr;
+                    if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                        return nullptr;
+                    }
                     continue;
                 }
                 //}
@@ -104,7 +106,9 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                         //todo: failure here, make this more robust?
                         if (!optRecvStatus2.has_value()) {
                             NES_DEBUG("recv failed on network channel");
-                            //return nullptr;
+                            if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                                return nullptr;
+                            }
                             continue;
                         }
                         NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
@@ -131,7 +135,9 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                         auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
                         if (!optRecvStatus3.has_value()) {
                             NES_DEBUG("recv failed on network channel");
-                            //return nullptr;
+                            if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                                return nullptr;
+                            }
                             continue;
                         }
                         NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
