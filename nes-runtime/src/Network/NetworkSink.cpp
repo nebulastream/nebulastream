@@ -249,10 +249,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                               Runtime::NesThread::getId());
                     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel));
                 } else {
-//                    NES_ASSERT(false,
-//                               "Could not connect to channel with partition "
-//                                   << nesPartition.toString() << " receiver node " << receiverLocation.getNodeId() << "with uri "
-//                                   << receiverLocation.createZmqURI() << " before eos of type" << magic_enum::enum_name(terminationType));
+                    NES_ASSERT(false,
+                               "Could not connect to channel with partition "
+                                   << nesPartition.toString() << " receiver node " << receiverLocation.getNodeId() << "with uri "
+                                   << receiverLocation.createZmqURI() << " before eos of type" << magic_enum::enum_name(terminationType));
                     networkManager->unregisterSubpartitionProducer(nesPartition);
                     //do not release network channel in the next step because none was established
                     return;

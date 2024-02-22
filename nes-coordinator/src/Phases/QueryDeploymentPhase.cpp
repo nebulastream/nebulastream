@@ -106,17 +106,21 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan, De
             switch (subQueryPlan->getState()) {
                 case QueryState::MARKED_FOR_DEPLOYMENT: subQueryPlan->setState(QueryState::DEPLOYED); break;
                 case QueryState::MARKED_FOR_REDEPLOYMENT: subQueryPlan->setState(QueryState::REDEPLOYED); break;
-                case QueryState::MARKED_FOR_MIGRATION:
+                case QueryState::MARKED_FOR_MIGRATION: {
                     subQueryPlan->setState(QueryState::MIGRATING);
                     break;
+                }
                     //todo: the following condition is needed only because of bug in cleanup
                 case QueryState::MIGRATING: subQueryPlan->setState(QueryState::MIGRATION_COMPLETED); break;
 
                 case QueryState::RUNNING: break;            //do not modify anything for running plans
                 case QueryState::MIGRATION_COMPLETED: break;//do not modfify plans that have been stopped after migration
+                case QueryState::DEPLOYED: subQueryPlan->setState(QueryState::RUNNING); break;//do not modfify plans that have been stopped after migration
+                case QueryState::REDEPLOYED: subQueryPlan->setState(QueryState::RUNNING); break;//do not modfify plans that have been stopped after migration
                 default: {
-                    NES_WARNING("Unexpected query plan state: {}", magic_enum::enum_name(subQueryPlan->getState()));
-                    NES_THROW_RUNTIME_ERROR("Unexpected query plan state");
+//                    NES_WARNING("Unexpected query plan state: {}", magic_enum::enum_name(subQueryPlan->getState()));
+//                    NES_THROW_RUNTIME_ERROR("Unexpected query plan state");
+                    break;
                 }
             }
             //todo #4452: avoid looping over all query ids by changing the structure of the query catalog
