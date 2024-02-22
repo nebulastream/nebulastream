@@ -249,6 +249,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
             }
         }
     }
+    NES_DEBUG("QueryDeploymentPhase: Checking results for deploying execution plan for query with Id {} ", sharedQueryId);
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
 }
@@ -329,7 +330,9 @@ void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Optimiz
         workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
         completionQueues[queueForExecutionNode] = 1;
     }
+    NES_DEBUG("QueryDeploymentPhase: Checking results for starting query")
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
+    NES_DEBUG("QueryDeploymentPhase: Marking queries as migrated")
     for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
         const auto& nesNode = executionNode->getTopologyNode();
