@@ -96,7 +96,6 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     TopologyPtr topology = Topology::create();
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
-
     std::string physicalSourceName = "testStream";
 
     auto csvSourceType = CSVSourceType::create("testStream", "physical_test");
@@ -111,8 +110,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
     uint64_t nodeId =
-        topology
-            ->registerWorker(INVALID_WORKER_NODE_ID, address, 4000, 5000, 6, properties, bandwidthInMbps, latencyInMs);
+        topology->registerWorker(INVALID_WORKER_NODE_ID, address, 4000, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_NE(nodeId, 0u);
 
     //setup test

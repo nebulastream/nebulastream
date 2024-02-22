@@ -271,22 +271,20 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     //checking coordinates
     ASSERT_EQ(topology->getGeoLocationForNode(node2->getId()),
               NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092));
-    topology->updateGeoLocation(
-        node2->getId(),
-        NES::Spatial::DataTypes::Experimental::GeoLocation(52.51094383152051, 13.463078966025266));
+    topology->updateGeoLocation(node2->getId(),
+                                NES::Spatial::DataTypes::Experimental::GeoLocation(52.51094383152051, 13.463078966025266));
     ASSERT_EQ(topology->getGeoLocationForNode(node2->getId()),
               NES::Spatial::DataTypes::Experimental::GeoLocation(52.51094383152051, 13.463078966025266));
 
 #ifdef S2DEF
     NES_INFO("NEIGHBORS");
-    auto inRange = topology->getNodesIdsInRange(
-        NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092),
-        50.0);
+    auto inRange =
+        topology->getNodesIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092),
+                                     50.0);
     ASSERT_EQ(inRange.size(), (size_t) 3);
 #endif
-    topology->updateGeoLocation(
-        node3->getId(),
-        NES::Spatial::DataTypes::Experimental::GeoLocation(53.559524264262194, 10.039384739854102));
+    topology->updateGeoLocation(node3->getId(),
+                                NES::Spatial::DataTypes::Experimental::GeoLocation(53.559524264262194, 10.039384739854102));
 
     topology->removePhysicalNode(topology->findNodeWithId(wrk3->getWorkerId()));
 
@@ -895,8 +893,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     auto outOfCoverageLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(52.7091055763087, 13.128662109375002);
     TopologyNodePtr currNode = TopologyNode::create(initialParentId, "127.0.0.1", 1, 0, 0, properties);
     topology->addNewTopologyNodeAsChild(node, currNode);
-    topology->addGeoLocation(currNode->getId(),
-                                           NES::Spatial::DataTypes::Experimental::GeoLocation(outOfCoverageLocation));
+    topology->addGeoLocation(currNode->getId(), NES::Spatial::DataTypes::Experimental::GeoLocation(outOfCoverageLocation));
     nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(outOfCoverageLocation), currNode->getId());
 
     NES_INFO("start worker 1");
