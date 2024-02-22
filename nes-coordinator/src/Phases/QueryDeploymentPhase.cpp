@@ -230,17 +230,17 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
                         applyJavaUDFAcceleration(sharedQueryId, executionNode, decomposedQueryPlan);
                     }
                     //enable this for sync calls
-                    //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
-                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
-                    decomposedQueryPlan->setState(QueryState::RUNNING);
+                    bool success = workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
+                    //workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
+                    //decomposedQueryPlan->setState(QueryState::RUNNING);
                     subplanMetaData->updateStatus(decomposedQueryPlan->getState());
                     completionQueues[queueForExecutionNode]++;
                     break;
                 }
                 case QueryState::REDEPLOYED: {
-                    //workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
-                    workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
-                    completionQueues[queueForExecutionNode]++;
+                    workerRPCClient->registerQuery(rpcAddress, decomposedQueryPlan);
+                    //workerRPCClient->registerQueryAsync(rpcAddress, decomposedQueryPlan, queueForExecutionNode);
+                    //completionQueues[queueForExecutionNode]++;
                     break;
                 }
                 default: {
@@ -250,7 +250,7 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId,
         }
     }
     NES_DEBUG("QueryDeploymentPhase: Checking results for deploying execution plan for query with Id {} ", sharedQueryId);
-    workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
+    //workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
 }
 
