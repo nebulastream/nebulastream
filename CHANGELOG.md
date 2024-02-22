@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.53](https://github.com/nebulastream/nebulastream/tree/v0.6.53) (2024-02-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-java-sources...v0.6.53)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove topology manager service [\#4629](https://github.com/nebulastream/nebulastream/issues/4629)
+
+## [elegant-v0.6.19-java-sources](https://github.com/nebulastream/nebulastream/tree/elegant-v0.6.19-java-sources) (2024-02-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.52...elegant-v0.6.19-java-sources)
+
 ## [v0.6.52](https://github.com/nebulastream/nebulastream/tree/v0.6.52) (2024-02-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.51...v0.6.52)
@@ -34,15 +46,11 @@
 
 ## [v0.6.48](https://github.com/nebulastream/nebulastream/tree/v0.6.48) (2024-02-14)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-java-sources...v0.6.48)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.47...v0.6.48)
 
 ### Bug Fixes 🐛
 
 - \[BUG\] EXPLAIN with Java UDF crashes coordinator [\#4619](https://github.com/nebulastream/nebulastream/issues/4619)
-
-## [elegant-v0.6.19-java-sources](https://github.com/nebulastream/nebulastream/tree/elegant-v0.6.19-java-sources) (2024-02-14)
-
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.47...elegant-v0.6.19-java-sources)
 
 ## [v0.6.47](https://github.com/nebulastream/nebulastream/tree/v0.6.47) (2024-02-14)
 
