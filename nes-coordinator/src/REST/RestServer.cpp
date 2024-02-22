@@ -56,9 +56,9 @@ RestServer::RestServer(std::string host,
     : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalog(std::move(queryCatalog)),
       globalExecutionPlan(std::move(globalExecutionPlan)), requestHandlerService(std::move(requestHandlerService)),
       globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
-      topology(std::move(topology)), udfCatalog(std::move(udfCatalog)),
-      monitoringService(std::move(monitoringService)), queryParsingService(std::move(queryParsingService)),
-      bufferManager(std::move(bufferManager)), corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
+      topology(std::move(topology)), udfCatalog(std::move(udfCatalog)), monitoringService(std::move(monitoringService)),
+      queryParsingService(std::move(queryParsingService)), bufferManager(std::move(bufferManager)),
+      corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
 
 bool RestServer::start() {
     NES_INFO("Starting Oatpp Server on {}:{}", host, std::to_string(port));
@@ -108,8 +108,7 @@ void RestServer::run() {
     auto connectivityController = REST::Controller::ConnectivityController::create(objectMapper, "/connectivity");
     auto queryCatalogController =
         REST::Controller::QueryCatalogController::create(objectMapper, queryCatalog, coordinator, "/queryCatalog", errorHandler);
-    auto topologyController =
-        REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
+    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      requestHandlerService,
                                                                      queryCatalog,
@@ -124,8 +123,7 @@ void RestServer::run() {
                                                                                      queryParsingService,
                                                                                      errorHandler,
                                                                                      "/sourceCatalog");
-    auto locationController =
-        REST::Controller::LocationController::create(objectMapper, topology, "/location", errorHandler);
+    auto locationController = REST::Controller::LocationController::create(objectMapper, topology, "/location", errorHandler);
     auto monitoringController = REST::Controller::MonitoringController::create(objectMapper,
                                                                                monitoringService,
                                                                                bufferManager,

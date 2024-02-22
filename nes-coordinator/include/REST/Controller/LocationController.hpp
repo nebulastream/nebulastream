@@ -14,8 +14,8 @@
 #ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
 
-#include <REST/Controller/BaseRouterPrefix.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/DTOs/ErrorResponse.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -39,8 +39,8 @@ class LocationController : public oatpp::web::server::api::ApiController {
                        const oatpp::String& completeRouterPrefix,
                        const TopologyPtr& topology,
                        const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          topology(topology), errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(topology),
+          errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
