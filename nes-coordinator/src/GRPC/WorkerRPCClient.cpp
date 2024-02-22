@@ -44,7 +44,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const Decomposed
     auto serializedQueryPlan = request.mutable_decomposedqueryplan();
     DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializedQueryPlan);
 
-    NES_DEBUG("WorkerRPCClient:registerQuery -> {}", request.DebugString());
+    NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 
