@@ -204,11 +204,12 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
 //                workerContext.storeEventChannelFuture(uniqueNetworkSourceIdentifier, std::move(channelFuture));
 //                break;
 //            } else {
-                auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
-                                                                                 nesPartition,
-                                                                                 localBufferManager,
-                                                                                 waitTime,
-                                                                                 retryTimes);
+                  EventOnlyNetworkChannelPtr channel = nullptr;
+//                auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
+//                                                                                 nesPartition,
+//                                                                                 localBufferManager,
+//                                                                                 waitTime,
+//                                                                                 retryTimes);
                 if (channel == nullptr) {
                     NES_WARNING("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
                                 nesPartition.toString(),
