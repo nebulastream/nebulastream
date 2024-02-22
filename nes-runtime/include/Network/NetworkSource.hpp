@@ -191,8 +191,8 @@ class NetworkSource : public DataSource {
     [[maybe_unused]] DecomposedQueryPlanVersion version;
     const uint64_t uniqueNetworkSourceIdentifier;
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
-    bool migrated = false;
-    bool receivedDrain = false;
+    std::atomic<bool> migrated = false;
+    std::atomic<bool> receivedDrain = false;
     std::recursive_mutex versionMutex;
 };
 

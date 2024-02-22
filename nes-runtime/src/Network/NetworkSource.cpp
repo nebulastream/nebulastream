@@ -331,12 +331,14 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
 void NetworkSource::onDrainMessage() {
     std::unique_lock lock(versionMutex);
     receivedDrain = true;
+    lock.unlock();
     tryStartingNewVersion();
 }
 
 void NetworkSource::markAsMigrated() {
     std::unique_lock lock(versionMutex);
     migrated = true;
+    lock.unlock();
     tryStartingNewVersion();
 }
 
@@ -368,6 +370,7 @@ bool NetworkSource::tryStartingNewVersion() {
         if (receivedDrain && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
             migrated = false;
             receivedDrain = false;
+            lock.unlock();
             onEndOfStream(Runtime::QueryTerminationType::Drain);
             return true;
         }
