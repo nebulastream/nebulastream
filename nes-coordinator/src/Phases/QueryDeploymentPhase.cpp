@@ -333,12 +333,12 @@ void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Optimiz
         //        }
 
         //enable this for sync calls
-        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
-        workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
-        completionQueues[queueForExecutionNode] = 1;
+        bool success = workerRPCClient->startQuery(rpcAddress, queryId);
+        //workerRPCClient->startQueryAsync(rpcAddress, queryId, queueForExecutionNode);
+        //completionQueues[queueForExecutionNode] = 1;
     }
     NES_DEBUG("QueryDeploymentPhase: Checking results for starting query")
-    workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
+    //workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Start);
     NES_DEBUG("QueryDeploymentPhase: Marking queries as migrated")
     for (const Optimizer::ExecutionNodePtr& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
