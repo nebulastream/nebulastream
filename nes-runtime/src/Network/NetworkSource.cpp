@@ -204,6 +204,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
 //                workerContext.storeEventChannelFuture(uniqueNetworkSourceIdentifier, std::move(channelFuture));
 //                break;
 //            } else {
+            (void ) waitTime;
+            (void ) retryTimes;
                   EventOnlyNetworkChannelPtr channel = nullptr;
 //                auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
 //                                                                                 nesPartition,
