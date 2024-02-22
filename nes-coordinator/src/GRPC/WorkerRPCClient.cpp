@@ -44,13 +44,16 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const Decomposed
     auto serializedQueryPlan = request.mutable_decomposedqueryplan();
     DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializedQueryPlan);
 
-    NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
+    NES_DEBUG("WorkerRPCClient:registerQuery -> {}", request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    NES_DEBUG("WorkerRPCClient:registerQuery: created channel");
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    NES_DEBUG("WorkerRPCClient:registerQuery: created stub");
     Status status = workerStub->RegisterQuery(&context, request, &reply);
+    NES_DEBUG("WorkerRPCClient:registerQuery: received answer");
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::registerQuery: status ok return success={}", reply.success());

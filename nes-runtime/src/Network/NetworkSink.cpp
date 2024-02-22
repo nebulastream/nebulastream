@@ -63,7 +63,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
 SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    NES_TRACE("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
+    NES_DEBUG("context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
               workerContext.getId(),
               getUniqueNetworkSinkDescriptorId(),
               nodeEngine->getNodeId(),
@@ -242,7 +242,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                           Runtime::NesThread::getId());
                 //todo #4309: make sure this function times out
                 //the following call blocks until the channel has been established
-                auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId(), 100);
+                //auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId(), 100);
+                auto channel = nullptr;
                 if (channel) {
                     NES_DEBUG("NetworkSink: reconfigure() established connection for operator {} Thread {}",
                               nesPartition.toString(),
@@ -397,7 +398,7 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
 
     //if the connection process did not finish yet, the reconfiguration was triggered by another thread.
     if (!newNetworkChannelFutureOptional.has_value()) {
-        NES_DEBUG("NetworkSink: reconfigure() network channel has not connected yet for operator {} Thread {}",
+        NES_DEBUG("NetworkSink: network channel has not connected yet for operator {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
         return false;
