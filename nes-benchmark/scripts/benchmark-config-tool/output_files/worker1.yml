@@ -1,0 +1,37 @@
+###
+### General configuration
+###
+logLevel: LOG_ERROR
+###
+### Network configuration
+###
+localWorkerIp: 172.31.0.3
+coordinatorIp: coordinator
+###
+### Other configs
+###
+###
+### Physical source configuration
+###
+physicalSources:
+
+        - logicalSourceName: "points"
+          physicalSourceName: "points_1"
+          type: "CSV_SOURCE"
+          configuration:
+            filePath: "/tutorial/resources/points.csv"
+            skipHeader: True
+
+        - logicalSourceName: "wind_turbines"
+          physicalSourceName: "wind_turbine_1"
+          type: "CSV_SOURCE"
+          configuration:
+            filePath: "/tutorial/wind-turbine-1.csv"
+            skipHeader: True
+
+        - logicalSourceName: "iris"
+          physicalSourceName: "iris_1"
+          type: "CSV_SOURCE"
+          configuration:
+            filePath: "/tutorial/resources/iris_short.csv"
+            skipHeader: False

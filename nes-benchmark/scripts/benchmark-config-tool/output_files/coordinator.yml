@@ -1,0 +1,93 @@
+###
+### General Coordinator Configuration
+###
+
+
+
+
+logLevel: LOG_ERROR
+
+# 
+# image: nebulastream/nes-executable-image:latest
+# 
+
+
+optimizer:
+        distributedWindowChildThreshold: 3
+
+###
+### Network Configuration
+###
+restIp: 172.31.0.2
+coordinatorIp: 172.31.0.2
+restPort: 8081
+
+
+
+
+worker:
+  localWorkerIp: 172.31.0.2
+  #workerConfigPath: 
+
+
+###
+### Logical Sources Configuration
+###
+logicalSources:
+  - logicalSourceName: "points"
+    fields:
+      - name: "x"
+        type: "FLOAT64"
+      - name: "y"
+        type: "FLOAT64"
+      
+  - logicalSourceName: "wind_turbines"
+    fields:
+      - name: "type"
+        type: "TEXT"
+      - name: "metadata_generated"
+        type: "UINT64"
+      - name: "metadata_title"
+        type: "TEXT"
+      - name: "metadata_id"
+        type: "TEXT"
+      - name: "features_type"
+        type: "TEXT"
+      - name: "features_properties_capacity"
+        type: "UINT64"
+      - name: "features_properties_efficiency"
+        type: "FLOAT32"
+      - name: "features_properties_mag"
+        type: "FLOAT32"
+      - name: "features_properties_time"
+        type: "UINT64"
+      - name: "features_properties_updated"
+        type: "UINT64"
+      - name: "features_properties_type"
+        type: "TEXT"
+      - name: "features_geometry_type"
+        type: "TEXT"
+      - name: "features_geometry_coordinates_longitude"
+        type: "FLOAT32"
+      - name: "features_geometry_coordinates_latitude"
+        type: "FLOAT32"
+      - name: "features_eventId"
+        type: "TEXT"
+      
+  - logicalSourceName: "iris"
+    fields:
+      - name: "id"
+        type: "UINT64"
+      - name: "f1"
+        type: "FLOAT32"
+      - name: "f2"
+        type: "FLOAT32"
+      - name: "f3"
+        type: "FLOAT32"
+      - name: "f4"
+        type: "FLOAT32"
+      - name: "target"
+        type: "UINT64"
+      
+  
+

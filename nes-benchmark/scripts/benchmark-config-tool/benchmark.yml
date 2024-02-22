@@ -1,0 +1,120 @@
+
+## For now just works with the tutorial!
+## Network topology
+network:
+  coordinator:
+    image: nebulastream/nes-executable-image:latest
+    coordinatorIp: 172.31.0.2
+    restIp: 172.31.0.2
+    restPort: 8081
+    rpcPort: 0
+  worker:
+    n_worker: 1
+    image: nebulastream/nes-executable-image:latest
+    connections:
+      - from: "TODO: Specify source ID"
+        to: "TODO: Specify worker by name (worker_1)"
+  sources:
+    connections:
+      - physical_source_name: "TODO: Specify name"
+        worker_id: "TODO: Specify worker ID"
+
+## coordinator
+coordinator:
+  # configPath: "TODO: Link to the created config file (auto set)"
+  image: nebulastream/nes-executable-image:latest
+  logLevel: LOG_ERROR
+  localWorkerIp: 172.31.0.2
+  optimizer:
+        distributedWindowChildThreshold: 3
+
+## worker
+# dynamic define the first and for the others just the parameters which are different to the first 
+workers:
+    worker_1:
+      logLevel: "LOG_ERROR" 
+      coordinatorIp: coordinator
+      #coordinatorPort: 4000 # read from coordinator config there's just one 
+      dataPort: 0 # default 
+      localWorkerIp: 172.31.0.3 # TODO: coordiantor and worker different localworkerip ips ?
+      rpcPort: 0 # auto select port # default
+
+## logical sources
+logicalSources:
+        - logicalSourceName: "points"
+          fields:
+            - name: "x"
+              type: "FLOAT64"
+            - name: "y"
+              type: "FLOAT64"
+        - logicalSourceName: "wind_turbines"
+          fields:
+                  - name: type
+                    type: TEXT
+                  - name: metadata_generated
+                    type: UINT64
+                  - name: metadata_title
+                    type: TEXT
+                  - name: metadata_id
+                    type: TEXT
+                  - name: features_type
+                    type: TEXT
+                  - name: features_properties_capacity
+                    type: UINT64
+                  - name: features_properties_efficiency
+                    type: FLOAT32
+                  - name: features_properties_mag
+                    type: FLOAT32
+                  - name: features_properties_time
+                    type: UINT64
+                  - name: features_properties_updated
+                    type: UINT64
+                  - name: features_properties_type
+                    type: TEXT
+                  - name: features_geometry_type
+                    type: TEXT
+                  - name: features_geometry_coordinates_longitude
+                    type: FLOAT32
+                  - name: features_geometry_coordinates_latitude
+                    type: FLOAT32
+                  - name: features_eventId
+                    type: TEXT
+
+        - logicalSourceName: "iris"
+          fields:
+            - name: "id"
+              type: "UINT64"
+            - name: "f1"
+              type: "FLOAT32"
+            - name: "f2"
+              type: "FLOAT32"
+            - name: "f3"
+              type: "FLOAT32"
+            - name: "f4"
+              type: "FLOAT32"
+            - name: "target"
+              type: "UINT64"
+
+
+
+
+### Physical source configuration
+physicalSources:
+        - logicalSourceName: "points"
+          physicalSourceName: "points_1"
+          type: "CSV_SOURCE"
+          configuration:
+            filePath: "/tutorial/resources/points.csv"
+            skipHeader: true
+        - logicalSourceName: wind_turbines
+          physicalSourceName: wind_turbine_1
+          type: CSV_SOURCE
+          configuration:
+                  filePath: /tutorial/wind-turbine-1.csv
+                  skipHeader: true
+        - logicalSourceName: "iris"
+          physicalSourceName: "iris_1"
+          type: CSV_SOURCE
+          configuration:
+            filePath: /tutorial/resources/iris_short.csv
+            skipHeader: false

@@ -1,0 +1,75 @@
+###
+### General configuration
+###
+{% if worker.bufferSizeInBytes -%}
+bufferSizeInBytes: {{ worker.bufferSizeInBytes }}
+{% endif -%}
+{% if worker.numWorkerThreads -%}
+numWorkerThreads: {{ worker.numWorkerThreads }}
+{% endif -%}
+{% if worker.numberOfBuffersPerWorker -%}
+numberOfBuffersPerWorker: {{ worker.numberOfBuffersPerWorker }}
+{% endif -%}
+{% if worker.numberOfBuffersInGlobalBufferManager -%}
+numberOfBuffersInGlobalBufferManager: {{ worker.numberOfBuffersInGlobalBufferManager }}
+{% endif -%}
+{% if worker.numberOfBuffersInSourceLocalBufferPool -%}
+numberOfBuffersInSourceLocalBufferPool: {{ worker.numberOfBuffersInSourceLocalBufferPool }}
+{% endif -%}
+{% if worker.configPath -%}
+configPath: "{{ worker.configPath }}"
+{% endif -%}
+{% if worker.logLevel -%}
+logLevel: {{ worker.logLevel }}
+{% endif -%}
+
+###
+### Network configuration
+###
+{% if worker.localWorkerIp -%}
+localWorkerIp: {{ worker.localWorkerIp }}
+{% endif -%}
+{% if worker.coordinatorIp -%}
+coordinatorIp: {{ worker.coordinatorIp }}
+{% endif -%}
+{% if worker.coordinatorPort -%}
+coordinatorPort: {{ worker.coordinatorPort }}
+{% endif -%}
+{% if worker.dataPort -%}
+dataPort: {{ worker.dataPort }}
+{% endif -%}
+{% if worker.rpcPort -%}
+rpcPort: {{ worker.rpcPort }}
+{% endif -%}
+{% if worker.parentId -%}
+parentId: {{ worker.parentId }}
+{% endif -%}
+
+###
+### Other configs
+###
+{% if worker.numberOfQueues -%}
+numberOfQueues: {{ worker.numberOfQueues }}
+{% endif -%}
+{% if worker.numberOfSlots -%}
+numberOfSlots: {{ worker.numberOfSlots }}
+{% endif -%}
+{% if worker.numberOfThreadsPerQueue -%}
+numberOfThreadsPerQueue: {{ worker.numberOfThreadsPerQueue }}
+{% endif -%}
+{% if worker.queryManagerMode -%}
+queryManagerMode: "{{ worker.queryManagerMode }}"
+{% endif -%}
+
+###
+### Physical source configuration
+###
+physicalSources:
+{% for source in physicalSources %}
+        - logicalSourceName: "{{ source.logicalSourceName }}"
+          physicalSourceName: "{{ source.physicalSourceName }}"
+          type: "{{ source.type }}"
+          configuration:
+            filePath: "{{ source.configuration.filePath }}"
+            skipHeader: {{ source.configuration.skipHeader }}
+{% endfor -%}

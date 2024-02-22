@@ -1,0 +1,52 @@
+###
+### General Coordinator Configuration
+###
+{% if coordinator.configPath %}
+configPath: {{ coordinator.configPath }}
+{% endif %}
+
+{% if coordinator.enableQueryReconfiguration %}
+enableQueryReconfiguration: {{ coordinator.enableQueryReconfiguration }}
+{% endif %}
+
+logLevel: {{ coordinator.logLevel }}
+
+# {% if coordinator.image %}
+# image: {{ coordinator.image }}
+# {% endif %}
+
+{% if coordinator.optimizer %}
+optimizer:
+        distributedWindowChildThreshold: 3
+{% endif %}
+###
+### Network Configuration
+###
+restIp: {{ coordinator.restIp }}
+coordinatorIp: {{ coordinator.coordinatorIp }}
+restPort: {{ coordinator.restPort }}
+
+{% if coordinator.rpcPort %}
+rpcPort: {{ coordinator.rpcPort }}
+{% endif %}
+
+
+worker:
+  localWorkerIp: {{ coordinator.localWorkerIp }}
+  #workerConfigPath: {{ coordinator.workerConfigPath }}
+
+
+###
+### Logical Sources Configuration
+###
+logicalSources:
+  {% for source in logicalSources -%}
+  - logicalSourceName: "{{ source.logicalSourceName }}"
+    fields:
+      {% for field in source.fields -%}
+        - name: "{{ field.name }}"
+        type: "{{ field.type }}"
+      {% endfor %}
+  {% endfor %}
+
+
