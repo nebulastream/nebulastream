@@ -204,9 +204,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         int bytesRead = read(sockfd, &incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
                         if (bytesRead < 0) {
                             if (byteOffset < incomingTupleSize) {
-                                //return std::nullopt;
-                                buffer.setNumberOfTuples(0);
-                                return buffer.getBuffer();
+                                return std::nullopt;
+//                                buffer.setNumberOfTuples(0);
+//                                return buffer.getBuffer();
                             }
                             break;
                         }
