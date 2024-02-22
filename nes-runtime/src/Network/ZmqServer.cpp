@@ -26,7 +26,7 @@
 namespace NES::Network {
 
 /// max number of tcp sockets
-static constexpr auto MAX_ZMQ_SOCKET = 2 * 65536;
+static constexpr auto MAX_ZMQ_SOCKET = 10000 * 65536;
 
 namespace detail {
 
