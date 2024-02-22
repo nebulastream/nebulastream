@@ -105,7 +105,6 @@ bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr
 }
 
 bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
-    std::unique_lock lock(engineMutex);
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
 

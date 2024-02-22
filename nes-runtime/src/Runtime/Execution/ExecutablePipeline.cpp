@@ -87,7 +87,7 @@ bool ExecutablePipeline::start() {
             operatorHandler->start(pipelineContext, localStateVariableId);
             localStateVariableId++;
         }
-        queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, newReconf, true);
+        queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, newReconf, false);
         executablePipelineStage->start(*pipelineContext.get());
         return true;
     }
