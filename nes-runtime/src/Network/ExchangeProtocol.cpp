@@ -190,21 +190,24 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         if (lastEOS) {
             const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
             while (true) {
-                auto locked = maxSeqNumberPerNesPartition.wlock();
-                auto foundVersionWaitingForDrain = false;
-                for (auto& [version, info] : (*locked)[eosNesPartition]) {
-                    if (info.expected) {
-                        foundVersionWaitingForDrain = true;
+                {
+                    auto locked = maxSeqNumberPerNesPartition.wlock();
+                    auto foundVersionWaitingForDrain = false;
+                    for (auto& [version, info] : (*locked)[eosNesPartition]) {
+                        if (info.expected) {
+                            foundVersionWaitingForDrain = true;
+                        }
+                    }
+                    if (!foundVersionWaitingForDrain) {
+                        NES_DEBUG("No more versions waiting for drain");
+                        if ((*locked)[eosNesPartition].empty()) {
+                            NES_DEBUG("No more versions active for this partiion, erasing");
+                            (*locked).erase(eosNesPartition);
+                        }
+                        break;
                     }
                 }
-                if (!foundVersionWaitingForDrain) {
-                    NES_DEBUG("No more versions waiting for drain");
-                    if ((*locked)[eosNesPartition].empty()) {
-                        NES_DEBUG("No more versions active for this partiion, erasing");
-                        (*locked).erase(eosNesPartition);
-                    }
-                    break;
-                }
+
 
                 NES_DEBUG("Waiting for version to drain");
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
