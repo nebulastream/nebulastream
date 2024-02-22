@@ -105,7 +105,7 @@ bool NetworkSource::start() {
                                                     querySubPlanId,
                                                     Runtime::ReconfigurationType::Initialize,
                                                     shared_from_base<DataSource>());
-            queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
+            queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, true);
             break;// hack as currently we assume only one executableSuccessor
         }
         NES_DEBUG("NetworkSource: start completed on {}", nesPartition);

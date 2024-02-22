@@ -114,7 +114,7 @@ void NetworkSink::setup() {
                                                   Runtime::ReconfigurationType::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
-    queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, reconf, false);
+    queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, reconf, true);
 }
 
 void NetworkSink::shutdown() {
