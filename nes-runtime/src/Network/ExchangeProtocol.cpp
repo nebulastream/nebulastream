@@ -120,8 +120,8 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
 
 void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber, uint64_t sinkVersion) {
     if (partitionManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Registered) {
-        (void) sinkVersion;
-        (void) messageSequenceNumber;
+        protocolListener->onDataBuffer(nesPartition, buffer);
+        partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
         //(*maxSeqNumberPerNesPartition.wlock())[nesPartition][sinkVersion].queue.emplace(messageSequenceNumber, messageSequenceNumber);
         {
             auto lockedQueue = maxSeqNumberPerNesPartition.wlock();
@@ -132,8 +132,6 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer&
                 (*lockedQueue)[nesPartition].erase(sinkVersion);
             }
         }
-        protocolListener->onDataBuffer(nesPartition, buffer);
-        partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
     } else {
         NES_ERROR("DataBuffer for {} is not registered and was discarded!", nesPartition.toString());
     }

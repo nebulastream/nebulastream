@@ -86,6 +86,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                 if (!optRecvStatus.has_value()) {
                     NES_DEBUG("recv failed on network channel {}", magic_enum::enum_name(mode));
                     if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                        zmqSocket.close();
                         return nullptr;
                     }
                     backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
@@ -108,6 +109,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                         if (!optRecvStatus2.has_value()) {
                             NES_DEBUG("recv failed on network channel");
                             if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                                zmqSocket.close();
                                 return nullptr;
                             }
                             backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
@@ -138,6 +140,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                         if (!optRecvStatus3.has_value()) {
                             NES_DEBUG("recv failed on network channel");
                             if (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                                zmqSocket.close();
                                 return nullptr;
                             }
                             backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
@@ -152,6 +155,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                 // to receive any event. We should figure out if this case must be
                                 // handled somewhere else. For instance, what does this mean for FT and upstream backup?
                                 NES_ERROR("EventOnlyNetworkChannel: Received partition deleted error from server {}", socketAddr);
+                                zmqSocket.close();
                                 return nullptr;
                             }
                         }
@@ -170,6 +174,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     default: {
                         // got a wrong message type!
                         NES_ERROR("{}: received unknown message {}", channelName, static_cast<int>(recvHeader->getMsgType()));
+                        zmqSocket.close();
                         return nullptr;
                     }
                 }
