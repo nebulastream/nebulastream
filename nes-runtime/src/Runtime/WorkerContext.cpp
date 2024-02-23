@@ -99,7 +99,15 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::R
 }
 
 void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES::Runtime::TupleBuffer buffer) {
-    reconnectBufferStorage[operatorId].push(std::move(buffer));
+    auto bufferCopy = localBufferPool->getUnpooledBuffer(buffer.getBufferSize()).value();
+    //todo: this also copies invalid data
+    std::memcpy(bufferCopy.getBuffer(), buffer.getBuffer(), buffer.getBufferSize());
+    bufferCopy.setNumberOfTuples(buffer.getNumberOfTuples());
+    bufferCopy.setOriginId(buffer.getOriginId());
+    bufferCopy.setWatermark(buffer.getNumberOfTuples());
+    bufferCopy.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+    bufferCopy.setSequenceNumber(buffer.getSequenceNumber());
+    reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
 }
 
 bool WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
