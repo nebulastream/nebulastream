@@ -49,6 +49,39 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down PagedVectorVarSizedTest test class."); }
 
+    std::vector<Record> createRecords(const SchemaPtr& schema, const uint64_t numRecords) {
+        std::vector<Record> allRecords;
+        auto allFields = schema->getFieldNames();
+        for (auto i = 0_u64; i < numRecords; ++i) {
+
+            Record newRecord;
+            auto fieldCnt = 0_u64;
+            for (auto& field : allFields) {
+                auto const fieldType = schema->get(field)->getDataType();
+                auto tupleNo = schema->getSize() * i + fieldCnt++;
+
+                if (fieldType->isText()) {
+                    auto buffer = bufferManager->getUnpooledBuffer(PagedVectorVarSized::PAGE_SIZE);
+                    if (buffer.has_value()) {
+                        std::stringstream ss;
+                        ss << "TextValue" << tupleNo;
+                        auto textValue = TextValue::create(buffer.value(), ss.str().length());
+                        std::memcpy(textValue->str(), ss.str().c_str(), ss.str().length());
+                        newRecord.write(field, Text(textValue));
+                    } else {
+                        NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
+                    }
+                } else if (fieldType->isInteger()) {
+                    newRecord.write(field, Value<UInt64>(tupleNo));
+                } else {
+                    newRecord.write(field, Value<Double>((double_t) tupleNo / numRecords));
+                }
+            }
+            allRecords.emplace_back(newRecord);
+        }
+        return allRecords;
+    }
+
     void runStoreTest(PagedVectorVarSized& pagedVector,
                       const SchemaPtr& schema,
                       const uint64_t entrySize,
@@ -95,18 +128,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues) {
                           ->addField(createField("value3", BasicType::UINT64));
     const auto entrySize = 3 * sizeof(uint64_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
-    const auto numItems = 1234_u64;
-
-    std::vector<Record> allRecords;
-    auto allFields = testSchema->getFieldNames();
-    for (auto i = 0_u64; i < numItems; ++i) {
-        Record newRecord;
-        auto fieldCnt = 0_u64;
-        for (auto& field : allFields) {
-            newRecord.write(field, Value<UInt64>(testSchema->getSize() * i + fieldCnt++));
-        }
-        allRecords.emplace_back(newRecord);
-    }
+    const auto numItems = 507_u64;
+    auto allRecords = createRecords(testSchema, numItems);
 
     PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
@@ -120,20 +143,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues) {
                           ->addField(createField("value3", BasicType::TEXT));
     const auto entrySize = 3 * sizeof(uint64_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
-    const auto numItems = 1234_u64;
-
-    std::vector<Record> allRecords;
-    auto allFields = testSchema->getFieldNames();
-    for (auto i = 0_u64; i < numItems; ++i) {
-        Record newRecord;
-        auto fieldCnt = 0_u64;
-        for (auto& field : allFields) {
-            std::stringstream ss;
-            ss << "TextValue" << (testSchema->getSize() * i + fieldCnt++);
-            newRecord.write(field, Text(TextValue::create(ss.str())));
-        }
-        allRecords.emplace_back(newRecord);
-    }
+    const auto numItems = 507_u64;
+    auto allRecords = createRecords(testSchema, numItems);
 
     PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
@@ -147,28 +158,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes) {
                           ->addField(createField("value3", BasicType::FLOAT64));
     const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
-    const auto numItems = 1234_u64;
-
-    std::vector<Record> allRecords;
-    auto allFields = testSchema->getFieldNames();
-    for (auto i = 0_u64; i < numItems; ++i) {
-        Record newRecord;
-        auto fieldCnt = 0_u64;
-        for (auto& field : allFields) {
-            auto const fieldType = testSchema->getField(field)->getDataType();
-            auto tupleNo = testSchema->getSize() * i + fieldCnt++;
-            if (fieldType->isText()) {
-                std::stringstream ss;
-                ss << "TextValue" << tupleNo;
-                newRecord.write(field, Text(TextValue::create(ss.str())));
-            } else if (fieldType->isFloat()) {
-                newRecord.write(field, Value<Float>((float) tupleNo / numItems));
-            } else {
-                newRecord.write(field, Value<UInt64>(tupleNo));
-            }
-        }
-        allRecords.emplace_back(newRecord);
-    }
+    const auto numItems = 507_u64;
+    auto allRecords = createRecords(testSchema, numItems);
 
     PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
@@ -180,19 +171,9 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedValuesNonDefaultPageSize) {
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::UINT64));
     const auto entrySize = 2 * sizeof(uint64_t);
-    const auto pageSize = (10 * entrySize) + 2;
-    const auto numItems = 1234_u64;
-
-    std::vector<Record> allRecords;
-    auto allFields = testSchema->getFieldNames();
-    for (auto i = 0_u64; i < numItems; ++i) {
-        Record newRecord;
-        auto fieldCnt = 0_u64;
-        for (auto& field : allFields) {
-            newRecord.write(field, Value<UInt64>(testSchema->getSize() * i + fieldCnt++));
-        }
-        allRecords.emplace_back(newRecord);
-    }
+    const auto pageSize = (10 * entrySize) + 3;
+    const auto numItems = 507_u64;
+    auto allRecords = createRecords(testSchema, numItems);
 
     PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
