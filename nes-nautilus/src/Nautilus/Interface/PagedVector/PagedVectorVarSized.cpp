@@ -101,17 +101,63 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey) {
     }
 }
 
-std::string PagedVectorVarSized::loadText(uint8_t* textPtr, uint32_t length) {
-    NES_ASSERT2_FMT(length > 0, "Length of text has to be larger than 0!");
-    NES_ASSERT2_FMT(length <= pageSize, "Length of text has to be smaller than the page size!");
+void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other) {
+    // TODO optimize appending the maps, see #4639
+    NES_ASSERT2_FMT(pageSize == other.pageSize, "Can not combine PagedVector of different pageSizes for now!");
+    NES_ASSERT2_FMT(entrySize == other.entrySize, "Can not combine PagedVector of different entrySize for now!");
 
-    std::string result;
-    result.append(reinterpret_cast<char*>(textPtr), length);
-    return result;
+    pages.back().setNumberOfTuples(numberOfEntriesOnCurrPage);
+    other.pages.back().setNumberOfTuples(other.numberOfEntriesOnCurrPage);
+
+    DefaultPhysicalTypeFactory physicalDataTypeFactory;
+    for (auto entryId = 0UL; entryId < other.totalNumberOfEntries; ++entryId) {
+        auto pageIdx = entryId / other.capacityPerPage;
+        auto entryIdxOnPage = entryId % other.capacityPerPage;
+        auto entryPtr = other.pages[pageIdx].getBuffer() + entryIdxOnPage * other.entrySize;
+
+        for (auto& field : schema->fields) {
+            auto fieldType = field->getDataType();
+            if (fieldType->isText()) {
+                auto textEntryMapKey = *reinterpret_cast<uint64_t*>(entryPtr);
+                auto textMapValue = other.varSizedDataEntryMap.at(textEntryMapKey);
+                varSizedDataEntryMap.insert(std::make_pair(++varSizedDataEntryMapCounter, textMapValue));
+                std::memcpy(entryPtr, &varSizedDataEntryMapCounter, sizeof(uint64_t));
+                entryPtr += sizeof(uint64_t);
+            } else {
+                entryPtr += physicalDataTypeFactory.getPhysicalType(fieldType)->size();
+            }
+        }
+    }
+
+    pages.insert(pages.end(), other.pages.begin(), other.pages.end());
+    varSizedDataPages.insert(varSizedDataPages.end(), other.varSizedDataPages.begin(), other.varSizedDataPages.end());
+    totalNumberOfEntries += other.totalNumberOfEntries;
+    numberOfEntriesOnCurrPage = other.numberOfEntriesOnCurrPage;
+    currVarSizedDataEntry = other.currVarSizedDataEntry;
+
+    other.pages.clear();
+    other.varSizedDataPages.clear();
+    other.totalNumberOfEntries = 0;
+    other.numberOfEntriesOnCurrPage = 0;
+    other.currVarSizedDataEntry = nullptr;
+    other.varSizedDataEntryMap.clear();
+    other.varSizedDataEntryMapCounter = 0;
 }
 
 std::vector<Runtime::TupleBuffer>& PagedVectorVarSized::getPages() { return pages; }
 
 uint64_t PagedVectorVarSized::getNumberOfPages() { return pages.size(); }
+
+uint64_t PagedVectorVarSized::getNumberOfVarSizedPages() { return varSizedDataPages.size(); }
+
+uint64_t PagedVectorVarSized::getNumberOfEntries() const { return totalNumberOfEntries; }
+
+uint64_t PagedVectorVarSized::getNumberOfEntriesOnCurrentPage() const { return numberOfEntriesOnCurrPage; }
+
+bool PagedVectorVarSized::varSizedDataEntryMapEmpty() const { return varSizedDataEntryMap.empty(); }
+
+uint64_t PagedVectorVarSized::getVarSizedDataEntryMapCounter() const { return varSizedDataEntryMapCounter; }
+
+uint64_t PagedVectorVarSized::getEntrySize() const { return entrySize; }
 
 } //NES::Nautilus::Interface

@@ -22,6 +22,12 @@
 
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedRef;
+
+typedef struct {
+    uint8_t *entryPtr;
+    uint32_t entryLength;
+} VarSizedDataEntryMapValue;
+
 class PagedVectorVarSized {
   public:
     static constexpr uint64_t PAGE_SIZE = 4096;
@@ -58,7 +64,13 @@ class PagedVectorVarSized {
      * @param textEntryMapKey
      * @return TextValue*
      */
-    std::string loadText(uint8_t *textPtr, uint32_t length);
+    TextValue* loadText(uint64_t textEntryMapKey);
+
+    /**
+     * @brief Combines the pages of the given PagedVectorVarSized with the pages of this PagedVectorVarSized.
+     * @param other PagedVectorVarSized
+     */
+    void appendAllPages(PagedVectorVarSized& other);
 
     /**
      * @brief Getter for the pages object.
@@ -71,6 +83,42 @@ class PagedVectorVarSized {
      * @return uint64_t
      */
     uint64_t getNumberOfPages();
+
+    /**
+     * @brief Returns the number of varSizedPages.
+     * @return uint64_t
+     */
+    uint64_t getNumberOfVarSizedPages();
+
+    /**
+     * @brief Return the total number of entries across all pages.
+     * @return uint64_t
+     */
+    uint64_t getNumberOfEntries() const;
+
+    /**
+     * @brief Returns the number of entries on the current page.
+     * @return uint64_t
+     */
+    uint64_t getNumberOfEntriesOnCurrentPage() const;
+
+    /**
+     * @brief Checks if the varSizedDataEntryMap is empty.
+     * @return bool
+     */
+    bool varSizedDataEntryMapEmpty() const;
+
+    /**
+     * @brief Returns the counter of the varSizedDataEntryMap.
+     * @return uint64_t
+     */
+    uint64_t getVarSizedDataEntryMapCounter() const;
+
+    /**
+     * @brief Returns the entry size.
+     * @return uint64_t
+     */
+    uint64_t getEntrySize() const;
 
   private:
     friend PagedVectorVarSizedRef;
