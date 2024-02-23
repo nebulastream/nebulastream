@@ -118,22 +118,9 @@ class PagedVectorVarSizedRefIter {
 
     /**
      * @brief Constructor
-     * @param listRef
+     * @param pagedVectorVarSized
      */
-    PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef& listRef);
-
-    /**
-     * @brief Copy constructor
-     * @param it
-     */
-    PagedVectorVarSizedRefIter(const PagedVectorVarSizedRefIter& it);
-
-    /**
-     * @brief Assignment operator
-     * @param it
-     * @return Reference to ListRefIter
-     */
-    PagedVectorVarSizedRefIter& operator=(const PagedVectorVarSizedRefIter& it);
+    PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef& pagedVectorVarSized);
 
     /**
      * @brief Dereference operator that returns the record at a given entry in the ListRef
@@ -146,12 +133,6 @@ class PagedVectorVarSizedRefIter {
      * @return Reference
      */
     PagedVectorVarSizedRefIter& operator++();
-
-    /**
-     * @brief Post-increment count that first returns the reference and then increments
-     * @return Iterator
-     */
-    PagedVectorVarSizedRefIter operator++(int);
 
     /**
      * @brief Equality operator

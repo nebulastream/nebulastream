@@ -211,31 +211,11 @@ Value<> PagedVectorVarSizedRef::loadBasicType(const PhysicalTypePtr& type,
 PagedVectorVarSizedRefIter::PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef& pagedVectorVarSized)
     : pos(0_u64), pagedVectorVarSized(pagedVectorVarSized) {}
 
-PagedVectorVarSizedRefIter::PagedVectorVarSizedRefIter(const PagedVectorVarSizedRefIter& it)
-    : pos(it.pos), pagedVectorVarSized(it.pagedVectorVarSized) {}
-
-PagedVectorVarSizedRefIter& PagedVectorVarSizedRefIter::operator=(const PagedVectorVarSizedRefIter& it) {
-    if (this == &it) {
-        return *this;
-    }
-
-    pos = it.pos;
-    // TODO schema has no copy assignment operator
-    pagedVectorVarSized = it.pagedVectorVarSized;
-    return *this;
-}
-
 Record PagedVectorVarSizedRefIter::operator*() { return pagedVectorVarSized.readRecord(pos); }
 
 PagedVectorVarSizedRefIter& PagedVectorVarSizedRefIter::operator++() {
     pos = pos + 1;
     return *this;
-}
-
-PagedVectorVarSizedRefIter PagedVectorVarSizedRefIter::operator++(int) {
-    PagedVectorVarSizedRefIter copy = *this;
-    pos = pos + 1;
-    return copy;
 }
 
 bool PagedVectorVarSizedRefIter::operator==(const PagedVectorVarSizedRefIter& other) const {
