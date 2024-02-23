@@ -104,10 +104,21 @@ void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES:
     std::memcpy(bufferCopy.getBuffer(), buffer.getBuffer(), buffer.getBufferSize());
     bufferCopy.setNumberOfTuples(buffer.getNumberOfTuples());
     bufferCopy.setOriginId(buffer.getOriginId());
-    bufferCopy.setWatermark(buffer.getNumberOfTuples());
+    bufferCopy.setWatermark(buffer.getWatermark());
     bufferCopy.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
     bufferCopy.setSequenceNumber(buffer.getSequenceNumber());
     reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
+
+//    std::vector<uint8_t> bufferCopy;
+//    bufferCopy.reserve(buffer.getBufferSize());
+//    //todo: this also copies invalid data
+//    std::memcpy(bufferCopy.getBuffer(), buffer.getBuffer(), buffer.getBufferSize());
+//    bufferCopy.setNumberOfTuples(buffer.getNumberOfTuples());
+//    bufferCopy.setOriginId(buffer.getOriginId());
+//    bufferCopy.setWatermark(buffer.getWatermark());
+//    bufferCopy.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+//    bufferCopy.setSequenceNumber(buffer.getSequenceNumber());
+//    reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
 }
 
 bool WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
