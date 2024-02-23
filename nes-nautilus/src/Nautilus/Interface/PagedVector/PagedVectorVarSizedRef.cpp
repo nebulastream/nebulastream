@@ -25,11 +25,6 @@ namespace NES::Nautilus::Interface {
 PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
     : pagedVectorVarSizedRef(pagedVectorVarSizedRef), schema(std::move(schema)) {}
 
-void* getCurrPageProxy(void* pagedVectorVarSizedPtr) {
-    auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
-    return pagedVectorVarSized->getPages().back().getBuffer();
-}
-
 void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr) {
     auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
     pagedVectorVarSized->appendPage();
@@ -64,10 +59,6 @@ Value<UInt64> PagedVectorVarSizedRef::getCapacityPerPage() {
     return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, capacityPerPage).load<UInt64>();
 }
 
-Value<UInt64> PagedVectorVarSizedRef::getEntrySize() {
-    return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, entrySize).load<UInt64>();
-}
-
 Value<UInt64> PagedVectorVarSizedRef::getTotalNumberOfEntries() {
     return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, totalNumberOfEntries).load<UInt64>();
 }
@@ -91,8 +82,11 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
         tuplesOnPage = 0_u64;
     }
 
-    auto pageBase = Nautilus::FunctionCall("getCurrPageProxy", getCurrPageProxy, pagedVectorVarSizedRef);
-    auto pageEntry = pageBase + (tuplesOnPage * getEntrySize());
+    setNumberOfEntriesOnCurrPage(tuplesOnPage + 1_u64);
+    auto oldTotalNumberOfEntries = getTotalNumberOfEntries();
+    setTotalNumberOfEntries(oldTotalNumberOfEntries + 1_u64);
+    auto pageEntry =
+        Nautilus::FunctionCall("getEntryVarSizedProxy", getEntryVarSizedProxy, pagedVectorVarSizedRef, oldTotalNumberOfEntries);
 
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : schema->fields) {
@@ -110,15 +104,12 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
             pageEntry = pageEntry + fieldType->size();
         }
     }
-    setTotalNumberOfEntries(getTotalNumberOfEntries() + 1_u64);
-    setNumberOfEntriesOnCurrPage(tuplesOnPage + 1_u64);
 }
 
 Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
     Record record;
     if (pos < getTotalNumberOfEntries()) {
-        auto pageEntry =
-            Nautilus::FunctionCall("getEntryVarSizedProxy", getEntryVarSizedProxy, pagedVectorVarSizedRef, pos);
+        auto pageEntry = Nautilus::FunctionCall("getEntryVarSizedProxy", getEntryVarSizedProxy, pagedVectorVarSizedRef, pos);
 
         DefaultPhysicalTypeFactory physicalDataTypeFactory;
         for (auto& field : schema->fields) {

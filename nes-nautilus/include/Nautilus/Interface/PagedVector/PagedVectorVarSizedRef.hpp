@@ -83,12 +83,6 @@ class PagedVectorVarSizedRef {
     Value<UInt64> getCapacityPerPage();
 
     /**
-     * @brief Returns the entry size
-     * @return UInt64
-     */
-    Value<UInt64> getEntrySize();
-
-    /**
      * @brief Sets the total number of entries to the given value
      * @param val
      */
