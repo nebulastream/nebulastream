@@ -29,7 +29,7 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
     totalNumberOfEntries = 0;
     entrySize = 0;
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
-    for (auto& field : schema->fields) {
+    for (auto& field : this->schema->fields) {
         auto fieldType = field->getDataType();
         if (fieldType->isText()) {
             auto varSizedDataPtrSize = sizeof(int8_t*);
@@ -39,9 +39,9 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
             entrySize += physicalDataTypeFactory.getPhysicalType(fieldType)->size();
         }
     }
-    capacityPerPage = entrySize / pageSize;
+    capacityPerPage = pageSize / entrySize;
     NES_ASSERT2_FMT(entrySize > 0, "EntrySize for a pagedVector has to be larger than 0!");
-    NES_ASSERT2_FMT((entrySize / pageSize) > 0, "At least one tuple has to fit on a page!");
+    NES_ASSERT2_FMT(capacityPerPage > 0, "At least one tuple has to fit on a page!");
 }
 
 void PagedVectorVarSized::appendPage() {
