@@ -36,7 +36,7 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        bufferManager =  std::make_shared<Runtime::BufferManager>();
+        bufferManager = std::make_shared<Runtime::BufferManager>();
         NES_INFO("Setup PagedVectorVarSizedTest test case.");
     }
 
@@ -54,30 +54,34 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
                       const uint64_t entrySize,
                       const uint64_t pageSize,
                       const std::vector<Record>& allRecords) {
-        ASSERT_EQ(entrySize, sizeof(Record));
+        ASSERT_EQ(entrySize, pagedVector.getEntrySize());
         const uint64_t capacityPerPage = pageSize / entrySize;
         const uint64_t expectedNumberOfEntries = allRecords.size();
         const uint64_t numberOfPages = std::ceil((double) expectedNumberOfEntries / capacityPerPage);
-        auto pagedVectorRef = PagedVectorVarSizedRef(Value<MemRef>((int8_t*) &pagedVector), schema);
+        auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(Value<MemRef>((int8_t*) &pagedVector), schema);
 
         for (auto& record : allRecords) {
-            pagedVectorRef.writeRecord(record);
+            pagedVectorVarSizedRef.writeRecord(record);
         }
 
-        ASSERT_EQ(pagedVectorRef.getTotalNumberOfEntries(), expectedNumberOfEntries);
+        ASSERT_EQ(pagedVector.getNumberOfEntries(), expectedNumberOfEntries);
         ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
 
-        // TODO assert that the number of tuples on the last page is correct?
+        // As we do lazy allocation, we do not create a new page if the last tuple fit on the page
+        bool lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
+        const uint64_t numTuplesLastPage =
+            lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
+        ASSERT_EQ(pagedVector.getNumberOfEntriesOnCurrentPage(), numTuplesLastPage);
     }
 
     void runRetrieveTest(const PagedVectorVarSized& pagedVector,
                          const SchemaPtr& schema,
                          const std::vector<Record>& allRecords) {
-        auto pagedVectorRef = PagedVectorVarSizedRef(Value<MemRef>((int8_t*) &pagedVector), schema);
-        ASSERT_EQ(pagedVectorRef.getTotalNumberOfEntries(), allRecords.size());
+        auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(Value<MemRef>((int8_t*) &pagedVector), schema);
+        ASSERT_EQ(pagedVector.getNumberOfEntries(), allRecords.size());
 
         auto itemPos = 0_u64;
-        for (auto record : pagedVectorRef) {
+        for (auto record : pagedVectorVarSizedRef) {
             ASSERT_EQ(record, allRecords[itemPos++]);
         }
         ASSERT_EQ(itemPos, allRecords.size());
@@ -87,8 +91,9 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", BasicType::UINT64));
-    const auto entrySize = 2 * sizeof(uint64_t);
+                          ->addField(createField("value2", BasicType::UINT64))
+                          ->addField(createField("value3", BasicType::UINT64));
+    const auto entrySize = 3 * sizeof(uint64_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
     const auto numItems = 1234_u64;
 
@@ -111,8 +116,9 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues) {
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::TEXT))
-                          ->addField(createField("value2", BasicType::TEXT));
-    const auto entrySize = 2 * sizeof(int8_t*) + 2 * sizeof(uint32_t);
+                          ->addField(createField("value2", BasicType::TEXT))
+                          ->addField(createField("value3", BasicType::TEXT));
+    const auto entrySize = 3 * sizeof(uint64_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
     const auto numItems = 1234_u64;
 
@@ -138,8 +144,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::TEXT))
-                          ->addField(createField("value3", BasicType::FLOAT32));
-    const auto entrySize = sizeof(uint64_t) + sizeof(int8_t*) + sizeof(uint32_t) + sizeof(float_t);
+                          ->addField(createField("value3", BasicType::FLOAT64));
+    const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
     const auto numItems = 1234_u64;
 
