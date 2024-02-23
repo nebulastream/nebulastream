@@ -167,16 +167,20 @@ uint64_t StreamJoinOperatorHandler::getWindowSlide() const { return sliceAssigne
 
 uint64_t StreamJoinOperatorHandler::getWindowSize() const { return sliceAssigner.getWindowSize(); }
 
+void StreamJoinOperatorHandler::setBufferManager(const NES::Runtime::BufferManagerPtr& bufManager) {
+    this->bufferManager = bufManager;
+}
+
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                                      const OriginId outputOriginId,
                                                      const uint64_t windowSize,
                                                      const uint64_t windowSlide,
-                                                     uint64_t sizeOfRecordLeft,
-                                                     uint64_t sizeOfRecordRight)
+                                                     const SchemaPtr& leftSchema,
+                                                     const SchemaPtr& rightSchema)
     : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSlide), windowSize(windowSize), windowSlide(windowSlide),
       watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)),
       watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector<OriginId>(1, outputOriginId))),
-      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(sizeOfRecordLeft),
-      sizeOfRecordRight(sizeOfRecordRight) {}
+      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(leftSchema->getSchemaSizeInBytes()),
+      sizeOfRecordRight(rightSchema->getSchemaSizeInBytes()), leftSchema(leftSchema), rightSchema(rightSchema) {}
 
 }// namespace NES::Runtime::Execution::Operators

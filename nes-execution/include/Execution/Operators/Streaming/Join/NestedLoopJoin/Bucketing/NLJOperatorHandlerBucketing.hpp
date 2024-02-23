@@ -37,8 +37,8 @@ class NLJOperatorHandlerBucketing : public NLJOperatorHandler, public StreamJoin
                                 const OriginId outputOriginId,
                                 const uint64_t windowSize,
                                 const uint64_t windowSlide,
-                                uint64_t sizeOfRecordLeft,
-                                uint64_t sizeOfRecordRight,
+                                const SchemaPtr& leftSchema,
+                                const SchemaPtr& rightSchema,
                                 const uint64_t pageSizeLeft,
                                 const uint64_t pageSizeRight);
 
@@ -58,8 +58,8 @@ class NLJOperatorHandlerBucketing : public NLJOperatorHandler, public StreamJoin
                                         const OriginId outputOriginId,
                                         const uint64_t windowSize,
                                         const uint64_t windowSlide,
-                                        uint64_t sizeOfRecordLeft,
-                                        uint64_t sizeOfRecordRight,
+                                        const SchemaPtr& leftSchema,
+                                        const SchemaPtr& rightSchema,
                                         const uint64_t pageSizeLeft,
                                         const uint64_t pageSizeRight);
 };

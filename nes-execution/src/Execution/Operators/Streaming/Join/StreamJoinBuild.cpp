@@ -74,6 +74,19 @@ void setNumberOfWorkerThreadsProxy(void* ptrOpHandler,
     opHandler->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
 }
 
+void setBufferManagerProxy(void* ptrOpHandler,
+                           void* ptrPipelineContext,
+                           uint64_t joinStrategyInt,
+                           uint64_t windowingStrategyInt) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineContext != nullptr, "pipeline context should not be null!");
+
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineContext);
+
+    opHandler->setBufferManager(pipelineCtx->getBufferManager());
+}
+
 void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
     // Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -105,6 +118,12 @@ void StreamJoinBuild::terminate(ExecutionContext& ctx) const {
 void StreamJoinBuild::setup(ExecutionContext& ctx) const {
     Nautilus::FunctionCall("setNumberOfWorkerThreadsProxy",
                            setNumberOfWorkerThreadsProxy,
+                           ctx.getGlobalOperatorHandler(operatorHandlerIndex),
+                           ctx.getPipelineContext(),
+                           Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                           Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    Nautilus::FunctionCall("setBufferManagerProxy",
+                           setBufferManagerProxy,
                            ctx.getGlobalOperatorHandler(operatorHandlerIndex),
                            ctx.getPipelineContext(),
                            Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
