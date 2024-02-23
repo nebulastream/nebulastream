@@ -18,6 +18,7 @@
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedRef;
@@ -26,7 +27,7 @@ class PagedVectorVarSized {
     static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
-     * @brief Constructor
+     * @brief Constructor. It calculates the entrySize and the capacityPerPage based on the schema and the pageSize.
      * @param bufferManager
      * @param schema
      * @param pageSize
@@ -34,12 +35,12 @@ class PagedVectorVarSized {
     PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
 
     /**
-     * @brief Appends a new page to the pages vector
+     * @brief Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage.
      */
     void appendPage();
 
     /**
-     * @brief Appends a new page to the varSizedDataPages vector
+     * @brief Appends a new page to the varSizedDataPages vector. It also updates the currVarSizedDataEntry pointer.
      */
     void appendVarSizedDataPage();
 
@@ -47,14 +48,15 @@ class PagedVectorVarSized {
      * @brief Stores text of the given length in the varSizedDataPages. If the current page is full, a new page is appended.
      * @param text
      * @param length
+     * @return uint64_t Returns the key to the text in the varSizedDataEntryMap.
      */
-    void storeText(const char* text, uint64_t length);
+    uint64_t storeText(const char* text, uint32_t length);
 
     /**
-     * @brief Loads text from the varSizedDataPages by retrieving the pointer to the text from the page at the given entryPos.
-     * @param textPtr
-     * @param length
-     * @return std::string
+     * @brief Loads text from the varSizedDataPages by retrieving the pointer to the text and its length from the
+     * varSizedDataEntryMap with the given key.
+     * @param textEntryMapKey
+     * @return TextValue*
      */
     std::string loadText(uint8_t *textPtr, uint32_t length);
 
@@ -80,9 +82,10 @@ class PagedVectorVarSized {
     uint64_t totalNumberOfEntries;
     uint64_t numberOfEntriesOnCurrPage;
     std::vector<Runtime::TupleBuffer> pages;
-    // TODO currently the varSizedData must fit into one single page
     std::vector<Runtime::TupleBuffer> varSizedDataPages;
     uint8_t* currVarSizedDataEntry;
+    std::map<uint64_t, VarSizedDataEntryMapValue> varSizedDataEntryMap;
+    uint64_t varSizedDataEntryMapCounter;
 };
 } //NES::Nautilus::Interface
 
