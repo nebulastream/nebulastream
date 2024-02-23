@@ -41,7 +41,8 @@ class PagedVectorVarSized {
     PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
 
     /**
-     * @brief Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage.
+     * @brief Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
+     * and updates the numberOfEntriesOnCurrPage.
      */
     void appendPage();
 
@@ -52,9 +53,10 @@ class PagedVectorVarSized {
 
     /**
      * @brief Stores text of the given length in the varSizedDataPages. If the current page is full, a new page is appended.
+     * It then creates a new entry in the varSizedDataEntryMap with the given key and the pointer to the text and its length.
      * @param text
      * @param length
-     * @return uint64_t Returns the key to the text in the varSizedDataEntryMap.
+     * @return uint64_t Returns the key of the new entry in the varSizedDataEntryMap.
      */
     uint64_t storeText(const char* text, uint32_t length);
 

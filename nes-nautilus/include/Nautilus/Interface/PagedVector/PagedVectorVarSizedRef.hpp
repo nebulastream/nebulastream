@@ -83,12 +83,6 @@ class PagedVectorVarSizedRef {
     Value<UInt64> getCapacityPerPage();
 
     /**
-     * @brief Returns a pointer to the current var sized data entry
-     * @return
-     */
-    Value<MemRef> getCurrentVarSizedDataEntry();
-
-    /**
      * @brief Returns the entry size
      * @return UInt64
      */

@@ -35,12 +35,13 @@ void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr) {
     pagedVectorVarSized->appendPage();
 }
 
-void* getEntryVarSizedProxy(void* pagedVectorVarSizedPtr, uint64_t entryPos, uint64_t entrySize) {
+void* getEntryVarSizedProxy(void* pagedVectorVarSizedPtr, uint64_t entryPos) {
     auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
     for (auto& page : pagedVectorVarSized->getPages()) {
         auto numTuplesOnPage = page.getNumberOfTuples();
+
         if (entryPos < numTuplesOnPage || entryPos < pagedVectorVarSized->getNumberOfEntriesOnCurrentPage()) {
-            auto entryPtrOnPage = entryPos * entrySize;
+            auto entryPtrOnPage = entryPos * pagedVectorVarSized->getEntrySize();
             return page.getBuffer() + entryPtrOnPage;
         } else {
             entryPos -= numTuplesOnPage;
@@ -61,10 +62,6 @@ TextValue* loadTextProxy(void* pagedVectorVarSizedPtr, uint64_t textEntryMapKey)
 
 Value<UInt64> PagedVectorVarSizedRef::getCapacityPerPage() {
     return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, capacityPerPage).load<UInt64>();
-}
-
-Value<MemRef> PagedVectorVarSizedRef::getCurrentVarSizedDataEntry() {
-    return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, currVarSizedDataEntry).load<MemRef>();
 }
 
 Value<UInt64> PagedVectorVarSizedRef::getEntrySize() {
@@ -88,13 +85,12 @@ void PagedVectorVarSizedRef::setNumberOfEntriesOnCurrPage(const Value<>& val) {
 }
 
 void PagedVectorVarSizedRef::writeRecord(Record record) {
-    auto totalNumberOfEntries = getTotalNumberOfEntries();
     auto tuplesOnPage = getNumberOfEntriesOnCurrPage();
-
     if (tuplesOnPage >= getCapacityPerPage()) {
         Nautilus::FunctionCall("allocateNewPageVarSizedProxy", allocateNewPageVarSizedProxy, pagedVectorVarSizedRef);
         tuplesOnPage = 0_u64;
     }
+
     auto pageBase = Nautilus::FunctionCall("getCurrPageProxy", getCurrPageProxy, pagedVectorVarSizedRef);
     auto pageEntry = pageBase + (tuplesOnPage * getEntrySize());
 
@@ -114,15 +110,15 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
             pageEntry = pageEntry + fieldType->size();
         }
     }
-    setTotalNumberOfEntries(totalNumberOfEntries + 1_u64);
+    setTotalNumberOfEntries(getTotalNumberOfEntries() + 1_u64);
     setNumberOfEntriesOnCurrPage(tuplesOnPage + 1_u64);
 }
 
 Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
     Record record;
-    if (pos <= getTotalNumberOfEntries()) {
+    if (pos < getTotalNumberOfEntries()) {
         auto pageEntry =
-            Nautilus::FunctionCall("getEntryVarSizedProxy", getEntryVarSizedProxy, pagedVectorVarSizedRef, pos, getEntrySize());
+            Nautilus::FunctionCall("getEntryVarSizedProxy", getEntryVarSizedProxy, pagedVectorVarSizedRef, pos);
 
         DefaultPhysicalTypeFactory physicalDataTypeFactory;
         for (auto& field : schema->fields) {

@@ -29,6 +29,7 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
     varSizedDataEntryMapCounter = 0;
     totalNumberOfEntries = 0;
     entrySize = 0;
+
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : this->schema->fields) {
         auto fieldType = field->getDataType();
