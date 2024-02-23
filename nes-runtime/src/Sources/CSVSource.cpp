@@ -215,7 +215,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         //tupleCount = byteOffset / incomingTupleSize;
                         //todo: flush interval
                              if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
-                                    .count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
+                                    .count() >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(10)).count()) {
+                                 //.count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
                             NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
                             flushIntervalPassed = true;
                         }
