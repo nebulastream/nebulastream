@@ -73,12 +73,12 @@ class PagedVectorVarSized {
   private:
     friend PagedVectorVarSizedRef;
     Runtime::BufferManagerPtr bufferManager;
-    // TODO do we really need the schema here?
     SchemaPtr schema;
     uint64_t entrySize;
     uint64_t pageSize;
     uint64_t capacityPerPage;
     uint64_t totalNumberOfEntries;
+    uint64_t numberOfEntriesOnCurrPage;
     std::vector<Runtime::TupleBuffer> pages;
     // TODO currently the varSizedData must fit into one single page
     std::vector<Runtime::TupleBuffer> varSizedDataPages;

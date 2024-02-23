@@ -101,6 +101,18 @@ class PagedVectorVarSizedRef {
     void setTotalNumberOfEntries(const Value<>& val);
 
     /**
+     * @brief Returns the number of entries on the current page
+     * @return UInt64
+     */
+    Value<UInt64> getNumberOfEntriesOnCurrPage();
+
+    /**
+     * @brief Sets the number of entries on the current page
+     * @param val
+     */
+    void setNumberOfEntriesOnCurrPage(const Value<>& val);
+
+    /**
      * @brief Loads a basic type from a given field reference
      * @param type
      * @param fieldReference

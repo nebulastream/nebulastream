@@ -65,6 +65,14 @@ void PagedVectorVarSizedRef::setTotalNumberOfEntries(const Value<>& val) {
     getMember(pagedVectorVarSizedRef, PagedVectorVarSized, totalNumberOfEntries).store(val);
 }
 
+Value<UInt64> PagedVectorVarSizedRef::getNumberOfEntriesOnCurrPage() {
+    return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, numberOfEntriesOnCurrPage).load<UInt64>();
+}
+
+void PagedVectorVarSizedRef::setNumberOfEntriesOnCurrPage(const Value<>& val) {
+    getMember(pagedVectorVarSizedRef, PagedVectorVarSized, numberOfEntriesOnCurrPage).store(val);
+}
+
 void PagedVectorVarSizedRef::writeRecord(Record record) {
     auto capacityPerPage = getCapacityPerPage();
     auto totalNumberOfEntries = getTotalNumberOfEntries();
