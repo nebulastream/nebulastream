@@ -47,12 +47,6 @@ class Schema {
     Schema(SchemaPtr const& query, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
-     * @brief Copy constructor
-     * @param it
-     */
-    Schema(const Schema& it);
-
-    /**
      * @brief Schema qualifier separator
      */
     constexpr static const char* const ATTRIBUTE_NAME_SEPARATOR = "$";
@@ -257,13 +251,6 @@ class Schema {
      * @return std::vector<std::string> fieldNames
      */
     std::vector<std::string> getFieldNames() const;
-
-    /**
-     * @brief Copy Assignment operator
-     * @param it
-     * @return Schema
-     */
-    Schema& operator=(const Schema& it);
 
     std::vector<AttributeFieldPtr> fields;
 
