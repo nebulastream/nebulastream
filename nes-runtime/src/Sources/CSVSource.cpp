@@ -203,7 +203,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                         // Read data from the socket
                         //int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
+                        NES_DEBUG("TCPSource::fillBuffer: reading from socket");
                         int bytesRead = read(sockfd, &incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
+                        NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
                         if (bytesRead == 0) {
                             if (byteOffset < incomingTupleSize) {
                                 NES_DEBUG("TCPSource::fillBuffer: inserting eos");
