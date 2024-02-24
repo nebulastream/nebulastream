@@ -180,8 +180,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         if (numberOfTuplesToProducePerBuffer == 0) {
             if (port != 0) {
                 //init flush interval value
-//                bool flushIntervalPassed = false;
-//                auto flushIntervalTimerStart = std::chrono::system_clock::now();
+                bool flushIntervalPassed = false;
+                auto flushIntervalTimerStart = std::chrono::system_clock::now();
 
                 //init tuple count for buffer
                 uint64_t tupleCount = 0;
@@ -226,16 +226,16 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         byteOffset += bytesRead;
                         //todo: this was new
                         //tupleCount = byteOffset / incomingTupleSize;
-                        //todo: flush interval
-//                        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-//                                                                                  - flushIntervalTimerStart)
-//                                .count()
-//                            >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(1000)).count()) {
-//                            //.count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
-//                            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
-//                                      "TupleBuffer.");
-//                            flushIntervalPassed = true;
-//                        }
+                        //flush interval
+                        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+                                                                                  - flushIntervalTimerStart)
+                                .count()
+                            >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(1000)).count()) {
+                            //.count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
+                            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
+                                      "TupleBuffer.");
+                            flushIntervalPassed = true;
+                        }
                     }
                 }
                 //                if (tupleCount <= 0) {
