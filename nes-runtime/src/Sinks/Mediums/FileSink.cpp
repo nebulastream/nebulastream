@@ -146,17 +146,32 @@ void FileSink::shutdown() {
     }
 }
 
+struct Record {
+    uint64_t id;
+    uint64_t value;
+    uint64_t ingestionTimestamp;
+    uint64_t processingTimestamp;
+    uint64_t outputTimestamp;
+};
+
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     if (timestampAndWriteToSocket) {
         std::unique_lock lock(writeMutex);
-        std::string bufferContent;
-        auto schema = sinkFormat->getSchemaPtr();
-        schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
+//        std::string bufferContent;
+        //auto schema = sinkFormat->getSchemaPtr();
+        //schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
+        //bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
         //totalTupleCountreceived += inputBuffer.getNumberOfTuples();
 
+
         // Write data to the socket
-        ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
+        //ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
+
+        auto* records = buffer.getBuffer().getBuffer<Record>();
+        for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
+            records[i].outputTimestamp = getTimestamp();
+        }
+        ssize_t bytes_written = write(sockfd, inputBuffer.getBuffer(), inputBuffer.getBufferSize());
         if (bytes_written == -1) {
             perror("write");
             close(sockfd);

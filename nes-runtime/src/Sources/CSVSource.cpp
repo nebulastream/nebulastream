@@ -168,6 +168,7 @@ struct Record {
     uint64_t value;
     uint64_t ingestionTimestamp;
     uint64_t processingTimestamp;
+    uint64_t outputTimestamp;
 };
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
