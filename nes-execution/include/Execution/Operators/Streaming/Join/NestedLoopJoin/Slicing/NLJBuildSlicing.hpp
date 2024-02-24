@@ -15,6 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJBUILDSLICING_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJBUILDSLICING_HPP_
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -32,12 +33,12 @@ class NLJBuildSlicing : public StreamJoinBuild {
       public:
         LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
                                  const Value<MemRef>& sliceReference,
-                                 Nautilus::Interface::PagedVectorRef pagedVectorRef)
-            : joinOperatorHandler(operatorHandler), sliceReference(sliceReference), pagedVectorRef(std::move(pagedVectorRef)),
+                                 Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef)
+            : joinOperatorHandler(operatorHandler), sliceReference(sliceReference), pagedVectorVarSizedRef(std::move(pagedVectorVarSizedRef)),
               sliceStart(0_u64), sliceEnd(0_u64){};
         Value<MemRef> joinOperatorHandler;
         Value<MemRef> sliceReference;
-        Nautilus::Interface::PagedVectorRef pagedVectorRef;
+        Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef;
         Value<UInt64> sliceStart;
         Value<UInt64> sliceEnd;
     };

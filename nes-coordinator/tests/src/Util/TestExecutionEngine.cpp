@@ -27,7 +27,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpM
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
     workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
+    workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
     workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
     workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
     workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::CompilationStrategy::DEBUG;

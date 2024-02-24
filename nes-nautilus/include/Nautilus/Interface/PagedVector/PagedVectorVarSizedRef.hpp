@@ -31,6 +31,12 @@ class PagedVectorVarSizedRef {
     PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema);
 
     /**
+     * @brief Copy constructor
+     * @param other
+     */
+    PagedVectorVarSizedRef(const PagedVectorVarSizedRef& other);
+
+    /**
      * @brief Writes a new record to the PagedVectorVarSizedRef
      * @param record
      */
@@ -74,6 +80,13 @@ class PagedVectorVarSizedRef {
      * @return Boolean
      */
     bool operator==(const PagedVectorVarSizedRef& other) const;
+
+    /**
+     * @brief Copy assignment operator
+     * @param other
+     * @return PagedVectorVarSizedRef
+     */
+    PagedVectorVarSizedRef& operator=(const PagedVectorVarSizedRef& other);
 
   private:
     /**
@@ -120,7 +133,7 @@ class PagedVectorVarSizedRefIter {
      * @brief Constructor
      * @param pagedVectorVarSized
      */
-    PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef& pagedVectorVarSized);
+    explicit PagedVectorVarSizedRefIter(const PagedVectorVarSizedRef& pagedVectorVarSized);
 
     /**
      * @brief Dereference operator that returns the record at a given entry in the ListRef

@@ -25,6 +25,9 @@ namespace NES::Nautilus::Interface {
 PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
     : pagedVectorVarSizedRef(pagedVectorVarSizedRef), schema(std::move(schema)) {}
 
+PagedVectorVarSizedRef::PagedVectorVarSizedRef(const PagedVectorVarSizedRef& other)
+    : pagedVectorVarSizedRef(other.pagedVectorVarSizedRef), schema(other.schema->copy()) {}
+
 void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr) {
     auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
     pagedVectorVarSized->appendPage();
@@ -149,6 +152,15 @@ bool PagedVectorVarSizedRef::operator==(const PagedVectorVarSizedRef& other) con
     }
 
     return schema == other.schema && pagedVectorVarSizedRef == other.pagedVectorVarSizedRef;
+}
+
+PagedVectorVarSizedRef& PagedVectorVarSizedRef::operator=(const PagedVectorVarSizedRef& other) {
+    if (this == &other) {
+        return *this;
+    }
+    pagedVectorVarSizedRef = other.pagedVectorVarSizedRef;
+    schema->copyFields(other.schema);
+    return *this;
 }
 
 Value<> PagedVectorVarSizedRef::loadBasicType(const PhysicalTypePtr& type,
