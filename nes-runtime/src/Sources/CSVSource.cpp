@@ -213,14 +213,15 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         if (bytesRead == 0) {
                             if (byteOffset < incomingTupleSize) {
                                 NES_DEBUG("TCPSource::fillBuffer: inserting eos");
-                                return std::nullopt;
+                                //return std::nullopt;
                                 //                                buffer.setNumberOfTuples(0);
                                 //                                return buffer.getBuffer();
+                                continue;
                             }
-                            flushIntervalPassed = true;
+                            //flushIntervalPassed = true;
                         } else if (bytesRead < 0) {
                             NES_DEBUG("TCPSource::fillBuffer: error while reading from socket");
-                            continue;
+                            break;
                         }
                         byteOffset += bytesRead;
                         //todo: this was new
