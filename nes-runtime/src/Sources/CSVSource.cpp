@@ -204,7 +204,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         // Read data from the socket
                         //int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
                         int bytesRead = read(sockfd, &incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
-                        if (bytesRead < 0) {
+                        if (bytesRead == 0) {
                             if (byteOffset < incomingTupleSize) {
                                 NES_DEBUG("TCPSource::fillBuffer: inserting eos");
                                 return std::nullopt;
@@ -212,6 +212,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                                 //                                return buffer.getBuffer();
                             }
                             flushIntervalPassed = true;
+                        } else if (bytesRead < 0) {
+                            NES_DEBUG("TCPSource::fillBuffer: error while reading from socket");
+                            continue;
                         }
                         byteOffset += bytesRead;
                         //todo: this was new
@@ -256,7 +259,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 generatedTuples += numCompleteTuplesRead;
                 generatedBuffers++;
                 NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
-                          "leftover bytesprevious. New leftover bytes count: {} ",
+                          "New leftover bytes count: {} ",
                           numCompleteTuplesRead,
                           generatedTuples, bytesOfCompleteTuples, oldLeftoverBytes, leftoverByteCount);
                 return buffer.getBuffer();
