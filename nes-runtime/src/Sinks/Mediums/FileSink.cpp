@@ -167,7 +167,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         // Write data to the socket
         //ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
 
-        auto* records = buffer.getBuffer().getBuffer<Record>();
+        auto* records = inputBuffer.getBuffer<Record>();
         for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
             records[i].outputTimestamp = getTimestamp();
         }
