@@ -171,7 +171,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
             records[i].outputTimestamp = getTimestamp();
         }
-        ssize_t bytes_written = write(sockfd, inputBuffer.getBuffer(), inputBuffer.getBufferSize());
+        ssize_t bytes_written = write(sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
         if (bytes_written == -1) {
             perror("write");
             close(sockfd);
