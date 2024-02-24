@@ -44,7 +44,8 @@ CSVSource::CSVSource(SchemaPtr schema,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      const std::string& physicalSourceName,
-                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors, bool addTimestampsAndReadOnStartup)
+                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                     bool addTimestampsAndReadOnStartup)
     : DataSource(schema,
                  std::move(bufferManager),
                  std::move(queryManager),
@@ -56,7 +57,8 @@ CSVSource::CSVSource(SchemaPtr schema,
                  std::move(successors)),
       fileEnded(false), csvSourceType(csvSourceType), filePath(csvSourceType->getFilePath()->getValue()),
       numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
-      delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()), addTimeStampsAndReadOnStartup(addTimestampsAndReadOnStartup) {
+      delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()),
+      addTimeStampsAndReadOnStartup(addTimestampsAndReadOnStartup) {
 
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
@@ -76,16 +78,15 @@ CSVSource::CSVSource(SchemaPtr schema,
             // Specify the server address and port
             struct sockaddr_in server_addr;
             server_addr.sin_family = AF_INET;
-            server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Server IP address
+            server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");// Server IP address
             server_addr.sin_port = htons(port);
 
             // Connect to the server
-            if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+            if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
                 perror("connect");
                 ::close(sockfd);
                 return;
             }
-
         }
 
         return;
@@ -184,10 +185,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto valueSize = sizeof(uint64_t);
                 auto incomingTupleSize = valueSize * 3;
                 //todo: move to beginning
-                auto bytesPerBuffer =  generatedTuplesThisPass * incomingTupleSize;
+                auto bytesPerBuffer = generatedTuplesThisPass * incomingTupleSize;
                 incomingBuffer.reserve(bytesPerBuffer);
                 leftOverBytes.reserve(incomingTupleSize);
-                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
+                for (uint16_t i = 0; i < leftoverByteCount; ++i) {
                     incomingBuffer[i] = leftOverBytes[i];
                 }
                 //auto writePostion = &incomingBuffer[leftoverByteCount];
@@ -207,8 +208,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                             if (byteOffset < incomingTupleSize) {
                                 NES_DEBUG("TCPSource::fillBuffer: inserting eos");
                                 return std::nullopt;
-//                                buffer.setNumberOfTuples(0);
-//                                return buffer.getBuffer();
+                                //                                buffer.setNumberOfTuples(0);
+                                //                                return buffer.getBuffer();
                             }
                             break;
                         }
@@ -216,17 +217,20 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         //todo: this was new
                         //tupleCount = byteOffset / incomingTupleSize;
                         //todo: flush interval
-                             if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
-                                    .count() >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(1000)).count()) {
-                                 //.count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
-                            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+                        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+                                                                                  - flushIntervalTimerStart)
+                                .count()
+                            >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(1000)).count()) {
+                            //.count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
+                            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
+                                      "TupleBuffer.");
                             flushIntervalPassed = true;
                         }
                     }
                 }
-//                if (tupleCount <= 0) {
-//                    return std::nullopt;
-//                }
+                //                if (tupleCount <= 0) {
+                //                    return std::nullopt;
+                //                }
                 uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
                 for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
                     auto index = i * incomingTupleSize;
@@ -241,6 +245,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     //totalTupleCount++;
                 }
                 auto bytesOfCompleteTuples = incomingTupleSize * numCompleteTuplesRead;
+                //todo: this is only for debugging
+                auto oldLeftoverBytes = leftoverByteCount;
                 leftoverByteCount = byteOffset % incomingTupleSize;
                 for (uint64_t i = 0; i < leftoverByteCount; ++i) {
                     leftOverBytes[i] = incomingBuffer[i + bytesOfCompleteTuples];
@@ -249,63 +255,64 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
                 generatedTuples += numCompleteTuplesRead;
                 generatedBuffers++;
-                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples ({} in total)", numCompleteTuplesRead, generatedTuples);
+                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
+                          "leftover bytesprevious. New leftover bytes count: {} ",
+                          numCompleteTuplesRead,
+                          generatedTuples, bytesOfCompleteTuples, oldLeftoverBytes, leftoverByteCount);
                 return buffer.getBuffer();
-
-
 
                 //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
 
-//                uint16_t bytesToJoinWithLeftover = 0;
-//
-//
-//                auto additionalTupleRead = 0;
-//                if (leftoverByteCount != 0) {
-//                    bytesToJoinWithLeftover = incomingTupleSize - leftoverByteCount;
-//                    //NES_INFO("Copying {} bytes to complete leftover tuple", bytesToJoinWithLeftover)
-//                    for (uint16_t i = leftoverByteCount; i < incomingTupleSize; ++i) {
-//                        leftOverBytes[i] = incomingBuffer[i - leftoverByteCount];
-//                    }
-//                    additionalTupleRead = 1;
-//                    auto id = reinterpret_cast<uint64_t*>(&leftOverBytes[0]);
-//                    auto seqenceNr = reinterpret_cast<uint64_t*>(&leftOverBytes[valueSize]);
-//                    auto ingestionTime = reinterpret_cast<uint64_t*>(&leftOverBytes[2 * valueSize]);
-//                    records[0].id = *id;
-//                    records[0].value = *seqenceNr;
-//                    records[0].ingestionTimestamp = *ingestionTime;
-//                    records[0].processingTimestamp = getTimestamp();
-//                    //totalTupleCount++;
-//                    //std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
-//                }
-//
-//                //auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
-//                // Calculate the number of tuples read
-//                auto newTupleBytesRead = bytesRead - bytesToJoinWithLeftover;
-//                uint64_t numCompleteTuplesRead = newTupleBytesRead / incomingTupleSize;
-//                for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
-//                    auto index = i * incomingTupleSize + bytesToJoinWithLeftover;
-//                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
-//                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
-//                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
-//                    //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
-//                    auto writeIndex = i + additionalTupleRead;
-//                    records[writeIndex].id = *id;
-//                    records[writeIndex].value = *seqenceNr;
-//                    records[writeIndex].ingestionTimestamp = *ingestionTime;
-//                    records[writeIndex].processingTimestamp = getTimestamp();
-//                    //totalTupleCount++;
-//                }
-//
-//                leftoverByteCount = newTupleBytesRead % incomingTupleSize;
-//                auto processedBytes = numCompleteTuplesRead * incomingTupleSize + bytesToJoinWithLeftover;
-////                if (leftoverByteCount != 0) {
-////                    NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
-////                }
-//                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
-//                    leftOverBytes[i] = incomingBuffer[i + processedBytes];
-//                }
-//                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead);
-//                //NES_INFO("TotalTupleCount {}", totalTupleCount)
+                //                uint16_t bytesToJoinWithLeftover = 0;
+                //
+                //
+                //                auto additionalTupleRead = 0;
+                //                if (leftoverByteCount != 0) {
+                //                    bytesToJoinWithLeftover = incomingTupleSize - leftoverByteCount;
+                //                    //NES_INFO("Copying {} bytes to complete leftover tuple", bytesToJoinWithLeftover)
+                //                    for (uint16_t i = leftoverByteCount; i < incomingTupleSize; ++i) {
+                //                        leftOverBytes[i] = incomingBuffer[i - leftoverByteCount];
+                //                    }
+                //                    additionalTupleRead = 1;
+                //                    auto id = reinterpret_cast<uint64_t*>(&leftOverBytes[0]);
+                //                    auto seqenceNr = reinterpret_cast<uint64_t*>(&leftOverBytes[valueSize]);
+                //                    auto ingestionTime = reinterpret_cast<uint64_t*>(&leftOverBytes[2 * valueSize]);
+                //                    records[0].id = *id;
+                //                    records[0].value = *seqenceNr;
+                //                    records[0].ingestionTimestamp = *ingestionTime;
+                //                    records[0].processingTimestamp = getTimestamp();
+                //                    //totalTupleCount++;
+                //                    //std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+                //                }
+                //
+                //                //auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
+                //                // Calculate the number of tuples read
+                //                auto newTupleBytesRead = bytesRead - bytesToJoinWithLeftover;
+                //                uint64_t numCompleteTuplesRead = newTupleBytesRead / incomingTupleSize;
+                //                for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
+                //                    auto index = i * incomingTupleSize + bytesToJoinWithLeftover;
+                //                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
+                //                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
+                //                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
+                //                    //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+                //                    auto writeIndex = i + additionalTupleRead;
+                //                    records[writeIndex].id = *id;
+                //                    records[writeIndex].value = *seqenceNr;
+                //                    records[writeIndex].ingestionTimestamp = *ingestionTime;
+                //                    records[writeIndex].processingTimestamp = getTimestamp();
+                //                    //totalTupleCount++;
+                //                }
+                //
+                //                leftoverByteCount = newTupleBytesRead % incomingTupleSize;
+                //                auto processedBytes = numCompleteTuplesRead * incomingTupleSize + bytesToJoinWithLeftover;
+                ////                if (leftoverByteCount != 0) {
+                ////                    NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
+                ////                }
+                //                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
+                //                    leftOverBytes[i] = incomingBuffer[i + processedBytes];
+                //                }
+                //                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead);
+                //                //NES_INFO("TotalTupleCount {}", totalTupleCount)
 
             } else {
                 uint64_t valCount = 0;
@@ -327,7 +334,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
         uint64_t tupleCount = 0;
-        while ( tupleCount < generatedTuplesThisPass ) {
+        while (tupleCount < generatedTuplesThisPass) {
             if (nextLinesIndex == readLines.size()) {
                 break;
             }
@@ -419,7 +426,5 @@ std::string CSVSource::getFilePath() const { return filePath; }
 
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
 
-CSVSource::~CSVSource() {
-    ::close(sockfd);
-}
+CSVSource::~CSVSource() { ::close(sockfd); }
 }// namespace NES
