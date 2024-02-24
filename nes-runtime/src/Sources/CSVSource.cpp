@@ -249,6 +249,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
                 generatedTuples += numCompleteTuplesRead;
                 generatedBuffers++;
+                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples ({} in total)", numCompleteTuplesRead, generatedTuples);
                 return buffer.getBuffer();
 
 
