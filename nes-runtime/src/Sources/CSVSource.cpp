@@ -216,7 +216,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                                 //return std::nullopt;
                                 //                                buffer.setNumberOfTuples(0);
                                 //                                return buffer.getBuffer();
-                                continue;
+                                break;
                             }
                             //flushIntervalPassed = true;
                         } else if (bytesRead < 0) {
