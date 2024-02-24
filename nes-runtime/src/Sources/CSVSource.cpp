@@ -211,7 +211,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                                 //                                buffer.setNumberOfTuples(0);
                                 //                                return buffer.getBuffer();
                             }
-                            break;
+                            flushIntervalPassed = true;
                         }
                         byteOffset += bytesRead;
                         //todo: this was new
