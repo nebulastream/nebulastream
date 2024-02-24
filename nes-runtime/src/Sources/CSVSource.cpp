@@ -180,8 +180,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         if (numberOfTuplesToProducePerBuffer == 0) {
             if (port != 0) {
                 //init flush interval value
-                bool flushIntervalPassed = false;
-                auto flushIntervalTimerStart = std::chrono::system_clock::now();
+//                bool flushIntervalPassed = false;
+//                auto flushIntervalTimerStart = std::chrono::system_clock::now();
 
                 //init tuple count for buffer
                 uint64_t tupleCount = 0;
@@ -201,7 +201,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 while (byteOffset < incomingTupleSize) {
                     //while (tupleCount < generatedTuplesThisPass) {
                     NES_DEBUG("TCPSource::fillBuffer: filling buffer now");
-                    while (byteOffset < bytesPerBuffer && !flushIntervalPassed) {
+                    while (byteOffset < bytesPerBuffer) {
 
                         //NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
 
@@ -227,15 +227,15 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         //todo: this was new
                         //tupleCount = byteOffset / incomingTupleSize;
                         //todo: flush interval
-                        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-                                                                                  - flushIntervalTimerStart)
-                                .count()
-                            >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(1000)).count()) {
-                            //.count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
-                            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
-                                      "TupleBuffer.");
-                            flushIntervalPassed = true;
-                        }
+//                        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+//                                                                                  - flushIntervalTimerStart)
+//                                .count()
+//                            >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(1000)).count()) {
+//                            //.count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
+//                            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
+//                                      "TupleBuffer.");
+//                            flushIntervalPassed = true;
+//                        }
                     }
                 }
                 //                if (tupleCount <= 0) {
@@ -256,7 +256,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 }
                 auto bytesOfCompleteTuples = incomingTupleSize * numCompleteTuplesRead;
                 //todo: this is only for debugging
-                auto oldLeftoverBytes = leftoverByteCount;
+                //auto oldLeftoverBytes = leftoverByteCount;
                 leftoverByteCount = byteOffset % incomingTupleSize;
                 for (uint64_t i = 0; i < leftoverByteCount; ++i) {
                     leftOverBytes[i] = incomingBuffer[i + bytesOfCompleteTuples];
@@ -265,10 +265,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
                 generatedTuples += numCompleteTuplesRead;
                 generatedBuffers++;
-                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
-                          "New leftover bytes count: {} ",
-                          numCompleteTuplesRead,
-                          generatedTuples, bytesOfCompleteTuples, oldLeftoverBytes, leftoverByteCount);
+//                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
+//                          "New leftover bytes count: {} ",
+//                          numCompleteTuplesRead,
+//                          generatedTuples, bytesOfCompleteTuples, oldLeftoverBytes, leftoverByteCount);
                 return buffer.getBuffer();
 
                 //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
