@@ -267,6 +267,8 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconne
     }
     if (success) {
         //update locally saved information about parent
+        NES_ASSERT(!std::dynamic_pointer_cast<PreCalculatedReconnectSchedulePredictor>(reconnectSchedulePredictor)
+                ->getReconnect(currentParentId).first.has_value(), "Reconnect frequency to fast");
         currentParentId = newParentId;
     } else {
         NES_WARNING("WorkerMobilityHandler::replaceParent() failed to replace oldParent={} with newParentId={}.",

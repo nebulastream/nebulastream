@@ -26,8 +26,8 @@ NES::Spatial::Mobility::Experimental::PreCalculatedReconnectSchedulePredictor::g
 
     //find the waypoint with the smallest timestamp greater than requestTime
     //this point is the next waypoint on the way ahead of us
-    //while (nextReconnectIndex < reconnects.size() && reconnects.at(nextReconnectIndex).second < requestTime) {
-    if (nextReconnectIndex < reconnects.size() && reconnects.at(nextReconnectIndex).second < requestTime) {
+    while (nextReconnectIndex < reconnects.size() && reconnects.at(nextReconnectIndex).second < requestTime) {
+    //if (nextReconnectIndex < reconnects.size() && reconnects.at(nextReconnectIndex).second < requestTime) {
         nextReconnectIndex++;
     }
 
