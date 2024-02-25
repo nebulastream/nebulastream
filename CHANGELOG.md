@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.54](https://github.com/nebulastream/nebulastream/tree/v0.6.54) (2024-02-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.53...v0.6.54)
+
+**Implemented enhancements:**
+
+- \[TASK\] StatisticQueryGenerator [\#4611](https://github.com/nebulastream/nebulastream/issues/4611)
+- \[TASK\] Investigate Sub-Operators MemLayout [\#4399](https://github.com/nebulastream/nebulastream/issues/4399)
+
 ## [v0.6.53](https://github.com/nebulastream/nebulastream/tree/v0.6.53) (2024-02-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/elegant-v0.6.19-java-sources...v0.6.53)
