@@ -102,10 +102,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator
-                                    ->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64);
-
 
     constexpr auto EXPECTED_WIDTH = 512;
     const auto dataCharacteristic = DataCharacteristic::create(Cardinality::create(Over("f1")), "car");
@@ -114,10 +112,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition);
+    const auto statisticQuery =
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -143,11 +139,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator
-                                    ->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField("car$" + DEPTH_FIELD_NAME, BasicType::UINT64);
-
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
@@ -157,10 +151,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition);
+    const auto statisticQuery =
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -187,11 +179,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator
-                                    ->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField("car$" + DEPTH_FIELD_NAME, BasicType::UINT64);
-
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
@@ -201,10 +191,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition);
+    const auto statisticQuery =
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -231,11 +219,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator
-                                    ->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField("car$" + DEPTH_FIELD_NAME, BasicType::UINT64);
-
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
@@ -245,10 +231,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition);
+    const auto statisticQuery =
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -275,11 +259,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator
-                                    ->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField("car$" + DEPTH_FIELD_NAME, BasicType::UINT64);
-
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
@@ -289,10 +271,8 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     const auto triggerCondition = NeverTrigger::create();
 
     // Creating a statistic query and running the typeInference
-    const auto statisticQuery = defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic,
-                                                                                    window,
-                                                                                    sendingPolicy,
-                                                                                    triggerCondition);
+    const auto statisticQuery =
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct

@@ -229,9 +229,8 @@ Query Query::from(const std::string& sourceName) {
 }
 
 Query& Query::buildStatistic(Windowing::WindowTypePtr window, Statistic::WindowStatisticDescriptorPtr statisticDescriptor) {
-    this->queryPlan = QueryPlanBuilder::addStatisticBuildOperator(std::move(window),
-                                                                  std::move(statisticDescriptor),
-                                                                  this->queryPlan);
+    this->queryPlan =
+        QueryPlanBuilder::addStatisticBuildOperator(std::move(window), std::move(statisticDescriptor), this->queryPlan);
     return *this;
 }
 

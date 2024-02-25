@@ -15,9 +15,9 @@
 #include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/IngestionRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>

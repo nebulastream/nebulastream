@@ -58,7 +58,6 @@ class StatisticCoordinator : public StatisticInterface {
                                  const Windowing::TimeMeasure& granularity,
                                  const bool& estimationAllowed);
 
-
   private:
     DefaultStatisticQueryGenerator defaultStatisticQueryGenerator;
 };

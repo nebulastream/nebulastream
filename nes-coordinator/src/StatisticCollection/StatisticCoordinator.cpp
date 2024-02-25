@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <StatisticCollection/StatisticCoordinator.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <StatisticCollection/StatisticCoordinator.hpp>
 
 namespace NES::Statistic {
 void StatisticCoordinator::trackStatistic(const CharacteristicPtr&,

@@ -33,8 +33,10 @@ class DefaultStatisticQueryGenerator : public StatisticQueryGeneratorInterface {
      * @param triggerCondition
      * @return Query
      */
-    Query createStatisticQuery(const Characteristic& characteristic, const Windowing::WindowTypePtr& window,
-                               const SendingPolicyPtr& sendingPolicy, const TriggerConditionPtr& triggerCondition) override;
+    Query createStatisticQuery(const Characteristic& characteristic,
+                               const Windowing::WindowTypePtr& window,
+                               const SendingPolicyPtr& sendingPolicy,
+                               const TriggerConditionPtr& triggerCondition) override;
 };
 
 }// namespace NES::Statistic
