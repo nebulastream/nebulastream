@@ -14,6 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_WINDOWPROCESSINGTASKS_HPP_
 #include <Util/Logger/Logger.hpp>
+#include <Util/Common.hpp>
 #include <cinttypes>
 #include <memory>
 #include <vector>
@@ -25,10 +26,12 @@ namespace NES::Runtime::Execution::Operators {
 template<typename SliceType>
 struct SliceMergeTask {
     uint64_t sequenceNumber;
+    uint64_t chunkNumber;
+    bool lastChunk;
     uint64_t startSlice;
     uint64_t endSlice;
     std::vector<std::shared_ptr<SliceType>> slices;
-    ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber); }
+    ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber, chunkNumber, lastChunk); }
 };
 
 }// namespace NES::Runtime::Execution::Operators

@@ -32,11 +32,12 @@ void appendToGlobalSliceStore(void* ss, void* slicePtr) {
     handler->appendToGlobalSliceStore(std::move(slice));
 }
 template<class Slice>
-void triggerSlidingWindows(void* sh, void* wctx, void* pctx, uint64_t sequenceNumber, uint64_t sliceEnd) {
+void triggerSlidingWindows(void* sh, void* wctx, void* pctx, uint64_t sequenceNumber, uint64_t chunkNumber,
+                           bool lastChunk, uint64_t sliceEnd) {
     auto handler = static_cast<AppendToSliceStoreHandler<Slice>*>(sh);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, sequenceNumber, sliceEnd);
+    handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, {sequenceNumber, chunkNumber, lastChunk}, sliceEnd);
 }
 
 template<class Slice>
@@ -54,7 +55,7 @@ void AppendToSliceStoreHandler<Slice>::appendToGlobalSliceStore(std::unique_ptr<
 template<class Slice>
 void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerContext& wctx,
                                                              Runtime::Execution::PipelineExecutionContext& ctx,
-                                                             uint64_t sequenceNumber,
+                                                             SequenceData sequenceNumber,
                                                              uint64_t slideEnd) {
 
     NES_ASSERT(sliceStore != 0, "slice store is not initialized");
@@ -125,6 +126,8 @@ void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
                                                 Value<UInt64>&,
                                                 Value<UInt64>& sliceEnd,
                                                 Value<UInt64>& sequenceNumber,
+                                                Value<UInt64>& chunkNumber,
+                                                Value<Boolean>& lastChunk,
                                                 Value<MemRef>& combinedSlice) const {
 
     auto actionHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -135,6 +138,8 @@ void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
                  ctx.getWorkerContext(),
                  ctx.getPipelineContext(),
                  sequenceNumber,
+                 chunkNumber,
+                 lastChunk,
                  sliceEnd);
 }
 

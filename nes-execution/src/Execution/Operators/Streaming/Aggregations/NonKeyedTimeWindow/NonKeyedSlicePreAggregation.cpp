@@ -40,11 +40,14 @@ void triggerThreadLocalStateProxy(void* op,
                                   uint64_t,
                                   uint64_t originId,
                                   uint64_t sequenceNumber,
+                                  uint64_t chunkNumber,
+                                  bool lastChunk,
                                   uint64_t watermarkTs) {
     auto handler = static_cast<NonKeyedSlicePreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->trigger(*workerContext, *pipelineExecutionContext, originId, sequenceNumber, watermarkTs);
+    handler->trigger(*workerContext, *pipelineExecutionContext, originId, {sequenceNumber, chunkNumber, lastChunk},
+                     watermarkTs);
 }
 
 void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
@@ -131,6 +134,8 @@ void NonKeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) co
                            ctx.getWorkerId(),
                            ctx.getOriginId(),
                            ctx.getSequenceNumber(),
+                           ctx.getChunkNumber(),
+                           ctx.getLastChunk(),
                            ctx.getWatermarkTs());
 }
 

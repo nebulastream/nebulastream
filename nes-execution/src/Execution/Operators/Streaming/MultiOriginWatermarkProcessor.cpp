@@ -19,7 +19,7 @@ namespace NES::Runtime::Execution::Operators {
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins) : origins(origins) {
     for (const auto& _ : origins) {
-        watermarkProcessors.emplace_back(std::make_shared<Util::NonBlockingMonotonicSeqQueue<OriginId>>());
+        watermarkProcessors.emplace_back(std::make_shared<Sequencing::NonBlockingMonotonicSeqQueue<OriginId>>());
     }
 };
 
@@ -28,11 +28,11 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
 }
 
 // TODO use here the BufferMetaData class for the params #4177
-uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin) {
+uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, SequenceData sequenceData, OriginId origin) {
     bool found = false;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
         if (origins[originIndex] == origin) {
-            watermarkProcessors[originIndex]->emplace(sequenceNumber, ts);
+            watermarkProcessors[originIndex]->emplace(sequenceData, ts);
             found = true;
         }
     }

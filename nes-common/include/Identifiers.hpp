@@ -31,6 +31,9 @@ using WorkerId = uint64_t;       // a unique identifier of the worker node or to
 using ExecutionNodeId = uint64_t;// a unique identifier of the execution node holding all the placed sub query plans
 using RequestId = uint64_t;
 using DecomposedQueryPlanVersion = uint16_t;
+using WatermarkTs = uint64_t;
+using SequenceNumber = uint64_t;
+using ChunkNumber = uint64_t;
 static constexpr QueryId INVALID_QUERY_ID = 0;
 static constexpr DecomposedQueryPlanId INVALID_DECOMPOSED_QUERY_PLAN_ID = 0;
 static constexpr SharedQueryId INVALID_SHARED_QUERY_ID = 0;
@@ -40,6 +43,8 @@ static constexpr WorkerId INVALID_WORKER_NODE_ID = 0;
 static constexpr WorkerId INVALID_DECOMPOSED_QUERY_PLAN_VERSION = 0;
 static constexpr WorkerId INVALID_EXECUTION_NODE_ID = 0;
 static constexpr RequestId INVALID_REQUEST_ID = 0;
+static constexpr ChunkNumber INVALID_CHUNK_NUMBER = 0;
+static constexpr SequenceNumber INVALID_SEQ_NUMBER = 0;
 
 }// namespace NES
 

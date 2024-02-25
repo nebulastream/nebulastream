@@ -41,12 +41,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     // emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer) {
-        auto resultBuffer = emitState->resultBuffer;
-        resultBuffer.setNumRecords(emitState->outputIndex);
-        resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
-        resultBuffer.setOriginId(ctx.getOriginId());
-        resultBuffer.setSequenceNr(ctx.getSequenceNumber());
-        ctx.emitBuffer(resultBuffer);
+        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferReference = emitState->resultBuffer.getBuffer();
@@ -62,14 +57,24 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
 }
 
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
-    // emit current buffer and set the number of records
+    // emit current buffer and set the metadata
     auto emitState = (EmitState*) ctx.getLocalState(this);
-    auto resultBuffer = emitState->resultBuffer;
-    resultBuffer.setNumRecords(emitState->outputIndex);
-    resultBuffer.setWatermarkTs(ctx.getWatermarkTs());
-    resultBuffer.setOriginId(ctx.getOriginId());
-    resultBuffer.setSequenceNr(ctx.getSequenceNumber());
-    ctx.emitBuffer(resultBuffer);
+    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, ctx.isLastChunk());
+}
+
+void Emit::emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& recordBuffer, const Value<UInt64>& numRecords,
+                            const Value<Boolean>& lastChunk) const {
+    recordBuffer.setNumRecords(numRecords);
+    recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
+    recordBuffer.setOriginId(ctx.getOriginId());
+    recordBuffer.setSequenceNr(ctx.getSequenceNumber());
+    recordBuffer.setChunkNr(ctx.getNextChunkNr());
+    recordBuffer.setLastChunk(lastChunk);
+    ctx.emitBuffer(recordBuffer);
+
+    if (lastChunk == true) {
+        ctx.removeSequenceState();
+    }
 }
 
 Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)

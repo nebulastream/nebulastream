@@ -71,6 +71,7 @@ class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
             buf[recordIndex][1].write<int64_t>(recordIndex);
         }
         buf.setNumberOfTuples(recordsPerBuffer);
+        buf.getBuffer().setSequenceData({1, 1, true});
     }
 
     Runtime::Execution::ExecutableQueryPlanPtr executeQuery(Query query) {

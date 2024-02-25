@@ -33,6 +33,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -238,7 +239,20 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
         }
         nljWorks = nljWorks && (executablePipelineSink->stop(pipelineExecCtxSink) == 0);
+        std::vector<SequenceData> seqNumbers;
 
+        std::transform(pipelineExecCtxSink.emittedBuffers.begin(),
+                       pipelineExecCtxSink.emittedBuffers.end(),
+                       std::back_inserter(seqNumbers),
+                       [](const TupleBuffer& buffer) {
+                           return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk());
+                       });
+        std::sort(seqNumbers.begin(), seqNumbers.end());
+        bool hasDuplicates = std::adjacent_find(seqNumbers.begin(), seqNumbers.end()) != seqNumbers.end();
+        nljWorks &= !hasDuplicates;
+        if (hasDuplicates) {
+            NES_ERROR("Result contains multiple buffer with the same Sequence Number");
+        }
         auto resultBuffer = Util::mergeBuffers(pipelineExecCtxSink.emittedBuffers, joinSchema, bufferManager);
         NES_DEBUG("resultBuffer: \n{}", Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
         NES_DEBUG("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));

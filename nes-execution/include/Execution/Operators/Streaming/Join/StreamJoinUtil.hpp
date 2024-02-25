@@ -18,6 +18,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Util/StdInt.hpp>
+#include <Util/Common.hpp>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
@@ -103,7 +104,7 @@ class WindowSliceIdKey {
  */
 struct BufferMetaData {
   public:
-    BufferMetaData(const uint64_t watermarkTs, const uint64_t seqNumber, const OriginId originId)
+    BufferMetaData(const uint64_t watermarkTs, const SequenceData seqNumber, const OriginId originId)
         : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId) {}
 
     std::string toString() const {
@@ -115,7 +116,7 @@ struct BufferMetaData {
     }
 
     const uint64_t watermarkTs;
-    const uint64_t seqNumber;
+    const SequenceData seqNumber;
     const OriginId originId;
 };
 

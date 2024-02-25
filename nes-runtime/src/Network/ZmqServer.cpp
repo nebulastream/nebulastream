@@ -310,7 +310,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                               this->hostname,
                               this->currentPort,
                               bufferHeader->originId,
-                              bufferHeader->sequenceNumber,
+                              bufferHeader->sequenceData.toString(),
                               nesPartition->toString(),
                               bufferHeader->payloadSize,
                               bufferHeader->numOfChildren);
@@ -347,14 +347,18 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     buffer.setOriginId(bufferHeader->originId);
                     buffer.setWatermark(bufferHeader->watermark);
                     buffer.setCreationTimestampInMS(bufferHeader->creationTimestamp);
-                    buffer.setSequenceNumber(bufferHeader->sequenceNumber);
+                    buffer.setSequenceData(bufferHeader->sequenceData);
 
                     for (auto&& childBuffer : children) {
                         auto idx = buffer.storeChildBuffer(childBuffer);
                         NES_ASSERT2_FMT(idx >= 0, "Invalid child index: " << idx);
                     }
 
-                    exchangeProtocol.onBuffer(*nesPartition, buffer, bufferHeader->messageSequenceNumber);
+                    constexpr auto defaultChunkNumber = 1;
+                    constexpr auto isLastChunk = true;
+                    exchangeProtocol.onBuffer(*nesPartition, buffer, {bufferHeader->messageSequenceNumber,
+                                                                      defaultChunkNumber,
+                                                                      isLastChunk});
                     break;
                 }
                 case MessageType::EventBuffer: {

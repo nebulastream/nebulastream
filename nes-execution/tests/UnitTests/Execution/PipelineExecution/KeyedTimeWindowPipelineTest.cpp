@@ -143,7 +143,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     dynamicBuffer[3]["ts"].write(+3_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     std::vector<OriginId> origins = {0};
@@ -257,7 +257,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     dynamicBuffer[3]["ts"].write(+3_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     std::vector<OriginId> origins = {0};

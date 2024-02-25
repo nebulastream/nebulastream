@@ -39,6 +39,8 @@ class SliceMergingAction {
                            Value<UInt64>& windowStart,
                            Value<UInt64>& windowEnd,
                            Value<UInt64>& sequenceNumber,
+                           Value<UInt64>& chunkNumber,
+                           Value<Boolean>& lastChunk,
                            Value<MemRef>& globalSlice) const = 0;
 
     virtual ~SliceMergingAction() = default;

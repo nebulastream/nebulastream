@@ -53,6 +53,8 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::dispatchSliceMer
         task->startSlice = std::get<0>(metaData);
         task->endSlice = std::get<1>(metaData);
         task->sequenceNumber = resultSequenceNumber++;
+        task->chunkNumber = 1;
+        task->lastChunk = true;
         task->slices = slices;
         NES_DEBUG("{} Deploy merge task for slice {}-{} ", windowSize, task->startSlice, task->endSlice);
         ctx.dispatchBuffer(buffer);
@@ -63,11 +65,11 @@ template<class SliceType, typename SliceStore>
 void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::trigger(WorkerContext& wctx,
                                                                         PipelineExecutionContext& ctx,
                                                                         OriginId originId,
-                                                                        uint64_t sequenceNumber,
+                                                                        SequenceData sequenceData,
                                                                         uint64_t watermarkTs) {
     // the watermark update is an atomic process and returns the last and the current watermark.
-    NES_DEBUG("{} Trigger {}-{}-{}", windowSize, originId, sequenceNumber, watermarkTs);
-    auto currentWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
+    NES_DEBUG("{} Trigger {}-{}-{}", windowSize, originId, sequenceData.toString(), watermarkTs);
+    auto currentWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceData, originId);
 
     if (lastTriggerWatermark == currentWatermark) {
         // if the current watermark has not changed, we don't have to trigger any windows and return.

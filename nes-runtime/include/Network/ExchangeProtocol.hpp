@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
 #include <Network/NetworkMessage.hpp>
-#include <Util/NonBlockingMonotonicSeqQueue.hpp>
+#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <folly/Synchronized.h>
 #include <map>
 #include <variant>
@@ -57,8 +57,9 @@ class ExchangeProtocol {
      * @brief Reaction of the zmqServer after a buffer is received.
      * @param id of the buffer
      * @param buffer content
+     * @param messageSequenceData
      */
-    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber);
+    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, SequenceData messageSequenceData);
 
     /**
      * @brief Reaction of the zmqServer after an error occurs.
@@ -94,7 +95,7 @@ class ExchangeProtocol {
   private:
     std::shared_ptr<PartitionManager> partitionManager{nullptr};
     std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
-    folly::Synchronized<std::unordered_map<NesPartition, Util::NonBlockingMonotonicSeqQueue<uint64_t>>>
+    folly::Synchronized<std::unordered_map<NesPartition, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>
         maxSeqNumberPerNesPartition;
 };
 

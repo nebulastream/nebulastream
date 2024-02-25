@@ -73,6 +73,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
         buf[recordIndex][2].write<int64_t>(1);
     }
     buf.setNumberOfTuples(30);
+    buf.getBuffer().setSequenceData({1, 1, true});
 }
 
 void createExpectedBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {

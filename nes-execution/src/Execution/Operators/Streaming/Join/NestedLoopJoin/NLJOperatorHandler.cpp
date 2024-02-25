@@ -36,7 +36,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
          *  The watermark can not be the slice end as some buffer might be still waiting for getting processed.
          */
         tupleBuffer.setOriginId(getOutputOriginId());
-        tupleBuffer.setSequenceNumber(getNextSequenceNumber());
+        tupleBuffer.setSequenceData({getNextSequenceNumber(), /*chunkNumber*/ 1, true});
         tupleBuffer.setWatermark(std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart()));
 
         pipelineCtx->dispatchBuffer(tupleBuffer);

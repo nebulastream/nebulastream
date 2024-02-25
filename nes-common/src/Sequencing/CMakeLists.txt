@@ -13,20 +13,7 @@
 # limitations under the License.
 
 add_source_files(nes-common
-        Common.cpp
-        DumpHelper.cpp
-        FileMutex.cpp
-        DumpHelper.cpp
-        Common.cpp
-        PluginLoader.cpp
-        SpatialUtils.cpp
-        StacktraceLoader.cpp
-        ThreadNaming.cpp
-        TimeMeasurement.cpp
-        QueryStateHistory.cpp
-        TopologyLinkInformation.cpp
+        NonBlockingMonotonicSeqQueue.cpp
+        SequenceData.cpp
 )
-add_subdirectory(Logger)
-add_subdirectory(Mobility)
-add_subdirectory(Subprocess)
-add_subdirectory(yaml)
+

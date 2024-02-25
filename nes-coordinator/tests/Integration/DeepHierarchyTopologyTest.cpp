@@ -755,4 +755,63 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
+
+TEST_F(DeepHierarchyTopologyTest, testMapAndAggregationQuery) {
+    struct Test {
+        uint64_t value;
+        uint64_t id;
+        uint64_t timestamp;
+    };
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("ts", DataTypeFactory::createUInt64());
+    ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
+
+    constexpr auto NUM_BUFFERS = 5;
+    constexpr auto windowSize = 10;
+    auto query = Query::from("window")
+                     .map(Attribute("newField") = Attribute("value") + Attribute("id"))
+                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
+                     .apply(Sum(Attribute("newField")));
+
+    auto workerConfigEdgeNode = WorkerConfiguration::create();
+    workerConfigEdgeNode->numberOfSlots = 1;
+
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerToCoordinator()                                                    //2
+                           .attachWorkerWithMemorySourceToWorkerWithId("window", 2, workerConfigEdgeNode); //3
+
+    const auto bufferCapacity = workerConfigEdgeNode->bufferSizeInBytes / testSchema->getSchemaSizeInBytes();
+    NES_INFO("testHarness.getBufferManager()->getBufferSize = {} bufferCapacity = {}", workerConfigEdgeNode->bufferSizeInBytes.getValue(), bufferCapacity);
+    for (auto i = 0_u64; i < NUM_BUFFERS * bufferCapacity; ++i) {
+        testHarness.pushElement<Test>({i, 1, i}, 3);
+    }
+    testHarness.validate().setupTopology();
+
+    TopologyPtr topology = testHarness.getTopology();
+    NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
+
+    // Expected output
+    auto lastWindowStart = ((NUM_BUFFERS * bufferCapacity) - 1);
+    std::ostringstream oss;
+    for (auto windowStart = 0_u64; windowStart < lastWindowStart; windowStart += windowSize) {
+        const auto windowEnd = windowStart + windowSize;
+        auto newFieldSum = 0_u64;
+        for (auto i = windowStart; i < windowEnd; ++i) {
+            newFieldSum += (i + 1);
+        }
+        oss << windowStart << ", "  << windowEnd << ", " << newFieldSum << std::endl;
+    }
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(oss.str())).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(oss.str(), outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+}
 }// namespace NES

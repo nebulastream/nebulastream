@@ -18,6 +18,7 @@
 #include <Network/ChannelId.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Util/Common.hpp>
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
@@ -169,7 +170,7 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] uint16_t getNumberOfSendingThreads() const { return numSendingThreads; }
 
-    [[nodiscard]] uint16_t getMaxMessageSequenceNumber() const { return maxMessageSequenceNumber; }
+    [[nodiscard]] uint64_t getMaxMessageSequenceNumber() const { return maxMessageSequenceNumber; }
 
   private:
     ChannelType channelType;
@@ -234,11 +235,11 @@ class DataBufferMessage {
                                       OriginId originId,
                                       uint64_t watermark,
                                       uint64_t creationTimestamp,
-                                      uint64_t sequenceNumber,
+                                      SequenceData sequenceData,
                                       uint64_t messageSequenceNumber,
                                       uint32_t numOfChildren = 0) noexcept
         : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark),
-          creationTimestamp(creationTimestamp), sequenceNumber(sequenceNumber), messageSequenceNumber(messageSequenceNumber),
+          creationTimestamp(creationTimestamp), sequenceData(sequenceData), messageSequenceNumber(messageSequenceNumber),
           numOfChildren(numOfChildren) {}
 
     uint32_t const payloadSize;
@@ -246,7 +247,7 @@ class DataBufferMessage {
     uint64_t const originId;
     uint64_t const watermark;
     uint64_t const creationTimestamp;
-    uint64_t const sequenceNumber;
+    SequenceData const sequenceData;
     uint64_t const messageSequenceNumber;
     uint32_t const numOfChildren;
 };

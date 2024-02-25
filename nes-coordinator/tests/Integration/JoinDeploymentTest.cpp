@@ -14,6 +14,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -85,6 +86,9 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         auto tmpBuffers =
             TestUtils::createExpectedBufferFromStream(expectedFileStream, outputSchema, testHarness.getBufferManager());
         auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+        for (auto& buf : actualBuffers) {
+            NES_INFO("Buf:\n{}", NES::Util::printTupleBufferAsCSV(buf.getBuffer(), joinParams.outputSchema));
+        }
         EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
     }
 
@@ -242,6 +246,26 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
                      .where(Attribute("id1"))
                      .equalsTo(Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+}
+
+TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("value", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64);
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    TestUtils::CsvFileParams csvFileParams("window8.csv", "window9.csv", "window_sink8.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000000)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }

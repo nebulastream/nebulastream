@@ -56,7 +56,7 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     {
         auto maxSeqNumberPerNesPartitionLocked = maxSeqNumberPerNesPartition.wlock();
         if (!maxSeqNumberPerNesPartitionLocked->contains(nesPartition)) {
-            (*maxSeqNumberPerNesPartitionLocked)[nesPartition] = Util::NonBlockingMonotonicSeqQueue<uint64_t>();
+            (*maxSeqNumberPerNesPartitionLocked)[nesPartition] = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
         }
     }
 
@@ -100,9 +100,9 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     return Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError);
 }
 
-void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, uint64_t messageSequenceNumber) {
+void ExchangeProtocol::onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, SequenceData messageSequenceData) {
     if (partitionManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Registered) {
-        (*maxSeqNumberPerNesPartition.wlock())[nesPartition].emplace(messageSequenceNumber, messageSequenceNumber);
+        (*maxSeqNumberPerNesPartition.wlock())[nesPartition].emplace(messageSequenceData, messageSequenceData.sequenceNumber);
         protocolListener->onDataBuffer(nesPartition, buffer);
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
     } else {
@@ -150,7 +150,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
             NES_DEBUG("Waited for all buffers for the last EOS!");
 
             // Cleaning up and resetting for this partition, so that we can reuse the partition later on
-            (*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Util::NonBlockingMonotonicSeqQueue<uint64_t>();
+            (*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
         }
 
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())

@@ -15,15 +15,48 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 
+#include <Util/Common.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <folly/Synchronized.h>
+#include <map>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <vector>
 
 namespace NES::Runtime::Execution {
+
+
+/**
+ * @brief Stores a sequenceNumber and an OriginId
+ */
+struct SeqNumberOriginId {
+    uint64_t sequenceNumber =0;
+    uint64_t originId = 0;
+
+    bool operator<(const SeqNumberOriginId& other) const {
+        if (sequenceNumber == other.sequenceNumber) {
+            return originId < other.originId;
+        }
+        return sequenceNumber < other.sequenceNumber;
+    }
+
+    [[nodiscard]] std::string toString() const {
+        std::ostringstream oss;
+        oss << "{ seqNumber = " << sequenceNumber << ", originId = " << originId << "}";
+        return oss.str();
+    }
+};
+
+/**
+ * @brief Container for storing information, related to the state of a sequence number
+ */
+struct SequenceState {
+    uint64_t lastChunkNumber = 0;
+    uint64_t seenChunks = 0;
+};
 
 /**
  * @brief The PipelineExecutionContext is passed to a compiled pipeline and offers basic functionality to interact with the Runtime.
@@ -103,6 +136,29 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      */
     Runtime::BufferManagerPtr getBufferManager() const;
 
+    /**
+     * @brief Returns the next chunk number belonging to a sequence number for emitting a buffer
+     * @param seqNumberOriginId
+     * @return uint64_t
+     */
+    uint64_t getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId);
+
+    /**
+     * @brief Checks if this PipelineExecutionContext has seen all chunks for a given sequence number.
+     * @param seqNumberOriginId
+     * @param chunkNumber
+     * @param isLastChunk
+     * @return True, if all chunks have been seen, false otherwise
+     */
+    bool isLastChunk(const SeqNumberOriginId seqNumberOriginId, const uint64_t chunkNumber, const bool isLastChunk);
+
+    /**
+     * @brief Removes the sequence state in seqNumberOriginIdToChunkStateInput and seqNumberOriginIdToOutputChunkNumber
+     * for the seqNumberOriginId
+     * @param seqNumberOriginId
+     */
+    void removeSequenceState(const SeqNumberOriginId seqNumberOriginId);
+
   private:
     /**
      * @brief Id of the pipeline
@@ -127,6 +183,9 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @brief List of registered operator handlers.
      */
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
+
+    folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;
+    folly::Synchronized<std::map<SeqNumberOriginId, uint64_t>> seqNumberOriginIdToOutputChunkNumber;
 
     const Runtime::BufferManagerPtr bufferProvider;
     size_t numberOfWorkerThreads;
