@@ -54,10 +54,13 @@ add_nes_integration_test(network-stack-test "Network/NetworkStackTest.cpp")
 add_nes_unit_test(location-unit-tests "Spatial/DataTypes/LocationUnitTest.cpp")
 
 ### Statistic Test ###
-add_nes_unit_test(statistic-unit-test "Statistic/StatisticTest.cpp")
+add_nes_unit_test(statistic-unit-test "StatisticCollection/StatisticTest.cpp")
 
 ### StatisticRegistry Test ###
-add_nes_unit_test(statistic-registry-unit-test "Statistic/StatisticRegistryTest.cpp")
+add_nes_unit_test(statistic-registry-unit-test "StatisticCollection/StatisticRegistryTest.cpp")
+
+### DefaultStatisticQueryGeneratorTest ###
+add_nes_unit_test(default-statistic-query-generator-test "StatisticCollection/DefaultStatisticQueryGeneratorTest.cpp")
 
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "Runtime/AsyncTaskExecutorTest.cpp")

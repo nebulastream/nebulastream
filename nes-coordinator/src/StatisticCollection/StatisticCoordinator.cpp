@@ -13,12 +13,14 @@
 */
 
 #include <StatisticCollection/StatisticCoordinator.hpp>
-#include <StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
+
 namespace NES::Statistic {
 void StatisticCoordinator::trackStatistic(const CharacteristicPtr&,
                                           const Windowing::WindowTypePtr&,
                                           const TriggerCondition&,
-                                          const SendingPolicy&,
+                                          const SendingPolicyPtr&,
                                           std::function<void(CharacteristicPtr)>&&) {}
 
 void StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic, const Windowing::WindowTypePtr& window) {
@@ -27,7 +29,7 @@ void StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristi
 
 void StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
                                           const Windowing::WindowTypePtr& window,
-                                          const SendingPolicy& sendingPolicy) {
+                                          const SendingPolicyPtr& sendingPolicy) {
     trackStatistic(characteristic, window, NeverTrigger(), sendingPolicy, nullptr);
 }
 

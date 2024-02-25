@@ -30,6 +30,7 @@ add_source_files(nes-operators
 
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
+add_subdirectory(StatisticCollection)
 add_subdirectory(Watermarks)
 add_subdirectory(Windows)
 add_subdirectory(Network)

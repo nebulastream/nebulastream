@@ -1,0 +1,120 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICTYPE_STATISTICTYPE_HPP_
+#define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICTYPE_STATISTICTYPE_HPP_
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <StatisticIdentifiers.hpp>
+#include <utility>
+
+namespace NES::Statistic {
+class Metric;
+using MetricPtr = std::shared_ptr<Metric>;
+
+/**
+ * @brief This class acts as an abstract class for all possible statistic types
+ */
+class Metric : public std::enable_shared_from_this<Metric> {
+  public:
+    /**
+     * @brief Constructor for a Metric object
+     * @param field
+     */
+    explicit Metric(FieldAccessExpressionNodePtr field);
+
+    /**
+     * @brief Gets the field over which the Metric should be collected/built
+     * @return FieldAccessExpressionNodePtr
+     */
+    FieldAccessExpressionNodePtr getField() const;
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if equal otherwise false
+     */
+    virtual bool operator==(const Metric&) const = 0;
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if NOT equal otherwise false
+     */
+    virtual bool operator!=(const Metric& rhs) const { return !(*this == rhs); }
+
+    /**
+     * @brief Checks if the current Metric is of type MetricType
+     * @tparam Metric
+     * @return bool true if node is of Metric
+     */
+    template<class Metric>
+    bool instanceOf() {
+        if (dynamic_cast<Metric*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    /**
+    * @brief Dynamically casts the node to a MetricType
+    * @tparam MetricType
+    * @return returns a shared pointer of the MetricType
+    */
+    template<class MetricType>
+    std::shared_ptr<MetricType> as() {
+        if (instanceOf<MetricType>()) {
+            return std::dynamic_pointer_cast<MetricType>(this->shared_from_this());
+        }
+        throw std::logic_error("We performed an invalid cast of operator " + this->toString() + " to type "
+                               + typeid(MetricType).name());
+    }
+
+    /**
+     * @brief Checks if the current Metric is of type const MetricType
+     * @tparam Metric
+     * @return bool true if node is of Metric
+     */
+    template<class Metric>
+    [[nodiscard]] bool instanceOf() const {
+        if (dynamic_cast<const Metric*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    /**
+     * @brief Creates a string representation
+     * @return std::string
+     */
+    virtual std::string toString() const = 0;
+
+    /**
+     * @brief Virtual destructor
+     */
+    virtual ~Metric() = default;
+
+  protected:
+    const FieldAccessExpressionNodePtr field;
+};
+
+/**
+ * @brief Creates a FieldAccessExpressionNode for the field name
+ * @param name
+ * @return FieldAccessExpressionNodePtr
+ */
+FieldAccessExpressionNodePtr Over(std::string name);
+
+}// namespace NES::Statistic
+#endif//NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICTYPE_STATISTICTYPE_HPP_
