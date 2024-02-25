@@ -383,7 +383,7 @@ jobs:
           docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
           echo "Pushed the dev image"          
           docker logout
-      - name: "Generate ChangeLogs" 
+      - name: "Generate ChangeLogs"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ secrets.NES_CI_SECRET }}
