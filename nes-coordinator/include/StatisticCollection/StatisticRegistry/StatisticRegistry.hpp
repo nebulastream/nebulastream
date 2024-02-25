@@ -15,9 +15,9 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_HPP_
 
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <folly/Synchronized.h>
 #include <functional>
 #include <map>

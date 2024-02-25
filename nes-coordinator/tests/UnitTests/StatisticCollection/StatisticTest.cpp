@@ -15,18 +15,18 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/MinVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Selectivity.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <StatisticCollection/StatisticCoordinator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -60,9 +60,8 @@ TEST_F(StatisticTest, simpleTest) {
     statCoordinator.trackStatistic(
         DataCharacteristic::create(Selectivity::create(Over("f1")), "car", {"car_1", "car_2", "car_3"}),
         SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
-    statCoordinator.trackStatistic(
-        WorkloadCharacteristic::create(Selectivity::create(Over("f2")), queryId, operatorId),
-        SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
+    statCoordinator.trackStatistic(WorkloadCharacteristic::create(Selectivity::create(Over("f2")), queryId, operatorId),
+                                   SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
 
     statCoordinator.trackStatistic(WorkloadCharacteristic::create(Cardinality::create(Over("f2")), queryId, operatorId),
                                    TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4)),
@@ -85,16 +84,17 @@ TEST_F(StatisticTest, simpleTest) {
 
     // TODO With issue #4633, we will update our probing interface. After we have tackled #4606 and #4608, we have more
     //  information on how to best do this.
-    auto probeResult = statCoordinator.probeStatistic(DataCharacteristic::create(Cardinality::create(Over("f2")), "car", {"car_2"}),
-                                                      Hours(24),
-                                                      Seconds(2),
-                                                      estimationAllowed);
+    auto probeResult =
+        statCoordinator.probeStatistic(DataCharacteristic::create(Cardinality::create(Over("f2")), "car", {"car_2"}),
+                                       Hours(24),
+                                       Seconds(2),
+                                       estimationAllowed);
 
-    auto anotherProbeResult = statCoordinator.probeStatistic(
-        WorkloadCharacteristic::create(Selectivity::create(Over("f1")), queryId, operatorId),
-        Hours(1),
-        Seconds(10),
-        estimationAllowed);
+    auto anotherProbeResult =
+        statCoordinator.probeStatistic(WorkloadCharacteristic::create(Selectivity::create(Over("f1")), queryId, operatorId),
+                                       Hours(1),
+                                       Seconds(10),
+                                       estimationAllowed);
 
     auto yetAnotherProbeResult = statCoordinator.probeStatistic(InfrastructureStatistic::create(IngestionRate::create(), nodeId),
                                                                 Minutes(1),

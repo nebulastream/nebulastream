@@ -26,7 +26,6 @@ namespace NES::Statistic {
  */
 class StatisticQueryGeneratorInterface {
   public:
-
     /**
      * @brief Creates a query that is used for creating the statistics
      * @param characteristic
@@ -35,8 +34,10 @@ class StatisticQueryGeneratorInterface {
      * @param triggerCondition
      * @return Query
      */
-    virtual Query createStatisticQuery(const Characteristic& characteristic, const Windowing::WindowTypePtr& window,
-                                       const SendingPolicyPtr& sendingPolicy, const TriggerConditionPtr& triggerCondition) = 0;
+    virtual Query createStatisticQuery(const Characteristic& characteristic,
+                                       const Windowing::WindowTypePtr& window,
+                                       const SendingPolicyPtr& sendingPolicy,
+                                       const TriggerConditionPtr& triggerCondition) = 0;
 };
 
 }// namespace NES::Statistic
