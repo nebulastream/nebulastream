@@ -112,6 +112,8 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // As this operator functions as a scan, we have to set the execution context for this pipeline
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
+    ctx.setChunkNumber(recordBuffer.getChunkNr());
+    ctx.setLastChunk(recordBuffer.isLastChunk());
     ctx.setOrigin(recordBuffer.getOriginId());
     Operator::open(ctx, recordBuffer);
 

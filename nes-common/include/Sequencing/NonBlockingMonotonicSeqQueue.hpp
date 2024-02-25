@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
-#define NES_COMMON_INCLUDE_UTIL_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
+#ifndef NES_COMMON_INCLUDE_SEQUENCING_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
+#define NES_COMMON_INCLUDE_SEQUENCING_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Common.hpp>
 #include <algorithm>
 #include <array>
 #include <atomic>
 #include <cassert>
+#include <list>
 #include <memory>
 
-namespace NES::Util {
+namespace NES::Sequencing {
 
 /**
  * @brief This class implements a non blocking monotonic sequence queue,
@@ -52,12 +55,53 @@ namespace NES::Util {
 template<class T, uint64_t blockSize = 10000>
 class NonBlockingMonotonicSeqQueue {
   private:
+
     /**
-     * @brief Container, which contains the sequence number and the value.
+     * @brief This class contains the state for one sequence number. It checks if the SeqQueue has seen all chunks for
+     * the sequence number.
      */
-    struct Container {
-        uint64_t seq;
-        T value;
+    class Container {
+      public:
+        Container() : seqNumber(INVALID_SEQ_NUMBER), lastChunkNumber(INVALID_CHUNK_NUMBER), seenChunks(0), mergeValues(Util::updateAtomicMax<T>) {}
+
+        /**
+         * @brief This methods emplaces <chunkNumber, lastChunk, value> into the container.
+         * @param chunkNumber
+         * @param lastChunk
+         * @param value
+         */
+        void emplaceChunk(ChunkNumber chunkNumber, bool lastChunk, T value) {
+            if (lastChunk) {
+                this->lastChunkNumber = chunkNumber;
+            }
+            ++seenChunks;
+            mergeValues(this->value, value);
+        }
+
+        void setSeqNumber(const SequenceNumber& seqNumber) { this->seqNumber = seqNumber; }
+
+        /**
+         * @brief Returns the value
+         * @return T
+         */
+        T getValue() const { return value; }
+
+        /**
+         * @brief Gets the sequence number corresponding to this container
+         * @return SequenceNumber
+         */
+        [[nodiscard]] SequenceNumber getSeqNumber() const { return seqNumber; }
+
+        bool seenAllChunks() {
+            return (lastChunkNumber != INVALID_CHUNK_NUMBER) && (seenChunks == lastChunkNumber);
+        }
+
+      private:
+        SequenceNumber seqNumber;
+        ChunkNumber lastChunkNumber;
+        std::atomic<uint64_t> seenChunks;
+        std::atomic<T> value;
+        std::function<void(std::atomic<T>&,const T&)> mergeValues;
     };
 
     /**
@@ -69,12 +113,13 @@ class NonBlockingMonotonicSeqQueue {
         explicit Block(uint64_t blockIndex) : blockIndex(blockIndex){};
         ~Block() = default;
         const uint64_t blockIndex;
-        std::array<Container, blockSize> log = {};
+        std::array<Container, blockSize> log;
         std::shared_ptr<Block> next = std::shared_ptr<Block>();
     };
 
   public:
     NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) {}
+
     ~NonBlockingMonotonicSeqQueue() = default;
 
     NonBlockingMonotonicSeqQueue& operator=(const NonBlockingMonotonicSeqQueue& other) {
@@ -87,20 +132,20 @@ class NonBlockingMonotonicSeqQueue {
      * @brief Emplace a new element to the queue.
      * This method can be called concurrently.
      * However, only one element with a given sequence number can be inserted.
-     * @param sequenceNumber of the new element.
+     * @param sequenceData of the new element.
      * @param value of the new value.
      * @throws RuntimeException if an element with the same sequence number was already inserted.
      */
-    void emplace(uint64_t sequenceNumber, T value) {
-        if (sequenceNumber <= currentSeq) {
-            NES_FATAL_ERROR("Invalid sequence number {} as it is <= {}", sequenceNumber, currentSeq);
+    void emplace(SequenceData sequenceData, T value) {
+        if (sequenceData.sequenceNumber < currentSeq) {
+            NES_FATAL_ERROR("Invalid sequence number {} as it is < {}", sequenceData.sequenceNumber, currentSeq);
             // TODO add exception, currently tests fail
             // throw Exceptions::RuntimeException("Invalid sequence number " + std::to_string(sequenceNumber)
             //                                   + " as it is <= " + std::to_string(currentSeq));
         }
         // First emplace the value to the specific block of the sequenceNumber.
         // After this call it is safe to assume that a block, which contains the sequenceNumber exists.
-        emplaceValueInBlock(sequenceNumber, value);
+        emplaceValueInBlock(sequenceData, value);
         // Try to shift the current sequence number
         shiftCurrentValue();
     }
@@ -119,7 +164,7 @@ class NonBlockingMonotonicSeqQueue {
         // read the value from the correct slot.
         auto seqIndexInBlock = currentSequenceNumber % blockSize;
         auto& value = currentBlock->log[seqIndexInBlock];
-        return value.value;
+        return value.getValue();
     }
 
   private:
@@ -133,11 +178,11 @@ class NonBlockingMonotonicSeqQueue {
      * @param seq the sequence number of the value
      * @param value the value that should be stored.
      */
-    void emplaceValueInBlock(uint64_t seq, T value) {
+    void emplaceValueInBlock(SequenceData seq, T value) {
         // Each block contains blockSize elements and covers sequence numbers from
         // [blockIndex * blockSize] till [blockIndex * blockSize + blockSize]
         // Calculate the target block index, which contains the sequence number
-        auto targetBlockIndex = seq / blockSize;
+        auto targetBlockIndex = seq.sequenceNumber / blockSize;
         // Lookup the current block
         auto currentBlock = std::atomic_load(&head);
         // if the blockIndex is smaller the target block index we travers the next block
@@ -156,18 +201,16 @@ class NonBlockingMonotonicSeqQueue {
         }
 
         // check if we really found the correct block
-        if (!(seq >= currentBlock->blockIndex * blockSize && seq < currentBlock->blockIndex * blockSize + blockSize)) {
+        if (!(seq.sequenceNumber >= currentBlock->blockIndex * blockSize && seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize)) {
             throw Exceptions::RuntimeException("The found block is wrong");
         }
 
         // Emplace value in block
-        // It is safe to perform this operation without atomics as no other thread can't the same sequence number,
-        // and thus can't modify this value.
-        // Concurrent can also not happen yet as the currentSeq is only modified in shiftCurrent.
-        auto seqIndexInBlock = seq % blockSize;
-        currentBlock->log[seqIndexInBlock].seq = seq;
-        currentBlock->log[seqIndexInBlock].value = value;
+        auto seqIndexInBlock = seq.sequenceNumber % blockSize;
+        currentBlock->log[seqIndexInBlock].setSeqNumber(seq.sequenceNumber);
+        currentBlock->log[seqIndexInBlock].emplaceChunk(seq.chunkNumber, seq.lastChunk, value);
     }
+
 
     /**
      * @brief This method shifts tries to shift the current value.
@@ -194,7 +237,7 @@ class NonBlockingMonotonicSeqQueue {
                 if (nextBlock != nullptr) {
                     // this will always be the first element
                     auto& value = nextBlock->log[0];
-                    if (value.seq == nextSeqNumber) {
+                    if (value.getSeqNumber() == nextSeqNumber && value.seenAllChunks()) {
                         // Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber)) {
                             std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
@@ -205,7 +248,7 @@ class NonBlockingMonotonicSeqQueue {
             } else {
                 auto seqIndexInBlock = nextSeqNumber % blockSize;
                 auto& value = currentBlock->log[seqIndexInBlock];
-                if (value.seq == nextSeqNumber) {
+                if (value.getSeqNumber() == nextSeqNumber && value.seenAllChunks()) {
                     // the next sequence number is still in the current block thus we only have to exchange the currentSeq.
                     std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber);
                     continue;
@@ -238,9 +281,9 @@ class NonBlockingMonotonicSeqQueue {
     // Stores a reference to the current block
     std::shared_ptr<Block> head;
     // Stores the current sequence number
-    std::atomic<uint64_t> currentSeq;
+    std::atomic<SequenceNumber> currentSeq;
 };
 
 }// namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
+#endif// NES_COMMON_INCLUDE_SEQUENCING_NONBLOCKINGMONOTONICSEQQUEUE_HPP_

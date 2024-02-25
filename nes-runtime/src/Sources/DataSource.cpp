@@ -90,6 +90,8 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // A data source generates a monotonic increasing sequence number
     maxSequenceNumber++;
     buffer.setSequenceNumber(maxSequenceNumber);
+    buffer.setChunkNumber(1);
+    buffer.setLastChunk(true);
     emitWork(buffer);
 }
 

@@ -16,12 +16,14 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
 
 #include <Runtime/detail/TupleBufferImpl.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <utility>
 
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
@@ -38,6 +40,7 @@ class NetworkEventSender;
 }// namespace NES::Network::detail
 
 namespace NES::Runtime {
+
 /**
  * @brief The TupleBuffer allows Runtime components to access memory to store records in a reference-counted and
  * thread-safe manner.
@@ -264,8 +267,32 @@ class TupleBuffer {
     /// @brief set the sequence number
     inline void setSequenceNumber(uint64_t sequenceNumber) noexcept { controlBlock->setSequenceNumber(sequenceNumber); }
 
+    /// @brief set the sequence data, i.e., sequenceNumber, chunkNumber, and lastChunk
+    inline void setSequenceData(SequenceData sequenceData) noexcept {
+        setSequenceNumber(sequenceData.sequenceNumber);
+        setChunkNumber(sequenceData.chunkNumber);
+        setLastChunk(sequenceData.lastChunk);
+    }
+
+    /// @brief gets the sequence data from this buffer
+    inline SequenceData getSequenceData() const noexcept {
+        return {getSequenceNumber(), getChunkNumber(), isLastChunk()};
+    }
+
     /// @brief get the sequence number
     [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); }
+
+    /// @brief set the sequence number
+    inline void setChunkNumber(uint64_t chunkNumber) noexcept { controlBlock->setChunkNumber(chunkNumber); }
+
+    /// @brief get the chunk number
+    [[nodiscard]] constexpr uint64_t getChunkNumber() const noexcept { return controlBlock->getChunkNumber(); }
+
+    /// @brief set if this is the last chunk of a sequence number
+    inline void setLastChunk(bool isLastChunk) noexcept { controlBlock->setLastChunk(isLastChunk); }
+
+    /// @brief retrieves if this is the last chunk
+    [[nodiscard]] constexpr bool isLastChunk() const noexcept { return controlBlock->isLastChunk(); }
 
     /// @brief set the creation timestamp in milliseconds
     inline void setCreationTimestampInMS(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }

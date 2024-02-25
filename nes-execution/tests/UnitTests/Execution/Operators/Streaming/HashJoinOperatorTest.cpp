@@ -366,6 +366,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         executionContext.setCurrentTs(leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setOrigin(inputOriginIds[0]);
         executionContext.setSequenceNumber(uint64_t(i + 1));
+        executionContext.setChunkNumber(uint64_t(1));
+        executionContext.setLastChunk(true);
         NES_DEBUG("trigger left with ts={}", leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft)->toString());
 
         hashJoinBuildLeft->close(executionContext, recordBufferLeft);
@@ -389,6 +391,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         executionContext.setCurrentTs(rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight).as<UInt64>());
         executionContext.setOrigin(inputOriginIds[1]);
         executionContext.setSequenceNumber(uint64_t(i + 1));
+        executionContext.setChunkNumber(uint64_t(1));
+        executionContext.setLastChunk(true);
         NES_DEBUG("trigger right with ts={}",
                   rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight)->toString());
         hashJoinBuildRight->close(executionContext, recordBufferRight);

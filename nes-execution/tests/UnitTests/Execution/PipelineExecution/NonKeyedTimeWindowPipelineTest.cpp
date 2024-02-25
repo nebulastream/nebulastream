@@ -132,7 +132,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     dynamicBuffer[3]["ts"].write(+3_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
@@ -231,7 +231,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     dynamicBuffer[3]["ts"].write(+3_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
@@ -337,7 +337,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     dynamicBuffer[3]["ts"].write(+3_s64);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);

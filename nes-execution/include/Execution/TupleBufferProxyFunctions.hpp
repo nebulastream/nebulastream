@@ -63,5 +63,21 @@ void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->setCreationTimestampInMS(value);
 }
+void NES__Runtime__TupleBuffer__setChunkNumber(void* thisPtr, uint64_t chunkNumber) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->setChunkNumber(chunkNumber);
+};
+void NES__Runtime__TupleBuffer__setLastChunk(void* thisPtr, bool isLastChunk) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->setLastChunk(isLastChunk);
+};
+uint64_t NES__Runtime__TupleBuffer__getChunkNumber(void* thisPtr) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->getChunkNumber();
+};
+bool NES__Runtime__TupleBuffer__isLastChunk(void* thisPtr) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->isLastChunk();
+};
 
 }// namespace NES::Runtime::ProxyFunctions

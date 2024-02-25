@@ -42,11 +42,14 @@ void triggerKeyedThreadLocalWindow(void* op,
                                    void* pctx,
                                    uint64_t originId,
                                    uint64_t sequenceNumber,
+                                   uint64_t chunkNumber,
+                                   bool lastChunk,
                                    uint64_t watermarkTs) {
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->trigger(*workerContext, *pipelineExecutionContext, originId, sequenceNumber, watermarkTs);
+    handler->trigger(*workerContext, *pipelineExecutionContext, originId, {sequenceNumber, chunkNumber, lastChunk},
+                     watermarkTs);
 }
 
 void setupWindowHandler2(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
@@ -164,6 +167,8 @@ void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) const
                            ctx.getPipelineContext(),
                            ctx.getOriginId(),
                            ctx.getSequenceNumber(),
+                           ctx.getChunkNumber(),
+                           ctx.getLastChunk(),
                            ctx.getWatermarkTs());
 }
 

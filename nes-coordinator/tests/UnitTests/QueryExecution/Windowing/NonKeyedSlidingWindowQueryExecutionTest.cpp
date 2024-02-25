@@ -71,6 +71,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
         buf[recordIndex][1].write<int64_t>(1);
     }
     buf.setNumberOfTuples(30);
+    buf.getBuffer().setSequenceData({1, 1, true});
 }
 
 TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {

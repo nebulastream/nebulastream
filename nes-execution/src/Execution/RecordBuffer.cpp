@@ -67,6 +67,32 @@ void RecordBuffer::setSequenceNr(const Value<UInt64>& seqNumber) {
                    seqNumber);
 }
 
+void RecordBuffer::setChunkNr(const Value<UInt64>& chunkNumber) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setChunkNumber",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setChunkNumber,
+                   tupleBufferRef,
+                   chunkNumber);
+}
+
+Value<UInt64> RecordBuffer::getChunkNr() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getChunkNumber",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getChunkNumber,
+                   tupleBufferRef);
+}
+
+void RecordBuffer::setLastChunk(const Value<Boolean>& isLastChunk) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setLastChunk",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setLastChunk,
+                   tupleBufferRef,
+                   isLastChunk);
+}
+
+Value<Boolean> RecordBuffer::isLastChunk() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__isLastChunk",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__isLastChunk,
+                          tupleBufferRef);
+}
+
 Value<UInt64> RecordBuffer::getWatermarkTs() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__Watermark",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark,

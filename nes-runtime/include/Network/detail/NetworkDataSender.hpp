@@ -45,28 +45,28 @@ class NetworkDataSender : public BaseChannelType {
      * @param the sequence number of this message
      * @return true if send was successful, else false
      */
-    bool sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize, uint64_t messageSequenceNumber) {
-        auto numOfTuples = inputBuffer.getNumberOfTuples();
-        auto originId = inputBuffer.getOriginId();
-        auto watermark = inputBuffer.getWatermark();
-        auto sequenceNumber = inputBuffer.getSequenceNumber();
-        auto creationTimestamp = inputBuffer.getCreationTimestampInMS();
+    bool sendBuffer(Runtime::TupleBuffer& buffer, uint64_t tupleSize, uint64_t messageSequenceNumber) {
+        auto numOfTuples = buffer.getNumberOfTuples();
+        auto originId = buffer.getOriginId();
+        auto watermark = buffer.getWatermark();
+        SequenceData sequenceData {buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
+        auto creationTimestamp = buffer.getCreationTimestampInMS();
         auto payloadSize = tupleSize * numOfTuples;
-        auto* ptr = inputBuffer.getBuffer<uint8_t>();
-        auto numOfChildren = inputBuffer.getNumberOfChildrenBuffer();
+        auto* ptr = buffer.getBuffer<uint8_t>();
+        auto numOfChildren = buffer.getNumberOfChildrenBuffer();
         sendMessage<Messages::DataBufferMessage, kZmqSendMore>(this->zmqSocket,
                                                                payloadSize,
                                                                numOfTuples,
                                                                originId,
                                                                watermark,
                                                                creationTimestamp,
-                                                               sequenceNumber,
+                                                               sequenceData,
                                                                messageSequenceNumber,
                                                                numOfChildren);
 
         bool res = true;
         for (auto i = 0u; i < numOfChildren; ++i) {
-            auto childBuffer = inputBuffer.loadChildBuffer(i);
+            auto childBuffer = buffer.loadChildBuffer(i);
             // We need to retain the `childBuffer` here, because the send function operates asynchronously and we therefore
             // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
             childBuffer.retain();
@@ -76,7 +76,7 @@ class NetworkDataSender : public BaseChannelType {
                                                                            originId,
                                                                            watermark,
                                                                            creationTimestamp,
-                                                                           sequenceNumber,
+                                                                           sequenceData,
                                                                            messageSequenceNumber,
                                                                            0);
             auto const sentBytesOpt = this->zmqSocket.send(zmq::message_t(childBuffer.getBuffer(),
@@ -95,15 +95,15 @@ class NetworkDataSender : public BaseChannelType {
 
         // again, we need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
         // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
-        inputBuffer.retain();
+        buffer.retain();
         auto const sentBytesOpt = this->zmqSocket.send(
-            zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()),
+            zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, buffer.getControlBlock()),
             kZmqSendDefault);
         if (!!sentBytesOpt) {
             NES_TRACE("DataChannel: Sending buffer with {}/{}-{}",
-                      inputBuffer.getNumberOfTuples(),
-                      inputBuffer.getBufferSize(),
-                      inputBuffer.getOriginId());
+                      buffer.getNumberOfTuples(),
+                      buffer.getBufferSize(),
+                      buffer.getOriginId());
 
             return true;
         }

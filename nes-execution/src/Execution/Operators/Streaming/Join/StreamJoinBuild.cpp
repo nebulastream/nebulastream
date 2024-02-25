@@ -29,6 +29,8 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
                               void* ptrWorkerCtx,
                               uint64_t watermarkTs,
                               uint64_t sequenceNumber,
+                              uint64_t chunkNumber,
+                              bool lastChunk,
                               OriginId originId,
                               uint64_t joinStrategyInt,
                               uint64_t windowingStrategyInt) {
@@ -44,7 +46,7 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    BufferMetaData bufferMetaData(minWatermark, sequenceNumber, originId);
+    BufferMetaData bufferMetaData(minWatermark, {sequenceNumber, chunkNumber, lastChunk}, originId);
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
@@ -82,6 +84,8 @@ void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
                            ctx.getWorkerContext(),
                            ctx.getWatermarkTs(),
                            ctx.getSequenceNumber(),
+                           ctx.getChunkNumber(),
+                           ctx.getLastChunk(),
                            ctx.getOriginId(),
                            Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                            Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));

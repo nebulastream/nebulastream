@@ -35,7 +35,7 @@ MemorySourceType::MemorySourceType(const std::string& logicalSourceName, const s
                                    GatheringMode gatheringMode,
                                    uint64_t sourceAffinity,
                                    uint64_t taskQueueId)
-    : PhysicalSourceType(logicalSourceName, physicalSourceName,SourceType::MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
       memoryAreaSize(memoryAreaSize), numberOfBufferToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 

@@ -37,11 +37,11 @@ template<class SliceType, typename SliceStore>
 void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::trigger(WorkerContext& wctx,
                                                                          PipelineExecutionContext& ctx,
                                                                          OriginId originId,
-                                                                         uint64_t sequenceNumber,
+                                                                         SequenceData sequenceData,
                                                                          uint64_t watermarkTs) {
     // the watermark update is an atomic process and returns the last and the current watermark.
-    NES_TRACE("{} Trigger {}-{}-{}", windowSize, originId, sequenceNumber, watermarkTs);
-    auto currentWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
+    NES_TRACE("{} Trigger {}-{}-{}", windowSize, originId, sequenceData.toString(), watermarkTs);
+    auto currentWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceData, originId);
 
     if (lastTriggerWatermark == currentWatermark) {
         // if the current watermark has not changed, we don't have to trigger any windows and return.

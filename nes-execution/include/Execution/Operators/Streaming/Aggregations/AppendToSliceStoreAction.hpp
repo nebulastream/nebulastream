@@ -17,6 +17,7 @@
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <memory>
 namespace NES::Runtime::Execution::Operators {
 class MultiOriginWatermarkProcessor;
@@ -35,7 +36,7 @@ class AppendToSliceStoreHandler : public OperatorHandler {
     void appendToGlobalSliceStore(std::unique_ptr<Slice> slice);
     void triggerSlidingWindows(Runtime::WorkerContext& wctx,
                                Runtime::Execution::PipelineExecutionContext& ctx,
-                               uint64_t sequenceNumber,
+                               SequenceData sequenceNumber,
                                uint64_t slideEnd);
 
   private:
@@ -60,6 +61,8 @@ class AppendToSliceStoreAction : public SliceMergingAction {
                    Value<UInt64>& windowStart,
                    Value<UInt64>& windowEnd,
                    Value<UInt64>& sequenceNumber,
+                   Value<UInt64>& chunkNumber,
+                   Value<Boolean>& lastChunk,
                    Value<MemRef>& globalSlice) const override;
 
   private:

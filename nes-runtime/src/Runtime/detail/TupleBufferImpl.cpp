@@ -17,6 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <bitset>
+#include <Runtime/detail/TupleBufferImpl.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <Util/Backward/backward.hpp>
@@ -256,6 +257,14 @@ void BufferControlBlock::setWatermark(uint64_t watermark) { this->watermark = wa
 uint64_t BufferControlBlock::getSequenceNumber() const noexcept { return sequenceNumber; }
 
 void BufferControlBlock::setSequenceNumber(uint64_t sequenceNumber) { this->sequenceNumber = sequenceNumber; }
+
+uint64_t BufferControlBlock::getChunkNumber() const noexcept { return chunkNumber; }
+
+void BufferControlBlock::setChunkNumber(uint64_t chunkNumber) { this->chunkNumber = chunkNumber; }
+
+bool BufferControlBlock::isLastChunk() const noexcept { return lastChunk; }
+
+void BufferControlBlock::setLastChunk(bool lastChunk) { this->lastChunk = lastChunk; }
 
 void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimestamp = ts; }
 

@@ -44,10 +44,14 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                       Value<UInt64>& windowStart,
                                       Value<UInt64>& windowEnd,
                                       Value<UInt64>& sequenceNumber,
+                                      Value<UInt64>& chunkNumber,
+                                      Value<Boolean>& lastChunk,
                                       Value<MemRef>& globalSlice) const {
     ctx.setWatermarkTs(windowEnd);
     ctx.setOrigin(resultOriginId);
     ctx.setSequenceNumber(sequenceNumber);
+    ctx.setChunkNumber(chunkNumber);
+    ctx.setLastChunk(lastChunk);
 
     auto globalSliceState = Nautilus::FunctionCall("getKeyedSliceState", getKeyedSliceState, globalSlice);
     auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, keyDataTypes, keySize, valueSize);

@@ -31,12 +31,14 @@ namespace NES::Runtime::Execution::Operators {
 void deleteAllSlicesProxy(void* ptrOpHandler,
                           uint64_t watermarkTs,
                           uint64_t sequenceNumber,
+                          uint64_t chunkNumber,
+                          bool lastChunk,
                           OriginId originId,
                           uint64_t joinStrategyInt,
                           uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    BufferMetaData bufferMetaData(watermarkTs, sequenceNumber, originId);
+    BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, originId);
     opHandler->deleteSlices(bufferMetaData);
 }
 
@@ -49,6 +51,8 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
                                operatorHandlerMemRef,
                                ctx.getWatermarkTs(),
                                ctx.getSequenceNumber(),
+                               ctx.getChunkNumber(),
+                               ctx.getLastChunk(),
                                ctx.getOriginId(),
                                Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                                Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));

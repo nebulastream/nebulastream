@@ -27,6 +27,7 @@
 #include <numaif.h>
 #endif
 #endif
+#include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
@@ -101,9 +102,10 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     const auto bytesLeftInMemoryArea = memoryAreaSize - currentPositionInBytes;
     const auto tupleCapacityOfMemoryArea = bytesLeftInMemoryArea / schemaSize;
     const auto numTuplesToWrite = std::min(tupleCapacityOfMemoryArea, noTuplesPerBuffer);
-    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
+    const auto numBytesToWrite = numTuplesToWrite * schemaSize;
+    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, numBytesToWrite);
     buffer.setNumberOfTuples(numTuplesToWrite);
-    currentPositionInBytes += bufferSize;
+    currentPositionInBytes += numBytesToWrite;
 
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
@@ -112,6 +114,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }
+
     return buffer;
 }
 

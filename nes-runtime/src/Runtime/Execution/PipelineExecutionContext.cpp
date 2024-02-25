@@ -49,4 +49,27 @@ std::string PipelineExecutionContext::toString() const { return "PipelineContext
 uint64_t PipelineExecutionContext::getNumberOfWorkerThreads() const { return numberOfWorkerThreads; }
 Runtime::BufferManagerPtr PipelineExecutionContext::getBufferManager() const { return bufferProvider; }
 
+uint64_t PipelineExecutionContext::getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId)  {
+    auto lockedMap = seqNumberOriginIdToOutputChunkNumber.wlock();
+    (*lockedMap)[seqNumberOriginId] += 1;
+    return (*lockedMap)[seqNumberOriginId];
+}
+
+void PipelineExecutionContext::removeSequenceState(const SeqNumberOriginId seqNumberOriginId) {
+    seqNumberOriginIdToOutputChunkNumber.wlock()->erase(seqNumberOriginId);
+    seqNumberOriginIdToChunkStateInput.wlock()->erase(seqNumberOriginId);
+}
+
+bool PipelineExecutionContext::isLastChunk(const SeqNumberOriginId seqNumberOriginId, const uint64_t chunkNumber, const bool isLastChunk) {
+    auto lockedMap = seqNumberOriginIdToChunkStateInput.wlock();
+    auto& chunkState = (*lockedMap)[seqNumberOriginId];
+    if (isLastChunk) {
+        chunkState.lastChunkNumber = chunkNumber;
+    }
+    chunkState.seenChunks++;
+    NES_INFO("seqNumberOriginId = {} chunkNumber = {} isLastChunk = {} seenChunks = {} lastChunkNumber = {}", seqNumberOriginId.toString(), chunkNumber,
+             isLastChunk, chunkState.seenChunks, chunkState.lastChunkNumber)
+    return chunkState.seenChunks == chunkState.lastChunkNumber;
+}
+
 }// namespace NES::Runtime::Execution

@@ -60,7 +60,7 @@ void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
             }
 
             buffer.setOriginId(getOutputOriginId());
-            buffer.setSequenceNumber(getNextSequenceNumber());
+            buffer.setSequenceData({getNextSequenceNumber(), /*chunkNumber*/ 1, true});
             buffer.setWatermark(watermark);
 
             pipelineCtx->dispatchBuffer(buffer);

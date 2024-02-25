@@ -16,50 +16,46 @@
 #include <utility>
 namespace NES::Runtime::Execution {
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext()
-    : PipelineExecutionContext(
-        -1,// mock pipeline id
-        0, // mock query id
-        nullptr,
-        1,
-        [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-            if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
-                NES_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
-            }
-            this->seenSeqNumbers.insert(buffer.getSequenceNumber());
-            this->buffers.emplace_back(std::move(buffer));
-        },
-        [this](TupleBuffer& buffer) {
-              if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
-                  NES_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
-              }
-              this->seenSeqNumbers.insert(buffer.getSequenceNumber());
-              this->buffers.emplace_back(std::move(buffer));
-        },
-        {}){
-        // nop
-    };
-
-
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler)
+    : MockedPipelineExecutionContext(std::move(handler), true) {}
+
+MockedPipelineExecutionContext::MockedPipelineExecutionContext() : MockedPipelineExecutionContext(true) {}
+
+MockedPipelineExecutionContext::MockedPipelineExecutionContext(bool logSeenSeqChunk)
+    : MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr>(), logSeenSeqChunk) {}
+
+MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler,
+                                                               bool logSeenSeqChunk)
     : PipelineExecutionContext(
         -1,// mock pipeline id
         0, // mock query id
         nullptr,
         1,
-        [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-              if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
-                  NES_FATAL_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
+        [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+              if (logSeenSeqChunk) {
+                  SequenceData seqChunkLastChunk = {buffer.getSequenceNumber(),
+                                                         buffer.getChunkNumber(),
+                                                         buffer.isLastChunk()};
+                  const auto it = std::find(seenSeqChunkLastChunk.begin(), seenSeqChunkLastChunk.end(), seqChunkLastChunk);
+                  if (it != seenSeqChunkLastChunk.end()) {
+                      NES_ERROR("Already seen triplet of {}", seqChunkLastChunk.toString());
+                  }
+                  seenSeqChunkLastChunk.insert(seqChunkLastChunk);
               }
-              this->seenSeqNumbers.insert(buffer.getSequenceNumber());
-              this->buffers.emplace_back(std::move(buffer));
+              buffers.emplace_back(std::move(buffer));
         },
-        [this](TupleBuffer& buffer) {
-              if (this->seenSeqNumbers.contains(buffer.getSequenceNumber())) {
-                  NES_FATAL_ERROR("Already seen sequenceNumber {}", buffer.getSequenceNumber());
+        [this, logSeenSeqChunk](TupleBuffer& buffer) {
+              if (logSeenSeqChunk) {
+                  SequenceData seqChunkLastChunk = {buffer.getSequenceNumber(),
+                                                         buffer.getChunkNumber(),
+                                                         buffer.isLastChunk()};
+                  const auto it = std::find(seenSeqChunkLastChunk.begin(), seenSeqChunkLastChunk.end(), seqChunkLastChunk);
+                  if (it != seenSeqChunkLastChunk.end()) {
+                      NES_ERROR("Already seen triplet of {}", seqChunkLastChunk.toString());
+                  }
+                  seenSeqChunkLastChunk.insert(seqChunkLastChunk);
               }
-              this->seenSeqNumbers.insert(buffer.getSequenceNumber());
-              this->buffers.emplace_back(std::move(buffer));
+              buffers.emplace_back(std::move(buffer));
         },
         std::move(handler)){
         // nop

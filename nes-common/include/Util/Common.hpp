@@ -14,10 +14,13 @@
 
 #ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+#include <Identifiers.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
+#include <sstream>
 
 namespace NES::QueryCompilation {
 enum class StreamJoinStrategy : uint8_t {
@@ -259,6 +262,17 @@ uint64_t countLines(const std::string& str);
  * @return number of lines
  */
 uint64_t countLines(std::istream& stream);
+
+/**
+ * @brief Tries to update curVal until it succeeds or curVal is larger then newVal
+ * @tparam T
+ * @param curVal
+ * @param newVal
+ */
+template<typename T> void updateAtomicMax(std::atomic<T>& curVal,const T& newVal) {
+    T prev_value = curVal;
+    while(prev_value < newVal && !curVal.compare_exchange_weak(prev_value, newVal)) {}
+};
 
 }// namespace NES::Util
 

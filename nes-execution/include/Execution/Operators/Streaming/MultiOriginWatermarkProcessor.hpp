@@ -14,7 +14,8 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
-#include <Util/NonBlockingMonotonicSeqQueue.hpp>
+#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <Util/Common.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -38,11 +39,11 @@ class MultiOriginWatermarkProcessor {
     /**
      * @brief Updates the watermark timestamp and origin and emits the current watermark.
      * @param ts watermark timestamp
-     * @param sequenceNumber of the watermark ts
+     * @param sequenceData of the watermark ts
      * @param origin of the watermark ts
      * @return currentWatermarkTs
      */
-    uint64_t updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin);
+    uint64_t updateWatermark(uint64_t ts, SequenceData sequenceData, OriginId origin);
 
     /**
      * @brief Returns the current watermark across all origins
@@ -54,7 +55,7 @@ class MultiOriginWatermarkProcessor {
 
   private:
     const std::vector<OriginId> origins;
-    std::vector<std::shared_ptr<NES::Util::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};
+    std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};
 };
 
 }// namespace NES::Runtime::Execution::Operators

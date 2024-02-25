@@ -71,6 +71,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf[9][0].write<uint64_t>(0);
     buf[9][1].write<int64_t>(0);
     buf.setNumberOfTuples(10);
+    buf.getBuffer().setSequenceData({1, 1, true});
 }
 
 TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
