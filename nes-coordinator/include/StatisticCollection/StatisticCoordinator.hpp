@@ -14,6 +14,7 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_
+#include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <StatisticCollection/StatisticInterface.hpp>
 #include <functional>
 namespace NES::Statistic {
@@ -26,7 +27,7 @@ class StatisticCoordinator : public StatisticInterface {
     void trackStatistic(const CharacteristicPtr&,
                         const Windowing::WindowTypePtr&,
                         const TriggerCondition&,
-                        const SendingPolicy&,
+                        const SendingPolicyPtr&,
                         std::function<void(CharacteristicPtr)>&&) override;
     /**
      * @brief Calling trackStatistic(characteristic, window, SENDING_LAZY)
@@ -38,7 +39,7 @@ class StatisticCoordinator : public StatisticInterface {
      */
     void trackStatistic(const CharacteristicPtr& characteristic,
                         const Windowing::WindowTypePtr& window,
-                        const SendingPolicy& sendingPolicy);
+                        const SendingPolicyPtr& sendingPolicy);
 
     /**
      * @brief Implements probeStatistic from StatisticInterface
@@ -56,6 +57,10 @@ class StatisticCoordinator : public StatisticInterface {
                                  const Windowing::TimeMeasure& period,
                                  const Windowing::TimeMeasure& granularity,
                                  const bool& estimationAllowed);
+
+
+  private:
+    DefaultStatisticQueryGenerator defaultStatisticQueryGenerator;
 };
 
 }// namespace NES::Statistic

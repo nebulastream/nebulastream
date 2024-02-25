@@ -25,6 +25,19 @@ namespace NES::Statistic {
  */
 static const std::string INGESTION_RATE_FIELD_NAME = "INGESTION_RATE_FIELD_NAME";
 static const std::string BUFFER_RATE_FIELD_NAME = "BUFFER_RATE_FIELD_NAME";
+static const std::string INFRASTRUCTURE_BASE_LOGICAL_SOURCE_NAME = "INFRASTRUCTURE_LOGICAL_SOURCE_NAME_";
+
+/** Names for the fields of the StatisticWindowOperatorNode*/
+static const std::string OBSERVED_TUPLES_FIELD_NAME = "OBSERVED_TUPLES_SYNOPSIS_FIELD_NAME";
+static const std::string BASE_FIELD_NAME_START = "BASE_FIELD_NAME_START";
+static const std::string BASE_FIELD_NAME_END = "BASE_FIELD_NAME_END";
+static const std::string STATISTIC_KEY_FIELD_NAME = "STATISTIC_KEY_FIELD_NAME";
+static const std::string STATISTIC_DATA_FIELD_NAME = "STATISTIC_DATA_FIELD_NAME";
+static const std::string STATISTIC_TYPE_FIELD_NAME = "STATISTIC_TYPE_FIELD_NAME";
+
+/** Names for the fields of the synopsis */
+static const std::string WIDTH_FIELD_NAME = "WIDTH_FIELD_NAME";
+static const std::string DEPTH_FIELD_NAME = "DEPTH_FIELD_NAME";
 }// namespace NES::Statistic
 
 #endif//NES_NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_

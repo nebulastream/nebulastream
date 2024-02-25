@@ -105,6 +105,14 @@ QueryPlanPtr QueryPlanBuilder::addUnion(NES::QueryPlanPtr leftQueryPlan, NES::Qu
     return leftQueryPlan;
 }
 
+QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePtr window,
+                                                        Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+                                                        QueryPlanPtr queryPlan) {
+    auto op = LogicalOperatorFactory::createStatisticBuildOperator(std::move(window), std::move(statisticDescriptor));
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
 QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
                                        NES::QueryPlanPtr rightQueryPlan,
                                        ExpressionNodePtr onLeftKey,

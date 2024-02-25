@@ -16,10 +16,10 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICINTERFACE_HPP_
 
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
-#include <StatisticCollection/Characteristic/Characteristic.hpp>
-#include <StatisticCollection/SendingPolicy/SendingPolicy.hpp>
-#include <StatisticCollection/Statistic/StatisticValue.hpp>
-#include <StatisticCollection/TriggerCondition/TriggerCondition.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistic/StatisticValue.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <functional>
 
 namespace NES::Statistic {
@@ -38,7 +38,7 @@ class StatisticInterface {
     virtual void trackStatistic(const CharacteristicPtr& characteristic,
                                 const Windowing::WindowTypePtr& window,
                                 const TriggerCondition& triggerCondition,
-                                const SendingPolicy& sendingPolicy,
+                                const SendingPolicyPtr& sendingPolicy,
                                 std::function<void(CharacteristicPtr)>&& callBack) = 0;
 
     /**

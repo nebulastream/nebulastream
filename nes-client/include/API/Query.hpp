@@ -17,6 +17,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <memory>
 #include <string>
@@ -400,6 +401,14 @@ class Query {
      * @return the query
      */
     static Query from(std::string const& sourceName);
+
+    /**
+     * @brief Add a synopsis build operator to the query
+     * @param window
+     * @param statisticDescriptor
+     * @return The query
+     */
+    Query& buildStatistic(Windowing::WindowTypePtr window, Statistic::WindowStatisticDescriptorPtr statisticDescriptor);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.

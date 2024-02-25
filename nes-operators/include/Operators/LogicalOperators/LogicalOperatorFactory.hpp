@@ -17,6 +17,8 @@
 
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/OperatorNode.hpp>
 
@@ -93,6 +95,17 @@ class LogicalOperatorFactory {
                                                                 std::vector<ExpressionNodePtr> inputFields,
                                                                 std::vector<ExpressionNodePtr> outputFields,
                                                                 OperatorId id = getNextOperatorId());
+
+    /**
+     * @brief Creates a synopsis build operator
+     * @param window: Window properties
+     * @param statisticDescriptor: Descriptor on how to build the statistic
+     * @param id: The id of the operator if not defined then next free operator id is used.
+     * @return UnaryOperatorNodePtr
+     */
+    static LogicalUnaryOperatorNodePtr createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
+                                                                    const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
+                                                                    OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source operator with source descriptor.

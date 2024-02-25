@@ -77,6 +77,17 @@ class QueryPlanBuilder {
     static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
 
     /**
+     * @brief Adds a synopsis build operator to this query
+     * @param window
+     * @param statisticDescriptor: Descriptor for the synopsis
+     * @param queryPlan the queryPlan the synopsis is added to
+     * @return the updated queryPlanPtr
+     */
+    static QueryPlanPtr addStatisticBuildOperator(Windowing::WindowTypePtr window,
+                                                 Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+                                                 QueryPlanPtr queryPlan);
+
+    /**
      * @brief: Map java udf according to the java method given in the descriptor.
      * @param descriptor as java udf descriptor
      * @param queryPlan the queryPlan the map is added to

@@ -15,7 +15,7 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICKEY_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICKEY_HPP_
 
-#include <StatisticCollection/Characteristic/Characteristic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
 
 namespace NES::Statistic {
 
@@ -35,13 +35,13 @@ class StatisticKey {
      * @brief Getter for the characteristic
      * @return CharacteristicPtr
      */
-    CharacteristicPtr getCharacteristic() const;
+    [[nodiscard]] CharacteristicPtr getCharacteristic() const;
 
     /**
      * @brief Getter for the window
      * @return WindowTypePtr
      */
-    Windowing::WindowTypePtr getWindow() const;
+    [[nodiscard]] Windowing::WindowTypePtr getWindow() const;
 
     /**
      * @brief Checks for equality
