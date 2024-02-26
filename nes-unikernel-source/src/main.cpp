@@ -70,7 +70,10 @@ class CSVFileDataGenerator : public APrioriDataGenerator {
         return {data_chunks[chunk_index].data(), data_chunks[chunk_index].size()};
     }
 
-    void wait() override { done.wait(false); }
+    void wait() override {
+        if (!done)
+            done.wait(false);
+    }
 };
 
 class NESAPrioriDataGenerator : public APrioriDataGenerator {
@@ -157,6 +160,7 @@ class TcpServer {
                 ss << newConnection->remote_endpoint();
                 NES_INFO("Accepted connection from {}", ss.str());
                 dataGenerator->wait();
+                NES_INFO("Start sending");
                 startSend(newConnection, 0);
                 startAccept();// Accept the next connection
             } else {
@@ -168,6 +172,9 @@ class TcpServer {
     void startSend(std::shared_ptr<boost::asio::ip::tcp::socket> socket, size_t chunk_index) {
         const auto chunk = dataGenerator->get_chunk(chunk_index);
         if (chunk.empty()) {
+            std::stringstream ss;
+            ss << socket->remote_endpoint();
+            NES_INFO("{} done", ss.str());
             return;
         }
         if (print) {
