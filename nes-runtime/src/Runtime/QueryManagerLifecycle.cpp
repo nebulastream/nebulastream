@@ -244,6 +244,7 @@ bool AbstractQueryManager::deregisterQuery(const Execution::ExecutableQueryPlanP
 }
 
 bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType) {
+    return true;
     std::unique_lock lock(queryMutex);
     NES_ASSERT2_FMT(sourceToQEPMapping.contains(source->getOperatorId()),
                     "source=" << source->getOperatorId() << " wants to terminate but is not part of the mapping process");
@@ -529,6 +530,7 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
 }
 
 bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType) {
+    return true;
     std::unique_lock queryLock(queryMutex);
     NES_DEBUG("AbstractQueryManager: AbstractQueryManager::addEndOfStream for source operator {} terminationType={}",
               source->getOperatorId(),
