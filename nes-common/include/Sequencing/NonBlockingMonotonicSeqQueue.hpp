@@ -16,9 +16,9 @@
 #define NES_COMMON_INCLUDE_SEQUENCING_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -55,14 +55,15 @@ namespace NES::Sequencing {
 template<class T, uint64_t blockSize = 10000>
 class NonBlockingMonotonicSeqQueue {
   private:
-
     /**
      * @brief This class contains the state for one sequence number. It checks if the SeqQueue has seen all chunks for
      * the sequence number.
      */
     class Container {
       public:
-        Container() : seqNumber(INVALID_SEQ_NUMBER), lastChunkNumber(INVALID_CHUNK_NUMBER), seenChunks(0), mergeValues(Util::updateAtomicMax<T>) {}
+        Container()
+            : seqNumber(INVALID_SEQ_NUMBER), lastChunkNumber(INVALID_CHUNK_NUMBER), seenChunks(0),
+              mergeValues(Util::updateAtomicMax<T>) {}
 
         /**
          * @brief This methods emplaces <chunkNumber, lastChunk, value> into the container.
@@ -92,16 +93,14 @@ class NonBlockingMonotonicSeqQueue {
          */
         [[nodiscard]] SequenceNumber getSeqNumber() const { return seqNumber; }
 
-        bool seenAllChunks() {
-            return (lastChunkNumber != INVALID_CHUNK_NUMBER) && (seenChunks == lastChunkNumber);
-        }
+        bool seenAllChunks() { return (lastChunkNumber != INVALID_CHUNK_NUMBER) && (seenChunks == lastChunkNumber); }
 
       private:
         SequenceNumber seqNumber;
         ChunkNumber lastChunkNumber;
         std::atomic<uint64_t> seenChunks;
         std::atomic<T> value;
-        std::function<void(std::atomic<T>&,const T&)> mergeValues;
+        std::function<void(std::atomic<T>&, const T&)> mergeValues;
     };
 
     /**
@@ -201,7 +200,8 @@ class NonBlockingMonotonicSeqQueue {
         }
 
         // check if we really found the correct block
-        if (!(seq.sequenceNumber >= currentBlock->blockIndex * blockSize && seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize)) {
+        if (!(seq.sequenceNumber >= currentBlock->blockIndex * blockSize
+              && seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize)) {
             throw Exceptions::RuntimeException("The found block is wrong");
         }
 
@@ -210,7 +210,6 @@ class NonBlockingMonotonicSeqQueue {
         currentBlock->log[seqIndexInBlock].setSeqNumber(seq.sequenceNumber);
         currentBlock->log[seqIndexInBlock].emplaceChunk(seq.chunkNumber, seq.lastChunk, value);
     }
-
 
     /**
      * @brief This method shifts tries to shift the current value.
@@ -284,6 +283,6 @@ class NonBlockingMonotonicSeqQueue {
     std::atomic<SequenceNumber> currentSeq;
 };
 
-}// namespace NES::Util
+}// namespace NES::Sequencing
 
 #endif// NES_COMMON_INCLUDE_SEQUENCING_NONBLOCKINGMONOTONICSEQQUEUE_HPP_

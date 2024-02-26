@@ -780,11 +780,13 @@ TEST_F(DeepHierarchyTopologyTest, testMapAndAggregationQuery) {
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerToCoordinator()                                                    //2
-                           .attachWorkerWithMemorySourceToWorkerWithId("window", 2, workerConfigEdgeNode); //3
+                           .attachWorkerToCoordinator()                                                   //2
+                           .attachWorkerWithMemorySourceToWorkerWithId("window", 2, workerConfigEdgeNode);//3
 
     const auto bufferCapacity = workerConfigEdgeNode->bufferSizeInBytes / testSchema->getSchemaSizeInBytes();
-    NES_INFO("testHarness.getBufferManager()->getBufferSize = {} bufferCapacity = {}", workerConfigEdgeNode->bufferSizeInBytes.getValue(), bufferCapacity);
+    NES_INFO("testHarness.getBufferManager()->getBufferSize = {} bufferCapacity = {}",
+             workerConfigEdgeNode->bufferSizeInBytes.getValue(),
+             bufferCapacity);
     for (auto i = 0_u64; i < NUM_BUFFERS * bufferCapacity; ++i) {
         testHarness.pushElement<Test>({i, 1, i}, 3);
     }
@@ -802,7 +804,7 @@ TEST_F(DeepHierarchyTopologyTest, testMapAndAggregationQuery) {
         for (auto i = windowStart; i < windowEnd; ++i) {
             newFieldSum += (i + 1);
         }
-        oss << windowStart << ", "  << windowEnd << ", " << newFieldSum << std::endl;
+        oss << windowStart << ", " << windowEnd << ", " << newFieldSum << std::endl;
     }
 
     // Run the query and get the actual dynamic buffers

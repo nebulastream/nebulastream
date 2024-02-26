@@ -19,8 +19,8 @@
 #include <Runtime/TaggedPointer.hpp>
 #include <atomic>
 #include <functional>
-#include <vector>
 #include <sstream>
+#include <vector>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <deque>

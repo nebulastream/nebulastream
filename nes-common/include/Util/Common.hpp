@@ -18,9 +18,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <functional>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 namespace NES::QueryCompilation {
 enum class StreamJoinStrategy : uint8_t {
@@ -269,9 +269,11 @@ uint64_t countLines(std::istream& stream);
  * @param curVal
  * @param newVal
  */
-template<typename T> void updateAtomicMax(std::atomic<T>& curVal,const T& newVal) {
+template<typename T>
+void updateAtomicMax(std::atomic<T>& curVal, const T& newVal) {
     T prev_value = curVal;
-    while(prev_value < newVal && !curVal.compare_exchange_weak(prev_value, newVal)) {}
+    while (prev_value < newVal && !curVal.compare_exchange_weak(prev_value, newVal)) {
+    }
 };
 
 }// namespace NES::Util

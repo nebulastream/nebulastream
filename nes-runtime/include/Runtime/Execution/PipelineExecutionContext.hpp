@@ -15,25 +15,24 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 
-#include <Util/Common.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <folly/Synchronized.h>
-#include <map>
+#include <Util/Common.hpp>
 #include <cstdint>
+#include <folly/Synchronized.h>
 #include <functional>
+#include <map>
 #include <memory>
 #include <vector>
 
 namespace NES::Runtime::Execution {
 
-
 /**
  * @brief Stores a sequenceNumber and an OriginId
  */
 struct SeqNumberOriginId {
-    uint64_t sequenceNumber =0;
+    uint64_t sequenceNumber = 0;
     uint64_t originId = 0;
 
     bool operator<(const SeqNumberOriginId& other) const {
