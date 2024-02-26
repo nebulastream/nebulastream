@@ -23,6 +23,7 @@ ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 ## Setting up the git environment inside docker
 cd /nebulastream
+git config --global --add safe.directory /nebulastream
 git config --global user.name "NES-CI"
 git config --global user.email "nebulastream@dima.tu-berlin.de"
 git config --local core.sshcommand "/usr/bin/ssh -i \"~/.ssh/id_rsa\" -o \"UserKnownHostsFile=~/.ssh/known_hosts\""
