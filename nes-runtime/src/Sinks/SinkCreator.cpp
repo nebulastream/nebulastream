@@ -23,6 +23,7 @@
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
+#include <Sinks/Mediums/ThroughputSink.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 
@@ -144,6 +145,25 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                      queryId,
                                      querySubPlanId,
                                      numberOfOrigins);
+}
+
+DataSinkPtr createThroughputSink(const std::string& counterName,
+                                 size_t reportingThreshhold,
+                                 const SchemaPtr& schema,
+                                 QueryId queryId,
+                                 DecomposedQueryPlanId querySubPlanId,
+                                 const Runtime::NodeEnginePtr& nodeEngine,
+                                 uint32_t activeProducers) {
+
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+
+    return std::make_shared<ThroughputSink>(counterName,
+                                            reportingThreshhold,
+                                            format,
+                                            nodeEngine,
+                                            activeProducers,
+                                            queryId,
+                                            querySubPlanId);
 }
 
 DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,

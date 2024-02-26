@@ -21,5 +21,6 @@ add_source_files(nes-operators
         OPCSinkDescriptor.cpp
         MQTTSinkDescriptor.cpp
         NullOutputSinkDescriptor.cpp
+        ThroughputSinkDescriptor.cpp
         SinkDescriptor.cpp
         )

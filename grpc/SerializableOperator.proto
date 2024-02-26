@@ -268,6 +268,11 @@ message SerializableOperator{
       uint64 kafkaConnectTimeout = 5;
     }
 
+    message SerializableThroughputSinkDescriptor {
+        string counterName = 1;
+        uint64 reportingThreshold = 2;
+    }
+
     message SerializablePrintSinkDescriptor {
     }
 

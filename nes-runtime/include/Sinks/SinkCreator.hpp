@@ -159,6 +159,25 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 uint64_t numberOfOrigins = 1);
 
 /**
+ * @brief create a throughput test sink with a schema
+ * @param counterName name of the shared throughput counter
+ * @param reportingThreshhold number of tuples between throughput messages
+ * @param schema of sink
+ * @param queryId
+ * @param querySubPlanId
+ * @param nodeEngine
+ * @param activeProducers
+ * @return a data sink pointer
+ */
+DataSinkPtr createThroughputSink(const std::string& counterName,
+                                 size_t reportingThreshhold,
+                                 const SchemaPtr& schema,
+                                 QueryId queryId,
+                                 DecomposedQueryPlanId querySubPlanId,
+                                 const Runtime::NodeEnginePtr& nodeEngine,
+                                 uint32_t activeProducers);
+
+/**
  * @brief create a print test sink with a schema
  * @param schema of sink
  * @param bufferManager

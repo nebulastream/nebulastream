@@ -20,6 +20,7 @@ add_source_files(nes-runtime
         MonitoringSink.cpp
         KafkaSink.cpp
         MultiOriginWatermarkProcessor.cpp
+        ThroughputSink.cpp
         WatermarkProcessor.cpp
 )
 

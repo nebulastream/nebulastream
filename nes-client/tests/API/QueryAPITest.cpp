@@ -34,6 +34,7 @@
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/ThroughputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
@@ -428,6 +429,13 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
 
     SinkLogicalOperatorPtr sinkOptr2 = sinkOperators2[0];
     EXPECT_EQ(sinkOperators2.size(), 1U);
+}
+
+TEST_F(QueryAPITest, ThroughputSink) {
+    auto query = Query::from("default_logical")
+                     .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .sink(ThroughputSinkDescriptor::create("throughput"));
 }
 
 }// namespace NES

@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/ThroughputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
@@ -52,6 +53,17 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                   numOfProducers,
                                   std::cout,
                                   printSinkDescriptor->getNumberOfOrigins());
+    }
+    if (sinkDescriptor->instanceOf<ThroughputSinkDescriptor>()) {
+        NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
+        const ThroughputSinkDescriptorPtr throughputSinkDescriptor = sinkDescriptor->as<ThroughputSinkDescriptor>();
+        return createThroughputSink(throughputSinkDescriptor->getCounterName(),
+                                    throughputSinkDescriptor->getReportingThreshhold(),
+                                    schema,
+                                    pipelineQueryPlan->getQueryId(),
+                                    pipelineQueryPlan->getQuerySubPlanId(),
+                                    nodeEngine,
+                                    numOfProducers);
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
