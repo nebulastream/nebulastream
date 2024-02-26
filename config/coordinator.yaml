@@ -48,7 +48,7 @@
 # Enable reconfiguration of running query plans. Default: false
 #enableQueryReconfiguration:
 
-optimizer:
+#optimizer:
   # The rule to be used for performing query merging
   #queryMergerRule: DefaultQueryMergerRule
 
@@ -71,13 +71,16 @@ optimizer:
 # Valid types are: INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, FLOAT32, UINT64, FLOAT64, BOOLEAN, CHAR
 # CHARS require the length key
 # FLOAT32 is float, FLOAT64 is double
-#logicalSources:
-#  - logicalSourceName: "default_logical"
-#    fields:
-#      - name: "id"
-#        type: "UINT32"
-#      - name: "value"
-#        type: "UINT64"
-#      - name: "char_value"
-#        type: "CHAR"
-#        length: 5
+logicalSources:
+  - logicalSourceName: "nexmark_bid"
+    fields:
+      - name: "TIMESTAMP"
+        type: "UINT64"
+      - name: "auction"
+        type: "UINT64"
+      - name: "bidder"
+        type: "UINT64"
+      - name: "datetime"
+        type: "UINT64"
+      - name: "price"
+        type: "FLOAT64"
