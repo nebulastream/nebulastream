@@ -275,9 +275,7 @@ class TupleBuffer {
     }
 
     /// @brief gets the sequence data from this buffer
-    inline SequenceData getSequenceData() const noexcept {
-        return {getSequenceNumber(), getChunkNumber(), isLastChunk()};
-    }
+    inline SequenceData getSequenceData() const noexcept { return {getSequenceNumber(), getChunkNumber(), isLastChunk()}; }
 
     /// @brief get the sequence number
     [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); }

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <BaseUnitTest.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <algorithm>
 #include <atomic>
@@ -322,7 +322,6 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
 
         // It can happen that multiple threads write over the maxUpdatePos. Therefore, we have to set it back.
         globalUpdateCounter = maxUpdatePos;
-
 
         // Emplacing in mock-up queue the same updates
         auto currentValueExpected = 0_u64;

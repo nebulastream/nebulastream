@@ -49,7 +49,7 @@ class NetworkDataSender : public BaseChannelType {
         auto numOfTuples = buffer.getNumberOfTuples();
         auto originId = buffer.getOriginId();
         auto watermark = buffer.getWatermark();
-        SequenceData sequenceData {buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
+        SequenceData sequenceData{buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
         auto creationTimestamp = buffer.getCreationTimestampInMS();
         auto payloadSize = tupleSize * numOfTuples;
         auto* ptr = buffer.getBuffer<uint8_t>();
