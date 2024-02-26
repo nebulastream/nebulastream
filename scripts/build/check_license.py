@@ -31,8 +31,10 @@ license_text_cpp = """/*
 """
 
 if __name__ == "__main__":
-    exclude_dirs = set(['cmake-build-debug', 'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
-                        'build', 'yaml', 'jitify', 'magicenum', '.idea', 'gen'])
+    exclude_dirs = set(
+        ['cmake-build-unikernel-release', 'cmake-build-unikernel-debug', 'cmake-build-unikernel-release-original-deps',
+         'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
+         'build', 'yaml', 'jitify', 'magicenum', '.idea', 'gen'])
     exclude_files = ['backward.hpp',
                      'apex_memmove.hpp',
                      'rte_memory.h',
@@ -53,7 +55,8 @@ if __name__ == "__main__":
             if file in exclude_files:
                 continue
             filename = os.path.join(subdir, file)
-            if filename.endswith(".cpp") or filename.endswith(".hpp") or filename.endswith(".h") or filename.endswith(".proto"):
+            if filename.endswith(".cpp") or filename.endswith(".hpp") or filename.endswith(".h") or filename.endswith(
+                    ".proto"):
                 with open(filename, "r", encoding="utf-8") as fp:
                     content = fp.read()
                     if not content.startswith(license_text_cpp):
