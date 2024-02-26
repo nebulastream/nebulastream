@@ -19,6 +19,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
+#include <Configurations/Validation/IpValidation.hpp>
 #include <Configurations/WrapOption.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
