@@ -44,14 +44,23 @@ Value<> ModExpression::execute(NES::Nautilus::Record& record) const {
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (leftValue->isType<Int8>() && rightValue->isType<Int8>()) {
         // call the calculateMod function with the correct type
-        return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Int8>(), rightValue.as<Int8>());
+        return leftValue.as<Int8>() % rightValue.as<Int8>();
     } else if (leftValue->isType<Int16>() && rightValue->isType<Int16>()) {
-        return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Int16>(), rightValue.as<Int16>());
+        return leftValue.as<Int16>() % rightValue.as<Int16>();
     } else if (leftValue->isType<Int32>() && rightValue->isType<Int32>()) {
-        return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Int32>(), rightValue.as<Int32>());
+        return leftValue.as<Int32>() % rightValue.as<Int32>();
     } else if (leftValue->isType<Int64>() && rightValue->isType<Int64>()) {
-        return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Int64>(), rightValue.as<Int64>());
+        return leftValue.as<Int64>() % rightValue.as<Int64>();
+    } else if (leftValue->isType<UInt8>() && rightValue->isType<UInt8>()) {
+        return leftValue.as<UInt8>() % rightValue.as<UInt8>();
+    } else if (leftValue->isType<UInt16>() && rightValue->isType<UInt16>()) {
+        return leftValue.as<UInt16>() % rightValue.as<UInt16>();
+    } else if (leftValue->isType<UInt32>() && rightValue->isType<UInt32>()) {
+        return leftValue.as<UInt32>() % rightValue.as<UInt32>();
+    } else if (leftValue->isType<UInt64>() && rightValue->isType<UInt64>()) {
+        return leftValue.as<UInt64>() % rightValue.as<UInt64>();
     } else if (leftValue->isType<Float>() && rightValue->isType<Float>()) {
+        // fp-mod implementation is currently not implemented in the MLIR Backend, so we use a proxy call to fmod here.
         return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Float>(), rightValue.as<Float>());
     } else if (leftValue->isType<Double>() && rightValue->isType<Double>()) {
         return FunctionCall<>("calculateMod", calculateMod, leftValue.as<Double>(), rightValue.as<Double>());
