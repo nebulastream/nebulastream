@@ -113,7 +113,7 @@ extern "C" int socket(int domain, int type, int protocol) {
 
     return socket_mock_data.fd;
 }
-extern "C" int connect(int fd, const struct sockaddr* addr, socklen_t addrlen) {
+extern "C" int connect(int fd, const sockaddr* addr, [[maybe_unused]] socklen_t addrlen) {
     assert(!record_socket_parameters.called_connect && "Unexpected multiple connect calls");
     record_socket_parameters.connect_fd = fd;
     assert(addrlen == sizeof(sockaddr_in) && "Unexpected size of sockaddr_in parameter");

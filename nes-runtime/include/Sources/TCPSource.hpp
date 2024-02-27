@@ -124,7 +124,7 @@ class TCPSource : public DataSource {
     TCPSourceTypePtr sourceConfig;
     int sockfd = -1;
     CircularBuffer<char> circularBuffer;
-    char* messageBuffer;
+    std::unique_ptr<char[]> messageBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 }// namespace NES

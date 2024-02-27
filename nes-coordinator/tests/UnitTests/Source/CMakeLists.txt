@@ -4,6 +4,8 @@ add_nes_unit_test(zmq-tests
         "SourceTest.cpp"
         "MillisecondIntervalTest.cpp"
         "CircularBufferTest.cpp")
+
+### TCP Test ###
 if (NOT (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"))
     add_nes_unit_test(tcp-source-tests
             "TCPSourceTest.cpp"
