@@ -167,8 +167,7 @@ TEST_F(TensorflowInferenceDeploymentTest, testSimpleMLModelDeploymentMixedTypes)
                                        "0.434282,0.312879,0.252839\n"
                                        "0.434282,0.312879,0.252839\n";
     auto tmpBuffers =
-        TestUtils::createExpectedBufferFromCSVString(expectedOutputString, outputSchema, testHarness.getBufferManager(),
-                                                     false);
+        TestUtils::createExpectedBufferFromCSVString(expectedOutputString, outputSchema, testHarness.getBufferManager(), false);
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
     auto expectedTuples = TestUtils::countTuples(expectedBuffers);
 
