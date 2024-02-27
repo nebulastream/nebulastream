@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.56](https://github.com/nebulastream/nebulastream/tree/v0.6.56) (2024-02-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.55...v0.6.56)
+
+**Implemented enhancements:**
+
+- \[TASK\] TensorflowInferenceDeploymentTest disabled tests [\#4553](https://github.com/nebulastream/nebulastream/issues/4553)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Infer model deployment test is not terminating [\#3678](https://github.com/nebulastream/nebulastream/issues/3678)
+
 ## [v0.6.55](https://github.com/nebulastream/nebulastream/tree/v0.6.55) (2024-02-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.54...v0.6.55)
@@ -126,7 +138,6 @@
 **Implemented enhancements:**
 
 - \[TASK\] MQTTTSinkTest disabled tests. [\#4546](https://github.com/nebulastream/nebulastream/issues/4546)
-- \[TASK\] MQTTSinkDeploymentTest disabled test. [\#4543](https://github.com/nebulastream/nebulastream/issues/4543)
 - \[TASK\] Build NebulaStream without LLVM on Ubuntu 20.04 [\#4523](https://github.com/nebulastream/nebulastream/issues/4523)
 - \[TASK\] Restructure query catalog to avoid data duplication [\#4452](https://github.com/nebulastream/nebulastream/issues/4452)
 
