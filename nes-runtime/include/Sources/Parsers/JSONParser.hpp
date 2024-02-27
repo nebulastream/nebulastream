@@ -40,7 +40,7 @@ class JSONParser : public Parser {
    * @param schema: data schema
    * @param bufferManager: the buffer manager
    */
-    bool writeInputTupleToTupleBuffer(const std::string& jsonTuple,
+    bool writeInputTupleToTupleBuffer(std::string_view jsonTuple,
                                       uint64_t tupleCount,
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema,

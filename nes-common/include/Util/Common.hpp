@@ -16,6 +16,7 @@
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #include <Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <charconv>
 #include <functional>
 #include <memory>
 #include <sstream>
@@ -45,40 +46,21 @@ namespace detail {
     * @return splitting function for a given type
     */
 template<typename T>
-struct SplitFunctionHelper {};
+struct SplitFunctionHelper {
+    static constexpr auto FUNCTION = [](std::string_view str) {
+        T result_value;
+        auto result = std::from_chars(str.data(), str.data() + str.size(), result_value);
+        if (result.ec == std::errc::invalid_argument) {
+            NES_THROW_RUNTIME_ERROR("Could not convert");
+        }
+        return result_value;
+    };
+};
 
 template<>
 struct SplitFunctionHelper<std::string> {
-    static constexpr auto FUNCTION = [](std::string x) {
-        return x;
-    };
-};
-
-template<>
-struct SplitFunctionHelper<uint64_t> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return uint64_t(std::atoll(str.c_str()));
-    };
-};
-
-template<>
-struct SplitFunctionHelper<uint32_t> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return uint32_t(std::atoi(str.c_str()));
-    };
-};
-
-template<>
-struct SplitFunctionHelper<int> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return std::atoi(str.c_str());
-    };
-};
-
-template<>
-struct SplitFunctionHelper<double> {
-    static constexpr auto FUNCTION = [](std::string&& str) {
-        return std::atof(str.c_str());
+    static constexpr auto FUNCTION = [](std::string_view x) {
+        return std::string(x);
     };
 };
 
@@ -141,18 +123,21 @@ std::string toUpperCase(std::string string);
 * @return
 */
 template<typename T>
-std::vector<T> splitWithStringDelimiter(const std::string& inputString,
-                                        const std::string& delim,
-                                        std::function<T(std::string)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION) {
-    std::string copy = inputString;
-    size_t pos = 0;
+std::vector<T>
+splitWithStringDelimiter(std::string_view inputString,
+                         std::string_view delim,
+                         std::function<T(std::string_view)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION) {
+    size_t prev_pos = 0;
+    size_t next_pos = 0;
     std::vector<T> elems;
-    while ((pos = copy.find(delim)) != std::string::npos) {
-        elems.push_back(fromStringToT(copy.substr(0, pos)));
-        copy.erase(0, pos + delim.length());
+
+    while ((next_pos = inputString.find(delim, prev_pos)) != std::string::npos) {
+        elems.push_back(fromStringToT(inputString.substr(prev_pos, next_pos)));
+        prev_pos = next_pos + delim.size();
     }
-    if (!copy.substr(0, pos).empty()) {
-        elems.push_back(fromStringToT(copy.substr(0, pos)));
+
+    if (auto rest = inputString.substr(prev_pos, inputString.size()); !rest.empty()) {
+        elems.push_back(fromStringToT(rest));
     }
 
     return elems;

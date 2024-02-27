@@ -15,6 +15,7 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 
 #include <string>
+#include <string_view>
 
 namespace NES {
 
@@ -46,7 +47,7 @@ class Parser {
    * @param schema: data schema
    * @param bufferManager: the buffer manager
    */
-    virtual bool writeInputTupleToTupleBuffer(const std::string& inputTuple,
+    virtual bool writeInputTupleToTupleBuffer(std::string_view inputTuple,
                                               uint64_t tupleCount,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                               const SchemaPtr& schema,

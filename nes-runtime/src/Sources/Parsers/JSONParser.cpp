@@ -28,7 +28,7 @@ JSONParser::JSONParser(uint64_t numberOfSchemaFields,
     : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
       physicalTypes(std::move(physicalTypes)) {}
 
-bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
+bool JSONParser::writeInputTupleToTupleBuffer(std::string_view jsonTuple,
                                               uint64_t tupleCount,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                               const SchemaPtr& schema,
