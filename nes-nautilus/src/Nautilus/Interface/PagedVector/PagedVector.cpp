@@ -76,7 +76,7 @@ void PagedVector::appendAllPages(PagedVector& other) {
     for (auto otherPos = 0_u64; otherPos < other.totalNumberOfEntries; ++otherPos) {
         // Checking, if we require a new page
         if (numberOfEntries >= capacityPerPage) {
-            NES_INFO("appending new page");
+            NES_TRACE("appending new page");
             appendPage();
         }
 
