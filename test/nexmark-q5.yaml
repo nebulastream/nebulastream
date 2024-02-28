@@ -47,6 +47,7 @@ topology:
           tcp:
             ip: 127.0.0.1
             port: 8091
+            format: NES_FORMAT
           schema:
             type: MANUAL
             fields:

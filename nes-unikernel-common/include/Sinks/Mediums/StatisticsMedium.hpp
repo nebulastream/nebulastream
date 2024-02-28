@@ -11,7 +11,20 @@ class StatisticsMedium : public SinkMedium {
                      std::chrono::seconds duration)
         : SinkMedium(std::move(sinkFormat), numOfProducers, queryId, querySubPlanId), duration(std::move(duration)) {}
     void setup() override;
-    void shutdown() override;
+    void shutdown() override {
+        const auto current = std::chrono::high_resolution_clock::now();
+        const auto newCounter = totalCounter + newTupleCounter;
+        const auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(current - last_interval);
+
+        NES_INFO("Received {} tuples in {}s ({}tps)",
+                 (newCounter - totalCounter),
+                 elapsedTime.count(),
+                 static_cast<double>((newCounter - totalCounter)) / elapsedTime.count());
+
+        last_interval = std::chrono::high_resolution_clock::now();
+        totalCounter = 0;
+        newTupleCounter = 0;
+    }
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
     std::string toString() const override;
     SinkMediumTypes getSinkMediumType() override;
@@ -21,8 +34,13 @@ class StatisticsMedium : public SinkMedium {
     size_t totalCounter = 0;
     size_t newTupleCounter = 0;
 };
-inline void StatisticsMedium::setup() {}
-inline void StatisticsMedium::shutdown() {}
+
+inline void StatisticsMedium::setup() {
+    last_interval = std::chrono::high_resolution_clock::now();
+    totalCounter = 0;
+    newTupleCounter = 0;
+}
+
 inline bool StatisticsMedium::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     newTupleCounter += inputBuffer.getNumberOfTuples();
     const auto current = std::chrono::high_resolution_clock::now();
