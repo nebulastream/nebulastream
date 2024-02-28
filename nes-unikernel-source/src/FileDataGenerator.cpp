@@ -19,8 +19,8 @@
 #include <FileDataGenerator.h>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 
-FileDataGenerator::FileDataGenerator(NES::SchemaPtr schema, boost::filesystem::path path)
-    : schema(std::move(schema)), path(std::move(path)) {
+FileDataGenerator::FileDataGenerator(NES::SchemaPtr s, boost::filesystem::path p) : schema(std::move(s)), path(std::move(p)) {
+    auto extension = path.extension().string();
     if (path.extension() == ".csv") {
         std::vector<NES::PhysicalTypePtr> physicalTypes;
         NES::DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = NES::DefaultPhysicalTypeFactory();
@@ -46,21 +46,29 @@ FileDataGenerator::FileDataGenerator(NES::SchemaPtr schema, boost::filesystem::p
     }
 }
 std::vector<NES::Runtime::TupleBuffer> FileDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
-    if (!file) {
+    if (!file.is_open()) {
         file.open(path);
     }
-    NES_ASSERT(file.good(), "Could not open file");
-
-    if (file.eof()) {
+    if (file.eof())
         return {};
-    }
+
+    NES_ASSERT(file.good(), "Could not open file");
     std::vector<NES::Runtime::TupleBuffer> buffers;
     for (size_t current_buffer_index = 0; current_buffer_index < numberOfBuffers; current_buffer_index++) {
         auto buffer = allocateBuffer();
         if (!parser_impl) {
+            if (file.eof()) {
+                break;
+            }
             uint64_t numberOfTuplesInBuffer = 0;
-            file.read(reinterpret_cast<char*>(numberOfTuplesInBuffer), sizeof(numberOfTuplesInBuffer));
+            file.read(reinterpret_cast<char*>(&numberOfTuplesInBuffer), sizeof(numberOfTuplesInBuffer));
+            if (numberOfTuplesInBuffer == 0) {
+                NES_ASSERT(file.eof(), "Expected end of file");
+                break;
+            }
+
             NES_ASSERT(file.good(), "Could not read tuplecount from file");
+
             NES_ASSERT(numberOfTuplesInBuffer * schema->getSchemaSizeInBytes() <= bufferSize, "Buffer to small to load");
             file.read(reinterpret_cast<char*>(buffer.getBuffer()), numberOfTuplesInBuffer * schema->getSchemaSizeInBytes());
             buffer.setNumberOfTuples(numberOfTuplesInBuffer);
@@ -75,14 +83,15 @@ std::vector<NES::Runtime::TupleBuffer> FileDataGenerator::createData(size_t numb
                     break;
                 }
                 char line_buffer[1024];
-                file.getline(line_buffer, 1024);
-                NES_ASSERT(file.good(), "Could not read buffer content");
-                parser_impl->writeInputTupleToTupleBuffer(std::string(line_buffer, std::strlen(line_buffer)),
-                                                          current_tuple_index,
-                                                          dynamicBuffer,
-                                                          schema,
-                                                          bufferManager);
-                buffer.setNumberOfTuples(current_buffer_index + 1);
+                file.getline(line_buffer, 1023);
+                if (file.bad())
+                    throw file.exceptions();
+                if (file.eof())
+                    break;
+                std::string line(line_buffer, std::strlen(line_buffer));
+
+                parser_impl->writeInputTupleToTupleBuffer(line, current_tuple_index, dynamicBuffer, schema, bufferManager);
+                buffer.setNumberOfTuples(current_tuple_index + 1);
             }
         }
         buffers.emplace_back(std::move(buffer));
@@ -93,4 +102,7 @@ std::vector<NES::Runtime::TupleBuffer> FileDataGenerator::createData(size_t numb
 NES::SchemaPtr FileDataGenerator::getSchema() { return schema; }
 std::string FileDataGenerator::getName() { return fmt::format("FileDataGenerator({})", path.string()); }
 std::string FileDataGenerator::toString() { return fmt::format("FileDataGenerator({})", path.string()); }
+std::unique_ptr<FileDataGenerator> FileDataGenerator::create(NES::SchemaPtr schema, boost::filesystem::path path) {
+    return std::make_unique<FileDataGenerator>(schema, path);
+}
 NES::Configurations::SchemaTypePtr FileDataGenerator::getSchemaType() { NES_NOT_IMPLEMENTED(); }
