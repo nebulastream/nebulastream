@@ -16,8 +16,8 @@
 #include <BaseIntegrationTest.hpp>
 #include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -57,8 +57,7 @@ TEST_F(PatternParsingServiceTest, simplePattern) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
     // expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
     LogicalOperatorPtr filter = LogicalOperatorFactory::createFilterOperator(
         ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
@@ -79,8 +78,7 @@ TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
     // expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
     LogicalOperatorPtr filter1 = LogicalOperatorFactory::createFilterOperator(
         ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
@@ -105,8 +103,7 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
     // expected results
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     LogicalOperatorPtr sinkPrint = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     LogicalOperatorPtr sinkFile = LogicalOperatorFactory::createSinkOperator(NES::FileSinkDescriptor::create("testSink2"));
     LogicalOperatorPtr sinkNull = LogicalOperatorFactory::createSinkOperator(NES::NullOutputSinkDescriptor::create());
@@ -131,8 +128,7 @@ TEST_F(PatternParsingServiceTest, DisjunctionPattern) {
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
-    LogicalOperatorPtr source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
     LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
@@ -157,8 +153,7 @@ TEST_F(PatternParsingServiceTest, ConjunctionPattern) {
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
-    LogicalOperatorPtr source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
     LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
@@ -184,8 +179,7 @@ TEST_F(PatternParsingServiceTest, ConjunctionPatternWithFilter) {
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
-    LogicalOperatorPtr source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
     LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
@@ -215,8 +209,7 @@ TEST_F(PatternParsingServiceTest, SequencePattern) {
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
-    LogicalOperatorPtr source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
     LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
@@ -241,8 +234,7 @@ TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source);
     std::vector<ExpressionNodePtr> expression;
     expression.push_back(Attribute("id").getExpressionNode());
@@ -265,8 +257,7 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source);
     std::vector<ExpressionNodePtr> expression;
     expression.push_back(Attribute("name").getExpressionNode());
@@ -288,8 +279,7 @@ TEST_F(PatternParsingServiceTest, TimesOperator) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
     NES::Query qTimes = NES::Query(queryPlan).times(2, 10).window(
         NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
@@ -308,8 +298,7 @@ TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
     NES::Query qTime = NES::Query(queryPlan).times(2).window(
         NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
@@ -328,8 +317,7 @@ TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
     NES::Query qTimes = NES::Query(queryPlan).times().window(
         NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
