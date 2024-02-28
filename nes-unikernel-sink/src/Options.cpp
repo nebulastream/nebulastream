@@ -28,6 +28,9 @@ Options::Result Options::fromCLI(int argc, char** argv) {
         .nargs(1)
         .metavar("SINK_ID")
         .help("Id of the source to use (currently index of the sink in the list of sinks)");
+
+    bool print = false;
+    params.add_parameter(print, "-p").nargs(0);
     auto result = parser.parse_args(argc, argv);
     if (result.errors_were_shown()) {
         return "Arg parsing";
@@ -59,7 +62,7 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                    upstream.partitionId,
                    upstream.subpartitionId,
                    schema,
-                   configuration.sink.print.value_or(false)};
+                   print};
 }
 
 std::pair<WorkerConfiguration, WorkerLinkConfiguration>
