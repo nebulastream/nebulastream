@@ -74,6 +74,7 @@ void YamlExport::setQueryPlan(NES::QueryPlanPtr queryPlan,
                 source.schema = SchemaConfiguration(noOpSourceType->getSchemaType(), sourceOp->getOutputSchema());
                 source.ip = noOpSourceType->getTCP()->ip;
                 source.port = noOpSourceType->getTCP()->port;
+                source.format = noOpSourceType->getTCP()->format;
                 source.type = TcpSource;
             }
 
@@ -101,7 +102,10 @@ void YamlExport::setQueryPlan(NES::QueryPlanPtr queryPlan,
 }
 
 WorkerTCPSourceConfiguration buildTCPSource(const NES::NoOpSourceDescriptor& desc) {
-    return WorkerTCPSourceConfiguration{desc.getTcp()->ip, desc.getTcp()->port, SchemaConfiguration(MANUAL, desc.getSchema())};
+    return WorkerTCPSourceConfiguration{desc.getTcp()->ip,
+                                        desc.getTcp()->port,
+                                        desc.getTcp()->format,
+                                        SchemaConfiguration(MANUAL, desc.getSchema())};
 }
 
 WorkerLinkConfiguration buildWorkerLink(NES::Network::NetworkSourceDescriptorPtr desc) {
