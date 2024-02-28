@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.57](https://github.com/nebulastream/nebulastream/tree/v0.6.57) (2024-02-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.56...v0.6.57)
+
+**Implemented enhancements:**
+
+- \[TASK\] Consistent naming in `nes-operators` [\#4410](https://github.com/nebulastream/nebulastream/issues/4410)
+
 ## [v0.6.56](https://github.com/nebulastream/nebulastream/tree/v0.6.56) (2024-02-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.55...v0.6.56)
