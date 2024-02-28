@@ -25,15 +25,14 @@ class ExportPhaseFactory : public PhaseFactory {
     LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
     PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
-    LowerPhysicalToGeneratableOperatorsPtr createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) {
+    LowerPhysicalToGeneratableOperatorsPtr createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr) {
         NES_THROW_RUNTIME_ERROR("Not Implemented");
     }
-    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,
-                                                                             bool sourceSharing) {
+    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr, bool) override {
         NES_THROW_RUNTIME_ERROR("Not Implemented");
     }
     BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
-    PredicationOptimizationPhasePtr createPredicationOptimizationPhase(QueryCompilerOptionsPtr options) {
+    PredicationOptimizationPhasePtr createPredicationOptimizationPhase(QueryCompilerOptionsPtr) {
         NES_THROW_RUNTIME_ERROR("Not Implemented");
     }
 };

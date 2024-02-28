@@ -70,8 +70,8 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
                  SequenceData sequenceData,
                  uint64_t watermarkTs);
 
-    void start(PipelineExecutionContextPtr, uint32_t);
-    void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
+    void start(PipelineExecutionContextPtr, uint32_t) override;
+    void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx) override;
     ~AbstractSlicePreAggregationHandler() override;
 
   protected:
