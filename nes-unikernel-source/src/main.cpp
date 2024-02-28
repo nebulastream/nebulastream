@@ -1,4 +1,5 @@
 #include <AutomaticDataGenerator.h>
+#include <FileDataGenerator.h>
 #include <CSVDataGenerator.h>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
@@ -9,9 +10,9 @@
 #include <Network/PartitionManager.hpp>
 #include <Options.h>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <YAMLModel.h>
@@ -94,12 +95,15 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
                 break;
             case NEXMARK_PERSON: NES_NOT_IMPLEMENTED(); break;
             case MANUAL: generatorImpl = AutomaticDataGenerator::create(options.schema); break;
+            case SchemaType::DATA_FILE: generatorImpl = FileDataGenerator::create(options.schema, options.path); break;
             default: NES_NOT_IMPLEMENTED();
         }
 
         generatorImpl->setBufferManager(bufferManager);
 
         switch (options.format) {
+            case NES::FormatTypes::NES_FORMAT:
+                format = std::make_unique<NES::NesFormat>(generatorImpl->getSchema(), bufferManager);
             case NES::FormatTypes::CSV_FORMAT:
                 format = std::make_unique<NES::CsvFormat>(generatorImpl->getSchema(), bufferManager);
                 break;
@@ -117,7 +121,7 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
 #ifdef NES_UNIKERNEL_SOURCE_HAS_TBB
                 std::execution::par_unseq,
 #else
-                std::execution::unseq,
+                std::execution::seq,
 #endif
                 data_chunks.begin(),
                 data_chunks.end(),
@@ -128,6 +132,12 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
                                                     bufferManager->getBufferSize(),
                                                     chunkIndex * buffer[0].getNumberOfTuples());
                     auto tupleData = format->getFormattedBuffer(buffer[0]);
+                    if (dynamic_cast<NES::NesFormat*>(this->format.get())) {
+                        auto numberOfTuples = buffer[0].getNumberOfTuples();
+                        std::copy(std::bit_cast<uint8_t*>(&numberOfTuples),
+                                  std::bit_cast<uint8_t*>(&numberOfTuples) + sizeof(numberOfTuples),
+                                  std::back_inserter(v));
+                    }
                     std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
                 });
             NES_DEBUG("Generated {} buffers", numberOfBuffers);

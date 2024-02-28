@@ -1,6 +1,6 @@
 find_package(Argumentum REQUIRED)
 
-add_executable(unikernel-source src/main.cpp src/CSVDataGenerator.cpp src/AutomaticDataGenerator.cpp src/Options.cpp)
+add_executable(unikernel-source src/main.cpp src/CSVDataGenerator.cpp src/AutomaticDataGenerator.cpp src/Options.cpp src/FileDataGenerator.cpp)
 target_include_directories(unikernel-source PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

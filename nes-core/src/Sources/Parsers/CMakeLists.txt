@@ -19,4 +19,5 @@ add_source_files(nes-core
 add_source_files(unikernel-test-lib
         Parser.cpp
         CSVParser.cpp
+        JSONParser.cpp
         )
