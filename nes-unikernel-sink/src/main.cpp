@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     NesPartition partition(options.queryId, options.operatorId, options.partitionId, options.subPartitionId);
 
     auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
-    boost::iostreams::stream<NES::Logger::LogSink> os(NES_LOG_OS(NES::LogLevel::LOG_INFO));
+    boost::iostreams::stream os(NES_LOG_OS(NES::LogLevel::LOG_INFO));
 
     NES::DataSinkPtr statisticSink;
     if (!options.print) {
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
                                                          options.queryId,
                                                          os);
     }
-    std::vector<NES::DataSinkPtr> pipelines{statisticSink};
+    std::vector pipelines{statisticSink};
     auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema,
                                                                 buffer_manager,
                                                                 wc,
