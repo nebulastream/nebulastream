@@ -75,8 +75,12 @@ Options::Result Options::fromCLI(int argc, char** argv) {
     auto params = parser.params();
 
     std::optional<long> sourceIdOpt;
-
     std::string filepath = "./testConfig.yaml";
+    std::string dataSourceType = std::string("ADHOC_GENERATOR");
+    std::string path;
+    bool print = false;
+    size_t numberOfTupleBuffers = 32;
+    size_t delayInMillies = 0;
 
     parser.config().program(argv[0]).description("Unikernel Source");
     params.add_parameter(filepath, "-c", "--config").nargs(1).metavar("PATH").help("path to config.yaml");
@@ -84,6 +88,18 @@ Options::Result Options::fromCLI(int argc, char** argv) {
         .nargs(1)
         .metavar("SOURCE_ID")
         .help("Id of the source to use (currently index of the source in the list of sources)");
+
+    params.add_parameter(dataSourceType, "-t", "--type")
+        .nargs(1)
+        .required(false)
+        .metavar("DATA_SOURCE_TYPE")
+        .help("DATA_FILE or ADHOC_GENERATOR (default)");
+
+    params.add_parameter(path, "-f", "--file").nargs(1);
+
+    params.add_parameter(print, "-p", "--print").nargs(0).required(false);
+    params.add_parameter(numberOfTupleBuffers, "-s", "--size").nargs(1).required(false);
+    params.add_parameter(delayInMillies, "-d", "--delay").nargs(1).required(false);
 
     parser.parse_args(argc, argv);
 
@@ -121,15 +137,15 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        downstream.partitionId,
                        downstream.subpartitionId,
                        schema,
-                       source.delayInMS.value_or(0),
+                       delayInMillies,
                        8192,
                        source.format.value_or(NES::FormatTypes::CSV_FORMAT),
                        source.schema.type,
                        source.type,
-                       source.dataSource.value_or(ADHOC_GENERATOR),
-                       source.path.value_or("."),
-                       source.numberOfBuffers.value_or(32),
-                       source.print.value_or(false)};
+                       magic_enum::enum_cast<DataSourceType>(dataSourceType).value_or(ADHOC_GENERATOR),
+                       path,
+                       numberOfTupleBuffers,
+                       print};
     } else if (source.type == TcpSource) {
         return Options{0,
                        0,
@@ -150,10 +166,10 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        source.format.value_or(NES::FormatTypes::CSV_FORMAT),
                        source.schema.type,
                        source.type,
-                       source.dataSource.value_or(ADHOC_GENERATOR),
-                       source.path.value_or("."),
-                       source.numberOfBuffers.value_or(32),
-                       source.print.value_or(false)};
+                       magic_enum::enum_cast<DataSourceType>(dataSourceType).value_or(ADHOC_GENERATOR),
+                       path,
+                       numberOfTupleBuffers,
+                       print};
     } else {
         NES_NOT_IMPLEMENTED();
     }
