@@ -80,6 +80,7 @@ TCPSource::TCPSource(SchemaPtr schema,
         case Configurations::InputFormat::CSV:
             inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
             break;
+        case Configurations::InputFormat::NES: inputParser = std::make_unique<NESParser>(); break;
     }
 
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
@@ -196,7 +197,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         // search the circularBuffer until Tuple seperator is found to obtain size of tuple
                         inputTupleSize = sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
                         // allocate buffer with size of tuple
-                        messageBuffer = std::make_unique<char[]>(inputTupleSize+1);
+                        messageBuffer = std::make_unique<char[]>(inputTupleSize + 1);
                         NES_DEBUG("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
                                   inputTupleSize);
                         NES_DEBUG("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());

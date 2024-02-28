@@ -63,7 +63,7 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
           Configurations::INPUT_FORMAT_CONFIG,
           Configurations::InputFormat::CSV,
           "Input format defines how the data will arrive in NES. Current Option: CSV (comma separated list with separator "
-          "between lines/tuples), JSON.")),
+          "between lines/tuples), JSON, NES (binary format).")),
       decideMessageSize(Configurations::ConfigurationOption<Configurations::TCPDecideMessageSize>::create(
           Configurations::DECIDE_MESSAGE_SIZE_CONFIG,
           Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR,

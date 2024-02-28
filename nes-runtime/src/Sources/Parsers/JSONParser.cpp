@@ -13,14 +13,31 @@
 */
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <absl/numeric/bits.h>
+#include <absl/types/span.h>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <utility>
 
 namespace NES {
+
+NESParser::NESParser() : Parser({}) {}
+bool NESParser::writeInputTupleToTupleBuffer(std::string_view nesBuffer,
+                                             uint64_t,
+                                             Runtime::MemoryLayouts::DynamicTupleBuffer& dynamicBuffer,
+                                             const SchemaPtr& schema,
+                                             const Runtime::BufferManagerPtr&) {
+    NES_ASSERT(nesBuffer.size() % schema->getSchemaSizeInBytes() == 0, "Buffer size does not match expected buffer size");
+    NES_ASSERT(nesBuffer.size() <= dynamicBuffer.getBuffer().getBufferSize(), "Buffer size missmatch");
+    std::memcpy(dynamicBuffer.getBuffer().getBuffer(), nesBuffer.data(), nesBuffer.size());
+    dynamicBuffer.getBuffer().setNumberOfTuples(nesBuffer.size() / schema->getSchemaSizeInBytes());
+    return true;
+}
 
 JSONParser::JSONParser(uint64_t numberOfSchemaFields,
                        std::vector<std::string> schemaKeys,

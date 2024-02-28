@@ -904,6 +904,9 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
             case Configurations::InputFormat::CSV:
                 tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
                 break;
+            case Configurations::InputFormat::NES:
+                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_NES);
+                break;
         }
         switch (tcpSourceDescriptor->getSourceConfig()->getDecideMessageSize()->getValue()) {
             case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:

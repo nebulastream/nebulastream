@@ -19,6 +19,30 @@
 #include <Sources/Parsers/Parser.hpp>
 
 namespace NES {
+class NESParser : public Parser {
+
+  public:
+    /**
+   * @brief public constructor for NES input data parser
+   */
+    NESParser();
+
+    /**
+   * @brief takes a json tuple as string, parses it using cpprest and calls Parser::writeFieldValueToTupleBuffer() for every value in the tuple
+   * @param jsonTuple: string value that is cast to the PhysicalType and written to the TupleBuffer
+   * @param tupleCount: the number of tuples already written to the current TupleBuffer
+   * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
+   * @param schema: data schema
+   * @param bufferManager: the buffer manager
+   */
+    bool writeInputTupleToTupleBuffer(std::string_view jsonTuple,
+                                      uint64_t tupleCount,
+                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                      const SchemaPtr& schema,
+                                      const Runtime::BufferManagerPtr& bufferManager) override;
+
+};
+
 class JSONParser : public Parser {
 
   public:

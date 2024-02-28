@@ -22,7 +22,7 @@ namespace NES::Configurations {
 /**
  * @brief input format enum gives information whether a JSON or CSV was used to transfer data
  */
-enum class InputFormat : uint8_t { JSON, CSV };
+enum class InputFormat : uint8_t { JSON, CSV, NES};
 
 /**
  * NOTE: this is not related to the network stack at all. Do not mix it up.
