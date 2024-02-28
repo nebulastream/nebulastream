@@ -1,8 +1,8 @@
 #include <AutomaticDataGenerator.h>
-#include <FileDataGenerator.h>
 #include <CSVDataGenerator.h>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
+#include <FileDataGenerator.h>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
@@ -83,27 +83,33 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
     NES::Benchmark::DataGeneration::DataGeneratorPtr generatorImpl;
     NES::SinkFormatPtr format;
     std::jthread generatorThread;
+    std::atomic<bool> done = false;
+
+    std::unique_ptr<NES::Benchmark::DataGeneration::DataGenerator> createGenerator(const Options& options) {
+        switch (options.dataSource) {
+            case DATA_FILE: return FileDataGenerator::create(options.getSchema(), options.path);
+            case ADHOC_GENERATOR:
+                switch (options.schemaType) {
+                    case NEXMARK_BID: return std::make_unique<NES::Benchmark::DataGeneration::NEBitDataGenerator>();
+                    case NEXMARK_PERSON: NES_NOT_IMPLEMENTED();
+                    case NEXMARK_AUCTION: return std::make_unique<NES::Benchmark::DataGeneration::NEAuctionDataGenerator>();
+                    case MANUAL: return AutomaticDataGenerator::create(options.getSchema());
+                }
+        }
+        NES_NOT_IMPLEMENTED();
+    }
 
   public:
     NESAPrioriDataGenerator(const Options& options) {
         bufferManager = std::make_shared<NES::Runtime::BufferManager>(options.bufferSize);
         bufferManager->createFixedSizeBufferPool(32);
-        switch (options.generator) {
-            case NEXMARK_BID: generatorImpl = std::make_unique<NES::Benchmark::DataGeneration::NEBitDataGenerator>(); break;
-            case NEXMARK_AUCTION:
-                generatorImpl = std::make_unique<NES::Benchmark::DataGeneration::NEAuctionDataGenerator>();
-                break;
-            case NEXMARK_PERSON: NES_NOT_IMPLEMENTED(); break;
-            case MANUAL: generatorImpl = AutomaticDataGenerator::create(options.schema); break;
-            case SchemaType::DATA_FILE: generatorImpl = FileDataGenerator::create(options.schema, options.path); break;
-            default: NES_NOT_IMPLEMENTED();
-        }
-
+        generatorImpl = createGenerator(options);
         generatorImpl->setBufferManager(bufferManager);
 
         switch (options.format) {
             case NES::FormatTypes::NES_FORMAT:
                 format = std::make_unique<NES::NesFormat>(generatorImpl->getSchema(), bufferManager);
+                break;
             case NES::FormatTypes::CSV_FORMAT:
                 format = std::make_unique<NES::CsvFormat>(generatorImpl->getSchema(), bufferManager);
                 break;
@@ -115,32 +121,43 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
     }
 
     void startGenerator(size_t numberOfBuffers) override {
+        NES_INFO("Starting {}", generatorImpl->toString());
         generatorThread = std::jthread([this, numberOfBuffers]() {
-            data_chunks.resize(numberOfBuffers);
-            std::for_each(
-#ifdef NES_UNIKERNEL_SOURCE_HAS_TBB
-                std::execution::par_unseq,
-#else
-                std::execution::seq,
-#endif
-                data_chunks.begin(),
-                data_chunks.end(),
-                [this](auto& v) {
-                    auto chunkIndex = &v - data_chunks.data();
-                    auto buffer = generatorImpl->createData(1, bufferManager->getBufferSize());
-                    generatorImpl->insertTimestamps(buffer,
-                                                    bufferManager->getBufferSize(),
-                                                    chunkIndex * buffer[0].getNumberOfTuples());
-                    auto tupleData = format->getFormattedBuffer(buffer[0]);
-                    if (dynamic_cast<NES::NesFormat*>(this->format.get())) {
-                        auto numberOfTuples = buffer[0].getNumberOfTuples();
-                        std::copy(std::bit_cast<uint8_t*>(&numberOfTuples),
-                                  std::bit_cast<uint8_t*>(&numberOfTuples) + sizeof(numberOfTuples),
-                                  std::back_inserter(v));
-                    }
-                    std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
-                });
-            NES_DEBUG("Generated {} buffers", numberOfBuffers);
+            auto start = std::chrono::high_resolution_clock::now();
+            for (size_t i = 0; i < numberOfBuffers; i++) {
+                std::vector<char> v;
+                auto buffer = generatorImpl->createData(1, bufferManager->getBufferSize());
+                if (buffer.empty())
+                    break;
+
+                auto tupleData = format->getFormattedBuffer(buffer[0]);
+                if (dynamic_cast<NES::NesFormat*>(this->format.get())) {
+                    auto numberOfTuples = buffer[0].getNumberOfTuples();
+                    std::copy(std::bit_cast<uint8_t*>(&numberOfTuples),
+                              std::bit_cast<uint8_t*>(&numberOfTuples) + sizeof(numberOfTuples),
+                              std::back_inserter(v));
+                }
+                std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
+                data_chunks.emplace_back(std::move(v));
+            }
+
+            if (dynamic_cast<NES::NesFormat*>(this->format.get())) {
+                boost::filesystem::ofstream output("data.bin");
+                for (const auto& chunk : data_chunks) {
+                    output.write(chunk.data(), chunk.size());
+                }
+            } else if (dynamic_cast<NES::CsvFormat*>(this->format.get())) {
+                boost::filesystem::ofstream output("data.csv");
+                for (const auto& chunk : data_chunks) {
+                    output.write(chunk.data(), chunk.size());
+                }
+            }
+
+            NES_INFO(
+                "Generated {} buffers in {}ms",
+                data_chunks.size(),
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count());
+            done.store(true);
         });
     }
 
@@ -150,7 +167,10 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
         return {data_chunks[chunk_index].data(), data_chunks[chunk_index].size()};
     }
 
-    void wait() override { generatorThread.join(); }
+    void wait() override {
+        if (!done)
+            done.wait(false);
+    }
 };
 
 class TcpServer {
@@ -187,6 +207,9 @@ class TcpServer {
             NES_INFO("{} done", ss.str());
             return;
         }
+
+        NES_INFO("Chunk {}\n", chunk_index);
+
         if (print) {
             NES_INFO("Chunk {}\n{}", chunk_index, std::string_view{chunk.data(), chunk.size()});
         }
@@ -306,7 +329,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     auto options = optionsResult.assume_value();
-    auto dataGenerator = std::make_unique<CSVFileDataGenerator>("bid.csv");
+    std::unique_ptr<APrioriDataGenerator> dataGenerator;
+
+    dataGenerator = std::make_unique<NESAPrioriDataGenerator>(options);
     dataGenerator->startGenerator(options.numberOfBuffers);
 
     if (options.type == NetworkSource) {

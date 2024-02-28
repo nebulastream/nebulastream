@@ -4,6 +4,8 @@
 
 #include "Util/Logger/Logger.hpp"
 #include <API/Schema.hpp>
+#include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
+#include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <Options.h>
 #include <Util/magicenum/magic_enum.hpp>
 #include <YAMLModel.h>
@@ -119,12 +121,13 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        downstream.partitionId,
                        downstream.subpartitionId,
                        schema,
-                       source.path.value_or("."),
                        source.delayInMS.value_or(0),
                        8192,
-                       NES::FormatTypes::CSV_FORMAT,
+                       source.format.value_or(NES::FormatTypes::CSV_FORMAT),
+                       source.schema.type,
                        source.type,
-                       NEXMARK_BID,
+                       source.dataSource.value_or(ADHOC_GENERATOR),
+                       source.path.value_or("."),
                        source.numberOfBuffers.value_or(32),
                        source.print.value_or(false)};
     } else if (source.type == TcpSource) {
@@ -142,15 +145,25 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        0,
                        0,
                        schema,
-                       source.path.value_or("."),
                        source.delayInMS.value_or(0),
                        8192,
-                       NES::FormatTypes::CSV_FORMAT,
-                       source.type,
+                       source.format.value_or(NES::FormatTypes::CSV_FORMAT),
                        source.schema.type,
+                       source.type,
+                       source.dataSource.value_or(ADHOC_GENERATOR),
+                       source.path.value_or("."),
                        source.numberOfBuffers.value_or(32),
                        source.print.value_or(false)};
     } else {
         NES_NOT_IMPLEMENTED();
+    }
+}
+NES::SchemaPtr Options::getSchema() const {
+    switch (this->schemaType) {
+        case NEXMARK_BID: return std::make_unique<NES::Benchmark::DataGeneration::NEBitDataGenerator>()->getSchema();
+        case NEXMARK_PERSON: NES_NOT_IMPLEMENTED();
+        case NEXMARK_AUCTION: return std::make_unique<NES::Benchmark::DataGeneration::NEAuctionDataGenerator>()->getSchema();
+        case MANUAL: return schema;
+        default: NES_NOT_IMPLEMENTED();
     }
 }

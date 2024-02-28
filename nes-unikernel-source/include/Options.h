@@ -27,17 +27,19 @@ struct Options {
     NES::PartitionId partitionId;
     NES::SubpartitionId subPartitionId;
     NES::SchemaPtr schema;
-    boost::filesystem::path path;
     size_t delayInMS;
     size_t bufferSize;
     NES::FormatTypes format;
+    SchemaType schemaType;
     SourceType type;
-    SchemaType generator;
+    DataSourceType dataSource;
+    boost::filesystem::path path;
     unsigned long numberOfBuffers;
     bool print;
 
     using Result = boost::outcome_v2::result<Options, std::string>;
     static Result fromCLI(int argc, char** argv);
+    NES::SchemaPtr getSchema() const;
 };
 
 #endif//NES_OPTIONS_H
