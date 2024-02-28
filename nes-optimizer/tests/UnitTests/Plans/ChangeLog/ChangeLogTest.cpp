@@ -15,10 +15,10 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -57,13 +57,13 @@ class ChangeLogTest : public Testing::BaseUnitTest {
     ExpressionNodePtr pred1;
     ExpressionNodePtr pred2;
     ExpressionNodePtr pred3;
-    LogicalOperatorNodePtr sourceOp1;
-    LogicalOperatorNodePtr sourceOp2;
-    LogicalOperatorNodePtr filterOp1;
-    LogicalOperatorNodePtr filterOp2;
-    LogicalOperatorNodePtr filterOp3;
-    LogicalOperatorNodePtr sinkOp1;
-    LogicalOperatorNodePtr sinkOp2;
+    LogicalOperatorPtr sourceOp1;
+    LogicalOperatorPtr sourceOp2;
+    LogicalOperatorPtr filterOp1;
+    LogicalOperatorPtr filterOp2;
+    LogicalOperatorPtr filterOp3;
+    LogicalOperatorPtr sinkOp1;
+    LogicalOperatorPtr sinkOp2;
 };
 
 //Insert and fetch change log entry

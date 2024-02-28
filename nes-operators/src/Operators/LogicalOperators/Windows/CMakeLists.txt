@@ -12,9 +12,9 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        LogicalWindowDefinition.cpp
-        WindowLogicalOperatorNode.cpp
-        WindowOperatorNode.cpp
+        LogicalWindowDescriptor.cpp
+        LogicalWindowOperator.cpp
+        WindowOperator.cpp
 )
 
 add_subdirectory(Aggregations)

@@ -24,7 +24,7 @@ PhysicalOperatorPtr PhysicalDemultiplexOperator::create(SchemaPtr inputSchema) {
 }
 
 PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const SchemaPtr& inputSchema)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
+    : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
 
 std::string PhysicalDemultiplexOperator::toString() const {
     std::stringstream out;
@@ -34,6 +34,6 @@ std::string PhysicalDemultiplexOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalDemultiplexOperator::copy() { return create(id, inputSchema); }
+OperatorPtr PhysicalDemultiplexOperator::copy() { return create(id, inputSchema); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

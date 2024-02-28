@@ -16,7 +16,7 @@
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
 #include <Plans/Query/QueryPlan.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <string>
 
 namespace NES {
@@ -126,7 +126,7 @@ class QueryPlanBuilder {
                                      ExpressionNodePtr onLeftKey,
                                      ExpressionNodePtr onRightKey,
                                      const Windowing::WindowTypePtr& windowType,
-                                     Join::LogicalJoinDefinition::JoinType joinType);
+                                     Join::LogicalJoinDescriptor::JoinType joinType);
 
     /**
      * @brief This methods add the batch join operator to a query
@@ -183,7 +183,7 @@ class QueryPlanBuilder {
     * @param: rightQueryPlan the right query plan of the binary operation
     * @return the updated queryPlan
     */
-    static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorNodePtr operatorNode,
+    static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode,
                                                               QueryPlanPtr leftQueryPlan,
                                                               QueryPlanPtr rightQueryPlan);
 };

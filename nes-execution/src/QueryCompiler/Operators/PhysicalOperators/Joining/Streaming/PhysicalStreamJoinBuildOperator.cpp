@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/OperatorNode.hpp>
+#include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
@@ -68,7 +68,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const std::string& joinFieldName,
     QueryCompilation::StreamJoinStrategy joinStrategy,
     QueryCompilation::WindowingStrategy windowingStrategy)
-    : OperatorNode(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
+    : Operator(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
       PhysicalUnaryOperator(id, inputSchema, outputSchema), timeStampFieldName(timeStampFieldName), joinFieldName(joinFieldName),
       buildSide(buildSide) {}
 
@@ -84,7 +84,7 @@ std::string PhysicalStreamJoinBuildOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalStreamJoinBuildOperator::copy() {
+OperatorPtr PhysicalStreamJoinBuildOperator::copy() {
     auto result = create(id,
                          inputSchema,
                          outputSchema,

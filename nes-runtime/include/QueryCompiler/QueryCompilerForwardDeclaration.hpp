@@ -46,12 +46,12 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-class JoinLogicalOperatorNode;
-using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
+class LogicalJoinOperator;
+using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 
 namespace Join {
-class LogicalJoinDefinition;
-using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
+class LogicalJoinDescriptor;
+using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
@@ -60,8 +60,8 @@ using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
 namespace Windowing {
 
-class LogicalWindowDefinition;
-using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
+class LogicalWindowDescriptor;
+using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 
 class WindowOperatorHandler;
 using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
@@ -74,11 +74,11 @@ using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescript
 
 }// namespace Windowing
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;

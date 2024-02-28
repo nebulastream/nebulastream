@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -108,7 +108,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
     for (auto&& node : queryPlanIterator) {
         for (auto const& [key, val] : *propertyIterator) {
             // add the current property to the current operator
-            node->as<LogicalOperatorNode>()->addProperty(key, val);
+            node->as<LogicalOperator>()->addProperty(key, val);
         }
         ++propertyIterator;
     }

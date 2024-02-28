@@ -14,11 +14,11 @@
 
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementRemovalException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementRemoval/PlacementRemovalStrategy.hpp>
@@ -59,8 +59,8 @@ PlacementRemovalStrategy::~PlacementRemovalStrategy() {
 
 std::map<DecomposedQueryPlanId, DeploymentContextPtr>
 PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId sharedQueryId,
-                                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                    const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                     DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
@@ -99,15 +99,15 @@ PlacementRemovalStrategy::updateGlobalExecutionPlan(NES::SharedQueryId sharedQue
     }
 }
 
-void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
-                                                    const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators) {
+void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators,
+                                                    const std::set<LogicalOperatorPtr>& downStreamPinnedOperators) {
 
     // 1. We iterate over the query plan in BFS order and record worker ids where operators are placed
 
     // 2. Temp container for iteration
     // Iterate operator nodes in a true breadth first order
     // Initialize with all pinned upstream operators
-    std::queue<LogicalOperatorNodePtr> operatorsToProcessInBFSOrder;
+    std::queue<LogicalOperatorPtr> operatorsToProcessInBFSOrder;
     std::for_each(upStreamPinnedOperators.begin(), upStreamPinnedOperators.end(), [&](const auto& logicalOperator) {
         operatorsToProcessInBFSOrder.push(logicalOperator);
     });
@@ -163,7 +163,7 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
         // 10. If the operator is one of the downstream pinned operator then continue
         auto found = std::find_if(downStreamPinnedOperators.begin(),
                                   downStreamPinnedOperators.end(),
-                                  [&](LogicalOperatorNodePtr operatorPin) {
+                                  [&](LogicalOperatorPtr operatorPin) {
                                       return operatorPin->getId() == operatorToProcess->getId();
                                   });
         if (found != downStreamPinnedOperators.end()) {
@@ -173,7 +173,7 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
         // 11. Fetch all connected upstream operators for further processing
         bool downStreamInToBePlacedState = true;
         for (const auto& parent : operatorToProcess->getParents()) {
-            const auto& downStreamOperator = parent->as<LogicalOperatorNode>();
+            const auto& downStreamOperator = parent->as<LogicalOperator>();
             if (downStreamInToBePlacedState && downStreamOperator->getOperatorState() != OperatorState::TO_BE_PLACED) {
                 downStreamInToBePlacedState = false;
             }
@@ -288,14 +288,14 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
             if (querySubPlanToUpdate->getRootOperators().size() == 1) {
                 auto rootOperator = querySubPlanToUpdate->getRootOperators()[0];
                 //Check if the root is of type network sink
-                if (rootOperator->instanceOf<SinkLogicalOperatorNode>()
-                    && rootOperator->as_if<SinkLogicalOperatorNode>()
+                if (rootOperator->instanceOf<SinkLogicalOperator>()
+                    && rootOperator->as_if<SinkLogicalOperator>()
                            ->getSinkDescriptor()
                            ->instanceOf<Network::NetworkSinkDescriptor>()) {
                     const auto& upstreamOperator = rootOperator->getChildren()[0];
                     //Check if the root is connected to a source of type network source
-                    if (upstreamOperator->instanceOf<SourceLogicalOperatorNode>()
-                        && upstreamOperator->as_if<SourceLogicalOperatorNode>()
+                    if (upstreamOperator->instanceOf<SourceLogicalOperator>()
+                        && upstreamOperator->as_if<SourceLogicalOperator>()
                                ->getSourceDescriptor()
                                ->instanceOf<Network::NetworkSourceDescriptor>()) {
                         // 6. Mark the plan for migration to flush the in network tuples
@@ -324,18 +324,18 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
                     releasedSlots++;
 
                     // 9. If the operator is of type sink then also remove it as the root operator of the query sub plan
-                    if (placedOperator->instanceOf<SinkLogicalOperatorNode>()) {
+                    if (placedOperator->instanceOf<SinkLogicalOperator>()) {
                         querySubPlanToUpdate->removeAsRootOperator(operatorId);
                     }
 
                     // 10. Check all upstream operators of the considered operator and if any of the operator is of type
                     // network sink then remove it as the root of the query sub plan
                     for (auto placedDownStreamOperator : placedOperator->getParents()) {
-                        if (placedDownStreamOperator->instanceOf<SinkLogicalOperatorNode>()
-                            && placedDownStreamOperator->as_if<SinkLogicalOperatorNode>()
+                        if (placedDownStreamOperator->instanceOf<SinkLogicalOperator>()
+                            && placedDownStreamOperator->as_if<SinkLogicalOperator>()
                                    ->getSinkDescriptor()
                                    ->instanceOf<Network::NetworkSinkDescriptor>()) {
-                            querySubPlanToUpdate->removeAsRootOperator(placedDownStreamOperator->as_if<OperatorNode>()->getId());
+                            querySubPlanToUpdate->removeAsRootOperator(placedDownStreamOperator->as_if<Operator>()->getId());
                         }
                     }
 

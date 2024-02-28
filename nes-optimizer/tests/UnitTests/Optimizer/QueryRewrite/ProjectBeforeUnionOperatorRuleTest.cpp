@@ -23,7 +23,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
@@ -92,7 +92,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     Query query = Query::from("y").unionWith(subQuery).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto projectionOperators = queryPlan->getOperatorByType<LogicalProjectionOperator>();
     EXPECT_TRUE(projectionOperators.empty());
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -103,7 +103,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
 
     typeInferencePhase->execute(updatedQueryPlan);
 
-    projectionOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    projectionOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
     EXPECT_TRUE(projectionOperators.size() == 1);
     auto projectOperator = projectionOperators[0];
     SchemaPtr projectOutputSchema = projectOperator->getOutputSchema();
@@ -122,7 +122,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     Query query = Query::from("x").unionWith(subQuery).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto projectionOperators = queryPlan->getOperatorByType<LogicalProjectionOperator>();
     EXPECT_TRUE(projectionOperators.empty());
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -133,7 +133,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
 
     typeInferencePhase->execute(updatedQueryPlan);
 
-    projectionOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    projectionOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
     EXPECT_TRUE(projectionOperators.empty());
 }
 }// namespace NES

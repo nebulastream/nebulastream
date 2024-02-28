@@ -23,7 +23,7 @@ PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor)) {}
 
 PhysicalOperatorPtr
@@ -57,7 +57,7 @@ std::string PhysicalWatermarkAssignmentOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalWatermarkAssignmentOperator::copy() {
+OperatorPtr PhysicalWatermarkAssignmentOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, getWatermarkStrategyDescriptor());
     result->addAllProperties(properties);
     return result;

@@ -41,8 +41,8 @@ using QueryPtr = std::shared_ptr<Query>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;

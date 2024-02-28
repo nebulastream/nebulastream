@@ -19,8 +19,8 @@
 
 namespace NES {
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -52,9 +52,9 @@ class ProjectBeforeUnionOperatorRule : public BaseRewriteRule {
      * @brief Construct the project operator to be added between union and one of the child.
      * @param sourceSchema : the source schema for project.
      * @param destinationSchema : the destination schema for project.
-     * @return LogicalOperatorNodePtr: the project operator based on source and destination schema
+     * @return LogicalOperatorPtr: the project operator based on source and destination schema
      */
-    static LogicalOperatorNodePtr constructProjectOperator(const SchemaPtr& sourceSchema, const SchemaPtr& destinationSchema);
+    static LogicalOperatorPtr constructProjectOperator(const SchemaPtr& sourceSchema, const SchemaPtr& destinationSchema);
 };
 
 }// namespace NES::Optimizer

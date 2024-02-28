@@ -21,7 +21,7 @@ PhysicalMapUDFOperator::PhysicalMapUDFOperator(OperatorId id,
                                                const SchemaPtr& inputSchema,
                                                const SchemaPtr& outputSchema,
                                                const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       udfDescriptor(std::move(udfDescriptor)) {}
 
 PhysicalOperatorPtr PhysicalMapUDFOperator::create(const SchemaPtr& inputSchema,
@@ -49,7 +49,7 @@ std::string PhysicalMapUDFOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalMapUDFOperator::copy() {
+OperatorPtr PhysicalMapUDFOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, udfDescriptor);
     result->addAllProperties(properties);
     return result;

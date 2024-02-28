@@ -22,8 +22,8 @@
 
 namespace NES {
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 namespace Optimizer {
 
@@ -40,16 +40,16 @@ class CopiedPinnedOperators {
      * @param operatorIdToOriginalOperatorMap: the operator id to the original operator map
      * @return instance of CopiedPinnedOperators
      */
-    static CopiedPinnedOperators create(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                        const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                        std::unordered_map<OperatorId, LogicalOperatorNodePtr>& operatorIdToOriginalOperatorMap);
+    static CopiedPinnedOperators create(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                        std::unordered_map<OperatorId, LogicalOperatorPtr>& operatorIdToOriginalOperatorMap);
 
-    std::set<LogicalOperatorNodePtr> copiedPinnedUpStreamOperators;
-    std::set<LogicalOperatorNodePtr> copiedPinnedDownStreamOperators;
+    std::set<LogicalOperatorPtr> copiedPinnedUpStreamOperators;
+    std::set<LogicalOperatorPtr> copiedPinnedDownStreamOperators;
 
   private:
-    CopiedPinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+    CopiedPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                          const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 };
 }// namespace Optimizer
 }// namespace NES

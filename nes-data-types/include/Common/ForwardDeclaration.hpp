@@ -25,8 +25,8 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 }// namespace NES
 

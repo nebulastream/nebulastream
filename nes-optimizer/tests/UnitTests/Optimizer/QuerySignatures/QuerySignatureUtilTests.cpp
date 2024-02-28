@@ -29,7 +29,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
@@ -73,16 +73,16 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -105,16 +105,16 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -135,16 +135,16 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -168,16 +168,16 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -201,16 +201,16 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -234,16 +234,16 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -267,15 +267,15 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -296,16 +296,16 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -326,16 +326,16 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -356,20 +356,20 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create map
-    LogicalOperatorNodePtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
+    LogicalOperatorPtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator11->addChild(sourceOperator);
-    LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
+    LogicalOperatorPtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator12->addChild(logicalOperator11);
     logicalOperator12->inferSchema();
     logicalOperator12->inferZ3Signature(context);
     auto sig1 = logicalOperator12->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator21 = LogicalOperatorFactory::createMapOperator(expression2);
+    LogicalOperatorPtr logicalOperator21 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator21->addChild(sourceOperator);
-    LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression1);
+    LogicalOperatorPtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator22->addChild(logicalOperator21);
     logicalOperator22->inferSchema();
     logicalOperator22->inferZ3Signature(context);
@@ -392,20 +392,20 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create map
-    LogicalOperatorNodePtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
+    LogicalOperatorPtr logicalOperator11 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator11->addChild(sourceOperator);
-    LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
+    LogicalOperatorPtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator12->addChild(logicalOperator11);
     logicalOperator12->inferSchema();
     logicalOperator12->inferZ3Signature(context);
     auto sig1 = logicalOperator12->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator21 = LogicalOperatorFactory::createMapOperator(expression1);
+    LogicalOperatorPtr logicalOperator21 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator21->addChild(sourceOperator);
-    LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression2);
+    LogicalOperatorPtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator22->addChild(logicalOperator21);
     logicalOperator22->inferSchema();
     logicalOperator22->inferZ3Signature(context);
@@ -428,16 +428,16 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
-    LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+    LogicalOperatorPtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
     //Create Filters
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
@@ -456,12 +456,12 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameSourceName) {
     sourceDescriptor->setSchema(schema);
 
     //Create source operator
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
@@ -481,12 +481,12 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentSourceName) {
     sourceDescriptor2->setSchema(schema);
 
     //Create source
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     logicalOperator1->inferSchema();
     logicalOperator1->inferZ3Signature(context);
     auto sig1 = logicalOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     logicalOperator2->inferSchema();
     logicalOperator2->inferZ3Signature(context);
     auto sig2 = logicalOperator2->getZ3Signature();
@@ -510,13 +510,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
     auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator(
         {FieldAccessExpressionNode::create("id"), FieldAccessExpressionNode::create("value")});
 
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
     projectionOperator1->inferSchema();
     projectionOperator1->inferZ3Signature(context);
     auto sig1 = projectionOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
     projectionOperator2->inferSchema();
     projectionOperator2->inferZ3Signature(context);
@@ -541,13 +541,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
     auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator(
         {FieldAccessExpressionNode::create("id"), FieldAccessExpressionNode::create("value")});
 
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
     projectionOperator1->inferSchema();
     projectionOperator1->inferZ3Signature(context);
     auto sig1 = projectionOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
     projectionOperator2->inferSchema();
     projectionOperator2->inferZ3Signature(context);
@@ -571,13 +571,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
         {FieldAccessExpressionNode::create("id"), FieldAccessExpressionNode::create("value")});
     auto projectionOperator2 = LogicalOperatorFactory::createProjectionOperator({FieldAccessExpressionNode::create("id")});
 
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
     projectionOperator1->inferSchema();
     projectionOperator1->inferZ3Signature(context);
     auto sig1 = projectionOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
     projectionOperator2->inferSchema();
     projectionOperator2->inferZ3Signature(context);
@@ -606,13 +606,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
                                                                 NES::API::Milliseconds(10),
                                                                 NES::API::Milliseconds()));
 
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
     watermarkOperator2->inferZ3Signature(context);
@@ -637,13 +637,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
     auto watermarkOperator2 =
         LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
 
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
     watermarkOperator2->inferZ3Signature(context);
@@ -670,13 +670,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
     auto watermarkOperator2 =
         LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
 
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
     watermarkOperator2->inferZ3Signature(context);
@@ -705,13 +705,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
                                                                 NES::API::Milliseconds(9),
                                                                 NES::API::Milliseconds()));
 
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
     watermarkOperator2->inferZ3Signature(context);
@@ -740,13 +740,13 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
                                                                 NES::API::Milliseconds(10),
                                                                 NES::API::Milliseconds()));
 
-    LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
+    LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
     watermarkOperator1->inferZ3Signature(context);
     auto sig1 = watermarkOperator1->getZ3Signature();
 
-    LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
+    LogicalOperatorPtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
     watermarkOperator2->inferZ3Signature(context);

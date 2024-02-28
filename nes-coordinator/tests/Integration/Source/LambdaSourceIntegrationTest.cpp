@@ -20,8 +20,8 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/RequestHandlerService.hpp>

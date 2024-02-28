@@ -22,7 +22,7 @@ PhysicalExternalOperator::PhysicalExternalOperator(OperatorId id,
                                                    SchemaPtr inputSchema,
                                                    SchemaPtr outputSchema,
                                                    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       executablePipelineStage(std::move(executablePipelineStage)) {}
 
 PhysicalOperatorPtr
@@ -49,7 +49,7 @@ std::string PhysicalExternalOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalExternalOperator::copy() {
+OperatorPtr PhysicalExternalOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, executablePipelineStage);
     result->addAllProperties(properties);
     return result;

@@ -34,7 +34,7 @@ class PhysicalDemultiplexOperator : public PhysicalUnaryOperator {
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr const& inputSchema);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema);
     [[nodiscard]] std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 

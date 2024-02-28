@@ -12,6 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        BinaryOperatorNode.cpp
-        UnaryOperatorNode.cpp
+        BinaryOperator.cpp
+        UnaryOperator.cpp
 )

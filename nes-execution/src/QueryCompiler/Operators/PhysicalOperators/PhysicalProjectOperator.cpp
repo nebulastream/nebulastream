@@ -21,7 +21,7 @@ PhysicalProjectOperator::PhysicalProjectOperator(OperatorId id,
                                                  SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema,
                                                  std::vector<ExpressionNodePtr> expressions)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       expressions(std::move(expressions)) {}
 
 PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id,
@@ -46,7 +46,7 @@ std::string PhysicalProjectOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalProjectOperator::copy() {
+OperatorPtr PhysicalProjectOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, getExpressions());
     result->addAllProperties(properties);
     return result;

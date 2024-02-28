@@ -14,7 +14,7 @@
 
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -39,7 +39,7 @@ DecomposedQueryPlanPtr OriginIdInferencePhase::execute(DecomposedQueryPlanPtr de
 }
 
 void OriginIdInferencePhase::performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator,
-                                              std::vector<OperatorNodePtr> rootOperators) {
+                                              std::vector<OperatorPtr> rootOperators) {
     // origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = 1;
     // set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
@@ -49,11 +49,11 @@ void OriginIdInferencePhase::performInference(std::vector<OriginIdAssignmentOper
 
     // propagate origin ids through the complete query plan
     for (auto rootOperator : rootOperators) {
-        if (auto logicalOperator = rootOperator->as_if<LogicalOperatorNode>()) {
+        if (auto logicalOperator = rootOperator->as_if<LogicalOperator>()) {
             logicalOperator->inferInputOrigins();
         } else {
             throw Exceptions::InvalidLogicalOperatorException(
-                "During OriginIdInferencePhase all root operators have to be LogicalOperatorNodes");
+                "During OriginIdInferencePhase all root operators have to be LogicalOperators");
         }
     }
 }

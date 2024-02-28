@@ -23,11 +23,11 @@ namespace NES::Statistic {
 LogicalStatisticWindowOperator::LogicalStatisticWindowOperator(OperatorId id,
                                                          Windowing::WindowTypePtr windowType,
                                                          WindowStatisticDescriptorPtr windowStatisticDescriptor)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id),
+    : Operator(id), LogicalUnaryOperator(id),
       windowType(std::move(windowType)), windowStatisticDescriptor(std::move(windowStatisticDescriptor)) {}
 
 bool LogicalStatisticWindowOperator::inferSchema() {
-    if (!LogicalUnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperator::inferSchema()) {
         return false;
     }
     const auto qualifierNameWithSeparator = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator();
@@ -74,7 +74,7 @@ std::string LogicalStatisticWindowOperator::toString() const {
     return oss.str();
 }
 
-OperatorNodePtr LogicalStatisticWindowOperator::copy() {
+OperatorPtr LogicalStatisticWindowOperator::copy() {
     auto copy = LogicalOperatorFactory::createStatisticBuildOperator(windowType, windowStatisticDescriptor, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -92,8 +92,8 @@ WindowStatisticDescriptorPtr LogicalStatisticWindowOperator::getWindowStatisticD
 }
 
 void LogicalStatisticWindowOperator::inferStringSignature() {
-    auto operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("StatisticWindowOperatorNode: Inferring String signature for {}", operatorNode->toString());
+    auto op = shared_from_this()->as<Operator>();
+    NES_TRACE("StatisticWindowOperatorNode: Inferring String signature for {}", op->toString());
 
     std::stringstream signatureStream;
     signatureStream << "STATISTIC_BUILD_OPERATOR(" + windowStatisticDescriptor->toString() + ").";

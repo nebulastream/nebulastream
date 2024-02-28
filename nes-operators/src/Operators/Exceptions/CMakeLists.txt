@@ -13,7 +13,7 @@
 
 add_source_files(nes-operators
         InvalidFieldException.cpp
-        InvalidLogicalOperatorNodeException.cpp
+        InvalidLogicalOperatorException.cpp
         InvalidOperatorStateException.cpp
         SignatureComputationException.cpp
         TypeInferenceException.cpp

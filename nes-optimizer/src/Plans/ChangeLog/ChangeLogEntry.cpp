@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <stack>
 #include <utility>
@@ -20,13 +20,13 @@
 
 namespace NES::Optimizer::Experimental {
 
-ChangeLogEntryPtr ChangeLogEntry::create(std::set<LogicalOperatorNodePtr> upstreamOperators,
-                                         std::set<LogicalOperatorNodePtr> downstreamOperators) {
+ChangeLogEntryPtr ChangeLogEntry::create(std::set<LogicalOperatorPtr> upstreamOperators,
+                                         std::set<LogicalOperatorPtr> downstreamOperators) {
     return std::make_shared<ChangeLogEntry>(ChangeLogEntry(std::move(upstreamOperators), std::move(downstreamOperators)));
 }
 
-ChangeLogEntry::ChangeLogEntry(std::set<LogicalOperatorNodePtr> upstreamOperators,
-                               std::set<LogicalOperatorNodePtr> downstreamOperators)
+ChangeLogEntry::ChangeLogEntry(std::set<LogicalOperatorPtr> upstreamOperators,
+                               std::set<LogicalOperatorPtr> downstreamOperators)
     : upstreamOperators(std::move(upstreamOperators)), downstreamOperators(std::move(downstreamOperators)),
       poSetOfSubQueryPlan(computePoSet()) {}
 
@@ -46,7 +46,7 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
             auto visitingOperator = operatorsToVisit.top();
             operatorsToVisit.pop();
             // Insert the operator id to the poSet
-            auto inserted = poSet.insert(visitingOperator->as<OperatorNode>()->getId());
+            auto inserted = poSet.insert(visitingOperator->as<Operator>()->getId());
 
             //If insertion was not successful then skip the remainder of operation
             // NOTE: this can happen because this operator was already visited.
@@ -56,7 +56,7 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
             }
 
             // Check if the visiting operator is also one of the downstream operators
-            if (downstreamOperators.find(visitingOperator->as<LogicalOperatorNode>()) != downstreamOperators.end()) {
+            if (downstreamOperators.find(visitingOperator->as<LogicalOperator>()) != downstreamOperators.end()) {
                 // Skip rest of the operation
                 continue;
             }
@@ -69,14 +69,14 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
                 for (const auto& downStreamOperatorToVisit : downStreamOperatorsToVisit) {
                     bool visit = false;
                     // If the operator to visit is one of the input downstream operators then add the operator to visit list
-                    if (downstreamOperators.find(downStreamOperatorToVisit->as<LogicalOperatorNode>())
+                    if (downstreamOperators.find(downStreamOperatorToVisit->as<LogicalOperator>())
                         != downstreamOperators.end()) {
                         visit = true;
                     } else {// Check if the path is to be explored
                         // visit only those downstream operators that are connected
                         // to the most downstream operators (or root) of the sub-query plan captured by the changelog entry
                         for (const auto& downstreamOperator : downstreamOperators) {
-                            if (downStreamOperatorToVisit->as<OperatorNode>()->containAsGrandParent(downstreamOperator)) {
+                            if (downStreamOperatorToVisit->as<Operator>()->containAsGrandParent(downstreamOperator)) {
                                 visit = true;
                                 //skip rest of the checks
                                 break;

@@ -14,11 +14,11 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -50,7 +50,7 @@ QueryPlanPtr DistributedWindowRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-void DistributedWindowRule::createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator,
+void DistributedWindowRule::createDistributedWindowOperator(const WindowOperatorPtr& logicalWindowOperator,
                                                             const QueryPlanPtr& queryPlan) {
     // To distribute the window operator we replace the current window operator with 1 WindowComputationOperator (performs the final aggregate)
     // and n SliceCreationOperators.
@@ -72,22 +72,22 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
     auto windowComputationAggregation = windowAggregation[0]->copy();
     //    windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
-    Windowing::LogicalWindowDefinitionPtr windowDef;
+    Windowing::LogicalWindowDescriptorPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef = Windowing::LogicalWindowDefinition::create(keyField,
+        windowDef = Windowing::LogicalWindowDescriptor::create(keyField,
                                                                {windowComputationAggregation},
                                                                windowType,
                                                                allowedLateness);
 
     } else {
-        windowDef = Windowing::LogicalWindowDefinition::create({windowComputationAggregation},
+        windowDef = Windowing::LogicalWindowDescriptor::create({windowComputationAggregation},
                                                                windowType,
                                                                allowedLateness);
     }
     NES_DEBUG("DistributedWindowRule::apply: created logical window definition for computation operator{}",
               windowDef->toString());
 
-    auto assignerOp = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
+    auto assignerOp = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperator>();
     NES_ASSERT(assignerOp.size() > 1, "at least one assigner has to be there");
 }
 

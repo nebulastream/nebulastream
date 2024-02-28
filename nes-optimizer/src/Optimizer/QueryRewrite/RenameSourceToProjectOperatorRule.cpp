@@ -16,7 +16,7 @@
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -25,7 +25,7 @@ namespace NES::Optimizer {
 
 QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("RenameSourceToProjectOperatorRule: Convert all Rename Source operator to the project operator");
-    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
+    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
     //Iterate over all rename source operators and convert them to project operator
     for (auto& renameSourceOperator : renameSourceOperators) {
         //Convert the rename source operator to project operator
@@ -39,9 +39,9 @@ QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-OperatorNodePtr RenameSourceToProjectOperatorRule::convert(const OperatorNodePtr& operatorNode) {
+OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operatorNode) {
     //Fetch the new source name and input schema for the as operator
-    auto renameSourceOperator = operatorNode->as<RenameSourceOperatorNode>();
+    auto renameSourceOperator = operatorNode->as<RenameSourceOperator>();
     auto newSourceName = renameSourceOperator->getNewSourceName();
     auto inputSchema = renameSourceOperator->getInputSchema();
 

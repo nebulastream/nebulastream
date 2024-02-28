@@ -27,13 +27,13 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -185,10 +185,10 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
                                      uint64_t expectedRootOperators = 1) {
         ASSERT_EQ(querySubPlans.size(), expectedSubPlanSize);
         for (auto& querySubPlan : querySubPlans) {
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), expectedRootOperators);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
             auto children = actualRootOperator->getChildren();
             for (const auto& child : children) {
                 ASSERT_TRUE(child->instanceOf<T>());
@@ -202,11 +202,11 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
                                       uint64_t expectedSourceOperatorSize) {
         ASSERT_EQ(querySubPlans.size(), expectedSubPlanSize);
         auto querySubPlan = querySubPlans[0];
-        std::vector<SourceLogicalOperatorNodePtr> sourceOperators = querySubPlan->getSourceOperators();
+        std::vector<SourceLogicalOperatorPtr> sourceOperators = querySubPlan->getSourceOperators();
         ASSERT_EQ(sourceOperators.size(), expectedSourceOperatorSize);
         for (const auto& sourceOperator : sourceOperators) {
-            EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
-            auto sourceDescriptor = sourceOperator->as_if<SourceLogicalOperatorNode>()->getSourceDescriptor();
+            EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperator>());
+            auto sourceDescriptor = sourceOperator->as_if<SourceLogicalOperator>()->getSourceDescriptor();
             ASSERT_TRUE(sourceDescriptor->instanceOf<T>());
         }
     }
@@ -239,11 +239,11 @@ TEST_F(DistributedMatrixJoinPlacementTest, testNemoJoinPlacement) {
         std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
         if (executionNode->operator*()->getId() == 1u) {
             // coordinator should have 1 sink, 8 network sources
-            verifyChildrenOfType<JoinLogicalOperatorNode>(querySubPlans, 1, 1);
+            verifyChildrenOfType<LogicalJoinOperator>(querySubPlans, 1, 1);
             verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 2 * sourceNodes.size());
         } else {
             // 2x replication factor, therefore each source should have 2 network sources
-            verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans, 1, 2);
+            verifyChildrenOfType<WatermarkAssignerLogicalOperator>(querySubPlans, 1, 2);
             verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
         }
     }

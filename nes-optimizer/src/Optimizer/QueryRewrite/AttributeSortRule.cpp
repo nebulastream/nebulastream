@@ -30,8 +30,8 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -44,25 +44,25 @@ AttributeSortRulePtr AttributeSortRule::create() { return std::make_shared<Attri
 
 QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan) {
 
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     for (auto const& filterOperator : filterOperators) {
         auto predicate = filterOperator->getPredicate();
         auto updatedPredicate = sortAttributesInExpression(predicate);
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
         updatedFilter->setInputSchema(filterOperator->getInputSchema()->copy());
-        updatedFilter->as_if<LogicalOperatorNode>()->setOutputSchema(
-            filterOperator->as_if<LogicalOperatorNode>()->getOutputSchema()->copy());
+        updatedFilter->as_if<LogicalOperator>()->setOutputSchema(
+            filterOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
         filterOperator->replace(updatedFilter);
     }
 
-    auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperatorNode>();
+    auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     for (auto const& mapOperator : mapOperators) {
         auto mapExpression = mapOperator->getMapExpression();
         auto updatedMapExpression = sortAttributesInExpression(mapExpression)->as<FieldAssignmentExpressionNode>();
         auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapExpression);
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        updatedMap->as_if<LogicalOperatorNode>()->setOutputSchema(
-            mapOperator->as_if<LogicalOperatorNode>()->getOutputSchema()->copy());
+        updatedMap->as_if<LogicalOperator>()->setOutputSchema(
+            mapOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;

@@ -25,13 +25,13 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
@@ -97,7 +97,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     // Validate
     std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
+    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1u);
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2u);
 }
@@ -131,7 +131,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     // Validate
     std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
+    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 2U);
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
@@ -168,7 +168,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     // Validate
     std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
+    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 2U);
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
@@ -191,7 +191,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     // Validate
     std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
+    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1U);
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
@@ -219,10 +219,10 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     // Validate
     std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size() * 2);
-    std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
+    std::vector<OperatorPtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1U);
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
-    auto mergeOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto mergeOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(mergeOperators.size(), 1U);
     EXPECT_EQ(mergeOperators[0]->getChildren().size(), 4U);
 }
@@ -261,12 +261,12 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     auto rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1U);
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
-    auto flatMapOperators = queryPlan->getOperatorByType<FlatMapUDFLogicalOperatorNode>();
+    auto flatMapOperators = queryPlan->getOperatorByType<FlatMapUDFLogicalOperator>();
     EXPECT_EQ(flatMapOperators.size(), 1U);
     EXPECT_EQ(flatMapOperators[0]->getChildren().size(), 2U);
 
     //Validate that FlatMap is connected to two map logical operators
     for (const auto& childOperator : flatMapOperators[0]->getChildren()) {
-        EXPECT_TRUE(childOperator->as_if<LogicalOperatorNode>()->instanceOf<MapUDFLogicalOperatorNode>());
+        EXPECT_TRUE(childOperator->as_if<LogicalOperator>()->instanceOf<MapUDFLogicalOperator>());
     }
 }

@@ -19,8 +19,8 @@
 namespace NES {
 
 class Query;
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 class ExpressionItem;
 

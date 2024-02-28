@@ -32,8 +32,8 @@ using grpc::CompletionQueue;
 using grpc::Status;
 namespace NES {
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;

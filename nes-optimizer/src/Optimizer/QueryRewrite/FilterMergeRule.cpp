@@ -14,7 +14,7 @@
 
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,12 +26,12 @@ FilterMergeRulePtr FilterMergeRule::create() { return std::make_shared<FilterMer
 QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan) {
     NES_INFO("Applying FilterMergeRule to query {}", queryPlan->toString());
     std::set<OperatorId> visitedOperators;
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     NES_DEBUG("FilterMergeRule: Identified {} filter nodes in the query plan", filterOperators.size());
     NES_DEBUG("Query before applying the rule: {}", queryPlan->toString());
     for (auto& filter : filterOperators) {
         if (visitedOperators.find(filter->getId()) == visitedOperators.end()) {
-            std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = getConsecutiveFilters(filter);
+            std::vector<LogicalFilterOperatorPtr> consecutiveFilters = getConsecutiveFilters(filter);
             NES_DEBUG("FilterMergeRule: Filter {} has {} consecutive filters as children",
                       filter->getId(),
                       consecutiveFilters.size());
@@ -78,15 +78,15 @@ QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-std::vector<FilterLogicalOperatorNodePtr>
-FilterMergeRule::getConsecutiveFilters(const NES::FilterLogicalOperatorNodePtr& filter) {
-    std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = {};
+std::vector<LogicalFilterOperatorPtr>
+FilterMergeRule::getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& filter) {
+    std::vector<LogicalFilterOperatorPtr> consecutiveFilters = {};
     DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
-    while (node->instanceOf<FilterLogicalOperatorNode>()) {
+    while (node->instanceOf<LogicalFilterOperator>()) {
         NES_DEBUG("Found consecutive filter in the chain, adding it the list");
-        consecutiveFilters.push_back(node->as<FilterLogicalOperatorNode>());
+        consecutiveFilters.push_back(node->as<LogicalFilterOperator>());
         ++nodeIterator;
         node = (*nodeIterator);
     }

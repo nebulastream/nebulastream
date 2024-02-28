@@ -27,7 +27,7 @@
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLOperator.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLPattern.hpp>
 #include <Parsers/NebulaPSL/gen/NesCEPBaseListener.h>
 #include <Plans/Query/QueryPlan.hpp>
@@ -178,7 +178,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      * @param iterator the list of nodes from the ANTLR AST Tree
      */
     QueryPlanPtr addBinaryOperatorToQueryPlan(std::string operaterName,
-                                              std::map<int, NebulaPSLOperatorNode>::const_iterator iterator,
+                                              std::map<int, NebulaPSLOperator>::const_iterator iterator,
                                               QueryPlanPtr queryPlan) const;
 
     /**

@@ -23,8 +23,8 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator; 
+using OperatorPtr = std::shared_ptr<Operator>;
 
 namespace Optimizer {
 class GlobalExecutionPlan;
@@ -46,13 +46,13 @@ class PlanJsonGenerator {
      * @param nodes JSON array to store the traversed node
      * @param edges JSON array to store the traversed edge
      */
-    static void getChildren(OperatorNodePtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
+    static void getChildren(OperatorPtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
 
     /**
      * @param an operator node
      * @return the type of operator in String
      */
-    static std::string getOperatorType(const OperatorNodePtr& operatorNode);
+    static std::string getOperatorType(const OperatorPtr& operatorNode);
 };
 }// namespace NES
 #endif // NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_

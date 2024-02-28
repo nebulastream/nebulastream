@@ -21,9 +21,9 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Network/NetworkChannel.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -424,7 +424,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter
-    auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
+    auto filterOperator = queryPlan->getOperatorByType<LogicalFilterOperator>()[0];
 
     auto customPipelineStage = std::make_shared<SimpleGPUPipelineStage>();
     auto externalOperator =
@@ -502,7 +502,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter
-    auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
+    auto filterOperator = queryPlan->getOperatorByType<LogicalFilterOperator>()[0];
 
     auto customPipelineStage = std::make_shared<MultifieldGPUPipelineStage>();
     auto externalOperator =
@@ -584,7 +584,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // add physical operator behind the filter
-    auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
+    auto filterOperator = queryPlan->getOperatorByType<LogicalFilterOperator>()[0];
 
     auto customPipelineStage = std::make_shared<ColumnLayoutGPUPipelineStage>();
     auto externalOperator =
@@ -790,7 +790,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWindowedAggregation) {
     auto externalOperator =
         NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 
-    auto sourceOperator = queryPlan->getOperatorByType<SourceLogicalOperatorNode>()[0];
+    auto sourceOperator = queryPlan->getOperatorByType<SourceLogicalOperator>()[0];
     sourceOperator->insertBetweenThisAndParentNodes(externalOperator);
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);

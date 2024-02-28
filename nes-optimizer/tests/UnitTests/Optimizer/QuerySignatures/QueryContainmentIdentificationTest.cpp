@@ -21,9 +21,9 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
@@ -1105,10 +1105,10 @@ TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
                                                        Optimizer::QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule);
         signatureInferencePhase->execute(queryPlanSQPQuery);
         signatureInferencePhase->execute(queryPlanNewQuery);
-        SinkLogicalOperatorNodePtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
-        SinkLogicalOperatorNodePtr sinkOperatorNewQuery = queryPlanSQPQuery->getSinkOperators()[0];
+        SinkLogicalOperatorPtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
+        SinkLogicalOperatorPtr sinkOperatorNewQuery = queryPlanSQPQuery->getSinkOperators()[0];
         auto signatureContainmentUtil = Optimizer::SignatureContainmentCheck::create(context, true);
-        std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
+        std::map<OperatorPtr, OperatorPtr> targetToHostSinkOperatorMap;
         auto sqpSink = queryPlanSQPQuery->getSinkOperators()[0];
         auto newSink = queryPlanNewQuery->getSinkOperators()[0];
         //Check if the host and target sink operator signatures have a containment relationship

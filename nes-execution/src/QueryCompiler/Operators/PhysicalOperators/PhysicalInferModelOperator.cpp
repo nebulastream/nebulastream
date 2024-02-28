@@ -22,7 +22,7 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(OperatorId id,
                                                        std::string model,
                                                        std::vector<ExpressionNodePtr> inputFields,
                                                        std::vector<ExpressionNodePtr> outputFields)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields),
+    : Operator(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields),
       outputFields(outputFields) {}
 
 PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
@@ -52,7 +52,7 @@ std::string PhysicalInferModelOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalInferModelOperator::copy() {
+OperatorPtr PhysicalInferModelOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, model, inputFields, outputFields);
     result->addAllProperties(properties);
     return result;

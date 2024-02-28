@@ -25,12 +25,12 @@ class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
 namespace Join {
-class LogicalJoinDefinition;
-using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
+class LogicalJoinDescriptor;
+using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
 namespace Experimental {
-class LogicalBatchJoinDefinition;
-using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
+class LogicalBatchJoinDescriptor;
+using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
 }// namespace Experimental
 class JoinActionDescriptor;
 using JoinActionDescriptorPtr = std::shared_ptr<JoinActionDescriptor>;

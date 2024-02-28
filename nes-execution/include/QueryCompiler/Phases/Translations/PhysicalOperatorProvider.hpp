@@ -28,7 +28,7 @@ class PhysicalOperatorProvider {
      * @param decomposedQueryPlan the current decomposed query plan.
      * @param operatorNode the operator that should be replaced.
      */
-    virtual void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorNodePtr operatorNode) = 0;
+    virtual void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) = 0;
 
   protected:
     QueryCompilerOptionsPtr options;

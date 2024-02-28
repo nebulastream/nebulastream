@@ -14,8 +14,8 @@
 
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributedMatrixJoinRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -33,10 +33,10 @@ DistributedMatrixJoinRulePtr DistributedMatrixJoinRule::create(Configurations::O
 
 QueryPlanPtr DistributedMatrixJoinRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("DistributedMatrixJoinRule: Plan before replacement\n{}", queryPlan->toString());
-    auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOps = queryPlan->getOperatorByType<LogicalJoinOperator>();
     if (!joinOps.empty()) {
         NES_DEBUG("DistributedMatrixJoinRule::apply: found {} join operators", joinOps.size());
-        for (const JoinLogicalOperatorNodePtr& joinOp : joinOps) {
+        for (const LogicalJoinOperatorPtr& joinOp : joinOps) {
             NES_DEBUG("DistributedMatrixJoinRule::apply: join operator {}", joinOp->toString());
             auto parents = joinOp->getParents();
             auto leftOps = joinOp->getLeftOperators();
@@ -44,8 +44,8 @@ QueryPlanPtr DistributedMatrixJoinRule::apply(QueryPlanPtr queryPlan) {
             for (const auto& leftOp : leftOps) {
                 for (const auto& rightOp : rightOps) {
                     // create join replicas for each lhs/rhs combination
-                    JoinLogicalOperatorNodePtr newJoin =
-                        LogicalOperatorFactory::createJoinOperator(joinOp->getJoinDefinition())->as<JoinLogicalOperatorNode>();
+                    LogicalJoinOperatorPtr newJoin =
+                        LogicalOperatorFactory::createJoinOperator(joinOp->getJoinDefinition())->as<LogicalJoinOperator>();
                     newJoin->addChild(leftOp);
                     newJoin->addChild(rightOp);
                     for (const auto& parent : parents) {

@@ -16,7 +16,7 @@
 
 namespace NES::QueryCompilation {
 
-OperatorNodePtr NautilusPipelineOperator::create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+OperatorPtr NautilusPipelineOperator::create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
                                                  std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
     return std::make_shared<NautilusPipelineOperator>(
         NautilusPipelineOperator(getNextOperatorId(), std::move(nautilusPipeline), std::move(operatorHandlers)));
@@ -25,12 +25,12 @@ OperatorNodePtr NautilusPipelineOperator::create(std::shared_ptr<Runtime::Execut
 NautilusPipelineOperator::NautilusPipelineOperator(OperatorId id,
                                                    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
                                                    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
-    : OperatorNode(id), UnaryOperatorNode(id), nautilusPipeline(std::move(nautilusPipeline)),
+    : Operator(id), UnaryOperator(id), nautilusPipeline(std::move(nautilusPipeline)),
       operatorHandlers(std::move(operatorHandlers)) {}
 
 std::string NautilusPipelineOperator::toString() const { return "NautilusPipelineOperator"; }
 
-OperatorNodePtr NautilusPipelineOperator::copy() {
+OperatorPtr NautilusPipelineOperator::copy() {
     auto result = create(nautilusPipeline, operatorHandlers);
     result->addAllProperties(properties);
     return result;

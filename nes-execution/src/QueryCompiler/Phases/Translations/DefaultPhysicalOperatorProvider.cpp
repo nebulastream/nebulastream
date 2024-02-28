@@ -19,22 +19,22 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
@@ -79,11 +79,11 @@ PhysicalOperatorProviderPtr DefaultPhysicalOperatorProvider::create(const QueryC
     return std::make_shared<DefaultPhysicalOperatorProvider>(options);
 }
 
-bool DefaultPhysicalOperatorProvider::isDemultiplex(const LogicalOperatorNodePtr& operatorNode) {
+bool DefaultPhysicalOperatorProvider::isDemultiplex(const LogicalOperatorPtr& operatorNode) {
     return operatorNode->getParents().size() > 1;
 }
 
-void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const LogicalOperatorPtr& operatorNode) {
     auto operatorOutputSchema = operatorNode->getOutputSchema();
     // A demultiplex operator has the same output schema as its child operator.
     auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create(operatorOutputSchema);
@@ -91,20 +91,20 @@ void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const Log
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
 }
 
-void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const LogicalOperatorPtr& operatorNode) {
     // the unionOperator operator has the same schema as the output schema of the operator node.
     auto unionOperator = PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndChildNodes(unionOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) {
     if (isDemultiplex(operatorNode)) {
         insertDemultiplexOperatorsBefore(operatorNode);
     }
 
-    if (operatorNode->instanceOf<UnaryOperatorNode>()) {
+    if (operatorNode->instanceOf<UnaryOperator>()) {
         lowerUnaryOperator(decomposedQueryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<BinaryOperatorNode>()) {
+    } else if (operatorNode->instanceOf<BinaryOperator>()) {
         lowerBinaryOperator(operatorNode);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -114,7 +114,7 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
 }
 
 void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                                         const LogicalOperatorNodePtr& operatorNode) {
+                                                         const LogicalOperatorPtr& operatorNode) {
 
     // If a unary operator has more than one parent, we introduce an implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1) {
@@ -125,8 +125,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
         throw QueryCompilationException("A unary operator should only have at most one parent.");
     }
 
-    if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        auto logicalSourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
+    if (operatorNode->instanceOf<SourceLogicalOperator>()) {
+        auto logicalSourceOperator = operatorNode->as<SourceLogicalOperator>();
         auto physicalSourceOperator =
             PhysicalOperators::PhysicalSourceOperator::create(getNextOperatorId(),
                                                               logicalSourceOperator->getOriginId(),
@@ -135,8 +135,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
                                                               logicalSourceOperator->getSourceDescriptor());
         physicalSourceOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSourceOperator);
-    } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        auto logicalSinkOperator = operatorNode->as<SinkLogicalOperatorNode>();
+    } else if (operatorNode->instanceOf<SinkLogicalOperator>()) {
+        auto logicalSinkOperator = operatorNode->as<SinkLogicalOperator>();
 
         auto physicalSinkOperator = PhysicalOperators::PhysicalSinkOperator::create(logicalSinkOperator->getInputSchema(),
                                                                                     logicalSinkOperator->getOutputSchema(),
@@ -144,29 +144,29 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
         physicalSinkOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSinkOperator);
         decomposedQueryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
-    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-        auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
+    } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
+        auto filterOperator = operatorNode->as<LogicalFilterOperator>();
         auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(filterOperator->getInputSchema(),
                                                                                         filterOperator->getOutputSchema(),
                                                                                         filterOperator->getPredicate());
         physicalFilterOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalFilterOperator);
-    } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
+    } else if (operatorNode->instanceOf<WindowOperator>()) {
         lowerWindowOperator(operatorNode);
-    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperator>()) {
         lowerWatermarkAssignmentOperator(operatorNode);
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
         lowerMapOperator(operatorNode);
-    } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<InferModel::LogicalInferModelOperator>()) {
         lowerInferModelOperator(operatorNode);
-    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
         lowerProjectOperator(operatorNode);
-    } else if (operatorNode->instanceOf<MapUDFLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<MapUDFLogicalOperator>()) {
         lowerUDFMapOperator(operatorNode);
-    } else if (operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<FlatMapUDFLogicalOperator>()) {
         lowerUDFFlatMapOperator(operatorNode);
-    } else if (operatorNode->instanceOf<LimitLogicalOperatorNode>()) {
-        auto limitOperator = operatorNode->as<LimitLogicalOperatorNode>();
+    } else if (operatorNode->instanceOf<LogicalLimitOperator>()) {
+        auto limitOperator = operatorNode->as<LogicalLimitOperator>();
         auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(limitOperator->getInputSchema(),
                                                                                       limitOperator->getOutputSchema(),
                                                                                       limitOperator->getLimit());
@@ -176,19 +176,19 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorNodePtr& operatorNode) {
-    if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorPtr& operatorNode) {
+    if (operatorNode->instanceOf<LogicalUnionOperator>()) {
         lowerUnionOperator(operatorNode);
-    } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
         lowerJoinOperator(operatorNode);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorPtr& operatorNode) {
 
-    auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
+    auto unionOperator = operatorNode->as<LogicalUnionOperator>();
     // this assumes that we applies the ProjectBeforeUnionRule and the input across all children is the same.
     if (!unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema())) {
         throw QueryCompilationException("The children of a union operator should have the same schema. Left:"
@@ -199,8 +199,8 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorNo
     operatorNode->replace(physicalUnionOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerProjectOperator(const LogicalOperatorNodePtr& operatorNode) {
-    auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
+void DefaultPhysicalOperatorProvider::lowerProjectOperator(const LogicalOperatorPtr& operatorNode) {
+    auto projectOperator = operatorNode->as<LogicalProjectionOperator>();
     auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(projectOperator->getInputSchema(),
                                                                                       projectOperator->getOutputSchema(),
                                                                                       projectOperator->getExpressions());
@@ -209,8 +209,8 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const LogicalOperator
     operatorNode->replace(physicalProjectOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerInferModelOperator(LogicalOperatorNodePtr operatorNode) {
-    auto inferModelOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
+void DefaultPhysicalOperatorProvider::lowerInferModelOperator(LogicalOperatorPtr operatorNode) {
+    auto inferModelOperator = operatorNode->as<InferModel::LogicalInferModelOperator>();
     auto physicalInferModelOperator =
         PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
                                                               inferModelOperator->getOutputSchema(),
@@ -220,8 +220,8 @@ void DefaultPhysicalOperatorProvider::lowerInferModelOperator(LogicalOperatorNod
     operatorNode->replace(physicalInferModelOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorNodePtr& operatorNode) {
-    auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
+void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr& operatorNode) {
+    auto mapOperator = operatorNode->as<LogicalMapOperator>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(mapOperator->getInputSchema(),
                                                                               mapOperator->getOutputSchema(),
                                                                               mapOperator->getMapExpression());
@@ -229,8 +229,8 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorNode
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const LogicalOperatorNodePtr& operatorNode) {
-    auto mapUDFOperator = operatorNode->as<MapUDFLogicalOperatorNode>();
+void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const LogicalOperatorPtr& operatorNode) {
+    auto mapUDFOperator = operatorNode->as<MapUDFLogicalOperator>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapUDFOperator::create(mapUDFOperator->getInputSchema(),
                                                                                  mapUDFOperator->getOutputSchema(),
                                                                                  mapUDFOperator->getUDFDescriptor());
@@ -238,8 +238,8 @@ void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const LogicalOperatorN
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOperatorNodePtr& operatorNode) {
-    auto flatMapUDFOperator = operatorNode->as<FlatMapUDFLogicalOperatorNode>();
+void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOperatorPtr& operatorNode) {
+    auto flatMapUDFOperator = operatorNode->as<FlatMapUDFLogicalOperator>();
     auto physicalMapOperator = PhysicalOperators::PhysicalFlatMapUDFOperator::create(flatMapUDFOperator->getInputSchema(),
                                                                                      flatMapUDFOperator->getOutputSchema(),
                                                                                      flatMapUDFOperator->getUDFDescriptor());
@@ -247,9 +247,9 @@ void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOpera
     operatorNode->replace(physicalMapOperator);
 }
 
-OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
+OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator,
                                                                            SchemaPtr outputSchema,
-                                                                           std::vector<OperatorNodePtr> children) {
+                                                                           std::vector<OperatorPtr> children) {
     if (children.empty()) {
         throw QueryCompilationException("There should be at least one child for the join operator " + joinOperator->toString());
     }
@@ -267,14 +267,14 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
     return children[0];
 }
 
-void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr& operatorNode) {
     lowerNautilusJoin(operatorNode);
 }
 
-void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr& operatorNode) {
     using namespace Runtime::Execution::Operators;
 
-    auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
+    auto joinOperator = operatorNode->as<LogicalJoinOperator>();
     const auto& joinDefinition = joinOperator->getJoinDefinition();
     const auto& joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
     const auto& joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
@@ -292,7 +292,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
         getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
     const auto joinStrategy = options->getStreamJoinStratgy();
 
-    const StreamJoinOperatorNodes streamJoinOperatorNodes(operatorNode, leftInputOperator, rightInputOperator);
+    const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(joinFieldNameLeft,
                                              joinFieldNameRight,
                                              windowSize,
@@ -306,10 +306,10 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
         case StreamJoinStrategy::HASH_JOIN_LOCAL:
         case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
         case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
-            joinOperatorHandler = lowerStreamingHashJoin(streamJoinOperatorNodes, streamJoinConfig);
+            joinOperatorHandler = lowerStreamingHashJoin(streamJoinOperators, streamJoinConfig);
             break;
         case StreamJoinStrategy::NESTED_LOOP_JOIN:
-            joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperatorNodes, streamJoinConfig);
+            joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
             break;
     }
 
@@ -348,17 +348,17 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
                                                                    options->getStreamJoinStratgy(),
                                                                    options->getWindowingStrategy());
 
-    streamJoinOperatorNodes.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
-    streamJoinOperatorNodes.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
-    streamJoinOperatorNodes.operatorNode->replace(joinProbeOperator);
+    streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+    streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+    streamJoinOperators.operatorNode->replace(joinProbeOperator);
 }
 
 Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators,
                                                               const StreamJoinConfigs& streamJoinConfig) {
 
     using namespace Runtime::Execution;
-    const auto joinOperator = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
+    const auto joinOperator = streamJoinOperators.operatorNode->as<LogicalJoinOperator>();
 
     Operators::NLJOperatorHandlerPtr joinOperatorHandler;
     if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
@@ -385,10 +385,10 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
 }
 
 Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperators& streamJoinOperators,
                                                         const StreamJoinConfigs& streamJoinConfig) {
     using namespace Runtime::Execution;
-    const auto joinOperator = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
+    const auto joinOperator = streamJoinOperators.operatorNode->as<LogicalJoinOperator>();
     Operators::HJOperatorHandlerPtr joinOperatorHandler;
     if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
         return Operators::HJOperatorHandlerSlicing::create(joinOperator->getAllInputOriginIds(),
@@ -420,7 +420,7 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
 }
 
 std::tuple<std::string, std::string>
-DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<JoinLogicalOperatorNode>& joinOperator,
+DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator,
                                                           const Windowing::TimeBasedWindowTypePtr& windowType) const {
     if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
         NES_DEBUG("Skip eventime identification as we use ingestion time");
@@ -454,8 +454,8 @@ DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const LogicalOperatorNodePtr& operatorNode) {
-    auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
+void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode) {
+    auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperator>();
     auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
         logicalWatermarkAssignment->getInputSchema(),
         logicalWatermarkAssignment->getOutputSchema(),
@@ -464,10 +464,10 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const Log
     operatorNode->replace(physicalWatermarkAssignment);
 }
 
-void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const LogicalOperatorNodePtr& operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode) {
 
     NES_DEBUG("Create Thread local window aggregation");
-    auto windowOperator = operatorNode->as<WindowOperatorNode>();
+    auto windowOperator = operatorNode->as<WindowOperator>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
@@ -506,8 +506,8 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     operatorNode->replace(windowSink);
 }
 
-void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorNodePtr& operatorNode) {
-    auto windowOperator = operatorNode->as<WindowOperatorNode>();
+void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorPtr& operatorNode) {
+    auto windowOperator = operatorNode->as<WindowOperator>();
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
@@ -518,10 +518,10 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorN
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
-    if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<LogicalWindowOperator>()) {
         // handle if threshold window
         //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
-        auto windowType = operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType();
+        auto windowType = operatorNode->as<WindowOperator>()->getWindowDefinition()->getWindowType();
         if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
             auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
             // check different content-based window types

@@ -17,7 +17,7 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const SchemaPtr& inputSchema)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
+    : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
 
 PhysicalOperatorPtr PhysicalEmitOperator::create(SchemaPtr inputSchema) {
     return create(getNextOperatorId(), std::move(inputSchema));
@@ -34,7 +34,7 @@ std::string PhysicalEmitOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalEmitOperator::copy() {
+OperatorPtr PhysicalEmitOperator::copy() {
     auto result = create(id, inputSchema);
     result->addAllProperties(properties);
     return result;

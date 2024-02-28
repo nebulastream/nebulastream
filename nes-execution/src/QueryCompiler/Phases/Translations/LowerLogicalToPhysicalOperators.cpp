@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -37,7 +37,7 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
             NES_DEBUG("Skipped node: {} as it is already a physical operator.", node->toString());
             continue;
         }
-        provider->lower(decomposedQueryPlan, node->as<LogicalOperatorNode>());
+        provider->lower(decomposedQueryPlan, node->as<LogicalOperator>());
     }
     return decomposedQueryPlan;
 }

@@ -43,8 +43,8 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     static const bool DEFAULT_ML_HARDWARE = false;
 
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     /**
@@ -66,20 +66,20 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
                                  PlacementAmendmentMode placementAmendmentMode);
 
     void performOperatorPlacement(SharedQueryId sharedQueryId,
-                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+                                  const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     void identifyPinningLocation(SharedQueryId sharedQueryId,
-                                 const LogicalOperatorNodePtr& logicalOperator,
+                                 const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
      * @brief checks if the ratio of #sink_fields/#source_fields > 1/product of all selectivities
      * @param operatorNode
      * @return
      */
-    bool pushUpBasedOnFilterSelectivity(const LogicalOperatorNodePtr& operatorNode);
+    bool pushUpBasedOnFilterSelectivity(const LogicalOperatorPtr& operatorNode);
 
     /**
      * @brief removes redundant operators

@@ -25,7 +25,7 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -85,13 +85,13 @@ TEST_F(PredicateReorderingRuleTest, testReorderingChain) {
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperatorHighSelectivity = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.9);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.9);
     ++itr;
     const NodePtr filterOperatorMediumSelectivity = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.5);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.5);
     ++itr;
     const NodePtr filterOperatorLowSelectivity = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.1);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.1);
     ++itr;
     const NodePtr srcOperator = (*itr);
 
@@ -131,10 +131,10 @@ TEST_F(PredicateReorderingRuleTest, testReorderingChainNotApplicable) {
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperatorLowSelectivity = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.2);
     ++itr;
     const NodePtr filterOperatorMediumSelectivity = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.6);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.6);
     ++itr;
     const NodePtr srcOperator = (*itr);
 
@@ -179,29 +179,29 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperator1 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.8);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.8);
     ++itr;
     const NodePtr filterOperator2 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.2);
     ++itr;
     const NodePtr filterOperator3 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.6);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.6);
     ++itr;
     const NodePtr projectionOperator = (*itr);
     ++itr;
     const NodePtr filterOperator4 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.2);
     ++itr;
     const NodePtr filterOperator5 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.2);
     ++itr;
     const NodePtr mapOperator = (*itr);
     ++itr;
     const NodePtr filterOperator6 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.6);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.6);
     ++itr;
     const NodePtr filterOperator7 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.4);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.4);
     ++itr;
     const NodePtr srcOperator = (*itr);
 
@@ -262,13 +262,13 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator) {
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperatorPQ1 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.2);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.2);
     ++itr;
     const NodePtr filterOperatorPQ2 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.6);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.6);
     ++itr;
     const NodePtr filterOperatorPQ3 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.4);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.4);
     ++itr;
     const NodePtr mapOperatorPQ = (*itr);
     ++itr;
@@ -279,10 +279,10 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator) {
     const NodePtr srcOperatorSQ = (*itr);
     ++itr;
     const NodePtr filterOperatorPQ4 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.7);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.7);
     ++itr;
     const NodePtr filterOperatorPQ5 = (*itr);
-    (*itr)->as<FilterLogicalOperatorNode>()->setSelectivity(0.3);
+    (*itr)->as<LogicalFilterOperator>()->setSelectivity(0.3);
     ++itr;
     const NodePtr srcOperatorPQ = (*itr);
     ++itr;

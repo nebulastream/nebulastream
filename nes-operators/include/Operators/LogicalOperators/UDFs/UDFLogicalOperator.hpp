@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFLOGICALOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFLOGICALOPERATOR_HPP_
 
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -27,7 +27,7 @@ using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 /**
  * Logical operator node for a udf. This class acts as a parent class for any udf logical operator node
  */
-class UDFLogicalOperator : public LogicalUnaryOperatorNode {
+class UDFLogicalOperator : public LogicalUnaryOperator {
 
   public:
     /**
@@ -38,7 +38,7 @@ class UDFLogicalOperator : public LogicalUnaryOperatorNode {
     UDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id);
 
     /**
-     * @see LogicalOperatorNode#inferStringSignature
+     * @see LogicalOperator#inferStringSignature
      */
     void inferStringSignature() override;
 
@@ -49,19 +49,19 @@ class UDFLogicalOperator : public LogicalUnaryOperatorNode {
     Catalogs::UDF::UDFDescriptorPtr getUDFDescriptor() const;
 
     /**
-     * @see LogicalUnaryOperatorNode#inferSchema
+     * @see LogicalUnaryOperator#inferSchema
      *
      * Sets the output schema contained in the UDFDescriptor as the output schema of the operator.
      */
     bool inferSchema() override;
 
     /**
-     * @see OperatorNode#copy
+     * @see Operator#copy
      */
-    virtual OperatorNodePtr copy() override = 0;
+    virtual OperatorPtr copy() override = 0;
 
     /**
-     * Two MapUdfLogicalOperatorNode are equal when the wrapped UDFDescriptor are equal.
+     * Two MapUdfLogicalOperator are equal when the wrapped UDFDescriptor are equal.
      */
     [[nodiscard]] virtual bool equal(const NodePtr& other) const override;
 

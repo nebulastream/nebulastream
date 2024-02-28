@@ -65,8 +65,8 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 using ExecutableSliceAggregationTriggerActionPtr =
     std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
-class LogicalWindowDefinition;
-using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
+class LogicalWindowDescriptor;
+using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 
 class WindowAggregationDescriptor;
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;

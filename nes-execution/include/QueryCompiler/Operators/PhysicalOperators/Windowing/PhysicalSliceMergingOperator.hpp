@@ -28,13 +28,13 @@ class PhysicalSliceMergingOperator : public PhysicalWindowOperator, public Abstr
     PhysicalSliceMergingOperator(OperatorId id,
                                  SchemaPtr inputSchema,
                                  SchemaPtr outputSchema,
-                                 Windowing::LogicalWindowDefinitionPtr windowDefinition);
+                                 Windowing::LogicalWindowDescriptorPtr windowDefinition);
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
+                                      const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 

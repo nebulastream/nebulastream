@@ -31,8 +31,8 @@ using ExprPtr = std::shared_ptr<expr>;
 }// namespace z3
 
 namespace NES {
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
@@ -80,8 +80,8 @@ class SignatureContainmentCheck {
      * @param rightOperator the current operator of the right query
      * @return enum with containment relationships
      */
-    ContainmentRelationshipAndOperatorChainPtr checkContainmentForBottomUpMerging(const LogicalOperatorNodePtr& leftSignature,
-                                                                                  const LogicalOperatorNodePtr& rightSignature);
+    ContainmentRelationshipAndOperatorChainPtr checkContainmentForBottomUpMerging(const LogicalOperatorPtr& leftSignature,
+                                                                                  const LogicalOperatorPtr& rightSignature);
 
     /**
      * @brief Check containment relationships for the given signatures as follows
@@ -97,8 +97,8 @@ class SignatureContainmentCheck {
      * equivalence or no containment was detected.
      */
     ContainmentRelationshipAndOperatorChainPtr
-    checkContainmentRelationshipForTopDownMerging(const LogicalOperatorNodePtr& leftOperator,
-                                                  const LogicalOperatorNodePtr& rightOperator);
+    checkContainmentRelationshipForTopDownMerging(const LogicalOperatorPtr& leftOperator,
+                                                  const LogicalOperatorPtr& rightOperator);
 
   private:
     /**

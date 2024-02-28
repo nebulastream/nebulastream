@@ -15,7 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -56,13 +56,13 @@ class PipeliningPhaseTest : public Testing::BaseUnitTest {
 
   protected:
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
-    LogicalOperatorNodePtr sourceOp1, sourceOp2, sourceOp3, sourceOp4, unionOp1;
-    LogicalOperatorNodePtr watermarkAssigner1, centralWindowOperator, sliceCreationOperator, windowComputation, sliceMerging;
-    LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
-    LogicalOperatorNodePtr sinkOp1, sinkOp2;
-    LogicalOperatorNodePtr mapOp;
-    LogicalOperatorNodePtr projectPp;
-    JoinLogicalOperatorNodePtr joinOp1;
+    LogicalOperatorPtr sourceOp1, sourceOp2, sourceOp3, sourceOp4, unionOp1;
+    LogicalOperatorPtr watermarkAssigner1, centralWindowOperator, sliceCreationOperator, windowComputation, sliceMerging;
+    LogicalOperatorPtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
+    LogicalOperatorPtr sinkOp1, sinkOp2;
+    LogicalOperatorPtr mapOp;
+    LogicalOperatorPtr projectPp;
+    LogicalJoinOperatorPtr joinOp1;
     static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
     static constexpr uint64_t defaultSharedQueryId = 0;
 };
@@ -390,9 +390,9 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
     auto windowAssignment =
         PhysicalWatermarkAssignmentOperator::create(SchemaPtr(), SchemaPtr(), WatermarkStrategyDescriptorPtr());
     auto slicePreAggregation =
-        PhysicalSlicePreAggregationOperator::create(getNextOperatorId(), SchemaPtr(), SchemaPtr(), LogicalWindowDefinitionPtr());
+        PhysicalSlicePreAggregationOperator::create(getNextOperatorId(), SchemaPtr(), SchemaPtr(), LogicalWindowDescriptorPtr());
     auto windowSink =
-        PhysicalWindowSinkOperator::create(getNextOperatorId(), SchemaPtr(), SchemaPtr(), LogicalWindowDefinitionPtr());
+        PhysicalWindowSinkOperator::create(getNextOperatorId(), SchemaPtr(), SchemaPtr(), LogicalWindowDescriptorPtr());
     auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);

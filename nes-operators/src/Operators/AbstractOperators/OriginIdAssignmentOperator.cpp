@@ -17,7 +17,7 @@
 namespace NES {
 
 OriginIdAssignmentOperator::OriginIdAssignmentOperator(OperatorId operatorId, OriginId originId)
-    : OperatorNode(operatorId), originId(originId) {}
+    : Operator(operatorId), originId(originId) {}
 
 const std::vector<OriginId> OriginIdAssignmentOperator::getOutputOriginIds() const {
     if (originId == INVALID_ORIGIN_ID) {

@@ -70,7 +70,7 @@ class PhysicalFlatMapUDFOperator : public PhysicalUnaryOperator {
     Catalogs::UDF::UDFDescriptorPtr getUDFDescriptor();
 
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
   protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;

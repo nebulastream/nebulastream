@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/OperatorNode.hpp>
+#include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <utility>
 
@@ -20,10 +20,10 @@ namespace NES::QueryCompilation {
 ExecutableOperator::ExecutableOperator(OperatorId id,
                                        Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
-    : OperatorNode(id), UnaryOperatorNode(id), executablePipelineStage(std::move(executablePipelineStage)),
+    : Operator(id), UnaryOperator(id), executablePipelineStage(std::move(executablePipelineStage)),
       operatorHandlers(std::move(operatorHandlers)) {}
 
-OperatorNodePtr ExecutableOperator::create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+OperatorPtr ExecutableOperator::create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                            std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
     return std::make_shared<ExecutableOperator>(
         ExecutableOperator(getNextOperatorId(), std::move(executablePipelineStage), std::move(operatorHandlers)));
@@ -37,6 +37,6 @@ std::vector<Runtime::Execution::OperatorHandlerPtr> ExecutableOperator::getOpera
 
 std::string ExecutableOperator::toString() const { return "ExecutableOperator"; }
 
-OperatorNodePtr ExecutableOperator::copy() { return create(executablePipelineStage, operatorHandlers); }
+OperatorPtr ExecutableOperator::copy() { return create(executablePipelineStage, operatorHandlers); }
 
 }// namespace NES::QueryCompilation

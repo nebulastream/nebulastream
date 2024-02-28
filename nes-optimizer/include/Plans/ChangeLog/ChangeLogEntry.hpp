@@ -20,8 +20,8 @@
 #include <set>
 
 namespace NES {
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 }// namespace NES
 
 namespace NES::Optimizer::Experimental {
@@ -43,18 +43,18 @@ class ChangeLogEntry {
      * @param downstreamOperators: downstream operator set
      * @return shared pointer to change log entry
      */
-    static ChangeLogEntryPtr create(std::set<LogicalOperatorNodePtr> upstreamOperators,
-                                    std::set<LogicalOperatorNodePtr> downstreamOperators);
+    static ChangeLogEntryPtr create(std::set<LogicalOperatorPtr> upstreamOperators,
+                                    std::set<LogicalOperatorPtr> downstreamOperators);
 
     // Impacted upstream operators
-    const std::set<LogicalOperatorNodePtr> upstreamOperators;
+    const std::set<LogicalOperatorPtr> upstreamOperators;
     // Impacted downstream operators
-    const std::set<LogicalOperatorNodePtr> downstreamOperators;
+    const std::set<LogicalOperatorPtr> downstreamOperators;
     // A partially ordered set (poset) of operator ids that represent the sub-query plan captured in the changelog entry
     const std::set<OperatorId> poSetOfSubQueryPlan;
 
   private:
-    ChangeLogEntry(std::set<LogicalOperatorNodePtr> upstreamOperators, std::set<LogicalOperatorNodePtr> downstreamOperators);
+    ChangeLogEntry(std::set<LogicalOperatorPtr> upstreamOperators, std::set<LogicalOperatorPtr> downstreamOperators);
 
     /**
      * @brief: This method computes the partially ordered set of operator ids representing the sub-query plan captured by change log entry.

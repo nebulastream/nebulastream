@@ -24,11 +24,11 @@ namespace NES {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+class LogicalFilterOperator;
+using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -77,10 +77,10 @@ class PredicateReorderingRule : public BaseRewriteRule {
   private:
     /**
      * @brief Given a node, check if the parent or the child is a filter.
-     * @param OperatorNodePtr: the node to be check
+     * @param OperatorPtr: the node to be check
      * @return boolean, true when a consecutive filter is found
      */
-    static std::vector<FilterLogicalOperatorNodePtr> getConsecutiveFilters(const NES::FilterLogicalOperatorNodePtr& firstFilter);
+    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_PREDICATEREORDERINGRULE_HPP_

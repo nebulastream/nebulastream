@@ -12,11 +12,11 @@
     limitations under the License.
 */
 #include <Catalogs/Topology/Topology.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -41,10 +41,10 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
         //replace the system generated operators with their non system up- or downstream operators
         auto upstreamLogicalOperatorId =
             std::any_cast<OperatorId>(upstreamOperator->getProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID));
-        upstreamOperator = queryPlanForSharedQuery->getOperatorWithId(upstreamLogicalOperatorId)->as<LogicalOperatorNode>();
+        upstreamOperator = queryPlanForSharedQuery->getOperatorWithId(upstreamLogicalOperatorId)->as<LogicalOperator>();
         auto downstreamLogicalOperatorId =
             std::any_cast<OperatorId>(downstreamOperator->getProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID));
-        downstreamOperator = queryPlanForSharedQuery->getOperatorWithId(downstreamLogicalOperatorId)->as<LogicalOperatorNode>();
+        downstreamOperator = queryPlanForSharedQuery->getOperatorWithId(downstreamLogicalOperatorId)->as<LogicalOperator>();
     }
 
     std::set<OperatorId> upstreamPinned;
@@ -78,13 +78,13 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
 
             //at this point all reachable downstream nodes in the new topology are found for a specific operator
             //now find the closest downstream operator hosted on one of these reachable nodes
-            std::queue<LogicalOperatorNodePtr> queryPlanBFSQueue;
+            std::queue<LogicalOperatorPtr> queryPlanBFSQueue;
             std::set<OperatorId> visitedOperators;
 
             //populate queue with the non system parents of the upstream operator
             auto startOperatorInSharedQueryPlan = queryPlanForSharedQuery->getOperatorWithId(upstreamOperator->getId());
             for (const auto& parent : startOperatorInSharedQueryPlan->getParents()) {
-                queryPlanBFSQueue.push(parent->as<LogicalOperatorNode>());
+                queryPlanBFSQueue.push(parent->as<LogicalOperator>());
             }
 
             while (!queryPlanBFSQueue.empty()) {
@@ -104,11 +104,11 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
                     //which is reachable by this node as well and pin that one.
                     downstreamPinned.erase(currentOperator->getId());
                     for (const auto& parent : currentOperator->getParents()) {
-                        queryPlanBFSQueue.push(parent->as<LogicalOperatorNode>());
+                        queryPlanBFSQueue.push(parent->as<LogicalOperator>());
                     }
                     toRemove.insert(currentOperator->getId());
                     for (const auto& child : currentOperator->getChildren()) {
-                        auto nonSystemChild = child->as<LogicalOperatorNode>();
+                        auto nonSystemChild = child->as<LogicalOperator>();
                         if (!toRemove.contains(nonSystemChild->getId())) {
                             upstreamPinned.insert(nonSystemChild->getId());
                         }
@@ -121,12 +121,12 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     return {upstreamPinned, downstreamPinned};
 }
 
-std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
+std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>>
 findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
                             Optimizer::ExecutionNodeWLock lockedUpstreamNode,
                             Optimizer::ExecutionNodeWLock lockedDownstreamNode) {
     const auto& upstreamSubPlans = lockedUpstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
-    std::unordered_map<Network::NesPartition, LogicalOperatorNodePtr> upstreamSinkMap;
+    std::unordered_map<Network::NesPartition, LogicalOperatorPtr> upstreamSinkMap;
     auto downstreamWorkerId = lockedDownstreamNode->operator*()->getId();
     for (const auto& subPlan : upstreamSubPlans) {
         for (const auto& sinkOperator : subPlan->getSinkOperators()) {
@@ -141,7 +141,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
 
     const auto& downstreamSubPlans = lockedDownstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
     auto upstreamWorkerId = lockedUpstreamNode->operator*()->getId();
-    std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>> pairs;
+    std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>> pairs;
     for (const auto& subPlan : downstreamSubPlans) {
         for (const auto& sourceOperator : subPlan->getSourceOperators()) {
             auto downNetworkSourceDescriptor =

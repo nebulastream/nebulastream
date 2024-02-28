@@ -26,8 +26,8 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
@@ -91,8 +91,8 @@ class PlacementRemovalStrategy {
      * @return map of deployment context containing updated decomposed query plans
      */
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
@@ -106,8 +106,8 @@ class PlacementRemovalStrategy {
      * @param upStreamPinnedOperators: the pinned upstream operators
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
-    void performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
-                              const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
+    void performPathSelection(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators,
+                              const std::set<LogicalOperatorPtr>& downStreamPinnedOperators);
 
     /**
      * @brief Select path for placement using pessimistic 2PL strategy. If attempt fails then an exponential retries are performed.
@@ -148,7 +148,7 @@ class PlacementRemovalStrategy {
     PlacementAmendmentMode placementAmendmentMode;
     PathFinderPtr pathFinder;
     std::set<WorkerId> workerIdsInBFS;
-    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
+    std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
     std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToDecomposedQueryPlanIds;
     std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;

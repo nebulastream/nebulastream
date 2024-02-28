@@ -76,7 +76,7 @@ class PlanIterator {
         NodePtr operator*();
 
       private:
-        explicit iterator(const std::vector<OperatorNodePtr>& rootOperators);
+        explicit iterator(const std::vector<OperatorPtr>& rootOperators);
         explicit iterator();
         std::stack<NodePtr> workStack;
     };
@@ -100,7 +100,7 @@ class PlanIterator {
     std::vector<NodePtr> snapshot();
 
   private:
-    std::vector<OperatorNodePtr> rootOperators;
+    std::vector<OperatorPtr> rootOperators;
 };
 
 }// namespace NES

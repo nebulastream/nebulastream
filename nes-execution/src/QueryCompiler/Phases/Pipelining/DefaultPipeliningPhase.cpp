@@ -40,7 +40,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomp
     NES_DEBUG("Pipeline: query id: {} - {}",
               decomposedQueryPlan->getSharedQueryId(),
               decomposedQueryPlan->getDecomposedQueryPlanId());
-    std::map<OperatorNodePtr, OperatorPipelinePtr> pipelineOperatorMap;
+    std::map<OperatorPtr, OperatorPipelinePtr> pipelineOperatorMap;
     auto pipelinePlan =
         PipelineQueryPlan::create(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId());
     for (const auto& sinkOperators : decomposedQueryPlan->getRootOperators()) {
@@ -54,7 +54,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomp
 }
 
 void DefaultPipeliningPhase::processMultiplex(const PipelineQueryPlanPtr& pipelinePlan,
-                                              std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                              std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                               OperatorPipelinePtr currentPipeline,
                                               const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
@@ -73,7 +73,7 @@ void DefaultPipeliningPhase::processMultiplex(const PipelineQueryPlanPtr& pipeli
 }
 
 void DefaultPipeliningPhase::processDemultiplex(const PipelineQueryPlanPtr& pipelinePlan,
-                                                std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                                std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                                 OperatorPipelinePtr currentPipeline,
                                                 const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
@@ -99,7 +99,7 @@ void DefaultPipeliningPhase::processDemultiplex(const PipelineQueryPlanPtr& pipe
 }
 
 void DefaultPipeliningPhase::processPipelineBreakerOperator(const PipelineQueryPlanPtr& pipelinePlan,
-                                                            std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                                            std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                                             const OperatorPipelinePtr& currentPipeline,
                                                             const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // for pipeline breakers we create a new pipeline
@@ -114,7 +114,7 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(const PipelineQueryP
 }
 
 void DefaultPipeliningPhase::processFusibleOperator(const PipelineQueryPlanPtr& pipelinePlan,
-                                                    std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                                    std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                                     const OperatorPipelinePtr& currentPipeline,
                                                     const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // for operator we can fuse, we just append them to the current pipelie.
@@ -125,7 +125,7 @@ void DefaultPipeliningPhase::processFusibleOperator(const PipelineQueryPlanPtr& 
 }
 
 void DefaultPipeliningPhase::processSink(const PipelineQueryPlanPtr& pipelinePlan,
-                                         std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                         std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                          const OperatorPipelinePtr& currentPipeline,
                                          const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     for (const auto& child : currentOperator->getChildren()) {
@@ -137,7 +137,7 @@ void DefaultPipeliningPhase::processSink(const PipelineQueryPlanPtr& pipelinePla
 }
 
 void DefaultPipeliningPhase::processSource(const PipelineQueryPlanPtr& pipelinePlan,
-                                           std::map<OperatorNodePtr, OperatorPipelinePtr>&,
+                                           std::map<OperatorPtr, OperatorPipelinePtr>&,
                                            OperatorPipelinePtr currentPipeline,
                                            const PhysicalOperators::PhysicalOperatorPtr& sourceOperator) {
     // Source operators will always be part of their own pipeline.
@@ -152,7 +152,7 @@ void DefaultPipeliningPhase::processSource(const PipelineQueryPlanPtr& pipelineP
 }
 
 void DefaultPipeliningPhase::process(const PipelineQueryPlanPtr& pipelinePlan,
-                                     std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                     std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                      const OperatorPipelinePtr& currentPipeline,
                                      const PhysicalOperators::PhysicalOperatorPtr& currentOperators) {
 

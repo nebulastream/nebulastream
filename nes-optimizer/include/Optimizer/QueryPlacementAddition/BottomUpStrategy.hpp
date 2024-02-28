@@ -41,8 +41,8 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
                                            PlacementAmendmentMode placementAmendmentMode);
 
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -57,8 +57,8 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
      * @param pinnedDownStreamNodes: pinned downstream operators
      * @throws exception if the operator can't be placed.
      */
-    void pinOperators(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                      const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+    void pinOperators(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to pin input operator on the input topology node otherwise find appropriate node to pin the operator
@@ -66,9 +66,9 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
      * @param candidateTopologyNode : the candidate topology node to place operator on
      * @param pinnedDownStreamOperators: list of pinned downstream node after which placement stops
      */
-    void identifyPinningLocation(const LogicalOperatorNodePtr& logicalOperator,
+    void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 };
 }// namespace NES::Optimizer
 

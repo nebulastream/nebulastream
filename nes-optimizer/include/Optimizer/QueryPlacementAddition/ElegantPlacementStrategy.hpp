@@ -52,8 +52,8 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
                                            PlacementAmendmentMode placementAmendmentMode);
 
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion) override;
 
   private:
@@ -70,8 +70,8 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
      * @param pinnedDownStreamOperators: pinned downstream operators of the plan to be placed
      * @return json representing the payload
      */
-    void prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+    void prepareQueryPayload(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                             const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                              nlohmann::json&);
 
     /**
@@ -87,15 +87,15 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
      * @param response: Json representing the placement response received from the external service
      */
     void pinOperatorsBasedOnElegantService(SharedQueryId sharedQueryId,
-                                           const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                           const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                            cpr::Response& response) const;
 
     /**
-     * @brief Add a base64-transformed Java bytecode list to the JSON representation of the operator, if the operator is a MapUDFLogicalOperatorNode or FlatMapUDFLogicalOperatorNode. Otherwise, add an empty field.
+     * @brief Add a base64-transformed Java bytecode list to the JSON representation of the operator, if the operator is a MapUDFLogicalOperator or FlatMapUDFLogicalOperator. Otherwise, add an empty field.
      * @param logicalOperator The logical operator that is processed.
      * @param node Target JSON operator.
      */
-    void addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node);
+    void addJavaUdfByteCodeField(const OperatorPtr& logicalOperator, nlohmann::json& node);
 
     std::string serviceURL;
     float timeWeight;

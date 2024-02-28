@@ -16,12 +16,12 @@
 #define NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_
 
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Statistic {
 
-class LogicalStatisticWindowOperator : public LogicalUnaryOperatorNode {
+class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
   public:
     LogicalStatisticWindowOperator(OperatorId id,
                                 Windowing::WindowTypePtr windowType,
@@ -62,7 +62,7 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperatorNode {
      * @brief Creates a copy of this operator with
      * @return
      */
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
      * @brief Getter for the window type
