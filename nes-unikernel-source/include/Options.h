@@ -27,6 +27,7 @@ struct Options {
     NES::PartitionId partitionId;
     NES::SubpartitionId subPartitionId;
     NES::SchemaPtr schema;
+    boost::filesystem::path path;
     size_t delayInMS;
     size_t bufferSize;
     NES::FormatTypes format;

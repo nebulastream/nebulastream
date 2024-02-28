@@ -20,4 +20,5 @@ add_source_files(unikernel-test-lib
         Parser.cpp
         CSVParser.cpp
         NESBinaryParser.cpp
+        JSONParser.cpp
         )

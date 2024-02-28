@@ -24,6 +24,7 @@
 #include <Sinks/Formats/FormatType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <boost/filesystem.hpp>
 #include <queue>
 #include <type_traits>
 #include <yaml-cpp/yaml.h>
@@ -99,7 +100,7 @@ static NES::BasicType toBasicType(NES::DataTypePtr dt) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-enum SchemaType { NEXMARK_BID, NEXMARK_PERSON, NEXMARK_AUCTION, MANUAL };
+enum SchemaType { NEXMARK_BID, NEXMARK_PERSON, NEXMARK_AUCTION, MANUAL, DATA_FILE };
 struct SchemaConfiguration {
     SchemaType type = MANUAL;
     std::vector<SchemaField> fields;
@@ -187,24 +188,34 @@ struct convert<SinkEndpointConfiguration> {
 }// namespace YAML
 
 struct SourceEndpointConfiguration {
-    NES::QuerySubPlanId subQueryID;
+    NES::QuerySubPlanId subQueryID{};
     SchemaConfiguration schema;
+    std::optional<boost::filesystem::path> path;
     std::optional<size_t> numberOfBuffers;
     std::optional<bool> print;
     std::string ip;
-    uint32_t port;
-    NES::NodeId nodeId;
-    NES::OriginId originId;
+    uint32_t port{};
+    NES::NodeId nodeId{};
+    NES::OriginId originId{};
     std::optional<size_t> delayInMS;
     SourceType type;
 };
 
 namespace YAML {
 template<>
+struct convert<boost::filesystem::path> {
+    static Node encode(const boost::filesystem::path& rhs) { return Node(rhs.string()); }
+    static Node decode(const Node& node, boost::filesystem::path& rhs) {
+        rhs = node.as<std::string>();
+        return node;
+    }
+};
+template<>
 struct convert<SourceEndpointConfiguration> {
     static Node encode(const SourceEndpointConfiguration& rhs) {
         Node node;
         UNIKERNEL_MODEL_YAML_ENCODE(schema);
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(path);
         UNIKERNEL_MODEL_YAML_ENCODE(ip);
         UNIKERNEL_MODEL_YAML_ENCODE(port);
         UNIKERNEL_MODEL_YAML_ENCODE_OPT(delayInMS);
@@ -223,6 +234,7 @@ struct convert<SourceEndpointConfiguration> {
 
     static Node decode(const Node& node, SourceEndpointConfiguration& rhs) {
         UNIKERNEL_MODEL_YAML_DECODE(ip);
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(path);
         UNIKERNEL_MODEL_YAML_DECODE(schema);
         UNIKERNEL_MODEL_YAML_DECODE(port);
         UNIKERNEL_MODEL_YAML_DECODE_OPT(delayInMS);
