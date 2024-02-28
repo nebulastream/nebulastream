@@ -34,41 +34,36 @@ class APrioriDataGenerator {
     virtual std::span<const char> get_chunk(size_t chunkIndex) = 0;
 };
 
-class CSVFileDataGenerator : public APrioriDataGenerator {
-    const char* filename;
-    std::vector<std::vector<char>> data_chunks;
+class DirectFileDataGenerator : public APrioriDataGenerator {
+    boost::filesystem::path filename;
+    std::vector<std::unique_ptr<char[]>> data_chunks;
     std::jthread generatorThread;
     std::atomic<bool> done = false;
+    size_t file_size = 0;
+    constexpr static size_t chunk_size = 8192 + 8;
 
   public:
-    explicit CSVFileDataGenerator(const char* filename) : filename(filename) {}
+    explicit DirectFileDataGenerator(boost::filesystem::path filename) : filename(std::move(filename)) {}
 
     void startGenerator(size_t /*numberOfBuffers*/) override {
+        NES_INFO("Starting DirectFileDataGenerator");
         generatorThread = std::jthread([this]() {
             boost::filesystem::ifstream file(filename);
             NES_ASSERT(file.good(), "Could not open file");
-            std::string lineBuffer;
-            while (true) {
-                std::vector<char> chunk;
-                size_t tuplesInChunk = 0;
-                while (tuplesInChunk < 150 && std::getline(file, lineBuffer)) {
-                    std::ranges::copy(lineBuffer, std::back_inserter(chunk));
-                    chunk.back() = '\n';
-                    tuplesInChunk++;
-                };
-                data_chunks.emplace_back(std::move(chunk));
-                if (tuplesInChunk < 150)
-                    break;
-            }
+            file_size = boost::filesystem::file_size(filename);
+            auto chunk = std::make_unique<char[]>(file_size);
+            file.read(chunk.get(), file_size);
+            data_chunks.emplace_back(std::move(chunk));
             done.store(true);
-            NES_INFO("Loaded {} chunks", data_chunks.size());
+            NES_INFO("Loaded {} bytes", file_size);
         });
     }
 
     std::span<const char> get_chunk(size_t chunk_index) override {
-        if (chunk_index >= data_chunks.size())
+        if (chunk_index * chunk_size >= file_size)
             return {};
-        return {data_chunks[chunk_index].data(), data_chunks[chunk_index].size()};
+        return {data_chunks[0].get() + (chunk_index * chunk_size),
+                data_chunks[0].get() + std::min(chunk_index + 1 * chunk_size, file_size)};
     }
 
     void wait() override {
@@ -208,8 +203,6 @@ class TcpServer {
             return;
         }
 
-        NES_INFO("Chunk {}\n", chunk_index);
-
         if (print) {
             NES_INFO("Chunk {}\n{}", chunk_index, std::string_view{chunk.data(), chunk.size()});
         }
@@ -321,6 +314,20 @@ int runTcpSource(const Options& options, std::unique_ptr<APrioriDataGenerator> g
     return 0;
 }
 
+bool hasFormatMismatch(Options options) {
+    if (options.path.extension() == ".csv" && options.format == NES::FormatTypes::CSV_FORMAT) {
+        return false;
+    }
+    if (options.path.extension() == ".bin" && options.format == NES::FormatTypes::NES_FORMAT) {
+        return false;
+    }
+    if (options.path.extension() == ".json" && options.format == NES::FormatTypes::JSON_FORMAT) {
+        return false;
+    }
+
+    return true;
+}
+
 int main(int argc, char* argv[]) {
     NES::Logger::setupLogging("unikernel_source.log", NES::LogLevel::LOG_DEBUG);
     auto optionsResult = Options::fromCLI(argc, argv);
@@ -331,7 +338,12 @@ int main(int argc, char* argv[]) {
     auto options = optionsResult.assume_value();
     std::unique_ptr<APrioriDataGenerator> dataGenerator;
 
-    dataGenerator = std::make_unique<NESAPrioriDataGenerator>(options);
+    if (options.dataSource == DATA_FILE && !hasFormatMismatch(options)) {
+        dataGenerator = std::make_unique<DirectFileDataGenerator>(options.path);
+    } else {
+        dataGenerator = std::make_unique<NESAPrioriDataGenerator>(options);
+    }
+
     dataGenerator->startGenerator(options.numberOfBuffers);
 
     if (options.type == NetworkSource) {
