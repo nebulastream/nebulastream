@@ -100,7 +100,7 @@ static NES::BasicType toBasicType(NES::DataTypePtr dt) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-enum SchemaType { NEXMARK_BID, NEXMARK_PERSON, NEXMARK_AUCTION, MANUAL, DATA_FILE };
+enum SchemaType { NEXMARK_BID, NEXMARK_PERSON, NEXMARK_AUCTION, MANUAL };
 struct SchemaConfiguration {
     SchemaType type = MANUAL;
     std::vector<SchemaField> fields;
@@ -130,7 +130,8 @@ struct convert<SchemaConfiguration> {
     static Node decode(const Node& node, SchemaConfiguration& rhs) {
         rhs.type = MANUAL;
         if (node["type"]) {
-            auto opt = magic_enum::enum_cast<SchemaType>(node["type"].as<std::string>());
+            auto value = node["type"].as<std::string>();
+            auto opt = magic_enum::enum_cast<SchemaType>(value);
             NES_ASSERT(opt.has_value(), "Unknown SchemaType");
             rhs.type = opt.value();
             rhs.fields.clear();
@@ -187,12 +188,38 @@ struct convert<SinkEndpointConfiguration> {
 };
 }// namespace YAML
 
+enum DataSourceType {
+    DATA_FILE,
+    ADHOC_GENERATOR,
+};
+
+namespace YAML {
+template<>
+struct convert<NES::FormatTypes> {
+    static Node encode(const NES::FormatTypes& rhs) { return Node(std::string(magic_enum::enum_name<>(rhs))); }
+    static Node decode(const Node& node, NES::FormatTypes& rhs) {
+        rhs = magic_enum::enum_cast<NES::FormatTypes>(node.as<std::string>()).value();
+        return node;
+    }
+};
+template<>
+struct convert<DataSourceType> {
+    static Node encode(const DataSourceType& rhs) { return Node(std::string(magic_enum::enum_name<>(rhs))); }
+    static Node decode(const Node& node, DataSourceType& rhs) {
+        rhs = magic_enum::enum_cast<DataSourceType>(node.as<std::string>()).value();
+        return node;
+    }
+};
+}// namespace YAML
+
 struct SourceEndpointConfiguration {
     NES::QuerySubPlanId subQueryID{};
     SchemaConfiguration schema;
-    std::optional<boost::filesystem::path> path;
     std::optional<size_t> numberOfBuffers;
     std::optional<bool> print;
+    std::optional<DataSourceType> dataSource;
+    std::optional<boost::filesystem::path> path;
+    std::optional<NES::FormatTypes> format;
     std::string ip;
     uint32_t port{};
     NES::NodeId nodeId{};
@@ -222,6 +249,8 @@ struct convert<SourceEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE_OPT(numberOfBuffers);
         UNIKERNEL_MODEL_YAML_ENCODE_OPT(print);
         node["type"] = std::string(magic_enum::enum_name(rhs.type));
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(dataSource);
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(format);
 
         if (rhs.type == NetworkSource) {
             UNIKERNEL_MODEL_YAML_ENCODE(nodeId);
@@ -241,6 +270,8 @@ struct convert<SourceEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE_OPT(numberOfBuffers);
         UNIKERNEL_MODEL_YAML_DECODE_OPT(print);
         rhs.type = magic_enum::enum_cast<SourceType>(node["type"].as<std::string>()).value();
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(dataSource);
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(format);
 
         if (rhs.type == NetworkSource) {
             UNIKERNEL_MODEL_YAML_DECODE(nodeId);
@@ -290,6 +321,7 @@ struct convert<WorkerLinkConfiguration> {
 struct WorkerTCPSourceConfiguration {
     std::string ip;
     size_t port;
+    std::optional<NES::FormatTypes> format;
     SchemaConfiguration schema;
 };
 
@@ -301,6 +333,7 @@ struct convert<WorkerTCPSourceConfiguration> {
         Node node;
         UNIKERNEL_MODEL_YAML_ENCODE(port);
         UNIKERNEL_MODEL_YAML_ENCODE(ip);
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(format);
         UNIKERNEL_MODEL_YAML_ENCODE(schema);
         return node;
     };
@@ -308,6 +341,7 @@ struct convert<WorkerTCPSourceConfiguration> {
     static Node decode(const Node& node, WorkerTCPSourceConfiguration& rhs) {
         UNIKERNEL_MODEL_YAML_DECODE(port);
         UNIKERNEL_MODEL_YAML_DECODE(ip);
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(format);
         UNIKERNEL_MODEL_YAML_DECODE(schema);
         return node;
     };
