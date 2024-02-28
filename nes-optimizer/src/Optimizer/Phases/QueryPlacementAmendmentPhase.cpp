@@ -15,7 +15,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
@@ -149,15 +149,15 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
     } else {
 
         //1. Fetch all upstream pinned operators
-        std::set<LogicalOperatorNodePtr> pinnedUpstreamOperators;
+        std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
         for (const auto& leafOperator : queryPlan->getLeafOperators()) {
-            pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperatorNode>());
+            pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
         };
 
         //2. Fetch all downstream pinned operators
-        std::set<LogicalOperatorNodePtr> pinnedDownStreamOperators;
+        std::set<LogicalOperatorPtr> pinnedDownStreamOperators;
         for (const auto& rootOperator : queryPlan->getRootOperators()) {
-            pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperatorNode>());
+            pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
         };
 
         //3. Pin all sink operators
@@ -219,33 +219,33 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
     return computedDeploymentContexts;
 }
 
-bool QueryPlacementAmendmentPhase::containsOnlyPinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators) {
+bool QueryPlacementAmendmentPhase::containsOnlyPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedOperators) {
 
     //Find if one of the operator does not have PINNED_NODE_ID property
-    return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const LogicalOperatorNodePtr& pinnedOperator) {
+    return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const LogicalOperatorPtr& pinnedOperator) {
         return !pinnedOperator->hasProperty(PINNED_WORKER_ID);
     });
 }
 
-bool QueryPlacementAmendmentPhase::containsOperatorsForPlacement(const std::set<LogicalOperatorNodePtr>& operatorsToCheck) {
-    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorNodePtr& operatorToCheck) {
+bool QueryPlacementAmendmentPhase::containsOperatorsForPlacement(const std::set<LogicalOperatorPtr>& operatorsToCheck) {
+    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorPtr& operatorToCheck) {
         return (operatorToCheck->getOperatorState() == OperatorState::TO_BE_PLACED
                 || operatorToCheck->getOperatorState() == OperatorState::PLACED);
     });
 }
 
-bool QueryPlacementAmendmentPhase::containsOperatorsForRemoval(const std::set<LogicalOperatorNodePtr>& operatorsToCheck) {
-    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorNodePtr& operatorToCheck) {
+bool QueryPlacementAmendmentPhase::containsOperatorsForRemoval(const std::set<LogicalOperatorPtr>& operatorsToCheck) {
+    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorPtr& operatorToCheck) {
         return (operatorToCheck->getOperatorState() == OperatorState::TO_BE_REPLACED
                 || operatorToCheck->getOperatorState() == OperatorState::TO_BE_REMOVED
                 || operatorToCheck->getOperatorState() == OperatorState::PLACED);
     });
 }
 
-void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOperatorNodePtr>& operators) {
+void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOperatorPtr>& operators) {
     uint64_t rootNodeId = topology->getRootTopologyNodeId();
     for (const auto& operatorToCheck : operators) {
-        if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {
+        if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperator>()) {
             operatorToCheck->addProperty(PINNED_WORKER_ID, rootNodeId);
         }
     }

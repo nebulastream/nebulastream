@@ -45,7 +45,7 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
                                       std::vector<ExpressionNodePtr> outputFields);
 
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
     const std::string& getModel() const;
     const std::vector<ExpressionNodePtr>& getInputFields() const;
     const std::vector<ExpressionNodePtr>& getOutputFields() const;

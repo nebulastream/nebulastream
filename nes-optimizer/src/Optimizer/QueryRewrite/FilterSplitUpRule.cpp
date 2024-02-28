@@ -15,7 +15,7 @@
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -29,16 +29,16 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan) {
 
     NES_INFO("Applying FilterSplitUpRule to query {}", queryPlan->toString());
     const auto rootOperators = queryPlan->getRootOperators();
-    std::set<FilterLogicalOperatorNodePtr> filterOperatorsSet;
-    for (const OperatorNodePtr& rootOperator : rootOperators) {
-        auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
+    std::set<LogicalFilterOperatorPtr> filterOperatorsSet;
+    for (const OperatorPtr& rootOperator : rootOperators) {
+        auto filters = rootOperator->getNodesByType<LogicalFilterOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
-    std::vector<FilterLogicalOperatorNodePtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
+    std::vector<LogicalFilterOperatorPtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
     NES_DEBUG("FilterSplitUpRule: Sort all filter nodes in increasing order of the operator id")
     std::sort(filterOperators.begin(),
               filterOperators.end(),
-              [](const FilterLogicalOperatorNodePtr& lhs, const FilterLogicalOperatorNodePtr& rhs) {
+              [](const LogicalFilterOperatorPtr& lhs, const LogicalFilterOperatorPtr& rhs) {
                   return lhs->getId() < rhs->getId();
               });
     auto originalQueryPlan = queryPlan->copy();
@@ -55,17 +55,17 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan) {
     }
 }
 
-void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperator) {
+void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator) {
     // if our query plan contains a parentOperaters->filter(expression1 && expression2)->childOperator.
     // We can rewrite this plan to parentOperaters->filter(expression1)->filter(expression2)->childOperator.
     if (filterOperator->getPredicate()->instanceOf<AndExpressionNode>()) {
         //create filter that contains expression1 of the andExpression
-        auto child1 = filterOperator->copy()->as<FilterLogicalOperatorNode>();
+        auto child1 = filterOperator->copy()->as<LogicalFilterOperator>();
         child1->setId(getNextOperatorId());
         child1->setPredicate(filterOperator->getPredicate()->getChildren()[0]->as<ExpressionNode>());
 
         //create filter that contains expression2 of the andExpression
-        auto child2 = filterOperator->copy()->as<FilterLogicalOperatorNode>();
+        auto child2 = filterOperator->copy()->as<LogicalFilterOperator>();
         child2->setId(getNextOperatorId());
         child2->setPredicate(filterOperator->getPredicate()->getChildren()[1]->as<ExpressionNode>());
 

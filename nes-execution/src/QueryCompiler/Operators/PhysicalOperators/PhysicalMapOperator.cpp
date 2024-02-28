@@ -22,7 +22,7 @@ PhysicalMapOperator::PhysicalMapOperator(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          FieldAssignmentExpressionNodePtr mapExpression)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       mapExpression(std::move(mapExpression)) {}
 
 FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression() { return mapExpression; }
@@ -51,7 +51,7 @@ std::string PhysicalMapOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalMapOperator::copy() {
+OperatorPtr PhysicalMapOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, getMapExpression());
     result->addAllProperties(properties);
     return result;

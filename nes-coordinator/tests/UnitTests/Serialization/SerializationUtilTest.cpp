@@ -39,25 +39,25 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/Expressions/WhenExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/Serialization/DataTypeSerializationUtil.hpp>
@@ -608,15 +608,15 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
-        Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
+        Join::LogicalJoinDescriptorPtr joinDef = Join::LogicalJoinDescriptor::create(
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
             1,
             1,
-            NES::Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
+            NES::Join::LogicalJoinDescriptor::JoinType::INNER_JOIN);
 
-        auto join = LogicalOperatorFactory::createJoinOperator(joinDef)->as<JoinLogicalOperatorNode>();
+        auto join = LogicalOperatorFactory::createJoinOperator(joinDef)->as<LogicalJoinOperator>();
         join->setOriginId(42);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -648,7 +648,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
+            Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto tumblingWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(tumblingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -658,7 +658,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto windowType = Windowing::SlidingWindow::of(EventTime(Attribute("ts")), Seconds(10), Hours(200));
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
+            Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto slidingWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(slidingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -669,7 +669,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45);
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
+            Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto thresholdWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -680,7 +680,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45, 5);
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
+            Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto thresholdWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -795,7 +795,7 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
 
-    std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
+    std::vector<OperatorPtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
     for (const auto& actualRootOperator : actualRootOperators) {
         bool found = false;
         for (const auto& queryRoot : queryPlan->getRootOperators()) {
@@ -829,7 +829,7 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
 
-    std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
+    std::vector<OperatorPtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
     for (const auto& actualRootOperator : actualRootOperators) {
         bool found = false;
         for (const auto& queryRoot : queryPlan->getRootOperators()) {
@@ -840,8 +840,8 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
         }
         EXPECT_TRUE(found);
     }
-    EXPECT_TRUE(actualRootOperators[0]->getChildren()[0]->as<OperatorNode>()->getId()
-                == actualRootOperators[1]->getChildren()[0]->as<OperatorNode>()->getId());
+    EXPECT_TRUE(actualRootOperators[0]->getChildren()[0]->as<Operator>()->getId()
+                == actualRootOperators[1]->getChildren()[0]->as<Operator>()->getId());
     EXPECT_TRUE(actualRootOperators[0]->getChildren()[0].get() == actualRootOperators[1]->getChildren()[0].get());
     std::vector<NodePtr> sourceOperatorsForRoot1 = actualRootOperators[0]->getAllLeafNodes();
     std::vector<NodePtr> sourceOperatorsForRoot2 = actualRootOperators[1]->getAllLeafNodes();
@@ -878,6 +878,6 @@ TEST_F(SerializationUtilTest, testSerializeDeserializeCilentOriginatedQueryPlan)
 
     // Expect that the id of operators in the deserialized query plan are different to the original query plan, because the initial IDs are client-generated and NES should provide its own IDs
     EXPECT_FALSE(queryPlan->getRootOperators()[0]->getId() == deserializedQueryPlan->getRootOperators()[0]->getId());
-    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId()
-                 == deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId());
+    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperator>()->getId()
+                 == deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperator>()->getId());
 }

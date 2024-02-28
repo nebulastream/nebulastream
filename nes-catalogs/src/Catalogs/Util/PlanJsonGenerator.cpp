@@ -14,54 +14,54 @@
 
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/Util/PlanJsonGenerator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
-std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNode) {
+std::string PlanJsonGenerator::getOperatorType(const OperatorPtr& operatorNode) {
     NES_INFO("Util: getting the type of the operator");
 
     std::string operatorType;
-    if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        if (operatorNode->as<SourceLogicalOperatorNode>()
+    if (operatorNode->instanceOf<SourceLogicalOperator>()) {
+        if (operatorNode->as<SourceLogicalOperator>()
                 ->getSourceDescriptor()
                 ->instanceOf<Network::NetworkSourceDescriptor>()) {
             operatorType = "SOURCE_SYS";
         } else {
             operatorType = "SOURCE";
         }
-    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
         operatorType = "FILTER";
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
         operatorType = "MAP";
-    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalWindowOperator>()) {
         operatorType = "WINDOW AGGREGATION";
-    } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
         operatorType = "JOIN";
-    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
         operatorType = "PROJECTION";
-    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalUnionOperator>()) {
         operatorType = "UNION";
-    } else if (operatorNode->instanceOf<RenameSourceOperatorNode>()) {
+    } else if (operatorNode->instanceOf<RenameSourceOperator>()) {
         operatorType = "RENAME";
-    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperator>()) {
         operatorType = "WATERMARK";
-    } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        if (operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+    } else if (operatorNode->instanceOf<SinkLogicalOperator>()) {
+        if (operatorNode->as<SinkLogicalOperator>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
             operatorType = "SINK_SYS";
         } else {
             operatorType = "SINK";
@@ -73,7 +73,7 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
     return operatorType;
 }
 
-void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
+void PlanJsonGenerator::getChildren(OperatorPtr const& root,
                                     std::vector<nlohmann::json>& nodes,
                                     std::vector<nlohmann::json>& edges) {
 
@@ -89,20 +89,20 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
     for (const NodePtr& child : children) {
         // Create a node JSON object for the current operator
         nlohmann::json node;
-        auto childLogicalOperatorNode = child->as<LogicalOperatorNode>();
-        std::string childOPeratorType = getOperatorType(childLogicalOperatorNode);
+        auto childLogicalOperator = child->as<LogicalOperator>();
+        std::string childOPeratorType = getOperatorType(childLogicalOperator);
 
         // use the id of the current operator to fill the id field
-        node["id"] = childLogicalOperatorNode->getId();
+        node["id"] = childLogicalOperator->getId();
 
         if (childOPeratorType == "WINDOW AGGREGATION") {
             // window operator node needs more information, therefore we added information about window type and aggregation
-            node["name"] = childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString();
-            NES_DEBUG("{}", childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
+            node["name"] = childLogicalOperator->as<LogicalWindowOperator>()->toString();
+            NES_DEBUG("{}", childLogicalOperator->as<LogicalWindowOperator>()->toString());
         } else {
             // use concatenation of <operator type>(OP-<operator id>) to fill name field
             // e.g. FILTER(OP-1)
-            node["name"] = childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")";
+            node["name"] = childOPeratorType + "(OP-" + std::to_string(childLogicalOperator->getId()) + ")";
         }
         node["nodeType"] = childOPeratorType;
 
@@ -114,13 +114,13 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 
         if (childOPeratorType == "WINDOW AGGREGATION") {
             // window operator node needs more information, therefore we added information about window type and aggregation
-            edge["source"] = childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString();
+            edge["source"] = childLogicalOperator->as<LogicalWindowOperator>()->toString();
         } else {
-            edge["source"] = childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")";
+            edge["source"] = childOPeratorType + "(OP-" + std::to_string(childLogicalOperator->getId()) + ")";
         }
 
         if (getOperatorType(root) == "WINDOW AGGREGATION") {
-            edge["target"] = root->as<WindowLogicalOperatorNode>()->toString();
+            edge["target"] = root->as<LogicalWindowOperator>()->toString();
         } else {
             edge["target"] = getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")";
         }
@@ -128,7 +128,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
         edges.push_back(edge);
 
         // traverse to the children of current operator
-        getChildren(childLogicalOperatorNode, nodes, edges);
+        getChildren(childLogicalOperator, nodes, edges);
     }
 }
 
@@ -140,7 +140,7 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPl
     std::vector<nlohmann::json> nodes{};
     std::vector<nlohmann::json> edges{};
 
-    OperatorNodePtr root = queryPlan->getRootOperators()[0];
+    OperatorPtr root = queryPlan->getRootOperators()[0];
 
     if (!root) {
         NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is empty");

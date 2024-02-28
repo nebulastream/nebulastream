@@ -112,9 +112,9 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
 
     /**
      * @brief Performs a deep copy of this physical operator
-     * @return OperatorNodePtr
+     * @return OperatorPtr
      */
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
      * @brief getter for left join field name

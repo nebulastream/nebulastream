@@ -17,7 +17,7 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/CopiedPinnedOperators.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
@@ -46,17 +46,17 @@ using PathFinderPtr = std::shared_ptr<PathFinder>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class SourceLogicalOperator;
+using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+class SinkLogicalOperator;
+using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
@@ -111,8 +111,8 @@ class BasePlacementAdditionStrategy {
      */
     virtual std::map<DecomposedQueryPlanId, DeploymentContextPtr>
     updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                              const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                              const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                              const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                               DecomposedQueryPlanVersion querySubPlanVersion) = 0;
 
   protected:
@@ -121,8 +121,8 @@ class BasePlacementAdditionStrategy {
      * @param upStreamPinnedOperators: the pinned upstream operators
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
-    void performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
-                              const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
+    void performPathSelection(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators,
+                              const std::set<LogicalOperatorPtr>& downStreamPinnedOperators);
 
     /**
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and compute
@@ -132,8 +132,8 @@ class BasePlacementAdditionStrategy {
      * @param pinnedDownStreamOperators the downstream operators
      */
     ComputedDecomposedQueryPlans computeDecomposedQueryPlans(SharedQueryId sharedQueryId,
-                                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+                                                             const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                             const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Add network source and sink operators
@@ -165,7 +165,7 @@ class BasePlacementAdditionStrategy {
      * @param operatorNode: the input operator
      * @return vector of topology nodes where child operator was placed or empty if not all children operators are placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const LogicalOperatorNodePtr& operatorNode);
+    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const LogicalOperatorPtr& operatorNode);
 
     /**
      * @brief Perform locking of all topology nodes selected by the path selection algorithm.
@@ -189,7 +189,7 @@ class BasePlacementAdditionStrategy {
     PathFinderPtr pathFinder;
     PlacementAmendmentMode placementAmendmentMode;
     std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
-    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
+    std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
 
   private:
     /**
@@ -199,7 +199,7 @@ class BasePlacementAdditionStrategy {
      * @param sourceTopologyNode : the topology node to which sink operator will send the data
      * @return the instance of network sink operator
      */
-    static LogicalOperatorNodePtr
+    static LogicalOperatorPtr
     createNetworkSinkOperator(QueryId queryId, OperatorId sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
 
     /**
@@ -210,7 +210,7 @@ class BasePlacementAdditionStrategy {
      * @param sinkTopologyNode: sink topology node
      * @return the instance of network source operator
      */
-    static LogicalOperatorNodePtr createNetworkSourceOperator(QueryId queryId,
+    static LogicalOperatorPtr createNetworkSourceOperator(QueryId queryId,
                                                               SchemaPtr inputSchema,
                                                               OperatorId operatorId,
                                                               const TopologyNodePtr& sinkTopologyNode);
@@ -265,7 +265,7 @@ class BasePlacementAdditionStrategy {
     bool tryMergingNetworkSink(DecomposedQueryPlanVersion querySubPlanVersion,
                                const DecomposedQueryPlanPtr& computedQuerySubPlan,
                                const NodePtr& upstreamOperatorOfPlacedSinksToCheck,
-                               const SinkLogicalOperatorNodePtr& newNetworkSinkOperator);
+                               const SinkLogicalOperatorPtr& newNetworkSinkOperator);
 
     /**
      * @brief chack if a computed source operator corresponds to a placed source that is to be reconfigured. If so,
@@ -277,7 +277,7 @@ class BasePlacementAdditionStrategy {
      */
     bool tryMergingNetworkSource(DecomposedQueryPlanVersion querySubPlanVersion,
                                  const NodePtr& placedDownstreamOperator,
-                                 const SourceLogicalOperatorNodePtr& newNetworkSourceOperator);
+                                 const SourceLogicalOperatorPtr& newNetworkSourceOperator);
 
     //Number of retries to connect to downstream source operators
     static constexpr auto SINK_RETRIES = 100;
@@ -298,7 +298,7 @@ class BasePlacementAdditionStrategy {
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
     std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
-    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToCopiedOperatorMap;
+    std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToCopiedOperatorMap;
 };
 }// namespace Optimizer
 }// namespace NES

@@ -22,7 +22,7 @@ namespace NES::Optimizer {
 class Z3QuerySignatureContext : public QuerySignatureContext {
   public:
     explicit Z3QuerySignatureContext(const z3::ContextPtr& context);
-    QuerySignaturePtr createQuerySignatureForOperator(const OperatorNodePtr& operatorNode) const override;
+    QuerySignaturePtr createQuerySignatureForOperator(const OperatorPtr& operatorNode) const override;
     z3::ContextPtr getContext() const;
   private:
     const z3::ContextPtr context;

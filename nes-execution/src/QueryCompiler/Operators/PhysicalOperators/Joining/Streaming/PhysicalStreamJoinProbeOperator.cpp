@@ -82,7 +82,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
     QueryCompilation::StreamJoinStrategy joinStrategy,
     QueryCompilation::WindowingStrategy windowingStrategy)
-    : OperatorNode(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
+    : Operator(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
       PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema), joinFieldNameLeft(joinFieldNameLeft),
       joinFieldNameRight(joinFieldNameRight), windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName) {}
 
@@ -100,7 +100,7 @@ std::string PhysicalStreamJoinProbeOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalStreamJoinProbeOperator::copy() {
+OperatorPtr PhysicalStreamJoinProbeOperator::copy() {
     return create(id,
                   leftInputSchema,
                   rightInputSchema,

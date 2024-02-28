@@ -12,6 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        LogicalJoinDefinition.cpp
-        JoinLogicalOperatorNode.cpp
+        LogicalJoinDescriptor.cpp
+        LogicalJoinOperator.cpp
 )

@@ -22,7 +22,7 @@ PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            SinkDescriptorPtr sinkDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       sinkDescriptor(std::move(sinkDescriptor)) {}
 
 PhysicalOperatorPtr
@@ -51,7 +51,7 @@ std::string PhysicalSinkOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalSinkOperator::copy() {
+OperatorPtr PhysicalSinkOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, sinkDescriptor);
     result->addAllProperties(properties);
     return result;

@@ -126,7 +126,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Prepends a new operator to this pipeline.
      * @param newRootOperator
      */
-    void prependOperator(OperatorNodePtr newRootOperator);
+    void prependOperator(OperatorPtr newRootOperator);
 
     /**
      * @brief Checks if this pipeline has an operator.

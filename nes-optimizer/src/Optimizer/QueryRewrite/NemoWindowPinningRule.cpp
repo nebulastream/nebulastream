@@ -16,11 +16,11 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <Optimizer/QueryRewrite/NemoWindowPinningRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -57,22 +57,22 @@ QueryPlanPtr NemoWindowPinningRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
-NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sharedParentThreshold) {
-    std::unordered_map<uint64_t, std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>>> nodePlacement;
+std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorPtr>>
+NemoWindowPinningRule::getMergerNodes(OperatorPtr operatorNode, uint64_t sharedParentThreshold) {
+    std::unordered_map<uint64_t, std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorPtr>>> nodePlacement;
     //iterate over all children of the operator
     for (auto child : operatorNode->getAndFlattenAllChildren(true)) {
-        if (child->as_if<OperatorNode>()->hasProperty(NES::Optimizer::PINNED_WORKER_ID)) {
-            auto nodeId = std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(NES::Optimizer::PINNED_WORKER_ID));
+        if (child->as_if<Operator>()->hasProperty(NES::Optimizer::PINNED_WORKER_ID)) {
+            auto nodeId = std::any_cast<uint64_t>(child->as_if<Operator>()->getProperty(NES::Optimizer::PINNED_WORKER_ID));
             TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(nodeId);
             for (auto& parent : node->getParents()) {
                 auto parentId = std::any_cast<uint64_t>(parent->as_if<TopologyNode>()->getId());
 
                 // get the watermark parent
-                WatermarkAssignerLogicalOperatorNodePtr watermark;
+                WatermarkAssignerLogicalOperatorPtr watermark;
                 for (auto ancestor : child->getAndFlattenAllAncestors()) {
-                    if (ancestor->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-                        watermark = ancestor->as_if<WatermarkAssignerLogicalOperatorNode>();
+                    if (ancestor->instanceOf<WatermarkAssignerLogicalOperator>()) {
+                        watermark = ancestor->as_if<WatermarkAssignerLogicalOperator>();
                         break;
                     }
                 }
@@ -84,12 +84,12 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
                     nodePlacement[parentId].emplace_back(newPair);
                 } else {
                     nodePlacement[parentId] =
-                        std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>>{newPair};
+                        std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorPtr>>{newPair};
                 }
             }
         }
     }
-    std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>> rootOperators;
+    std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorPtr>> rootOperators;
     auto rootId = topology->getRootTopologyNodeId();
 
     //get the root operators
@@ -100,17 +100,17 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
     }
 
     // add windows under the threshold to the root
-    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>> output;
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorPtr>> output;
     for (auto plcmnt : nodePlacement) {
         if (plcmnt.second.size() <= sharedParentThreshold) {
             // resolve the placement
             for (auto pairs : plcmnt.second) {
-                output[pairs.first->getId()] = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{pairs.second};
+                output[pairs.first->getId()] = std::vector<WatermarkAssignerLogicalOperatorPtr>{pairs.second};
             }
         } else {
             // add to output
             if (plcmnt.second.size() > 1) {
-                auto addedNodes = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{};
+                auto addedNodes = std::vector<WatermarkAssignerLogicalOperatorPtr>{};
                 for (auto pairs : plcmnt.second) {
                     addedNodes.emplace_back(pairs.second);
                 }
@@ -120,7 +120,7 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
                 if (output.contains(rootId)) {
                     output[rootId].emplace_back(plcmnt.second[0].second);
                 } else {
-                    output[rootId] = std::vector<WatermarkAssignerLogicalOperatorNodePtr>{plcmnt.second[0].second};
+                    output[rootId] = std::vector<WatermarkAssignerLogicalOperatorPtr>{plcmnt.second[0].second};
                 }
             }
         }
@@ -128,7 +128,7 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
     return output;
 }
 
-void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator,
+void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperatorPtr& logicalWindowOperator,
                                                             const QueryPlanPtr& queryPlan) {
     // To distribute the window operator we replace the current window operator with 1 WindowComputationOperator (performs the final aggregate)
     // and n SliceCreationOperators.
@@ -150,22 +150,22 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
     auto windowComputationAggregation = windowAggregation[0]->copy();
     //    windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
-    Windowing::LogicalWindowDefinitionPtr windowDef;
+    Windowing::LogicalWindowDescriptorPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef = Windowing::LogicalWindowDefinition::create(keyField,
+        windowDef = Windowing::LogicalWindowDescriptor::create(keyField,
                                                                {windowComputationAggregation},
                                                                windowType,
                                                                allowedLateness);
 
     } else {
-        windowDef = Windowing::LogicalWindowDefinition::create({windowComputationAggregation},
+        windowDef = Windowing::LogicalWindowDescriptor::create({windowComputationAggregation},
                                                                windowType,
                                                                allowedLateness);
     }
     NES_DEBUG("NemoWindowPinningRule::apply: created logical window definition for computation operator{}",
               windowDef->toString());
 
-    auto assignerOp = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
+    auto assignerOp = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperator>();
     NES_ASSERT(assignerOp.size() > 1, "at least one assigner has to be there");
 }
 

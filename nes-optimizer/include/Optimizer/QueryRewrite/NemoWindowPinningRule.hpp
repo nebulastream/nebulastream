@@ -23,14 +23,14 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
-class WindowOperatorNode;
-using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
+class WindowOperator;
+using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 
-class WatermarkAssignerLogicalOperatorNode;
-using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
+class WatermarkAssignerLogicalOperator;
+using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -114,13 +114,13 @@ class NemoWindowPinningRule : public DistributedWindowRule {
      * @param sharedParentThreshold threshold that identifies when to combine based on the number of sources of an operator
      * @return map with the node id where the window operator shall be placed and its sources
      */
-    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
-    getMergerNodes(OperatorNodePtr operatorNode, uint64_t sharedParentThreshold);
+    std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorPtr>>
+    getMergerNodes(OperatorPtr operatorNode, uint64_t sharedParentThreshold);
 
     /**
      * @deprecated Replaced by pinWindowOperators as it is using the old window operator implementation
      */
-    void createDistributedWindowOperator(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan);
+    void createDistributedWindowOperator(const WindowOperatorPtr& windowOp, const QueryPlanPtr& queryPlan);
 
     bool performDistributedWindowOptimization;
     // The number of child nodes from which on we will replace a central window operator with a distributed window operator.

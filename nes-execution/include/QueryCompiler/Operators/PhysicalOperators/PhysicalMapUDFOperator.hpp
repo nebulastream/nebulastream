@@ -75,7 +75,7 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      * @brief Creates a copy of this operator node
      * @return A copy of this operator node
      */
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
      * @brief Returns the udf descriptor of this map operator

@@ -14,7 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_NAUTILUSPIPELINEOPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_NAUTILUSPIPELINEOPERATOR_HPP_
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
@@ -23,17 +23,17 @@ namespace NES::QueryCompilation {
 /**
  * @brief A nautilus pipeline, that can be stored in a query plan.
  */
-class NautilusPipelineOperator : public UnaryOperatorNode {
+class NautilusPipelineOperator : public UnaryOperator {
   public:
     /**
      * @brief Creates a new nautilus pipeline operator, which captures a pipeline stage and a set of operators.
      * @return PhysicalOperatorPipeline for nautilus.
      */
-    static OperatorNodePtr create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+    static OperatorPtr create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
                                   std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> getNautilusPipeline();
 
     /**

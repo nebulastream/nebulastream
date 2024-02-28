@@ -39,7 +39,7 @@ class PhysicalUnionOperator : public PhysicalBinaryOperator {
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& schema);
     static PhysicalOperatorPtr create(const SchemaPtr& schema);
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

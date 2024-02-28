@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
@@ -60,7 +60,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
 
             //Initialized the target and host matched pair
-            std::map<OperatorNodePtr, OperatorNodePtr> matchedTargetToHostOperatorMap;
+            std::map<OperatorPtr, OperatorPtr> matchedTargetToHostOperatorMap;
             //Initialized the vector containing iterated matched host operator
             std::vector<NodePtr> matchedHostOperators;
 
@@ -76,7 +76,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                     //Extract the front of the queue and check if there is a matching operator in the
                     // host query plan
                     bool foundMatch = false;
-                    auto targetOperator = targetOperators.front()->as<LogicalOperatorNode>();
+                    auto targetOperator = targetOperators.front()->as<LogicalOperator>();
                     targetOperators.pop_front();
 
                     //Skip if the target operator is already matched
@@ -105,7 +105,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                         // perform matching
                         while (!hostOperators.empty()) {
                             //Take out the front of the queue and add the host operator to the visited list
-                            auto hostOperator = hostOperators.front()->as<LogicalOperatorNode>();
+                            auto hostOperator = hostOperators.front()->as<LogicalOperator>();
                             visitedHostOperators.emplace_back(hostOperator);
                             hostOperators.pop_front();
 
@@ -166,7 +166,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
 
                 if (matchedTargetToHostOperatorMap.size() > 1) {
                     //Fetch all the matched target operators.
-                    std::vector<OperatorNodePtr> matchedTargetOperators;
+                    std::vector<OperatorPtr> matchedTargetOperators;
                     matchedTargetOperators.reserve(matchedTargetToHostOperatorMap.size());
                     for (auto& mapEntry : matchedTargetToHostOperatorMap) {
                         matchedTargetOperators.emplace_back(mapEntry.first);
@@ -193,8 +193,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                 matchedOperatorPairs.reserve(matchedTargetToHostOperatorMap.size());
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator->as<LogicalOperatorNode>(),
-                                                                                  targetOperator->as<LogicalOperatorNode>(),
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator->as<LogicalOperator>(),
+                                                                                  targetOperator->as<LogicalOperator>(),
                                                                                   ContainmentRelationship::EQUALITY));
                 }
 

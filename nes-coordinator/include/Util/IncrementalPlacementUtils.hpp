@@ -34,8 +34,8 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 namespace Experimental {
 
@@ -64,7 +64,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
  * @param lockedDownstreamNode the node hosting the network sources
  * @return a vector source-sink-pairs in the format {SinkOperator, SourceOperator}
  */
-std::vector<std::pair<LogicalOperatorNodePtr, LogicalOperatorNodePtr>>
+std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>>
 findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
                             Optimizer::ExecutionNodeWLock lockedUpstreamNode,
                             Optimizer::ExecutionNodeWLock lockedDownstreamNode);

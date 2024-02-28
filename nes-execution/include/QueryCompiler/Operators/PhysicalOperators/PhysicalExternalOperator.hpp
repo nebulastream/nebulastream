@@ -44,7 +44,7 @@ class PhysicalExternalOperator : public PhysicalUnaryOperator, public AbstractEm
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
     * @brief get executable pipeline stage

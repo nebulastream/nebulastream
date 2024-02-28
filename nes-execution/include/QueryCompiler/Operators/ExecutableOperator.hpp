@@ -13,7 +13,7 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
-#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation {
@@ -23,15 +23,15 @@ namespace NES::QueryCompilation {
  * It is currently used to represent compiled executable pipeline stages in a query plan.
  * Based on this query plan we then create the executable query plan.
  */
-class ExecutableOperator : public UnaryOperatorNode {
+class ExecutableOperator : public UnaryOperator {
   public:
     /**
      * @brief Creates a new executable operator, which captures a pipeline stage and a set of operator handlers.
      * @param executablePipelineStage the executable pipeline stage
      * @param operatorHandlers a list of operator handlers
-     * @return OperatorNodePtr
+     * @return OperatorPtr
      */
-    static OperatorNodePtr create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+    static OperatorPtr create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                   std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
     /**
@@ -46,7 +46,7 @@ class ExecutableOperator : public UnaryOperatorNode {
      */
     std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
   private:
     ExecutableOperator(OperatorId id,

@@ -24,12 +24,12 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -95,24 +95,24 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator) {
     Query query = Query::from("src").mapUDF(javaUDFDescriptor).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
+    auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperator>();
     EXPECT_EQ(mapJavaUDFOperators.size(), 1);
 
     auto udFsToOpenClOperatorsRule = Optimizer::MapUDFsToOpenCLOperatorsRule::create();
     auto updatedQueryPlan = udFsToOpenClOperatorsRule->apply(queryPlan);
     NES_INFO("{}", updatedQueryPlan->toString());
 
-    mapJavaUDFOperators = updatedQueryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
+    mapJavaUDFOperators = updatedQueryPlan->getOperatorByType<MapUDFLogicalOperator>();
     EXPECT_TRUE(mapJavaUDFOperators.empty());
 
-    auto openCLOperators = updatedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+    auto openCLOperators = updatedQueryPlan->getOperatorByType<LogicalOpenCLOperator>();
     EXPECT_TRUE(openCLOperators.size() == 1);
 
     //Check if the insertion happened at the correct location
     EXPECT_EQ(openCLOperators[0]->getParents().size(), 1);
-    EXPECT_TRUE(openCLOperators[0]->getParents()[0]->instanceOf<SinkLogicalOperatorNode>());
+    EXPECT_TRUE(openCLOperators[0]->getParents()[0]->instanceOf<SinkLogicalOperator>());
     EXPECT_EQ(openCLOperators[0]->getChildren().size(), 1);
-    EXPECT_TRUE(openCLOperators[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+    EXPECT_TRUE(openCLOperators[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
 }
 
 TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator) {
@@ -130,27 +130,27 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator)
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
+    auto mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperator>();
     EXPECT_EQ(mapJavaUDFOperators.size(), 2);
 
     auto udFsToOpenClOperatorsRule = Optimizer::MapUDFsToOpenCLOperatorsRule::create();
     auto updatedQueryPlan = udFsToOpenClOperatorsRule->apply(queryPlan);
     NES_INFO("{}", updatedQueryPlan->toString());
 
-    mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
+    mapJavaUDFOperators = queryPlan->getOperatorByType<MapUDFLogicalOperator>();
     EXPECT_TRUE(mapJavaUDFOperators.empty());
 
-    auto openCLOperators = updatedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+    auto openCLOperators = updatedQueryPlan->getOperatorByType<LogicalOpenCLOperator>();
     EXPECT_EQ(openCLOperators.size(), 2);
 
     //Check if the insertion happened at the correct location
     EXPECT_EQ(openCLOperators[0]->getParents().size(), 1);
-    EXPECT_TRUE(openCLOperators[0]->getParents()[0]->instanceOf<SinkLogicalOperatorNode>());
+    EXPECT_TRUE(openCLOperators[0]->getParents()[0]->instanceOf<SinkLogicalOperator>());
     EXPECT_EQ(openCLOperators[0]->getChildren().size(), 1);
-    EXPECT_TRUE(openCLOperators[0]->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+    EXPECT_TRUE(openCLOperators[0]->getChildren()[0]->instanceOf<LogicalMapOperator>());
 
     EXPECT_EQ(openCLOperators[1]->getParents().size(), 1);
-    EXPECT_TRUE(openCLOperators[1]->getParents()[0]->instanceOf<MapLogicalOperatorNode>());
+    EXPECT_TRUE(openCLOperators[1]->getParents()[0]->instanceOf<LogicalMapOperator>());
     EXPECT_EQ(openCLOperators[1]->getChildren().size(), 1);
-    EXPECT_TRUE(openCLOperators[1]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+    EXPECT_TRUE(openCLOperators[1]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
 }

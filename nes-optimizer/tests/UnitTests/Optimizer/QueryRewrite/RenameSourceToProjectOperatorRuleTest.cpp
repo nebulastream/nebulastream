@@ -23,9 +23,9 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
@@ -82,7 +82,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperat
     Query query = Query::from("src").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
+    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -93,10 +93,10 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSingleSourceRenameOperat
 
     typeInferencePhase->execute(updatedQueryPlan);
 
-    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperatorNode>();
+    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
     EXPECT_TRUE(renameSourceOperators.empty());
 
-    auto projectOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto projectOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
     EXPECT_TRUE(projectOperators.size() == 1);
 }
 
@@ -111,7 +111,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOper
         Query::from("src").as("y").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
+    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -122,10 +122,10 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOper
 
     typeInferencePhase->execute(updatedQueryPlan);
 
-    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperatorNode>();
+    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
     EXPECT_TRUE(renameSourceOperators.empty());
 
-    auto projectOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto projectOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
     EXPECT_TRUE(projectOperators.size() == 2);
 }
 
@@ -143,7 +143,7 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWith
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
+    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -154,9 +154,9 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingSourceRenameOperatorWith
 
     typeInferencePhase->execute(updatedQueryPlan);
 
-    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperatorNode>();
+    renameSourceOperators = updatedQueryPlan->getOperatorByType<RenameSourceOperator>();
     EXPECT_TRUE(renameSourceOperators.empty());
 
-    auto projectOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
+    auto projectOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
     EXPECT_TRUE(projectOperators.size() == 2);
 }

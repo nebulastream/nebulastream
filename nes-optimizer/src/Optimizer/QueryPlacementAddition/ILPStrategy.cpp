@@ -16,13 +16,13 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
@@ -57,8 +57,8 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
       z3Context(z3Context) {}
 
 std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                            const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                            const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                             DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
@@ -90,8 +90,8 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
                 auto isPinnedDownStreamOperator = std::find_if(
                     copy.copiedPinnedDownStreamOperators.begin(),
                     copy.copiedPinnedDownStreamOperators.end(),
-                    [operatorToProcess](const LogicalOperatorNodePtr& pinnedDownStreamOperator) {
-                        return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperatorNode>()->getId();
+                    [operatorToProcess](const LogicalOperatorPtr& pinnedDownStreamOperator) {
+                        return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperator>()->getId();
                     });
 
                 //Skip further processing if encountered pinned downstream operator
@@ -119,7 +119,7 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
                     }
 
                     // Only include unplaced operators in the path
-                    if (downstreamOperator->as_if<LogicalOperatorNode>()->getOperatorState() != OperatorState::PLACED) {
+                    if (downstreamOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::PLACED) {
                         operatorPath.push_back(downstreamOperator);
                         unplacedDownStreamOperatorCount++;
                     }
@@ -130,7 +130,7 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
             auto upstreamPinnedNodeId = std::any_cast<WorkerId>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
 
             auto downstreamPinnedNodeId =
-                std::any_cast<WorkerId>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID));
+                std::any_cast<WorkerId>(operatorPath.back()->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID));
 
             std::vector<TopologyNodePtr> topologyPath =
                 topology->findPathBetween({upstreamPinnedNodeId}, {downstreamPinnedNodeId});
@@ -158,24 +158,24 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
         auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
 
         for (auto const& [operatorID, position] : operatorPositionMap) {
-            LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorID]->as<LogicalOperatorNode>();
-            if (logicalOperatorNode->getParents().empty()) {
+            LogicalOperatorPtr logicalOperator = operatorMap[operatorID]->as<LogicalOperator>();
+            if (logicalOperator->getParents().empty()) {
                 continue;
             }
 
             //Loop over downstream operators and compute network cost
-            for (const auto& downStreamOperator : logicalOperatorNode->getParents()) {
-                OperatorId downStreamOperatorId = downStreamOperator->as_if<LogicalOperatorNode>()->getId();
+            for (const auto& downStreamOperator : logicalOperator->getParents()) {
+                OperatorId downStreamOperatorId = downStreamOperator->as_if<LogicalOperator>()->getId();
                 //Only consider nodes that are to be placed
                 if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
 
                     auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
                     NES_DEBUG("distance: {} {}", operatorID, distance.to_string());
                     double output;
-                    if (!logicalOperatorNode->hasProperty("output")) {
-                        output = getDefaultOperatorOutput(logicalOperatorNode);
+                    if (!logicalOperator->hasProperty("output")) {
+                        output = getDefaultOperatorOutput(logicalOperator);
                     } else {
-                        std::any prop = logicalOperatorNode->getProperty("output");
+                        std::any prop = logicalOperator->getProperty("output");
                         output = std::any_cast<double>(prop);
                     }
                     cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
@@ -222,16 +222,16 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
         NES_INFO("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
 
         // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
-        std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
+        std::map<OperatorPtr, TopologyNodePtr> operatorToTopologyNodeMap;
         for (auto const& [topologyID, P] : placementVariables) {
             if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
                 int operatorId = std::stoi(topologyID.substr(0, topologyID.find(',')));
                 int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(',') + 1));
-                LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorId];
+                LogicalOperatorPtr logicalOperator = operatorMap[operatorId];
                 TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[topologyNodeId];
 
                 // collect the solution to operatorToTopologyNodeMap
-                operatorToTopologyNodeMap.insert(std::make_pair(logicalOperatorNode, topologyNode));
+                operatorToTopologyNodeMap.insert(std::make_pair(logicalOperator, topologyNode));
             }
         }
 
@@ -257,7 +257,7 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
     }
 }
 
-std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators) {
+std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators) {
     std::map<uint64_t, double> mileageMap;// (topologyId, M)
     // populate the distance map
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
@@ -298,7 +298,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
     // Creating z3 expression vector to implement an additional constraint of keeping the right order of operator nodes
     std::vector<z3::expr> P_IJ_stored;
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
-        auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
+        auto operatorNode = operatorNodePath[i]->as<LogicalOperator>();
         OperatorId operatorID = operatorNode->getId();
         // we only need to store the possibilities of the node before the one we look at, so we have to erase "old" data (we keep the values of the last iteration though)
         if (i > 1) {// if i == 0 noting to erase, if i == 1 we only have one "set" of values (which we still need)
@@ -409,35 +409,35 @@ void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizatio
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
 
 //FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
-double ILPStrategy::getDefaultOperatorOutput(const LogicalOperatorNodePtr& operatorNode) {
+double ILPStrategy::getDefaultOperatorOutput(const LogicalOperatorPtr& operatorNode) {
 
     double dmf = 1;
     double input = 10;
-    if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<SinkLogicalOperator>()) {
         dmf = 0;
-    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
         dmf = .5;
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
         dmf = 2;
-    } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<SourceLogicalOperator>()) {
         input = 100;
     }
     return dmf * input;
 }
 
 //FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
-int ILPStrategy::getDefaultOperatorCost(const LogicalOperatorNodePtr& operatorNode) {
+int ILPStrategy::getDefaultOperatorCost(const LogicalOperatorPtr& operatorNode) {
 
-    if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<SinkLogicalOperator>()) {
         return 0;
-    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
         return 1;
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
-               || operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalMapOperator>() || operatorNode->instanceOf<LogicalJoinOperator>()
+               || operatorNode->instanceOf<LogicalUnionOperator>()) {
         return 2;
-    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
         return 1;
-    } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<SourceLogicalOperator>()) {
         return 0;
     }
     return 2;

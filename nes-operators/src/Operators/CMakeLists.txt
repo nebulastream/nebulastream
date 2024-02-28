@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        OperatorNode.cpp
+        Operator.cpp
 )
 
 add_subdirectory(Exceptions)

@@ -32,7 +32,7 @@ PhysicalUnionOperator::PhysicalUnionOperator(OperatorId id,
                                              const SchemaPtr& leftSchema,
                                              const SchemaPtr& rightSchema,
                                              const SchemaPtr& outputSchema)
-    : OperatorNode(id), PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema) {}
+    : Operator(id), PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema) {}
 
 std::string PhysicalUnionOperator::toString() const {
     std::stringstream out;
@@ -40,6 +40,6 @@ std::string PhysicalUnionOperator::toString() const {
     out << "PhysicalUnionOperator:\n";
     return out.str();
 }
-OperatorNodePtr PhysicalUnionOperator::copy() { return create(id, leftInputSchema, rightInputSchema, outputSchema); }
+OperatorPtr PhysicalUnionOperator::copy() { return create(id, leftInputSchema, rightInputSchema, outputSchema); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

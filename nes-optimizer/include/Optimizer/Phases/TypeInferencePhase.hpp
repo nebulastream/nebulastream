@@ -28,11 +28,11 @@ using NodePtr = std::shared_ptr<Node>;
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class SourceLogicalOperator;
+using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+class SinkLogicalOperator;
+using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
@@ -101,8 +101,8 @@ class TypeInferencePhase {
      * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
      */
     void performTypeInference(uint64_t planId,
-                              std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
-                              std::vector<SinkLogicalOperatorNodePtr> sinkOperators);
+                              std::vector<SourceLogicalOperatorPtr> sourceOperators,
+                              std::vector<SinkLogicalOperatorPtr> sinkOperators);
 
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
     Catalogs::Source::SourceCatalogPtr sourceCatalog;

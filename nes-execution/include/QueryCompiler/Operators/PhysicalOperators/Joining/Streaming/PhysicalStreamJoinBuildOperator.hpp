@@ -100,9 +100,9 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
 
     /**
      * @brief Performs a deep copy of this physical operator
-     * @return OperatorNodePtr
+     * @return OperatorPtr
      */
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
      * @brief Getter for the build side, either left or right

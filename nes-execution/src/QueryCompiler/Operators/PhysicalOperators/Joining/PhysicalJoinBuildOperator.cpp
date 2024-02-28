@@ -38,7 +38,7 @@ PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id,
                                                      SchemaPtr outputSchema,
                                                      Join::JoinOperatorHandlerPtr operatorHandler,
                                                      JoinBuildSideType buildSide)
-    : OperatorNode(id), PhysicalJoinOperator(std::move(operatorHandler)),
+    : Operator(id), PhysicalJoinOperator(std::move(operatorHandler)),
       PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), joinBuildSide(buildSide){};
 
 std::string PhysicalJoinBuildOperator::toString() const {
@@ -51,7 +51,7 @@ std::string PhysicalJoinBuildOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalJoinBuildOperator::copy() {
+OperatorPtr PhysicalJoinBuildOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, operatorHandler, joinBuildSide);
     result->addAllProperties(properties);
     return result;

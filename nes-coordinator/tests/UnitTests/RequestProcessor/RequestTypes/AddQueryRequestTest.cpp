@@ -28,9 +28,9 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -100,7 +100,7 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical").sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator1 = queryPlan->getSinkOperators()[0];
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     auto storageHandler = TwoPhaseLockingStorageHandler::create(

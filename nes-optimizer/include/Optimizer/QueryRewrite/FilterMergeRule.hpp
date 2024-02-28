@@ -24,11 +24,11 @@ namespace NES {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+class LogicalFilterOperator;
+using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -76,7 +76,7 @@ class FilterMergeRule : public BaseRewriteRule {
      * @param firstFilter: the filter to check
      * @return vector of filters
      */
-    static std::vector<FilterLogicalOperatorNodePtr> getConsecutiveFilters(const NES::FilterLogicalOperatorNodePtr& firstFilter);
+    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_

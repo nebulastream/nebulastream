@@ -20,9 +20,9 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
@@ -288,7 +288,7 @@ void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
     auto queryPlanIterator = PlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
-        auto visitingOp = (*itr)->as<OperatorNode>();
+        auto visitingOp = (*itr)->as<Operator>();
         visitingOp->setId(NES::getNextOperatorId());
     }
 }
@@ -336,7 +336,7 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
             std::set<uint64_t> pipelineIds;
             auto queryPlanIterator = PlanIterator(updatedSubQueryPlan);
             for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
-                auto visitingOp = (*itr)->as<OperatorNode>();
+                auto visitingOp = (*itr)->as<Operator>();
                 if (visitingOp->hasProperty("PIPELINE_ID")) {
                     auto pipelineId = std::any_cast<uint64_t>(visitingOp->getProperty("PIPELINE_ID"));
                     if (pipelineIds.emplace(pipelineId).second) {
@@ -367,7 +367,7 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
 
     //Elegant acceleration service call
     //1. Fetch the OpenCL Operators
-    auto openCLOperators = decomposedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+    auto openCLOperators = decomposedQueryPlan->getOperatorByType<LogicalOpenCLOperator>();
 
     //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {

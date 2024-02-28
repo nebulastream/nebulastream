@@ -44,7 +44,7 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
      */
     static PhysicalOperatorPtr create(SchemaPtr outputSchema);
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 };
 }// namespace NES::QueryCompilationPhysicalOperators
 

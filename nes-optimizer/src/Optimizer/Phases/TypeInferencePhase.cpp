@@ -15,10 +15,10 @@
 #include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -74,8 +74,8 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
 }
 
 void TypeInferencePhase::performTypeInference(uint64_t planId,
-                                              std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
-                                              std::vector<SinkLogicalOperatorNodePtr> sinkOperators) {
+                                              std::vector<SourceLogicalOperatorPtr> sourceOperators,
+                                              std::vector<SinkLogicalOperatorPtr> sinkOperators) {
 
     // first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators) {

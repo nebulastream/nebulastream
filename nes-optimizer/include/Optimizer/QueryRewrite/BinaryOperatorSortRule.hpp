@@ -19,8 +19,8 @@
 
 namespace NES {
 
-class BinaryOperatorNode;
-using BinaryOperatorNodePtr = std::shared_ptr<BinaryOperatorNode>;
+class BinaryOperator;
+using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
 
 }// namespace NES
 
@@ -52,7 +52,7 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
      * @brief This method takes input as a binary operator and sort the children alphabetically based on source qualifier name
      * @param binaryOperator : the input binary operator
      */
-    static void sortChildren(const BinaryOperatorNodePtr& binaryOperator);
+    static void sortChildren(const BinaryOperatorPtr& binaryOperator);
 
     BinaryOperatorSortRule();
 };

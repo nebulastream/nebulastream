@@ -28,8 +28,8 @@ using NodePtr = std::shared_ptr<Node>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 namespace Catalogs::Source {
 class SourceCatalog;

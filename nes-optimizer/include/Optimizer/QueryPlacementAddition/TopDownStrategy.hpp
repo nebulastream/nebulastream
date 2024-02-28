@@ -31,8 +31,8 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
                                            PlacementAmendmentMode placementAmendmentMode);
 
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion) override;
 
   private:
@@ -47,31 +47,31 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @throws exception if the operator can't be placed.
      */
-    void pinOperators(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                      const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+    void pinOperators(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to place input operator on the input topology node
      * @param logicalOperator : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void identifyPinningLocation(const LogicalOperatorNodePtr& logicalOperator,
+    void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators);
+                                 const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators);
 
     /**
      * @brief Get topology node where all parent operators of the input operator are placed
      * @param candidateOperator: the input operator
      * @return vector of topology nodes where parent operator was placed or empty if not all parent operators are placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForDownStreamOperators(const LogicalOperatorNodePtr& candidateOperator);
+    std::vector<TopologyNodePtr> getTopologyNodesForDownStreamOperators(const LogicalOperatorPtr& candidateOperator);
 
     /**
      * @brief Get topology node where all children operators of the input operator are to be placed
      * @param candidateOperator: the input operator
      * @return vector of topology nodes where child operator are to be placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForUpStreamOperators(const LogicalOperatorNodePtr& candidateOperator);
+    std::vector<TopologyNodePtr> getTopologyNodesForUpStreamOperators(const LogicalOperatorPtr& candidateOperator);
 };
 
 }// namespace NES::Optimizer

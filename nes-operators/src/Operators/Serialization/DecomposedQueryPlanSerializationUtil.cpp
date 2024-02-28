@@ -13,7 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -28,14 +28,14 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     const DecomposedQueryPlanPtr& decomposedQueryPlan,
     SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan) {
     NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", decomposedQueryPlan->toString());
-    std::vector<OperatorNodePtr> rootOperators = decomposedQueryPlan->getRootOperators();
+    std::vector<OperatorPtr> rootOperators = decomposedQueryPlan->getRootOperators();
     NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     //Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableDecomposedQueryPlan->mutable_operatormap();
     auto bfsIterator = PlanIterator(decomposedQueryPlan);
     for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr) {
-        auto visitingOp = (*itr)->as<OperatorNode>();
+        auto visitingOp = (*itr)->as<Operator>();
         if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
             // skip rest of the steps as the operator is already serialized
             continue;
@@ -61,8 +61,8 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
 DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
     NES::SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan) {
     NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan {}", serializableDecomposedQueryPlan->DebugString());
-    std::vector<OperatorNodePtr> rootOperators;
-    std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
+    std::vector<OperatorPtr> rootOperators;
+    std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
 
     //Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap()) {

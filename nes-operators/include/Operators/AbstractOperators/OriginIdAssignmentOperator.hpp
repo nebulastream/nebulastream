@@ -15,7 +15,7 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_
 
 #include <Operators/OperatorForwardDeclaration.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES {
 /**
@@ -25,7 +25,7 @@ namespace NES {
  * Operators that only modify or select an already existing record, e.g.,
  * Filter or Map, dont need to assign new origin ids.
  */
-class OriginIdAssignmentOperator : public virtual OperatorNode {
+class OriginIdAssignmentOperator : public virtual Operator {
   public:
     /**
      * @brief Constructor for the origin id operator

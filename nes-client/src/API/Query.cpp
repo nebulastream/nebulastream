@@ -20,8 +20,8 @@
 #include <API/Windowing.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
@@ -257,7 +257,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
+    Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                 subQueryRhs.getQueryPlan(),
                                                 onLeftKey.getExpressionNode(),
@@ -281,7 +281,7 @@ Query& Query::andWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to AND Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
+    Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                 subQueryRhs.getQueryPlan(),
                                                 onLeftKey.getExpressionNode(),
@@ -296,7 +296,7 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to SEQ Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
+    Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                 subQueryRhs.getQueryPlan(),
                                                 onLeftKey.getExpressionNode(),
@@ -357,7 +357,7 @@ Query& Query::inferModel(const std::string model,
         outputFieldsPtr.push_back(outputField.getExpressionNode());
     }
 
-    OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
+    OperatorPtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
     NES_DEBUG("Query::inferModel: Current Operator: {}", op->toString());
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;

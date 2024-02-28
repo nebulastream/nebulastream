@@ -13,7 +13,7 @@
 
 add_source_files(nes-operators
         SourceDescriptor.cpp
-        SourceLogicalOperatorNode.cpp
+        SourceLogicalOperator.cpp
         SenseSourceDescriptor.cpp
         KafkaSourceDescriptor.cpp
         ZmqSourceDescriptor.cpp

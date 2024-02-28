@@ -120,7 +120,7 @@ void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
     auto queryPlanIterator = PlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
-        auto visitingOp = (*itr)->as<OperatorNode>();
+        auto visitingOp = (*itr)->as<Operator>();
         visitingOp->setId(getNextOperatorId());
     }
 }

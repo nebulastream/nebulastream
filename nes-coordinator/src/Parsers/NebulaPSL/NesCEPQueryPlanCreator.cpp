@@ -21,9 +21,9 @@
 #include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
@@ -50,12 +50,12 @@ void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* cxt)
 void NesCEPQueryPlanCreator::exitOperatorRule(NesCEPParser::OperatorRuleContext* context) {
     NES_DEBUG("NesCEPQueryPlanCreator : exitOperatorRule: create a node for the operator  {}", context->getText());
     //create Operator node and set attributes with context information
-    NebulaPSLOperatorNode node = NebulaPSLOperatorNode(nodeId);
+    NebulaPSLOperator node = NebulaPSLOperator(nodeId);
     node.setParentNodeId(-1);
     node.setOperatorName(context->getText());
     node.setLeftChildId(lastSeenSourcePtr);
     node.setRightChildId(lastSeenSourcePtr + 1);
-    pattern.addOperatorNode(node);
+    pattern.addOperator(node);
     // increase nodeId
     nodeId++;
     NesCEPBaseListener::exitOperatorRule(context);
@@ -134,27 +134,27 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     NES_DEBUG("NesCEPQueryPlanCreator : enterQuantifiers: {}", context->getText())
     //method that specifies the times operator which has several cases
     //create Operator node and add specification
-    NebulaPSLOperatorNode timeOperatorNode = NebulaPSLOperatorNode(nodeId);
-    timeOperatorNode.setParentNodeId(-1);
-    timeOperatorNode.setOperatorName("TIMES");
-    timeOperatorNode.setLeftChildId(lastSeenSourcePtr);
+    NebulaPSLOperator timeOperator = NebulaPSLOperator(nodeId);
+    timeOperator.setParentNodeId(-1);
+    timeOperator.setOperatorName("TIMES");
+    timeOperator.setLeftChildId(lastSeenSourcePtr);
     if (context->LBRACKET()) {    // context contains []
         if (context->D_POINTS()) {//e.g., A[2:10] means that we expect at least 2 and maximal 10 occurrences of A
             NES_DEBUG("NesCEPQueryPlanCreator : enterQuantifiers: Times with Min: {} and Max {}",
                       context->iterMin()->INT()->getText(),
                       context->iterMin()->INT()->getText());
-            timeOperatorNode.setMinMax(
+            timeOperator.setMinMax(
                 std::make_pair(stoi(context->iterMin()->INT()->getText()), stoi(context->iterMax()->INT()->getText())));
         } else {// e.g., A[2] means that we except exact 2 occurrences of A
-            timeOperatorNode.setMinMax(std::make_pair(stoi(context->INT()->getText()), stoi(context->INT()->getText())));
+            timeOperator.setMinMax(std::make_pair(stoi(context->INT()->getText()), stoi(context->INT()->getText())));
         }
     } else if (context->PLUS()) {//e.g., A+, means a occurs at least once
-        timeOperatorNode.setMinMax(std::make_pair(0, 0));
+        timeOperator.setMinMax(std::make_pair(0, 0));
     } else if (context->STAR()) {//[]*   //TODO unbounded iteration variant not yet implemented #866
         NES_THROW_RUNTIME_ERROR(
             "NesCEPQueryPlanCreator : enterQuantifiers: NES currently does not support the iteration variant *");
     }
-    pattern.addOperatorNode(timeOperatorNode);
+    pattern.addOperator(timeOperator);
     //update pointer
     nodeId++;
     NesCEPBaseListener::enterQuantifiers(context);
@@ -220,7 +220,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
         queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
         // else for pattern with binary operators
     } else {
-        // iterate over OperatorList, create and add LogicalOperatorNodes
+        // iterate over OperatorList, create and add LogicalOperators
         for (auto operatorNode = pattern.getOperatorList().begin(); operatorNode != pattern.getOperatorList().end();
              ++operatorNode) {
             auto operatorName = operatorNode->second.getOperatorName();
@@ -254,7 +254,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     windowAggs.push_back(sumAgg);
                     windowAggs.push_back(maxAggForTime);
 
-                    auto windowDefinition = Windowing::LogicalWindowDefinition::create(windowAggs, windowType, 0);
+                    auto windowDefinition = Windowing::LogicalWindowDescriptor::create(windowAggs, windowType, 0);
 
                     auto op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
                     queryPlan->appendOperatorAsNewRoot(op);
@@ -293,7 +293,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
         queryPlan = addProjections(queryPlan);
     }
 
-    const std::vector<NES::OperatorNodePtr>& rootOperators = queryPlan->getRootOperators();
+    const std::vector<NES::OperatorPtr>& rootOperators = queryPlan->getRootOperators();
     // add the sinks to the query plan
     for (const auto& sinkDescriptor : pattern.getSinks()) {
         auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
@@ -359,7 +359,7 @@ std::string NesCEPQueryPlanCreator::keyAssignment(std::string keyName) const {
 }
 
 QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string operaterName,
-                                                                  std::map<int, NebulaPSLOperatorNode>::const_iterator it,
+                                                                  std::map<int, NebulaPSLOperator>::const_iterator it,
                                                                   QueryPlanPtr queryPlan) const {
     QueryPlanPtr rightQueryPlan;
     QueryPlanPtr leftQueryPlan;
@@ -415,7 +415,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                                                       leftKeyFieldAccess,
                                                       rightKeyFieldAccess,
                                                       windowType,
-                                                      Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT);
+                                                      Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT);
 
             if (operaterName == "SEQ") {
                 // for SEQ we need to add additional filter for order by time

@@ -17,8 +17,8 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/QueryPlacementAddition/IFCOPStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
@@ -112,7 +112,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
         uint64_t opIdx = 0;
         for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
             auto currentEntry =
-                std::make_pair(std::make_pair((*topoItr)->as<TopologyNode>()->getId(), (*qPlanItr)->as<OperatorNode>()->getId()),
+                std::make_pair(std::make_pair((*topoItr)->as<TopologyNode>()->getId(), (*qPlanItr)->as<Operator>()->getId()),
                                std::make_pair(topoIdx, opIdx));
             matrixMapping.insert(currentEntry);
             currentTopologyNodeMapping.push_back(false);
@@ -128,7 +128,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
     // loop over all logical source
     // FIXME: #2486 Dwi: I think we will get this information from source operator's properties
     //    for (auto srcOp : queryPlan->getSourceOperators()) {
-    //        LogicalOperatorNodePtr currentOperator = srcOp;
+    //        LogicalOperatorPtr currentOperator = srcOp;
     //        for (auto topologyNode :
     //             sourceCatalog->getSourceNodesForLogicalSource(srcOp->getSourceDescriptor()->getLogicalSourceName())) {
     //            TopologyNodePtr currentTopologyNodePtr = topologyNode;
@@ -169,9 +169,9 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {
     //                    // while not stop and the current operator is not a sink operator, place the next parent operator in the query plan
     //                    while (!stop
     //                           && !currentOperator->getParents()[0]
-    //                                   ->instanceOf<SinkLogicalOperatorNode>()) {// assuming one sink operator
+    //                                   ->instanceOf<SinkLogicalOperator>()) {// assuming one sink operator
     //                        currentOperator =
-    //                            currentOperator->getParents()[0]->as<LogicalOperatorNode>();// assuming one parent per operator
+    //                            currentOperator->getParents()[0]->as<LogicalOperator>();// assuming one parent per operator
     //
     //                        // get the index of current topology node and operator in the PlacementCandidate
     //                        topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;
@@ -239,7 +239,7 @@ double IFCOPStrategy::getLocalCost(const std::vector<bool>&, NES::QueryPlanPtr) 
     QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
     // loop over operators in the query plan and check the placement decision for each operator in the current topology node
     for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
-        auto currentOperator = (*qPlanItr)->as<OperatorNode>();
+        auto currentOperator = (*qPlanItr)->as<Operator>();
 
         double dmf = 1;// fallback if the DMF property does not exist in the current operator
         // check if the current operator has the data modification factor (DMF) property, otherwise fallback to 1
@@ -302,7 +302,7 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
     // iterate to all operator in the query to check for un-assinged operator
     QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
     for (auto qPlanIter = queryPlanIterator.begin(); qPlanIter != NES::QueryPlanIterator::end(); ++qPlanIter) {
-        auto currentOpId = (*qPlanIter)->as<LogicalOperatorNode>()->getId();
+        auto currentOpId = (*qPlanIter)->as<LogicalOperator>()->getId();
 
         // check if the current operator has been placed before
         if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), currentOpId) == placedOperatorIds.end()) {
@@ -321,8 +321,8 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr,
 }
 
 std::map<DecomposedQueryPlanId, DeploymentContextPtr> IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
-                                              const std::set<LogicalOperatorNodePtr>& /*pinnedUpStreamNodes*/,
-                                              const std::set<LogicalOperatorNodePtr>& /*pinnedDownStreamNodes*/,
+                                              const std::set<LogicalOperatorPtr>& /*pinnedUpStreamNodes*/,
+                                              const std::set<LogicalOperatorPtr>& /*pinnedDownStreamNodes*/,
                                               DecomposedQueryPlanVersion /*querySubPlanVersion*/) {
     NES_NOT_IMPLEMENTED();
 }

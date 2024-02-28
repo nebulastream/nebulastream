@@ -16,7 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_HPP_
 
 #include <API/QueryAPI.hpp>
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLOperator.hpp>
 #include <list>
 #include <map>
 #include <string>
@@ -34,8 +34,8 @@ class NebulaPSLPattern {
     // Getter and Setter
     const std::map<int32_t, std::string>& getSources() const;
     void setSources(const std::map<int32_t, std::string>& sources);
-    const std::map<int32_t, NebulaPSLOperatorNode>& getOperatorList() const;
-    void setOperatorList(const std::map<int32_t, NebulaPSLOperatorNode>& operatorList);
+    const std::map<int32_t, NebulaPSLOperator>& getOperatorList() const;
+    void setOperatorList(const std::map<int32_t, NebulaPSLOperator>& operatorList);
     const std::list<ExpressionNodePtr>& getExpressions() const;
     void setExpressions(const std::list<ExpressionNodePtr>& expressions);
     const std::vector<ExpressionNodePtr>& getProjectionFields() const;
@@ -79,11 +79,11 @@ class NebulaPSLPattern {
      * @brief inserts a new Operator from the PATTERN clause to the list of operators
      * @param opNode
      */
-    void addOperatorNode(NebulaPSLOperatorNode operatorNode);
+    void addOperator(NebulaPSLOperator operatorNode);
 
   private:
     std::map<int32_t, std::string> sourceList;
-    std::map<int32_t, NebulaPSLOperatorNode> operatorList;// contains the operators from the PATTERN clause
+    std::map<int32_t, NebulaPSLOperator> operatorList;// contains the operators from the PATTERN clause
     std::list<ExpressionNodePtr> expressionList;
     std::vector<ExpressionNodePtr> projectionFields;
     std::list<SinkDescriptorPtr> sinkList; // INTO

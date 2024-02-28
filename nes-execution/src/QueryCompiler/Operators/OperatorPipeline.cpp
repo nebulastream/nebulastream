@@ -111,7 +111,7 @@ void OperatorPipeline::clearSuccessors() {
 
 std::vector<OperatorPipelinePtr> const& OperatorPipeline::getSuccessors() const { return successorPipelines; }
 
-void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
+void OperatorPipeline::prependOperator(OperatorPtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
     }

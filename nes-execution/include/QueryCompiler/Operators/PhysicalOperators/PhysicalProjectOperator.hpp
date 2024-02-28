@@ -38,7 +38,7 @@ class PhysicalProjectOperator : public PhysicalUnaryOperator {
      */
     std::vector<ExpressionNodePtr> getExpressions();
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
   private:
     std::vector<ExpressionNodePtr> expressions;

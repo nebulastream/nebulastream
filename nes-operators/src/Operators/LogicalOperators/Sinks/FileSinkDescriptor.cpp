@@ -13,7 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Operators/Operator.hpp>
 #include <utility>
 
 namespace NES {

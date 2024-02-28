@@ -21,7 +21,7 @@ PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       predicate(std::move(predicate)) {}
 
 PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id,
@@ -45,7 +45,7 @@ std::string PhysicalFilterOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalFilterOperator::copy() {
+OperatorPtr PhysicalFilterOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, getPredicate());
     result->addAllProperties(properties);
     return result;

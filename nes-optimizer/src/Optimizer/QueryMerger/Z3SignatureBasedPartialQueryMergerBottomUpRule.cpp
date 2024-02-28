@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerBottomUpRule.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
@@ -70,7 +70,7 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
                 // of inconsistent shared query plans.
                 if (matchedTargetToHostOperatorMap.size() > 1) {
                     //Fetch all the matched target operators.
-                    std::vector<LogicalOperatorNodePtr> matchedTargetOperators;
+                    std::vector<LogicalOperatorPtr> matchedTargetOperators;
                     matchedTargetOperators.reserve(matchedTargetToHostOperatorMap.size());
                     for (auto& mapEntry : matchedTargetToHostOperatorMap) {
                         matchedTargetOperators.emplace_back(mapEntry.first);
@@ -122,11 +122,11 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
-std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
+std::map<LogicalOperatorPtr, LogicalOperatorPtr>
 Z3SignatureBasedPartialQueryMergerBottomUpRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
                                                                    const QueryPlanPtr& hostQueryPlan) {
 
-    std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
+    std::map<LogicalOperatorPtr, LogicalOperatorPtr> targetHostOperatorMap;
     NES_DEBUG("Z3SignatureBasedPartialQueryMergerBottomUpRule: check if the target and address query plans are syntactically "
               "equal or not");
     auto targetSourceOperators = targetQueryPlan->getSourceOperators();
@@ -152,12 +152,12 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areQueryPlansEqual(const QueryPl
     return targetHostOperatorMap;
 }
 
-std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
-Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOperatorNodePtr& targetOperator,
-                                                                 const LogicalOperatorNodePtr& hostOperator) {
+std::map<LogicalOperatorPtr, LogicalOperatorPtr>
+Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOperatorPtr& targetOperator,
+                                                                 const LogicalOperatorPtr& hostOperator) {
 
-    std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
-    if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
+    std::map<LogicalOperatorPtr, LogicalOperatorPtr> targetHostOperatorMap;
+    if (targetOperator->instanceOf<SinkLogicalOperator>() && hostOperator->instanceOf<SinkLogicalOperator>()) {
         NES_TRACE("Z3SignatureBasedPartialQueryMergerBottomUpRule: Both target and host operators are of sink type.");
         return {};
     }
@@ -169,7 +169,7 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOp
         for (const auto& targetParent : targetOperator->getParents()) {
             for (const auto& hostParent : hostOperator->getParents()) {
                 auto matchedOperators =
-                    areOperatorEqual(targetParent->as<LogicalOperatorNode>(), hostParent->as<LogicalOperatorNode>());
+                    areOperatorEqual(targetParent->as<LogicalOperator>(), hostParent->as<LogicalOperator>());
                 if (!matchedOperators.empty()) {
                     targetHostOperatorMap.merge(matchedOperators);
                     matchCount++;

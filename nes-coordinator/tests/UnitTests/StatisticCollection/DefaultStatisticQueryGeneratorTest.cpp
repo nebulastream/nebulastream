@@ -71,7 +71,7 @@ class DefaultStatisticQueryGeneratorTest : public Testing::BaseUnitTest {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
-    LogicalOperatorNodePtr checkWindowStatisticOperatorCorrect(QueryPlan& queryPlan, Windowing::WindowType& window) const {
+    LogicalOperatorPtr checkWindowStatisticOperatorCorrect(QueryPlan& queryPlan, Windowing::WindowType& window) const {
         using namespace NES::Statistic;
         auto rootOperators = queryPlan.getRootOperators();
         EXPECT_EQ(rootOperators.size(), 1);

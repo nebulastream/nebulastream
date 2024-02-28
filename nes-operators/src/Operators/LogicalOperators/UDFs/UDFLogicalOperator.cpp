@@ -25,13 +25,13 @@
 namespace NES {
 
 UDFLogicalOperator::UDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), udfDescriptor(udfDescriptor) {}
+    : Operator(id), LogicalUnaryOperator(id), udfDescriptor(udfDescriptor) {}
 
 void UDFLogicalOperator::inferStringSignature() {
     NES_TRACE("UDFLogicalOperator: Inferring String signature for {}", toString());
     NES_ASSERT(children.size() == 1, "UDFLogicalOperator should have exactly 1 child.");
     // Infer query signatures for child operator.
-    auto child = children[0]->as<LogicalOperatorNode>();
+    auto child = children[0]->as<LogicalOperator>();
     child->inferStringSignature();
 
     auto signatureStream = udfDescriptor->generateInferStringSignature();
@@ -42,7 +42,7 @@ void UDFLogicalOperator::inferStringSignature() {
 
 bool UDFLogicalOperator::inferSchema() {
     // Set the input schema.
-    if (!LogicalUnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperator::inferSchema()) {
         return false;
     }
     // The output schema of this operation is determined by the UDF.
@@ -56,7 +56,7 @@ bool UDFLogicalOperator::inferSchema() {
         //Add new qualifier name to the field and update the field name
         field->setName(newQualifierName + fieldName);
     }
-    verifySchemaCompatibility(udfDescriptor->getInputSchema(), children[0]->as<OperatorNode>()->getOutputSchema());
+    verifySchemaCompatibility(udfDescriptor->getInputSchema(), children[0]->as<Operator>()->getOutputSchema());
     return true;
 }
 

@@ -15,7 +15,7 @@
 
 add_source_files(nes-coordinator
         NesCEPQueryPlanCreator.cpp
-        NebulaPSLOperatorNode.cpp
+        NebulaPSLOperator.cpp
         NebulaPSLPattern.cpp
 )
 

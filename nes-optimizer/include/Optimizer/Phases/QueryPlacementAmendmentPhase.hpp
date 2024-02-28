@@ -38,8 +38,8 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 namespace Configurations {
 class CoordinatorConfiguration;
@@ -107,21 +107,21 @@ class QueryPlacementAmendmentPhase {
      * @brief: analyze the set and pin all unpinned sink operators
      * @param operators: set of operators to check
      */
-    void pinAllSinkOperators(const std::set<LogicalOperatorNodePtr>& operators);
+    void pinAllSinkOperators(const std::set<LogicalOperatorPtr>& operators);
 
     /**
      * This method checks if the operators in the set are pinned or not
      * @param pinnedOperators: operators to check
      * @return false if one of the operator is not pinned else true
      */
-    bool containsOnlyPinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators);
+    bool containsOnlyPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedOperators);
 
     /**
      * @brief Check if in the provided set at least one operator is in the state To_Be_Placed or Placed
      * @param operatorsToCheck the logical operator nodes
      * @return true if at least one operator passes the condition
      */
-    bool containsOperatorsForPlacement(const std::set<LogicalOperatorNodePtr>& operatorsToCheck);
+    bool containsOperatorsForPlacement(const std::set<LogicalOperatorPtr>& operatorsToCheck);
 
     /**
      * @brief Check if in the provided set at least one operator is in the state To_Be_RePlaced, Placed, or To_Be_Removed
@@ -129,7 +129,7 @@ class QueryPlacementAmendmentPhase {
      * @param operatorsToCheck the logical operator nodes
      * @return true if at least one operator passes the condition
      */
-    bool containsOperatorsForRemoval(const std::set<LogicalOperatorNodePtr>& operatorsToCheck);
+    bool containsOperatorsForRemoval(const std::set<LogicalOperatorPtr>& operatorsToCheck);
 
     /**
      * @brief method returns different kind of placement strategies.

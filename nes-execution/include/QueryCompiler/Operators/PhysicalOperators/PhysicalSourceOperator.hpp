@@ -53,7 +53,7 @@ class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScan
      */
     OriginId getOriginId();
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;

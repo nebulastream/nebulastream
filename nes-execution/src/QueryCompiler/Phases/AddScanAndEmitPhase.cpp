@@ -57,7 +57,7 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
     // insert emit buffer operator if necessary
     auto pipelineLeafOperators = rootOperator->getAllLeafNodes();
     for (const auto& leaf : pipelineLeafOperators) {
-        auto leafOperator = leaf->as<OperatorNode>();
+        auto leafOperator = leaf->as<Operator>();
         if (!leafOperator->instanceOf<PhysicalOperators::AbstractEmitOperator>()) {
             auto emitOperator = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getOutputSchema());
             leafOperator->addChild(emitOperator);
