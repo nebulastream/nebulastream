@@ -25,13 +25,13 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -460,8 +460,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
                                                                        version,
                                                                        uniqueId);
     uniqueId++;
-    auto secondRightsourceLogicalOperator =
-        std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
+    auto secondRightsourceLogicalOperator = std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
     secondRightsourceLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     secondRightsourceLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{20});
     binaryOperator->addChild(secondRightsourceLogicalOperator);
@@ -481,8 +480,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, 20);
     decomposedQueryPlan->addRootOperator(sinkLogicalOperator);
     auto secondDefaultSourceIdRight = getNextOperatorId();
-    auto secondDefaultSourceRight =
-        std::make_shared<SourceLogicalOperator>(defaultSourcedescriptor, secondDefaultSourceIdRight);
+    auto secondDefaultSourceRight = std::make_shared<SourceLogicalOperator>(defaultSourcedescriptor, secondDefaultSourceIdRight);
     auto copiedSecondDefaultSourceRight = secondDefaultSourceRight->copy();
     copiedSecondDefaultSourceRight->addProperty(Optimizer::PINNED_WORKER_ID, pinnedId);
     copiedBinaryOperator->addChild(copiedSecondDefaultSourceRight);
