@@ -8,10 +8,8 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/StatisticsMedium.hpp>
 #include <argumentum/argparse.h>
@@ -22,16 +20,28 @@
 using namespace std::literals::chrono_literals;
 
 class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListener {
+    NES::DataSinkPtr sink;
+    std::atomic_bool running = false;
+
   public:
+    explicit DummyExchangeProtocolListener(const NES::DataSinkPtr& sink) : sink(sink) {}
+
     ~DummyExchangeProtocolListener() override = default;
 
-    void onDataBuffer(NES::Network::NesPartition, NES::Runtime::TupleBuffer&) override {}
+    void onDataBuffer(NES::Network::NesPartition, NES::Runtime::TupleBuffer&) override {
+        if (!running.exchange(true)) {
+            sink->setup();
+        }
+    }
 
-    void onEndOfStream(NES::Network::Messages::EndOfStreamMessage) override { exit(0); }
+    void onEndOfStream(NES::Network::Messages::EndOfStreamMessage) override {
+        sink->shutdown();
+        running.store(false);
+    }
 
     void onServerError(NES::Network::Messages::ErrorMessage) override {}
 
-    void onEvent(NES::Network::NesPartition, NES::Runtime::EventPtr) override {}
+    void onEvent(NES::Network::NesPartition, NES::Runtime::EventPtr) override { NES_INFO("Received EVENT"); }
 
     void onChannelError(NES::Network::Messages::ErrorMessage) override {}
 };
@@ -49,18 +59,9 @@ int main(int argc, char* argv[]) {
     auto options = optionsResult.assume_value();
 
     auto partition_manager = std::make_shared<PartitionManager>();
-    auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
     auto buffer_manager = std::make_shared<BufferManager>();
     buffer_manager->createFixedSizeBufferPool(128);
 
-    ExchangeProtocol exchange_protocol(partition_manager, exchange_listener);
-    auto manager =
-        NetworkManager::create(options.nodeId, options.hostIp, options.port, std::move(exchange_protocol), buffer_manager);
-
-    NodeLocation location(options.upstreamId, options.upstreamIp, options.upstreamPort);
-    NesPartition partition(options.queryId, options.operatorId, options.partitionId, options.subPartitionId);
-
-    auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
     boost::iostreams::stream os(NES_LOG_OS(NES::LogLevel::LOG_INFO));
 
     NES::DataSinkPtr statisticSink;
@@ -80,6 +81,16 @@ int main(int argc, char* argv[]) {
                                                          options.queryId,
                                                          os);
     }
+
+    auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>(statisticSink);
+    ExchangeProtocol exchange_protocol(partition_manager, exchange_listener);
+    auto manager =
+        NetworkManager::create(options.nodeId, options.hostIp, options.port, std::move(exchange_protocol), buffer_manager);
+
+    NodeLocation location(options.upstreamId, options.upstreamIp, options.upstreamPort);
+    NesPartition partition(options.queryId, options.operatorId, options.partitionId, options.subPartitionId);
+
+    auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
     std::vector pipelines{statisticSink};
     auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema,
                                                                 buffer_manager,
