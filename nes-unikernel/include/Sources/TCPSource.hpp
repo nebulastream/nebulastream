@@ -95,7 +95,9 @@ class TCPSource {
                 //might send more than one tuple at a time, hence we need to extract one tuple below in switch case.
                 //user needs to specify how to find out tuple size when creating TCPSource
                 auto bufferReservation = circularBuffer.reserveDataForWrite(circularBuffer.capacity());
+                NES_TRACE("Receiving {} bytes", bufferReservation.size());
                 bufferSizeReceived = read(sockfd, bufferReservation.data(), bufferReservation.size());
+                NES_TRACE("Received {} bytes", bufferSizeReceived);
                 //if read method returned -1 an error occurred during read.
                 if (bufferSizeReceived == -1) {
                     NES_ERROR("TCPSource<Schema>::fillBuffer: an error occurred while reading from socket. Error: {}",
@@ -105,16 +107,20 @@ class TCPSource {
                 }
 
                 if (bufferSizeReceived == 0) {
-                    NES_ERROR("TCPSource<Schema>::fillBuffer: EOF");
                     circularBuffer.returnMemoryForWrite(bufferReservation, 0);
-                    return false;
+                    // this will spin forever if the tcp source closes with an incomplete tuple buffer
+                    if (circularBuffer.empty()) {
+                        NES_ERROR("TCPSource<Schema>::fillBuffer: EOF");
+                        return false;
+                    }
+                } else {
+                    NES_TRACE("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
+                    circularBuffer.returnMemoryForWrite(bufferReservation, bufferSizeReceived);
                 }
-
-                NES_TRACE("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
-                circularBuffer.returnMemoryForWrite(bufferReservation, bufferSizeReceived);
 
                 //if size of received data is not 0 (no data received), push received data to circular buffer
             }
+
 #ifdef USE_MMAP_CIRCBUFFER
             auto csvData = circularBuffer.peekData(circularBuffer.capacity());
 #else
@@ -122,10 +128,10 @@ class TCPSource {
                 circularBuffer.peekData(std::span{backupBuffer.data(), backupBuffer.size()}, circularBuffer.capacity());
 #endif
             std::string_view dataLeft;
-            if constexpr (TCPConfig::Format == CSV_FORMAT) {
-                auto dataLeft = Unikernel::parseCSVIntoBuffer(csvData, tupleBuffer);
-            } else if constexpr (TCPConfig::Format == NES_FORMAT) {
-                auto dataLeft = Unikernel::copyIntoBuffer(csvData, tupleBuffer);
+            if constexpr (TCPConfig::Format == FormatTypes::CSV_FORMAT) {
+                dataLeft = Unikernel::parseCSVIntoBuffer(csvData, tupleBuffer);
+            } else if constexpr (TCPConfig::Format == FormatTypes::NES_FORMAT) {
+                dataLeft = Unikernel::copyIntoBuffer(csvData, tupleBuffer);
             }
 
 #ifndef USE_MMAP_CIRCBUFFER
@@ -134,7 +140,7 @@ class TCPSource {
                 backupBuffer.resize(backupBuffer.size() * 2);
             }
 #endif
-
+            NES_TRACE("{} left over bytes", dataLeft.size());
             circularBuffer.popData(csvData.size() - dataLeft.size());
 
             // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
