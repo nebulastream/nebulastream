@@ -60,13 +60,32 @@ static std::string_view scanRecursively(std::string_view sv, SchemaBufferType& b
 }
 
 template<typename SchemaBufferType>
+std::string_view copyIntoBuffer(std::span<const char> data, SchemaBufferType& buffer) {
+    uint64_t numberOfTuplesInBuffer = 0;
+    if (data.size() < sizeof(numberOfTuplesInBuffer)) {
+        return {data.data(), data.size()};
+    }
+
+    numberOfTuplesInBuffer = *std::bit_cast<uint64_t*>(data.data());
+    auto tupleBufferData = data.subspan(sizeof(numberOfTuplesInBuffer));
+    if (numberOfTuplesInBuffer * SchemaBufferType::SchemaType::TupleSize < tupleBufferData.size()) {
+        return {data.data(), data.size()};
+    }
+
+    std::memcpy(buffer.getBuffer().getBuffer(),
+                tupleBufferData.data(),
+                tupleBufferData.data() + numberOfTuplesInBuffer * SchemaBufferType::SchemaType::TupleSize);
+}
+template<typename SchemaBufferType>
 std::string_view parseCSVIntoBuffer(std::span<const char> data, SchemaBufferType& buffer) {
     size_t tuplesLeft = buffer.getCapacity() - buffer.getSize();
     // size_t bytesConsumed = 0;
     typename SchemaBufferType::TupleType t;
-    return std::apply([data, &buffer, tuplesLeft]<typename ... T>(T...) {
-        return scanRecursively<SchemaBufferType, T...>(std::string_view{data.begin(), data.end()}, buffer, tuplesLeft);
-    }, t);
+    return std::apply(
+        [data, &buffer, tuplesLeft]<typename... T>(T...) {
+            return scanRecursively<SchemaBufferType, T...>(std::string_view{data.begin(), data.end()}, buffer, tuplesLeft);
+        },
+        t);
 
     // scn::scan(data, SchemaBufferType::SchemaType::csvFormat).and_then([&buffer](auto& result) {
     //     buffer.writeTuple(result.values());

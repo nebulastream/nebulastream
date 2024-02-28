@@ -118,9 +118,15 @@ class TCPSource {
 #ifdef USE_MMAP_CIRCBUFFER
             auto csvData = circularBuffer.peekData(circularBuffer.capacity());
 #else
-            auto csvData = circularBuffer.peekData(std::span{backupBuffer.data(), backupBuffer.size()}, circularBuffer.capacity());
+            auto csvData =
+                circularBuffer.peekData(std::span{backupBuffer.data(), backupBuffer.size()}, circularBuffer.capacity());
 #endif
-            auto dataLeft = Unikernel::parseCSVIntoBuffer(csvData, tupleBuffer);
+            std::string_view dataLeft;
+            if constexpr (TCPConfig::Format == CSV_FORMAT) {
+                auto dataLeft = Unikernel::parseCSVIntoBuffer(csvData, tupleBuffer);
+            } else if constexpr (TCPConfig::Format == NES_FORMAT) {
+                auto dataLeft = Unikernel::copyIntoBuffer(csvData, tupleBuffer);
+            }
 
 #ifndef USE_MMAP_CIRCBUFFER
             // this means that the tuple did no fit into the backup buffer and the parser could not extract a complete tuple
