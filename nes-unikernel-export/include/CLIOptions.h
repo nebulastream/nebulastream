@@ -37,6 +37,7 @@ struct ExportTopologyNodeConfiguration {
 struct TCPSourceConfiguration {
     std::string ip;
     size_t port;
+    std::optional<NES::FormatTypes> format;
 
     friend bool operator==(const TCPSourceConfiguration& lhs, const TCPSourceConfiguration& rhs) {
         return lhs.ip == rhs.ip && lhs.port == rhs.port;
@@ -94,12 +95,14 @@ struct convert<TCPSourceConfiguration> {
         Node node;
         UNIKERNEL_MODEL_YAML_ENCODE(ip);
         UNIKERNEL_MODEL_YAML_ENCODE(port);
+        UNIKERNEL_MODEL_YAML_ENCODE_OPT(format);
         return node;
     }
 
     static Node decode(const Node& node, TCPSourceConfiguration& rhs) {
         UNIKERNEL_MODEL_YAML_DECODE(ip);
         UNIKERNEL_MODEL_YAML_DECODE(port);
+        UNIKERNEL_MODEL_YAML_DECODE_OPT(format);
         return node;
     }
 };
