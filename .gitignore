@@ -10,6 +10,8 @@
 **/._.DS_Store
 .debs
 
+.uuid
+
 # Build files
 build
 cmake-build*

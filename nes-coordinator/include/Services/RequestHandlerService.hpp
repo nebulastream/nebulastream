@@ -16,6 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Configurations/Enums/QueryMergerRule.hpp>
 #include <Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <future>
@@ -150,6 +151,12 @@ class RequestHandlerService {
      */
     bool validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
                                                const std::vector<TopologyLinkInformation>& addedLinks);
+
+    nlohmann::json
+    validateAndQueueSharingIdentificationBenchmarkRequest(const std::string& workloadType,
+                                                          const uint64_t noOfQueries,
+                                                          const Optimizer::QueryMergerRule queryMergerRule,
+                                                          const Optimizer::PlacementStrategy queryPlacementStrategy);
 
   private:
     /**

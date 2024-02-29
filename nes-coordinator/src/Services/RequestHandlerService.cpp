@@ -31,6 +31,7 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/SharingIdentificationBenchmarkRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -94,7 +95,7 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
             throw exc;
         }
         throw Exceptions::RuntimeException("RequestHandlerService: unable to create query catalog entry");
-    } else {
+    } else {//!
 
         auto addRequest = RequestProcessor::AddQueryRequest::create(queryString,
                                                                     placementStrategy,
@@ -208,6 +209,23 @@ bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId share
             std::static_pointer_cast<RequestProcessor::Experimental::FailQueryResponse>(future.get())->sharedQueryId;
         return returnedSharedQueryId != INVALID_SHARED_QUERY_ID;
     }
+}
+
+nlohmann::json RequestHandlerService::validateAndQueueSharingIdentificationBenchmarkRequest(
+    const std::string& workloadType,
+    const uint64_t noOfQueries,
+    const Optimizer::QueryMergerRule queryMergerRule,
+    const Optimizer::PlacementStrategy queryPlacementStrategy) {
+    auto benchmarkRequest = RequestProcessor::SharingIdentificationBenchmarkRequest::create(workloadType,
+                                                                                            noOfQueries,
+                                                                                            queryMergerRule,
+                                                                                            queryPlacementStrategy,
+                                                                                            RequestProcessor::DEFAULT_RETRIES,
+                                                                                            z3Context,
+                                                                                            queryParsingService);
+    asyncRequestExecutor->runAsync(benchmarkRequest);
+    auto future = benchmarkRequest->getFuture();
+    return std::static_pointer_cast<RequestProcessor::BenchmarkQueryResponse>(future.get())->jsonResponse;
 }
 
 void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {

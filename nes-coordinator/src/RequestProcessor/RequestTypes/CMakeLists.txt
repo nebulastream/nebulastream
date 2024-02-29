@@ -23,4 +23,5 @@ add_source_files(nes-coordinator
         AbstractUniRequest.cpp
         SubRequestFuture.cpp
         TopologyNodeRelocationRequest.cpp
+        SharingIdentificationBenchmarkRequest.cpp
         )

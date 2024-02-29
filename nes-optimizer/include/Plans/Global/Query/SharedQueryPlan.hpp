@@ -65,7 +65,7 @@ const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
 /**
  * @brief This class holds a query plan shared by multiple queryIdAndCatalogEntryMapping i.e. from its source nodes we can reach the sink nodes of all
  * the queryIdAndCatalogEntryMapping participating in the shared query plan. A Global Query Plan can consists of multiple Shared Query Plans.
- * Additionally, a query con share only one Shared Query Plan within a Global Query Plan.
+ * Additionally, a query can share only one Shared Query Plan within a Global Query Plan.
  *
  * Example:
  *

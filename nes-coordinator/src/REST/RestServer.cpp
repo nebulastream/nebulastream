@@ -15,12 +15,12 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <REST/Controller/BenchmarkController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/LocationController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/QueryController.hpp>
-//#include <REST/Controller/BenchmarkController.hpp>
 #include <REST/Controller/SourceCatalogController.hpp>
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
@@ -123,13 +123,13 @@ void RestServer::run() {
                                                                      "/query",
                                                                      errorHandler);
 
-//    auto benchmarkController = REST::Controller::BenchmarkController::create(objectMapper,
-//                                                                     queryService,
-//                                                                     queryCatalogService,
-//                                                                     globalQueryPlan,
-//                                                                     globalExecutionPlan,
-//                                                                     "/benchmark",
-//                                                                     errorHandler);
+    auto benchmarkController = REST::Controller::BenchmarkController::create(objectMapper,
+                                                                             requestHandlerService,
+                                                                             queryCatalogService,
+                                                                             globalQueryPlan,
+                                                                             globalExecutionPlan,
+                                                                             "/benchmark",
+                                                                             errorHandler);
     auto udfCatalogController =
         REST::Controller::UDFCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     auto sourceCatalogController = REST::Controller::SourceCatalogController::create(objectMapper,
@@ -148,7 +148,7 @@ void RestServer::run() {
     router->addController(connectivityController);
     router->addController(queryCatalogController);
     router->addController(queryController);
-   // router->addController(benchmarkController);
+    router->addController(benchmarkController);
     router->addController(topologyController);
     router->addController(sourceCatalogController);
     router->addController(udfCatalogController);

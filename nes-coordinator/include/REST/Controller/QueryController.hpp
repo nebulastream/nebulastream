@@ -34,8 +34,8 @@
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 
 namespace NES {
-class NesCoordinator;//声明一下class NesCoordinator的存在
-using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;  // NesCoordinatorWeakPtr 是指针类型
+class NesCoordinator;
+using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -58,7 +58,7 @@ class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
 namespace REST::Controller {
-class QueryController : public oatpp::web::server::api::ApiController {  //QueryController 继承了 ApiController
+class QueryController : public oatpp::web::server::api::ApiController {
 
   public:
     /**
@@ -207,7 +207,7 @@ class QueryController : public oatpp::web::server::api::ApiController {  //Query
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
                       userQuery,
                       placementStrategyString);
-            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement);
+            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement);//!
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
@@ -331,10 +331,7 @@ class QueryController : public oatpp::web::server::api::ApiController {  //Query
         }
     }
 
-    ENDPOINT("GET", "/test", test) {
-        std::string response="ss";
-        return createResponse(Status::CODE_200, response);
-    }
+
 
 
 
