@@ -39,7 +39,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief IP of the REST server.
      */
-    StringOption restIp = {REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server.", IpValidation::isValid};
+    StringOption restIp = {REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server.", std::make_unique<IpValidation>()};
 
     /**
      * @brief Port of the REST server.
@@ -49,7 +49,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief IP of the Coordinator.
      */
-    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator.", IpValidation::isValid};
+    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator.", std::make_unique<IpValidation>()};
 
     /**
      * @brief Port for the RPC server of the Coordinator.

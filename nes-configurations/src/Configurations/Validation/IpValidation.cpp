@@ -15,7 +15,7 @@
 #include <Configurations/Validation/IpValidation.hpp>
 
 namespace NES::Configurations {
-     bool IpValidation::isValid(const std::string& ip) {
+     bool IpValidation::isValid(const std::string& ip) const {
 
          // Accept localhost configuration
          if (ip == "localhost") {

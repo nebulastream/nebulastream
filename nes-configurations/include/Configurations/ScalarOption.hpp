@@ -16,6 +16,7 @@
 
 #include <Configurations/ConfigurationException.hpp>
 #include <Configurations/TypedBaseOption.hpp>
+#include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ostream>
 
@@ -46,9 +47,9 @@ class ScalarOption : public TypedBaseOption<T> {
      * @param name of the option.
      * @param defaultValue of the option. Has to be of type T.
      * @param description of the option.
-     * @param validator function to validate the configuration value
+     * @param validator class to validate the configuration value
      */
-    ScalarOption(const std::string& name, T defaultValue, const std::string& description, std::function<bool(const T&)> validator);
+    ScalarOption(const std::string& name, T defaultValue, const std::string& description, std::unique_ptr<ConfigurationValidation<T>> validator);
     /**
      * @brief Operator to assign a new value as a value of this option.
      * @param value that will be assigned
@@ -115,9 +116,9 @@ ScalarOption<T>::ScalarOption(const std::string& name, T value, const std::strin
     : TypedBaseOption<T>(name, value, description) {}
 
 template<class T>
-ScalarOption<T>::ScalarOption(const std::string& name, T value, const std::string& description, std::function<bool(const T&)> validator)
+ScalarOption<T>::ScalarOption(const std::string& name, T value, const std::string& description, std::unique_ptr<ConfigurationValidation<T>> validator)
     : TypedBaseOption<T>(name, value, description) {
-    if (!validator) {
+    if (!validator->isValid(value)) {
         NES_ERROR("The parameter ", name, "was misconfigured.");
     }
 }

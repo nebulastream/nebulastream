@@ -32,7 +32,7 @@ class IpValidation : public ConfigurationValidation<std::string> {
      * @param ip ip address
      * @return success if validated
      */
-    static bool isValid(const std::string& ip);
+    bool isValid(const std::string& ip) const override;
 };
 }
 
