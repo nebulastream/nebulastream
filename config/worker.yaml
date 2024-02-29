@@ -19,7 +19,7 @@ physicalSources:
    logicalSourceName: nexmark_bid
    physicalSourceName: nexmark_bid_1
    configuration:
-     socketHost: 10.0.0.1
+     socketHost: 127.0.0.1
      socketPort: 8080
      socketDomain: AF_INET
      socketType: SOCK_STREAM
