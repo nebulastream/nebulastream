@@ -62,11 +62,11 @@ class NLJBuildPiplineExecutionContext : public PipelineExecutionContext {
 class NLJProbePiplineExecutionContext : public PipelineExecutionContext {
   public:
     std::vector<TupleBuffer> emittedBuffers;
-    NLJProbePiplineExecutionContext(OperatorHandlerPtr nljOperatorHandler)
+    NLJProbePiplineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
-            nullptr,
+            bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {
                 //                emittedBuffers.emplace_back(std::move(buffer));
@@ -87,8 +87,6 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
     std::string joinFieldNameRight;
     std::string timestampFieldNameLeft;
     std::string timestampFieldNameRight;
-    uint64_t leftEntrySize;
-    uint64_t rightEntrySize;
     uint64_t windowSize = DEFAULT_WINDOW_SIZE;
     const uint64_t handlerIndex = DEFAULT_OP_HANDLER_IDX;
     const uint64_t leftPageSize = DEFAULT_LEFT_PAGE_SIZE;
@@ -106,21 +104,18 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         NES_INFO("Setup NestedLoopJoinOperatorTest test case.");
 
         leftSchema = Schema::create()
-                         ->addField("id", BasicType::UINT64)
-                         ->addField("value_left", BasicType::UINT64)
-                         ->addField("ts", BasicType::UINT64);
+                         ->addField("test1$id", BasicType::UINT64)
+                         ->addField("test1$value_left", BasicType::UINT64)
+                         ->addField("test1$ts", BasicType::UINT64);
         rightSchema = Schema::create()
-                          ->addField("id", BasicType::UINT64)
-                          ->addField("value_right", BasicType::UINT64)
-                          ->addField("ts", BasicType::UINT64);
+                          ->addField("test2$id", BasicType::UINT64)
+                          ->addField("test2$value_right", BasicType::UINT64)
+                          ->addField("test2$ts", BasicType::UINT64);
 
         joinFieldNameLeft = leftSchema->get(1)->getName();
         joinFieldNameRight = rightSchema->get(1)->getName();
         timestampFieldNameLeft = leftSchema->get(2)->getName();
         timestampFieldNameRight = rightSchema->get(2)->getName();
-
-        leftEntrySize = leftSchema->getSchemaSizeInBytes();
-        rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
         nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({0},
                                                                           1,
@@ -196,26 +191,23 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
      */
     void checkRecordsInBuild(uint64_t windowIdentifier,
                              Value<MemRef>& pagedVectorRef,
-                             uint64_t entrySize,
                              uint64_t expectedNumberOfTuplesInWindow,
                              std::vector<Record>& allRecords,
-                             MemoryProvider::MemoryProviderPtr& memoryProvider,
                              SchemaPtr& schema) {
 
         Nautilus::Value<UInt64> zeroVal(0_u64);
-        Nautilus::Interface::PagedVectorRef pagedVector(pagedVectorRef, entrySize);
+        Nautilus::Interface::PagedVectorVarSizedRef pagedVector(pagedVectorRef, schema);
         auto windowStartPos = windowIdentifier - windowSize;
         auto windowEndPos = windowStartPos + expectedNumberOfTuplesInWindow;
         uint64_t posInWindow = 0;
 
         for (auto pos = windowStartPos; pos < windowEndPos; ++pos, ++posInWindow) {
-            auto recordMemRef = *pagedVector.at(pos);
-            auto& record = allRecords[pos];
-            auto readRecord = memoryProvider->read({}, recordMemRef, zeroVal);
-            NES_TRACE("readRecord {} record{}", readRecord.toString(), record.toString());
+            auto record = *pagedVector.at(pos);
+            auto& expectedRecord = allRecords[pos];
+            NES_TRACE("readRecord {} record{}", record.toString(), expectedRecord.toString());
 
             for (auto& field : schema->fields) {
-                EXPECT_EQ(readRecord.read(field->getName()), record.read(field->getName()));
+                EXPECT_EQ(record.read(field->getName()), record.read(field->getName()));
             }
         }
     }
@@ -254,20 +246,16 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                 Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
             checkRecordsInBuild(windowIdentifier,
                                 leftPagedVectorRef,
-                                leftEntrySize,
                                 expectedNumberOfTuplesInWindowLeft,
                                 allLeftRecords,
-                                memoryProviderLeft,
                                 leftSchema);
 
             auto rightPagedVectorRef =
                 Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
             checkRecordsInBuild(windowIdentifier,
                                 rightPagedVectorRef,
-                                rightEntrySize,
                                 expectedNumberOfTuplesInWindowRight,
                                 allRightRecords,
-                                memoryProviderRight,
                                 rightSchema);
         }
     }
@@ -415,7 +403,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                               QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                                               QueryCompilation::WindowingStrategy::SLICING);
 
-        NLJProbePiplineExecutionContext pipelineContext(nljOperatorHandler);
+        NLJProbePiplineExecutionContext pipelineContext(nljOperatorHandler, bm);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
         auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                  Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
@@ -476,10 +464,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp));
             auto leftPagedVectorRef =
                 Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(/*workerId*/ 0));
-            Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
-
-            auto memRefToRecord = leftPagedVector.allocateEntry();
-            memoryProviderLeft->write(zeroVal, memRefToRecord, leftRecord);
+            Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
+            leftPagedVector.writeRecord(leftRecord);
         }
 
         for (auto& rightRecord : allRightRecords) {
@@ -490,10 +476,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp));
             auto rightPagedVectorRef =
                 Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(/*workerId*/ 0));
-            Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
-
-            auto memRefToRecord = rightPagedVector.allocateEntry();
-            memoryProviderRight->write(zeroVal, memRefToRecord, rightRecord);
+            Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
+            rightPagedVector.writeRecord(rightRecord);
         }
 
         NES_INFO("left: {} right: {}", allLeftRecords.size(), allRightRecords.size());
@@ -526,6 +510,7 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
     const auto numberOfRecordsLeft = 250;
     const auto numberOfRecordsRight = 250;
 
+    nljOperatorHandler->setBufferManager(bm);
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }
 
@@ -542,6 +527,7 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
                                                                       leftPageSize,
                                                                       rightPageSize);
 
+    nljOperatorHandler->setBufferManager(bm);
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }
 
