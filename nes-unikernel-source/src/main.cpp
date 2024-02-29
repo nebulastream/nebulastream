@@ -46,7 +46,7 @@ class DirectFileDataGenerator : public APrioriDataGenerator {
     explicit DirectFileDataGenerator(boost::filesystem::path filename) : filename(std::move(filename)) {}
 
     void startGenerator(size_t /*numberOfBuffers*/) override {
-        NES_INFO("Starting DirectFileDataGenerator");
+        NES_INFO("Starting DirectFileDataGenerator ({})", filename.string());
         generatorThread = std::jthread([this]() {
             boost::filesystem::ifstream file(filename);
             NES_ASSERT(file.good(), "Could not open file");
@@ -63,7 +63,7 @@ class DirectFileDataGenerator : public APrioriDataGenerator {
         if (chunk_index * chunk_size >= file_size)
             return {};
         return {data_chunks[0].get() + (chunk_index * chunk_size),
-                data_chunks[0].get() + std::min(chunk_index + 1 * chunk_size, file_size)};
+                data_chunks[0].get() + std::min((chunk_index + 1) * chunk_size, file_size)};
     }
 
     void wait() override {
@@ -127,9 +127,9 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
 
                 auto tupleData = format->getFormattedBuffer(buffer[0]);
                 if (dynamic_cast<NES::NesFormat*>(this->format.get())) {
-                    auto numberOfTuples = buffer[0].getNumberOfTuples();
-                    std::copy(std::bit_cast<uint8_t*>(&numberOfTuples),
-                              std::bit_cast<uint8_t*>(&numberOfTuples) + sizeof(numberOfTuples),
+                    auto bufferSize = buffer[0].getNumberOfTuples() * generatorImpl->getSchema()->getSchemaSizeInBytes();
+                    std::copy(std::bit_cast<uint8_t*>(&bufferSize),
+                              std::bit_cast<uint8_t*>(&bufferSize) + sizeof(bufferSize),
                               std::back_inserter(v));
                 }
                 std::copy(tupleData.begin(), tupleData.end(), std::back_inserter(v));
