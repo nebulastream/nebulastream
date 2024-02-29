@@ -126,8 +126,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                                           1,
                                                                           windowSize,
                                                                           windowSize,
-                                                                          leftEntrySize,
-                                                                          rightEntrySize,
+                                                                          leftSchema,
+                                                                          rightSchema,
                                                                           leftPageSize,
                                                                           rightPageSize);
         bm = std::make_shared<BufferManager>(8196, 5000);
@@ -410,8 +410,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                               joinFieldNameLeft,
                                                               joinFieldNameRight,
                                                               windowMetaData,
-                                                              leftEntrySize,
-                                                              rightEntrySize,
+                                                              leftSchema,
+                                                              rightSchema,
                                                               QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                                               QueryCompilation::WindowingStrategy::SLICING);
 
@@ -537,8 +537,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
                                                                       1,
                                                                       windowSize,
                                                                       windowSize,
-                                                                      leftEntrySize,
-                                                                      rightEntrySize,
+                                                                      leftSchema,
+                                                                      rightSchema,
                                                                       leftPageSize,
                                                                       rightPageSize);
 
