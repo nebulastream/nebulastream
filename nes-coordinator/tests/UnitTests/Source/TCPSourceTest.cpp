@@ -459,4 +459,115 @@ bytesUsedForSocketBufferSizeTransfer: 8
     ASSERT_EQ(i, 1000);
 }
 
+/**
+ * Test TCPSource Construction via PhysicalSourceFactory from YAML
+ */
+TEST_F(TCPSourceTest, TCPSourceBufferSizeFromSocketNesFormatPrint) {
+
+    Yaml::Node sourceConfiguration;
+    std::string yaml = R"(
+logicalSourceName: tcpsource
+physicalSourceName: tcpsource_1
+type: TCP_SOURCE
+configuration:
+    socketDomain: AF_INET
+    socketType: SOCK_STREAM
+    socketPort: 9090
+    socketHost: 127.0.0.1
+    inputFormat: NES
+    decideMessageSize: BUFFER_SIZE_FROM_SOCKET
+    bytesUsedForSocketBufferSizeTransfer: 8
+    flushIntervalMS: 100
+    )";
+    Yaml::Parse(sourceConfiguration, yaml);
+
+    auto sourceType = PhysicalSourceTypeFactory::createFromYaml(sourceConfiguration);
+    auto tcpSourceType = std::dynamic_pointer_cast<TCPSourceType>(sourceType);
+    ASSERT_NE(tcpSourceType, nullptr);
+
+    ASSERT_EQ(tcpSourceType->getSocketDomain()->getValue(), AF_INET);
+    ASSERT_EQ(tcpSourceType->getSocketType()->getValue(), SOCK_STREAM);
+    ASSERT_EQ(tcpSourceType->getSocketPort()->getValue(), 9090);
+    ASSERT_EQ(tcpSourceType->getSocketHost()->getValue(), "127.0.0.1");
+    ASSERT_EQ(tcpSourceType->getInputFormat()->getValue(), InputFormat::NES);
+    ASSERT_EQ(tcpSourceType->getDecideMessageSize()->getValue(), TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET);
+    ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 100);
+
+    auto schema = Schema::create()
+                      ->addField("timestamp", BasicType::UINT64)
+                      ->addField("bidder", BasicType::UINT64)
+                      ->addField("auction", BasicType::UINT64)
+                      ->addField("price", BasicType::FLOAT64);
+    auto tcpSource = createTCPSource(schema,
+                                     bufferManager,
+                                     queryManager,
+                                     tcpSourceType,
+                                     OPERATORID,
+                                     ORIGINID,
+                                     NUMSOURCELOCALBUFFERS,
+                                     "tcp-source",
+                                     SUCCESSORS);
+
+    std::string expected =
+        R"(TCPSOURCE(SCHEMA(timestamp:INTEGER(64 bits) bidder:INTEGER(64 bits) auction:INTEGER(64 bits) price:Float(64 bits)), TCPSourceType => {
+socketHost: 127.0.0.1
+socketPort: 9090
+socketDomain: 2
+socketType: 1
+flushIntervalMS: 100
+inputFormat: NES
+decideMessageSize: BUFFER_SIZE_FROM_SOCKET
+tupleSeparator:)";
+    std::string expected_part_2 = " \n";
+    std::string expected_part_3 = R"(
+socketBufferSize: 0
+bytesUsedForSocketBufferSizeTransfer: 8
+})";
+    EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
+
+    size_t total_number_of_bytes = 0;
+    std::vector<char> data;
+    for (size_t number_of_buffers = 0; number_of_buffers < 10; number_of_buffers++) {
+        auto buffer = bufferManager->getBufferBlocking();
+        auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
+        buffer.setNumberOfTuples(dynBuffer.getCapacity());
+        uint64_t i = 0;
+        for (auto tuple : dynBuffer) {
+            tuple[0].write<uint64_t>(i);
+            tuple[1].write<uint64_t>(i);
+            tuple[2].write<uint64_t>(i);
+            tuple[3].write<double>(i * 0.9);
+            i++;
+        }
+
+        std::copy(reinterpret_cast<char*>(&i), reinterpret_cast<char*>(&i) + 8, std::back_inserter(data));
+        std::copy(buffer.getBuffer(), buffer.getBuffer() + i * schema->getSchemaSizeInBytes(), std::back_inserter(data));
+    }
+    total_number_of_bytes += data.size();
+    setup_read_from_buffer(std::move(data));
+    read(socket_mock_data.connection_fd, nullptr, 0);
+
+    tcpSource->open();
+
+    ASSERT_EQ(get_ip_address(), "127.0.0.1");
+    ASSERT_EQ(get_port(), 9090);
+
+    uint32_t i = 0;
+    while (socket_mock_data.index < total_number_of_bytes) {
+        auto buffer = bufferManager->getBufferBlocking();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(
+            Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize()),
+            buffer);
+        std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(dynamicBuffer);
+
+        for (const auto& tuple : dynamicBuffer) {
+            ASSERT_EQ(tuple[0].read<uint64_t>(), i % dynamicBuffer.getCapacity());
+            ASSERT_EQ(tuple[1].read<uint64_t>(), i % dynamicBuffer.getCapacity());
+            ASSERT_EQ(tuple[2].read<uint64_t>(), i % dynamicBuffer.getCapacity());
+            i++;
+        }
+    }
+    ASSERT_EQ(i, 10 * 256);
+}
+
 }// namespace NES
