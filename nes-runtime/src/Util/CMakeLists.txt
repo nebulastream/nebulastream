@@ -13,6 +13,7 @@
 
 add_source_files(nes-runtime
         BufferSequenceNumber.cpp
+        MMapCircularBuffer.cpp
         Core.cpp
 )
 
