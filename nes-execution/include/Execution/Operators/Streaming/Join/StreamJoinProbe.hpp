@@ -62,6 +62,7 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
      */
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
+    void terminate(ExecutionContext& executionCtx) const override;
     /**
      * @brief Creates a joined record out of the left and right record
      * @param joinedRecord

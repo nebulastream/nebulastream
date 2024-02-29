@@ -230,8 +230,13 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
 /**
  * @brief Test a join query that uses fixed-array as keys
  */
-// TODO this test can be enabled once #3638 is merged
-TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
+TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
+
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING ||
+        joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE ||
+        joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+        GTEST_SKIP();
+    }
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$id1", BasicType::TEXT)
                                 ->addField("test1$timestamp", BasicType::UINT64);

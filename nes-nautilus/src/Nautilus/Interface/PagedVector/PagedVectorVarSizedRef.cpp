@@ -25,8 +25,8 @@ namespace NES::Nautilus::Interface {
 PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
     : pagedVectorVarSizedRef(pagedVectorVarSizedRef), schema(std::move(schema)) {}
 
-PagedVectorVarSizedRef::PagedVectorVarSizedRef(const PagedVectorVarSizedRef& other)
-    : pagedVectorVarSizedRef(other.pagedVectorVarSizedRef), schema(other.schema->copy()) {}
+//PagedVectorVarSizedRef::PagedVectorVarSizedRef(const PagedVectorVarSizedRef& other)
+//    : pagedVectorVarSizedRef(other.pagedVectorVarSizedRef), schema(other.schema->copy()) {}
 
 void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr) {
     auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
@@ -111,7 +111,7 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
 
 Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
     Record record;
-    if (pos < getTotalNumberOfEntries()) {
+    //if (pos < getTotalNumberOfEntries()) {
         auto pageEntry = Nautilus::FunctionCall("getEntryVarSizedProxy", getEntryVarSizedProxy, pagedVectorVarSizedRef, pos);
 
         DefaultPhysicalTypeFactory physicalDataTypeFactory;
@@ -130,9 +130,9 @@ Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
                 pageEntry = pageEntry + fieldType->size();
             }
         }
-    } else {
-        NES_ERROR("PagedVectorVarSizedRef::readRecord: Entry with index {} does not exist!", pos->toString());
-    }
+    //} else {
+        //    NES_ERROR("PagedVectorVarSizedRef::readRecord: Entry with index {} does not exist!", pos->toString());
+        //}
     return record;
 }
 
@@ -153,15 +153,15 @@ bool PagedVectorVarSizedRef::operator==(const PagedVectorVarSizedRef& other) con
 
     return schema == other.schema && pagedVectorVarSizedRef == other.pagedVectorVarSizedRef;
 }
-
-PagedVectorVarSizedRef& PagedVectorVarSizedRef::operator=(const PagedVectorVarSizedRef& other) {
-    if (this == &other) {
-        return *this;
-    }
-    pagedVectorVarSizedRef = other.pagedVectorVarSizedRef;
-    schema->copyFields(other.schema);
-    return *this;
-}
+//
+//PagedVectorVarSizedRef& PagedVectorVarSizedRef::operator=(const PagedVectorVarSizedRef& other) {
+//    if (this == &other) {
+//        return *this;
+//    }
+//    pagedVectorVarSizedRef = other.pagedVectorVarSizedRef;
+//    schema->copyFields(other.schema);
+//    return *this;
+//}
 
 Value<> PagedVectorVarSizedRef::loadBasicType(const PhysicalTypePtr& type,
                                                         Value<MemRef> fieldReference) {

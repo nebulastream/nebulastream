@@ -35,7 +35,7 @@ SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSc
 
     retSchema->addField(newQualifierForSystemField + "$start", BasicType::UINT64);
     retSchema->addField(newQualifierForSystemField + "$end", BasicType::UINT64);
-    retSchema->addField(newQualifierForSystemField + "$key", BasicType::UINT64);
+    retSchema->addField(newQualifierForSystemField + "$key", leftSchema->getField(keyFieldName)->getDataType());
 
     for (auto& fields : leftSchema->fields) {
         retSchema->addField(fields->getName(), fields->getDataType());

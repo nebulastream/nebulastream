@@ -34,7 +34,7 @@ class PagedVectorVarSizedRef {
      * @brief Copy constructor
      * @param other
      */
-    PagedVectorVarSizedRef(const PagedVectorVarSizedRef& other);
+    //PagedVectorVarSizedRef(const PagedVectorVarSizedRef& other);
 
     /**
      * @brief Writes a new record to the PagedVectorVarSizedRef
@@ -86,7 +86,7 @@ class PagedVectorVarSizedRef {
      * @param other
      * @return PagedVectorVarSizedRef
      */
-    PagedVectorVarSizedRef& operator=(const PagedVectorVarSizedRef& other);
+    //PagedVectorVarSizedRef& operator=(const PagedVectorVarSizedRef& other);
 
   private:
     /**

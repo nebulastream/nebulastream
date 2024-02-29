@@ -73,6 +73,14 @@ void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipel
     }
 }
 
+void StreamJoinOperatorHandler::deleteAllSlices() {
+    {
+        auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
+        slicesLocked->clear();
+        windowToSlicesLocked->clear();
+    }
+}
+
 void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData,
                                                        PipelineExecutionContext* pipelineCtx) {
     // The watermark processor handles the minimal watermark across both streams

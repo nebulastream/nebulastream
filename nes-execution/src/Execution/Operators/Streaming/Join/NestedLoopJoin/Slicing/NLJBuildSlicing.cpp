@@ -63,8 +63,14 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal, workerId);
     }
 
-    // Write record to the pagedVector
-    localJoinState->pagedVectorVarSizedRef.writeRecord(record);
+    // Write record to the
+     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
+                                                           getNLJPagedVectorProxy,
+                                                           localJoinState->sliceReference,
+                                                           ctx.getWorkerId(),
+                                                           Value<UInt64>(to_underlying(joinBuildSide)));
+    Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
+    pagedVectorVarSizedRef.writeRecord(record);
 }
 
 void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
@@ -81,7 +87,7 @@ void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinSt
                                                        localJoinState->sliceReference,
                                                        workerId,
                                                        Value<UInt64>(to_underlying(joinBuildSide)));
-    localJoinState->pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
+    //localJoinState->pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
     localJoinState->sliceStart =
         Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, localJoinState->sliceReference);
     localJoinState->sliceEnd = Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);

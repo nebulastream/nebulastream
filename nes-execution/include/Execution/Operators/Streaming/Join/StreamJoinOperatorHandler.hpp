@@ -75,6 +75,11 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void triggerAllSlices(PipelineExecutionContext* pipelineCtx);
 
     /**
+     * //TODO
+     */
+    void deleteAllSlices();
+
+    /**
      * @brief Triggers windows that are ready. This method updates the watermarkProcessor and should be thread-safe
      * @param bufferMetaData
      */
