@@ -160,8 +160,5 @@ bool PagedVectorVarSized::varSizedDataEntryMapEmpty() const { return varSizedDat
 uint64_t PagedVectorVarSized::getVarSizedDataEntryMapCounter() const { return varSizedDataEntryMapCounter; }
 
 uint64_t PagedVectorVarSized::getEntrySize() const { return entrySize; }
-PagedVectorVarSized::~PagedVectorVarSized() {
-    NES_INFO("PagedVectorVarSized: numPages: {}, numVarSizedPages: {}, numMapEntries: {}", pages.size(), varSizedDataPages.size(), varSizedDataEntryMap.size());
-}
 
 } //NES::Nautilus::Interface

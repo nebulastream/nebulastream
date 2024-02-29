@@ -107,7 +107,7 @@ StreamJoinProbe::StreamJoinProbe(const uint64_t operatorHandlerIndex,
       joinFieldNameRight(std::move(joinFieldNameRight)), windowMetaData(windowMetaData) {}
 
 void StreamJoinProbe::terminate(ExecutionContext& ctx) const {
-    // Trigger all slices, as the query has ended
+    // Delete all slices, as the query has ended
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("deleteAllWindowsProxy",
                            deleteAllWindowsProxy,

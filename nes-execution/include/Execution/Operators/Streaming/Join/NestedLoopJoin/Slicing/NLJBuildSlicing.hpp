@@ -71,12 +71,10 @@ class NLJBuildSlicing : public StreamJoinBuild {
      * @param localJoinState: The pointer to the joinstate that we want to update
      * @param operatorHandlerMemRef: MemRef to the operator handler
      * @param timestamp: Timestamp, for which to get the sliceRef, sliceStart, and sliceEnd
-     * @param workerId: WorkerId necessary for getting the correct pagedVectorRef
      */
     void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                               Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
-                              Nautilus::Value<Nautilus::UInt64>& timestamp,
-                              Nautilus::Value<Nautilus::UInt64>& workerId) const;
+                              Nautilus::Value<Nautilus::UInt64>& timestamp) const;
 };
 }// namespace NES::Runtime::Execution::Operators
 

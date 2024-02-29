@@ -327,7 +327,6 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     coordinatorConfiguration->rpcPort = rpcPort;
 
     coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
-    coordinatorConfiguration->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
     coordinatorConfiguration->worker.queryCompiler.windowingStrategy = windowingStrategy;
     coordinatorConfiguration->worker.queryCompiler.joinStrategy = joinStrategy;
 
@@ -346,7 +345,6 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         auto workerConfiguration = workerConf->getWorkerConfiguration();
 
         workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
-        workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
         workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
         workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
 

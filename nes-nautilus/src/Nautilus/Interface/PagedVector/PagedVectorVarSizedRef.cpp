@@ -25,9 +25,6 @@ namespace NES::Nautilus::Interface {
 PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
     : pagedVectorVarSizedRef(pagedVectorVarSizedRef), schema(std::move(schema)) {}
 
-//PagedVectorVarSizedRef::PagedVectorVarSizedRef(const PagedVectorVarSizedRef& other)
-//    : pagedVectorVarSizedRef(other.pagedVectorVarSizedRef), schema(other.schema->copy()) {}
-
 void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr) {
     auto* pagedVectorVarSized = (PagedVectorVarSized*) pagedVectorVarSizedPtr;
     pagedVectorVarSized->appendPage();
@@ -111,28 +108,25 @@ void PagedVectorVarSizedRef::writeRecord(Record record) {
 
 Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos) {
     Record record;
-    //if (pos < getTotalNumberOfEntries()) {
-        auto pageEntry = Nautilus::FunctionCall("getEntryVarSizedProxy", getEntryVarSizedProxy, pagedVectorVarSizedRef, pos);
+    auto pageEntry = Nautilus::FunctionCall("getEntryVarSizedProxy", getEntryVarSizedProxy, pagedVectorVarSizedRef, pos);
 
-        DefaultPhysicalTypeFactory physicalDataTypeFactory;
-        for (auto& field : schema->fields) {
-            auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-            auto const fieldName = field->getName();
+    DefaultPhysicalTypeFactory physicalDataTypeFactory;
+    for (auto& field : schema->fields) {
+        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        auto const fieldName = field->getName();
 
-            if (fieldType->type->isText()) {
-                auto textEntryMapKey = pageEntry.as<MemRef>().load<UInt64>();
-                pageEntry = pageEntry + sizeof(uint64_t);
-                auto text = Nautilus::FunctionCall("loadTextProxy", loadTextProxy, pagedVectorVarSizedRef, textEntryMapKey);
-                record.write(fieldName, text);
-            } else {
-                auto fieldValue = loadBasicType(fieldType, pageEntry.as<MemRef>());
-                record.write(fieldName, fieldValue);
-                pageEntry = pageEntry + fieldType->size();
-            }
+        if (fieldType->type->isText()) {
+            auto textEntryMapKey = pageEntry.as<MemRef>().load<UInt64>();
+            pageEntry = pageEntry + sizeof(uint64_t);
+            auto text = Nautilus::FunctionCall("loadTextProxy", loadTextProxy, pagedVectorVarSizedRef, textEntryMapKey);
+            record.write(fieldName, text);
+        } else {
+            auto fieldValue = loadBasicType(fieldType, pageEntry.as<MemRef>());
+            record.write(fieldName, fieldValue);
+            pageEntry = pageEntry + fieldType->size();
         }
-    //} else {
-        //    NES_ERROR("PagedVectorVarSizedRef::readRecord: Entry with index {} does not exist!", pos->toString());
-        //}
+    }
+
     return record;
 }
 
@@ -153,15 +147,6 @@ bool PagedVectorVarSizedRef::operator==(const PagedVectorVarSizedRef& other) con
 
     return schema == other.schema && pagedVectorVarSizedRef == other.pagedVectorVarSizedRef;
 }
-//
-//PagedVectorVarSizedRef& PagedVectorVarSizedRef::operator=(const PagedVectorVarSizedRef& other) {
-//    if (this == &other) {
-//        return *this;
-//    }
-//    pagedVectorVarSizedRef = other.pagedVectorVarSizedRef;
-//    schema->copyFields(other.schema);
-//    return *this;
-//}
 
 Value<> PagedVectorVarSizedRef::loadBasicType(const PhysicalTypePtr& type,
                                                         Value<MemRef> fieldReference) {

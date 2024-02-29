@@ -39,7 +39,7 @@ class PagedVectorVarSized {
      * @param pageSize
      */
     PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
-    virtual ~PagedVectorVarSized();
+
     /**
      * @brief Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
      * and updates the numberOfEntriesOnCurrPage.

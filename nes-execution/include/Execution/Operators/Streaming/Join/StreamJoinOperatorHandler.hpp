@@ -75,7 +75,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void triggerAllSlices(PipelineExecutionContext* pipelineCtx);
 
     /**
-     * //TODO
+     * @brief Deletes all slices/windows
      */
     void deleteAllSlices();
 
