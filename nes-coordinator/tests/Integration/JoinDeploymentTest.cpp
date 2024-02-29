@@ -29,9 +29,9 @@ namespace NES::Runtime::Execution {
  */
 static SchemaPtr createValueIdTimeStamp() {
     return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-        ->addField("value", BasicType::UINT64)
-        ->addField("id", BasicType::UINT64)
-        ->addField("timestamp", BasicType::UINT64);
+        ->addField("test1$value", BasicType::UINT64)
+        ->addField("test1$id", BasicType::UINT64)
+        ->addField("test1$timestamp", BasicType::UINT64);
 }
 
 class JoinDeploymentTest : public Testing::BaseIntegrationTest,
