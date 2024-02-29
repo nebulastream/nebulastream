@@ -46,11 +46,11 @@ auto constexpr DEFAULT_RIGHT_PAGE_SIZE = 256;
 
 class NLJBuildPiplineExecutionContext : public PipelineExecutionContext {
   public:
-    NLJBuildPiplineExecutionContext(OperatorHandlerPtr nljOperatorHandler)
+    NLJBuildPiplineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
-            nullptr,
+            bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {
             },
@@ -300,7 +300,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler);
+        NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler, bm);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
         auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                  Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
