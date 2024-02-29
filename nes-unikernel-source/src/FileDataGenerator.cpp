@@ -60,18 +60,19 @@ std::vector<NES::Runtime::TupleBuffer> FileDataGenerator::createData(size_t numb
             if (file.eof()) {
                 break;
             }
-            uint64_t numberOfTuplesInBuffer = 0;
-            file.read(reinterpret_cast<char*>(&numberOfTuplesInBuffer), sizeof(numberOfTuplesInBuffer));
-            if (numberOfTuplesInBuffer == 0) {
+            uint64_t expectedBufferSize = 0;
+            file.read(reinterpret_cast<char*>(&expectedBufferSize), sizeof(expectedBufferSize));
+            if (expectedBufferSize == 0) {
                 NES_ASSERT(file.eof(), "Expected end of file");
                 break;
             }
 
             NES_ASSERT(file.good(), "Could not read tuplecount from file");
 
-            NES_ASSERT(numberOfTuplesInBuffer * schema->getSchemaSizeInBytes() <= bufferSize, "Buffer to small to load");
-            file.read(reinterpret_cast<char*>(buffer.getBuffer()), numberOfTuplesInBuffer * schema->getSchemaSizeInBytes());
-            buffer.setNumberOfTuples(numberOfTuplesInBuffer);
+            NES_ASSERT(expectedBufferSize <= bufferSize, "Buffer to small to load");
+            NES_ASSERT(expectedBufferSize % schema->getSchemaSizeInBytes() == 0, "Buffer schema missmatch");
+            file.read(reinterpret_cast<char*>(buffer.getBuffer()), expectedBufferSize);
+            buffer.setNumberOfTuples(expectedBufferSize / schema->getSchemaSizeInBytes());
             NES_ASSERT(file.good(), "Could not read buffer content");
         } else {
             size_t number_of_tuples_in_buffer = bufferSize / schema->getSchemaSizeInBytes();
