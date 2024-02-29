@@ -60,22 +60,24 @@ static std::string_view scanRecursively(std::string_view sv, SchemaBufferType& b
 
 template<typename SchemaBufferType>
 std::string_view copyIntoBuffer(const std::span<const char> data, SchemaBufferType& buffer) {
-    uint64_t numberOfTuplesInBuffer = 0;
-    if (sizeof(numberOfTuplesInBuffer) > data.size()) {
+    uint64_t sizeOfBuffer = 0;
+    if (sizeof(sizeOfBuffer) > data.size()) {
         return {data.data(), data.size()};
     }
 
-    numberOfTuplesInBuffer = *std::bit_cast<uint64_t*>(data.data());
-    NES_TRACE("Number of tuples: {}", numberOfTuplesInBuffer);
-    auto expectedTupleBufferSize = numberOfTuplesInBuffer * SchemaBufferType::SchemaType::TupleSize;
-    if (expectedTupleBufferSize + sizeof(numberOfTuplesInBuffer) > data.size()) {
-        NES_DEBUG("Could not extract full Data Segment Size: {} Required: {}", data.size(), expectedTupleBufferSize);
+    sizeOfBuffer = *std::bit_cast<uint64_t*>(data.data());
+    NES_ASSERT(sizeOfBuffer % SchemaBufferType::SchemaType::TupleSize == 0, "Schema Missmatch");
+    auto numberOfTuples = sizeOfBuffer / SchemaBufferType::SchemaType::TupleSize;
+
+    NES_TRACE("Number of tuples: {}", numberOfTuples);
+    if (sizeOfBuffer + sizeof(sizeOfBuffer) > data.size()) {
+        NES_DEBUG("Could not extract full Data Segment Size: {} Required: {}", data.size(), sizeOfBuffer);
         return {data.data(), data.size()};
     }
 
-    auto tupleBufferData = data.subspan(sizeof(numberOfTuplesInBuffer), expectedTupleBufferSize);
+    auto tupleBufferData = data.subspan(sizeof(sizeOfBuffer), sizeOfBuffer);
     std::memcpy(buffer.getBuffer().getBuffer(), tupleBufferData.data(), tupleBufferData.size());
-    buffer.getBuffer().setNumberOfTuples(numberOfTuplesInBuffer);
+    buffer.getBuffer().setNumberOfTuples(numberOfTuples);
 
     return {tupleBufferData.end(), data.end()};
 }
