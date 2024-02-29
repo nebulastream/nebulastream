@@ -222,15 +222,6 @@ uint64_t calculateExpNoTuplesInWindow(uint64_t totalTuples, uint64_t windowIdent
 
 bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
-    if (!hashJoinProbeHelper.leftSchema->contains(hashJoinProbeHelper.joinFieldNameLeft)) {
-        NES_ERROR("JoinFieldNameLeft {} is not in leftSchema!", hashJoinProbeHelper.joinFieldNameLeft);
-        return false;
-    }
-    if (!hashJoinProbeHelper.rightSchema->contains(hashJoinProbeHelper.joinFieldNameRight)) {
-        NES_ERROR("JoinFieldNameLeft {} is not in leftSchema!", hashJoinProbeHelper.joinFieldNameRight);
-        return false;
-    }
-
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
                                                          hashJoinProbeHelper.bufferManager,
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
@@ -666,19 +657,19 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultipleWindows) {
 
 TEST_F(HashJoinOperatorTest, joinProbeTest) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f1_left", BasicType::UINT64)
-                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("left$f1_left", BasicType::UINT64)
+                                ->addField("left$f2_left", BasicType::UINT64)
                                 ->addField("left$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("f1_right", BasicType::UINT64)
-                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("right$f1_right", BasicType::UINT64)
+                                 ->addField("right$f2_right", BasicType::UINT64)
                                  ->addField("right$timestamp", BasicType::UINT64);
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinProbeHelper
-        hashJoinProbeHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+        hashJoinProbeHelper("left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
     hashJoinProbeHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
     hashJoinProbeHelper.numPartitions = 2;
     hashJoinProbeHelper.windowSize = 20;
@@ -715,18 +706,18 @@ TEST_F(HashJoinOperatorTest, joinProbeTestMultipleBuckets) {
 TEST_F(HashJoinOperatorTest, joinProbeTestMultipleWindows) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f1_left", BasicType::UINT64)
-                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("left$f1_left", BasicType::UINT64)
+                                ->addField("left$f2_left", BasicType::UINT64)
                                 ->addField("left$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("f1_right", BasicType::UINT64)
-                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("right$f1_right", BasicType::UINT64)
+                                 ->addField("right$f2_right", BasicType::UINT64)
                                  ->addField("right$timestamp", BasicType::UINT64);
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinProbeHelper
-        hashJoinProbeHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+        hashJoinProbeHelper("left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
     hashJoinProbeHelper.numPartitions = 1;
     hashJoinProbeHelper.windowSize = 10;
 

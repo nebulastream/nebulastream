@@ -453,6 +453,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
         auto memoryProviderLeft = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), leftSchema);
         auto memoryProviderRight = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), rightSchema);
+        nljOperatorHandler->setBufferManager(bm);
 
         uint64_t maxTimestamp = 0;
         Value<UInt64> zeroVal(0_u64);
@@ -510,7 +511,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
     const auto numberOfRecordsLeft = 250;
     const auto numberOfRecordsRight = 250;
 
-    nljOperatorHandler->setBufferManager(bm);
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }
 
@@ -527,7 +527,6 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
                                                                       leftPageSize,
                                                                       rightPageSize);
 
-    nljOperatorHandler->setBufferManager(bm);
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }
 
