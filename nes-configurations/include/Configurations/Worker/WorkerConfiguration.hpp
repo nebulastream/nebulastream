@@ -61,7 +61,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief IP of the Worker.
      */
-    StringOption localWorkerIp = {LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP.", IpValidation::isValid};
+    StringOption localWorkerIp = {LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP.", std::make_unique<IpValidation>()};
 
     /**
      * @brief Port for the RPC server of the Worker.
@@ -81,7 +81,7 @@ class WorkerConfiguration : public BaseConfiguration {
     StringOption coordinatorIp = {COORDINATOR_IP_CONFIG,
                                   "127.0.0.1",
                                   "Server IP of the NES Coordinator to which the NES Worker should connect.",
-                                  IpValidation::isValid};
+                                  std::make_unique<IpValidation>()};
     /**
      * @brief RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs
      * to be the same as rpcPort in Coordinator.

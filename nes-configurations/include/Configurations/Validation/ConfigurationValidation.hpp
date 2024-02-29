@@ -24,14 +24,13 @@ template<class T>
 class ConfigurationValidation {
   public:
 
+    virtual ~ConfigurationValidation() = default;
     /**
      * @brief Method to check the validity of a configuration option
      * @param configuration option
      * @return success if validated
      */
-    static bool isValid(const T&) {
-        return true;
-    }
+    virtual bool isValid(const T&) const = 0;
 };
 }
 #endif//NES_CONFIGURATIONVALIDATION_H
