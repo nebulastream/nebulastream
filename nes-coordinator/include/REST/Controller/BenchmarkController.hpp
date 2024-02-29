@@ -1,16 +1,30 @@
-//
-// Created by ninghong on 12/5/23.
-//
+#ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_BENCHMARKCONTROLLER_HPP
+#define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_BENCHMARKCONTROLLER_HPP
 
-#ifndef NES_BENCHMARKCONTROLLER_HPP
-#define NES_BENCHMARKCONTROLLER_HPP
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/MapEntryNotFoundException.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <REST/Controller/BaseRouterPrefix.hpp>
+#include <REST/Handlers/ErrorHandler.hpp>
+#include <Runtime/QueryStatistics.hpp>
+#include <SerializableQueryPlan.pb.h>
+#include <Services/RequestHandlerService.hpp>
+#include <exception>
+#include <iostream>
+#include <memory>
+#include <oatpp/core/macro/codegen.hpp>
+#include <oatpp/core/macro/component.hpp>
+#include <oatpp/web/server/api/ApiController.hpp>
+#include <string>
+#include <utility>
 
-
+#include OATPP_CODEGEN_BEGIN(ApiController)
 
 
 namespace NES {
-class NesCoordinator;//声明一下class NesCoordinator的存在
-using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;  // NesCoordinatorWeakPtr 是指针类型
+class NesCoordinator;
+using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -31,7 +45,7 @@ class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
 namespace REST::Controller {
-class BenchmarkController : public oatpp::web::server::api::ApiController {  //BenchmarkController 继承了 ApiController
+class BenchmarkController : public oatpp::web::server::api::ApiController {//BenchmarkController 继承了 ApiController
 
   public:
     /**
@@ -39,70 +53,84 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {  //B
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      */
     BenchmarkController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                    const QueryServicePtr& queryService,
-                    const QueryCatalogServicePtr& queryCatalogService,
-                    const GlobalQueryPlanPtr& globalQueryPlan,
-                    const GlobalExecutionPlanPtr& globalExecutionPlan,
-                    const std::string& completeRouterPrefix,
-                    const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(queryService),
-          queryCatalogService(queryCatalogService), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
-          errorHandler(errorHandler) {} //：后面是初始化列表；{} 里写的函数体 为空
+                        const RequestHandlerServicePtr& requestHandlerService,
+                        const QueryCatalogServicePtr& queryCatalogService,
+                        const GlobalQueryPlanPtr& globalQueryPlan,
+                        const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
+                        const std::string& completeRouterPrefix,
+                        const ErrorHandlerPtr& errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
+          requestHandlerService(requestHandlerService), queryCatalogService(queryCatalogService),
+          globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
      * @param objectMapper
      * @return
      */
-    static std::shared_ptr<QueryController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                   const QueryServicePtr& queryService,
-                                                   const QueryCatalogServicePtr& queryCatalogService,
-                                                   const GlobalQueryPlanPtr& globalQueryPlan,
-                                                   const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                   const std::string& routerPrefixAddition,
-                                                   const ErrorHandlerPtr& errorHandler) {
+    static std::shared_ptr<BenchmarkController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                       const RequestHandlerServicePtr& requestHandlerService,
+                                                       const QueryCatalogServicePtr& queryCatalogService,
+                                                       const GlobalQueryPlanPtr& globalQueryPlan,
+                                                       const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                       const std::string& routerPrefixAddition,
+                                                       const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<QueryController>(objectMapper,
-                                                 queryService,
-                                                 queryCatalogService,
-                                                 globalQueryPlan,
-                                                 globalExecutionPlan,
-                                                 completeRouterPrefix,
-                                                 errorHandler);
+        return std::make_shared<BenchmarkController>(objectMapper,
+                                                     requestHandlerService,
+                                                     queryCatalogService,
+                                                     globalQueryPlan,
+                                                     globalExecutionPlan,
+                                                     completeRouterPrefix,
+                                                     errorHandler);
     }
 
     // (HTTP method, path,name,para)
-    ENDPOINT("GET", "/test", test, QUERY(UInt64, queryId, "queryId")) {
+    ENDPOINT("POST", "/test", test, BODY_STRING(String, request)) {
+
+        NES_INFO("receive request with parameters");
         try {
-            return createResponse(Status::CODE_200, "success");
-        } catch (Exceptions::QueryNotFoundException& e) {
-            return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
+            std::string req = request.getValue("{}");
+            nlohmann::json requestJson = nlohmann::json::parse(req);
+
+            const auto workloadType = requestJson["workloadType"].get<std::string>();
+            const auto noOfQueries = requestJson["noOfQueries"].get<uint64_t>();
+            const auto queryMergerRule = static_cast<Optimizer::QueryMergerRule>(requestJson["queryMergerRule"].get<uint8_t>());
+
+            const auto response = requestHandlerService->validateAndQueueSharingIdentificationBenchmarkRequest(
+                workloadType,
+                noOfQueries,
+                queryMergerRule,
+                Optimizer::PlacementStrategy::TopDown);
+
+            return createResponse(Status::CODE_200, response.dump());//serialize
+
+        } catch (const InvalidQueryException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (const MapEntryNotFoundException& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
         } catch (nlohmann::json::exception& e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (...) {
-            return errorHandler->handleError(Status::CODE_500, "Internal Error");
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
         }
     }
 
-
-
-
-
   private:
-    QueryServicePtr queryService;
+    RequestHandlerServicePtr requestHandlerService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     ErrorHandlerPtr errorHandler;
+};
 
-
-};// namespace REST::Controller
+}// namespace REST::Controller
 
 }// namespace NES
-
-
-
-
-
-#endif//NES_BENCHMARKCONTROLLER_HPP
-
+#endif//NES_COORDINATOR_INCLUDE_REST_CONTROLLER_BENCHMARKCONTROLLER_HPP

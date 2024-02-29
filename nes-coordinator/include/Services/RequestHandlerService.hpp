@@ -16,6 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Configurations/Enums/QueryMergerRule.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
 #include <Statistics/StatisticKey.hpp>
@@ -203,6 +204,12 @@ class RequestHandlerService {
      */
     std::vector<Statistic::StatisticKey> trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic,
                                                                const Windowing::WindowTypePtr& window);
+
+    nlohmann::json
+    validateAndQueueSharingIdentificationBenchmarkRequest(const std::string& workloadType,
+                                                          const uint64_t noOfQueries,
+                                                          const Optimizer::QueryMergerRule queryMergerRule,
+                                                          const Optimizer::PlacementStrategy queryPlacementStrategy);
 
   private:
     /**
