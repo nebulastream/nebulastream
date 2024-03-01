@@ -431,8 +431,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
 }
 
-LogicalUnaryOperatorPtr
-OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
+LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
     return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, getNextOperatorId());
 }
@@ -573,7 +572,6 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         }
     }
 
-
     Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_TumblingWindow>()) {
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
@@ -625,13 +623,9 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         keyAccessExpression.emplace_back(
             ExpressionSerializationUtil::deserializeExpression(key)->as<FieldAccessExpressionNode>());
     }
-    auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessExpression,
-                                                                aggregation,
-                                                                window,
-                                                                allowedLateness);
+    auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessExpression, aggregation, window, allowedLateness);
     windowDef->setOriginId(windowDetails.origin());
     return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId);
-
 }
 
 void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator& joinOperator,
@@ -690,7 +684,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
 }
 
 LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails,
-                                                                              OperatorId operatorId) {
+                                                                          OperatorId operatorId) {
     auto serializedWindowType = joinDetails.windowtype();
     auto serializedJoinType = joinDetails.jointype();
     // check which jointype is set
@@ -795,8 +789,8 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
                                                                                  probeKeyAccessExpression,
                                                                                  joinDetails.numberofinputedgesprobe(),
                                                                                  joinDetails.numberofinputedgesbuild());
-    auto retValue = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)
-                        ->as<Experimental::LogicalBatchJoinOperator>();
+    auto retValue =
+        LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)->as<Experimental::LogicalBatchJoinOperator>();
     return retValue;
 }
 
@@ -843,6 +837,9 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
                 break;
             case Configurations::InputFormat::CSV:
                 mqttSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
+                break;
+            case Configurations::InputFormat::NES:
+                mqttSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_NES);
                 break;
         }
         serializedPhysicalSourceType->mutable_specificphysicalsourcetype()->PackFrom(mqttSerializedSourceConfig);
@@ -1168,7 +1165,9 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
                                                             nesPartition,
                                                             nodeLocation,
                                                             waitTime,
-                                                            networkSerializedSourceDescriptor.retrytimes(), networkSerializedSourceDescriptor.version(), networkSerializedSourceDescriptor.uniqueid());
+                                                            networkSerializedSourceDescriptor.retrytimes(),
+                                                            networkSerializedSourceDescriptor.version(),
+                                                            networkSerializedSourceDescriptor.uniqueid());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
         // de-serialize default source descriptor
@@ -1618,13 +1617,12 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
     }
 }
 
-void OperatorSerializationUtil::serializeInputSchema(const OperatorPtr& operatorNode,
-                                                     SerializableOperator& serializedOperator) {
+void OperatorSerializationUtil::serializeInputSchema(const OperatorPtr& operatorNode, SerializableOperator& serializedOperator) {
 
     NES_TRACE("OperatorSerializationUtil:: serialize input schema");
-        if (!operatorNode->instanceOf<BinaryOperator>()) {
-            SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperator>()->getInputSchema(),
-                                                     serializedOperator.mutable_inputschema());
+    if (!operatorNode->instanceOf<BinaryOperator>()) {
+        SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperator>()->getInputSchema(),
+                                                 serializedOperator.mutable_inputschema());
     } else {
         auto binaryOperator = operatorNode->as<BinaryOperator>();
         SchemaSerializationUtil::serializeSchema(binaryOperator->getLeftInputSchema(),
@@ -1639,13 +1637,11 @@ void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorPtr operat
     // de-serialize operator input schema
     if (!operatorNode->instanceOf<BinaryOperator>()) {
         operatorNode->as<UnaryOperator>()->setInputSchema(
-                SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
     } else {
         auto binaryOperator = operatorNode->as<BinaryOperator>();
-        binaryOperator->setLeftInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
-        binaryOperator->setRightInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
+        binaryOperator->setLeftInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
+        binaryOperator->setRightInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
     }
 }
 
