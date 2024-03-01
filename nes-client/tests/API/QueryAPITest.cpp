@@ -432,24 +432,24 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
 }
 
 TEST_F(QueryAPITest, Nexmark17) {
-    Query::from("bid")
-        .window(TumblingWindow::of(EventTime("timestamp"), Hours(1)))
-        .apply(Count()->as("total_bids"),
-               Min(Attribute("price"))->as("min_price"),
-               Max(Attribute("price"))->as("max_price"),
-               Avg(Attribute("price"))->as("avg_price"),
-               Sum(Attribute("price"))->as("sum_price"));
+    auto q = Query::from("bid")
+                 .window(TumblingWindow::of(EventTime("timestamp"), Hours(1)))
+                 .apply(Count()->as("total_bids"),
+                        Min(Attribute("price"))->as("min_price"),
+                        Max(Attribute("price"))->as("max_price"),
+                        Avg(Attribute("price"))->as("avg_price"),
+                        Sum(Attribute("price"))->as("sum_price"));
 }
 
 TEST_F(QueryAPITest, Nexmark12) {
-    Query::from("bid")
-        .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
-        .byKey(Attribute("bidder"))
-        .apply(Count()->as("bid_count"))
-        .project(Attribute("bidder"),
-                 Attribute("bid_count"),
-                 Attribute("start").as("starttime"),
-                 Attribute("start").as("endtime"));
+    auto q = Query::from("bid")
+                 .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
+                 .byKey(Attribute("bidder"))
+                 .apply(Count()->as("bid_count"))
+                 .project(Attribute("bidder"),
+                          Attribute("bid_count"),
+                          Attribute("start").as("starttime"),
+                          Attribute("start").as("endtime"));
 }
 
 TEST_F(QueryAPITest, Nexmark4) {
@@ -459,16 +459,16 @@ TEST_F(QueryAPITest, Nexmark4) {
                            .project(Attribute("start").as("timestamp"), Attribute("maxprice"))
                            .as("maxbid");
 
-    Query::from("bid")
-        .joinWith(inner_query)
-        .where(Attribute("price"))
-        .equalsTo("maxprice")
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-        .project(Attribute("bid$auction"),
-                 Attribute("bid$price"),
-                 Attribute("bid$bidder"),
-                 Attribute("bid$datetime"),
-                 Attribute("bid$timestamp"));
+    auto q = Query::from("bid")
+                 .joinWith(inner_query)
+                 .where(Attribute("price"))
+                 .equalsTo("maxprice")
+                 .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
+                 .project(Attribute("bid$auction"),
+                          Attribute("bid$price"),
+                          Attribute("bid$bidder"),
+                          Attribute("bid$datetime"),
+                          Attribute("bid$timestamp"));
 }
 
 TEST_F(QueryAPITest, ThroughputSink) {
