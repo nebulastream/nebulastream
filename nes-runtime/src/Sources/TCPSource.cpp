@@ -195,6 +195,11 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                 return false;
             }
             writer.consume(bufferSizeReceived);
+            if (bufferSizeReceived == 0 && circularBuffer.empty()) {
+                NES_INFO("TCP Source detected EoS");
+                this->running.exchange(false);
+                break;
+            }
         }
 
         if (!circularBuffer.empty()) {
