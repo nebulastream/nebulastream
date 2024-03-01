@@ -49,7 +49,7 @@ class MockExchangeProtocol : public NES::Network::ExchangeProtocol {
 
 class MockNetworkManager : public NES::Network::NetworkManager {
   public:
-    MockNetworkManager() : NetworkManager(1, "", 90000, MockExchangeProtocol(), nullptr, 0, 0) {}
+    MockNetworkManager() : NetworkManager(1, "", static_cast<uint16_t>(9000), MockExchangeProtocol(), nullptr, 0, 0) {}
 };
 
 class MockQueryManager final : public NES::Runtime::AbstractQueryManager {
