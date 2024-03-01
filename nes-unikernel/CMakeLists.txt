@@ -45,7 +45,6 @@ if (UNIKERNEL_USE_CUSTOM_DEPS)
     set(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} smallfolly)
     message("Unikernel use custom libs")
 else ()
-    message(FATAL_ERROR "Not Supported")
     FetchContent_Declare(
             scnlib
             GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
@@ -77,7 +76,6 @@ target_compile_options(unikernel-lib PRIVATE ${UNIKERNEL_COMPILE_OPTIONS}
         -Wno-error=unused-parameter
 )
 target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork scn::scn ${UNIKERNEL_LIBS})
-
 
 add_executable(pipeline-test tests/pipelineTest.cpp)
 target_compile_options(pipeline-test PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
