@@ -72,15 +72,15 @@
 # CHARS require the length key
 # FLOAT32 is float, FLOAT64 is double
 logicalSources:
-  - logicalSourceName: "nexmark_bid"
+  - logicalSourceName: "bid"
     fields:
-      - name: "TIMESTAMP"
+      - name: "creationTS"
         type: "UINT64"
-      - name: "auction"
+      - name: "auctionId"
         type: "UINT64"
       - name: "bidder"
         type: "UINT64"
-      - name: "datetime"
+      - name: "timestamp"
         type: "UINT64"
       - name: "price"
         type: "FLOAT64"

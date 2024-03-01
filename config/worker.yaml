@@ -16,7 +16,7 @@ rpcPort: 9433
 coordinatorPort: 8434
 physicalSources:
  - type: TCP_SOURCE
-   logicalSourceName: nexmark_bid
+   logicalSourceName: bid
    physicalSourceName: nexmark_bid_1
    configuration:
      socketHost: 127.0.0.1
