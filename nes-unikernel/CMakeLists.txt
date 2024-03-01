@@ -46,6 +46,7 @@ if (UNIKERNEL_USE_CUSTOM_DEPS)
     set(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} smallfolly)
     message("Unikernel use custom libs")
 else ()
+    message(FATAL_ERROR "Not Supported")
     FetchContent_Declare(
             scnlib
             GIT_REPOSITORY https://github.com/eliaskosunen/scnlib.git
