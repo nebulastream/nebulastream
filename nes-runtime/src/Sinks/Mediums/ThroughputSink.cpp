@@ -46,7 +46,7 @@ bool NES::ThroughputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::
         const auto timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - time);
         double durationInSeconds = timeDiff.count() * 1.0e-9;
 
-        NES_INFO("Throughput for {}: {}", counterName, static_cast<float>(numberOfTuplesReceived) / durationInSeconds);
+        NES_INFO("Throughput for {}: {} tps", counterName, static_cast<float>(numberOfTuplesReceived) / durationInSeconds);
         NES_DEBUG("Throughput for {}: Tuples {} in {}s", counterName, numberOfTuplesReceived, durationInSeconds);
         localCounter = currentCounter + numberOfTuples;
         time = currentTime;
