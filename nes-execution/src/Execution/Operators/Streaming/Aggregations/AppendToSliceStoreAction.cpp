@@ -80,6 +80,8 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
         auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
         task->startSlice = windowStart;
         task->endSlice = windowEnd;
+        task->lastChunk = true;
+        task->chunkNumber = 1;
         task->slices = slicesForWindow;
         task->sequenceNumber = resultSequenceNumber++;
         ctx.dispatchBuffer(buffer);
