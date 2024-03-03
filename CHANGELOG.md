@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.58](https://github.com/nebulastream/nebulastream/tree/v0.6.58) (2024-03-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.57...v0.6.58)
+
+**Implemented enhancements:**
+
+- \[TASK\] Statistic Cache / Store [\#4608](https://github.com/nebulastream/nebulastream/issues/4608)
+- \[TASK\] Interface for StatisticStorage [\#4606](https://github.com/nebulastream/nebulastream/issues/4606)
+
 ## [v0.6.57](https://github.com/nebulastream/nebulastream/tree/v0.6.57) (2024-02-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.56...v0.6.57)
