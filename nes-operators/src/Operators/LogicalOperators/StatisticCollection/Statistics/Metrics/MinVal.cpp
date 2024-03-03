@@ -12,25 +12,23 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Cardinality.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/MinVal.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Statistic {
 
-MetricPtr Cardinality::create(const FieldAccessExpressionNodePtr& field) {
-    return std::make_shared<Cardinality>(Cardinality(field));
-}
+MetricPtr MinVal::create(const FieldAccessExpressionNodePtr& field) { return std::make_shared<MinVal>(MinVal(field)); }
 
-bool Cardinality::operator==(const Metric& rhs) const {
-    if (rhs.instanceOf<Cardinality>()) {
-        auto rhsCardinality = dynamic_cast<const Cardinality&>(rhs);
-        return field->equal(rhsCardinality.field);
+MinVal::MinVal(const FieldAccessExpressionNodePtr& field) : Metric(field) {}
+
+bool MinVal::operator==(const Metric& rhs) const {
+    if (rhs.instanceOf<MinVal>()) {
+        auto rhsMinVal = dynamic_cast<const MinVal&>(rhs);
+        return field->equal(rhsMinVal.field);
     }
     return false;
 }
 
-std::string Cardinality::toString() const { return "Cardinality over " + field->toString(); }
-
-Cardinality::Cardinality(const FieldAccessExpressionNodePtr& field) : Metric(field) {}
+std::string MinVal::toString() const { return "MinVal over " + field->toString(); }
 
 }// namespace NES::Statistic

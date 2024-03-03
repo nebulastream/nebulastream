@@ -32,11 +32,14 @@ class StatisticInfo {
 
     /**
      * @brief Constructor for a StatisticInfo
-     * @param triggerCondition
-     * @param callBack
-     * @param queryId
+     * @param window: Over what window do we built the statistic, e.g., Tumbling, Sliding, Threshold, ...
+     * @param triggerCondition: Condition that is checked for each newly created window of a given statistic.
+     * @param callBack: Function that is called, if triggerCondition returns true
+     * @param queryId: Id of the StatisticQuery
      */
-    StatisticInfo(const TriggerConditionPtr triggerCondition,
+    StatisticInfo(const Windowing::WindowTypePtr window,
+                  const TriggerConditionPtr triggerCondition,
+                  // Using an rvalue reference here to avoid unnecessary copies
                   const std::function<void(CharacteristicPtr)>&& callBack,
                   const QueryId& queryId);
 
@@ -76,6 +79,12 @@ class StatisticInfo {
     void setQueryId(const QueryId queryId);
 
     /**
+     * @brief Gets the Window
+     * @return WindowTypePtr
+     */
+    Windowing::WindowTypePtr getWindow() const;
+
+    /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if equal otherwise false
@@ -96,6 +105,7 @@ class StatisticInfo {
     [[nodiscard]] std::string toString() const;
 
   private:
+    Windowing::WindowTypePtr window;
     TriggerConditionPtr triggerCondition;
     std::function<void(CharacteristicPtr)> callBack;
     QueryId queryId;

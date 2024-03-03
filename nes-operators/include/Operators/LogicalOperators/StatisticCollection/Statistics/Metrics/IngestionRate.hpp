@@ -12,23 +12,22 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_
-#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Metric.hpp>
+#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_INGESTIONRATE_HPP_
+#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_INGESTIONRATE_HPP_
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 
 namespace NES::Statistic {
 
 /**
- * @brief Collects the min value for the fieldName
+ * @brief Collects the ingestion rate on a node
  */
-class MinVal : public Metric {
+class IngestionRate : public Metric {
   public:
     /**
-     * @brief Creates a MinVal wrapped in a MetricPtr
-     * @param fieldName
+     * @brief Creates a IngestionRate wrapped in a MetricPtr
      * @return MetricPtr
      */
-    static MetricPtr create(const FieldAccessExpressionNodePtr& field);
+    static MetricPtr create();
 
     /**
      * @brief Checks for equality
@@ -45,12 +44,11 @@ class MinVal : public Metric {
 
   private:
     /**
-     * @brief Private constructor for a MinVal
-     * @param fieldName
+     * @brief Private constructor for IngestionRate
      */
-    explicit MinVal(const FieldAccessExpressionNodePtr& field);
+    explicit IngestionRate();
 };
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_
+#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_INGESTIONRATE_HPP_

@@ -13,7 +13,7 @@
 */
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 #include <utility>
 
 namespace NES::Statistic {

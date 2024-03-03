@@ -19,6 +19,13 @@
 
 namespace NES::Statistic {
 
+/*
+ * We use this as a way to not having to send the characteristic and window to all workers.
+ * The StatisticHash uniquely identifies a statistic anywhere in our system, which means we do not need to send
+ * characteristics and windows to all workers to uniquely identify a statistic.
+ */
+using StatisticHash = std::size_t;
+
 /**
  * @brief This class represents how to uniquely identify a statistic in the system
  */
@@ -27,21 +34,14 @@ class StatisticKey {
     /**
      * @brief Constructor for a StatisticKey
      * @param characteristic
-     * @param window
      */
-    StatisticKey(const CharacteristicPtr& characteristic, const Windowing::WindowTypePtr& window);
+    StatisticKey(CharacteristicPtr  characteristic);
 
     /**
      * @brief Getter for the characteristic
      * @return CharacteristicPtr
      */
     [[nodiscard]] CharacteristicPtr getCharacteristic() const;
-
-    /**
-     * @brief Getter for the window
-     * @return WindowTypePtr
-     */
-    [[nodiscard]] Windowing::WindowTypePtr getWindow() const;
 
     /**
      * @brief Checks for equality
@@ -71,7 +71,6 @@ class StatisticKey {
 
   private:
     const CharacteristicPtr characteristic;
-    const Windowing::WindowTypePtr window;
 };
 
 /**

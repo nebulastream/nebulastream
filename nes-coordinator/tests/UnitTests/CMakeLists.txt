@@ -62,6 +62,9 @@ add_nes_unit_test(statistic-registry-unit-test "StatisticCollection/StatisticReg
 ### DefaultStatisticQueryGeneratorTest ###
 add_nes_unit_test(default-statistic-query-generator-test "StatisticCollection/DefaultStatisticQueryGeneratorTest.cpp")
 
+### DefaultStatisticStoreTest ###
+add_nes_unit_test(default-statistic-store-test "StatisticCollection/DefaultStatisticStoreTest.cpp")
+
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "Runtime/AsyncTaskExecutorTest.cpp")
 

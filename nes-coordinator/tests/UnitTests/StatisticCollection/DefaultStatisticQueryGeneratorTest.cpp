@@ -23,16 +23,14 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/BufferRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Cardinality.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/IngestionRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/MinVal.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Selectivity.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/BufferRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Cardinality.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/MinVal.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
@@ -106,7 +104,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
                                     ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64);
 
     constexpr auto EXPECTED_WIDTH = 512;
-    const auto dataCharacteristic = DataCharacteristic::create(Cardinality::create(Over("f1")), "car");
+    const auto dataCharacteristic = DataCharacteristic::create(Cardinality::create(Over("f1")), "car", "car_1");
     const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
     const auto sendingPolicy = SENDING_ASAP;
     const auto triggerCondition = NeverTrigger::create();
@@ -145,7 +143,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
-    const auto dataCharacteristic = DataCharacteristic::create(Selectivity::create(Over("f1")), "car");
+    const auto dataCharacteristic = DataCharacteristic::create(Selectivity::create(Over("f1")), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(60), Seconds(10));
     const auto sendingPolicy = SENDING_LAZY;
     const auto triggerCondition = NeverTrigger::create();
@@ -185,7 +183,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
-    const auto dataCharacteristic = DataCharacteristic::create(Selectivity::create(Over("f1")), "car");
+    const auto dataCharacteristic = DataCharacteristic::create(IngestionRate::create(), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(60), Seconds(10));
     const auto sendingPolicy = SENDING_LAZY;
     const auto triggerCondition = NeverTrigger::create();
@@ -204,7 +202,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(countMinDescriptor->getField()->equal(Over("f1")));
+    EXPECT_TRUE(countMinDescriptor->getField()->equal(Over(INGESTION_RATE_FIELD_NAME)));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyLazy>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
@@ -225,7 +223,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
-    const auto dataCharacteristic = DataCharacteristic::create(Selectivity::create(Over("f1")), "car");
+    const auto dataCharacteristic = DataCharacteristic::create(BufferRate::create(), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Hours(24), Seconds(60));
     const auto sendingPolicy = SENDING_ADAPTIVE;
     const auto triggerCondition = NeverTrigger::create();
@@ -244,7 +242,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(countMinDescriptor->getField()->equal(Over("f1")));
+    EXPECT_TRUE(countMinDescriptor->getField()->equal(Over(BUFFER_RATE_FIELD_NAME)));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyAdaptive>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
@@ -265,7 +263,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
-    const auto dataCharacteristic = DataCharacteristic::create(Selectivity::create(Over("f1")), "car");
+    const auto dataCharacteristic = DataCharacteristic::create(MinVal::create(Over("f1")), "car", "car_1");
     const auto window = SlidingWindow::of(EventTime(Attribute("ts")), Seconds(60), Seconds(10));
     const auto sendingPolicy = SENDING_LAZY;
     const auto triggerCondition = NeverTrigger::create();

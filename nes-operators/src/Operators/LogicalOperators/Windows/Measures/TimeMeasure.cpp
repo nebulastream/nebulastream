@@ -17,12 +17,18 @@
 
 namespace NES::Windowing {
 
-TimeMeasure::TimeMeasure(uint64_t ms) : ms(ms) {}
+TimeMeasure::TimeMeasure(uint64_t milliseconds) : milliSeconds(milliseconds) {}
 
-uint64_t TimeMeasure::getTime() const { return ms; }
+uint64_t TimeMeasure::getTime() const { return milliSeconds; }
 
-std::string TimeMeasure::toString() { return "TimeMeasure: ms)" + std::to_string(ms); }
+std::string TimeMeasure::toString() const { return "TimeMeasure: " + std::to_string(milliSeconds) + "ms"; }
 
-bool TimeMeasure::equals(const TimeMeasure& other) const { return this->ms == other.ms; }
+bool TimeMeasure::operator<(const TimeMeasure& other) const { return milliSeconds < other.milliSeconds; }
+
+bool TimeMeasure::operator<=(const TimeMeasure& other) const { return milliSeconds <= other.milliSeconds; }
+
+bool TimeMeasure::operator==(const TimeMeasure& other) const { return milliSeconds == other.milliSeconds; }
+
+bool TimeMeasure::equals(const TimeMeasure& other) const { return this->milliSeconds == other.milliSeconds; }
 
 }// namespace NES::Windowing

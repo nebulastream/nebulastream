@@ -16,29 +16,27 @@
 #include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
+#include <utility>
 
 namespace NES::Statistic {
 
-StatisticKey::StatisticKey(const CharacteristicPtr& characteristic, const Windowing::WindowTypePtr& window)
-    : characteristic(std::move(characteristic)), window(window) {}
+StatisticKey::StatisticKey(CharacteristicPtr  characteristic)
+    : characteristic(std::move(characteristic)) {}
 
 CharacteristicPtr StatisticKey::getCharacteristic() const { return characteristic; }
 
-Windowing::WindowTypePtr StatisticKey::getWindow() const { return window; }
-
 bool StatisticKey::operator==(const StatisticKey& rhs) const {
-    return (*characteristic) == (*rhs.characteristic) && window == rhs.window;
+    return (*characteristic) == (*rhs.characteristic);
 }
 
 bool StatisticKey::operator!=(const StatisticKey& rhs) const { return !(rhs == *this); }
 
 std::string StatisticKey::toString() const {
     std::ostringstream oss;
-    oss << "Characteristic: " << characteristic->toString() << " "
-        << "Window: " << window->toString();
+    oss << "Characteristic(" << characteristic->toString() << ")";
     return oss.str();
 }
 
-std::size_t StatisticKey::hash() const { return characteristic->hash() ^ window->hash(); }
+std::size_t StatisticKey::hash() const { return characteristic->hash(); }
 
 }// namespace NES::Statistic

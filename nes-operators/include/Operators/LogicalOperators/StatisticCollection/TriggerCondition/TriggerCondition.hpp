@@ -14,7 +14,7 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_TRIGGERCONDITION_TRIGGERCONDITION_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_TRIGGERCONDITION_TRIGGERCONDITION_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Statistic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Statistic.hpp>
 namespace NES::Statistic {
 
 class TriggerCondition;

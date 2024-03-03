@@ -14,7 +14,7 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/IngestionRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
@@ -41,8 +41,7 @@ class StatisticRegistryTest : public Testing::BaseUnitTest {
 std::vector<Statistic::StatisticKey> createRandomStatisticKey(const uint64_t numberOfKeys) {
     std::vector<Statistic::StatisticKey> randomKeys;
     for (auto i = 0_u64; i < numberOfKeys; ++i) {
-        randomKeys.emplace_back(Statistic::InfrastructureStatistic::create(Statistic::IngestionRate::create(), i),
-                                TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(rand())));
+        randomKeys.emplace_back(Statistic::InfrastructureStatistic::create(Statistic::IngestionRate::create(), i));
     }
     return randomKeys;
 }
@@ -50,7 +49,8 @@ std::vector<Statistic::StatisticKey> createRandomStatisticKey(const uint64_t num
 std::vector<Statistic::StatisticInfo> createRandomStatisticInfo(const uint64_t numberOfInfos) {
     std::vector<Statistic::StatisticInfo> randomInfos;
     for (auto i = 0_u64; i < numberOfInfos; ++i) {
-        randomInfos.emplace_back(Statistic::NeverTrigger::create(), nullptr, rand());
+        randomInfos.emplace_back(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(rand())),
+                                 Statistic::NeverTrigger::create(), nullptr, rand());
     }
     return randomInfos;
 }

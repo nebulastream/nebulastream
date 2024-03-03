@@ -14,7 +14,7 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_BUFFERRATE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_BUFFERRATE_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 
 namespace NES::Statistic {
 
