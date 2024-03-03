@@ -40,8 +40,7 @@ bool DefaultStatisticStore::insertStatistic(const StatisticHash& statisticHash, 
 
     // For now, we do not allow duplicate statistics. Meaning the same statistic key with the same startTs and endTs
     for (const auto& stat : statisticVec) {
-        if (statistic->getStartTs().equals(stat->getStartTs()) &&
-            statistic->getEndTs().equals(stat->getEndTs())) {
+        if (statistic->getStartTs().equals(stat->getStartTs()) && statistic->getEndTs().equals(stat->getEndTs())) {
             return false;
         }
     }

@@ -37,12 +37,10 @@ class DummyStatistic : public Statistic {
         return std::make_shared<DummyStatistic>(DummyStatistic(startTs, endTs));
     }
 
-    StatisticValue<> getStatisticValue(const Characteristic&) const override {
-        return StatisticValue<>(randomValue);
-    }
+    StatisticValue<> getStatisticValue(const Characteristic&) const override { return StatisticValue<>(randomValue); }
     std::string toString() const override {
-        return "DummyStatistic (" + startTs.toString() + ", " + endTs.toString() + ", "
-            + std::to_string(observedTuples) + ", " + std::to_string(randomValue) + ")";
+        return "DummyStatistic (" + startTs.toString() + ", " + endTs.toString() + ", " + std::to_string(observedTuples) + ", "
+            + std::to_string(randomValue) + ")";
     }
 
     bool equal(const Statistic& other) const override {
@@ -59,8 +57,7 @@ class DummyStatistic : public Statistic {
     uint64_t randomValue;
 };
 
-class DefaultStatisticStoreTest : public Testing::BaseUnitTest,
-                                  public ::testing::WithParamInterface<std::tuple<int, int, int>>{
+class DefaultStatisticStoreTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<std::tuple<int, int, int>> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DefaultStatisticStoreTest.log", NES::LogLevel::LOG_DEBUG);
@@ -68,9 +65,7 @@ class DefaultStatisticStoreTest : public Testing::BaseUnitTest,
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
-        NES::Testing::BaseUnitTest::SetUp();
-    }
+    void SetUp() override { NES::Testing::BaseUnitTest::SetUp(); }
 
     /**
      * @brief Creates statistics for the number of statistics key and returns the largest endTs
@@ -155,15 +150,15 @@ TEST_P(DefaultStatisticStoreTest, multipleItem) {
     std::vector<std::thread> insertThreads;
     std::atomic<uint64_t> statisticsPos = 0;
     for (auto threadId = 0; threadId < numberOfThreads; ++threadId) {
-        insertThreads.emplace_back([&statisticsPos, this, &allStatisticsPlusKey](){
+        insertThreads.emplace_back([&statisticsPos, this, &allStatisticsPlusKey]() {
             uint64_t nextPos;
             while ((nextPos = statisticsPos++) < allStatisticsPlusKey.size()) {
                 const auto& statisticKey = allStatisticsPlusKey[nextPos].first;
                 const auto& dummyStatistic = allStatisticsPlusKey[nextPos].second;
                 ASSERT_TRUE(defaultStatisticStore.insertStatistic(statisticKey.hash(), dummyStatistic));
                 auto getStatistics = defaultStatisticStore.getStatistics(statisticKey.hash(),
-                                                                        dummyStatistic->getStartTs(),
-                                                                        dummyStatistic->getEndTs());
+                                                                         dummyStatistic->getStartTs(),
+                                                                         dummyStatistic->getEndTs());
                 ASSERT_EQ(getStatistics.size(), 1);
                 EXPECT_TRUE(getStatistics[0]->equal(*dummyStatistic));
             }
@@ -183,7 +178,7 @@ TEST_P(DefaultStatisticStoreTest, multipleItem) {
         }
         auto getStatistics = defaultStatisticStore.getStatistics(statisticKey.hash(), Milliseconds(0), maxEndTs);
         ASSERT_EQ(getStatistics.size(), statistics.size());
-        std::sort(getStatistics.begin(), getStatistics.end(), [](const StatisticPtr& left, const StatisticPtr& right){
+        std::sort(getStatistics.begin(), getStatistics.end(), [](const StatisticPtr& left, const StatisticPtr& right) {
             return left->getStartTs() < right->getStartTs();
         });
         EXPECT_EQ(getStatistics, statistics);
@@ -193,7 +188,7 @@ TEST_P(DefaultStatisticStoreTest, multipleItem) {
     std::vector<std::thread> deleteThreads;
     statisticsPos = 0;
     for (auto threadId = 0; threadId < numberOfThreads; ++threadId) {
-        deleteThreads.emplace_back([&statisticsPos, this, &allStatisticsPlusKey](){
+        deleteThreads.emplace_back([&statisticsPos, this, &allStatisticsPlusKey]() {
             uint64_t nextPos;
             while ((nextPos = statisticsPos++) < allStatisticsPlusKey.size()) {
                 const auto& statisticKey = allStatisticsPlusKey[nextPos].first;
@@ -220,14 +215,12 @@ TEST_P(DefaultStatisticStoreTest, multipleItem) {
 INSTANTIATE_TEST_CASE_P(testDefaultStatisticStore,
                         DefaultStatisticStoreTest,
                         // We test here over threads, number of statistic keys, and number of statistics per key
-                        ::testing::Combine(::testing::Values(1, 2, 4, 8),    // No. threads
-                                           ::testing::Values(1, 5, 10),      // No. statistic key
-                                           ::testing::Values(1, 500, 1000)), // No. statistics per key
+                        ::testing::Combine(::testing::Values(1, 2, 4, 8),   // No. threads
+                                           ::testing::Values(1, 5, 10),     // No. statistic key
+                                           ::testing::Values(1, 500, 1000)),// No. statistics per key
                         [](const testing::TestParamInfo<DefaultStatisticStoreTest::ParamType>& info) {
-                            return std::string(
-                                std::to_string(std::get<0>(info.param)) + "_Threads" +
-                                std::to_string(std::get<1>(info.param)) + "_StatisticKey" +
-                                std::to_string(std::get<2>(info.param)) + "_StatisticsPerKey"
-                                               );
+                            return std::string(std::to_string(std::get<0>(info.param)) + "_Threads"
+                                               + std::to_string(std::get<1>(info.param)) + "_StatisticKey"
+                                               + std::to_string(std::get<2>(info.param)) + "_StatisticsPerKey");
                         });
-} // namespace NES::Statistic
+}// namespace NES::Statistic

@@ -20,14 +20,11 @@
 
 namespace NES::Statistic {
 
-StatisticKey::StatisticKey(CharacteristicPtr  characteristic)
-    : characteristic(std::move(characteristic)) {}
+StatisticKey::StatisticKey(CharacteristicPtr characteristic) : characteristic(std::move(characteristic)) {}
 
 CharacteristicPtr StatisticKey::getCharacteristic() const { return characteristic; }
 
-bool StatisticKey::operator==(const StatisticKey& rhs) const {
-    return (*characteristic) == (*rhs.characteristic);
-}
+bool StatisticKey::operator==(const StatisticKey& rhs) const { return (*characteristic) == (*rhs.characteristic); }
 
 bool StatisticKey::operator!=(const StatisticKey& rhs) const { return !(rhs == *this); }
 
