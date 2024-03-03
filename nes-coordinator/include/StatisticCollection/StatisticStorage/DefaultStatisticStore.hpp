@@ -16,8 +16,8 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_DEFAULTSTATISTICSTORE_HPP_
 
 #include <StatisticCollection/StatisticStorage/StatisticStoreInterface.hpp>
-#include <unordered_map>
 #include <folly/Synchronized.h>
+#include <unordered_map>
 namespace NES::Statistic {
 
 /**
@@ -26,7 +26,6 @@ namespace NES::Statistic {
  */
 class DefaultStatisticStore : public StatisticStoreInterface {
   public:
-
     std::vector<StatisticPtr> getStatistics(const StatisticHash& statisticHash,
                                             const Windowing::TimeMeasure& startTs,
                                             const Windowing::TimeMeasure& endTs) override;

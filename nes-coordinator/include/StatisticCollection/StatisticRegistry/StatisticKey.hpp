@@ -35,7 +35,7 @@ class StatisticKey {
      * @brief Constructor for a StatisticKey
      * @param characteristic
      */
-    StatisticKey(CharacteristicPtr  characteristic);
+    StatisticKey(CharacteristicPtr characteristic);
 
     /**
      * @brief Getter for the characteristic

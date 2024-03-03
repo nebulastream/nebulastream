@@ -57,9 +57,8 @@ TEST_F(StatisticTest, simpleTest) {
     constexpr auto nodeId = 1;
 
     //----------------------- Tracking
-    statCoordinator.trackStatistic(
-        DataCharacteristic::create(Selectivity::create(Over("f1")), "car", "car_1"),
-        SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
+    statCoordinator.trackStatistic(DataCharacteristic::create(Selectivity::create(Over("f1")), "car", "car_1"),
+                                   SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
     statCoordinator.trackStatistic(WorkloadCharacteristic::create(Selectivity::create(Over("f2")), queryId, operatorId),
                                    SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(1)));
 
@@ -84,11 +83,10 @@ TEST_F(StatisticTest, simpleTest) {
 
     // TODO With issue #4633, we will update our probing interface. After we have tackled #4606 and #4608, we have more
     //  information on how to best do this.
-    auto probeResult =
-        statCoordinator.probeStatistic(DataCharacteristic::create(Cardinality::create(Over("f2")), "car", "car_2"),
-                                       Hours(24),
-                                       Seconds(2),
-                                       estimationAllowed);
+    auto probeResult = statCoordinator.probeStatistic(DataCharacteristic::create(Cardinality::create(Over("f2")), "car", "car_2"),
+                                                      Hours(24),
+                                                      Seconds(2),
+                                                      estimationAllowed);
 
     auto anotherProbeResult =
         statCoordinator.probeStatistic(WorkloadCharacteristic::create(Selectivity::create(Over("f1")), queryId, operatorId),

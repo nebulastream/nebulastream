@@ -50,7 +50,9 @@ std::vector<Statistic::StatisticInfo> createRandomStatisticInfo(const uint64_t n
     std::vector<Statistic::StatisticInfo> randomInfos;
     for (auto i = 0_u64; i < numberOfInfos; ++i) {
         randomInfos.emplace_back(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(rand())),
-                                 Statistic::NeverTrigger::create(), nullptr, rand());
+                                 Statistic::NeverTrigger::create(),
+                                 nullptr,
+                                 rand());
     }
     return randomInfos;
 }

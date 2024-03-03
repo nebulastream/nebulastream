@@ -55,6 +55,6 @@ class StatisticStoreInterface {
                                   const Windowing::TimeMeasure& startTs,
                                   const Windowing::TimeMeasure& endTs) = 0;
 };
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_STATISTICSTOREINTERFACE_HPP_
