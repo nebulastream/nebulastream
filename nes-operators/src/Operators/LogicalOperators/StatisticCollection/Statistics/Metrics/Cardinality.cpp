@@ -12,23 +12,25 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Cardinality.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Selectivity.hpp>
 
 namespace NES::Statistic {
-MetricPtr Selectivity::create(const FieldAccessExpressionNodePtr& expressionNode) {
-    return std::make_shared<Selectivity>(Selectivity(expressionNode));
+
+MetricPtr Cardinality::create(const FieldAccessExpressionNodePtr& field) {
+    return std::make_shared<Cardinality>(Cardinality(field));
 }
 
-bool Selectivity::operator==(const Metric& rhs) const {
-    if (rhs.instanceOf<Selectivity>()) {
-        auto rhsSelectivity = dynamic_cast<const Selectivity&>(rhs);
-        return field->equal(rhsSelectivity.field);
+bool Cardinality::operator==(const Metric& rhs) const {
+    if (rhs.instanceOf<Cardinality>()) {
+        auto rhsCardinality = dynamic_cast<const Cardinality&>(rhs);
+        return field->equal(rhsCardinality.field);
     }
     return false;
 }
 
-std::string Selectivity::toString() const { return "Selectivity over " + field->toString(); }
+std::string Cardinality::toString() const { return "Cardinality over " + field->toString(); }
 
-Selectivity::Selectivity(const FieldAccessExpressionNodePtr& expressionNode) : Metric(expressionNode) {}
+Cardinality::Cardinality(const FieldAccessExpressionNodePtr& field) : Metric(field) {}
+
 }// namespace NES::Statistic

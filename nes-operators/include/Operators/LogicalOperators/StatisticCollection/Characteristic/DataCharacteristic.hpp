@@ -21,32 +21,32 @@ namespace NES::Statistic {
 
 /**
  * @brief Represents a data characteristic that results in collecting statistics over a given logical stream and
- * all or a subset of the physical streams
+ * all or a subset of the physical source
  */
 class DataCharacteristic : public Characteristic {
   public:
     /**
      * @brief Creates a DataCharacteristic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
-     * @param logicalSourceName: Logical stream name to collect the statistics
-     * @param physicalSourceNames: If set to {}, then all physical streams are being selected
+     * @param logicalSourceName: Logical source name to collect the statistics
+     * @param physicalSourceName: Physical source name to collect the statistics over
      * @return CharacteristicPtr
      */
     static CharacteristicPtr create(MetricPtr type,
                                     const std::string& logicalSourceName,
-                                    const std::initializer_list<std::string>& physicalSourceNames = {});
+                                    const std::string& physicalSourceName);
 
     /**
-     * @brief Gets the logical stream name
+     * @brief Gets the logical source name
      * @return std::string
      */
     std::string getLogicalSourceName() const;
 
     /**
-     * @brief Gets the physical stream names
-     * @return std::vector<std::string>
+     * @brief Gets the physical source name
+     * @return std::string
      */
-    std::vector<std::string> getPhysicalSourceNames() const;
+    std::string getPhysicalSourceName() const;
 
     /**
      * @brief Checks for equality
@@ -71,15 +71,15 @@ class DataCharacteristic : public Characteristic {
     /**
      * @brief Creates a DataCharacteristic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
-     * @param logicalSourceName: Logical stream name to collect the statistics
-     * @param physicalSourceNames: If set to {}, then all physical streams are being selected
+     * @param logicalSourceName: Logical source name to collect the statistics from
+     * @param physicalSourceNames: Physical source name to collect the statistics from
      */
     DataCharacteristic(MetricPtr type,
                        std::string logicalSourceName,
-                       const std::initializer_list<std::string>& physicalSourceNames = {});
+                       const std::string& physicalSourceName);
 
     std::string logicalSourceName;
-    std::vector<std::string> physicalSourceNames;
+    std::string physicalSourceName;
 };
 }// namespace NES::Statistic
 

@@ -18,47 +18,41 @@ namespace NES::Statistic {
 
 CharacteristicPtr DataCharacteristic::create(MetricPtr type,
                                              const std::string& logicalSourceName,
-                                             const std::initializer_list<std::string>& physicalSourceNames) {
-    return std::make_shared<DataCharacteristic>(DataCharacteristic(std::move(type), logicalSourceName, physicalSourceNames));
+                                             const std::string& physicalSourceName) {
+    return std::make_shared<DataCharacteristic>(DataCharacteristic(std::move(type), logicalSourceName, physicalSourceName));
 }
 
 std::string DataCharacteristic::getLogicalSourceName() const { return logicalSourceName; }
 
-std::vector<std::string> DataCharacteristic::getPhysicalSourceNames() const { return physicalSourceNames; }
+std::string DataCharacteristic::getPhysicalSourceName() const { return physicalSourceName; }
 
 bool DataCharacteristic::operator==(const Characteristic& rhs) const {
     if (this->Characteristic::operator==(rhs) && rhs.instanceOf<DataCharacteristic>()) {
         auto rhsDataCharacteristic = dynamic_cast<const DataCharacteristic&>(rhs);
         return logicalSourceName == rhsDataCharacteristic.logicalSourceName
-            && physicalSourceNames == rhsDataCharacteristic.physicalSourceNames;
+            && physicalSourceName == rhsDataCharacteristic.physicalSourceName;
     }
     return false;
 }
 
 std::string DataCharacteristic::toString() const {
     std::ostringstream oss;
-    oss << "{ LogicalSourceName: " << logicalSourceName << " "
-        << "PhysicalSourceNames: ";
-    for (const auto& physicalSourceName : physicalSourceNames) {
-        oss << physicalSourceName << " ";
-    }
-    oss << "}";
+    oss << "{ LogicalSourceName: " << logicalSourceName  << " "
+        << "PhysicalSourceName: " << physicalSourceName << "}";
     return oss.str();
 }
 
 size_t DataCharacteristic::hash() const {
     size_t hash = 0;
     hash ^= std::hash<std::string>{}(logicalSourceName);
-    for (const auto& str : physicalSourceNames) {
-        hash ^= std::hash<std::string>{}(str);
-    }
+    hash ^= std::hash<std::string>{}(physicalSourceName);
     return hash;
 }
 
 DataCharacteristic::DataCharacteristic(MetricPtr type,
                                        std::string logicalSourceName,
-                                       const std::initializer_list<std::string>& physicalSourceNames)
+                                       const std::string& physicalSourceName)
     : Characteristic(std::move(type)), logicalSourceName(std::move(logicalSourceName)),
-      physicalSourceNames(physicalSourceNames) {}
+      physicalSourceName(physicalSourceName) {}
 
 }// namespace NES::Statistic

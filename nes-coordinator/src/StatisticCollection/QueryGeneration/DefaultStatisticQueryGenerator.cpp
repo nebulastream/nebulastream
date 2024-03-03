@@ -19,11 +19,11 @@
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/BufferRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Cardinality.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/IngestionRate.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/MinVal.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Selectivity.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/BufferRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Cardinality.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/MinVal.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 

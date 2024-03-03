@@ -11,10 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(QueryGeneration)
-add_subdirectory(StatisticRegistry)
-add_subdirectory(StatisticStorage)
-
 add_source_files(nes-coordinator
-        StatisticCoordinator.cpp
+    DefaultStatisticStore.cpp
 )

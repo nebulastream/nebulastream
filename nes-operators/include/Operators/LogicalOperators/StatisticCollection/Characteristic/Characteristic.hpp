@@ -16,7 +16,7 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_HPP_
 
 #include <Identifiers.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 namespace NES::Statistic {
 class Characteristic;
 using CharacteristicPtr = std::shared_ptr<Characteristic>;

@@ -64,7 +64,7 @@ class StatisticRegistry {
     /**
      * @brief Checks if a query is running according to this registry
      * @param statisticKey
-     * @return True, if queryId != INVALID_QUERY_IDqueryId != INVALID_QUERY_ID
+     * @return True, if queryId != INVALID_QUERY_ID
      */
     bool isRunning(const StatisticKey statisticKey) const;
 

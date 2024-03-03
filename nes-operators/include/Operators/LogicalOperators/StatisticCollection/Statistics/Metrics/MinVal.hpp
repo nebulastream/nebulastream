@@ -12,22 +12,20 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_SELECTIVITY_HPP_
-#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_SELECTIVITY_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Metric.hpp>
+#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_
+#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 
 namespace NES::Statistic {
 
 /**
- * @brief Collects statistics to estimate the selectivity. We define the selectivity as a ratio of how many tuples
- * an operator filters out. For example, a selectivity of 75% would mean that 75% of all tuples are not passed on by the
- * operator.
+ * @brief Collects the min value for the fieldName
  */
-class Selectivity : public Metric {
+class MinVal : public Metric {
   public:
     /**
-     * @brief Creates a Selectivity wrapped in a MetricPtr
-     * @param expressionNode
+     * @brief Creates a MinVal wrapped in a MetricPtr
+     * @param fieldName
      * @return MetricPtr
      */
     static MetricPtr create(const FieldAccessExpressionNodePtr& field);
@@ -47,12 +45,12 @@ class Selectivity : public Metric {
 
   private:
     /**
-     * @brief Private constructor for a Selectivity
-     * @param expressionNode
+     * @brief Private constructor for a MinVal
+     * @param fieldName
      */
-    explicit Selectivity(const FieldAccessExpressionNodePtr& field);
+    explicit MinVal(const FieldAccessExpressionNodePtr& field);
 };
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_SELECTIVITY_HPP_
+#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_

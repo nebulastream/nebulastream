@@ -12,23 +12,23 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/BufferRate.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Statistic {
 
-MetricPtr BufferRate::create() { return std::make_shared<BufferRate>(BufferRate()); }
+MetricPtr IngestionRate::create() { return std::make_shared<IngestionRate>(IngestionRate()); }
 
-bool BufferRate::operator==(const Metric& rhs) const {
-    if (rhs.instanceOf<BufferRate>()) {
-        auto rhsBufferRate = dynamic_cast<const BufferRate&>(rhs);
-        return field->equal(rhsBufferRate.field);
+IngestionRate::IngestionRate() : Metric(FieldAccessExpressionNode::create(INGESTION_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
+
+bool IngestionRate::operator==(const Metric& rhs) const {
+    if (rhs.instanceOf<IngestionRate>()) {
+        auto rhsIngestionRate = dynamic_cast<const IngestionRate&>(rhs);
+        return field == rhsIngestionRate.field;
     }
     return false;
 }
 
-BufferRate::BufferRate() : Metric(FieldAccessExpressionNode::create(BUFFER_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
-
-std::string BufferRate::toString() const { return "BufferRate"; }
+std::string IngestionRate::toString() const { return "IngestionRate"; }
 
 }// namespace NES::Statistic

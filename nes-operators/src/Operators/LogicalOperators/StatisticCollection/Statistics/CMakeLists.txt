@@ -11,4 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Metric)
+add_subdirectory(Metrics)
+
+add_source_files(nes-operators
+        Statistic.cpp
+        StatisticValue.cpp
+)

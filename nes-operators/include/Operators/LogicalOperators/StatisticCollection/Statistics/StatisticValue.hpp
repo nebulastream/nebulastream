@@ -18,11 +18,18 @@
 namespace NES::Statistic {
 
 /**
- * @brief This class acts as an abstract class for all possible statistic values
+ * @brief This class acts as an abstract class for all possible statistic values, e.g., a specific cardinality of 25
  */
 template<typename StatType = double>
 class StatisticValue {
   public:
+
+    /**
+     * @brief Constructor
+     * @param value
+     */
+    explicit StatisticValue(StatType value) : value(value) {}
+
     /**
      * @brief Getter for the underlying value
      * @return
@@ -30,7 +37,7 @@ class StatisticValue {
     virtual StatType getValue() const { return value; }
 
     /**
-     * @brief Virtual default deconstructor
+     * @brief Virtual default destructor
      */
     virtual ~StatisticValue() = default;
 

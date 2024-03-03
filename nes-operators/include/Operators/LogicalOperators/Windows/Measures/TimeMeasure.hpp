@@ -23,7 +23,11 @@ namespace NES::Windowing {
  */
 class TimeMeasure : public WindowMeasure {
   public:
-    explicit TimeMeasure(uint64_t ms);
+    /**
+     * @brief Constructor for a TimeMeasure
+     * @param milliseconds
+     */
+    explicit TimeMeasure(uint64_t milliseconds);
 
     /**
      * @brief gets the time measure in milliseconds
@@ -31,7 +35,7 @@ class TimeMeasure : public WindowMeasure {
      */
     [[nodiscard]] uint64_t getTime() const;
 
-    std::string toString() override;
+    std::string toString() const override;
 
     /**
      * @brief Compares for equality
@@ -40,8 +44,29 @@ class TimeMeasure : public WindowMeasure {
      */
     bool equals(const TimeMeasure& other) const;
 
+    /**
+     * @brief Checks for less than
+     * @param other
+     * @return True if this < other, false otherwise
+     */
+    bool operator<(const TimeMeasure& other) const;
+
+    /**
+     * @brief Checks for less or equal than
+     * @param other
+     * @return True if this <= other, false otherwise
+     */
+    bool operator<=(const TimeMeasure& other) const;
+
+    /**
+     * @brief Checks equality
+     * @param other
+     * @return True if this == other, false otherwise
+     */
+    bool operator==(const TimeMeasure& other) const;
+
   private:
-    const uint64_t ms;
+    const uint64_t milliSeconds;
 };
 
 }// namespace NES::Windowing

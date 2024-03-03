@@ -12,22 +12,25 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_INGESTIONRATE_HPP_
-#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_INGESTIONRATE_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/Metric.hpp>
+#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_SELECTIVITY_HPP_
+#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_SELECTIVITY_HPP_
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 
 namespace NES::Statistic {
 
 /**
- * @brief Collects the ingestion rate on a node
+ * @brief Collects statistics to estimate the selectivity. We define the selectivity as a ratio of how many tuples
+ * an operator filters out. For example, a selectivity of 75% would mean that 75% of all tuples are not passed on by the
+ * operator.
  */
-class IngestionRate : public Metric {
+class Selectivity : public Metric {
   public:
     /**
-     * @brief Creates a IngestionRate wrapped in a MetricPtr
+     * @brief Creates a Selectivity wrapped in a MetricPtr
+     * @param expressionNode
      * @return MetricPtr
      */
-    static MetricPtr create();
+    static MetricPtr create(const FieldAccessExpressionNodePtr& field);
 
     /**
      * @brief Checks for equality
@@ -44,11 +47,12 @@ class IngestionRate : public Metric {
 
   private:
     /**
-     * @brief Private constructor for IngestionRate
+     * @brief Private constructor for a Selectivity
+     * @param expressionNode
      */
-    explicit IngestionRate();
+    explicit Selectivity(const FieldAccessExpressionNodePtr& field);
 };
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_INGESTIONRATE_HPP_
+#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_SELECTIVITY_HPP_

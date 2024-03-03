@@ -24,8 +24,8 @@ namespace NES::Statistic {
 class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
   public:
     LogicalStatisticWindowOperator(OperatorId id,
-                                Windowing::WindowTypePtr windowType,
-                                WindowStatisticDescriptorPtr windowStatisticDescriptor);
+                                   Windowing::WindowTypePtr windowType,
+                                   WindowStatisticDescriptorPtr windowStatisticDescriptor);
 
     /**
      * @brief Infers the schema for this StatisticWindowOperatorNode

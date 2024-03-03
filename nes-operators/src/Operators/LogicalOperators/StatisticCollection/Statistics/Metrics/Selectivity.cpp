@@ -12,23 +12,23 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/StatisticCollection/Statistic/Metric/MinVal.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
 
 namespace NES::Statistic {
+MetricPtr Selectivity::create(const FieldAccessExpressionNodePtr& expressionNode) {
+    return std::make_shared<Selectivity>(Selectivity(expressionNode));
+}
 
-MetricPtr MinVal::create(const FieldAccessExpressionNodePtr& field) { return std::make_shared<MinVal>(MinVal(field)); }
-
-MinVal::MinVal(const FieldAccessExpressionNodePtr& field) : Metric(field) {}
-
-bool MinVal::operator==(const Metric& rhs) const {
-    if (rhs.instanceOf<MinVal>()) {
-        auto rhsMinVal = dynamic_cast<const MinVal&>(rhs);
-        return field->equal(rhsMinVal.field);
+bool Selectivity::operator==(const Metric& rhs) const {
+    if (rhs.instanceOf<Selectivity>()) {
+        auto rhsSelectivity = dynamic_cast<const Selectivity&>(rhs);
+        return field->equal(rhsSelectivity.field);
     }
     return false;
 }
 
-std::string MinVal::toString() const { return "MinVal over " + field->toString(); }
+std::string Selectivity::toString() const { return "Selectivity over " + field->toString(); }
 
+Selectivity::Selectivity(const FieldAccessExpressionNodePtr& expressionNode) : Metric(expressionNode) {}
 }// namespace NES::Statistic
