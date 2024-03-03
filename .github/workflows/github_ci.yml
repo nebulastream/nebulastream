@@ -197,6 +197,38 @@ jobs:
         uses: styfle/cancel-workflow-action@0.12.0
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
+      - name: Build Docker for CleanUp
+        id: builddocker_cleanup
+        if: github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+      - name: "Perform cleanup, if necessary"
+        run: |
+          os_version_arch="${{ matrix.osversion }}_${{ matrix.arch }}"
+          cache_dir="/data/nes-ci/tmp/nes-ccache_$os_version_arch"
+          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          docker_image_name="nes_build_${{ matrix.osversion }}"
+          github_workspace=${{ github.workspace }}
+          file="/data/nes-ci/tmp/last_checked_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}.txt"
+          
+          # We check, if we have to perform some cleanup. 
+          perform_cleanup=$(bash $github_workspace/scripts/build/check_cleanup.sh $file)
+          if [ $perform_cleanup -eq 1 ]; then
+            echo "Performing cleanup!"
+            # Running the script in the docker container, as otherwise, we will have permission issues
+            docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
+            docker rm ${{ github.run_id }}_${{ matrix.osversion }}_build
+            
+            # Remove the image and all containers based on this image
+            echo "Cleaning up docker image $docker_image_name"
+            docker ps -a | grep "docker_image_name" | awk '{print $1}' | xargs -r docker rm -f
+            docker rmi "$docker_image_name"
+          else
+            echo "We will not perform any cleanup!"
+          fi
+
       - name: Build Docker
         id: builddocker
         if: github.event_name != 'workflow_dispatch'
