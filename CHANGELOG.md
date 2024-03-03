@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.59](https://github.com/nebulastream/nebulastream/tree/v0.6.59) (2024-03-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.58...v0.6.59)
+
+**Implemented enhancements:**
+
+- \[TASK\] Clean up docker and ccache [\#4617](https://github.com/nebulastream/nebulastream/issues/4617)
+
 ## [v0.6.58](https://github.com/nebulastream/nebulastream/tree/v0.6.58) (2024-03-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.57...v0.6.58)
