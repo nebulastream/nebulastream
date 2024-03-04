@@ -1,0 +1,37 @@
+query: |
+  Query::from("bid_1")
+  .unionWith(Query::from("bid_2"))
+  .sink(NullOutputSinkDescriptor::create());
+topology:
+  sink:
+    node:
+      ip: 127.0.0.1
+      port: 8085
+      resources: 2
+  workers:
+    - node:
+        ip: 10.0.0.2
+        port: 8080
+        resources: 90
+      sources:
+        - name: bid_1
+          tcp:
+            ip: 127.0.0.1
+            port: 8091
+          schema:
+            type: NEXMARK_BID
+      links:
+        - sink
+    - node:
+        ip: 10.0.0.3
+        port: 8080
+        resources: 90
+      sources:
+        - name: bid_2
+          tcp:
+            ip: 127.0.0.1
+            port: 8091
+          schema:
+            type: NEXMARK_BID
+      links:
+        - 2

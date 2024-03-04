@@ -115,17 +115,16 @@ class Pipeline {
     using Impl = PipelineImpl<Prev, Stages...>;
 };
 
-template<typename Query, typename Sink, UnikernelPipeline<Sink> Pipeline>
+template<typename Query, typename Sink, UnikernelPipeline<Sink> ...Pipelines>
 class SubQueryImpl {
     using SinkImpl = typename Sink::template Impl<SubQueryImpl>;
-    using PipelineImpl = typename Pipeline::template Impl<SinkImpl>;
     constexpr static size_t StageId = 0;
 
   public:
     static void setup() {
         TRACE_PIPELINE_SETUP("SubQuery");
         SinkImpl::setup();
-        PipelineImpl::setup();
+        (Pipelines::template Impl<SinkImpl>::setup(),...);
     }
     static void stop(Runtime::QueryTerminationType type) {
         TRACE_PIPELINE_STOP("SubQuery");
@@ -134,17 +133,17 @@ class SubQueryImpl {
 
     static void request_stop(Runtime::QueryTerminationType type) {
         TRACE_PIPELINE_STOP_REQUEST("SubQuery");
-        PipelineImpl::request_stop(type);
+        (Pipelines::template Impl<SinkImpl>::request_stop(type),...);
         SinkImpl::request_stop(type);
         Query::stop(type);
     }
 };
 
-template<typename Sink, UnikernelPipeline<Sink> Pipeline>
+template<typename Sink, UnikernelPipeline<Sink> ...Pipelines>
 class SubQuery {
   public:
     template<typename Query>
-    using Impl = SubQueryImpl<Query, Sink, Pipeline>;
+    using Impl = SubQueryImpl<Query, Sink, Pipelines...>;
 };
 
 template<UnikernelBackwardsPipelineImpl Prev,

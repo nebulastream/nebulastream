@@ -91,6 +91,16 @@ void Stage<7>::execute(NES::Unikernel::UnikernelPipelineExecutionContext& contex
 CREATE_SIMPLE_STAGE(8)
 static bool stage_8_received_from_1 = false;
 static bool stage_8_received_from_2 = false;
+
+
+CREATE_SIMPLE_STAGE(9)
+template<>
+void Stage<9>::execute(NES::Unikernel::UnikernelPipelineExecutionContext& context,
+                       NES::Runtime::WorkerContext*,
+                       NES::Runtime::TupleBuffer& buffer) {
+    NES_INFO("Stage 7 Execute");
+    context.emit(buffer);
+}
 template<>
 void Stage<8>::execute(NES::Unikernel::UnikernelPipelineExecutionContext& context,
                        NES::Runtime::WorkerContext*,
@@ -224,6 +234,17 @@ struct TestSourceConfig3 {
     using SourceType = TestSourceImpl<TestSourceConfig3>;
 };
 
+
+struct TestSourceConfig4 {
+    constexpr static bool CopyBuffer = false;
+    constexpr static size_t OriginId = 0;
+
+    constexpr static size_t LocalBuffers = 100;
+    constexpr static size_t OperatorId = 3;
+    using Schema = Schema<Field<INT32>>;
+    using SourceType = TestSourceImpl<TestSourceConfig4>;
+};
+
 static_assert(DataSourceConfig<TestSourceConfig1>, "TestSourceConfig does not implement DataSourceConfig");
 static_assert(DataSourceConfig<TestSourceConfig2>, "TestSourceConfig does not implement DataSourceConfig");
 static_assert(DataSourceConfig<TestSourceConfig3>, "TestSourceConfig does not implement DataSourceConfig");
@@ -247,9 +268,10 @@ using Sink = UnikernelSink<TestSink>;
 using Source1 = UnikernelSource<TestSourceConfig1>;
 using Source2 = UnikernelSource<TestSourceConfig2>;
 using Source3 = UnikernelSource<TestSourceConfig3>;
+using Source4 = UnikernelSource<TestSourceConfig4>;
 using FirstJoin = PipelineJoin<Stage<4>, Pipeline<Stage<5>, Source1>, Pipeline<Stage<6>, Source2>>;
 using SecondJoin = PipelineJoin<Stage<8>, Pipeline<Stage<7>, Source3>, FirstJoin>;
-using SubQueryPlan = SubQuery<Sink, SecondJoin>;
+using SubQueryPlan = SubQuery<Sink, SecondJoin, Pipeline<Stage<9>, Source4>>;
 using QueryPlan = UnikernelExecutionPlan<SubQueryPlan>;
 
 }// namespace NES::Unikernel
@@ -266,6 +288,7 @@ int main() {
     auto& source1 = *NES::Unikernel::SourceHandle<NES::Unikernel::TestSourceConfig1>;
     auto& source2 = *NES::Unikernel::SourceHandle<NES::Unikernel::TestSourceConfig2>;
     auto& source3 = *NES::Unikernel::SourceHandle<NES::Unikernel::TestSourceConfig3>;
+    auto& source4 = *NES::Unikernel::SourceHandle<NES::Unikernel::TestSourceConfig4>;
 
     auto t1 = std::jthread([&source1]() {
         auto buffer = TheBufferManager->getBufferBlocking();
@@ -285,6 +308,13 @@ int main() {
         buffer.setOriginId(3);
         source3.emit(buffer);
         source3.eof();
+    });
+
+    auto t4 = std::jthread([&source4]() {
+        auto buffer = TheBufferManager->getBufferBlocking();
+        buffer.setOriginId(3);
+        source4.emit(buffer);
+        source4.eof();
     });
 
     NES::Unikernel::QueryPlan::wait();
