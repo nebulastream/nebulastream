@@ -572,7 +572,6 @@ struct Configuration {
     SinkEndpointConfiguration sink;
     std::vector<WorkerConfiguration> workers;
     QueryConfiguration query;
-    NES::FormatTypes format;
 };
 
 namespace YAML {
@@ -583,13 +582,6 @@ struct convert<Configuration> {
         UNIKERNEL_MODEL_YAML_DECODE(sink);
         UNIKERNEL_MODEL_YAML_DECODE(query);
         UNIKERNEL_MODEL_YAML_DECODE(workers);
-
-        rhs.format = NES::FormatTypes::CSV_FORMAT;
-        if (node["format"]) {
-            auto opt = magic_enum::enum_cast<NES::FormatTypes>(node["format"].as<std::string>());
-            NES_ASSERT(opt.has_value(), "Format is invalid");
-            rhs.format = *opt;
-        }
         return node;
     };
 
@@ -599,7 +591,6 @@ struct convert<Configuration> {
         UNIKERNEL_MODEL_YAML_ENCODE(sink);
         UNIKERNEL_MODEL_YAML_ENCODE(query);
         UNIKERNEL_MODEL_YAML_ENCODE(workers);
-        node["fomat"] = std::string(magic_enum::enum_name(rhs.format));
         return node;
     };
 };
