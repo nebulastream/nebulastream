@@ -192,7 +192,7 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const QueryPlanPtr&, co
 
     auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
     // this assumes that we applies the ProjectBeforeUnionRule and the input across all children is the same.
-    if (!unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema())) {
+    if (!unionOperator->getLeftInputSchema()->equalsIgnoringPrefix(unionOperator->getRightInputSchema())) {
         throw QueryCompilationException("The children of a union operator should have the same schema. Left:"
                                         + unionOperator->getLeftInputSchema()->toString() + " but right "
                                         + unionOperator->getRightInputSchema()->toString());
