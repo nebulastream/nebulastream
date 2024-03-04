@@ -162,6 +162,13 @@ class Schema {
     bool equals(const SchemaPtr& schema, bool considerOrder = true);
 
     /**
+     * @brief Checks if two Schemas are equal to each other ignoring source identifier prefixes.
+     * @param schema
+     * @return boolean
+     */
+    bool equalsIgnoringPrefix(const SchemaPtr& schema) const;
+
+    /**
      * @brief Checks if two schemas have same datatypes at same index location
      * @param otherSchema: the other schema to compare agains
      * @return ture if they are equal else false

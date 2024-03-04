@@ -52,6 +52,7 @@ class AttributeField {
 
     [[nodiscard]] std::string toString() const;
     bool isEqual(const AttributeFieldPtr& attr);
+    bool isEqualIgnoringPrefix(const AttributeFieldPtr& attr) const;
 
     /**
      * @brief Make copy of this attribute
@@ -60,6 +61,7 @@ class AttributeField {
     AttributeFieldPtr copy();
 
   private:
+    std::pair<std::string_view, std::string_view> splitSourcePrefix() const;
     std::string name;
     DataTypePtr dataType;
 };

@@ -47,6 +47,21 @@ bool AttributeField::isEqual(const AttributeFieldPtr& attr) {
     return (attr->name == name) && equalDataType;
 }
 
+std::pair<std::string_view, std::string_view> AttributeField::splitSourcePrefix() const {
+    auto it = this->name.find_first_of("$");
+    if (it == std::string::npos)
+        return std::make_pair("", this->name);
+
+    auto sv = std::string_view(this->name);
+    return std::make_pair(sv.substr(0, it), sv.substr(it + 1));
+}
+
+bool AttributeField::isEqualIgnoringPrefix(const AttributeFieldPtr& attr) const {
+    auto [s1, n1] = attr->splitSourcePrefix();
+    auto [s2, n2] = attr->splitSourcePrefix();
+    return n1 == n2;
+}
+
 AttributeFieldPtr AttributeField::copy() { return create(name, dataType); }
 
 }// namespace NES

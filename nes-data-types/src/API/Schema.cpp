@@ -113,6 +113,16 @@ AttributeFieldPtr Schema::get(uint32_t index) {
     throw std::invalid_argument("field id " + std::to_string(index) + " does not exist");
 }
 
+bool Schema::equalsIgnoringPrefix(const SchemaPtr& schema) const {
+    return std::equal(this->fields.begin(),
+                      this->fields.end(),
+                      schema->fields.begin(),
+                      schema->fields.end(),
+                      [](const auto& a, const auto& b) {
+                          return a->isEqualIgnoringPrefix(b);
+                      });
+}
+
 bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
     if (schema->fields.size() != fields.size()) {
         return false;
