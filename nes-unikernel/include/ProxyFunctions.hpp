@@ -446,7 +446,6 @@ PROXY_FN void* getSliceStoreProxy(void* op, uint64_t workerId) {
 
 PROXY_FN void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
     auto sliceStore = static_cast<NES::Runtime::Execution::Operators::NonKeyedThreadLocalSliceStore*>(ss);
-    NES_DEBUG("findSliceStateByTsProxy(ts: {})", ts);
     auto slice = sliceStore->findSliceByTs(ts).get();
     auto state = slice->getState().get();
     return state->ptr;
