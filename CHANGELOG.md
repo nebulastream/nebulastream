@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.60](https://github.com/nebulastream/nebulastream/tree/v0.6.60) (2024-03-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.59...v0.6.60)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Setting up CoordinatorIp of the Coordinator as localhost prints strange error message [\#4372](https://github.com/nebulastream/nebulastream/issues/4372)
+
 ## [v0.6.59](https://github.com/nebulastream/nebulastream/tree/v0.6.59) (2024-03-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.58...v0.6.59)
