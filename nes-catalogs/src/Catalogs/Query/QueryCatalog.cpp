@@ -48,7 +48,7 @@ QueryState QueryCatalog::getQueryState(QueryId queryId) {
     return (*lockedQueryCatalogEntryMapping)[queryId]->getQueryState();
 }
 
-void QueryCatalog::linkSharedQuery(NES::QueryId queryId, NES::SharedQueryId sharedQueryId) {
+void QueryCatalog::linkSharedQuery(QueryId queryId, NES::SharedQueryId sharedQueryId) {
     //Fetch shared query and query catalogs
     auto [lockedSharedQueryCatalogEntryMapping, lockedQueryCatalogEntryMapping] =
         folly::acquireLocked(sharedQueryCatalogEntryMapping, queryCatalogEntryMapping);
@@ -73,7 +73,7 @@ void QueryCatalog::linkSharedQuery(NES::QueryId queryId, NES::SharedQueryId shar
     sharedQueryCatalogEntry->addQueryId(queryId);
 }
 
-SharedQueryId QueryCatalog::getLinkedSharedQueryId(NES::QueryId queryId) {
+SharedQueryId QueryCatalog::getLinkedSharedQueryId(QueryId queryId) {
     //Fetch shared query and query catalogs
     auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
     //Check if query exists
@@ -185,6 +185,7 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
         case QueryState::RESTARTING:
         case QueryState::DEPLOYED:
         case QueryState::MIGRATING:
+        case QueryState::OPTIMIZING:
         case QueryState::RUNNING: {
             sharedQueryCatalogEntry->setQueryState(queryState);
             auto containedQueryIds = sharedQueryCatalogEntry->getContainedQueryIds();
@@ -215,7 +216,7 @@ void QueryCatalog::updateSharedQueryStatus(SharedQueryId sharedQueryId,
         }
         default:
             throw Exceptions::InvalidQueryStateException(
-                {QueryState::RESTARTING, QueryState::DEPLOYED, QueryState::STOPPED, QueryState::RUNNING, QueryState::FAILED},
+                {QueryState::RESTARTING, QueryState::DEPLOYED, QueryState::STOPPED, QueryState::RUNNING, QueryState::OPTIMIZING, QueryState::FAILED},
                 queryState);
     }
 }
@@ -542,7 +543,7 @@ QueryPlanPtr QueryCatalog::getCopyOfExecutedQueryPlan(QueryId queryId) {
     return queryCatalogEntry->getExecutedQueryPlan()->copy();
 }
 
-nlohmann::json QueryCatalog::getQueryEntry(NES::QueryId queryId) {
+nlohmann::json QueryCatalog::getQueryEntry(QueryId queryId) {
 
     auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
     if (!lockedQueryCatalogEntryMapping->contains(queryId)) {

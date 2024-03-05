@@ -30,7 +30,7 @@ TopologyNode::TopologyNode(WorkerId workerId,
                            uint16_t totalSlots,
                            const std::map<std::string, std::any>& properties)
     : workerId(workerId), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), totalSlots(totalSlots), occupiedSlots(0),
-      locked(false), nodeProperties(properties) {}
+      nodeProperties(properties) {}
 
 TopologyNodePtr TopologyNode::create(WorkerId workerId,
                                      const std::string& ipAddress,
@@ -181,31 +181,5 @@ void TopologyNode::setSpatialType(NES::Spatial::Experimental::SpatialType spatia
 
 Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
     return std::any_cast<Spatial::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
-}
-
-bool TopologyNode::acquireLock() {
-    //NOTE: Dear reviewer, I will fix it in #4456
-    bool expected = false;
-    bool desired = true;
-    //Check if no one has locked the topology node already
-    if (locked.compare_exchange_strong(expected, desired)) {
-        //lock the topology node and return true
-        return true;
-    }
-    //Someone has already locked the topology node
-    return false;
-}
-
-bool TopologyNode::releaseLock() {
-    //NOTE: Dear reviewer, I will fix it in #4456
-    bool expected = true;
-    bool desired = false;
-    //Check if the lock was acquired
-    if (locked.compare_exchange_strong(expected, desired)) {
-        //Unlock the topology node and return true
-        return true;
-    }
-    //Return false as the topology node was not locked
-    return false;
 }
 }// namespace NES

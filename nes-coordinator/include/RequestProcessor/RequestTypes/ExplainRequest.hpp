@@ -101,7 +101,7 @@ class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 }// namespace Optimizer
 
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
 
 //a response to the creator of the request
 struct ExplainResponse : public AbstractRequestResponse {
@@ -226,7 +226,7 @@ class ExplainRequest : public AbstractUniRequest {
     const std::string DEVICE_INFO_EXTENSIONS_KEY = "deviceExtensions";
     const std::string DEVICE_INFO_AVAILABLE_PROCESSORS_KEY = "availableProcessors";
 };
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 }// namespace NES
 
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_

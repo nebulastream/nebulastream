@@ -53,7 +53,8 @@ auto WAIT_TIME = std::chrono::milliseconds(1);
 
 uint32_t DATA_CHANNEL_RETRY_TIMES = 1;
 uint64_t DEFAULT_NUMBER_OF_ORIGINS = 1;
-namespace NES {
+
+namespace NES::RequestProcessor {
 
 class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
   public:
@@ -504,4 +505,4 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     ASSERT_EQ(downStreamPinned.size(), 1);
     ASSERT_TRUE(downStreamPinned.contains(4));
 }
-}// namespace NES
+}// namespace NES::RequestProcessor

@@ -34,7 +34,7 @@ void SharedQueryCatalogEntry::setTerminationReason(std::string terminationReason
 
 std::set<QueryId> SharedQueryCatalogEntry::getContainedQueryIds() { return containedQueryIds; }
 
-void SharedQueryCatalogEntry::addQueryId(NES::QueryId queryId) { containedQueryIds.emplace(queryId); }
+void SharedQueryCatalogEntry::addQueryId(QueryId queryId) { containedQueryIds.emplace(queryId); }
 
 std::vector<DecomposedQueryPlanMetaDataPtr> SharedQueryCatalogEntry::getAllDecomposedQueryPlanMetaData() {
     std::vector<DecomposedQueryPlanMetaDataPtr> decomposedQueryPlan;

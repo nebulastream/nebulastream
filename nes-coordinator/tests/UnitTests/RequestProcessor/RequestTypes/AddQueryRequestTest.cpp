@@ -46,7 +46,7 @@
 #include <iostream>
 #include <z3++.h>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 class AddQueryRequestTest : public Testing::BaseUnitTest {
   public:

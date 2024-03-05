@@ -55,7 +55,7 @@
 #include <string>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                                const Optimizer::PlacementStrategy queryPlacementStrategy,

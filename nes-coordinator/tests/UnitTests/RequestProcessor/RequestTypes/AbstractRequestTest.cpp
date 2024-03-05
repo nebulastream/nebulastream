@@ -16,7 +16,7 @@
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <gtest/gtest.h>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 class DummyResponse : public AbstractRequestResponse {
   public:

@@ -13,7 +13,6 @@
 */
 
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RuntimeException.hpp>
@@ -31,7 +30,7 @@
 #include <Util/RequestType.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 FailQueryRequest::FailQueryRequest(const SharedQueryId sharedQueryId,
                                    const DecomposedQueryPlanId failedDecomposedPlanId,

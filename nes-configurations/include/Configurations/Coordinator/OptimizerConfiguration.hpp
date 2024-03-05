@@ -138,6 +138,18 @@ class OptimizerConfiguration : public BaseConfiguration {
         Optimizer::PlacementAmendmentMode::PESSIMISTIC,
         "selects the placement amender mode to use [PESSIMISTIC|OPTIMISTIC]"};
 
+    /**
+     * @brief Set the thread count for running concurrent placement amenders
+     */
+    UIntOption placementAmendmentThreadCount = {PLACEMENT_AMENDMENT_THREAD_COUNT, 1, "set the placement amender thread count"};
+
+    /**
+     * @brief Enable incremental placement of running query plans.
+     */
+    BoolOption enableIncrementalPlacement = {ENABLE_INCREMENTAL_PLACEMENT,
+                                             false,
+                                             "Enable reconfiguration of running query plans. (Default: false)"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&queryMergerRule,
@@ -150,7 +162,9 @@ class OptimizerConfiguration : public BaseConfiguration {
                 &performAdvanceSemanticValidation,
                 &enableNemoPlacement,
                 &allowExhaustiveContainmentCheck,
-                &placementAmendmentMode};
+                &placementAmendmentMode,
+                &placementAmendmentThreadCount,
+                &enableIncrementalPlacement};
     }
 };
 

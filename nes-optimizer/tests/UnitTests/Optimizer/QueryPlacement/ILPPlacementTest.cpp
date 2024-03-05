@@ -609,7 +609,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
 TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->enableQueryReconfiguration = true;
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
@@ -795,7 +795,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrate
 TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->enableQueryReconfiguration = true;
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
@@ -1004,7 +1004,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWi
 TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->enableQueryReconfiguration = true;
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();

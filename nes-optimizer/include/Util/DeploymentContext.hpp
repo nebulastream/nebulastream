@@ -16,6 +16,7 @@
 #define NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
 
 #include <Identifiers.hpp>
+#include <Util/QueryState.hpp>
 #include <memory>
 
 namespace NES {
@@ -97,4 +98,4 @@ class DeploymentContext {
 };
 }// namespace Optimizer
 }// namespace NES
-#endif // NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_

@@ -36,7 +36,7 @@
 #include <string>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 StopQueryRequest::StopQueryRequest(QueryId queryId, uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::QueryCatalogService,

@@ -31,7 +31,7 @@ class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 }// namespace Optimizer
 
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
 class FailQueryRequest;
 using FailQueryRequestPtr = std::shared_ptr<FailQueryRequest>;
 
@@ -117,6 +117,6 @@ class FailQueryRequest : public AbstractUniRequest {
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 }// namespace NES
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_

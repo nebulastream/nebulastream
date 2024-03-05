@@ -28,6 +28,7 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -80,20 +81,20 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const QueryPlanPt
 nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
                                                                           const Optimizer::PlacementStrategy placementStrategy) {
 
-    auto explainRequest = RequestProcessor::Experimental::ExplainRequest::create(queryPlan, placementStrategy, 1, z3Context);
+    auto explainRequest = RequestProcessor::ExplainRequest::create(queryPlan, placementStrategy, 1, z3Context);
     asyncRequestExecutor->runAsync(explainRequest);
     auto future = explainRequest->getFuture();
-    return std::static_pointer_cast<RequestProcessor::Experimental::ExplainResponse>(future.get())->jsonResponse;
+    return std::static_pointer_cast<RequestProcessor::ExplainResponse>(future.get())->jsonResponse;
 }
 
 bool RequestHandlerService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
     try {
-        auto stopRequest = RequestProcessor::Experimental::StopQueryRequest::create(queryId, RequestProcessor::DEFAULT_RETRIES);
-        auto future = stopRequest->getFuture();
+        auto stopRequest = RequestProcessor::StopQueryRequest::create(queryId, RequestProcessor::DEFAULT_RETRIES);
         asyncRequestExecutor->runAsync(stopRequest);
+        auto future = stopRequest->getFuture();
         auto response = future.get();
-        auto success = std::static_pointer_cast<RequestProcessor::Experimental::StopQueryResponse>(response)->success;
+        auto success = std::static_pointer_cast<RequestProcessor::StopQueryResponse>(response)->success;
         return success;
     } catch (Exceptions::InvalidQueryStateException& e) {
         //return true if the query was already stopped
@@ -105,14 +106,13 @@ bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId share
                                                              DecomposedQueryPlanId querySubPlanId,
                                                              const std::string& failureReason) {
 
-    auto failRequest = RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId,
-                                                                                querySubPlanId,
-                                                                                failureReason,
-                                                                                RequestProcessor::DEFAULT_RETRIES);
-    auto future = failRequest->getFuture();
+    auto failRequest = RequestProcessor::FailQueryRequest::create(sharedQueryId,
+                                                                  querySubPlanId,
+                                                                  failureReason,
+                                                                  RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(failRequest);
-    auto returnedSharedQueryId =
-        std::static_pointer_cast<RequestProcessor::Experimental::FailQueryResponse>(future.get())->sharedQueryId;
+    auto future = failRequest->getFuture();
+    auto returnedSharedQueryId = std::static_pointer_cast<RequestProcessor::FailQueryResponse>(future.get())->sharedQueryId;
     return returnedSharedQueryId != INVALID_SHARED_QUERY_ID;
 }
 
@@ -125,15 +125,26 @@ void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
     }
 }
 
-bool RequestHandlerService::validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                                                  const std::vector<TopologyLinkInformation>& addedLinks) {
-    auto changeRequest = RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks,
-                                                                                               addedLinks,
-                                                                                               RequestProcessor::DEFAULT_RETRIES);
-    auto future = changeRequest->getFuture();
-    asyncRequestExecutor->runAsync(changeRequest);
+bool RequestHandlerService::queueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
+                                                       const std::vector<TopologyLinkInformation>& addedLinks) {
+    auto nodeRelocationRequest =
+        RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks,
+                                                                              addedLinks,
+                                                                              RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(nodeRelocationRequest);
+    auto future = nodeRelocationRequest->getFuture();
     auto changeResponse =
         std::static_pointer_cast<RequestProcessor::Experimental::TopologyNodeRelocationRequestResponse>(future.get());
     return changeResponse->success;
 }
+
+bool RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents) {
+
+    auto isqpRequest = RequestProcessor::ISQPRequest::create(z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(isqpRequest);
+    auto future = isqpRequest->getFuture();
+    auto changeResponse = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
+    return changeResponse->success;
+}
+
 }// namespace NES

@@ -365,7 +365,7 @@ int main(int argc, const char* argv[]) {
         auto node = (*entry).second;
         auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
         auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
-        coordinatorConfiguration->enableQueryReconfiguration = incrementalPlacement;
+        coordinatorConfiguration->optimizer.enableIncrementalPlacement = incrementalPlacement;
 
         for (uint32_t run = 0; run < numberOfRun; run++) {
             std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));

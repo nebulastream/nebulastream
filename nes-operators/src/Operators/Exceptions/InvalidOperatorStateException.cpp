@@ -18,7 +18,7 @@
 
 namespace NES::Exceptions {
 
-InvalidOperatorStateException::InvalidOperatorStateException(NES::OperatorId operatorId,
+InvalidOperatorStateException::InvalidOperatorStateException(OperatorId operatorId,
                                                              const std::vector<OperatorState>& expectedState,
                                                              NES::OperatorState actualState)
     : RequestExecutionException("Invalid operator state") {
