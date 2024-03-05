@@ -22,7 +22,8 @@ namespace NES::Windowing {
  */
 class SlidingWindow : public TimeBasedWindowType {
   public:
-    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    static WindowTypePtr
+    of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide, std::optional<TimeCharacteristicPtr> other);
 
     /**
     * @brief return size of the window
@@ -41,11 +42,14 @@ class SlidingWindow : public TimeBasedWindowType {
     bool equal(WindowTypePtr otherWindowType) override;
 
   private:
-    SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeCharacteristicPtr timeCharacteristic,
+                  TimeMeasure size,
+                  TimeMeasure slide,
+                  std::optional<TimeCharacteristicPtr> other);
     const TimeMeasure size;
     const TimeMeasure slide;
 };
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_SLIDINGWINDOW_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_SLIDINGWINDOW_HPP_

@@ -16,10 +16,10 @@
 #include <API/Schema.hpp>
 #include  <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {
@@ -122,6 +122,7 @@ bool LogicalJoinOperator::inferSchema() {
     //Infer stamp of window definition
     const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     windowType->inferStamp(leftInputSchema);
+    windowType->inferStampOther(rightInputSchema);
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();

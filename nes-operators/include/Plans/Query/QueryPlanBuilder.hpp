@@ -167,7 +167,7 @@ class QueryPlanBuilder {
     * @return the updated queryPlan
     */
     static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan,
-                                                            const Windowing::WindowTypePtr windowType);
+                                                            const Windowing::WindowTypePtr windowType, bool other = false);
 
   private:
     /**

@@ -69,6 +69,7 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
      * @return true if success else false
      */
     virtual bool inferStamp(const SchemaPtr& schema) = 0;
+    virtual bool inferStampOther(const SchemaPtr& schema) { return inferStamp(schema); }
 
     // TODO this will be implemented for all window types with issue #4624
     virtual std::size_t hash() const {

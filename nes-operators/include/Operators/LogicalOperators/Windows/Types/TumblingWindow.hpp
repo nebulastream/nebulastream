@@ -34,7 +34,8 @@ class TumblingWindow : public TimeBasedWindowType {
     * @param size
     * @return WindowTypePtr
     */
-    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
+    static WindowTypePtr
+    of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, std::optional<TimeCharacteristicPtr> other = std::nullopt);
 
     /**
     * @brief return size of the window
@@ -49,10 +50,12 @@ class TumblingWindow : public TimeBasedWindowType {
     bool equal(WindowTypePtr otherWindowType) override;
 
   private:
-    TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
+    TumblingWindow(TimeCharacteristicPtr timeCharacteristic,
+                   TimeMeasure size,
+                   std::optional<TimeCharacteristicPtr> timeCharacteristic2 = std::nullopt);
     const TimeMeasure size;
 };
 
 }// namespace NES::Windowing
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_TUMBLINGWINDOW_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_TYPES_TUMBLINGWINDOW_HPP_

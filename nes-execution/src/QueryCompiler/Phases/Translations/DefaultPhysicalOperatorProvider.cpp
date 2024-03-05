@@ -24,16 +24,15 @@
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
@@ -42,6 +41,7 @@
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
@@ -260,8 +260,8 @@ void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOpera
 }
 
 OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator,
-                                                                           SchemaPtr outputSchema,
-                                                                           std::vector<OperatorPtr> children) {
+                                                                       SchemaPtr outputSchema,
+                                                                       std::vector<OperatorPtr> children) {
     if (children.empty()) {
         throw QueryCompilationException("There should be at least one child for the join operator " + joinOperator->toString());
     }
@@ -443,14 +443,30 @@ DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<
     } else {
 
         // FIXME Once #3407 is done, we can change this to get the left and right fieldname
-        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
-        auto timeStampFieldNameWithoutSourceName =
-            timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+        auto timeStampFieldNameLeft = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldNameRight =
+            (windowType->hasOther() ? windowType->getOther() : windowType->getTimeCharacteristic())->getField()->getName();
+
+        auto timeStampFieldNameWithoutSourceNameLeft =
+            timeStampFieldNameLeft.substr(timeStampFieldNameLeft.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+
+        auto timeStampFieldNameWithoutSourceNameRight =
+            timeStampFieldNameRight.substr(timeStampFieldNameRight.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
         // Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldName = [&](const SchemaPtr& schema) {
+        auto findTimeStampFieldNameLeft = [&](const SchemaPtr& schema) {
             for (const auto& field : schema->fields) {
-                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                if (field->getName().find(timeStampFieldNameWithoutSourceNameLeft) != std::string::npos) {
+                    return field->getName();
+                }
+            }
+            return std::string();
+        };
+
+        // Lambda function for extracting the timestamp from a schema
+        auto findTimeStampFieldNameRight = [&](const SchemaPtr& schema) {
+            for (const auto& field : schema->fields) {
+                if (field->getName().find(timeStampFieldNameWithoutSourceNameRight) != std::string::npos) {
                     return field->getName();
                 }
             }
@@ -458,11 +474,11 @@ DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<
         };
 
         // Extracting the left and right timestamp
-        auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator->getLeftInputSchema());
-        auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
+        timeStampFieldNameLeft = findTimeStampFieldNameLeft(joinOperator->getLeftInputSchema());
+        timeStampFieldNameRight = findTimeStampFieldNameRight(joinOperator->getRightInputSchema());
 
         NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-                   "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+                   "Could not find timestampfieldname in both streams!");
         NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
 
         return {timeStampFieldNameLeft, timeStampFieldNameRight};

@@ -478,4 +478,13 @@ TEST_F(QueryAPITest, ThroughputSink) {
                      .sink(ThroughputSinkDescriptor::create("throughput"));
 }
 
+TEST_F(QueryAPITest, JoinWithTwoWatermarks) {
+    auto query =
+        Query::from("default_logical")
+            .joinWith(Query::from("default_logical"))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), EventTime(Attribute("timestamp"))));
+}
+
 }// namespace NES

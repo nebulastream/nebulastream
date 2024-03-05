@@ -13,20 +13,20 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 #include <vector>
 
 namespace NES::Windowing {
 
-TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
-    : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)) {}
+TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, std::optional<TimeCharacteristicPtr> other)
+    : TimeBasedWindowType(std::move(timeCharacteristic), std::move(other)), size(std::move(size)) {}
 
-WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size) {
+WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, std::optional<TimeCharacteristicPtr> other) {
     return std::dynamic_pointer_cast<WindowType>(
-        std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size))));
+        std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size), std::move(other))));
 }
 
 TimeMeasure TumblingWindow::getSize() { return size; }
