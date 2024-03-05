@@ -122,6 +122,7 @@ bool LogicalJoinOperator::inferSchema() {
     //Infer stamp of window definition
     const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     windowType->inferStamp(leftInputSchema);
+    windowType->inferStampOther(rightInputSchema);
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();

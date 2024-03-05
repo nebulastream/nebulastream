@@ -461,6 +461,7 @@ message SerializableOperator{
   message TumblingWindow {
     TimeCharacteristic timeCharacteristic = 1;
     uint32 size = 2;
+    optional TimeCharacteristic timeCharacteristicOther = 3;
   }
 
   /**
