@@ -86,6 +86,7 @@ class RequestHandlerService {
                                    const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                    const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                                    const z3::ContextPtr& z3Context);
+    ~RequestHandlerService();
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -155,6 +156,8 @@ class RequestHandlerService {
                                                const std::vector<TopologyLinkInformation>& expectedAddedLinks,
                                                Timestamp expectedTime);
 
+    nlohmann::json getReconnects();
+
   private:
     /**
      * Assign unique operator ids to the incoming query plan from a client.
@@ -171,6 +174,7 @@ class RequestHandlerService {
     NES::RequestProcessor::AsyncRequestProcessorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
+    std::vector<std::pair<Timestamp, Timestamp>> reconnectTimestamps;
 };
 
 }// namespace NES

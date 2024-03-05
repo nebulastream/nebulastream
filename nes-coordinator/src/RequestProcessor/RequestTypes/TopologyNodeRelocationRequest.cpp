@@ -30,6 +30,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 #include <queue>
+#include <fstream>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -69,6 +70,7 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
     queryCatalogService = storageHandle->getQueryCatalogServiceHandle(requestId);
 
+    //auto beginTimestamp = getTimestamp();
     //no function yet to process multiple removed links
     if (removedLinks.size() > 1) {
         NES_NOT_IMPLEMENTED();
@@ -111,6 +113,9 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     }
 
 
+    responsePromise.set_value(std::make_shared<TopologyNodeRelocationRequestResponse>(true));
+    //auto endTimestamp = getTimestamp();
+    //file.open("/tmp/reconnect_timestamps.csv", std::ios::out | std::ios::trunc);
     if (!expectedRemovedLinks.empty() && coordinatorConfiguration->enableProactiveDeployment) {
         NES_ASSERT(!expectedAddedLinks.empty(), "We currently expect exactly one parent for moving devices");
         NES_ASSERT(expectedTime != 0, "Invalid expected timestamp");
@@ -129,7 +134,6 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
         topology->insertPrediction(expectedRemovedLinks, expectedAddedLinks, impactedPlans, removedLinks.front().upstreamTopologyNode);
     }
 
-    responsePromise.set_value(std::make_shared<TopologyNodeRelocationRequestResponse>(true));
     return {};
 }
 

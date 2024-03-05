@@ -315,6 +315,25 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ENDPOINT("GET", "/reconnects", queryReconnects) {
+        try {
+
+            nlohmann::json response = requestHandlerService->getReconnects();
+
+            return createResponse(Status::CODE_202, response.dump());
+        } catch (nlohmann::json::exception& e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (const std::exception& exc) {
+            NES_ERROR("QueryController: handlePost -execute-query-ex: Exception occurred while building the query plan for "
+                      "user request: {}",
+                      exc.what());
+            return errorHandler->handleError(Status::CODE_400, exc.what());
+        } catch (...) {
+            NES_ERROR("RestServer: unknown exception.");
+            return errorHandler->handleError(Status::CODE_500, "unknown exception");
+        }
+    }
+
     ENDPOINT("DELETE", "/stop-query", stopQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
             bool success = requestHandlerService->validateAndQueueStopQueryRequest(queryId);

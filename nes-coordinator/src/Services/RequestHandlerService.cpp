@@ -37,8 +37,10 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <nlohmann/json.hpp>
+#include <fstream>
 
 namespace NES {
 
@@ -151,6 +153,10 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
     }
 }
 
+nlohmann::json RequestHandlerService::getReconnects() {
+    return reconnectTimestamps;
+}
+
 nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
                                                                           const Optimizer::PlacementStrategy placementStrategy) {
 
@@ -224,6 +230,7 @@ bool RequestHandlerService::validateAndQueueNodeRelocationRequest(const std::vec
                                                                   const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
                                                                   const std::vector<TopologyLinkInformation>& expectedAddedLinks,
                                                                   Timestamp expectedTime) {
+    auto beginTimestamp = getTimestamp();
     auto changeRequest = RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks,
                                                                                                addedLinks,
                                                                                                expectedRemovedLinks,
@@ -234,6 +241,26 @@ bool RequestHandlerService::validateAndQueueNodeRelocationRequest(const std::vec
     asyncRequestExecutor->runAsync(changeRequest);
     auto changeResponse =
         std::static_pointer_cast<RequestProcessor::Experimental::TopologyNodeRelocationRequestResponse>(future.get());
+    auto endTimestamp = getTimestamp();
+    reconnectTimestamps.emplace_back(beginTimestamp, endTimestamp);
     return changeResponse->success;
+}
+RequestHandlerService::~RequestHandlerService() {
+    std::ofstream file;
+
+    file.open("/tmp/reconnect_timestamps.csv", std::ios::out | std::ios::trunc);
+
+    if (file.is_open()) {
+        for (const auto& [begin, end] : reconnectTimestamps) {
+            file << begin << "," << end << std::endl;
+        }
+        file.close();
+    } else {
+        NES_ERROR("could not write reconnects to file");
+    }
+
+
+
+
 }
 }// namespace NES
