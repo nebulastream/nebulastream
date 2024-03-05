@@ -226,7 +226,6 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t totalSlots;
     uint16_t occupiedSlots;
-    std::atomic<bool> locked;
 
     /**
      * @brief A field to store a map of node properties

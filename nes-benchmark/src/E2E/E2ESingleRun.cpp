@@ -359,7 +359,7 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
     return false;
 }
 
-bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
+bool E2ESingleRun::waitForQueryToStop(QueryId queryId,
                                       const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                       std::chrono::seconds timeoutInSec) {
     NES_TRACE("checkCompleteOrTimeout: Wait until the query {} is stopped", queryId);

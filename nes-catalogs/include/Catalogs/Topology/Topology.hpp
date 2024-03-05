@@ -109,6 +109,13 @@ class Topology {
     std::vector<WorkerId> getParentTopologyNodeIds(WorkerId nodeId);
 
     /**
+     * @brief returns a vector of child topology node ids connected to the specified topology node
+     * @param nodeId: id of the specified topology node
+     * @return vector of parent node ids
+     */
+    std::vector<WorkerId> getChildTopologyNodeIds(WorkerId nodeId);
+
+    /**
      * @brief This method will add the a topology node as child to the parent with provided Id
      * @param parentWorkerId : the id of the parent topology node
      * @param childWorkerId : the new topology node.

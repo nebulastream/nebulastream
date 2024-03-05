@@ -484,7 +484,7 @@ CoordinatorRPCServer::RelocateTopologyNode(ServerContext*, const NodeRelocationR
     for (const auto& addedTopologyLink : request->addedlinks()) {
         addedLinks.push_back(TopologyLinkInformation(addedTopologyLink.upstream(), addedTopologyLink.downstream()));
     }
-    auto success = requestHandlerService->validateAndQueueNodeRelocationRequest(removedLinks, addedLinks);
+    auto success = requestHandlerService->queueNodeRelocationRequest(removedLinks, addedLinks);
     reply->set_success(success);
     if (success) {
         return Status::OK;

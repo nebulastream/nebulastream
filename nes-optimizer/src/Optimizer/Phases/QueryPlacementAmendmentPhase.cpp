@@ -69,7 +69,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
              std::to_string(sharedQueryPlan->getId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
-    bool queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
+    bool enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
 
     auto sharedQueryId = sharedQueryPlan->getId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
@@ -82,7 +82,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
     // Create container to record all deployment contexts
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
 
-    if (queryReconfiguration) {
+    if (enableIncrementalPlacement) {
         for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
 
             //1. Fetch all upstream pinned operators

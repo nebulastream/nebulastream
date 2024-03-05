@@ -101,6 +101,9 @@ add_nes_unit_test(async-request-processor-test "RequestProcessor/AsyncRequestPro
 ### Request Execution Exception Test ###
 add_nes_unit_test(request-execution-exception-test "Exceptions/RequestExecutionExceptionTest.cpp")
 
+### ISQP Query Request Test ###
+add_nes_unit_test(isqp-request-test "RequestProcessor/RequestTypes/ISQP/ISQPRequestTest.cpp")
+
 ### gRPC Tests
 add_nes_unit_test(grpc-test "gRPC/grpcTests.cpp")
 

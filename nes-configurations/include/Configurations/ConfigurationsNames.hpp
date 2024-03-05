@@ -77,9 +77,10 @@ const std::string JOIN_STRATEGY = "joinStrategy";
 
 //Optimizer Configurations
 const std::string PLACEMENT_AMENDMENT_MODE_CONFIG = "placementAmendmentMode";
+const std::string PLACEMENT_AMENDMENT_THREAD_COUNT = "placementAmendmentThreadCount";
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
-const std::string ENABLE_QUERY_RECONFIGURATION = "enableQueryReconfiguration";
+const std::string ENABLE_INCREMENTAL_PLACEMENT = "enableIncrementalPlacement";
 const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
 const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
 const std::string ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK = "allowExhaustiveContainmentCheck";
@@ -90,11 +91,11 @@ const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distribu
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
 //Elegant Configurations
-const auto ELEGANT = "elegant"s;                                 // elegant configurations are initialize with this constant
-const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s;         // accelerate java udfs supplied in Map UDF operator
-const auto PLANNER_SERVICE_URL = "plannerServiceURL"s;           // URL for ELEGANT planner
-const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; // URL for acceleration service
-const auto TRANSFER_RATE = "transferRate"s;                      // Fake transfer rate between two workers
+const auto ELEGANT = "elegant"s;                                // elegant configurations are initialize with this constant
+const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s;        // accelerate java udfs supplied in Map UDF operator
+const auto PLANNER_SERVICE_URL = "plannerServiceURL"s;          // URL for ELEGANT planner
+const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s;// URL for acceleration service
+const auto TRANSFER_RATE = "transferRate"s;                     // Fake transfer rate between two workers
 
 //Worker Configuration Names
 const std::string WORKER_ID = "workerId";
@@ -223,4 +224,4 @@ const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
 }// namespace NES::Configurations
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

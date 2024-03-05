@@ -65,13 +65,13 @@ uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 
-void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel) {
+void WorkerContext::storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
     dataChannels[id] = std::move(channel);
 }
 
 void WorkerContext::storeNetworkChannelFuture(
-    NES::OperatorId id,
+    OperatorId id,
     std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
     dataChannelFutures[id] = std::move(channelFuture);
@@ -138,7 +138,7 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
     }
 }
 
-bool WorkerContext::releaseNetworkChannel(NES::OperatorId id,
+bool WorkerContext::releaseNetworkChannel(OperatorId id,
                                           Runtime::QueryTerminationType terminationType,
                                           uint16_t sendingThreadCount,
                                           uint64_t currentMessageSequenceNumber) {
@@ -153,12 +153,12 @@ bool WorkerContext::releaseNetworkChannel(NES::OperatorId id,
     return false;
 }
 
-void WorkerContext::storeEventOnlyChannel(NES::OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel) {
+void WorkerContext::storeEventOnlyChannel(OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel) {
     NES_TRACE("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
     reverseEventChannels[id] = std::move(channel);
 }
 
-bool WorkerContext::releaseEventOnlyChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType) {
+bool WorkerContext::releaseEventOnlyChannel(OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = reverseEventChannels.find(id); it != reverseEventChannels.end()) {
         if (auto& channel = it->second; channel) {
@@ -170,13 +170,13 @@ bool WorkerContext::releaseEventOnlyChannel(NES::OperatorId id, Runtime::QueryTe
     return false;
 }
 
-Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerId) {
+Network::NetworkChannel* WorkerContext::getNetworkChannel(OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
     auto it = dataChannels.find(ownerId);// note we assume it's always available
     return (*it).second.get();
 }
 
-std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(NES::OperatorId operatorId) {
+std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
     auto& [futureReference, promiseReference] = iteratorOperatorId->second;
@@ -191,7 +191,7 @@ std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResul
 }
 
 std::optional<Network::EventOnlyNetworkChannelPtr>
-WorkerContext::getAsyncEventChannelConnectionResult(NES::OperatorId operatorId) {
+WorkerContext::getAsyncEventChannelConnectionResult(OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
     auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);// note we assume it's always available
     auto& [futureReference, promiseReference] = iteratorOperatorId->second;
@@ -210,7 +210,7 @@ bool WorkerContext::isAsyncConnectionInProgress(OperatorId operatorId) {
     return dataChannelFutures.contains(operatorId);
 }
 
-Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId operatorId) {
+Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving event only channel for operator {} for context {}", operatorId, workerId);
     auto iteratorOperatorId = reverseEventChannels.find(operatorId);// note we assume it's always available
     return (*iteratorOperatorId).second.get();
@@ -220,7 +220,7 @@ LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolT
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
 
-Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId operatorId) {
+Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(OperatorId operatorId) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
     //blocking wait on get
     auto channel = iteratorOperatorId->second.first.get();
@@ -229,7 +229,7 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId
     return channel;
 }
 
-Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventChannel(NES::OperatorId operatorId) {
+Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventChannel(OperatorId operatorId) {
     auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);// note we assume it's always available
     //blocking wait on get
     auto channel = iteratorOperatorId->second.first.get();
@@ -238,7 +238,7 @@ Network::EventOnlyNetworkChannelPtr WorkerContext::waitForAsyncConnectionEventCh
     return channel;
 }
 
-void WorkerContext::abortConnectionProcess(NES::OperatorId operatorId) {
+void WorkerContext::abortConnectionProcess(OperatorId operatorId) {
     auto iteratorOperatorId = dataChannelFutures.find(operatorId);// note we assume it's always available
     auto& promise = iteratorOperatorId->second.second;
     //signal connection process to stop

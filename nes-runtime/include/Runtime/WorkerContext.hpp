@@ -51,14 +51,14 @@ class WorkerContext {
     /// object reference counters
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
-    std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
+    std::unordered_map<OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>
+    std::unordered_map<OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>
         dataChannelFutures;
     /// event only channels that send events upstream
-    std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
+    std::unordered_map<OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// reverse event channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>>
+    std::unordered_map<OperatorId, std::pair<std::future<Network::EventOnlyNetworkChannelPtr>, std::promise<bool>>>
         reverseEventChannelFutures;
     /// worker local buffer pool stored in tls
     static folly::ThreadLocalPtr<WorkerContextBufferProvider> localBufferPoolTLS;
@@ -135,7 +135,7 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel);
+    void storeNetworkChannel(OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
      * @brief This stores a future for network channel creation and a promise which can be used to abort the creation
@@ -143,7 +143,7 @@ class WorkerContext {
      * @param channelFuture a pair of a future waiting for the output channel to be connected and a promise to be used if the connection
      * process is to be aborted
      */
-    void storeNetworkChannelFuture(NES::OperatorId id,
+    void storeNetworkChannelFuture(OperatorId id,
                                    std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture);
 
     /**
@@ -186,7 +186,7 @@ class WorkerContext {
      * @param type the termination type
      * @param currentMessageSequenceNumber represents the total number of data buffer messages sent
      */
-    bool releaseNetworkChannel(NES::OperatorId id,
+    bool releaseNetworkChannel(OperatorId id,
                                Runtime::QueryTerminationType type,
                                uint16_t sendingThreadCount,
                                uint64_t currentMessageSequenceNumber);
@@ -196,21 +196,21 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param channel the output channel
      */
-    void storeEventOnlyChannel(NES::OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel);
+    void storeEventOnlyChannel(OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel);
 
     /**
      * @brief removes a registered network channel
      * @param id of the operator that we want to store the output channel
      * @param terminationType the termination type
      */
-    bool releaseEventOnlyChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType);
+    bool releaseEventOnlyChannel(OperatorId id, Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief retrieve a registered output channel
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::NetworkChannel* getNetworkChannel(NES::OperatorId ownerId);
+    Network::NetworkChannel* getNetworkChannel(OperatorId ownerId);
 
     /**
      * @brief retrieves an asynchronously established output channel.
@@ -220,14 +220,14 @@ class WorkerContext {
      * - optional containing nullptr if the conneciton timed out
      * - optional containing valid ptr if connection succeeded
      */
-    std::optional<Network::NetworkChannelPtr> getAsyncConnectionResult(NES::OperatorId operatorId);
+    std::optional<Network::NetworkChannelPtr> getAsyncConnectionResult(OperatorId operatorId);
 
     /**
      * @brief blocks until async connection of a network channel has succeeded or timed out
      * @param operatorId id of the operator which will use the network channel
      * @return a pointer to the network channel or nullptr if the connection timed out
      */
-    Network::NetworkChannelPtr waitForAsyncConnection(NES::OperatorId operatorId);
+    Network::NetworkChannelPtr waitForAsyncConnection(OperatorId operatorId);
 
     /**
      * @brief check if an async connection that was started by the operator with the specified id is currently in progress
@@ -241,7 +241,7 @@ class WorkerContext {
      * @param operatorId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(NES::OperatorId operatorId);
+    Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(OperatorId operatorId);
 
     /**
      * @brief insert a tuple buffer into the reconnect buffer storage

@@ -66,6 +66,10 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 namespace RequestProcessor {
 class AsyncRequestProcessor;
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
+
+class ISQPEvent;
+using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
+
 }// namespace RequestProcessor
 
 /**
@@ -142,8 +146,15 @@ class RequestHandlerService {
      * @param addedLinks a list or topology links to add
      * @return true on success
      */
-    bool validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                               const std::vector<TopologyLinkInformation>& addedLinks);
+    bool queueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
+                                    const std::vector<TopologyLinkInformation>& addedLinks);
+
+    /**
+     * @brief Process multiple query and topology change request represented by isqp events in a batch
+     * @param isqpEvents a vector of ISQP requests to be handled
+     * @return true on success
+     */
+    bool queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
 
   private:
     /**

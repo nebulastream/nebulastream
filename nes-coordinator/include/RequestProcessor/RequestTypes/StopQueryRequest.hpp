@@ -79,7 +79,7 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 }// namespace Catalogs
 
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
 
 class StopQueryRequest;
 using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
@@ -166,7 +166,7 @@ class StopQueryRequest : public AbstractUniRequest {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     static constexpr uint8_t MAX_RETRIES_FOR_FAILURE = 1;
 };
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 }// namespace NES
 
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STOPQUERYREQUEST_HPP_
