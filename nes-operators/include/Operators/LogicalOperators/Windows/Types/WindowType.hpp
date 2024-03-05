@@ -63,6 +63,7 @@ class WindowType {
      * @return true if success else false
      */
     virtual bool inferStamp(const SchemaPtr& schema) = 0;
+    virtual bool inferStampOther(const SchemaPtr& schema) { return inferStamp(schema); }
 };
 
 }// namespace NES::Windowing

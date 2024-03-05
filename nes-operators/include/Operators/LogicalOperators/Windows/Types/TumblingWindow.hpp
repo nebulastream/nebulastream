@@ -34,7 +34,8 @@ class TumblingWindow : public TimeBasedWindowType {
     * @param size
     * @return WindowTypePtr
     */
-    static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
+    static WindowTypePtr
+    of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, std::optional<TimeCharacteristicPtr> other = std::nullopt);
 
     /**
     * Calculates the next window end based on a given timestamp.
@@ -71,7 +72,9 @@ class TumblingWindow : public TimeBasedWindowType {
     bool equal(WindowTypePtr otherWindowType) override;
 
   private:
-    TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
+    TumblingWindow(TimeCharacteristicPtr timeCharacteristic,
+                   TimeMeasure size,
+                   std::optional<TimeCharacteristicPtr> timeCharacteristic2 = std::nullopt);
     const TimeMeasure size;
 };
 

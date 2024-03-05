@@ -13,19 +13,26 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Windowing {
 
-SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)), slide(std::move(slide)) {}
+SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic,
+                             TimeMeasure size,
+                             TimeMeasure slide,
+                             std::optional<TimeCharacteristicPtr> other)
+    : TimeBasedWindowType(std::move(timeCharacteristic), std::move(other)), size(std::move(size)), slide(std::move(slide)) {}
 
-WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
-    return std::make_shared<SlidingWindow>(SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide)));
+WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic,
+                                TimeMeasure size,
+                                TimeMeasure slide,
+                                std::optional<TimeCharacteristicPtr> other) {
+    return std::make_shared<SlidingWindow>(
+        SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide), std::move(other)));
 }
 
 void SlidingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const {

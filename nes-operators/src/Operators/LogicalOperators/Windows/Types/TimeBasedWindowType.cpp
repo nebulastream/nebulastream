@@ -15,14 +15,15 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/InvalidFieldException.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing {
 
-TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic)
-    : timeCharacteristic(std::move(timeCharacteristic)) {}
+TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic,
+                                         std::optional<TimeCharacteristicPtr> timeCharacteristicOther)
+    : timeCharacteristic(std::move(timeCharacteristic)), timeCharacteristicOther(std::move(timeCharacteristicOther)) {}
 
 bool TimeBasedWindowType::isTimeBasedWindowType() { return true; }
 
@@ -42,6 +43,31 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
     }
     return true;
 }
+
+bool TimeBasedWindowType::inferStampOther(const SchemaPtr& schema) {
+    if (timeCharacteristicOther) {
+        auto other = *timeCharacteristicOther;
+        if (other->getType() == TimeCharacteristic::Type::EventTime) {
+            auto fieldName = other->getField()->getName();
+            auto existingField = schema->get(fieldName);
+            if (existingField) {
+                other->getField()->setName(existingField->getName());
+                return true;
+            } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
+                return true;
+            } else {
+                NES_ERROR("TimeBasedWindow using a non existing time field  {}", fieldName);
+                throw InvalidFieldException("TimeBasedWindow using a non existing time field " + fieldName);
+            }
+        }
+        return true;
+    } else {
+        return inferStamp(schema);
+    }
+}
+
+bool TimeBasedWindowType::hasOther() const { return timeCharacteristicOther.has_value(); }
+TimeCharacteristicPtr TimeBasedWindowType::getOther() const { return *timeCharacteristicOther; }
 
 TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const { return timeCharacteristic; }
 

@@ -17,7 +17,7 @@
 
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
-#include <vector>
+#include <optional>
 namespace NES::Windowing {
 
 class TimeBasedWindowType : public WindowType {
@@ -25,7 +25,8 @@ class TimeBasedWindowType : public WindowType {
   public:
     enum TimeBasedSubWindowType { SLIDINGWINDOW, TUMBLINGWINDOW };
 
-    explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
+    explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic,
+                                 std::optional<TimeCharacteristicPtr> timeCharacteristicJoin = std::nullopt);
 
     virtual ~TimeBasedWindowType() = default;
 
@@ -79,9 +80,13 @@ class TimeBasedWindowType : public WindowType {
      * @return true if success else false
      */
     bool inferStamp(const SchemaPtr& schema) override;
+    bool inferStampOther(const SchemaPtr& schema) override;
+    bool hasOther() const;
+    TimeCharacteristicPtr getOther() const;
 
   protected:
     TimeCharacteristicPtr timeCharacteristic;
+    std::optional<TimeCharacteristicPtr> timeCharacteristicOther;
 };
 
 }// namespace NES::Windowing

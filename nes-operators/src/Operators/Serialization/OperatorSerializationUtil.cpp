@@ -11,15 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -56,6 +47,7 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
@@ -75,6 +67,15 @@
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Operators/Serialization/ExpressionSerializationUtil.hpp>
@@ -833,11 +834,30 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
     } else {
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
     }
-    if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
-        auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
+    timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMultiplier());
+
+    std::optional<SerializableOperator_TimeCharacteristic> timeCharacteristicOtherDetails;
+    if (timeBasedWindowType->hasOther()) {
+        auto other = timeBasedWindowType->getOther();
+        timeCharacteristicOtherDetails = SerializableOperator_TimeCharacteristic();
+        if (other->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
+            timeCharacteristicOtherDetails->set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
+            timeCharacteristicOtherDetails->set_field(other->getField()->getName());
+        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
+            timeCharacteristicOtherDetails->set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
+        } else {
+            NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
+        }
+        timeCharacteristicOtherDetails->set_multiplier(other->getTimeUnit().getMultiplier());
+    }
+
+    if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType)) {
         auto tumblingWindowDetails = SerializableOperator_TumblingWindow();
         tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
+        if (timeCharacteristicOtherDetails) {
+            tumblingWindowDetails.mutable_timecharacteristicother()->CopyFrom(*timeCharacteristicOtherDetails);
+        }
         joinDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
     } else if (timeBasedWindowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW) {
         auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
@@ -957,13 +977,30 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(co
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         auto serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
+
+        std::optional<Windowing::TimeCharacteristicPtr> other;
+        if (serializedTumblingWindow.has_timecharacteristicother()) {
+            auto serializedOther = serializedTumblingWindow.timecharacteristicother();
+            if (serializedOther.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
+                other = Windowing::TimeCharacteristic::createEventTime(FieldAccessExpressionNode::create(serializedOther.field()),
+                                                                       Windowing::TimeUnit(serializedOther.multiplier()));
+            } else if (serializedOther.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
+                other = Windowing::TimeCharacteristic::createIngestionTime();
+            } else {
+                NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
+                                serializedTimeCharacteristic.DebugString());
+            }
+        }
+
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
-                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()),
+                                                   other);
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()),
+                                                   other);
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());

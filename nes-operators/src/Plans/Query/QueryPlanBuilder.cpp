@@ -137,7 +137,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
 
     // check if query contain watermark assigner, and add if missing (as default behaviour)
     leftQueryPlan = checkAndAddWatermarkAssignment(leftQueryPlan, windowType);
-    rightQueryPlan = checkAndAddWatermarkAssignment(rightQueryPlan, windowType);
+    rightQueryPlan = checkAndAddWatermarkAssignment(rightQueryPlan, windowType, true);
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
@@ -195,20 +195,22 @@ QueryPlanBuilder::assignWatermark(NES::QueryPlanPtr queryPlan,
 }
 
 NES::QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(NES::QueryPlanPtr queryPlan,
-                                                                   const NES::Windowing::WindowTypePtr windowType) {
+                                                                   const NES::Windowing::WindowTypePtr windowType,
+                                                                   bool other) {
     NES_DEBUG("QueryPlanBuilder: checkAndAddWatermarkAssignment for a (sub)query plan");
-    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
+    auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
+    auto timeChar =
+        other && timeBasedWindowType->hasOther() ? timeBasedWindowType->getOther() : timeBasedWindowType->getTimeCharacteristic();
 
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
+        if (timeChar->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             return assignWatermark(queryPlan, Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-        } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
-            return assignWatermark(
-                queryPlan,
-                Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                    FieldAccessExpressionNode::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
-                    Windowing::TimeMeasure(0),
-                    timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
+        } else if (timeChar->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
+            return assignWatermark(queryPlan,
+                                   Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                                       FieldAccessExpressionNode::create(timeChar->getField()->getName()),
+                                       Windowing::TimeMeasure(0),
+                                       timeChar->getTimeUnit()));
         }
     }
     return queryPlan;

@@ -466,4 +466,13 @@ TEST_F(QueryAPITest, NexMarkQ5) {
         .sink(NullOutputSinkDescriptor::create());
 }
 
+TEST_F(QueryAPITest, JoinWithTwoWatermarks) {
+    auto query =
+        Query::from("default_logical")
+            .joinWith(Query::from("default_logical"))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), EventTime(Attribute("timestamp"))));
+}
+
 }// namespace NES

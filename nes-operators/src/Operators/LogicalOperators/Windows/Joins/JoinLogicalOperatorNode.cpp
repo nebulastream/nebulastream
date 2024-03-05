@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {
@@ -122,6 +123,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
     //Infer stamp of window definition
     const auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
     windowType->inferStamp(leftInputSchema);
+    windowType->inferStampOther(rightInputSchema);
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();
