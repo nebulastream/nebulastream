@@ -506,10 +506,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
 
     uint32_t subPlanId = 0;
     for (auto i = 1; i <= numQueries; ++i) {
-        NesPartition nesPartition{QueryId(i),
-                                  OperatorId(i * 22),
-                                  PartitionId(i * 33),
-                                  SubpartitionId(i * 44)};
+        NesPartition nesPartition{QueryId(i), OperatorId(i * 22), PartitionId(i * 33), SubpartitionId(i * 44)};
         // create NetworkSink
         auto networkSourceDescriptor1 = std::make_shared<TestUtils::TestSourceDescriptor>(
             schema,

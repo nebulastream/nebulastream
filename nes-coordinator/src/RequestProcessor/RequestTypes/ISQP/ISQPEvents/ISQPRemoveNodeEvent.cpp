@@ -19,11 +19,12 @@ namespace NES::RequestProcessor {
 ISQPRemoveNodeEvent::ISQPRemoveNodeEvent(const WorkerId& workerId,
                                          const std::vector<WorkerId>& downstreamWorkerIds,
                                          const std::vector<WorkerId>& upstreamWorkerIds)
-    : ISQPEvent(ISQP_REMOVE_NODE_EVENT_PRIORITY), workerId(workerId), downstreamWorkerIds(downstreamWorkerIds), upstreamWorkerIds(upstreamWorkerIds) {}
+    : ISQPEvent(ISQP_REMOVE_NODE_EVENT_PRIORITY), workerId(workerId), downstreamWorkerIds(downstreamWorkerIds),
+      upstreamWorkerIds(upstreamWorkerIds) {}
 
 ISQPEventPtr ISQPRemoveNodeEvent::create(const WorkerId& workerId,
-                                                   const std::vector<WorkerId>& downstreamWorkerIds,
-                                                   const std::vector<WorkerId>& upstreamWorkerIds) {
+                                         const std::vector<WorkerId>& downstreamWorkerIds,
+                                         const std::vector<WorkerId>& upstreamWorkerIds) {
     return std::make_shared<ISQPRemoveNodeEvent>(workerId, downstreamWorkerIds, upstreamWorkerIds);
 }
 

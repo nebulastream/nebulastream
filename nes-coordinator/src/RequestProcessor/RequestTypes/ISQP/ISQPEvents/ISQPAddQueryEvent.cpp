@@ -19,8 +19,7 @@ namespace NES::RequestProcessor {
 ISQPAddQueryEvent::ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy)
     : ISQPEvent(ISQP_ADD_QUERY_EVENT_PRIORITY), queryPlan(queryPlan), placementStrategy(placementStrategy) {}
 
-ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr& queryPlan,
-                                               Optimizer::PlacementStrategy placementStrategy) {
+ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy) {
     return std::make_shared<ISQPAddQueryEvent>(queryPlan, placementStrategy);
 }
 

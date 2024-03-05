@@ -408,4 +408,4 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
     }
 }
 
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
