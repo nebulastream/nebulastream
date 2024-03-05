@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.61](https://github.com/nebulastream/nebulastream/tree/v0.6.61) (2024-03-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.60...v0.6.61)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Implement incremental stream query placement \(ISQP\) [\#4594](https://github.com/nebulastream/nebulastream/issues/4594)
+
 ## [v0.6.60](https://github.com/nebulastream/nebulastream/tree/v0.6.60) (2024-03-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.59...v0.6.60)
