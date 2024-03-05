@@ -50,4 +50,4 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     auto stopQueryRequest = StopQueryRequest::create(queryId, retries);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

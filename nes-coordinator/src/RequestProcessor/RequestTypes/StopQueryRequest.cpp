@@ -223,5 +223,5 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
         std::make_exception_ptr<RequestExecutionException>(RequestExecutionException("No return value set in promise")));
     return failRequest;
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
  // namespace NES

@@ -125,4 +125,4 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
         EXPECT_EQ(e.getMode(), RpcClientMode::Register);
     }
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

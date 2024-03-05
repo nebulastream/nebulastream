@@ -138,4 +138,4 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     return {};
     //todo #3727: catch exceptions for error handling
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

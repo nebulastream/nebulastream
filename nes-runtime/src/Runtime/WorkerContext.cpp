@@ -190,8 +190,7 @@ std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResul
     return std::nullopt;
 }
 
-std::optional<Network::EventOnlyNetworkChannelPtr>
-WorkerContext::getAsyncEventChannelConnectionResult(OperatorId operatorId) {
+std::optional<Network::EventOnlyNetworkChannelPtr> WorkerContext::getAsyncEventChannelConnectionResult(OperatorId operatorId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", operatorId, workerId);
     auto iteratorOperatorId = reverseEventChannelFutures.find(operatorId);// note we assume it's always available
     auto& [futureReference, promiseReference] = iteratorOperatorId->second;
