@@ -121,8 +121,6 @@ std::vector<uint64_t> readCsvFile(const std::string& filename) {
  */
 TEST_P(SynopsisPipelineTest, countMinPipeline) {
 
-    auto FIELD_NAME = "f1";
-    auto tsFieldName = "ts";
     uint64_t OPERATOR_HANDLER_INDEX = 0;
     const uint64_t DEPTH = 3;
     uint64_t WIDTH = 8;
@@ -131,30 +129,27 @@ TEST_P(SynopsisPipelineTest, countMinPipeline) {
     uint64_t SLIDE_FACTOR = 5000;
     std::string DEFAULT_LOGICAL_SOURCE_NAME = "logicalSourceName1";
     std::string DEFAULT_PHYSICAL_SOURCE_NAME = "physicalSourceName1";
-    WorkerId WORKER_ID_VALUE = 0;
-    std::string ON_FIELD = "f1";
+    auto FIELD_NAME = DEFAULT_LOGICAL_SOURCE_NAME + "$" + "f1";
+    auto tsFieldName = DEFAULT_LOGICAL_SOURCE_NAME + "$" + "ts";
+    std::string ON_FIELD = DEFAULT_LOGICAL_SOURCE_NAME + "$" + "f1";
     uint64_t TUPLES = 6;
     uint64_t NUM_TUPLES_IN_WINDOW = 5;
 
     auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                            ->addField(FIELD_NAME, BasicType::UINT64)
                            ->addField(tsFieldName, BasicType::UINT64)
-                           ->addField(NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
-                           ->addField(NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
-                           ->addField(NES::Experimental::Statistics::WORKER_ID, BasicType::UINT64)
-                           ->addField(NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT);
+                           ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT);
 
     auto operatorOutputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                    ->addField(NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
-                                    ->addField(NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
-                                    ->addField(NES::Experimental::Statistics::WORKER_ID, BasicType::UINT64)
-                                    ->addField(NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT)
-                                    ->addField(NES::Experimental::Statistics::OBSERVED_TUPLES, BasicType::UINT64)
-                                    ->addField(NES::Experimental::Statistics::DEPTH, BasicType::UINT64)
-                                    ->addField(NES::Experimental::Statistics::START_TIME, BasicType::UINT64)
-                                    ->addField(NES::Experimental::Statistics::END_TIME, BasicType::UINT64)
-                                    ->addField(NES::Experimental::Statistics::DATA, BasicType::TEXT)
-                                    ->addField(NES::Experimental::Statistics::WIDTH, BasicType::UINT64);
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT)
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::OBSERVED_TUPLES, BasicType::UINT64)
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::DEPTH, BasicType::UINT64)
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::START_TIME, BasicType::UINT64)
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::END_TIME, BasicType::UINT64)
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::DATA, BasicType::TEXT)
+                                    ->addField(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::WIDTH, BasicType::UINT64);
 
     // create scan Operator
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
@@ -181,6 +176,7 @@ TEST_P(SynopsisPipelineTest, countMinPipeline) {
     }
 
     auto countMinBuildOperator = std::make_shared<NES::Experimental::Statistics::CountMinBuildOperator>(OPERATOR_HANDLER_INDEX,
+                                                                                                        DEFAULT_LOGICAL_SOURCE_NAME,
                                                                                                         WIDTH,
                                                                                                         DEPTH,
                                                                                                         FIELD_NAME,
@@ -200,19 +196,16 @@ TEST_P(SynopsisPipelineTest, countMinPipeline) {
         } else {
             dynamicBuffer[i][tsFieldName].write(i * 1000 + 1000);
         }
-        dynamicBuffer[i].writeVarSized(NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, DEFAULT_LOGICAL_SOURCE_NAME, bm.get());
-        dynamicBuffer[i].writeVarSized(NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME,
+        dynamicBuffer[i].writeVarSized(DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME,
                                        DEFAULT_PHYSICAL_SOURCE_NAME,
                                        bm.get());
-        dynamicBuffer[i][NES::Experimental::Statistics::WORKER_ID].write(WORKER_ID_VALUE);
-        dynamicBuffer[i].writeVarSized(NES::Experimental::Statistics::FIELD_NAME, ON_FIELD, bm.get());
         dynamicBuffer.setNumberOfTuples(i + 1);
         dynamicBuffer.setSequenceNumber(1);
     }
 
     auto phys1 =
         Runtime::MemoryLayouts::readVarSizedData(dynamicBuffer.getBuffer(),
-                                                 dynamicBuffer[0][NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME]
+                                                 dynamicBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME]
                                                      .read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
 //    NES_INFO("Creating a new tuple buffer to store a count min sketch for ts {} physicalSourceName {}", ts, physicalSourceName);
@@ -222,19 +215,17 @@ TEST_P(SynopsisPipelineTest, countMinPipeline) {
     filledBuffer.setWatermark(6000);
 
     // create CountMinOperatorHandler
-    std::vector<std::pair<OriginId, std::string>> allOriginIdsPhysicalSourceNames = {
-        std::make_pair(0, DEFAULT_PHYSICAL_SOURCE_NAME)};
+    std::vector<OriginId> allOriginIds = {0};
 
     auto handler = std::make_shared<Experimental::Statistics::CountMinOperatorHandler>(WINDOW_SIZE,
                                                                                        SLIDE_FACTOR,
                                                                                        DEFAULT_LOGICAL_SOURCE_NAME,
-                                                                                       WORKER_ID_VALUE,
                                                                                        ON_FIELD,
                                                                                        DEPTH,
                                                                                        WIDTH,
                                                                                        operatorOutputSchema,
                                                                                        H3Seeds,
-                                                                                       allOriginIdsPhysicalSourceNames);
+                                                                                       allOriginIds);
 
     auto executablePipeline = provider->create(pipeline, options);
 
@@ -252,30 +243,27 @@ TEST_P(SynopsisPipelineTest, countMinPipeline) {
 
     auto resultLogicalSourceName =
         Runtime::MemoryLayouts::readVarSizedData(dynResultBuffer.getBuffer(),
-                                                 dynResultBuffer[0][NES::Experimental::Statistics::LOGICAL_SOURCE_NAME]
+                                                 dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::LOGICAL_SOURCE_NAME]
                                                      .read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
     auto resultPhysicalSourceName =
         Runtime::MemoryLayouts::readVarSizedData(dynResultBuffer.getBuffer(),
-                                                 dynResultBuffer[0][NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME]
+                                                 dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME]
                                                      .read<Runtime::TupleBuffer::NestedTupleBufferKey>());
-
-    auto resultWorkerId = dynResultBuffer[0][NES::Experimental::Statistics::WORKER_ID].read<uint64_t>();
 
     auto resultFieldName =
         Runtime::MemoryLayouts::readVarSizedData(dynResultBuffer.getBuffer(),
-                                                 dynResultBuffer[0][NES::Experimental::Statistics::FIELD_NAME]
+                                                 dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::FIELD_NAME]
                                                      .read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
-    auto resultObservedTuples = dynResultBuffer[0][NES::Experimental::Statistics::OBSERVED_TUPLES].read<uint64_t>();
-    auto resultStartTime = dynResultBuffer[0][NES::Experimental::Statistics::START_TIME].read<uint64_t>();
-    auto resultEndTime = dynResultBuffer[0][NES::Experimental::Statistics::END_TIME].read<uint64_t>();
-    auto resultDepth = dynResultBuffer[0][NES::Experimental::Statistics::DEPTH].read<uint64_t>();
-    auto resultWidth = dynResultBuffer[0][NES::Experimental::Statistics::WIDTH].read<uint64_t>();
+    auto resultObservedTuples = dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::OBSERVED_TUPLES].read<uint64_t>();
+    auto resultStartTime = dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::START_TIME].read<uint64_t>();
+    auto resultEndTime = dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::END_TIME].read<uint64_t>();
+    auto resultDepth = dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::DEPTH].read<uint64_t>();
+    auto resultWidth = dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::WIDTH].read<uint64_t>();
 
     ASSERT_EQ(DEFAULT_LOGICAL_SOURCE_NAME, resultLogicalSourceName);
     ASSERT_EQ(DEFAULT_PHYSICAL_SOURCE_NAME, resultPhysicalSourceName);
-    ASSERT_EQ(WORKER_ID_VALUE, resultWorkerId);
     ASSERT_EQ(ON_FIELD, resultFieldName);
     ASSERT_EQ(NUM_TUPLES_IN_WINDOW, resultObservedTuples);
     ASSERT_EQ(0, resultStartTime);
@@ -285,7 +273,7 @@ TEST_P(SynopsisPipelineTest, countMinPipeline) {
 
     auto countMinString = Runtime::MemoryLayouts::readVarSizedData(
         dynResultBuffer.getBuffer(),
-        dynResultBuffer[0][NES::Experimental::Statistics::DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+        dynResultBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" +NES::Experimental::Statistics::DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
     auto countMinSketch = Experimental::Statistics::CountMin::createFromString((void*) countMinString.data(), DEPTH, WIDTH);
     auto countMinData = countMinSketch.getData();

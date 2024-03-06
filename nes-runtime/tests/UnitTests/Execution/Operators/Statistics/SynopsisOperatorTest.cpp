@@ -110,8 +110,8 @@ TEST_F(SynopsisOperatorTest, CountMinOperatorTest) {
     uint64_t WIDTH = 8;
     uint64_t WINDOW_SIZE = 5000;
     uint64_t SLIDE_FACTOR = 5000;
-    std::string ON_FIELD = "f1";
-    const std::string TS = "ts";
+    std::string ON_FIELD = DEFAULT_LOGICAL_SOURCE_NAME + "$" + "f1";
+    const std::string TS = DEFAULT_LOGICAL_SOURCE_NAME + "$" + "ts";
     uint64_t OPERATOR_HANDLER_INDEX = 0;
     uint64_t KEY_SIZE_IN_BITS = sizeof(uint64_t) * 8;
     uint64_t TUPLES = 5;
@@ -122,18 +122,17 @@ TEST_F(SynopsisOperatorTest, CountMinOperatorTest) {
     // FIELD_NAME --> the field which repeats the name from on which we build the statistic
     // ON_FIELD --> the field from which we read the data to build the statistic
     auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                            ->addField(NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
-                            ->addField(NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
-                            ->addField(NES::Experimental::Statistics::WORKER_ID, BasicType::UINT64)
-                            ->addField(NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT)
-                            ->addField(NES::Experimental::Statistics::OBSERVED_TUPLES, BasicType::UINT64)
-                            ->addField(NES::Experimental::Statistics::DEPTH, BasicType::UINT64)
-                            ->addField(NES::Experimental::Statistics::START_TIME, BasicType::UINT64)
-                            ->addField(NES::Experimental::Statistics::END_TIME, BasicType::UINT64)
-                            ->addField(NES::Experimental::Statistics::DATA, BasicType::TEXT)
-                            ->addField(NES::Experimental::Statistics::WIDTH, BasicType::UINT64)
-                            ->addField(ON_FIELD, BasicType::INT64)
-                            ->addField("ts", BasicType::UINT64);
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::OBSERVED_TUPLES, BasicType::UINT64)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::DEPTH, BasicType::UINT64)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::START_TIME, BasicType::UINT64)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::END_TIME, BasicType::UINT64)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::DATA, BasicType::TEXT)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::WIDTH, BasicType::UINT64)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + ON_FIELD, BasicType::INT64)
+                            ->addField( DEFAULT_LOGICAL_SOURCE_NAME + "$" + "ts", BasicType::UINT64);
 
     std::random_device rd;
     std::mt19937 gen(Nautilus::Interface::H3Hash::H3_SEED);
@@ -150,13 +149,11 @@ TEST_F(SynopsisOperatorTest, CountMinOperatorTest) {
     std::vector<OriginId> allOriginIds = {0};
 
     // create CountMinOperatorHandler
-    std::vector<std::pair<OriginId, std::string>> allOriginIdsPhysicalSourceNames = {
-        std::make_pair(0, DEFAULT_PHYSICAL_SOURCE_NAME)};
+    std::vector<OriginId> allOriginIdsPhysicalSourceNames = {0};
 
     auto handler = std::make_shared<Experimental::Statistics::CountMinOperatorHandler>(WINDOW_SIZE,
                                                                                        SLIDE_FACTOR,
                                                                                        DEFAULT_LOGICAL_SOURCE_NAME,
-                                                                                       WORKER_ID,
                                                                                        ON_FIELD,
                                                                                        DEPTH,
                                                                                        WIDTH,
@@ -168,9 +165,10 @@ TEST_F(SynopsisOperatorTest, CountMinOperatorTest) {
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
 
     auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
-        std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("ts"));
+        std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>( DEFAULT_LOGICAL_SOURCE_NAME + "$" + "ts"));
 
     auto cmOperator = NES::Experimental::Statistics::CountMinBuildOperator(OPERATOR_HANDLER_INDEX,
+                                                                           DEFAULT_LOGICAL_SOURCE_NAME,
                                                                            WIDTH,
                                                                            DEPTH,
                                                                            ON_FIELD,
@@ -192,10 +190,7 @@ TEST_F(SynopsisOperatorTest, CountMinOperatorTest) {
         auto record = Record(
             {{ON_FIELD, Value<>(tupleValue)},
              {TS, Value<>(tupleValue)},
-             {NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, Value<Nautilus::Text>(DEFAULT_LOGICAL_SOURCE_NAME.data())},
-             {NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, Value<Nautilus::Text>(DEFAULT_PHYSICAL_SOURCE_NAME.data())},
-             {NES::Experimental::Statistics::WORKER_ID, Value<>(WORKER_ID)},
-             {NES::Experimental::Statistics::FIELD_NAME, Value<Nautilus::Text>(ON_FIELD.data())}});
+             {DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, Value<Nautilus::Text>(DEFAULT_PHYSICAL_SOURCE_NAME.data())}});
         cmOperator.execute(ctx, record);
     }
 
@@ -206,9 +201,9 @@ TEST_F(SynopsisOperatorTest, CountMinOperatorTest) {
 
     auto countMinString = Runtime::MemoryLayouts::readVarSizedData(
         dynBuffer.getBuffer(),
-        dynBuffer[0][NES::Experimental::Statistics::DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
-    auto depth = dynBuffer[0][NES::Experimental::Statistics::DEPTH].read<uint64_t>();
-    auto width = dynBuffer[0][NES::Experimental::Statistics::WIDTH].read<uint64_t>();
+        dynBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+    auto depth = dynBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::DEPTH].read<uint64_t>();
+    auto width = dynBuffer[0][DEFAULT_LOGICAL_SOURCE_NAME + "$" + NES::Experimental::Statistics::WIDTH].read<uint64_t>();
 
     auto countMinSketch = Experimental::Statistics::CountMin::createFromString((void*) countMinString.data(), depth, width);
     auto countMinData = countMinSketch.getData();

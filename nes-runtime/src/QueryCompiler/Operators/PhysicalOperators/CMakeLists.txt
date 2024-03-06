@@ -30,6 +30,8 @@ add_source_files(nes-runtime
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
         PhysicalExternalOperator.cpp
+        PhysicalCountMinBuildOperator.cpp
+        PhysicalReservoirSampleBuildOperator.cpp
 )
 
 add_subdirectory(Windowing)

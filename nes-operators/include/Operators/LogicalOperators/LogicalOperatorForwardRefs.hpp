@@ -77,6 +77,11 @@ using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
 namespace Experimental {
 class BatchJoinLogicalOperatorNode;
 using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+
+namespace Statistics {
+class WindowStatisticLogicalOperatorNode;
+using WindowStatisticLogicalOperatorNodePtr = std::shared_ptr<WindowStatisticLogicalOperatorNode>;
+}// namespace Statistics
 }// namespace Experimental
 
 class FieldAssignmentExpressionNode;
@@ -122,4 +127,4 @@ using BroadcastLogicalOperatorNodePtr = std::shared_ptr<BroadcastLogicalOperator
 
 }// namespace NES
 
-#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_

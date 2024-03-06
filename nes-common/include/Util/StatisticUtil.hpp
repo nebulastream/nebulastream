@@ -39,6 +39,14 @@ class StatisticUtil {
      * @return a 1D vector containing the data from a csv file
      */
     static std::vector<std::vector<uint64_t>> read2DVectorFromCsvFile(const std::string& filename);
+
+    /**
+     * @param keySizeInBit the number of bits in the key
+     * @param numfunctions the number of (independent) hash functions that are desired
+     * @param seed the seed with which the random number generator will be set
+     * @return a vector of seeds for H3
+     */
+    static std::vector<uint64_t> createH3Seeds(uint32_t keySizeInBit, uint64_t numfunctions, uint64_t seed = 42);
 };
 }// namespace NES::Experimental::Statistics
 

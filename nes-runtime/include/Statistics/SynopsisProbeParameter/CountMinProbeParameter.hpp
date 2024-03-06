@@ -37,7 +37,7 @@ class CountMinProbeParameter : public StatisticProbeParameter {
      * extracted from the sketch
      * @param expression the expression defining what is to be probed
      */
-    explicit CountMinProbeParameter(ExpressionNodePtr& expression);
+    explicit CountMinProbeParameter(const ExpressionNodePtr& expression);
 
     /**
      * @return returns the query type (for CountMin point or range)

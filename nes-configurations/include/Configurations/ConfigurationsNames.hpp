@@ -63,6 +63,7 @@ const std::string WORKER_CONFIG_PATH = "workerConfigPath";
 const std::string CONFIG_PATH = "configPath";
 const std::string SENDER_HIGH_WATERMARK = "networkSenderHighWatermark";
 const std::string REST_SERVER_CORS_ORIGIN = "restServerCorsAllowedOrigin";
+const std::string STATISTICS_MODE = "statisticsMode";
 
 //Configurations for the hash table
 const std::string STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG = "numberOfPartitions";

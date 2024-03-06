@@ -27,6 +27,7 @@ add_source_files(nes-common
         ThreadNaming.cpp
         TimeMeasurement.cpp
         QueryStateHistory.cpp
+        StatisticUtil.cpp
 )
 add_subdirectory(Logger)
 add_subdirectory(Mobility)

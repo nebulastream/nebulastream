@@ -80,6 +80,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                operatorId,
                                originId,
                                numSourceLocalBuffers,
+                               sourceDescriptor->getLogicalSourceName(),
                                sourceDescriptor->getPhysicalSourceName(),
                                successors);
     }
@@ -94,6 +95,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                               operatorId,
                                                               originId,
                                                               numSourceLocalBuffers,
+                                                              sourceDescriptor->getLogicalSourceName(),
                                                               sourceDescriptor->getPhysicalSourceName(),
                                                               successors);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
@@ -106,6 +108,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                       operatorId,
                                       originId,
                                       numSourceLocalBuffers,
+                                      sourceDescriptor->getLogicalSourceName(),
                                       sourceDescriptor->getPhysicalSourceName(),
                                       successors);
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
@@ -118,6 +121,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    operatorId,
                                    originId,
                                    numSourceLocalBuffers,
+                                   sourceDescriptor->getLogicalSourceName(),
                                    sourceDescriptor->getPhysicalSourceName(),
                                    successors);
 #ifdef ENABLE_KAFKA_BUILD
@@ -139,6 +143,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  originId,
                                  numSourceLocalBuffers,
                                  kafkaSourceDescriptor->getBatchSize(),
+                                 sourceDescriptor->getLogicalSourceName(),
                                  sourceDescriptor->getPhysicalSourceName(),
                                  successors);
 #endif
@@ -153,6 +158,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                 operatorId,
                                 originId,
                                 numSourceLocalBuffers,
+                                sourceDescriptor->getLogicalSourceName(),
                                 sourceDescriptor->getPhysicalSourceName(),
                                 successors);
 #endif
@@ -169,6 +175,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                opcSourceDescriptor->getPassword(),
                                operatorId,
                                numSourceLocalBuffers,
+                               sourceDescriptor->getLogicalSourceName(),
                                sourceDescriptor->getPhysicalSourceName(),
                                successors);
 #endif
@@ -182,6 +189,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  operatorId,
                                  originId,
                                  numSourceLocalBuffers,
+                                 sourceDescriptor->getLogicalSourceName(),
                                  sourceDescriptor->getPhysicalSourceName(),
                                  successors);
     } else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
@@ -197,6 +205,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    numSourceLocalBuffers,
                                    networkSourceDescriptor->getWaitTime(),
                                    networkSourceDescriptor->getRetryTimes(),
+                                   sourceDescriptor->getLogicalSourceName(),
                                    sourceDescriptor->getPhysicalSourceName(),
                                    networkSourceDescriptor->getVersion(),
                                    successors);
@@ -216,6 +225,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   memorySourceDescriptor->getGatheringMode(),
                                   memorySourceDescriptor->getSourceAffinity(),
                                   memorySourceDescriptor->getTaskQueueId(),
+                                  sourceDescriptor->getLogicalSourceName(),
                                   sourceDescriptor->getPhysicalSourceName(),
                                   successors);
     } else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
@@ -231,6 +241,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                       operatorId,
                                       originId,
                                       numSourceLocalBuffers,
+                                      sourceDescriptor->getLogicalSourceName(),
                                       sourceDescriptor->getPhysicalSourceName(),
                                       successors);
     } else if (sourceDescriptor->instanceOf<NES::Experimental::StaticDataSourceDescriptor>()) {
@@ -244,6 +255,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                          operatorId,
                                                          originId,
                                                          numSourceLocalBuffers,
+                                                         sourceDescriptor->getLogicalSourceName(),
                                                          sourceDescriptor->getPhysicalSourceName(),
                                                          successors);
     } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
@@ -263,6 +275,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                      benchmarkSourceDescriptor->getSourceMode(),
                                      benchmarkSourceDescriptor->getSourceAffinity(),
                                      benchmarkSourceDescriptor->getTaskQueueId(),
+                                     sourceDescriptor->getLogicalSourceName(),
                                      sourceDescriptor->getPhysicalSourceName(),
                                      successors);
     } else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
@@ -280,6 +293,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   lambdaSourceDescriptor->getGatheringMode(),
                                   lambdaSourceDescriptor->getSourceAffinity(),
                                   lambdaSourceDescriptor->getTaskQueueId(),
+                                  sourceDescriptor->getLogicalSourceName(),
                                   sourceDescriptor->getPhysicalSourceName(),
                                   successors);
     } else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
@@ -292,6 +306,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                operatorId,
                                originId,
                                numSourceLocalBuffers,
+                               sourceDescriptor->getLogicalSourceName(),
                                sourceDescriptor->getPhysicalSourceName(),
                                successors);
     } else {

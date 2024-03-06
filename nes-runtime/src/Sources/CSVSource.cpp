@@ -19,6 +19,7 @@
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <StatisticFieldIdentifiers.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
@@ -38,6 +39,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                      OriginId originId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
+                     const std::string& logicalSourceName,
                      const std::string& physicalSourceName,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
@@ -47,15 +49,28 @@ CSVSource::CSVSource(SchemaPtr schema,
                  originId,
                  numSourceLocalBuffers,
                  gatheringMode,
+                 logicalSourceName,
                  physicalSourceName,
                  std::move(successors)),
       fileEnded(false), csvSourceType(csvSourceType), filePath(csvSourceType->getFilePath()->getValue()),
       numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
       delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()) {
 
+    dataSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    if (schema->partiallyContains(Experimental::Statistics::PHYSICAL_SOURCE_NAME)) {
+        for (auto i = 0UL; i < schema->getFieldNames().size(); ++i) {
+            auto field = schema->get(i);
+            if (field->getName().find(Experimental::Statistics::PHYSICAL_SOURCE_NAME) == std::string::npos) {
+                dataSchema->addField(field);
+            }
+        }
+    } else {
+        dataSchema = schema->copy();
+    }
+
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
-    this->tupleSize = schema->getSchemaSizeInBytes();
+    this->tupleSize = dataSchema->getSchemaSizeInBytes();
 
     struct Deleter {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
@@ -85,17 +100,21 @@ CSVSource::CSVSource(SchemaPtr schema,
               this->numberOfTuplesToProducePerBuffer);
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const AttributeFieldPtr& field : schema->fields) {
+    for (const AttributeFieldPtr& field : dataSchema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }
 
-    this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
+    this->inputParser = std::make_shared<CSVParser>(dataSchema->getSize(), physicalTypes, delimiter);
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
-    auto buffer = allocateBuffer();
+
+    auto buf = bufferManager->getBufferBlocking();
+    memoryLayout = Runtime::MemoryLayouts::RowLayout::create(dataSchema, localBufferManager->getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
+
     fillBuffer(buffer);
     NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
 
@@ -107,7 +126,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
 std::string CSVSource::toString() const {
     std::stringstream ss;
-    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count()
+    ss << "CSV_SOURCE(SCHEMA(" << dataSchema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count()
        << "ms"
        << " numBuff=" << this->numberOfBuffersToProduce << ")";
     return ss.str();
@@ -156,7 +175,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, dataSchema, localBufferManager);
         tupleCount++;
     }//end of while
 
@@ -165,7 +184,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     generatedTuples += tupleCount;
     generatedBuffers++;
     NES_TRACE("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
-    NES_TRACE("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+    NES_TRACE("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), dataSchema));
 }
 
 SourceType CSVSource::getType() const { return SourceType::CSV_SOURCE; }

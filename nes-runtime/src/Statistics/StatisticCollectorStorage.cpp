@@ -60,10 +60,12 @@ StatisticPtr StatisticCollectorStorage::getStatistic(StatisticCollectorIdentifie
         return statisticIt->second;
     } else {
         NES_ERROR("No statistic found for StatisticCollectorIdentifier with LogicalSourceName: {} PhysicalSourceName: {} Built "
-                  "on Field: {}\n",
+                  "on Field: {} with StartTime: {} and EndTime: {}\n",
                   statisticCollectorIdentifier.getLogicalSourceName(),
                   statisticCollectorIdentifier.getPhysicalSourceName(),
-                  statisticCollectorIdentifier.getFieldName());
+                  statisticCollectorIdentifier.getFieldName(),
+                  statisticCollectorIdentifier.getStartTime(),
+                  statisticCollectorIdentifier.getEndTime());
         return nullptr;
     }
 }

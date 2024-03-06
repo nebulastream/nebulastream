@@ -44,6 +44,7 @@ class TCPSource : public DataSource {
      * @param originId represents an origin
      * @param numSourceLocalBuffers number of local source buffers
      * @param gatheringMode the gathering mode used
+     * @param logicalSourceName the name of the logicalSource from which we get the data
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param executableSuccessors executable operators coming after this source
      */
@@ -55,6 +56,7 @@ class TCPSource : public DataSource {
                        OriginId originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
+                       const std::string& logicalSourceName,
                        const std::string& physicalSourceName,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 

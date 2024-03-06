@@ -337,6 +337,13 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     return *this;
 }
 
+Query& Query::buildStatistic(const Experimental::Statistics::WindowStatisticDescriptorPtr& statisticDescriptor) {
+    NES_DEBUG("Query: add statistic build operator to query");
+    this->queryPlan = QueryPlanBuilder::addStatisticOperator(statisticDescriptor,
+                                                             this->queryPlan);
+    return *this;
+}
+
 Query& Query::inferModel(const std::string model,
                          const std::initializer_list<ExpressionItem> inputFields,
                          const std::initializer_list<ExpressionItem> outputFields) {

@@ -62,12 +62,15 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_WORKER_NODE_ID),
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
-          workerConfig->mobilityConfiguration)),
-      statisticManager(std::make_unique<NES::Experimental::Statistics::StatisticManager>()) {
+          workerConfig->mobilityConfiguration)) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
+
+    if (workerConfig->statisticsMode == Experimental::Statistics::StatisticsMode::DECENTRALIZED_MODE) {
+        statisticManager = std::make_unique<NES::Experimental::Statistics::StatisticManager>();
+    }
 }
 
 NesWorker::~NesWorker() { stop(true); }

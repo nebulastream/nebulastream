@@ -346,6 +346,36 @@ class OperatorSerializationUtil {
      * @return OpenCLLogicalOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails);
+
+    /**
+     * @brief serializes a windowedStatisticLogicalOperatorNode
+     * @param windowstatisticNode the NES native WindowStatisticLogicalOperatorNode which is serialized into the GRPC SerializableOperator format
+     * @param serializedOperator a serialized WindowStatisticLogicalOperatorNode
+     */
+    static void serializeWindowStatisticOperator(const Experimental::Statistics::WindowStatisticLogicalOperatorNode& windowstatisticNode,
+                                                 SerializableOperator& serializedOperator);
+
+    /**
+     * @brief serializes a windowedStatisticDescriptor
+     * @param statisticDescriptor the NES native windowedStatisticDescriptor which is serialized into the GRPC SerializableOperator_WindowStatisticOperator format
+     * @param WindowStatisticOperator a serialized windowedStatisticDescriptor
+     */
+    static void serializeWindowStatisticDescriptor(const Experimental::Statistics::WindowStatisticDescriptor& statisticDescriptor,
+                                                   SerializableOperator_WindowStatisticOperator& WindowStatisticOperator);
+
+    /**
+     * @brief deserializes a windowedStatisticLogicalOperatorNode
+     * @param windowStatisticOperator a GRPC SerializableOperator
+     * @return returns the windowStatisticOperator deserialized as a WindowStatisticLogicalOperatorNode
+     */
+    static LogicalUnaryOperatorNodePtr deserializeWindowStatisticOperator(const SerializableOperator_WindowStatisticOperator& windowStatisticOperator);
+
+    /**
+     * @brief deserializes a windowedStatisticDescriptor
+     * @param windowStatisticDescriptor a GRPC SerializableOperator_WindowStatisticOperator
+     * @return returns the SerializableOperator_WindowStatisticOperator deserialized as a windowStatisticDescriptor
+     */
+    static Experimental::Statistics::WindowStatisticDescriptorPtr deserializeWindowStatisticDescriptor(const SerializableOperator_WindowStatisticOperator& windowStatisticDescriptor);
 };
 }// namespace NES
 

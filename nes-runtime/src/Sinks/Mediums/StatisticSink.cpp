@@ -16,6 +16,7 @@
 #include <Sinks/Formats/StatisticCollectorFormats/CountMinFormat.hpp>
 #include <Sinks/Formats/StatisticCollectorFormats/ReservoirSampleFormat.hpp>
 #include <Sinks/Mediums/StatisticSink.hpp>
+#include <Statistics/Statistic.hpp>
 #include <Statistics/StatisticCollectorStorage.hpp>
 #include <Util/StatisticCollectorType.hpp>
 
@@ -23,6 +24,7 @@ namespace NES::Experimental::Statistics {
 
 StatisticSink::StatisticSink(StatisticCollectorStoragePtr statisticCollectorStorage,
                              StatisticCollectorType statisticCollectorType,
+                             const std::string& logicalSourceName,
                              SinkFormatPtr sinkFormat,
                              Runtime::NodeEnginePtr const& nodeEngine,
                              uint32_t numOfProducers,
@@ -30,21 +32,14 @@ StatisticSink::StatisticSink(StatisticCollectorStoragePtr statisticCollectorStor
                              QuerySubPlanId querySubPlanId,
                              uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins),
-      statisticCollectorStorage(std::move(statisticCollectorStorage)), statisticCollectorType(statisticCollectorType) {
+      statisticCollectorStorage(std::move(statisticCollectorStorage)), statisticCollectorType(statisticCollectorType),
+      logicalSourceName(logicalSourceName) {
 
     switch (statisticCollectorType) {
-        case StatisticCollectorType::COUNT_MIN:
-            statisticCollectorFormat = std::make_shared<CountMinFormat>();
-            break;
-        case StatisticCollectorType::DDSKETCH:
-            NES_ERROR("Not yet implemented!");
-            break;
-        case StatisticCollectorType::HYPER_LOG_LOG:
-            NES_ERROR("Not yet implemented!");
-            break;
-        case StatisticCollectorType::RESERVOIR:
-            statisticCollectorFormat = std::make_shared<ReservoirSampleFormat>();
-            break;
+        case StatisticCollectorType::COUNT_MIN: statisticCollectorFormat = std::make_shared<CountMinFormat>(); break;
+        case StatisticCollectorType::DDSKETCH: NES_ERROR("Not yet implemented!"); break;
+        case StatisticCollectorType::HYPER_LOG_LOG: NES_ERROR("Not yet implemented!"); break;
+        case StatisticCollectorType::RESERVOIR: statisticCollectorFormat = std::make_shared<ReservoirSampleFormat>(); break;
         default: NES_ERROR("Synopsis not implemented!");
     }
 }
@@ -62,9 +57,8 @@ bool StatisticSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     auto schema = this->getSchemaPtr();
     auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(inputBuffer, schema);
 
-    std::vector<StatisticPtr> allStatisticCollectors = statisticCollectorFormat->readFromBuffer(dynBuffer);
-
-    statisticCollectorStorage->addStatistics(allStatisticCollectors);
+    std::vector<StatisticPtr> allStatistics = statisticCollectorFormat->readFromBuffer(dynBuffer, logicalSourceName);
+    statisticCollectorStorage->addStatistics(allStatistics);
 
     return true;
 }

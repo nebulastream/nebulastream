@@ -136,7 +136,10 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     monitoringService = std::make_shared<MonitoringService>(topology, queryService, queryCatalogService, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 
-    statCoordinator = std::make_shared<Experimental::Statistics::StatisticCoordinator>(queryService, sourceCatalog);
+    statCoordinator =
+        std::make_shared<Experimental::Statistics::StatisticCoordinator>(queryService,
+                                                                         sourceCatalog,
+                                                                         this->coordinatorConfiguration->statisticsMode);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -195,8 +198,20 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorConfiguration->worker.enableMonitoring = enableMonitoring;
     // Create a copy of the worker configuration to pass to the NesWorker.
     auto workerConfig = std::make_shared<WorkerConfiguration>(coordinatorConfiguration->worker);
+
+    // if we are generating statistics in a centralized manner, then we need to set the statistics mode to decentralized for the
+    // coordinators worker such that it does get initialized with a statisticManager
+    if (coordinatorConfiguration->statisticsMode == Experimental::Statistics::StatisticsMode::CENTRALIZED_MODE) {
+        workerConfig->statisticsMode = Experimental::Statistics::StatisticsMode::DECENTRALIZED_MODE;
+    }
+
     worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore());
     worker->start(/**blocking*/ false, /**withConnect*/ true);
+
+    // in the centralized approach we make the statisticManager of the coordinators worker a member in the StatisticCoordinator
+    if (coordinatorConfiguration->statisticsMode == Experimental::Statistics::StatisticsMode::CENTRALIZED_MODE) {
+        statCoordinator->setStatisticManager(worker->getStatisticManager());
+    }
 
     NES::Exceptions::installGlobalErrorListener(worker);
 

@@ -312,6 +312,7 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& o
                                                                1,
                                                                0,
                                                                12,
+                                                               "defaultLogicalSourceName",
                                                                "defaultPhysicalSourceName",
                                                                {pipeline});
     auto executionPlan = ExecutableQueryPlan::create(queryId,
@@ -429,6 +430,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                                 1,
                                                                 0,
                                                                 12,
+                                                                "defaultLogicalSourceName",
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
     auto executionPlan =
@@ -444,6 +446,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                                 2,
                                                                 0,
                                                                 12,
+                                                                "defaultLogicalSourceName",
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline2});
     auto executionPlan2 =
@@ -496,6 +499,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                                 1,
                                                                 0,
                                                                 12,
+                                                                "defaultLogicalSourceName",
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
     auto executionPlan =
@@ -512,6 +516,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                                          2,
                                                                          1,
                                                                          12,
+                                                                         "defaultLogicalSourceName",
                                                                          "defaultPhysicalSourceName",
                                                                          {pipeline2});
     auto executionPlan2 =
@@ -562,6 +567,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                                 1,
                                                                 0,
                                                                 12,
+                                                                "defaultLogicalSourceName",
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
     auto executionPlan = ExecutableQueryPlan::create(1,
@@ -581,6 +587,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                                          2,
                                                                          3,
                                                                          12,
+                                                                         "defaultLogicalSourceName",
                                                                          "defaultPhysicalSourceName",
                                                                          {pipeline2});
 
@@ -633,6 +640,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
                                                                 1,
                                                                 4,
                                                                 12,
+                                                                "defaultLogicalSourceName",
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1, pipeline2});
     auto executionPlan =

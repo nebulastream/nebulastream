@@ -92,6 +92,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         auto statisticStorageSinkDesc = sinkDescriptor->as<NES::Experimental::Statistics::StatisticStorageSinkDescriptor>();
         return createStatisticCollectorStorageSink(schema,
                                                    statisticStorageSinkDesc->getStatisticCollectorType(),
+                                                   statisticStorageSinkDesc->getLogicalSourceName(),
                                                    nodeEngine,
                                                    numOfProducers,
                                                    querySubPlan->getQueryId(),

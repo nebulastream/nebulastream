@@ -33,6 +33,7 @@ class DefaultSource : public GeneratorSource {
    * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
    * @param numSourceLocalBuffers number of local source buffers
    * @param successors the subsequent operators in the pipeline to which the data is pushed
+   * @param logicalSourceName the name of the logicalSource from which we get the data
    * @param physicalSourceName the name and unique identifier of a physical source
    */
     DefaultSource(SchemaPtr schema,
@@ -44,6 +45,7 @@ class DefaultSource : public GeneratorSource {
                   OriginId originId,
                   size_t numSourceLocalBuffers,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {},
+                  const std::string& logicalSourceName = std::string("defaultLogicalSourceName"),
                   const std::string& physicalSourceName = std::string("defaultPhysicalSourceName"));
 
     SourceType getType() const override;

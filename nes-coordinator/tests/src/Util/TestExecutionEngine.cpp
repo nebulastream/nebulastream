@@ -15,6 +15,8 @@
 #include <Util/NonRunnableDataSource.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSourceDescriptor.hpp>
+#include <Statistics/StatisticManager/StatisticManager.hpp>
+#include <Statistics/StatisticCollectorStorage.hpp>
 
 namespace NES::Testing {
 
@@ -56,6 +58,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpM
     // We inject an invalid query parsing service as it is not used in the tests.
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    nodeEngine->setStatisticManager(std::make_shared<Experimental::Statistics::StatisticManager>());
 }
 
 std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr& outputSchema, uint32_t expectedTuples) {
@@ -81,6 +84,32 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
                                            numSourceLocalBuffers,
                                            successors,
                                            Runtime::QueryTerminationType::Graceful);
+        });
+}
+
+std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema,
+                                                                        const std::string& logicalSourceName,
+                                                                        const std::string& physicalSourceName) {
+    return std::make_shared<TestUtils::TestSourceDescriptor>(
+        inputSchema,
+        // We require inputSchema as a lambda function arg since capturing it can lead to using a corrupted schema.
+        [&](SchemaPtr inputSchema,
+            OperatorId id,
+            OriginId originId,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr& nodeEngine,
+            size_t numSourceLocalBuffers,
+            const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) -> DataSourcePtr {
+            return createNonRunnableSource(inputSchema,
+                                           nodeEngine->getBufferManager(),
+                                           nodeEngine->getQueryManager(),
+                                           id,
+                                           originId,
+                                           numSourceLocalBuffers,
+                                           successors,
+                                           Runtime::QueryTerminationType::Graceful,
+                                           logicalSourceName,
+                                           physicalSourceName);
         });
 }
 

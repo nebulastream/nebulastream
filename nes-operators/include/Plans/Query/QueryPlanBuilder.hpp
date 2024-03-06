@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
-#include <Plans/Query/QueryPlan.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <string>
 
 namespace NES {
@@ -77,6 +77,15 @@ class QueryPlanBuilder {
     static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
 
     /**
+     * @brief
+     * @param statisticDescriptor the descriptor defining the details of the statistic
+     * @param queryPlan the queryPlan the statisticOperator is added to
+     * @return the updated queryPlanPtr
+     */
+    static QueryPlanPtr addStatisticOperator(Experimental::Statistics::WindowStatisticDescriptorPtr const& statisticDescriptor,
+                                             QueryPlanPtr queryPlan);
+
+    /**
      * @brief: Map java udf according to the java method given in the descriptor.
      * @param descriptor as java udf descriptor
      * @param queryPlan the queryPlan the map is added to
@@ -111,11 +120,11 @@ class QueryPlanBuilder {
      * @return the updated queryPlan
      */
     static QueryPlanPtr addJoin(QueryPlanPtr leftQueryPlan,
-                                     QueryPlanPtr rightQueryPlan,
-                                     ExpressionNodePtr onLeftKey,
-                                     ExpressionNodePtr onRightKey,
-                                     const Windowing::WindowTypePtr& windowType,
-                                     Join::LogicalJoinDefinition::JoinType joinType);
+                                QueryPlanPtr rightQueryPlan,
+                                ExpressionNodePtr onLeftKey,
+                                ExpressionNodePtr onRightKey,
+                                const Windowing::WindowTypePtr& windowType,
+                                Join::LogicalJoinDefinition::JoinType joinType);
 
     /**
      * @brief This methods add the batch join operator to a query
@@ -127,9 +136,9 @@ class QueryPlanBuilder {
      * @return the updated queryPlan
      */
     static QueryPlanPtr addBatchJoin(QueryPlanPtr leftQueryPlan,
-                                          QueryPlanPtr rightQueryPlan,
-                                          ExpressionNodePtr onProbeKey,
-                                          ExpressionNodePtr onBuildKey);
+                                     QueryPlanPtr rightQueryPlan,
+                                     ExpressionNodePtr onProbeKey,
+                                     ExpressionNodePtr onBuildKey);
     /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
@@ -144,7 +153,7 @@ class QueryPlanBuilder {
      * @return queryPlan
      */
     static QueryPlanPtr assignWatermark(QueryPlanPtr queryPlan,
-                                             Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+                                        Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
 
     /**
     * @brief: Method that checks in case a window is contained in the query
@@ -153,8 +162,7 @@ class QueryPlanBuilder {
     * @param queryPlan the queryPlan to check and add the watermark strategy to
     * @return the updated queryPlan
     */
-    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan,
-                                                            const Windowing::WindowTypePtr windowType);
+    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType);
 
   private:
     /**
@@ -172,9 +180,8 @@ class QueryPlanBuilder {
     * @param: rightQueryPlan the right query plan of the binary operation
     * @return the updated queryPlan
     */
-    static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorNodePtr operatorNode,
-                                                              QueryPlanPtr leftQueryPlan,
-                                                              QueryPlanPtr rightQueryPlan);
+    static QueryPlanPtr
+    addBinaryOperatorAndUpdateSource(OperatorNodePtr operatorNode, QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
 };
 }// end namespace NES
-#endif  // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_

@@ -31,6 +31,10 @@ SchemaPtr SourceDescriptor::getSchema() const { return schema; }
 
 std::string SourceDescriptor::getLogicalSourceName() const { return logicalSourceName; }
 
+void SourceDescriptor::setLogicalSourceName(const std::string& logicalSourceName) {
+    SourceDescriptor::logicalSourceName = logicalSourceName;
+}
+
 std::string SourceDescriptor::getPhysicalSourceName() const { return physicalSourceName; }
 
 void SourceDescriptor::setSchema(const SchemaPtr& schema) { this->schema = schema; }

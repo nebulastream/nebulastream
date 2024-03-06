@@ -69,16 +69,11 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const Fiel
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
 }
 
-LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createStatisticOperator(NES::Experimental::Statistics::WindowStatisticDescriptorPtr statisticDescriptor,
-                                                                            const std::string& synopsisFieldName,
-                                                                            uint64_t windowSize,
-                                                                            uint64_t slideFactor,
-                                                                            OperatorId id) {
+LogicalUnaryOperatorNodePtr
+LogicalOperatorFactory::createStatisticOperator(const Experimental::Statistics::WindowStatisticDescriptorPtr& statisticDescriptor,
+                                                OperatorId operatorId) {
     return std::make_shared<NES::Experimental::Statistics::WindowStatisticLogicalOperatorNode>(statisticDescriptor,
-                                                                                               synopsisFieldName,
-                                                                                               windowSize,
-                                                                                               slideFactor,
-                                                                                               id);
+                                                                                               operatorId);
 }
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createInferModelOperator(std::string model,

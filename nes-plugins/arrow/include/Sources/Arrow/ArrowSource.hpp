@@ -39,16 +39,18 @@ using ArrowParserPtr = std::shared_ptr<ArrowParser>;
 class ArrowSource : public DataSource {
   public:
     /**
-    * @brief constructor of Arrow source
-    * @param schema of the source
-    * @param bufferManager the buffer manager
-    * @param queryManager the query manager
-    * @param arrowSourceType points to the current source configuration object, look at mqttSourceType for info
-    * @param operatorId current operator id
-    * @param numSourceLocalBuffers
-    * @param gatheringMode
-    * @param successors
-    */
+     * @brief constructor of Arrow source
+     * @param schema of the source
+     * @param bufferManager the buffer manager
+     * @param queryManager the query manager
+     * @param arrowSourceType points to the current source configuration object, look at mqttSourceType for info
+     * @param operatorId current operator id
+     * @param numSourceLocalBuffers
+     * @param gatheringMode
+     * @param logicalSourceName the name of the logical Source
+     * @param physicalSourceName the name of the physical Source
+     * @param successors
+     */
     explicit ArrowSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,
@@ -57,6 +59,7 @@ class ArrowSource : public DataSource {
                          OriginId originId,
                          size_t numSourceLocalBuffers,
                          GatheringMode gatheringMode,
+                         const std::string& logicalSourceName,
                          const std::string& physicalSourceName,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 

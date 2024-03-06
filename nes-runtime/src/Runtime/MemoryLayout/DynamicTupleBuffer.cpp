@@ -40,7 +40,7 @@ DynamicField DynamicTuple::operator[](std::size_t fieldIndex) const {
 DynamicField DynamicTuple::operator[](std::string fieldName) const {
     auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value()) {
-        throw BufferAccessException("field name " + fieldName + " dose not exist in layout");
+        throw BufferAccessException("field name " + fieldName + " does not exist in layout");
     }
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }

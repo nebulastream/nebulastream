@@ -30,7 +30,13 @@ class StatisticCreateRequest : public StatisticRequest {
   public:
     StatisticCreateRequest(const std::string& logicalSourceName,
                            const std::string& fieldName,
-                           const StatisticCollectorType statisticCollectorType);
+                           const std::string& timestampField,
+                           StatisticCollectorType statisticCollectorType);
+
+    [[nodiscard]] const std::string& getTimestampField() const;
+
+  private:
+    std::string timestampField;
 };
 }// namespace NES::Experimental::Statistics
 

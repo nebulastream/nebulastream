@@ -35,6 +35,7 @@ class BinarySource : public DataSource {
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
      * @param numSourceLocalBuffers the number of buffers allocated to a source
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param logicalSourceName the name of the logicalSource from which we get the data
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      * @return a DataSourcePtr pointing to the data source
@@ -47,6 +48,7 @@ class BinarySource : public DataSource {
                           OriginId originId,
                           size_t numSourceLocalBuffers,
                           GatheringMode gatheringMode,
+                          const std::string& logicalSourceName,
                           const std::string& physicalSourceName,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 

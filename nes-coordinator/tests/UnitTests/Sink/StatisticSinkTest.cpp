@@ -91,45 +91,45 @@ TEST_F(StatisticSinkTest, statisticSinkTest) {
     uint64_t endTime = 5000;
     uint64_t width = 8;
     std::string fileName = "countmin.csv";
+    auto logSrcWSep = logicalSourceName + "$";
 
     std::string filepath = std::filesystem::path(TEST_DATA_DIRECTORY) / fileName;
     auto cmData = Experimental::Statistics::StatisticUtil::readFlattenedVectorFromCsvFile(filepath);
+    std::string cmString(reinterpret_cast<char*>(cmData.data()), cmData.size() * sizeof(uint64_t));
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                      ->addField(NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
-                      ->addField(NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
-                      ->addField(NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT)
-                      ->addField(NES::Experimental::Statistics::OBSERVED_TUPLES, BasicType::UINT64)
-                      ->addField(NES::Experimental::Statistics::DEPTH, BasicType::UINT64)
-                      ->addField(NES::Experimental::Statistics::START_TIME, BasicType::UINT64)
-                      ->addField(NES::Experimental::Statistics::END_TIME, BasicType::UINT64)
-                      ->addField(NES::Experimental::Statistics::DATA, BasicType::TEXT)
-                      ->addField(NES::Experimental::Statistics::WIDTH, BasicType::UINT64);
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT)
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::OBSERVED_TUPLES, BasicType::UINT64)
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::DEPTH, BasicType::UINT64)
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::START_TIME, BasicType::UINT64)
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::END_TIME, BasicType::UINT64)
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::DATA, BasicType::TEXT)
+                      ->addField(logSrcWSep + NES::Experimental::Statistics::WIDTH, BasicType::UINT64);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
 
-    std::string cmString(reinterpret_cast<char*>(cmData.data()), cmData.size() * sizeof(uint64_t));
-
     //fill buffer
-    dynBuffer[0].writeVarSized(Experimental::Statistics::LOGICAL_SOURCE_NAME, logicalSourceName, bufferManager.get());
-    dynBuffer[0].writeVarSized(Experimental::Statistics::PHYSICAL_SOURCE_NAME, physicalSourceName, bufferManager.get());
-    dynBuffer[0].writeVarSized(Experimental::Statistics::FIELD_NAME, fieldName, bufferManager.get());
+    dynBuffer[0].writeVarSized(logSrcWSep + Experimental::Statistics::LOGICAL_SOURCE_NAME, logicalSourceName, bufferManager.get());
+    dynBuffer[0].writeVarSized(logSrcWSep + Experimental::Statistics::PHYSICAL_SOURCE_NAME, physicalSourceName, bufferManager.get());
+    dynBuffer[0].writeVarSized(logSrcWSep + Experimental::Statistics::FIELD_NAME, fieldName, bufferManager.get());
 
-    dynBuffer[0][Experimental::Statistics::OBSERVED_TUPLES].write(observedTuples);
-    dynBuffer[0][Experimental::Statistics::DEPTH].write(depth);
-    dynBuffer[0][Experimental::Statistics::WIDTH].write(width);
-    dynBuffer[0].writeVarSized(Experimental::Statistics::DATA, cmString, bufferManager.get());
+    dynBuffer[0][logSrcWSep + Experimental::Statistics::OBSERVED_TUPLES].write(observedTuples);
+    dynBuffer[0][logSrcWSep + Experimental::Statistics::DEPTH].write(depth);
+    dynBuffer[0][logSrcWSep + Experimental::Statistics::WIDTH].write(width);
+    dynBuffer[0].writeVarSized(logSrcWSep + Experimental::Statistics::DATA, cmString, bufferManager.get());
 
-    dynBuffer[0][Experimental::Statistics::START_TIME].write(startTime);
-    dynBuffer[0][Experimental::Statistics::END_TIME].write(endTime);
+    dynBuffer[0][logSrcWSep + Experimental::Statistics::START_TIME].write(startTime);
+    dynBuffer[0][logSrcWSep + Experimental::Statistics::END_TIME].write(endTime);
     dynBuffer.setNumberOfTuples(1);
 
     auto synopsesText = Runtime::MemoryLayouts::readVarSizedData(
         dynBuffer.getBuffer(),
-        dynBuffer[0][Experimental::Statistics::DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+        dynBuffer[0][logSrcWSep + Experimental::Statistics::DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
-    auto statisticSinkDesc = Experimental::Statistics::StatisticStorageSinkDescriptor::create(statisticType);
+    auto statisticSinkDesc = Experimental::Statistics::StatisticStorageSinkDescriptor::create(statisticType, logicalSourceName);
 
     auto testSink = std::make_shared<SinkLogicalOperatorNode>(statisticSinkDesc, operatorId);
 

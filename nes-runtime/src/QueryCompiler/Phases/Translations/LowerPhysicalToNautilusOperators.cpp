@@ -36,6 +36,7 @@
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Statistics/CountMinBuildOperator.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
@@ -66,6 +67,7 @@
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -82,6 +84,7 @@
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalCountMinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
@@ -409,6 +412,33 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         parentOperator->setChild(joinBuildNautilus);
         return joinBuildNautilus;
+    } else if (operatorNode->instanceOf<Experimental::Statistics::PhysicalCountMinBuildOperator>()) {
+        auto cmBuildOperator = operatorNode->as<Experimental::Statistics::PhysicalCountMinBuildOperator>();
+        auto cmDesc = std::dynamic_pointer_cast<Experimental::Statistics::CountMinDescriptor>(cmBuildOperator->getDescriptor());
+        auto buildOperatorHandler = cmBuildOperator->getCountMinOperatorHandler();
+        operatorHandlers.push_back(buildOperatorHandler);
+        auto operatorHandlerIndex = operatorHandlers.size() - 1;
+
+        auto timeStampFieldRecord =
+            std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(cmDesc->gettimestampField());
+        Runtime::Execution::Operators::TimeFunctionPtr timeFunction =
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
+        if (cmDesc->gettimestampField() == "IngestionTime") {
+            timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
+        }
+        auto sizeInBit = 64;
+
+        auto cmOperator =
+            std::make_shared<NES::Experimental::Statistics::CountMinBuildOperator>(operatorHandlerIndex,
+                                                                                   cmDesc->getLogicalSourceName(),
+                                                                                   cmDesc->getWidth(),
+                                                                                   cmDesc->getDepth(),
+                                                                                   cmDesc->getFieldName(),
+                                                                                   sizeInBit,
+                                                                                   std::move(timeFunction),
+                                                                                   cmBuildOperator->getOutputSchema());
+        parentOperator->setChild(cmOperator);
+        return cmOperator;
     }
 
     // Check if a plugin is registered that handles this physical operator

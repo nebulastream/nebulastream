@@ -97,6 +97,22 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     bool isDemultiplex(const LogicalOperatorNodePtr& operatorNode);
 
     /**
+     * @brief checks which type of a WindowStatisticLogicalOperatorNode it is and calls the according lowering function
+     * @param queryPlan the query plan
+     * @param statisticOperatorNode the general WindowStatisticLogicalOperatorNode that is to be lowered to a physical operator
+     */
+    void lowerStatisticOperator(const QueryPlanPtr& queryPlan,
+                                Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode);
+
+    /**
+     * @brief lowers a WindowStatisticLogicalOperatorNode to a physical CountMinOperator
+     * @param queryPlan the query plan
+     * @param statisticOperatorNode the statistic node that will be lowered to a physical CountMinOperator
+     */
+    void lowerCountMinOperator(const QueryPlanPtr& queryPlan,
+                               Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode);
+
+    /**
      * @brief Lowers a binary operator
      * @param queryPlan current plan
      * @param operatorNode current operator

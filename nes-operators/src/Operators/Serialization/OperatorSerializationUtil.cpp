@@ -11,10 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -46,6 +42,9 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
+#include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -65,6 +64,10 @@
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Operators/Serialization/ExpressionSerializationUtil.hpp>
@@ -175,6 +178,9 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     } else if (operatorNode->instanceOf<OpenCLLogicalOperatorNode>()) {
         // Serialize map udf operator
         serializeOpenCLOperator(*operatorNode->as<OpenCLLogicalOperatorNode>(), serializedOperator);
+    } else if (operatorNode->instanceOf<Experimental::Statistics::WindowStatisticLogicalOperatorNode>()) {
+        serializeWindowStatisticOperator(*operatorNode->as<Experimental::Statistics::WindowStatisticLogicalOperatorNode>(),
+                                         serializedOperator);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", operatorNode->toString());
     }
@@ -328,6 +334,12 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&openCLDetails);
         operatorNode = deserializeOpenCLOperator(openCLDetails);
 
+    } else if (details.Is<SerializableOperator_WindowStatisticOperator>()) {
+        NES_TRACE("Deserialize WindowStatisticOperatorNode.");
+        auto windowStatisticOperatorNode = SerializableOperator_WindowStatisticOperator();
+        details.UnpackTo(&windowStatisticOperatorNode);
+        //        auto openCLDetails = SerializableOperator_OpenCLOperatorDetails();
+        operatorNode = deserializeWindowStatisticOperator(windowStatisticOperatorNode);
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }
@@ -595,7 +607,6 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         }
     }
 
-
     Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_TumblingWindow>()) {
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
@@ -677,11 +688,8 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         keyAccessExpression.emplace_back(
             ExpressionSerializationUtil::deserializeExpression(key)->as<FieldAccessExpressionNode>());
     }
-    auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
-                                                                aggregation,
-                                                                window,
-                                                                distChar,
-                                                                allowedLateness);
+    auto windowDef =
+        Windowing::LogicalWindowDefinition::create(keyAccessExpression, aggregation, window, distChar, allowedLateness);
     windowDef->setOriginId(windowDetails.origin());
 
     switch (distrChar.distr()) {
@@ -1247,7 +1255,8 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
                                                             nesPartition,
                                                             nodeLocation,
                                                             waitTime,
-                                                            networkSerializedSourceDescriptor.retrytimes(), networkSerializedSourceDescriptor.version());
+                                                            networkSerializedSourceDescriptor.retrytimes(),
+                                                            networkSerializedSourceDescriptor.version());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
         // de-serialize default source descriptor
@@ -1367,6 +1376,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         auto statSinkDesc = sinkDescriptor.as<const NES::Experimental::Statistics::StatisticStorageSinkDescriptor>();
         auto serializedSinkDesc = SerializableOperator_SinkDetails_SerializableStatisticStorageSinkDescriptor();
         serializedSinkDesc.set_collectortype(magic_enum::enum_integer(statSinkDesc->getStatisticCollectorType()));
+        serializedSinkDesc.set_logicalsourcename(statSinkDesc->getLogicalSourceName());
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDesc);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     }
@@ -1503,14 +1513,14 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         return MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType(serializedSinkDescriptor.collectortype()),
                                                 deserializedNumberOfOrigins);
-    } else if (deserializedSinkDescriptor
-                   .Is<SerializableOperator_SinkDetails_SerializableStatisticStorageSinkDescriptor>()) {
+    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableStatisticStorageSinkDescriptor>()) {
         // de-serialize StatisticStorageSinkDescriptor descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialize SinkDescriptor as StatisticStorageSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableStatisticStorageSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         return NES::Experimental::Statistics::StatisticStorageSinkDescriptor::create(
             Experimental::Statistics::StatisticCollectorType(serializedSinkDescriptor.collectortype()),
+            serializedSinkDescriptor.logicalsourcename(),
             deserializedNumberOfOrigins);
     }
 #ifdef ENABLE_OPC_BUILD
@@ -1679,9 +1689,9 @@ void OperatorSerializationUtil::serializeInputSchema(const OperatorNodePtr& oper
                                                      SerializableOperator& serializedOperator) {
 
     NES_TRACE("OperatorSerializationUtil:: serialize input schema");
-        if (!operatorNode->instanceOf<BinaryOperatorNode>()) {
-            SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperatorNode>()->getInputSchema(),
-                                                     serializedOperator.mutable_inputschema());
+    if (!operatorNode->instanceOf<BinaryOperatorNode>()) {
+        SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperatorNode>()->getInputSchema(),
+                                                 serializedOperator.mutable_inputschema());
     } else {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         SchemaSerializationUtil::serializeSchema(binaryOperator->getLeftInputSchema(),
@@ -1696,13 +1706,11 @@ void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorNodePtr op
     // de-serialize operator input schema
     if (!operatorNode->instanceOf<BinaryOperatorNode>()) {
         operatorNode->as<UnaryOperatorNode>()->setInputSchema(
-                SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
     } else {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
-        binaryOperator->setLeftInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
-        binaryOperator->setRightInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
+        binaryOperator->setLeftInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
+        binaryOperator->setRightInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
     }
 }
 
@@ -1798,4 +1806,86 @@ OperatorSerializationUtil::deserializeOpenCLOperator(const SerializableOperator_
     return openCLOperator;
 }
 
+void OperatorSerializationUtil::serializeWindowStatisticOperator(
+    const Experimental::Statistics::WindowStatisticLogicalOperatorNode& statisticOperatorNode,
+    SerializableOperator& serializedOperator) {
+    NES_TRACE("OperatorSerializationUtil:: serialize to WindowStatisticLogicalOperatorNode");
+    auto serializedStatisticOperator = SerializableOperator_WindowStatisticOperator();
+    auto windowStatisticDescriptor = statisticOperatorNode.getStatisticDescriptor();
+    serializeWindowStatisticDescriptor(*windowStatisticDescriptor, serializedStatisticOperator);
+    serializedOperator.mutable_details()->PackFrom(serializedStatisticOperator);
+}
+
+void OperatorSerializationUtil::serializeWindowStatisticDescriptor(
+    const Experimental::Statistics::WindowStatisticDescriptor& statisticDescriptor,
+    SerializableOperator_WindowStatisticOperator& windowStatisticOperator) {
+    NES_DEBUG("OperatorSerializationUtil:: serializing WindowStatisticDescriptor ");
+    if (statisticDescriptor.instanceOf<const Experimental::Statistics::WindowStatisticDescriptor>()) {
+        NES_TRACE("OperatorSerializationUtil:: serialized WindowStatisticDescriptor as "
+                  "SerializableOperator_WindowStatisticDescriptor_SerializableWindowCountMinDescriptor");
+        auto countMinDescriptor = statisticDescriptor.as<const Experimental::Statistics::CountMinDescriptor>();
+        auto serializedWindowCountMinDescriptor = SerializableOperator_WindowStatisticOperator_WindowCountMinDescriptor();
+
+        serializedWindowCountMinDescriptor.set_logicalsourcename(countMinDescriptor->getLogicalSourceName());
+        serializedWindowCountMinDescriptor.set_fieldname(countMinDescriptor->getFieldName());
+        serializedWindowCountMinDescriptor.set_timestampfield(countMinDescriptor->gettimestampField());
+        serializedWindowCountMinDescriptor.set_depth(countMinDescriptor->getDepth());
+        serializedWindowCountMinDescriptor.set_windowsize(countMinDescriptor->getWindowSize());
+        serializedWindowCountMinDescriptor.set_slidefactor(countMinDescriptor->getSlideFactor());
+        serializedWindowCountMinDescriptor.set_width(countMinDescriptor->getWidth());
+
+        windowStatisticOperator.mutable_windowstatisticdescriptor()->PackFrom(serializedWindowCountMinDescriptor);
+    } else {
+        NES_ERROR("OperatorSerializationUtil: Unknown WindowStatisticDescriptor");
+        throw std::invalid_argument("Unknown WindowStatisticOperator");
+    }
+}
+
+//void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor& sourceDescriptor,
+//                                                          SerializableOperator_SourceDetails& sourceDetails,
+//                                                          bool isClientOriginated) {
+//    NES_TRACE("OperatorSerializationUtil:: serialize to SourceDescriptor");
+//    NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with ={}", sourceDescriptor.toString());
+//    if (sourceDescriptor.instanceOf<const ZmqSourceDescriptor>()) {
+//        // serialize zmq source descriptor
+//        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+//                  "SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor");
+//        auto zmqSourceDescriptor = sourceDescriptor.as<const ZmqSourceDescriptor>();
+//        auto zmqSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor();
+//        zmqSerializedSourceDescriptor.set_host(zmqSourceDescriptor->getHost());
+//        zmqSerializedSourceDescriptor.set_port(zmqSourceDescriptor->getPort());
+//        // serialize source schema
+//        SchemaSerializationUtil::serializeSchema(zmqSourceDescriptor->getSchema(),
+//                                                 zmqSerializedSourceDescriptor.mutable_sourceschema());
+//        sourceDetails.mutable_sourcedescriptor()->PackFrom(zmqSerializedSourceDescriptor);
+//    }
+
+    LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeWindowStatisticOperator(
+        const SerializableOperator_WindowStatisticOperator& serializedWindowStatisticOperator) {
+        auto windowStatisticDescriptor = deserializeWindowStatisticDescriptor(serializedWindowStatisticOperator);
+        return LogicalOperatorFactory::createStatisticOperator(windowStatisticDescriptor);
+    }
+
+    Experimental::Statistics::WindowStatisticDescriptorPtr OperatorSerializationUtil::deserializeWindowStatisticDescriptor(
+        const SerializableOperator_WindowStatisticOperator& windowStatisticDescriptor) {
+        // de-serialize a windowStatisticDescriptor and all its properties.
+        const auto& deserializedWindowStatisticDescriptor = windowStatisticDescriptor.windowstatisticdescriptor();
+        if (deserializedWindowStatisticDescriptor.Is<SerializableOperator_WindowStatisticOperator_WindowCountMinDescriptor>()) {
+            // de-serialize print sink descriptor
+            NES_DEBUG("OperatorSerializationUtil:: de-serialized WindowStatisticOperator as WindowCountMinDescriptor");
+            auto serializedWindowCountMinDescriptor = SerializableOperator_WindowStatisticOperator_WindowCountMinDescriptor();
+            deserializedWindowStatisticDescriptor.UnpackTo(&serializedWindowCountMinDescriptor);
+            return std::make_shared<Experimental::Statistics::CountMinDescriptor>(
+                serializedWindowCountMinDescriptor.logicalsourcename(),
+                serializedWindowCountMinDescriptor.fieldname(),
+                serializedWindowCountMinDescriptor.timestampfield(),
+                serializedWindowCountMinDescriptor.depth(),
+                serializedWindowCountMinDescriptor.windowsize(),
+                serializedWindowCountMinDescriptor.slidefactor(),
+                serializedWindowCountMinDescriptor.width());
+        } else {
+            NES_ERROR("OperatorSerializationUtil: Unknown WindowStatisticOperator");
+            throw std::invalid_argument("Unknown WindowStatisticOperator");
+        }
+    }
 }// namespace NES

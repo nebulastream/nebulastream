@@ -85,17 +85,11 @@ class LogicalOperatorFactory {
     /**
      * @brief Creates a new statistic operator
      * @param statisticDescriptor a descriptor defining the details of a statistic/synopsis
-     * @param windowSize the size of the window over which the statistic is built
-     * @param synopsisFieldName the name of the field which serves as input for the statistic operator
-     * @param slideFactor the slideFactor with which two windows differ
      * @param id the id of the operator. If not defined, then the next free operator id is used.
      * @return LogicalUnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr
-    createStatisticOperator(NES::Experimental::Statistics::WindowStatisticDescriptorPtr statisticDescriptor,
-                            const std::string& synopsisFieldName,
-                            uint64_t windowSize,
-                            uint64_t slideFactor,
+    createStatisticOperator(const Experimental::Statistics::WindowStatisticDescriptorPtr& statisticDescriptor,
                             OperatorId id = getNextOperatorId());
 
     /**

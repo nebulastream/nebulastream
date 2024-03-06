@@ -87,6 +87,8 @@ class TestExecutionEngine {
 
     std::shared_ptr<SourceDescriptor> createDataSource(SchemaPtr inputSchema);
 
+    std::shared_ptr<SourceDescriptor> createDataSource(SchemaPtr inputSchema, const std::string& logicalSourceName, const std::string& physicalSourceName);
+
     std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> submitQuery(QueryPlanPtr queryPlan);
 
     std::shared_ptr<NonRunnableDataSource> getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,

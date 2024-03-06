@@ -21,6 +21,7 @@
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/Enums/StorageHandlerType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Util/StatisticsMode.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -104,7 +105,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @deprecated This is currently only used for testing and will be removed.
      */
     SequenceOption<WrapOption<LogicalSourceTypePtr, LogicalSourceTypeFactory>> logicalSourceTypes = {LOGICAL_SOURCES,
-                                                                                                 "Logical Sources"};
+                                                                                                     "Logical Sources"};
 
     /**
      * @brief Configuration yaml path.
@@ -142,6 +143,14 @@ class CoordinatorConfiguration : public BaseConfiguration {
     ElegantConfigurations elegant = {ELEGANT, "Define ELEGANT configuration"};
 
     /**
+     * @brief an enum describing how data statistics are generated
+     */
+    EnumOption<Experimental::Statistics::StatisticsMode> statisticsMode = {
+        STATISTICS_MODE,
+        Experimental::Statistics::StatisticsMode::CENTRALIZED_MODE,
+        "Mode for statistics handling (CENTRALIZED_MODE, HYBRID_MODE, DECENTRALIZED_MODE)"};
+
+    /**
      * @brief Create a default CoordinatorConfiguration object with default values.
      * @return A CoordinatorConfiguration object with default values.
      */
@@ -171,10 +180,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &logicalSourceTypes,
                 &coordinatorHealthCheckWaitTime,
                 &restServerCorsAllowedOrigin,
-                &elegant};
+                &elegant,
+                &statisticsMode};
     }
 };
 
 }// namespace NES::Configurations
 
-#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_

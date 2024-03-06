@@ -45,6 +45,7 @@ class ArrowSourcePlugin : public DataSourcePlugin {
                                                  originId,
                                                  numSourceLocalBuffers,
                                                  GatheringMode::INTERVAL_MODE,
+                                                 sourceDescriptor->getLogicalSourceName(),
                                                  sourceDescriptor->getPhysicalSourceName(),
                                                  successors);
         }

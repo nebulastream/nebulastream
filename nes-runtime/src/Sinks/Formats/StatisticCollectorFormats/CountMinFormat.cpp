@@ -21,28 +21,30 @@
 
 namespace NES::Experimental::Statistics {
 
-std::vector<StatisticPtr> CountMinFormat::readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer) {
+std::vector<StatisticPtr> CountMinFormat::readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer,
+                                                         const std::string& logicalSourceName) {
     std::vector<StatisticPtr> statisticCollectors = {};
+    auto logSrcNameWSep = logicalSourceName + "$";
 
     for (uint64_t rowIdx = 0; rowIdx < dynBuffer.getNumberOfTuples(); rowIdx++) {
         // read and create statisticCollectorIdentifier
-        auto logicalSourceName = Runtime::MemoryLayouts::readVarSizedData(
+        auto logSourceName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
-            dynBuffer[rowIdx][LOGICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+            dynBuffer[rowIdx][logSrcNameWSep + LOGICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
         auto physicalSourceName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
-            dynBuffer[rowIdx][PHYSICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+            dynBuffer[rowIdx][logSrcNameWSep + PHYSICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
         auto fieldName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
-            dynBuffer[rowIdx][FIELD_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+            dynBuffer[rowIdx][logSrcNameWSep + FIELD_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
         // read other general statisticCollector fields
-        auto observedTuples = dynBuffer[rowIdx][OBSERVED_TUPLES].read<uint64_t>();
-        auto depth = dynBuffer[rowIdx][DEPTH].read<uint64_t>();
-        auto startTime = dynBuffer[rowIdx][START_TIME].read<uint64_t>();
-        auto endTime = dynBuffer[rowIdx][END_TIME].read<uint64_t>();
+        auto observedTuples = dynBuffer[rowIdx][logSrcNameWSep + OBSERVED_TUPLES].read<uint64_t>();
+        auto depth = dynBuffer[rowIdx][logSrcNameWSep + DEPTH].read<uint64_t>();
+        auto startTime = dynBuffer[rowIdx][logSrcNameWSep + START_TIME].read<uint64_t>();
+        auto endTime = dynBuffer[rowIdx][logSrcNameWSep + END_TIME].read<uint64_t>();
 
-        auto statisticCollectorIdentifier = std::make_shared<StatisticCollectorIdentifier>(logicalSourceName,
+        auto statisticCollectorIdentifier = std::make_shared<StatisticCollectorIdentifier>(logSourceName,
                                                                                            physicalSourceName,
                                                                                            fieldName,
                                                                                            startTime,
@@ -50,20 +52,19 @@ std::vector<StatisticPtr> CountMinFormat::readFromBuffer(Runtime::MemoryLayouts:
                                                                                            StatisticCollectorType::COUNT_MIN);
 
         // read sketch data
-        auto synopsesText =
-            Runtime::MemoryLayouts::readVarSizedData(dynBuffer.getBuffer(),
-                                                     dynBuffer[rowIdx][DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+        auto synopsesText = Runtime::MemoryLayouts::readVarSizedData(
+            dynBuffer.getBuffer(),
+            dynBuffer[rowIdx][logSrcNameWSep + DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
         // read sketch specific fields
-        auto width = dynBuffer[rowIdx][WIDTH].read<uint64_t>();
+        auto width = dynBuffer[rowIdx][logSrcNameWSep + WIDTH].read<uint64_t>();
 
         // convert Text back to array
         std::vector<uint64_t> data(depth * width, 0);
         memcpy(data.data(), synopsesText.data(), synopsesText.size());
 
         // create sketch and add it to the vector of sketches
-        auto countMin =
-            std::make_shared<CountMin>(width, data, statisticCollectorIdentifier, observedTuples, depth);
+        auto countMin = std::make_shared<CountMin>(width, data, statisticCollectorIdentifier, observedTuples, depth);
         statisticCollectors.push_back(countMin);
     }
 

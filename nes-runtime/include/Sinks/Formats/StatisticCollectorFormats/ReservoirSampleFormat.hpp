@@ -34,9 +34,10 @@ class ReservoirSampleFormat : public StatisticCollectorFormat {
     /**
      * @brief defines how reservoir tuples are read from a buffer and creates samples from it
      * @param dynBuffer a dynamic tuple buffer that holds one or more samples
+     * @param logicalSourceName the name of the logicalSource whose format we will read
      * @return a vector of reservoir samples
      */
-    std::vector<StatisticPtr> readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer);
+    std::vector<StatisticPtr> readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer, const std::string& logicalSourceName);
 };
 }// namespace NES::Experimental::Statistics
 #endif//NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTORS_RESERVOIRSAMPLE_HPP_

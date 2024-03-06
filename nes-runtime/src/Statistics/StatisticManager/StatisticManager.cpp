@@ -30,7 +30,7 @@ void StatisticManager::probeStatistic(const std::string& logicalSourceName,
                                       const std::string& fieldName,
                                       StatisticCollectorType statisticCollectorType,
                                       ExpressionNodePtr& expression,
-                                      const std::vector<std::string>& allPhyicalSourceNames,
+                                      const std::vector<std::string>& allPhysicalSourceNames,
                                       const time_t startTime,
                                       const time_t endTime,
                                       ProbeStatisticReply* allStatistics) {
@@ -39,14 +39,14 @@ void StatisticManager::probeStatistic(const std::string& logicalSourceName,
     StatisticProbeParameterPtr probeParams = nullptr;
 
     switch (statisticCollectorType) {
-        case StatisticCollectorType::COUNT_MIN: probeParams = std::make_shared<CountMinProbeParameter>(expression);
-        case StatisticCollectorType::DDSKETCH: NES_ERROR("Sketch not yet implemented");
-        case StatisticCollectorType::HYPER_LOG_LOG: NES_ERROR("Sketch not yet implemented");
-        case StatisticCollectorType::RESERVOIR: NES_ERROR("Reservoir not yet implemented");
+        case StatisticCollectorType::COUNT_MIN: probeParams = std::make_shared<CountMinProbeParameter>(expression); break;
+        case StatisticCollectorType::DDSKETCH: NES_ERROR("Sketch not yet implemented"); break;
+        case StatisticCollectorType::HYPER_LOG_LOG: NES_ERROR("Sketch not yet implemented"); break;
+        case StatisticCollectorType::RESERVOIR: NES_ERROR("Reservoir not yet implemented"); break;
         default: NES_ERROR("StatisticCollectorType not implemented!")
     }
 
-    for (const auto& physicalSourceName : allPhyicalSourceNames) {
+    for (const auto& physicalSourceName : allPhysicalSourceNames) {
         auto statisticCollectorIdentifier = StatisticCollectorIdentifier(logicalSourceName,
                                                                          physicalSourceName,
                                                                          fieldName,
@@ -63,6 +63,46 @@ void StatisticManager::probeStatistic(const std::string& logicalSourceName,
             return;
         }
     }
+}
+
+std::vector<double> StatisticManager::probeStatistic(const std::string& logicalSourceName,
+                                                     const std::string& fieldName,
+                                                     StatisticCollectorType statisticCollectorType,
+                                                     const ExpressionNodePtr& expression,
+                                                     const std::vector<std::string>& allPhysicalSourceNames,
+                                                     const time_t startTime,
+                                                     const time_t endTime) {
+
+    double statistic;
+    StatisticProbeParameterPtr probeParams = nullptr;
+    std::vector<double> allStatistics;
+
+    switch (statisticCollectorType) {
+        case StatisticCollectorType::COUNT_MIN: probeParams = std::make_shared<CountMinProbeParameter>(expression); break;
+        case StatisticCollectorType::DDSKETCH: NES_ERROR("Sketch not yet implemented"); break;
+        case StatisticCollectorType::HYPER_LOG_LOG: NES_ERROR("Sketch not yet implemented"); break;
+        case StatisticCollectorType::RESERVOIR: NES_ERROR("Reservoir not yet implemented"); break;
+        default: NES_ERROR("StatisticCollectorType not implemented!")
+    }
+
+    for (const auto& physicalSourceName : allPhysicalSourceNames) {
+        auto statisticCollectorIdentifier = StatisticCollectorIdentifier(logicalSourceName,
+                                                                         physicalSourceName,
+                                                                         fieldName,
+                                                                         startTime,
+                                                                         endTime,
+                                                                         statisticCollectorType);
+
+        statistic = statisticCollectorStorage->probeStatistic(statisticCollectorIdentifier, probeParams);
+
+        if (statistic != std::numeric_limits<double>::quiet_NaN()) {
+            allStatistics.push_back(statistic);
+        } else {
+            allStatistics.clear();
+            return allStatistics;
+        }
+    }
+    return allStatistics;
 }
 
 bool StatisticManager::deleteStatistic(const std::string& logicalSourceName,

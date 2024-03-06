@@ -17,6 +17,7 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Util/StatisticCollectorType.hpp>
+#include <string>
 
 namespace NES::Experimental::Statistics {
 
@@ -28,10 +29,12 @@ class StatisticStorageSinkDescriptor : public SinkDescriptor {
     /**
      * @brief creates a shared pointer to a specified version of a StatisticStorageSinkDesc. This function can be called via the
      * @param statisticCollectorType the type of statistic object that the sink expects, from which it derives the output schema
+     * @param logicalSourceName the logicalSourceName of the data which the sink will write to the StatisticStorage.
      * @param numberOfOrigins number of origins of a given query
      * @return a abstract SinkDescriptorPtr
      */
     static SinkDescriptorPtr create(StatisticCollectorType statisticCollectorType,
+                                    const std::string& logicalSourceName,
                                     uint64_t numberOfOrigins = 1);
 
     virtual ~StatisticStorageSinkDescriptor() = default;
@@ -52,16 +55,25 @@ class StatisticStorageSinkDescriptor : public SinkDescriptor {
      * @return the type of the statisticCollector that is meant to be written to the storage
      */
     StatisticCollectorType getStatisticCollectorType() const;
+
+    /**
+     * @return returns the name of the logicalSource of data over which the statistics are being generated
+     */
+    const std::string& getLogicalSourceName() const;
+
   private:
     /**
      * @brief the constructor of the StatisticStorageSinkDesc
      * @param statisticCollectorType the type of statistic obj the sink will expect
+     * @param logicalSourceName the logicalSourceName of the stream over which we are building the statistic
      * @param numberOfOrigins the number of origins
      */
     StatisticStorageSinkDescriptor(StatisticCollectorType statisticCollectorType,
+                                   const std::string& logicalSourceName,
                                    uint64_t numberOfOrigins = 1);
 
     StatisticCollectorType statisticCollectorType;
+    std::string logicalSourceName;
 };
 }// namespace NES::Experimental::Statistics
 #endif//NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_STATISTICSTORAGESINKDESCRIPTOR_HPP_

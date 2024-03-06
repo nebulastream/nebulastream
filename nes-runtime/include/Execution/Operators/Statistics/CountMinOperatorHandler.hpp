@@ -55,7 +55,6 @@ class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
      * @param windowSize the windowSize over which the CountMin sketches are generated
      * @param slideFactor the slideFactor with which the sketches are generated
      * @param logicalSourceName the logicalSourceName from which the data originates
-     * @param workerId the workerID from which the data originates
      * @param fieldName the name of the field over which we construct the sketch
      * @param depth the depth of the sketch
      * @param width the width of the sketch
@@ -66,13 +65,12 @@ class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
     CountMinOperatorHandler(uint64_t windowSize,
                             uint64_t slideFactor,
                             const std::string& logicalSourceName,
-                            WorkerId workerId,
                             const std::string& fieldName,
                             uint64_t depth,
                             uint64_t width,
                             SchemaPtr schema,
                             std::vector<uint64_t> h3Seeds,
-                            std::vector<std::pair<OriginId, std::string>>& allOriginIdsPhysicalSourceNames);
+                            const std::vector<OriginId>& allOriginIds);
 
     /**
      * @brief the default destructor of the CountMinOperatorHandler
@@ -113,18 +111,21 @@ class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
                                                                   uint64_t sequenceNumber,
                                                                   OriginId originId0);
 
+    /**
+     * @brief
+     */
+    void discardUnfinishedRemainingStatistics();
+
   private:
     Runtime::Execution::Operators::SliceAssigner sliceAssigner;
     std::vector<Runtime::TupleBuffer> allCountMin;
     std::string logicalSourceName;
-    WorkerId workerId;
     std::string fieldName;
     uint64_t depth;
     uint64_t width;
     const std::vector<uint64_t> h3Seeds;
     SchemaPtr schema;
-    std::map<OriginId, std::string> allPhysicalSources;
-    std::map<std::string, Runtime::Execution::Operators::MultiOriginWatermarkProcessorPtr> allWatermarkProcessors;
+    Runtime::Execution::Operators::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     Runtime::BufferManagerPtr bufferManager;
 
     /**

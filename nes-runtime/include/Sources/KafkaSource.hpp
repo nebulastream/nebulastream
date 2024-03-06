@@ -48,6 +48,7 @@ class KafkaSource : public DataSource {
    * @param operatorId current operator id
    * @param numSourceLocalBuffers the number of buffers allocated to a source
    * @param batchSize the maximum amount of data (in bytes) that a Kafka producer can accumulate before sending a batch of messages to the Kafka
+   * @param logicalSourceName the name of the logicalSource from which we get the data
    * @param physicalSourceName the name and unique identifier of a physical source
    * @param successors the subsequent operators in the pipeline to which the data is pushed
    * @return
@@ -67,6 +68,7 @@ class KafkaSource : public DataSource {
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers,
                 uint64_t batchSize,
+                const std::string& logicalSourceName,
                 const std::string& physicalSourceName,
                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 

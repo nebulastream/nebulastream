@@ -21,12 +21,28 @@ namespace NES::Experimental::Statistics {
 
 class CountMinDescriptor : public WindowStatisticDescriptor {
   public:
-
     /**
-     * @param depth the depth of the CM Sketch that we wish to create
+     *
+     * @param logicalSourceName the logical source name over which we wish to generate countMin sketches
+     * @param fieldName the field name over which we wish to generate countMin sketches
+     * @param timestampField the timestamp field which determines the window/sketch of a tuple
+     * @param depth the depth of the count min sketches
+     * @param windowSize the window size of the countMin sketches
+     * @param slideFactor the slide factor of the CountMin sketches
      * @param width the width of the CM Sketch that we wish to create
      */
-    CountMinDescriptor(uint64_t depth, uint64_t width);
+    explicit CountMinDescriptor(const std::string& logicalSourceName,
+                                const std::string& fieldName,
+                                const std::string& timestampField,
+                                uint64_t depth,
+                                uint64_t windowSize,
+                                uint64_t slideFactor,
+                                uint64_t width);
+
+    /**
+     * @return a string representation of the desc
+     */
+    std::string toString() const override;
 
     /**
      * @brief checks if two statisticOperators are equal
@@ -42,19 +58,13 @@ class CountMinDescriptor : public WindowStatisticDescriptor {
     void addStatisticFields(SchemaPtr schema) override;
 
     /**
-     * @return returns the depth of the sketch
-     */
-    double getDepth() const;
-
-    /**
      * @return returns the width of the sketch
      */
-    double getWidth() const;
+    [[nodiscard]] uint64_t getWidth() const;
 
   private:
-    uint64_t depth;
     uint64_t width;
 };
-}
+}// namespace NES::Experimental::Statistics
 
 #endif//NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICS_COUNTMINDESCRIPTOR_HPP_

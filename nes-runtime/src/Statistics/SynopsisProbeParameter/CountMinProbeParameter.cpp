@@ -30,7 +30,7 @@
 
 namespace NES::Experimental::Statistics {
 
-CountMinProbeParameter::CountMinProbeParameter(NES::ExpressionNodePtr& expression) {
+CountMinProbeParameter::CountMinProbeParameter(const NES::ExpressionNodePtr& expression) {
 
     if (!expression->instanceOf<BinaryExpressionNode>()) {
         NES_ERROR("Invalid expression used to define queried statistic")

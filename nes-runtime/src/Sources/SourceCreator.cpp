@@ -49,6 +49,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                               OperatorId operatorId,
                                               OriginId originId,
                                               size_t numSourceLocalBuffers,
+                                              const std::string& logicalSourceName,
                                               const std::string& physicalSourceName,
                                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<DefaultSource>(schema,
@@ -60,6 +61,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                            originId,
                                            numSourceLocalBuffers,
                                            successors,
+                                           logicalSourceName,
                                            physicalSourceName);
 }
 
@@ -72,6 +74,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                                OperatorId operatorId,
                                                OriginId originId,
                                                size_t numSourceLocalBuffers,
+                                               const std::string& logicalSourceName,
                                                const std::string& physicalSourceName,
                                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<DefaultSource>(schema,
@@ -83,6 +86,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                            originId,
                                            numSourceLocalBuffers,
                                            successors,
+                                           logicalSourceName,
                                            physicalSourceName);
 }
 
@@ -92,6 +96,7 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
                                              OperatorId operatorId,
                                              OriginId originId,
                                              size_t numSourceLocalBuffers,
+                                             const std::string& logicalSourceName,
                                              const std::string& physicalSourceName,
                                              const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()),
@@ -103,6 +108,7 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
                                            originId,
                                            numSourceLocalBuffers,
                                            successors,
+                                           logicalSourceName,
                                            physicalSourceName);
 }
 
@@ -119,6 +125,7 @@ createLambdaSource(const SchemaPtr& schema,
                    GatheringMode gatheringMode,
                    uint64_t sourceAffinity,
                    uint64_t taskQueueId,
+                   const std::string& logicalSourceName,
                    const std::string& physicalSourceName,
                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<LambdaSource>(schema,
@@ -133,6 +140,7 @@ createLambdaSource(const SchemaPtr& schema,
                                           gatheringMode,
                                           sourceAffinity,
                                           taskQueueId,
+                                          logicalSourceName,
                                           physicalSourceName,
                                           successors);
 }
@@ -150,6 +158,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  GatheringMode gatheringMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId,
+                                 const std::string& logicalSourceName,
                                  const std::string& physicalSourceName,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<MemorySource>(schema,
@@ -165,6 +174,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                           gatheringMode,
                                           sourceAffinity,
                                           taskQueueId,
+                                          logicalSourceName,
                                           physicalSourceName,
                                           successors);
 }
@@ -178,6 +188,7 @@ Experimental::createStaticDataSource(const SchemaPtr& schema,
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
+                                     const std::string& logicalSourceName,
                                      const std::string& physicalSourceName,
                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<Experimental::StaticDataSource>(schema,
@@ -188,6 +199,7 @@ Experimental::createStaticDataSource(const SchemaPtr& schema,
                                                             operatorId,
                                                             originId,
                                                             numSourceLocalBuffers,
+                                                            logicalSourceName,
                                                             physicalSourceName,
                                                             successors);
 }
@@ -206,6 +218,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     SourceMode sourceMode,
                                     uint64_t sourceAffinity,
                                     uint64_t taskQueueId,
+                                    const std::string& logicalSourceName,
                                     const std::string& physicalSourceName,
                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<BenchmarkSource>(schema,
@@ -222,6 +235,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                              sourceMode,
                                              sourceAffinity,
                                              taskQueueId,
+                                             logicalSourceName,
                                              physicalSourceName,
                                              successors);
 }
@@ -234,6 +248,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
                               OperatorId operatorId,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
+                              const std::string& logicalSourceName,
                               const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<ZmqSource>(schema,
@@ -245,6 +260,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
                                        originId,
                                        numSourceLocalBuffers,
                                        GatheringMode::INTERVAL_MODE,
+                                       logicalSourceName,
                                        physicalSourceName,
                                        successors);
 }
@@ -256,6 +272,7 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
+                                     const std::string& logicalSourceName,
                                      const std::string& physicalSourceName,
                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<BinarySource>(schema,
@@ -266,6 +283,7 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                           originId,
                                           numSourceLocalBuffers,
                                           GatheringMode::INTERVAL_MODE,
+                                          logicalSourceName,
                                           physicalSourceName,
                                           successors);
 }
@@ -277,6 +295,7 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                 OperatorId operatorId,
                                 OriginId originId,
                                 size_t numSourceLocalBuffers,
+                                const std::string& logicalSourceName,
                                 const std::string& physicalSourceName,
                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<SenseSource>(schema,
@@ -286,6 +305,7 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                          operatorId,
                                          originId,
                                          numSourceLocalBuffers,
+                                         logicalSourceName,
                                          physicalSourceName,
                                          successors);
 }
@@ -297,6 +317,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   OperatorId operatorId,
                                   OriginId originId,
                                   size_t numSourceLocalBuffers,
+                                  const std::string& logicalSourceName,
                                   const std::string& physicalSourceName,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<CSVSource>(schema,
@@ -307,6 +328,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                        originId,
                                        numSourceLocalBuffers,
                                        GatheringMode::INTERVAL_MODE,
+                                       logicalSourceName,
                                        physicalSourceName,
                                        successors);
 }
@@ -320,6 +342,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   size_t numSourceLocalBuffers,
                                   std::chrono::milliseconds waitTime,
                                   uint8_t retryTimes,
+                                  const std::string& logicalSourceName,
                                   const std::string& physicalSourceName,
                                   Version version,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
@@ -334,6 +357,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     retryTimes,
                                                     successors,
                                                     version,
+                                                    logicalSourceName,
                                                     physicalSourceName);
 }
 
@@ -344,6 +368,7 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
                                      OperatorId operatorId,
                                      OriginId originId,
                                      size_t numSourceLocalBuffers,
+                                     const std::string& logicalSourceName,
                                      const std::string& physicalSourceName,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
     return std::make_shared<MonitoringSource>(metricCollector,
@@ -353,6 +378,7 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
                                               operatorId,
                                               originId,
                                               numSourceLocalBuffers,
+                                              logicalSourceName,
                                               physicalSourceName,
                                               successors);
 }
@@ -373,6 +399,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
                                       uint64_t batchSize,
+                                      const std::string& logicalSourceName,
                                       const std::string& physicalSourceName,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<KafkaSource>(schema,
@@ -390,6 +417,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                          originId,
                                          numSourceLocalBuffers,
                                          batchSize,
+                                         logicalSourceName,
                                          physicalSourceName,
                                          successors);
 }
@@ -405,6 +433,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                     OperatorId operatorId,
                                     OriginId originId,
                                     size_t numSourceLocalBuffers,
+                                    const std::string& logicalSourceName,
                                     const std::string& physicalSourceName,
                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
     return std::make_shared<OPCSource>(schema,
@@ -418,6 +447,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                        originId,
                                        numSourceLocalBuffers,
                                        GatheringMode::INTERVAL_MODE,
+                                       logicalSourceName,
                                        physicalSourceName,
                                        successors);
 }
@@ -430,6 +460,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                OperatorId operatorId,
                                OriginId originId,
                                size_t numSourceLocalBuffers,
+                               const std::string& logicalSourceName,
                                const std::string& physicalSourceName,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<MQTTSource>(schema,
@@ -440,6 +471,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         originId,
                                         numSourceLocalBuffers,
                                         GatheringMode::INTERVAL_MODE,
+                                        logicalSourceName,
                                         physicalSourceName,
                                         successors);
 }
@@ -452,6 +484,7 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               OperatorId operatorId,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
+                              const std::string& logicalSourceName,
                               const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<TCPSource>(schema,
@@ -462,6 +495,7 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                                        originId,
                                        numSourceLocalBuffers,
                                        GatheringMode::INTERVAL_MODE,
+                                       logicalSourceName,
                                        physicalSourceName,
                                        successors);
 }

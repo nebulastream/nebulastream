@@ -15,15 +15,33 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
 #include <StatisticFieldIdentifiers.hpp>
+#include <sstream>
 
 namespace NES::Experimental::Statistics {
 
-CountMinDescriptor::CountMinDescriptor(uint64_t depth, uint64_t width) : WindowStatisticDescriptor(), depth(depth), width(width) {}
+CountMinDescriptor::CountMinDescriptor(const std::string& logicalSourceName,
+                                       const std::string& fieldName,
+                                       const std::string& timestampField,
+                                       uint64_t depth,
+                                       uint64_t windowSize,
+                                       uint64_t slideFactor,
+                                       uint64_t width)
+    : WindowStatisticDescriptor(logicalSourceName, fieldName, timestampField, depth, windowSize, slideFactor), width(width) {}
+
+std::string CountMinDescriptor::toString() const {
+    std::stringstream ss;
+    ss << "CountMinDescriptor: "
+       << "\n"
+       << WindowStatisticDescriptor::toString() << " Width: " << width << "\n";
+    return ss.str();
+}
 
 bool CountMinDescriptor::operator==(WindowStatisticDescriptor& statisticDescriptor) {
     auto countMinDesc = dynamic_cast<CountMinDescriptor*>(&statisticDescriptor);
     if (countMinDesc != nullptr) {
-        if (depth == countMinDesc->getDepth() && width == countMinDesc->getWidth()) {
+        if (getLogicalSourceName() == countMinDesc->getLogicalSourceName() && getFieldName() == countMinDesc->getFieldName()
+            && getDepth() == countMinDesc->getDepth() && getWindowSize() == countMinDesc->getWindowSize()
+            && getSlideFactor() == countMinDesc->getSlideFactor() && width == countMinDesc->getWidth()) {
             return true;
         }
         return false;
@@ -31,12 +49,8 @@ bool CountMinDescriptor::operator==(WindowStatisticDescriptor& statisticDescript
     return false;
 }
 
-void CountMinDescriptor::addStatisticFields(NES::SchemaPtr schema) {
-    schema->addField(WIDTH, BasicType::UINT64);
-}
+void CountMinDescriptor::addStatisticFields(NES::SchemaPtr schema) { schema->addField(getLogicalSourceName() + "$" +  WIDTH, BasicType::UINT64); }
 
-double CountMinDescriptor::getDepth() const { return depth; }
+uint64_t CountMinDescriptor::getWidth() const { return width; }
 
-double CountMinDescriptor::getWidth() const { return width; }
-
-}
+}// namespace NES::Experimental::Statistics

@@ -92,6 +92,12 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     std::string getLogicalSourceName() const;
 
     /**
+     * @brief sets the name of the logicalSource
+     * @param logicalSourceName the name of the logical source
+     */
+    void setLogicalSourceName(const std::string& logicalSourceName);
+
+    /**
      * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
      * @return logicalSourceName
      */
@@ -128,7 +134,6 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Destructor
      */
     virtual ~SourceDescriptor() = default;
-
   protected:
     SchemaPtr schema;
     std::string logicalSourceName;

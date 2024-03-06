@@ -46,7 +46,6 @@ QueryPlanPtr TypeInferencePhase::execute(NES::QueryPlanPtr queryPlan) {
     }
 }
 
-
 QueryPlanPtr TypeInferencePhase::inferSchemaForStatisticQuery(NES::QueryPlanPtr queryPlan) {
 
     // first we have to check if all source operators have a correct source descriptors
@@ -80,12 +79,9 @@ QueryPlanPtr TypeInferencePhase::inferSchemaForStatisticQuery(NES::QueryPlanPtr 
                 }
             }
 
-            schema->addField(NES::Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT);
-            schema->addField(NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT);
-            schema->addField(NES::Experimental::Statistics::FIELD_NAME, BasicType::TEXT);
-            schema->addField(NES::Experimental::Statistics::WORKER_ID, BasicType::UINT64);
-
+            schema->addField(qualifierName + NES::Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT);
             sourceDescriptor->setSchema(schema);
+
             NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}",
                       logicalSourceName,
                       schema->toString());

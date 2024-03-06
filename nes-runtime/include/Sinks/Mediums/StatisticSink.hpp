@@ -35,6 +35,7 @@ class StatisticSink : public SinkMedium {
      * @brief the constructor for a StatisticSink that writes statisticCollector objects to statisticCollectorStorages
      * @param statisticCollectorStorage the storage to which the statisticCollectors are to be written to
      * @param statisticCollectorType the type of statistics that are going to be written by the sink
+     * @param logicalSourceName the name of the logicalSource over which the statistic that we will read will be built
      * @param sinkFormat in which the data is written
      * @param nodeEngine the nodeEngine
      * @param numOfProducers
@@ -44,6 +45,7 @@ class StatisticSink : public SinkMedium {
      */
     StatisticSink(StatisticCollectorStoragePtr statisticCollectorStorage,
                   StatisticCollectorType statisticCollectorType,
+                  const std::string& logicalSourceName,
                   SinkFormatPtr sinkFormat,
                   Runtime::NodeEnginePtr const& nodeEngine,
                   uint32_t numOfProducers,
@@ -65,8 +67,8 @@ class StatisticSink : public SinkMedium {
 
     /**
      * @brief not yet implemented by any statisticCollectors as it is not yet needed
-     * @param inputBuffer
-     * @return
+     * @param inputBuffer the buffer containing the statistic
+     * @return a boolean symbolizing whether we wrote the statistic successfully
      */
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
 
@@ -88,6 +90,7 @@ class StatisticSink : public SinkMedium {
   private:
     StatisticCollectorStoragePtr statisticCollectorStorage;
     StatisticCollectorType statisticCollectorType;
+    std::string logicalSourceName;
     StatisticCollectorFormatPtr statisticCollectorFormat;
 };
 }// namespace NES::Experimental::Statistics

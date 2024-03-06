@@ -47,6 +47,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                                  SourceMode sourceMode,
                                  uint64_t sourceAffinity,
                                  uint64_t taskQueueId,
+                                 const std::string& logicalSourceName,
                                  const std::string& physicalSourceName,
                                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
@@ -58,6 +59,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                       numSourceLocalBuffers,
                       gatheringMode,
                       std::move(successors),
+                      logicalSourceName,
                       physicalSourceName),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
     NES_ASSERT(this->memoryArea && this->memoryAreaSize > 0, "invalid memory area");

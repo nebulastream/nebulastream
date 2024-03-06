@@ -40,6 +40,7 @@ class LambdaSource : public GeneratorSource {
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
      * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
      * @param taskQueueId the ID of the queue to which the task is pushed
+     * @param logicalSourceName the name of the logicalSource from which we get the data
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
@@ -56,6 +57,7 @@ class LambdaSource : public GeneratorSource {
         GatheringMode gatheringMode,
         uint64_t sourceAffinity,
         uint64_t taskQueueId,
+        const std::string& logicalSourceName,
         const std::string& physicalSourceName,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 

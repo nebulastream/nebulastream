@@ -181,6 +181,13 @@ class Schema {
     bool contains(const std::string& fieldName);
 
     /**
+     * @brief Checks if the fieldName is exactly equal or contained within one of the fields in the schema
+     * @param schema the schema of the csv source
+     * @return boolean true if a field is partially or fully contained equal to one of the field names of the schema
+    */
+    bool partiallyContains(const std::string& fieldName);
+
+    /**
      * @brief returns a string representation
      * @param prefix of the string
      * @param delimitor between each field

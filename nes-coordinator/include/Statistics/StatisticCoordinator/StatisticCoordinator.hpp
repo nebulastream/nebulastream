@@ -17,6 +17,7 @@
 
 #include <Identifiers.hpp>
 #include <Statistics/StatisticCoordinator/StatisticQueryIdentifier.hpp>
+#include <Util/StatisticsMode.hpp>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -42,6 +43,9 @@ class StatisticProbeRequest;
 class StatisticDeleteRequest;
 class StatisticCollectorIdentifier;
 
+class StatisticManager;
+using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
+
 /**
  * @brief the statisticCoordinator is a class that is a member of the coordinator node and that handles all
  * calls to create, query, and delete statistics. It forwards these to the local worker nodes and
@@ -55,8 +59,9 @@ class StatisticCoordinator {
      * @param sourceCatalog the source catalog allows the StatisticCoordinator to understand the relationship
      * between logical and physical sources and get the IPs of the nodes on which the physical sources
      * are located
+     * @param statisticsMode the mode in which statistics are generated and stored. This tells the StatisticsManager where the StatisticStorages are located.
      */
-    StatisticCoordinator(QueryServicePtr queryService, Catalogs::Source::SourceCatalogPtr sourceCatalog);
+    StatisticCoordinator(QueryServicePtr queryService, Catalogs::Source::SourceCatalogPtr sourceCatalog, StatisticsMode statisticsMode);
 
     /**
      * @brief checks if the parametrized statistic query already exists and if not starts one accordingly
@@ -86,6 +91,16 @@ class StatisticCoordinator {
      */
     bool deleteStatistic(StatisticDeleteRequest& deleteRequest);
 
+    /**
+     * @return returns the mode in which statistics are being generated
+     */
+    StatisticsMode getStatisticsMode() const;
+
+    /**
+     * @param statisticManager the statisticManager which we are setting as a member in the clas s
+     */
+    void setStatisticManager(const StatisticManagerPtr& statisticManager);
+
   private:
     /**
      * @brief gets the addresses of the nodes on which the physicalSources sit of the logicalSource
@@ -100,6 +115,8 @@ class StatisticCoordinator {
     QueryServicePtr queryService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     WorkerRPCClientPtr workerClient;
+    StatisticsMode statisticsMode;
+    StatisticManagerPtr statisticManager;
 };
 }// namespace Experimental::Statistics
 }// namespace NES

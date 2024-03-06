@@ -18,6 +18,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <StatisticFieldIdentifiers.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -891,7 +892,12 @@ std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBuffersFromCsv(const 
     NES_DEBUG("read file={}", fullPath.string());
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
     std::ifstream inputFile(fullPath);
-    return createExpectedBufferFromStream(inputFile, schema, bufferManager, skipHeader, numTuplesPerBuffer, delimiter);
+    return createExpectedBufferFromStream(inputFile,
+                                          schema,
+                                          bufferManager,
+                                          skipHeader,
+                                          numTuplesPerBuffer,
+                                          delimiter);
 }
 
 uint64_t TestUtils::countTuples(std::vector<Runtime::TupleBuffer>& buffers) {
@@ -923,9 +929,14 @@ std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBufferFromStream(std:
                                                                             uint64_t numTuplesPerBuffer,
                                                                             const std::string& delimiter) {
 
+    auto dataSchema = schema->copy();
+    if (schema->partiallyContains(Experimental::Statistics::PHYSICAL_SOURCE_NAME)) {
+        dataSchema->removeField(schema->get(schema->getSize() - 1));
+    }
+
     std::vector<Runtime::TupleBuffer> allBuffers;
     auto tupleCount = 0_u64;
-    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
+    auto parser = std::make_shared<CSVParser>(dataSchema->fields.size(), getPhysicalTypes(schema), delimiter);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto maxTuplePerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
     numTuplesPerBuffer = (numTuplesPerBuffer == 0) ? maxTuplePerBuffer : numTuplesPerBuffer;
@@ -940,8 +951,12 @@ std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBufferFromStream(std:
         NES_DEBUG("Skipping first line!");
     }
     while (std::getline(istream, line)) {
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicBuffer, schema, bufferManager);
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, dataSchema);
+        parser->writeInputTupleToTupleBuffer(line,
+                                             tupleCount,
+                                             dynamicBuffer,
+                                             dataSchema,
+                                             bufferManager);
         tupleCount++;
 
         if (tupleCount >= numTuplesPerBuffer) {

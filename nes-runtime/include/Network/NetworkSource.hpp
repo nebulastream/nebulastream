@@ -33,7 +33,7 @@ namespace NES::Network {
 class NetworkSource : public DataSource {
 
   public:
-    /*
+    /**
    * @param SchemaPtr
    * @param bufferManager
    * @param queryManager
@@ -45,6 +45,7 @@ class NetworkSource : public DataSource {
    * @param retryTimes
    * @param successors
    * @param version The initial version number of this source when it starts
+   * @param logicalSourceName
    * @param physicalSourceName
    */
     NetworkSource(SchemaPtr schema,
@@ -58,6 +59,7 @@ class NetworkSource : public DataSource {
                   uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                   Version version,
+                  const std::string& logicalSourceName = "defaultLogicalSourceName",
                   const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**

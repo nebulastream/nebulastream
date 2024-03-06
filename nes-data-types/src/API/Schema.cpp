@@ -200,6 +200,16 @@ bool Schema::contains(const std::string& fieldName) {
     return false;
 }
 
+bool Schema::partiallyContains(const std::string& fieldName) {
+    for (const auto& field : this->fields) {
+        NES_TRACE("contain compare field={} with other={}", field->getName(), fieldName);
+        if (field->getName().find(fieldName) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
 uint64_t Schema::getIndex(const std::string& fieldName) {
     int i = 0;
     bool found = false;

@@ -276,6 +276,7 @@ message SerializableOperator{
 
     message SerializableStatisticStorageSinkDescriptor {
         uint64 collectorType = 1;
+        string logicalSourceName = 2;
     }
 
     message SerializableNullOutputSinkDescriptor {
@@ -549,6 +550,24 @@ message SerializableOperator{
         uint64 deviceId = 2;
         string openCLCode = 3;
     }
+
+  /**
+    Information to serialize a WindowStatisticLogicalOperatorNode
+   */
+ message WindowStatisticOperator {
+
+    google.protobuf.Any windowStatisticDescriptor = 1;
+
+    message WindowCountMinDescriptor {
+        string logicalSourceName = 1;
+        string fieldName = 2;
+        string timestampField = 3;
+        uint64 depth = 4;
+        uint64 windowSize = 5;
+        uint64 slideFactor = 6;
+        uint64 width = 7;
+    }
+ }
 
   /**
     Information to serialize a FlatMap operator with a Java UDF.

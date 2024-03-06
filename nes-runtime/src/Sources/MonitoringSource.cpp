@@ -33,6 +33,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                                    OperatorId operatorId,
                                    OriginId originId,
                                    size_t numSourceLocalBuffers,
+                                   const std::string& logicalSourceName,
                                    const std::string& physicalSourceName,
                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(Schema::create(),
@@ -42,6 +43,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                  originId,
                  numSourceLocalBuffers,
                  GatheringMode::INTERVAL_MODE,
+                 logicalSourceName,
                  physicalSourceName,
                  successors),
       metricCollector(metricCollector), waitTime(waitTime) {

@@ -14,15 +14,32 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Statistics/ReservoirSampleDescriptor.hpp>
+#include <sstream>
 
 namespace NES::Experimental::Statistics {
 
-ReservoirSampleDescriptor::ReservoirSampleDescriptor(uint64_t width) : WindowStatisticDescriptor(), width(width) {}
+ReservoirSampleDescriptor::ReservoirSampleDescriptor(const std::string& logicalSourceName,
+                                                     const std::string& fieldName,
+                                                     const std::string& timestampField,
+                                                     uint64_t depth,
+                                                     uint64_t windowSize,
+                                                     uint64_t slideFactor)
+    : WindowStatisticDescriptor(logicalSourceName, fieldName, timestampField, depth, windowSize, slideFactor) {}
+
+std::string ReservoirSampleDescriptor::toString() const {
+    std::stringstream ss;
+    ss << "ReservoirSampleDescriptor: "
+       << "\n"
+       << WindowStatisticDescriptor::toString();
+    return ss.str();
+}
 
 bool ReservoirSampleDescriptor::operator==(WindowStatisticDescriptor& statisticsDescriptor) {
     auto rsDesc = dynamic_cast<ReservoirSampleDescriptor*>(&statisticsDescriptor);
     if (rsDesc != nullptr) {
-        if (width == rsDesc->getWidth()) {
+        if (getLogicalSourceName() == rsDesc->getLogicalSourceName() && getFieldName() == rsDesc->getFieldName()
+            && getDepth() == rsDesc->getDepth() && getWindowSize() == rsDesc->getWindowSize()
+            && getSlideFactor() == rsDesc->getSlideFactor()) {
             return true;
         }
         return false;
@@ -30,10 +47,5 @@ bool ReservoirSampleDescriptor::operator==(WindowStatisticDescriptor& statistics
     return false;
 }
 
-void ReservoirSampleDescriptor::addStatisticFields(NES::SchemaPtr schema) {
-    schema->addField("width", BasicType::UINT64);
-}
-
-uint64_t ReservoirSampleDescriptor::getWidth() const { return width; }
-
-}
+void ReservoirSampleDescriptor::addStatisticFields(NES::SchemaPtr) {}
+}// namespace NES::Experimental::Statistics

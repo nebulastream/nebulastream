@@ -32,6 +32,7 @@
 namespace NES::Experimental::Statistics {
 
 CountMinBuildOperator::CountMinBuildOperator(uint64_t operatorHandlerIndex,
+                                             const std::string& logicalSourceName,
                                              uint64_t width,
                                              uint64_t depth,
                                              const std::string& onField,
@@ -40,7 +41,15 @@ CountMinBuildOperator::CountMinBuildOperator(uint64_t operatorHandlerIndex,
                                              SchemaPtr schema)
     : operatorHandlerIndex(operatorHandlerIndex), width(width), depth(depth), onField(onField), keySizeInBits(keySizeInBits),
       timeFunction(std::move(timeFunction)),
-      memoryProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(1, std::move(schema))) {}
+      memoryProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(1, std::move(schema))) {
+
+    fieldsToFullyQualifiedFields = {
+        {onField, logicalSourceName + "$" + onField},
+        {PHYSICAL_SOURCE_NAME, logicalSourceName + "$" + PHYSICAL_SOURCE_NAME},
+        {DATA, logicalSourceName + "$" + DATA},
+        {OBSERVED_TUPLES, logicalSourceName + "$" + OBSERVED_TUPLES},
+    };
+}
 
 void setUpOperatorHandlerProxy(void* opHandlerPtr, void* ptrPipelineCtx) {
     auto* opHandler = static_cast<CountMinOperatorHandler*>(opHandlerPtr);
@@ -86,6 +95,15 @@ void* getH3SeedsProxy(void* ptrOpHandler) {
     return opHandler->getH3Seeds();
 }
 
+void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto* opHandler = static_cast<CountMinOperatorHandler*>(ptrOpHandler);
+
+    opHandler->discardUnfinishedRemainingStatistics();
+}
+
 void CountMinBuildOperator::setup(Runtime::Execution::ExecutionContext& ctx) const {
     Nautilus::FunctionCall("setUpOperatorHandlerProxy",
                            setUpOperatorHandlerProxy,
@@ -99,7 +117,8 @@ void CountMinBuildOperator::execute(NES::Runtime::Execution::ExecutionContext& c
     Nautilus::Value<Nautilus::UInt64> timestampVal = timeFunction->getTs(ctx, incomingRecord);
     Nautilus::Value<Nautilus::UInt64> nWidth(width);
     Nautilus::Value<Nautilus::UInt64> nDepth(depth);
-    auto physicalSourceName = incomingRecord.read(PHYSICAL_SOURCE_NAME).as<Nautilus::Text>();
+    auto fullPhysicalSourceName = fieldsToFullyQualifiedFields.find(PHYSICAL_SOURCE_NAME)->second;
+    auto physicalSourceName = incomingRecord.read(fullPhysicalSourceName).as<Nautilus::Text>();
 
     // get TupleBuffer and convert it to a MemRef
     auto tupleBuffer = FunctionCall("getTupleBufferProxy",
@@ -113,8 +132,9 @@ void CountMinBuildOperator::execute(NES::Runtime::Execution::ExecutionContext& c
     Nautilus::Record cmRecord = memoryProvider->read({}, tupleBuffer, zeroVal);
 
     // increase the number of observed tuples
-    auto obsTups = cmRecord.read(OBSERVED_TUPLES);
-    cmRecord.write(OBSERVED_TUPLES, obsTups + 1);
+    auto fullObserverTuples = fieldsToFullyQualifiedFields.find(OBSERVED_TUPLES)->second;
+    auto obsTups = cmRecord.read(fullObserverTuples);
+    cmRecord.write(fullObserverTuples, obsTups + 1);
 
     // get the memref of the seeds twice
     auto h3SeedsBaseMemRef = Nautilus::FunctionCall("getH3SeedsProxy", getH3SeedsProxy, globalOperatorHandler);
@@ -124,25 +144,24 @@ void CountMinBuildOperator::execute(NES::Runtime::Execution::ExecutionContext& c
     auto key = incomingRecord.read(onField);
 
     // here we have to iterate over all rows and increment the corresponding columns
+    auto fullData = fieldsToFullyQualifiedFields.find(DATA)->second;
     for (Nautilus::Value<Nautilus::UInt64> rowId = 0_u64; rowId < nDepth; rowId = rowId + 1) {
         // calculate hash/columnId for each row
         h3SeedsMemRef = h3SeedsBaseMemRef + (sizeof(uint64_t) * width * rowId).as<Nautilus::MemRef>();
         Nautilus::Value<Nautilus::UInt64> columnId = 0_u64;
+        Nautilus::FunctionCall("getH3SeedsProxy", getH3SeedsProxy, globalOperatorHandler);
         Nautilus::Interface::H3Hash(keySizeInBits).calculateWithState(columnId, key, h3SeedsMemRef);
         columnId = columnId % width;
 
-        auto cmString = cmRecord.read(DATA).as<Nautilus::Text>();
+        auto cmString = cmRecord.read(fullData).as<Nautilus::Text>();
         FunctionCall("incrementCMProxy", incrementCMProxy, cmString->getReference(), rowId, nWidth, columnId);
     }
-
-    cmRecord.write(WIDTH, width);
 
     // As a last step, we have to write the updated incomingRecord back to the tuple buffer
     memoryProvider->write(zeroVal, tupleBuffer, cmRecord);
 }
 
-void CountMinBuildOperator::close(Runtime::Execution::ExecutionContext& executionCtx,
-                                  Runtime::Execution::RecordBuffer&) const {
+void CountMinBuildOperator::close(Runtime::Execution::ExecutionContext& executionCtx, Runtime::Execution::RecordBuffer&) const {
 
     // Update the watermark for the countMinBuildOperator and trigger slices
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -154,6 +173,12 @@ void CountMinBuildOperator::close(Runtime::Execution::ExecutionContext& executio
                            executionCtx.getWatermarkTs(),
                            executionCtx.getSequenceNumber(),
                            executionCtx.getOriginId());
+}
+
+void CountMinBuildOperator::terminate(Runtime::Execution::ExecutionContext& ctx) const {
+    // Trigger all slices, as the query has ended
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    Nautilus::FunctionCall("triggerAllWindowsProxy", triggerAllWindowsProxy, operatorHandlerMemRef, ctx.getPipelineContext());
 }
 
 }// namespace NES::Experimental::Statistics

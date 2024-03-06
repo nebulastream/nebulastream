@@ -20,28 +20,29 @@
 
 namespace NES::Experimental::Statistics {
 
-std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer) {
+std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer, const std::string& logicalSourceName) {
     std::vector<StatisticPtr> allStatisticCollectors = {};
+    auto logSrcNameWSep = logicalSourceName + "$";
 
     for (uint64_t rowIdx = 0; rowIdx < dynBuffer.getNumberOfTuples(); rowIdx++) {
         // read and create statisticCollectorIdentifier
-        auto logicalSourceName = Runtime::MemoryLayouts::readVarSizedData(
+        auto logSrcName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
-            dynBuffer[rowIdx][LOGICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+            dynBuffer[rowIdx][logSrcNameWSep + LOGICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
         auto physicalSourceName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
-            dynBuffer[rowIdx][PHYSICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+            dynBuffer[rowIdx][logSrcNameWSep + PHYSICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
         auto fieldName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
-            dynBuffer[rowIdx][FIELD_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+            dynBuffer[rowIdx][logSrcNameWSep + FIELD_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
         // read other general statisticCollector fields
-        auto observedTuples = dynBuffer[rowIdx][OBSERVED_TUPLES].read<uint64_t>();
-        auto depth = dynBuffer[rowIdx][DEPTH].read<uint64_t>();
-        auto startTime = dynBuffer[rowIdx][START_TIME].read<uint64_t>();
-        auto endTime = dynBuffer[rowIdx][END_TIME].read<uint64_t>();
+        auto observedTuples = dynBuffer[rowIdx][logSrcNameWSep + OBSERVED_TUPLES].read<uint64_t>();
+        auto depth = dynBuffer[rowIdx][logSrcNameWSep + DEPTH].read<uint64_t>();
+        auto startTime = dynBuffer[rowIdx][logSrcNameWSep + START_TIME].read<uint64_t>();
+        auto endTime = dynBuffer[rowIdx][logSrcNameWSep + END_TIME].read<uint64_t>();
 
-        auto statisticCollectorIdentifier = std::make_shared<StatisticCollectorIdentifier>(logicalSourceName,
+        auto statisticCollectorIdentifier = std::make_shared<StatisticCollectorIdentifier>(logSrcName,
                                                                                            physicalSourceName,
                                                                                            fieldName,
                                                                                            startTime,
@@ -51,7 +52,7 @@ std::vector<StatisticPtr> ReservoirSampleFormat::readFromBuffer(Runtime::MemoryL
         // read reservoir data
         auto synopsesText =
             Runtime::MemoryLayouts::readVarSizedData(dynBuffer.getBuffer(),
-                                                     dynBuffer[rowIdx][DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+                                                     dynBuffer[rowIdx][logSrcNameWSep + DATA].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
         // convert Text back to array
         std::vector<uint64_t> data(synopsesText.size() / sizeof(uint64_t));

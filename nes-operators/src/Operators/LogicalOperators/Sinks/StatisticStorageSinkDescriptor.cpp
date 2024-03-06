@@ -12,19 +12,21 @@
     limitations under the License.
 */
 
-#include <string>
 #include <Operators/LogicalOperators/Sinks/StatisticStorageSinkDescriptor.hpp>
+#include <string>
 
 namespace NES::Experimental::Statistics {
 
 StatisticStorageSinkDescriptor::StatisticStorageSinkDescriptor(StatisticCollectorType statisticCollectorType,
+                                                               const std::string& logicalSourceName,
                                                                uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins), statisticCollectorType(statisticCollectorType) {}
+    : SinkDescriptor(numberOfOrigins), statisticCollectorType(statisticCollectorType), logicalSourceName(logicalSourceName) {}
 
 SinkDescriptorPtr StatisticStorageSinkDescriptor::create(StatisticCollectorType statisticCollectorType,
+                                                         const std::string& logicalSourceName,
                                                          uint64_t numberOfOrigins) {
     return std::make_shared<StatisticStorageSinkDescriptor>(
-        StatisticStorageSinkDescriptor(statisticCollectorType, numberOfOrigins));
+        StatisticStorageSinkDescriptor(statisticCollectorType, logicalSourceName, numberOfOrigins));
 }
 
 std::string StatisticStorageSinkDescriptor::toString() const { return "StatisticStorageSinkDescriptor()"; }
@@ -34,9 +36,12 @@ bool StatisticStorageSinkDescriptor::equal(const NES::SinkDescriptorPtr& other) 
         return false;
     }
     auto otherSinkDesc = other->as<StatisticStorageSinkDescriptor>();
-    return this->statisticCollectorType == otherSinkDesc->statisticCollectorType;
+    return this->statisticCollectorType == otherSinkDesc->statisticCollectorType
+        && otherSinkDesc->getLogicalSourceName() == logicalSourceName;
 }
 
 StatisticCollectorType StatisticStorageSinkDescriptor::getStatisticCollectorType() const { return statisticCollectorType; }
+
+const std::string& StatisticStorageSinkDescriptor::getLogicalSourceName() const { return logicalSourceName; }
 
 }// namespace NES::Experimental::Statistics

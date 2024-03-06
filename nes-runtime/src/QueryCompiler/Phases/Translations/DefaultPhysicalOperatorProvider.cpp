@@ -26,6 +26,9 @@
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
+//#include <Operators/LogicalOperators/Statistics/ReservoirSampleDescriptor.hpp>
+#include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -48,6 +51,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalCountMinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
@@ -56,6 +60,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalReservoirSampleBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
@@ -66,8 +71,12 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <StatisticFieldIdentifiers.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Operators/Statistics/CountMinOperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StatisticUtil.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -169,9 +178,66 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
                                                                                       limitOperator->getOutputSchema(),
                                                                                       limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
+    } else if (operatorNode->instanceOf<Experimental::Statistics::WindowStatisticLogicalOperatorNode>()) {
+        auto statisticOperatorNode = operatorNode->as<Experimental::Statistics::WindowStatisticLogicalOperatorNode>();
+        lowerStatisticOperator(queryPlan, statisticOperatorNode);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
+}
+
+void DefaultPhysicalOperatorProvider::lowerStatisticOperator(
+    const QueryPlanPtr& queryPlan,
+    Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode) {
+    if (statisticOperatorNode->getStatisticDescriptor()->instanceOf<const Experimental::Statistics::CountMinDescriptor>()) {
+        lowerCountMinOperator(queryPlan, statisticOperatorNode);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
+void DefaultPhysicalOperatorProvider::lowerCountMinOperator(
+    const NES::QueryPlanPtr&,
+    Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode) {
+
+    auto logicalSourceWSep = statisticOperatorNode->getStatisticDescriptor()->getLogicalSourceName() + "$";
+
+    auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                            ->addField(logicalSourceWSep + Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
+                            ->addField(logicalSourceWSep + Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
+                            ->addField(logicalSourceWSep + Experimental::Statistics::FIELD_NAME, BasicType::TEXT)
+                            ->addField(logicalSourceWSep + Experimental::Statistics::OBSERVED_TUPLES, BasicType::UINT64)
+                            ->addField(logicalSourceWSep + Experimental::Statistics::DEPTH, BasicType::UINT64)
+                            ->addField(logicalSourceWSep + Experimental::Statistics::START_TIME, BasicType::UINT64)
+                            ->addField(logicalSourceWSep + Experimental::Statistics::END_TIME, BasicType::UINT64)
+                            ->addField(logicalSourceWSep + Experimental::Statistics::DATA, BasicType::TEXT);
+
+    auto countMinDesc =
+        std::dynamic_pointer_cast<Experimental::Statistics::CountMinDescriptor>(statisticOperatorNode->getStatisticDescriptor());
+
+    // complete schema with additional field
+    countMinDesc->addStatisticFields(outputSchema);
+
+    auto bitInByte = 8;
+    auto h3Seeds = Experimental::Statistics::StatisticUtil::createH3Seeds(sizeof(uint64_t) * bitInByte, countMinDesc->getDepth());
+
+    auto countMinOperatorHandler =
+        std::make_shared<Experimental::Statistics::CountMinOperatorHandler>(countMinDesc->getWindowSize(),
+                                                                            countMinDesc->getSlideFactor(),
+                                                                            countMinDesc->getLogicalSourceName(),
+                                                                            countMinDesc->getFieldName(),
+                                                                            countMinDesc->getDepth(),
+                                                                            countMinDesc->getWidth(),
+                                                                            outputSchema,
+                                                                            h3Seeds,
+                                                                            statisticOperatorNode->getInputOriginIds());
+
+    auto physicalCountMin =
+        Experimental::Statistics::PhysicalCountMinBuildOperator::create(statisticOperatorNode->getStatisticDescriptor(),
+                                                                        statisticOperatorNode->getInputSchema(),
+                                                                        statisticOperatorNode->getOutputSchema(),
+                                                                        countMinOperatorHandler);
+    statisticOperatorNode->replace(physicalCountMin);
 }
 
 void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const QueryPlanPtr& queryPlan,

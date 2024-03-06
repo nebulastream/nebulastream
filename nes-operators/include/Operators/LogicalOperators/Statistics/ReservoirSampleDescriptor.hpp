@@ -23,9 +23,24 @@ class ReservoirSampleDescriptor : public WindowStatisticDescriptor {
   public:
 
     /**
-     * @param width the width/size of the reservoir sample
+     * @param logicalSourceName the logical source name over which we wish to generate reservoirs
+     * @param fieldName the field name over which we wish to generate reservoirs
+     * @param timestampField the timestamp field which determines the window/reservoir of a tuple
+     * @param depth the depth of the reservoirs
+     * @param windowSize the window size of the reservoirs
+     * @param slideFactor the slide factor of the reservoirs
      */
-    ReservoirSampleDescriptor(uint64_t width);
+    ReservoirSampleDescriptor(const std::string& logicalSourceName,
+                              const std::string& fieldName,
+                              const std::string& timestampField,
+                              uint64_t depth,
+                              uint64_t windowSize,
+                              uint64_t slideFactor);
+
+    /**
+     * @return a string version of the reservoir sample desc
+     */
+    std::string toString() const override;
 
     /**
      * @brief checks if two statisticOperators/reservoirs are equal
@@ -35,18 +50,10 @@ class ReservoirSampleDescriptor : public WindowStatisticDescriptor {
     bool operator==(WindowStatisticDescriptor& statisticsDescriptor) override;
 
     /**
-     * @brief adds specific meta fields to a schema, such that
+     * @brief adds specific meta fields to a schema, in this scenario however none
      * @param schema the schema that will be modified
      */
     void addStatisticFields(SchemaPtr schema) override;
-
-    /**
-     * @return the width/size of the sample
-     */
-    uint64_t getWidth() const;
-
-  private:
-    uint64_t width;
 };
 }
 #endif//NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICS_RESERVOIRSAMPLEDESCRIPTOR_HPP_

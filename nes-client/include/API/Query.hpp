@@ -73,6 +73,11 @@ class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 }// namespace Windowing
 
+namespace Experimental::Statistics {
+class WindowStatisticDescriptor;
+using WindowStatisticDescriptorPtr = std::shared_ptr<WindowStatisticDescriptor>;
+}// namespace Experimental::Statistics
+
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
 namespace JoinOperatorBuilder {
@@ -477,6 +482,13 @@ class Query {
     Query& map(FieldAssignmentExpressionNodePtr const& mapExpression);
 
     /**
+     * @brief builds statistics according to the parameters set in the descriptor
+     * @param statisticDescriptor a parameter descriptor specifying how the statistics should be generated
+     * @return a query
+     */
+    Query& buildStatistic(Experimental::Statistics::WindowStatisticDescriptorPtr const& statisticDescriptor);
+
+    /**
      * @brief: inferModel
      * @example example
      * @param param
@@ -588,4 +600,4 @@ using QueryPtr = std::shared_ptr<Query>;
 
 }// namespace NES
 
-#endif  // NES_CLIENT_INCLUDE_API_QUERY_HPP_
+#endif// NES_CLIENT_INCLUDE_API_QUERY_HPP_

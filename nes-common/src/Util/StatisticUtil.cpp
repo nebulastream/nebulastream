@@ -15,6 +15,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StatisticUtil.hpp>
 #include <fstream>
+#include <random>
 #include <sstream>
 #include <vector>
 
@@ -68,5 +69,22 @@ std::vector<std::vector<uint64_t>> StatisticUtil::read2DVectorFromCsvFile(const 
     file.close();
 
     return csvData;
+}
+
+std::vector<uint64_t> StatisticUtil::createH3Seeds(uint32_t keySizeInBit, uint64_t numfunctions, uint64_t seed) {
+    std::random_device rd;
+    std::mt19937 gen(seed);
+
+    std::uniform_int_distribution<uint64_t> distribution;
+
+    std::vector<uint64_t> h3Seeds;
+
+    for (auto row = 0UL; row < numfunctions; ++row) {
+        for (auto keyBit = 0UL; keyBit < keySizeInBit; ++keyBit) {
+            auto value = distribution(gen);
+            h3Seeds.push_back(value);
+        }
+    }
+    return h3Seeds;
 }
 }// namespace NES::Experimental::Statistics

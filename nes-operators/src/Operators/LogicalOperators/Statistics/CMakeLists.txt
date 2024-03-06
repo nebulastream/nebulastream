@@ -14,5 +14,7 @@
 add_source_files(nes-operators
         CountMinDescriptor.cpp
         ReservoirSampleDescriptor.cpp
+        WindowStatisticDescriptorFactory.cpp
+        WindowStatisticDescriptor.cpp
         WindowStatisticLogicalOperatorNode.cpp
 )

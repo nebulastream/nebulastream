@@ -18,6 +18,9 @@ namespace NES::Experimental::Statistics {
 
 StatisticCreateRequest::StatisticCreateRequest(const std::string& logicalSourceName,
                                                const std::string& fieldName,
-                                               const StatisticCollectorType statisticCollectorType)
-    : StatisticRequest(logicalSourceName, fieldName, statisticCollectorType) {}
+                                               const std::string& timestampField,
+                                               StatisticCollectorType statisticCollectorType)
+    : StatisticRequest(logicalSourceName, fieldName, statisticCollectorType), timestampField(timestampField) {}
+
+const std::string& StatisticCreateRequest::getTimestampField() const { return timestampField; }
 }// namespace NES::Experimental::Statistics

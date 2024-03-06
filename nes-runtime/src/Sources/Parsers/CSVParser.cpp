@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <StatisticFieldIdentifiers.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>

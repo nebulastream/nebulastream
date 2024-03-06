@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/AttributeField.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
@@ -21,6 +22,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
+#include <StatisticFieldIdentifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <chrono>
@@ -57,6 +59,7 @@ DataSource::DataSource(SchemaPtr pSchema,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
+                       const std::string& logicalSourceName,
                        const std::string& physicalSourceName,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
@@ -64,7 +67,8 @@ DataSource::DataSource(SchemaPtr pSchema,
     : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
       originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), physicalSourceName(physicalSourceName) {
+      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), logicalSourceName(logicalSourceName),
+      physicalSourceName(physicalSourceName) {
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -86,6 +90,49 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     buffer.setCreationTimestampInMS(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
             .count());
+
+    if (schema->partiallyContains(Experimental::Statistics::PHYSICAL_SOURCE_NAME)) {
+
+        // we need to create a new buffer as the original data was written in memory sequentially, not expecting additional fields to be added
+        // construct original schema for easier copying
+        auto oldSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        for (auto i = 0UL; i < schema->getFieldNames().size(); ++i) {
+            auto field = schema->get(i);
+            if (field->getName().find(Experimental::Statistics::PHYSICAL_SOURCE_NAME) == std::string::npos) {
+                oldSchema->addField(field);
+            }
+        }
+
+        // create a new buffer to which we copy the original data and into which we can add the meta data field
+        auto newBuffer = localBufferManager->getBufferBlocking();
+        auto newDynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(newBuffer, schema);
+        auto oldTupleOffset = 0UL;
+        auto newTupleOffset = 0UL;
+        for (auto tupIndex = 0UL; tupIndex < buffer.getNumberOfTuples(); ++tupIndex) {
+            memcpy(newBuffer.getBuffer() + newTupleOffset,
+                   buffer.getBuffer() + oldTupleOffset,
+                   oldSchema->getSchemaSizeInBytes());
+            NES_DEBUG("Reading from address with offset: {} for {} Bytes and writing to address with offset {}",
+                      oldTupleOffset,
+                      oldSchema->getSchemaSizeInBytes(),
+                      newTupleOffset);
+            newDynBuffer[tupIndex].writeVarSized(logicalSourceName + "$" + Experimental::Statistics::PHYSICAL_SOURCE_NAME,
+                                                 physicalSourceName,
+                                                 localBufferManager.get());
+            oldTupleOffset += oldSchema->getSchemaSizeInBytes();
+            newTupleOffset += schema->getSchemaSizeInBytes();
+        }
+
+        // copy meta data from OG buffer over to the new one
+        newBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+        newBuffer.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+        newBuffer.setOriginId(buffer.getOriginId());
+        newBuffer.setWatermark(buffer.getWatermark());
+
+        // set the newBuffer as buffer
+        buffer = newBuffer;
+    }
+
     // Set the sequence number of this buffer.
     // A data source generates a monotonic increasing sequence number
     maxSequenceNumber++;

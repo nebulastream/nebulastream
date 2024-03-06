@@ -23,6 +23,7 @@ add_nes_unit_test(map-java-udf-query-execution-test "MapJavaUDFExecutionTest.cpp
 add_nes_unit_test(flatmap-java-udf-query-execution-test "FlatMapJavaUDFExecutionTest.cpp")
 add_nes_unit_test(map-python-udf-query-execution-test "MapPythonUDFExecutionTest.cpp")
 add_nes_unit_test(stream-join-execution-test "StreamJoinExecutionTest.cpp")
+add_nes_unit_test(build-statistic-execution-test "StatisticOperatorQueryExecutionTest.cpp")
 add_nes_unit_test(limit-query-execution-test "LimitQueryExecutionTest.cpp")
 
 add_subdirectory(Windowing)

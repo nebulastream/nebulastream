@@ -34,9 +34,10 @@ class CountMinFormat : public StatisticCollectorFormat {
     /**
      * @brief defines how CountMin tuples are read from a buffer and creates CountMin sketches from it
      * @param dynBuffer a dynamic tuple buffer that holds one or more sketches
+     * @param logicalSourceName the name of the logicalSource whose format we will read
      * @return a vector of CountMin sketches
      */
-    std::vector<StatisticPtr> readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer) override;
+    std::vector<StatisticPtr> readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer, const std::string& logicalSourceName) override;
 
 };
 }

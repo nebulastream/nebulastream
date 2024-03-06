@@ -43,7 +43,13 @@ class StatisticCollectorFormat {
 
     virtual ~StatisticCollectorFormat() = default;
 
-    virtual std::vector<StatisticPtr> readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer) = 0;
+    /**
+     * @brief defines how we read from the dynamic buffer and also does so
+     * @param dynBuffer the buffer which we wish to read
+     * @param logicalSourceName the logicalSourceName over which the source was built
+     * @return a vector of statistic objects
+     */
+    virtual std::vector<StatisticPtr> readFromBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& dynBuffer, const std::string& logicalSourceName) = 0;
 };
 }// namespace Experimental::Statistics
 }// namespace NES

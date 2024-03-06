@@ -27,6 +27,8 @@
 #include <Util/StatisticCollectorIdentifier.hpp>
 #include <Util/StatisticCollectorType.hpp>
 
+#include <API/Expressions/Expressions.hpp>
+#include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
@@ -41,8 +43,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <API/Expressions/Expressions.hpp>
-#include <API/QueryAPI.hpp>
 
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -54,8 +54,8 @@
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/StatisticUtil.hpp>
-
 
 using namespace std;
 
@@ -76,9 +76,10 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest {
 };
 
 TEST_F(StatisticsIntegrationTest, createTest) {
-    auto defaultLogicalSourceName = "defaultLogicalSourceName";
-    std::vector<std::string> physicalSourceNames(1, "defaultPhysicalSourceName");
-    auto defaultFieldName = "f1";
+    auto defaultLogicalSourceName = std::string("defaultLogicalSourceName");
+    std::vector<std::string> physicalSourceNames(1, std::string("defaultPhysicalSourceName"));
+    auto defaultFieldName = std::string("f1");
+    auto timestampField = std::string("ts");
     auto statisticCollectorType = Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
     auto startTime = 0;
     auto endTime = 5000;
@@ -86,16 +87,17 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     auto width = 8;
     auto observedTuples = 5;
 
-    auto expressionNodePtr = (Attribute("f1") == 1);
+    auto expressionNodePtr = (Attribute(defaultLogicalSourceName + "$" + defaultFieldName) == 1);
     EXPECT_EQ(expressionNodePtr->instanceOf<EqualsExpressionNode>(), true);
 
     auto createObj =
         Experimental::Statistics::StatisticCreateRequest(defaultLogicalSourceName,
-                                                         defaultFieldName,
+                                                         defaultLogicalSourceName + "$" + defaultFieldName,
+                                                         defaultLogicalSourceName + "$" + timestampField,
                                                          Experimental::Statistics::StatisticCollectorType::COUNT_MIN);
 
     auto probeObj = Experimental::Statistics::StatisticProbeRequest(defaultLogicalSourceName,
-                                                                    defaultFieldName,
+                                                                    defaultLogicalSourceName + "$" + defaultFieldName,
                                                                     Experimental::Statistics::StatisticCollectorType::COUNT_MIN,
                                                                     expressionNodePtr,
                                                                     physicalSourceNames,
@@ -103,7 +105,7 @@ TEST_F(StatisticsIntegrationTest, createTest) {
                                                                     endTime);
 
     auto deleteObj = Experimental::Statistics::StatisticDeleteRequest(defaultLogicalSourceName,
-                                                                      defaultFieldName,
+                                                                      defaultLogicalSourceName + "$" + defaultFieldName,
                                                                       Experimental::Statistics::StatisticCollectorType::COUNT_MIN,
                                                                       endTime);
 
@@ -116,7 +118,9 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     auto crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    auto testSchema = Schema::create()->addField(createField(defaultFieldName, BasicType::UINT64));
+    auto testSchema = Schema::create()
+                          ->addField(createField(defaultFieldName, BasicType::UINT64))
+                          ->addField(createField(timestampField, BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource(defaultLogicalSourceName, testSchema);
     NES_DEBUG("createProbeAndDeleteTest: Coordinator started successfully");
 
@@ -124,9 +128,13 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    auto defaultSourceType1 = DefaultSourceType::create(defaultLogicalSourceName, physicalSourceNames[0]);
-    defaultSourceType1->setNumberOfBuffersToProduce(3);
-    workerConfig1->physicalSourceTypes.add(defaultSourceType1);
+    auto csvSourceType = CSVSourceType::create(defaultLogicalSourceName, physicalSourceNames[0]);
+    const std::string filepath = std::filesystem::path(TEST_DATA_DIRECTORY) / "countMinInput.csv";
+    csvSourceType->setFilePath(filepath);
+    csvSourceType->setGatheringInterval(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType);
     auto wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     auto retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -137,37 +145,20 @@ TEST_F(StatisticsIntegrationTest, createTest) {
 
     // checks if the query ID is 1
     EXPECT_EQ(success, 1);
+    NES_INFO("Query successfully started");
 
-    auto statCollectorStorage = wrk1->getStatisticManager()->getStatisticCollectorStorage();
-
-    std::string filename = std::filesystem::path(TEST_DATA_DIRECTORY) / "countmin.csv";
-    auto manualCMSketch = Experimental::Statistics::StatisticUtil::readFlattenedVectorFromCsvFile(filename);
-
-    for (auto physicalSourceName : physicalSourceNames) {
-        auto statCollectorIdentifier =
-            std::make_shared<NES::Experimental::Statistics::StatisticCollectorIdentifier>(defaultLogicalSourceName,
-                                                                                          physicalSourceName,
-                                                                                          defaultFieldName,
-                                                                                          startTime,
-                                                                                          endTime,
-                                                                                          statisticCollectorType);
-
-        std::shared_ptr<Experimental::Statistics::Statistic> statistic =
-            std::make_shared<Experimental::Statistics::CountMin>(width,
-                                                                 manualCMSketch,
-                                                                 statCollectorIdentifier,
-                                                                 observedTuples,
-                                                                 depth);
-
-        statCollectorStorage->addStatistic(*(statCollectorIdentifier.get()), statistic);
-    }
+    sleep(10);
 
     auto stats = statCoordinator->probeStatistic(probeObj);
 
     EXPECT_EQ(stats[0], 0.2);
+    if (stats[0] == 0.2) {
+        NES_INFO("Value successfully probed");
+    }
 
     success = statCoordinator->deleteStatistic(deleteObj);
 
     EXPECT_EQ(success, true);
+    NES_INFO("Query successfully stopped");
 }
 }// namespace NES

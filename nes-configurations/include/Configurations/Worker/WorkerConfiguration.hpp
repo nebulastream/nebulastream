@@ -26,6 +26,7 @@
 #include <Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Util/StatisticsMode.hpp>
 #include <map>
 #include <string>
 
@@ -275,6 +276,14 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Let network sinks use a separate thread to establish a connection
      */
     BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC, false, "Let network sinks use a separate thread to establish a connection"};
+
+    /**
+     * @brief an enum describing how data statistics are generated
+     */
+    EnumOption<Experimental::Statistics::StatisticsMode> statisticsMode = {
+        STATISTICS_MODE,
+        Experimental::Statistics::StatisticsMode::CENTRALIZED_MODE,
+        "Mode for statistics handling (CENTRALIZED_MODE, HYBRID_MODE, DECENTRALIZED_MODE)"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

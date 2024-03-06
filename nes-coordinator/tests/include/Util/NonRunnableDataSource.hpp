@@ -32,7 +32,9 @@ class NonRunnableDataSource : public NES::DefaultSource {
         OriginId originId,
         size_t numSourceLocalBuffers,
         const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-        NES::Runtime::QueryTerminationType terminationType = NES::Runtime::QueryTerminationType::HardStop);
+        NES::Runtime::QueryTerminationType terminationType = NES::Runtime::QueryTerminationType::HardStop,
+        const std::string& logicalSourceName = "defaultLogicalSourceName",
+        const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     void runningRoutine() override;
 
@@ -56,7 +58,9 @@ createNonRunnableSource(const SchemaPtr& schema,
                         OriginId originId,
                         size_t numSourceLocalBuffers,
                         const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                        NES::Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
+                        NES::Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop,
+                        const std::string& logicalSourceName = "defaultLogicalSourceName",
+                        const std::string& physicalSourceName = "defaultPhysicalSourceName");
 }// namespace NES::Testing
 
 #endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_

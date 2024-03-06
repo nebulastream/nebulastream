@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -96,6 +97,27 @@ QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr cons
     }
     OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(mapExpression);
     queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
+QueryPlanPtr
+QueryPlanBuilder::addStatisticOperator(Experimental::Statistics::WindowStatisticDescriptorPtr const& statisticDescriptor,
+                                       NES::QueryPlanPtr queryPlan) {
+
+    // if not already contained within the query, then add a WatermarkAssigner
+    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+        assignWatermark(queryPlan,
+                        Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                            FieldAccessExpressionNode::create(statisticDescriptor->gettimestampField()),
+                            Windowing::TimeMeasure(0),
+                            Windowing::TimeUnit(1)));
+    }
+
+    OperatorNodePtr countMinLogicalOperator = LogicalOperatorFactory::createStatisticOperator(statisticDescriptor);
+    queryPlan->appendOperatorAsNewRoot(countMinLogicalOperator);
+
+    NES_DEBUG("QueryPlan: {}", queryPlan->toString());
+
     return queryPlan;
 }
 

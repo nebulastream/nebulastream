@@ -249,6 +249,7 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
  *
  * @param schema the schema of the data
  * @param statisticCollectorType the type of statisticCollector that will be written by the sink
+ * @param logicalSourceName the name of the logicalSource over which the statistic was built
  * @param nodeEngine the nodeEngine
  * @param numOfProducers
  * @param queryId queryId the query producing the tuple(Buffers)
@@ -260,6 +261,7 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
 DataSinkPtr
 createStatisticCollectorStorageSink(const SchemaPtr& schema,
                                     NES::Experimental::Statistics::StatisticCollectorType statisticCollectorType,
+                                    const std::string& logicalSourceName,
                                     Runtime::NodeEnginePtr const& nodeEngine,
                                     uint32_t numOfProducers,
                                     NES::QueryId queryId,

@@ -51,6 +51,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param sourceMode
      * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
      * @param taskQueueId the ID of the queue to which the task is pushed
+     * @param logicalSourceName the name of the logicalSource from which we get the data
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      * @return a DataSourcePtr pointing to the data source
@@ -69,6 +70,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              SourceMode sourceMode,
                              uint64_t sourceAffinity,
                              uint64_t taskQueueId,
+                             const std::string& logicalSourceName,
                              const std::string& physicalSourceName,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 

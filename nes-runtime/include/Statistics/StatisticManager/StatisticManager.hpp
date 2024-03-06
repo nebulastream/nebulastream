@@ -52,7 +52,7 @@ class StatisticManager {
 
     /**
      * @brief receives both a request and reply object and fills the reply object with the desired allStatistics specified by the
-     * request
+     * request. To be used in a distributed scenario.
      * @param logicalSourceName the logicalSourceName over which the statistic that we want was built
      * @param fieldName the fieldName over which the statistic that we want was built
      * @param statisticCollectorType the type of statistic that is to be probed
@@ -73,10 +73,31 @@ class StatisticManager {
                         ProbeStatisticReply* allStatistics);
 
     /**
+     * @brief receives both a request and reply object and fills the reply object with the desired allStatistics specified by the
+     * request. To be used in a centralized or hybrid scenario.
+     * @param logicalSourceName the logicalSourceName over which the statistic that we want was built
+     * @param fieldName the fieldName over which the statistic that we want was built
+     * @param statisticCollectorType the type of statistic that is to be probed
+     * @param probeExpression the expression defining the statistic that we want
+     * @param allPhysicalSources the physicalSourceNames belonging to the logicalSource that are on the local node over which the statistic
+     * that we want was built
+     * @param startTime the time at which the statistic that we want was created
+     * @param endTime the time at which the statistic that we want was completed
+     * @returns a std::vector of atomic statistics which could potentially be merged
+     */
+    std::vector<double> probeStatistic(const std::string& logicalSourceName,
+                                       const std::string& fieldName,
+                                       StatisticCollectorType statisticCollectorType,
+                                       const ExpressionNodePtr& expression,
+                                       const std::vector<std::string>& allPhysicalSourceNames,
+                                       const time_t startTime,
+                                       const time_t endTime);
+
+    /**
      * @brief receives a StatisticDeleteRequest and removes the according entries from the StatisticCollectorStorage
      * @param logicalSourceName the logicalSourceName over which the statistic that we want to delete was built
      * @param fieldName the fieldName over which the statistic that we want to delete was built
-     * @param allPhycialSourceNames the physicalSourceNames belonging to the the logicalSourceName on the local node
+     * @param allPhysicalSourceNames the physicalSourceNames belonging to the the logicalSourceName on the local node
      * that whose statistics we want to delete
      * @param startTime the time at which the statistic that we want to delete was created
      * @param endTime the time at which the statistic that we want to delete was completed
@@ -84,7 +105,7 @@ class StatisticManager {
      * @return returns true on success, otherwise false
      */
     bool deleteStatistic(const std::string& logicalSourceName,
-                         const std::vector<std::string>& allPhycialSourceNames,
+                         const std::vector<std::string>& allPhysicalSourceNames,
                          const std::string& fieldName,
                          const time_t startTime,
                          const time_t endTime,

@@ -13,40 +13,43 @@
 */
 
 #include <API/Schema.hpp>
+#include <API/AttributeField.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
-#include <sstream>
 #include <StatisticFieldIdentifiers.hpp>
+#include <sstream>
 
 namespace NES::Experimental::Statistics {
 
 WindowStatisticLogicalOperatorNode::WindowStatisticLogicalOperatorNode(WindowStatisticDescriptorPtr statisticDescriptor,
-                                                                       const std::string& synopsisFieldName,
-                                                                       uint64_t windowSize,
-                                                                       uint64_t slideFactor,
                                                                        OperatorId id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), statisticDescriptor(statisticDescriptor),
-      synopsisFieldName(synopsisFieldName), windowSize(windowSize), slideFactor(slideFactor) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), statisticDescriptor(statisticDescriptor) {}
 
 std::string WindowStatisticLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "StatisticLogicalOperator: ";
-    ss << " synopsisFieldName: " << this->getSynopsisFieldName();
-    ss << " windowSize: " << this->getWindowSize();
-    ss << " slideFactor: " << this->getSlideFactor();
+    ss << "SatisticLogicalOperator: ";
+    statisticDescriptor->toString();
     return ss.str();
 }
 
 OperatorNodePtr WindowStatisticLogicalOperatorNode::copy() {
-    return LogicalOperatorFactory::createStatisticOperator(statisticDescriptor, synopsisFieldName, windowSize, slideFactor);
+    auto copy = LogicalOperatorFactory::createStatisticOperator(statisticDescriptor, id);
+    copy->setInputOriginIds(inputOriginIds);
+    copy->setInputOriginIds(inputOriginIds);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    copy->setZ3Signature(z3Signature);
+    copy->setHashBasedSignature(hashBasedSignature);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
+    return copy;
 }
 
 bool WindowStatisticLogicalOperatorNode::equal(const NES::NodePtr& rhs) const {
     if (rhs->instanceOf<WindowStatisticLogicalOperatorNode>()) {
         auto statisticOperatorNode = rhs->as<WindowStatisticLogicalOperatorNode>();
-        if (statisticDescriptor == statisticOperatorNode->getStatisticDescriptor()
-            && synopsisFieldName == statisticOperatorNode->getSynopsisFieldName()
-            && windowSize == statisticOperatorNode->getWindowSize() && slideFactor == statisticOperatorNode->getSlideFactor()) {
+        if (statisticDescriptor == statisticOperatorNode->getStatisticDescriptor()) {
             return true;
         }
     }
@@ -62,12 +65,18 @@ bool WindowStatisticLogicalOperatorNode::inferSchema() {
         return false;
     }
 
-    auto inputSchema = getInputSchema();
-    outputSchema->addField(OBSERVED_TUPLES, BasicType::UINT64);
-    outputSchema->addField(START_TIME, BasicType::UINT64);
-    outputSchema->addField(END_TIME, BasicType::UINT64);
+    auto logSourceNameWithSep = statisticDescriptor->getLogicalSourceName() + "$";
 
-    outputSchema->addField(DATA, BasicType::TEXT);
+    outputSchema->clear();
+    outputSchema->addField(logSourceNameWithSep + LOGICAL_SOURCE_NAME, BasicType::TEXT);
+    outputSchema->addField(logSourceNameWithSep + PHYSICAL_SOURCE_NAME, BasicType::TEXT);
+    outputSchema->addField(logSourceNameWithSep + FIELD_NAME, BasicType::TEXT);
+    outputSchema->addField(logSourceNameWithSep + OBSERVED_TUPLES, BasicType::UINT64);
+    outputSchema->addField(logSourceNameWithSep + DEPTH, BasicType::UINT64);
+    outputSchema->addField(logSourceNameWithSep + START_TIME, BasicType::UINT64);
+    outputSchema->addField(logSourceNameWithSep + END_TIME, BasicType::UINT64);
+
+    outputSchema->addField(logSourceNameWithSep + DATA, BasicType::TEXT);
 
     statisticDescriptor->addStatisticFields(outputSchema);
 
@@ -79,10 +88,4 @@ void WindowStatisticLogicalOperatorNode::inferStringSignature() {}
 const WindowStatisticDescriptorPtr& WindowStatisticLogicalOperatorNode::getStatisticDescriptor() const {
     return statisticDescriptor;
 }
-
-const std::string& WindowStatisticLogicalOperatorNode::getSynopsisFieldName() const { return synopsisFieldName; }
-
-uint64_t WindowStatisticLogicalOperatorNode::getWindowSize() const { return windowSize; }
-
-uint64_t WindowStatisticLogicalOperatorNode::getSlideFactor() const { return slideFactor; }
 }// namespace NES::Experimental::Statistics

@@ -25,7 +25,9 @@ NonRunnableDataSource::NonRunnableDataSource(const SchemaPtr& schema,
                                              OriginId originId,
                                              size_t numSourceLocalBuffers,
                                              const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                                             NES::Runtime::QueryTerminationType type)
+                                             NES::Runtime::QueryTerminationType type,
+                                             const std::string& logicalSourceName,
+                                             const std::string& physicalSourceName)
     : DefaultSource(schema,
                     bufferManager,
                     queryManager,
@@ -34,7 +36,9 @@ NonRunnableDataSource::NonRunnableDataSource(const SchemaPtr& schema,
                     operatorId,
                     originId,
                     numSourceLocalBuffers,
-                    successors) {
+                    successors,
+                    logicalSourceName,
+                    physicalSourceName) {
     wasGracefullyStopped = type;
 }
 
@@ -69,7 +73,9 @@ DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                                      NES::Runtime::QueryTerminationType terminationType) {
+                                      NES::Runtime::QueryTerminationType terminationType,
+                                      const std::string& logicalSourceName,
+                                      const std::string& physicalSourceName) {
     return std::make_shared<NonRunnableDataSource>(schema,
                                                    bufferManager,
                                                    queryManager,
@@ -79,7 +85,9 @@ DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                                    originId,
                                                    numSourceLocalBuffers,
                                                    successors,
-                                                   terminationType);
+                                                   terminationType,
+                                                   logicalSourceName,
+                                                   physicalSourceName);
 }
 
 }// namespace NES::Testing
