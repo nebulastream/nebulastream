@@ -20,9 +20,12 @@
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SchemaBuffer.hpp>
 #include <Sources/DataSource.hpp>
-#include <folly/concurrency/DynamicBoundedQueue.h>
+#include <Util/magicenum/magic_enum.hpp>
+#include <folly/MPMCQueue.h>
 #include <variant>
 
 extern NES::Network::NetworkManagerPtr TheNetworkManager;
@@ -90,7 +93,7 @@ concept NetworkSourceConfig = requires(T* t) {
     { T::UpstreamNodeId } -> std::same_as<const size_t&>;
     { T::UpstreamNodeHostname } -> std::same_as<const char* const&>;
     { T::UpstreamNodePort } -> std::same_as<const size_t&>;
-    requires(std::same_as<typename T::Schema, NES::Unikernel::Schema<>>);
+    requires(std::same_as<typename T::Schema, Schema<>>);
 };
 
 /**
@@ -113,20 +116,20 @@ class UnikernelNetworkSource : DataEmitter {
     constexpr static bool NeedsBuffer = false;
     using QueueItemType = std::variant<TupleBufferHolder, Runtime::EventPtr, Runtime::QueryTerminationType>;
     //MPSC Queue
-    using Queue = typename folly::DynamicBoundedQueue<QueueItemType, false, true, true>;
+    using Queue = typename folly::MPMCQueue<QueueItemType>;
     using BufferType = NES::Unikernel::SchemaBuffer<typename Config::Schema, 8192>;
     void emitWork(Runtime::TupleBuffer& buffer) override {
-        NES_INFO("Network Source {} Received Data", Config::OperatorId);
-        NES_INFO("Buffer origin: {}", buffer.getOriginId());
-        queue.enqueue(buffer);
+        NES_DEBUG("Network Source {} Received Data", Config::OperatorId);
+        NES_DEBUG("Buffer origin: {}", buffer.getOriginId());
+        queue.write(buffer);
     }
     void onEvent(Runtime::EventPtr event) override {
         NES_INFO("Network Source {} Received Event", Config::OperatorId);
-        queue.enqueue(event);
+        queue.write(event);
     }
     void onEndOfStream(Runtime::QueryTerminationType type) override {
         NES_INFO("Network Source {} Received EoS", Config::OperatorId);
-        queue.enqueue(type);
+        queue.write(type);
     }
 
     /**
@@ -136,7 +139,10 @@ class UnikernelNetworkSource : DataEmitter {
     std::optional<NES::Runtime::TupleBuffer> receiveData(const std::stop_token& stoken, BufferType /*unused*/) {
         using namespace std::chrono_literals;
         QueueItemType bufferOrEvent;
-        while (!(queue.try_dequeue_for(bufferOrEvent, 20ms) || stoken.stop_requested())) {
+
+        while (!(queue.tryReadUntil<std::chrono::high_resolution_clock>(std::chrono::high_resolution_clock::now() + 20ms,
+                                                                        bufferOrEvent)
+                 || stoken.stop_requested())) {
             //poll until a items arrives or stop was requested
         }
 
@@ -145,15 +151,15 @@ class UnikernelNetworkSource : DataEmitter {
         }
 
         return std::visit(overloaded{[](TupleBufferHolder& buffer) -> std::optional<Runtime::TupleBuffer> {
-                                         NES_INFO("DataSource Thread: Buffer origin: {}", buffer.bufferToHold.getOriginId());
+                                         NES_TRACE("DataSource Thread: Buffer origin: {}", buffer.bufferToHold.getOriginId());
                                          return std::make_optional(buffer.bufferToHold);
                                      },
                                      [](Runtime::EventPtr& /*event*/) -> std::optional<Runtime::TupleBuffer> {
-                                         NES_INFO("Got Event can't really deal with it... Stopping Query");
+                                         NES_WARNING("Got Event can't really deal with it... Stopping Query");
                                          return std::nullopt;
                                      },
                                      [](Runtime::QueryTerminationType& type) -> std::optional<Runtime::TupleBuffer> {
-                                         NES_ERROR("Received Query Termination: {}", magic_enum::enum_name(type));
+                                         NES_INFO("Received Query Termination: {}", magic_enum::enum_name(type));
                                          return std::nullopt;
                                      }},
                           bufferOrEvent);
