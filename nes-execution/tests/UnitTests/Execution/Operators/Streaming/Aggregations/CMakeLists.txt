@@ -15,3 +15,6 @@ add_nes_execution_test(execution-global-slice-pre-aggregation-test "NonKeyedSlic
 add_nes_execution_test(execution-keyed-slice-pre-aggregation-test "KeyedSlicePreAggregationTest.cpp")
 add_nes_execution_test(execution-multi-origin-watermark-processor-test "MultiOriginWatermarkProcessorTest.cpp")
 add_nes_execution_test(execution-slice-assigner-test "SliceAssignerTest.cpp")
+
+add_nes_execution_test(execution-append-to-slicestore-action-test "AppendToSliceStoreActionTest.cpp")
+add_nes_execution_test(execution-keyed-slice-merging-test "KeyedSliceMergingTest.cpp")

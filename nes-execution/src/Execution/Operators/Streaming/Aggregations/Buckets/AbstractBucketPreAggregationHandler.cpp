@@ -82,12 +82,18 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::dispatchSliceMe
     // Thus, we emit slice deployment tasks in increasing order.
     for (const auto& [metaData, slices] : collectedSlices) {
         auto buffer = bufferProvider->getBufferBlocking();
+        buffer.setSequenceNumber(resultSequenceNumber);
+        buffer.setChunkNumber(1);
+        buffer.setLastChunk(true);
+
         // allocate a slice merge task withing the buffer.
         auto task = allocateWithin<SliceMergeTask<SliceType>>(buffer);
         task->startSlice = std::get<0>(metaData);
         task->endSlice = std::get<1>(metaData);
         task->sequenceNumber = resultSequenceNumber++;
         task->slices = slices;
+        task->chunkNumber = 1;
+        task->lastChunk = true;
         NES_DEBUG("{} Deploy merge task for bucket {}-{} ", windowSize, task->startSlice, task->endSlice);
         ctx.dispatchBuffer(buffer);
     }

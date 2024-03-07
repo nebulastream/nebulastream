@@ -16,7 +16,9 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <memory>
 namespace NES::Runtime::Execution::Operators {
@@ -43,7 +45,7 @@ class AppendToSliceStoreHandler : public OperatorHandler {
     std::unique_ptr<SlidingWindowSliceStore<Slice>> sliceStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::atomic<uint64_t> lastTriggerWatermark = 0;
-    std::atomic<uint64_t> resultSequenceNumber = 1;
+    std::atomic<uint64_t> resultSequenceNumber = TupleBuffer::INITIAL_SEQUENCE_NUMBER;
     std::mutex triggerMutex;
 };
 
