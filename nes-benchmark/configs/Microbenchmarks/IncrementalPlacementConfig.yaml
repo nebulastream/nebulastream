@@ -1,8 +1,8 @@
 #Location of query set
 # For each query set we will run the experiments
-QuerySetLocation: ''
+QuerySetLocation: '/home/ankit/dima/nes-2/nes-benchmark/src/MicroBenchmarks/ISQPBenchmark/QuerySet/generated_queries.txt'
 # LOG level
-LogLevel: LOG_ERROR
+LogLevel: LOG_DEBUG
 # Sleep interval between each run
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
@@ -11,8 +11,10 @@ NumOfRuns: 3
 RunConfig:
   - QueryPlacementStrategy: TopDown
     IncrementalPlacement: true
+    PlacementAmendmentMode: PESSIMISTIC
   - QueryPlacementStrategy: TopDown
     IncrementalPlacement: false
+    PlacementAmendmentMode: PESSIMISTIC
 #  - QueryPlacementStrategy: ILP
 #    IncrementalPlacement: true
 #  - QueryPlacementStrategy: ILP

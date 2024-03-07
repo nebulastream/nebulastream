@@ -110,27 +110,27 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         }
     }
 
-    // Identify affected operator placements
-    for (const auto& event : events) {
-        if (event->instanceOf<ISQPRemoveNodeEvent>()) {
-            handleRemoveNodeRequest(event->as<ISQPRemoveNodeEvent>());
-            event->response.set_value(std::make_shared<ISQPRemoveNodeResponse>(true));
-        } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
-            handleRemoveLinkRequest(event->as<ISQPRemoveLinkEvent>());
-            event->response.set_value(std::make_shared<ISQPRemoveLinkResponse>(true));
-        } else if (event->instanceOf<ISQPAddQueryEvent>()) {
-            auto queryId = handleAddQueryRequest(event->as<ISQPAddQueryEvent>());
-            event->response.set_value(std::make_shared<ISQPAddQueryResponse>(queryId));
-        } else if (event->instanceOf<ISQPRemoveQueryEvent>()) {
-            handleRemoveQueryRequest(event->as<ISQPRemoveQueryEvent>());
-            event->response.set_value(std::make_shared<ISQPRemoveQueryResponse>(true));
+        // Identify affected operator placements
+        for (const auto& event : events) {
+            if (event->instanceOf<ISQPRemoveNodeEvent>()) {
+                handleRemoveNodeRequest(event->as<ISQPRemoveNodeEvent>());
+                event->response.set_value(std::make_shared<ISQPRemoveNodeResponse>(true));
+            } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
+                handleRemoveLinkRequest(event->as<ISQPRemoveLinkEvent>());
+                event->response.set_value(std::make_shared<ISQPRemoveLinkResponse>(true));
+            } else if (event->instanceOf<ISQPAddQueryEvent>()) {
+                auto queryId = handleAddQueryRequest(event->as<ISQPAddQueryEvent>());
+                event->response.set_value(std::make_shared<ISQPAddQueryResponse>(queryId));
+            } else if (event->instanceOf<ISQPRemoveQueryEvent>()) {
+                handleRemoveQueryRequest(event->as<ISQPRemoveQueryEvent>());
+                event->response.set_value(std::make_shared<ISQPRemoveQueryResponse>(true));
+            }
         }
-    }
 
-    // Fetch affected SQPs and call in parallel operator placement amendment phase
-    auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+        // Fetch affected SQPs and call in parallel operator placement amendment phase
+        auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     auto amendmentStartTime =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -158,7 +158,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto numOfSQPAffected = sharedQueryPlans.size();
     responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
-                                                                    amendmentStartTime,
+                                                                amendmentStartTime,
                                                                     processingEndTime,
                                                                     numOfSQPAffected,
                                                                     numOfFailedPlacements,
@@ -323,6 +323,8 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     //5. Perform query re-write
     NES_DEBUG("Performing Query rewrite phase for query:  {}", queryId);
     queryPlan = queryRewritePhase->execute(queryPlan);
+
+    NES_INFO("After Rewrite {}", queryPlan->toString());
 
     //6. Add the updated query plan to the query catalog
     queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);

@@ -33,6 +33,11 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddNodeEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveQueryEvent.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/BenchmarkUtils.hpp>
@@ -53,6 +58,7 @@ NES::NesCoordinatorPtr coordinator;
 
 TopologyPtr topology;
 SourceCatalogServicePtr sourceCatalogService;
+RequestHandlerServicePtr requestHandlerService;
 Catalogs::Source::SourceCatalogPtr sourceCatalog;
 Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
@@ -69,14 +75,9 @@ class ErrorHandler : public Exceptions::ErrorListener {
 
 /**
  * @brief Set up the physical sources for the benchmark
- * @param nesCoordinator : the coordinator shared object
- * @param noOfPhysicalSource : number of physical sources
+ * @param leafWorkerIds: leaf worker ids
  */
-void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
-
-    //Create source catalog service
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
+void setupSources(std::vector<WorkerId> leafWorkerIds) {
 
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
@@ -119,72 +120,103 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
                                  ->addField("time1", BasicType::UINT64)
                                  ->addField("time2", BasicType::UINT64);
 
-    //Add the logical and physical stream to the stream catalog
-    uint64_t counter = 1;
-    for (uint64_t j = 0; j < noOfLogicalSource; j++) {
-        if (counter == 1) {
-            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema1);
-        } else if (counter == 2) {
-            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema2);
-        } else if (counter == 3) {
-            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema3);
-        } else if (counter == 4) {
-            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema4);
-            counter = 0;
-        }
-        counter++;
-
-        // Add Physical topology node and stream catalog entry
-        for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
-            //Fetch the leaf node of the topology and add all sources to it
-            auto logicalSourceName = "example" + std::to_string(j + 1);
-            auto physicalSourceName = "example" + std::to_string(j + 1) + std::to_string(i);
-            int sourceTopologyId = 5;
-            sourceCatalogService->registerPhysicalSource(physicalSourceName, logicalSourceName, sourceTopologyId);
+    //Add the logical and physical stream to the stream catalog such that each leaf has two distinct sources attached
+    for (const auto& leafWorkerId : leafWorkerIds) {
+        uint16_t noOfPhySourcePerWorker = 2;
+        for (uint16_t counter = 1; counter <= noOfPhySourcePerWorker; counter++) {
+            const auto& logicalSourceName = "example" + std::to_string(leafWorkerId) + "-" + std::to_string(counter);
+            auto physicalSourceName = "phy_" + logicalSourceName;
+            if (counter == 1) {
+                sourceCatalogService->registerLogicalSource(logicalSourceName, schema3);
+            } else if (counter == 2) {
+                sourceCatalogService->registerLogicalSource(logicalSourceName, schema3);
+            }
+            sourceCatalogService->registerPhysicalSource(physicalSourceName, logicalSourceName, leafWorkerId);
         }
     }
 }
 
-/**
- * @brief Set up the topology for the benchmark
- * @param noOfTopologyNodes : number of topology nodes
- */
-void setupTopology(uint64_t noOfTopologyNodes = 5) {
+void setupTopology(uint16_t rootNodes, uint16_t intermediateNodes, uint16_t sourceNodes) {
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    topology = Topology::create();
-    auto bandwidthInMbps = 50;
-    auto latencyInMs = 1;
-    //Register root worker
-    topology->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties, bandwidthInMbps, latencyInMs);
-    //register child workers
-    for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topology->registerWorker(INVALID_WORKER_NODE_ID,
-                                 std::to_string(i),
-                                 0,
-                                 0,
-                                 UINT16_MAX,
-                                 properties,
-                                 bandwidthInMbps,
-                                 latencyInMs);
+    std::vector<RequestProcessor::ISQPEventPtr> rootISQPAddNodeEvents;
+    for (uint16_t counter = 0; counter < rootNodes; counter++) {
+        rootISQPAddNodeEvents.emplace_back(
+            RequestProcessor::ISQPAddNodeEvent::create(INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
     }
 
-    topology->addLinkProperty(1, 2, 512, 100);
-    topology->addLinkProperty(2, 3, 512, 100);
-    topology->addLinkProperty(3, 4, 512, 100);
-    topology->addLinkProperty(4, 5, 512, 100);
-    topology->addTopologyNodeAsChild(3, 2);
-    topology->removeTopologyNodeAsChild(3, 1);
+    requestHandlerService->queueISQPRequest(rootISQPAddNodeEvents);
 
-    topology->addTopologyNodeAsChild(4, 3);
-    topology->removeTopologyNodeAsChild(4, 1);
+    std::vector<RequestProcessor::ISQPEventPtr> intermediateISQPAddNodeEvents;
+    for (uint16_t counter = 0; counter < intermediateNodes; counter++) {
+        intermediateISQPAddNodeEvents.emplace_back(
+            RequestProcessor::ISQPAddNodeEvent::create(INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
+    }
+    requestHandlerService->queueISQPRequest(intermediateISQPAddNodeEvents);
 
-    topology->addTopologyNodeAsChild(5, 4);
-    topology->removeTopologyNodeAsChild(5, 1);
-}
+    std::vector<RequestProcessor::ISQPEventPtr> leafISQPAddNodeEvents;
+    for (uint16_t counter = 0; counter < sourceNodes; counter++) {
+        leafISQPAddNodeEvents.emplace_back(
+            RequestProcessor::ISQPAddNodeEvent::create(INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
+    }
+    requestHandlerService->queueISQPRequest(leafISQPAddNodeEvents);
+
+    // Fetch worker Ids
+    std::vector<WorkerId> rootWorkerIds;
+    for (const auto& rootISQPAddNodeEvent : rootISQPAddNodeEvents) {
+        const auto& response = rootISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
+        auto workerId = std::static_pointer_cast<RequestProcessor::ISQPAddNodeResponse>(response)->workerId;
+        rootWorkerIds.emplace_back(workerId);
+    }
+
+    std::vector<WorkerId> intermediateWorkerIds;
+    for (const auto& intermediateISQPAddNodeEvent : intermediateISQPAddNodeEvents) {
+        const auto& response =
+            intermediateISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
+        auto workerId = std::static_pointer_cast<RequestProcessor::ISQPAddNodeResponse>(response)->workerId;
+        intermediateWorkerIds.emplace_back(workerId);
+    }
+
+    std::vector<WorkerId> leafWorkerIds;
+    for (const auto& leafISQPAddNodeEvent : leafISQPAddNodeEvents) {
+        const auto& response = leafISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
+        auto workerId = std::static_pointer_cast<RequestProcessor::ISQPAddNodeResponse>(response)->workerId;
+        leafWorkerIds.emplace_back(workerId);
+    }
+
+    // Remove connection between leaf and root nodes
+    std::vector<RequestProcessor::ISQPEventPtr> linkRemoveEvents;
+    for (const auto& rootWorkerId : rootWorkerIds) {
+        for (const auto& leafWorkerId : leafWorkerIds) {
+            auto linkRemoveEvent = RequestProcessor::ISQPRemoveLinkEvent::create(rootWorkerId, leafWorkerId);
+            linkRemoveEvents.emplace_back(linkRemoveEvent);
+        }
+    }
+    requestHandlerService->queueISQPRequest(linkRemoveEvents);
+
+    // Add connection between leaf and intermediate nodes
+    std::vector<RequestProcessor::ISQPEventPtr> linkAddEvents;
+    uint16_t intermediateNodeCounter = 0;
+    for (const auto& intermediateWorkerId : intermediateWorkerIds) {
+        uint16_t connectivityCounter = 0;
+        for (; intermediateNodeCounter < leafWorkerIds.size(); intermediateNodeCounter++) {
+            auto linkAddEvent =
+                RequestProcessor::ISQPAddLinkEvent::create(intermediateWorkerId, leafWorkerIds[intermediateNodeCounter]);
+            linkAddEvents.emplace_back(linkAddEvent);
+            connectivityCounter++;
+            if (connectivityCounter > leafWorkerIds.size() / intermediateWorkerIds.size()) {
+                break;
+            }
+        }
+    }
+    requestHandlerService->queueISQPRequest(linkAddEvents);
+
+    // create logical and physical sources
+    setupSources(leafWorkerIds);
+};
 
 /**
  * @brief Setup coordinator configuration and sources to run the experiments
@@ -192,9 +224,8 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
  * @param noOfPhysicalSources : total number of physical sources
  * @param batchSize : the batch size for query processing
  */
-void setUp(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSources) {
-    setupTopology();
-    setupSources(noOfLogicalSource, noOfPhysicalSources);
+void setUp(uint16_t rootNodes, uint16_t intermediateNodes, uint16_t leafNodes) {
+    setupTopology(rootNodes, intermediateNodes, leafNodes);
 }
 
 /**
@@ -301,7 +332,7 @@ int main(int argc, const char* argv[]) {
 
     //using thread pool to parallelize the compilation of string queries and string them in an array of query objects
     const uint32_t numOfQueries = queries.size();
-    std::vector<QueryPlanPtr> queryObjects;
+    QueryPlanPtr queryObjects[numOfQueries];
 
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -370,49 +401,37 @@ int main(int argc, const char* argv[]) {
         for (uint32_t run = 0; run < numberOfRun; run++) {
             std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
 
-            //Setup topology and source catalog
-            setUp(26, 1);
+            auto nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
+            nesCoordinator->startCoordinator(false);
+            requestHandlerService = nesCoordinator->getRequestHandlerService();
+            sourceCatalogService = nesCoordinator->getSourceCatalogService();
 
-            z3::config cfg;
-            cfg.set("timeout", 1000);
-            cfg.set("model", false);
-            cfg.set("type_check", false);
-            auto z3Context = std::make_shared<z3::context>(cfg);
-            udfCatalog = Catalogs::UDF::UDFCatalog::create();
-            auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-            auto globalQueryPlan = GlobalQueryPlan::create();
-            auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
-            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                                topology,
-                                                                                                typeInferencePhase,
-                                                                                                coordinatorConfiguration);
+            std::cout << "Setting up the topology." << std::endl;
+
+            //Setup topology and source catalog
+            setUp(1, 10, 100);
+
+            nesCoordinator->getTopology()->print();
+
+            auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 
             //Perform steps to optimize queries
             for (uint64_t i = 0; i < numOfQueries; i++) {
-
                 auto queryPlan = queryObjects[i];
-                queryCatalog->createQueryCatalogEntry(
-                    "",
-                    queryPlan,
-                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value(),
-                    QueryState::REGISTERED);
-
-                auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-                NES_ASSERT(sharedQueryPlansToDeploy.size() == 1, "Shared Query Plan to deploy has to be one");
+                auto addQueryRequest = RequestProcessor::ISQPAddQueryEvent::create(queryPlan, placement);
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                auto deploymentcontexts = queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
+                requestHandlerService->queueISQPRequest({addQueryRequest});
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                NES_ASSERT(!deploymentcontexts.empty(), "Placement should be successful");
                 benchmarkOutput << startTime << ",BM_Name," << placementStrategy << "," << incrementalPlacement << "," << run
                                 << "," << queryPlan->getQueryId() << "," << startTime << "," << endTime << ","
                                 << (endTime - startTime) << std::endl;
             }
             std::cout << "Finished Run " << run;
+            nesCoordinator->stopCoordinator(true);
         }
     }
 
