@@ -168,7 +168,6 @@ TEST_F(SynopsisOperatorTest, CountMinOperatorTest) {
         std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>( DEFAULT_LOGICAL_SOURCE_NAME + "$" + "ts"));
 
     auto cmOperator = NES::Experimental::Statistics::CountMinBuildOperator(OPERATOR_HANDLER_INDEX,
-                                                                           DEFAULT_LOGICAL_SOURCE_NAME,
                                                                            WIDTH,
                                                                            DEPTH,
                                                                            ON_FIELD,

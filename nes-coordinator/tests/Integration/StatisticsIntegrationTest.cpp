@@ -80,24 +80,20 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     std::vector<std::string> physicalSourceNames(1, std::string("defaultPhysicalSourceName"));
     auto defaultFieldName = std::string("f1");
     auto timestampField = std::string("ts");
-    auto statisticCollectorType = Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
     auto startTime = 0;
     auto endTime = 5000;
-    auto depth = 3;
-    auto width = 8;
-    auto observedTuples = 5;
 
     auto expressionNodePtr = (Attribute(defaultLogicalSourceName + "$" + defaultFieldName) == 1);
     EXPECT_EQ(expressionNodePtr->instanceOf<EqualsExpressionNode>(), true);
 
     auto createObj =
         Experimental::Statistics::StatisticCreateRequest(defaultLogicalSourceName,
-                                                         defaultLogicalSourceName + "$" + defaultFieldName,
-                                                         defaultLogicalSourceName + "$" + timestampField,
+                                                         defaultFieldName,
+                                                         timestampField,
                                                          Experimental::Statistics::StatisticCollectorType::COUNT_MIN);
 
     auto probeObj = Experimental::Statistics::StatisticProbeRequest(defaultLogicalSourceName,
-                                                                    defaultLogicalSourceName + "$" + defaultFieldName,
+                                                                    defaultFieldName,
                                                                     Experimental::Statistics::StatisticCollectorType::COUNT_MIN,
                                                                     expressionNodePtr,
                                                                     physicalSourceNames,
@@ -105,7 +101,7 @@ TEST_F(StatisticsIntegrationTest, createTest) {
                                                                     endTime);
 
     auto deleteObj = Experimental::Statistics::StatisticDeleteRequest(defaultLogicalSourceName,
-                                                                      defaultLogicalSourceName + "$" + defaultFieldName,
+                                                                      defaultFieldName,
                                                                       Experimental::Statistics::StatisticCollectorType::COUNT_MIN,
                                                                       endTime);
 

@@ -50,7 +50,6 @@ class CountMinBuildOperator : public Runtime::Execution::Operators::ExecutableOp
   public:
     /**
      * @param operatorHandlerIndex the index of the CountMinOperatorHandler
-     * @param logicalSourceName the logicalSourceName over which the CountMin sketch is being generated
      * @param width the width of the CountMin sketch
      * @param depth the depth of the CountMin sketch
      * @param onField the field name from which the CountMinBuildOperator reads the data
@@ -59,7 +58,6 @@ class CountMinBuildOperator : public Runtime::Execution::Operators::ExecutableOp
      * @param schema used to create the RowMemoryProvider, which allows us to read and write tuples from and to RecordBuffers
      */
     CountMinBuildOperator(uint64_t operatorHandlerIndex,
-                          const std::string& logicalSourceName,
                           uint64_t width,
                           uint64_t depth,
                           const std::string& onField,
@@ -101,7 +99,7 @@ class CountMinBuildOperator : public Runtime::Execution::Operators::ExecutableOp
     const std::string onField;
     const uint64_t keySizeInBits;
     const Runtime::Execution::Operators::TimeFunctionPtr timeFunction;
-    const Runtime::Execution::MemoryProvider::MemoryProviderPtr memoryProvider;
+    Runtime::Execution::MemoryProvider::MemoryProviderPtr memoryProvider;
     std::unordered_map<std::string, std::string> fieldsToFullyQualifiedFields;
 };
 }// namespace Experimental::Statistics

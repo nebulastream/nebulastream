@@ -127,6 +127,7 @@ class CountMinOperatorHandler : public Runtime::Execution::OperatorHandler {
     SchemaPtr schema;
     Runtime::Execution::Operators::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     Runtime::BufferManagerPtr bufferManager;
+    std::unordered_map<std::string, std::string> fieldsToFullyQualifiedFields;
 
     /**
      * @brief This function initializes the fields of the buffer with starting values (important for observed tuples), which is

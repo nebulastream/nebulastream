@@ -415,12 +415,14 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<Experimental::Statistics::PhysicalCountMinBuildOperator>()) {
         auto cmBuildOperator = operatorNode->as<Experimental::Statistics::PhysicalCountMinBuildOperator>();
         auto cmDesc = std::dynamic_pointer_cast<Experimental::Statistics::CountMinDescriptor>(cmBuildOperator->getDescriptor());
-        auto buildOperatorHandler = cmBuildOperator->getCountMinOperatorHandler();
-        operatorHandlers.push_back(buildOperatorHandler);
+        auto cmBuildOperatorHandler = cmBuildOperator->getCountMinOperatorHandler();
+        operatorHandlers.push_back(cmBuildOperatorHandler);
         auto operatorHandlerIndex = operatorHandlers.size() - 1;
 
+        auto inputSchema = cmBuildOperator->getInputSchema();
+        auto tsField = inputSchema->getField(cmDesc->gettimestampField());
         auto timeStampFieldRecord =
-            std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(cmDesc->gettimestampField());
+            std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(tsField->getName());
         Runtime::Execution::Operators::TimeFunctionPtr timeFunction =
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
         if (cmDesc->gettimestampField() == "IngestionTime") {
@@ -430,7 +432,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         auto cmOperator =
             std::make_shared<NES::Experimental::Statistics::CountMinBuildOperator>(operatorHandlerIndex,
-                                                                                   cmDesc->getLogicalSourceName(),
                                                                                    cmDesc->getWidth(),
                                                                                    cmDesc->getDepth(),
                                                                                    cmDesc->getFieldName(),

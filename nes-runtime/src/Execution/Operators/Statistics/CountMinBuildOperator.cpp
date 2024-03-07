@@ -32,7 +32,6 @@
 namespace NES::Experimental::Statistics {
 
 CountMinBuildOperator::CountMinBuildOperator(uint64_t operatorHandlerIndex,
-                                             const std::string& logicalSourceName,
                                              uint64_t width,
                                              uint64_t depth,
                                              const std::string& onField,
@@ -40,15 +39,15 @@ CountMinBuildOperator::CountMinBuildOperator(uint64_t operatorHandlerIndex,
                                              Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
                                              SchemaPtr schema)
     : operatorHandlerIndex(operatorHandlerIndex), width(width), depth(depth), onField(onField), keySizeInBits(keySizeInBits),
-      timeFunction(std::move(timeFunction)),
-      memoryProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(1, std::move(schema))) {
+      timeFunction(std::move(timeFunction)), memoryProvider(nullptr) {
 
     fieldsToFullyQualifiedFields = {
-        {onField, logicalSourceName + "$" + onField},
-        {PHYSICAL_SOURCE_NAME, logicalSourceName + "$" + PHYSICAL_SOURCE_NAME},
-        {DATA, logicalSourceName + "$" + DATA},
-        {OBSERVED_TUPLES, logicalSourceName + "$" + OBSERVED_TUPLES},
+        {PHYSICAL_SOURCE_NAME, schema->getSourceNameQualifier() + schema->ATTRIBUTE_NAME_SEPARATOR + PHYSICAL_SOURCE_NAME},
+        {DATA, schema->getSourceNameQualifier() + schema->ATTRIBUTE_NAME_SEPARATOR + DATA},
+        {OBSERVED_TUPLES, schema->getSourceNameQualifier() + schema->ATTRIBUTE_NAME_SEPARATOR + OBSERVED_TUPLES},
     };
+
+    memoryProvider = Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(1, std::move(schema));
 }
 
 void setUpOperatorHandlerProxy(void* opHandlerPtr, void* ptrPipelineCtx) {
@@ -117,8 +116,7 @@ void CountMinBuildOperator::execute(NES::Runtime::Execution::ExecutionContext& c
     Nautilus::Value<Nautilus::UInt64> timestampVal = timeFunction->getTs(ctx, incomingRecord);
     Nautilus::Value<Nautilus::UInt64> nWidth(width);
     Nautilus::Value<Nautilus::UInt64> nDepth(depth);
-    auto fullPhysicalSourceName = fieldsToFullyQualifiedFields.find(PHYSICAL_SOURCE_NAME)->second;
-    auto physicalSourceName = incomingRecord.read(fullPhysicalSourceName).as<Nautilus::Text>();
+    auto physicalSourceName = incomingRecord.read(fieldsToFullyQualifiedFields.find(PHYSICAL_SOURCE_NAME)->second).as<Nautilus::Text>();
 
     // get TupleBuffer and convert it to a MemRef
     auto tupleBuffer = FunctionCall("getTupleBufferProxy",

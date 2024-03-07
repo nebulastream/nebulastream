@@ -36,7 +36,19 @@ CountMinOperatorHandler::CountMinOperatorHandler(uint64_t windowSize,
                                                  const std::vector<OriginId>& allOriginIds)
     : sliceAssigner(windowSize, slideFactor), logicalSourceName(logicalSourceName), fieldName(fieldName), depth(depth),
       width(width), h3Seeds(std::move(h3Seeds)), schema(std::move(schema)),
-      watermarkProcessor(std::make_unique<Runtime::Execution::Operators::MultiOriginWatermarkProcessor>(allOriginIds)) {}
+      watermarkProcessor(std::make_unique<Runtime::Execution::Operators::MultiOriginWatermarkProcessor>(allOriginIds)) {
+
+    auto logSrcNameWSep = logicalSourceName + "$";
+    fieldsToFullyQualifiedFields[LOGICAL_SOURCE_NAME] = logSrcNameWSep + LOGICAL_SOURCE_NAME;
+    fieldsToFullyQualifiedFields[PHYSICAL_SOURCE_NAME] = logSrcNameWSep + PHYSICAL_SOURCE_NAME;
+    fieldsToFullyQualifiedFields[FIELD_NAME] = logSrcNameWSep + FIELD_NAME;
+    fieldsToFullyQualifiedFields[OBSERVED_TUPLES] = logSrcNameWSep + OBSERVED_TUPLES;
+    fieldsToFullyQualifiedFields[DEPTH] = logSrcNameWSep + DEPTH;
+    fieldsToFullyQualifiedFields[DATA] = logSrcNameWSep + DATA;
+    fieldsToFullyQualifiedFields[START_TIME] = logSrcNameWSep + START_TIME;
+    fieldsToFullyQualifiedFields[END_TIME] = logSrcNameWSep + END_TIME;
+    fieldsToFullyQualifiedFields[WIDTH] = logSrcNameWSep + WIDTH;
+}
 
 void CountMinOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
     NES_DEBUG("start CountMinOperatorHandler");
@@ -51,23 +63,22 @@ Runtime::TupleBuffer CountMinOperatorHandler::writeMetaData(NES::Runtime::TupleB
                                                             const Interval& interval,
                                                             const std::string& physicalSourceName) {
 
-    std::string logSrcNameWithSep = logicalSourceName + "$";
     std::vector<uint64_t> cmData(depth * width, 0);
     std::string cmString(reinterpret_cast<char*>(cmData.data()), cmData.size() * sizeof(uint64_t));
 
     auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(std::move(buffer), schema);
-    dynBuffer[0].writeVarSized(logSrcNameWithSep + LOGICAL_SOURCE_NAME, logicalSourceName, bufferManager.get());
-    dynBuffer[0].writeVarSized(logSrcNameWithSep + PHYSICAL_SOURCE_NAME, physicalSourceName, bufferManager.get());
-    dynBuffer[0].writeVarSized(logSrcNameWithSep + FIELD_NAME, fieldName, bufferManager.get());
+    dynBuffer[0].writeVarSized(fieldsToFullyQualifiedFields[LOGICAL_SOURCE_NAME], logicalSourceName, bufferManager.get());
+    dynBuffer[0].writeVarSized(fieldsToFullyQualifiedFields[PHYSICAL_SOURCE_NAME], physicalSourceName, bufferManager.get());
+    dynBuffer[0].writeVarSized(fieldsToFullyQualifiedFields[FIELD_NAME], fieldName, bufferManager.get());
 
-    dynBuffer[0][logSrcNameWithSep + OBSERVED_TUPLES].write(0UL);
-    dynBuffer[0][logSrcNameWithSep + DEPTH].write(depth);
-    dynBuffer[0].writeVarSized(logSrcNameWithSep + DATA, cmString, bufferManager.get());
+    dynBuffer[0][fieldsToFullyQualifiedFields[OBSERVED_TUPLES]].write(0UL);
+    dynBuffer[0][fieldsToFullyQualifiedFields[DEPTH]].write(depth);
+    dynBuffer[0].writeVarSized(fieldsToFullyQualifiedFields[DATA], cmString, bufferManager.get());
 
-    dynBuffer[0][logSrcNameWithSep + START_TIME].write(interval.getStartTime());
-    dynBuffer[0][logSrcNameWithSep + END_TIME].write(interval.getEndTime());
+    dynBuffer[0][fieldsToFullyQualifiedFields[START_TIME]].write(interval.getStartTime());
+    dynBuffer[0][fieldsToFullyQualifiedFields[END_TIME]].write(interval.getEndTime());
 
-    dynBuffer[0][logSrcNameWithSep + WIDTH].write(width);
+    dynBuffer[0][fieldsToFullyQualifiedFields[WIDTH]].write(width);
 
     return dynBuffer.getBuffer();
 }
@@ -76,19 +87,18 @@ Runtime::TupleBuffer CountMinOperatorHandler::getTupleBuffer(const std::string& 
     auto startTime = sliceAssigner.getSliceStartTs(ts);
     auto endTime = sliceAssigner.getSliceEndTs(ts);
     auto interval = Interval(startTime, endTime);
-    std::string logSrcNameWithSep = logicalSourceName + "$";
 
     NES_DEBUG("Tuple with timestamp: {}, which lies in the Interval: [{},{}]", ts, startTime, endTime)
     for (auto& countMinBuffer : allCountMin) {
         auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(countMinBuffer, schema);
-        auto sketchStartTime = dynBuffer[0][logSrcNameWithSep + START_TIME].read<uint64_t>();
-        auto sketchEndTime = dynBuffer[0][logSrcNameWithSep + END_TIME].read<uint64_t>();
+        auto sketchStartTime = dynBuffer[0][fieldsToFullyQualifiedFields[START_TIME]].read<uint64_t>();
+        auto sketchEndTime = dynBuffer[0][fieldsToFullyQualifiedFields[END_TIME]].read<uint64_t>();
         auto sketchPhysicalSourceName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
-            dynBuffer[0][logSrcNameWithSep + PHYSICAL_SOURCE_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+            dynBuffer[0][fieldsToFullyQualifiedFields[PHYSICAL_SOURCE_NAME]].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
         auto fieldName = Runtime::MemoryLayouts::readVarSizedData(
             dynBuffer.getBuffer(),
-            dynBuffer[0][logSrcNameWithSep + FIELD_NAME].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
+            dynBuffer[0][fieldsToFullyQualifiedFields[FIELD_NAME]].read<Runtime::TupleBuffer::NestedTupleBufferKey>());
 
         auto sketchInterval = Interval(sketchStartTime, sketchEndTime);
 
@@ -115,8 +125,6 @@ CountMinOperatorHandler::getFinishedCountMinSketches(uint64_t localWatermarkTs, 
     auto currentGlobalWatermarkTS = watermarkProcessor->updateWatermark(localWatermarkTs, sequenceNumber, originId);
 
     NES_INFO("LocalWatermarkTS: {}   currentGlobalWatermarkTS: {}", localWatermarkTs, currentGlobalWatermarkTS);
-
-    std::string logSrcNameWithSep = logicalSourceName + "$";
 
     auto removeIt =
         std::remove_if(allCountMin.begin(), allCountMin.end(), [currentGlobalWatermarkTS](const Runtime::TupleBuffer& buf) {

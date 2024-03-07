@@ -22,7 +22,6 @@ namespace NES::Experimental::Statistics {
 class CountMinDescriptor : public WindowStatisticDescriptor {
   public:
     /**
-     *
      * @param logicalSourceName the logical source name over which we wish to generate countMin sketches
      * @param fieldName the field name over which we wish to generate countMin sketches
      * @param timestampField the timestamp field which determines the window/sketch of a tuple

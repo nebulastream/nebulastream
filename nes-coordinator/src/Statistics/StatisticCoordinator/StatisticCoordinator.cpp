@@ -43,8 +43,13 @@ StatisticCoordinator::StatisticCoordinator(QueryServicePtr queryService,
 
 QueryId StatisticCoordinator::createStatistic(StatisticCreateRequest& createRequest) {
 
+    auto fieldName = createRequest.getFieldName();
+    if (createRequest.getFieldName().find(createRequest.getLogicalSourceName()) == std::string::npos) {
+        fieldName = createRequest.getLogicalSourceName() + "$" + createRequest.getFieldName();
+    }
+
     auto statisticQueryIdentifier = StatisticQueryIdentifier(createRequest.getLogicalSourceName(),
-                                                             createRequest.getFieldName(),
+                                                             fieldName,
                                                              createRequest.getStatisticCollectorType());
     auto statisticQueryIdIt = trackedStatistics.find(statisticQueryIdentifier);
 
@@ -63,7 +68,7 @@ QueryId StatisticCoordinator::createStatistic(StatisticCreateRequest& createRequ
             case StatisticCollectorType::COUNT_MIN:
                 windowStatisticDesc =
                     WindowStatisticDescriptorFactory::createCountMinDescriptor(createRequest.getLogicalSourceName(),
-                                                                               createRequest.getFieldName(),
+                                                                               fieldName,
                                                                                createRequest.getTimestampField(),
                                                                                STATISTIC_DEPTH,
                                                                                5000,
@@ -75,7 +80,7 @@ QueryId StatisticCoordinator::createStatistic(StatisticCreateRequest& createRequ
             case StatisticCollectorType::RESERVOIR:
                 windowStatisticDesc =
                     WindowStatisticDescriptorFactory::createReservoirSampleDescriptor(createRequest.getLogicalSourceName(),
-                                                                                      createRequest.getFieldName(),
+                                                                                      fieldName,
                                                                                       createRequest.getTimestampField(),
                                                                                       STATISTIC_DEPTH,
                                                                                       5000,
@@ -104,6 +109,11 @@ std::vector<double> StatisticCoordinator::probeStatistic(StatisticProbeRequest& 
     std::vector<double> statistics;
     std::vector<double> erroneousResult{-1.0};
 
+    auto fieldName = probeRequest.getFieldName();
+    if (probeRequest.getFieldName().find(probeRequest.getLogicalSourceName()) == std::string::npos) {
+        fieldName = probeRequest.getLogicalSourceName() + "$" + probeRequest.getFieldName();
+    }
+
     auto queriedPhysicalSources = probeRequest.getPhysicalSourceNames();
     probeRequest.clearPhysicalSourceNames();
 
@@ -128,13 +138,13 @@ std::vector<double> StatisticCoordinator::probeStatistic(StatisticProbeRequest& 
 
     // all the desired physicalSource exist
     auto statisticQueryIdentifier = StatisticQueryIdentifier(probeRequest.getLogicalSourceName(),
-                                                             probeRequest.getFieldName(),
+                                                             fieldName,
                                                              probeRequest.getStatisticCollectorType());
 
     auto statisticQueryPairIt = trackedStatistics.find(statisticQueryIdentifier);
 
     if (statisticQueryPairIt == trackedStatistics.end()) {
-        NES_DEBUG("Statistic cannot queried, as it is not being generated.");
+        NES_DEBUG("Statistic cannot be queried, as it is not being generated.");
         return erroneousResult;
     } else {
         NES_DEBUG("Statistic is being generated. Proceeding with probe operation.");
@@ -162,7 +172,7 @@ std::vector<double> StatisticCoordinator::probeStatistic(StatisticProbeRequest& 
             }
         } else {
             statistics = statisticManager->probeStatistic(probeRequest.getLogicalSourceName(),
-                                                          probeRequest.getFieldName(),
+                                                          fieldName,
                                                           probeRequest.getStatisticCollectorType(),
                                                           probeRequest.getExpression(),
                                                           queriedPhysicalSources,
@@ -179,9 +189,14 @@ std::vector<double> StatisticCoordinator::probeStatistic(StatisticProbeRequest& 
 
 bool StatisticCoordinator::deleteStatistic(StatisticDeleteRequest& deleteRequest) {
 
+    auto fieldName = deleteRequest.getFieldName();
+    if (deleteRequest.getFieldName().find(deleteRequest.getLogicalSourceName()) == std::string::npos) {
+        fieldName = deleteRequest.getLogicalSourceName() + "$" + deleteRequest.getFieldName();
+    }
+
     // check if statistic(s) even exists
     auto statisticQueryIdentifier = StatisticQueryIdentifier(deleteRequest.getLogicalSourceName(),
-                                                             deleteRequest.getFieldName(),
+                                                             fieldName,
                                                              deleteRequest.getStatisticCollectorType());
 
     auto statisticQueryIdIt = trackedStatistics.find(statisticQueryIdentifier);

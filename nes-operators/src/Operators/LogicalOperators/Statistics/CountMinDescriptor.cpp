@@ -49,7 +49,7 @@ bool CountMinDescriptor::operator==(WindowStatisticDescriptor& statisticDescript
     return false;
 }
 
-void CountMinDescriptor::addStatisticFields(NES::SchemaPtr schema) { schema->addField(getLogicalSourceName() + "$" +  WIDTH, BasicType::UINT64); }
+void CountMinDescriptor::addStatisticFields(NES::SchemaPtr schema) { schema->addField(getLogicalSourceName() + "$" + WIDTH, BasicType::UINT64); }
 
 uint64_t CountMinDescriptor::getWidth() const { return width; }
 

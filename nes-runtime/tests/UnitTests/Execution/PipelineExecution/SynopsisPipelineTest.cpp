@@ -176,7 +176,6 @@ TEST_P(SynopsisPipelineTest, countMinPipeline) {
     }
 
     auto countMinBuildOperator = std::make_shared<NES::Experimental::Statistics::CountMinBuildOperator>(OPERATOR_HANDLER_INDEX,
-                                                                                                        DEFAULT_LOGICAL_SOURCE_NAME,
                                                                                                         WIDTH,
                                                                                                         DEPTH,
                                                                                                         FIELD_NAME,

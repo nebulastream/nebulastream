@@ -28,6 +28,8 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
 //#include <Operators/LogicalOperators/Statistics/ReservoirSampleDescriptor.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Operators/Statistics/CountMinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
@@ -72,8 +74,6 @@
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <StatisticFieldIdentifiers.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Execution/Operators/Statistics/CountMinOperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StatisticUtil.hpp>
@@ -200,23 +200,8 @@ void DefaultPhysicalOperatorProvider::lowerCountMinOperator(
     const NES::QueryPlanPtr&,
     Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode) {
 
-    auto logicalSourceWSep = statisticOperatorNode->getStatisticDescriptor()->getLogicalSourceName() + "$";
-
-    auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                            ->addField(logicalSourceWSep + Experimental::Statistics::LOGICAL_SOURCE_NAME, BasicType::TEXT)
-                            ->addField(logicalSourceWSep + Experimental::Statistics::PHYSICAL_SOURCE_NAME, BasicType::TEXT)
-                            ->addField(logicalSourceWSep + Experimental::Statistics::FIELD_NAME, BasicType::TEXT)
-                            ->addField(logicalSourceWSep + Experimental::Statistics::OBSERVED_TUPLES, BasicType::UINT64)
-                            ->addField(logicalSourceWSep + Experimental::Statistics::DEPTH, BasicType::UINT64)
-                            ->addField(logicalSourceWSep + Experimental::Statistics::START_TIME, BasicType::UINT64)
-                            ->addField(logicalSourceWSep + Experimental::Statistics::END_TIME, BasicType::UINT64)
-                            ->addField(logicalSourceWSep + Experimental::Statistics::DATA, BasicType::TEXT);
-
-    auto countMinDesc =
-        std::dynamic_pointer_cast<Experimental::Statistics::CountMinDescriptor>(statisticOperatorNode->getStatisticDescriptor());
-
-    // complete schema with additional field
-    countMinDesc->addStatisticFields(outputSchema);
+    auto countMinDesc = statisticOperatorNode->getStatisticDescriptor()->as<const Experimental::Statistics::CountMinDescriptor>();
+    auto outputSchema = statisticOperatorNode->getOutputSchema();
 
     auto bitInByte = 8;
     auto h3Seeds = Experimental::Statistics::StatisticUtil::createH3Seeds(sizeof(uint64_t) * bitInByte, countMinDesc->getDepth());
