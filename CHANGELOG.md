@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.63](https://github.com/nebulastream/nebulastream/tree/v0.6.63) (2024-03-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.62...v0.6.63)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Missing LastChunk Information prevents join trigger [\#4660](https://github.com/nebulastream/nebulastream/issues/4660)
+
 ## [v0.6.62](https://github.com/nebulastream/nebulastream/tree/v0.6.62) (2024-03-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.61...v0.6.62)
