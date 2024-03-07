@@ -22,7 +22,7 @@ namespace NES {
 using SubpartitionId = uint64_t;
 using PartitionId = uint64_t;
 using OperatorId = uint64_t;
-using StatisticId = uint64_t; // Unique identifier across the system so that we can track statistic over the item
+using StatisticId = uint64_t;// Unique identifier across the system so that we can track statistic over the item
 using OriginId = uint64_t;
 using QueryId = uint64_t;
 using PipelineId = uint64_t;

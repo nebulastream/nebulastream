@@ -65,8 +65,10 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
     auto pipelineQueryPlan = QueryCompilation::PipelineQueryPlan::create();
     auto operatorPlan = QueryCompilation::OperatorPipeline::createSourcePipeline();
 
-    auto source =
-        QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
+    auto source = QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(statisticId,
+                                                                                      SchemaPtr(),
+                                                                                      SchemaPtr(),
+                                                                                      SourceDescriptorPtr());
     operatorPlan->prependOperator(source);
     pipelineQueryPlan->addPipeline(operatorPlan);
 
@@ -90,7 +92,10 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
  */
 TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
     auto operatorPlan = QueryCompilation::OperatorPipeline::create();
-    auto sink = QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(statisticId,
+                                                                                  SchemaPtr(),
+                                                                                  SchemaPtr(),
+                                                                                  SinkDescriptorPtr());
     operatorPlan->prependOperator(sink);
 
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();

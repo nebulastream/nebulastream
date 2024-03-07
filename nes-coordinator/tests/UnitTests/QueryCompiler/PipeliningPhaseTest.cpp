@@ -259,15 +259,18 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
 TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
     auto source1 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
-    auto joinBuildLeft = PhysicalJoinBuildOperator::create(++statisticId, SchemaPtr(),
+    auto joinBuildLeft = PhysicalJoinBuildOperator::create(++statisticId,
+                                                           SchemaPtr(),
                                                            SchemaPtr(),
                                                            Join::JoinOperatorHandlerPtr(),
                                                            QueryCompilation::JoinBuildSideType::Left);
-    auto joinBuildRight = PhysicalJoinBuildOperator::create(++statisticId, SchemaPtr(),
+    auto joinBuildRight = PhysicalJoinBuildOperator::create(++statisticId,
+                                                            SchemaPtr(),
                                                             SchemaPtr(),
                                                             Join::JoinOperatorHandlerPtr(),
                                                             QueryCompilation::JoinBuildSideType::Right);
-    auto joinSink = PhysicalJoinSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
+    auto joinSink =
+        PhysicalJoinSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
     auto sink = PhysicalSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);
@@ -321,15 +324,18 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
     auto source2 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source3 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto multiplex = PhysicalUnionOperator::create(++statisticId, SchemaPtr());
-    auto joinBuildLeft = PhysicalJoinBuildOperator::create(++statisticId, SchemaPtr(),
+    auto joinBuildLeft = PhysicalJoinBuildOperator::create(++statisticId,
+                                                           SchemaPtr(),
                                                            SchemaPtr(),
                                                            Join::JoinOperatorHandlerPtr(),
                                                            QueryCompilation::JoinBuildSideType::Left);
-    auto joinBuildRight = PhysicalJoinBuildOperator::create(++statisticId, SchemaPtr(),
+    auto joinBuildRight = PhysicalJoinBuildOperator::create(++statisticId,
+                                                            SchemaPtr(),
                                                             SchemaPtr(),
                                                             Join::JoinOperatorHandlerPtr(),
                                                             QueryCompilation::JoinBuildSideType::Right);
-    auto joinSink = PhysicalJoinSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
+    auto joinSink =
+        PhysicalJoinSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
     auto sink = PhysicalSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);
@@ -390,10 +396,16 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
     auto source1 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto windowAssignment =
         PhysicalWatermarkAssignmentOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), WatermarkStrategyDescriptorPtr());
-    auto slicePreAggregation =
-        PhysicalSlicePreAggregationOperator::create(getNextOperatorId(), ++statisticId, SchemaPtr(), SchemaPtr(), LogicalWindowDescriptorPtr());
-    auto windowSink =
-        PhysicalWindowSinkOperator::create(getNextOperatorId(), ++statisticId, SchemaPtr(), SchemaPtr(), LogicalWindowDescriptorPtr());
+    auto slicePreAggregation = PhysicalSlicePreAggregationOperator::create(getNextOperatorId(),
+                                                                           ++statisticId,
+                                                                           SchemaPtr(),
+                                                                           SchemaPtr(),
+                                                                           LogicalWindowDescriptorPtr());
+    auto windowSink = PhysicalWindowSinkOperator::create(getNextOperatorId(),
+                                                         ++statisticId,
+                                                         SchemaPtr(),
+                                                         SchemaPtr(),
+                                                         LogicalWindowDescriptorPtr());
     auto sink = PhysicalSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);

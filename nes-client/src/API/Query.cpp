@@ -231,8 +231,10 @@ Query Query::from(const std::string& sourceName) {
 Query& Query::buildStatistic(Windowing::WindowTypePtr window,
                              Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
                              Statistic::MetricHash metricHash) {
-    this->queryPlan =
-        QueryPlanBuilder::addStatisticBuildOperator(std::move(window), std::move(statisticDescriptor), metricHash, this->queryPlan);
+    this->queryPlan = QueryPlanBuilder::addStatisticBuildOperator(std::move(window),
+                                                                  std::move(statisticDescriptor),
+                                                                  metricHash,
+                                                                  this->queryPlan);
     return *this;
 }
 
