@@ -367,7 +367,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                 for (const auto& childOperator : pinnedOperator->getChildren()) {
                     OperatorId childOperatorId = childOperator->as<Operator>()->getId();
                     if (existingDecomposedQueryPlan->hasOperatorWithId(childOperatorId)) {
-                        auto placedOperator = existingDecomposedQueryPlan->getOperatorWithId(childOperatorId);
+                        auto placedOperator = existingDecomposedQueryPlan->getOperatorWithOperatorId(childOperatorId);
                         //Remove the placed operator as the root
                         existingDecomposedQueryPlan->removeAsRootOperator(placedOperator->getId());
                         // Add the copy as the parent of the iterated root operator and update the root of the iterated
@@ -381,7 +381,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
                 for (const auto& parentOperator : pinnedOperator->getParents()) {
                     OperatorId parentOperatorId = parentOperator->as<Operator>()->getId();
                     if (existingDecomposedQueryPlan->hasOperatorWithId(parentOperatorId)) {
-                        auto placedOperator = existingDecomposedQueryPlan->getOperatorWithId(parentOperatorId);
+                        auto placedOperator = existingDecomposedQueryPlan->getOperatorWithOperatorId(parentOperatorId);
                         // Add the copy as the parent of the iterated root operator and update the root of the iterated
                         placedOperator->addChild(copyOfPinnedOperator);
 
@@ -633,7 +633,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             networkSinkOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
                             networkSinkOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
                             operatorToConnectInMatchedPlan =
-                                querySubPlanWithUpstreamOperator->getOperatorWithId(upstreamOperatorToConnect->getId());
+                                querySubPlanWithUpstreamOperator->getOperatorWithOperatorId(upstreamOperatorToConnect->getId());
                             operatorToConnectInMatchedPlan->addParent(networkSinkOperator);
                             querySubPlanWithUpstreamOperator->removeAsRootOperator(operatorToConnectInMatchedPlan->getId());
                             querySubPlanWithUpstreamOperator->addRootOperator(networkSinkOperator);
@@ -786,7 +786,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
 
                                     // If the placed query sub plan contains the pinned upstream operator
                                     auto matchingPlacedLeafOperator =
-                                        placedDecomposedQueryPlan->getOperatorWithId(computedOperator->getId());
+                                        placedDecomposedQueryPlan->getOperatorWithOperatorId(computedOperator->getId());
                                     if (matchingPlacedLeafOperator) {
                                         if (computedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
                                             auto connectedSysSubPlanDetails =
@@ -895,7 +895,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                 for (const auto& placedDecomposedQueryPlan : placedDecomposedQueryPlans) {
                                     // If the placed query sub plan contains the pinned upstream operator
                                     auto matchingPinnedRootOperator =
-                                        placedDecomposedQueryPlan->getOperatorWithId(computedOperator->getId());
+                                        placedDecomposedQueryPlan->getOperatorWithOperatorId(computedOperator->getId());
                                     if (matchingPinnedRootOperator) {
                                         // Add all newly computed downstream operators to matching placed leaf operator
                                         for (const auto& upstreamOperator : computedOperator->getChildren()) {

@@ -52,6 +52,7 @@ OperatorPtr WatermarkAssignerLogicalOperator::copy() {
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
+    copy->setStatisticId(statisticId);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }
@@ -62,7 +63,7 @@ bool WatermarkAssignerLogicalOperator::inferSchema() {
     if (!LogicalUnaryOperator::inferSchema()) {
         return false;
     }
-    watermarkStrategyDescriptor->inferStamp( inputSchema);
+    watermarkStrategyDescriptor->inferStamp(inputSchema);
     return true;
 }
 

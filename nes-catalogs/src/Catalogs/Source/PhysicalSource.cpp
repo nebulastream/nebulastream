@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Identifiers.hpp>
+#include <Operators/Operator.hpp>
 #include <sstream>
 #include <utility>
 
@@ -23,7 +24,7 @@ PhysicalSource::PhysicalSource(std::string logicalSourceName,
                                std::string physicalSourceName,
                                PhysicalSourceTypePtr physicalSourceType)
     : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-      physicalSourceType(std::move(physicalSourceType)) {}
+      physicalSourceType(std::move(physicalSourceType)), statisticId(getNextStatisticId()) {}
 
 PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType) {
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
@@ -35,6 +36,8 @@ PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceTyp
 PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName) {
     return std::make_shared<PhysicalSource>(PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), nullptr));
 }
+
+StatisticId PhysicalSource::getStatisticId() const { return statisticId; }
 
 std::string PhysicalSource::toString() {
     std::stringstream ss;

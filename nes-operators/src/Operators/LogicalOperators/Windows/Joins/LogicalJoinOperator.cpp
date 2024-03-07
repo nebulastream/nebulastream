@@ -165,6 +165,7 @@ OperatorPtr LogicalJoinOperator::copy() {
     copy->windowEndFieldName = windowEndFieldName;
     copy->windowKeyFieldName = windowKeyFieldName;
     copy->setOperatorState(operatorState);
+    copy->setStatisticId(statisticId);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }

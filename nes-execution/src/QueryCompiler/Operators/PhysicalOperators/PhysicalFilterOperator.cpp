@@ -18,23 +18,25 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
+                                               StatisticId statisticId,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
-    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       predicate(std::move(predicate)) {}
 
 PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id,
+                                                   StatisticId statisticId,
                                                    const SchemaPtr& inputSchema,
                                                    const SchemaPtr& outputSchema,
                                                    const ExpressionNodePtr& expression) {
-    return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, expression);
+    return std::make_shared<PhysicalFilterOperator>(id, statisticId, inputSchema, outputSchema, expression);
 }
 
 ExpressionNodePtr PhysicalFilterOperator::getPredicate() { return predicate; }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
-    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expression));
+PhysicalOperatorPtr PhysicalFilterOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
+    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(expression));
 }
 
 std::string PhysicalFilterOperator::toString() const {
@@ -46,7 +48,7 @@ std::string PhysicalFilterOperator::toString() const {
 }
 
 OperatorPtr PhysicalFilterOperator::copy() {
-    auto result = create(id, inputSchema, outputSchema, getPredicate());
+    auto result = create(id, statisticId, inputSchema, outputSchema, getPredicate());
     result->addAllProperties(properties);
     return result;
 }

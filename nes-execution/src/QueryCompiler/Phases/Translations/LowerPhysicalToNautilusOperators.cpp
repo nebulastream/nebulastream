@@ -134,9 +134,10 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
     for (const auto& node : nodes) {
-        NES_INFO("Node: {}", node->toString());
+        NES_INFO("Lowering node: {}", node->toString());
         parentOperator =
             lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
+        parentOperator->setStatisticId(node->as<PhysicalOperators::PhysicalOperator>()->getStatisticId());
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
     for (auto& root : rootOperators) {

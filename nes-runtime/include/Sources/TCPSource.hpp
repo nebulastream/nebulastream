@@ -42,6 +42,7 @@ class TCPSource : public DataSource {
      * @param tcpSourceType points at current TCPSourceType config object, look at same named file for info
      * @param operatorId represents a locally running query execution plan
      * @param originId represents an origin
+     * @param statisticId represents the unique identifier of components that we can track statistics for
      * @param numSourceLocalBuffers number of local source buffers
      * @param gatheringMode the gathering mode used
      * @param physicalSourceName the name and unique identifier of a physical source
@@ -53,6 +54,7 @@ class TCPSource : public DataSource {
                        TCPSourceTypePtr tcpSourceType,
                        OperatorId operatorId,
                        OriginId originId,
+                       StatisticId statisticId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        const std::string& physicalSourceName,

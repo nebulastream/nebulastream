@@ -48,6 +48,10 @@
 #define ORIGINID 1
 #endif
 
+#ifndef STATISTICID
+#define STATISTICID 1
+#endif
+
 #ifndef NUMSOURCELOCALBUFFERS
 #define NUMSOURCELOCALBUFFERS 12
 #endif
@@ -219,6 +223,7 @@ configuration:
                                      tcpSourceType,
                                      OPERATORID,
                                      ORIGINID,
+                                     STATISTICID,
                                      NUMSOURCELOCALBUFFERS,
                                      "tcp-source",
                                      SUCCESSORS);
@@ -312,6 +317,7 @@ configuration:
                                      tcpSourceType,
                                      OPERATORID,
                                      ORIGINID,
+                                     STATISTICID,
                                      NUMSOURCELOCALBUFFERS,
                                      "tcp-source",
                                      SUCCESSORS);
@@ -400,6 +406,7 @@ configuration:
                                      tcpSourceType,
                                      OPERATORID,
                                      ORIGINID,
+                                     STATISTICID,
                                      NUMSOURCELOCALBUFFERS,
                                      "tcp-source",
                                      SUCCESSORS);

@@ -24,7 +24,15 @@ class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
 
 /**
- * @brief This class acts as an abstract class for all possible statistic types
+ * @brief The metric hash is the hash corresponding to a specific metric. We use this in combination with the
+ * StatisticId to uniquely identify a statistic in our system. By using the MetricHash, we do not have to send the whole
+ * metric down to the physical operator but can rather send the MetricHash. In the physical operator, we receive the
+ * statistic id as part of the tuple buffer and therefore, we can uniquely identify a statistic
+ */
+using MetricHash = uint64_t;
+
+/**
+ * @brief This class acts as an abstract class for all possible statistic types, e.g., Cardinality over field f1
  */
 class Metric : public std::enable_shared_from_this<Metric> {
   public:
@@ -39,6 +47,12 @@ class Metric : public std::enable_shared_from_this<Metric> {
      * @return FieldAccessExpressionNodePtr
      */
     FieldAccessExpressionNodePtr getField() const;
+
+    /**
+     * @brief Calculates a hash of the underlying metric
+     * @return MetricHash
+     */
+    MetricHash hash() const;
 
     /**
      * @brief Checks for equality

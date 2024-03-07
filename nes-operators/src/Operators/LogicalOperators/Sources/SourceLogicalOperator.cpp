@@ -42,7 +42,8 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const {
 
 std::string SourceLogicalOperator::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(" << id << "," << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString() << ")";
+    ss << "SOURCE(opId: " << id << ", statisticId: " << statisticId << ","
+       << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString() << ")";
     return ss.str();
 }
 
@@ -67,6 +68,7 @@ OperatorPtr SourceLogicalOperator::copy() {
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
+    copy->setStatisticId(statisticId);
     if (copy->instanceOf<SourceLogicalOperator>()) {
         copy->as<SourceLogicalOperator>()->setProjectSchema(projectSchema);
     }

@@ -22,6 +22,7 @@ namespace NES {
 using SubpartitionId = uint64_t;
 using PartitionId = uint64_t;
 using OperatorId = uint64_t;
+using StatisticId = uint64_t; // Unique identifier across the system so that we can track statistic over the item
 using OriginId = uint64_t;
 using QueryId = uint64_t;
 using PipelineId = uint64_t;
@@ -38,6 +39,7 @@ static constexpr QueryId INVALID_QUERY_ID = 0;
 static constexpr DecomposedQueryPlanId INVALID_DECOMPOSED_QUERY_PLAN_ID = 0;
 static constexpr SharedQueryId INVALID_SHARED_QUERY_ID = 0;
 static constexpr OperatorId INVALID_OPERATOR_ID = 0;
+static constexpr StatisticId INVALID_STATISTIC_ID = 0;
 static constexpr OriginId INVALID_ORIGIN_ID = 0;
 static constexpr WorkerId INVALID_WORKER_NODE_ID = 0;
 static constexpr WorkerId INVALID_DECOMPOSED_QUERY_PLAN_VERSION = 0;

@@ -42,7 +42,7 @@ bool SinkLogicalOperator::inferSchema() {
 
 std::string SinkLogicalOperator::toString() const {
     std::stringstream ss;
-    ss << "SINK(" << id << ": {" << sinkDescriptor->toString() << "})";
+    ss << "SINK(opId: " << id << ", statisticId: " << statisticId << ": {" << sinkDescriptor->toString() << "})";
     return ss.str();
 }
 
@@ -54,6 +54,7 @@ OperatorPtr SinkLogicalOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
+    copy->setStatisticId(statisticId);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }

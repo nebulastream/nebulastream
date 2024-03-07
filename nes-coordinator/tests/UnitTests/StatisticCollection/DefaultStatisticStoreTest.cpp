@@ -84,8 +84,7 @@ class DefaultStatisticStoreTest : public Testing::BaseUnitTest, public ::testing
         auto curStartTs = 0;
         auto curEndTs = WINDOW_SIZE;
         for (auto keyCnt = 0; keyCnt < numberOfStatisticKeys; ++keyCnt) {
-            auto characteristic = InfrastructureStatistic::create(IngestionRate::create(), keyCnt);
-            StatisticKey statisticKey(characteristic);
+            StatisticKey statisticKey(IngestionRate::create(), keyCnt);
             allStatisticKeys.emplace_back(statisticKey);
 
             // Creating for this statistic key now statistics
@@ -113,9 +112,8 @@ TEST_F(DefaultStatisticStoreTest, singleItem) {
     const auto startTs = Milliseconds(10);
     const auto endTs = Milliseconds(100);
     auto dummyStatistic = DummyStatistic::create(startTs, endTs);
-    auto characteristic = InfrastructureStatistic::create(IngestionRate::create(), 42);
     auto window = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
-    StatisticKey statisticKey(characteristic);
+    StatisticKey statisticKey(IngestionRate::create(), 42);
 
     // Checking if insert and get works properly
     ASSERT_TRUE(defaultStatisticStore.insertStatistic(statisticKey.hash(), dummyStatistic));

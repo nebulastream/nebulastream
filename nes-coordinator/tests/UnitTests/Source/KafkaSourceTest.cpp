@@ -106,6 +106,7 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
                                          kafkaSourceType,
                                          OPERATORID,
                                          OPERATORID,
+                                         INVALID_STATISTIC_ID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
                                          "defaultPhysicalStreamName",
@@ -131,6 +132,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          kafkaSourceType,
                                          OPERATORID,
                                          OPERATORID,
+                                         INVALID_STATISTIC_ID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
                                          "defaultPhysicalStreamName",
@@ -255,6 +257,7 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                          "earliest",
                                          OPERATORID,
                                          OPERATORID,
+                                         INVALID_STATISTIC_ID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());

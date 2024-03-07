@@ -17,10 +17,11 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
+                                               StatisticId statisticId,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                Windowing::LogicalWindowDescriptorPtr windowDefinition)
-    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       windowDefinition(std::move(windowDefinition)) {}
 
 const Windowing::LogicalWindowDescriptorPtr& PhysicalWindowOperator::getWindowDefinition() const { return windowDefinition; };

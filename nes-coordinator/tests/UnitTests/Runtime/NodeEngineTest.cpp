@@ -311,6 +311,7 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& o
                                                                engine->getQueryManager(),
                                                                1,
                                                                0,
+                                                               INVALID_STATISTIC_ID,
                                                                12,
                                                                "defaultPhysicalSourceName",
                                                                {pipeline});
@@ -428,6 +429,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                                 engine->getQueryManager(),
                                                                 1,
                                                                 0,
+                                                                INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
@@ -443,6 +445,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                                                 engine->getQueryManager(),
                                                                 2,
                                                                 0,
+                                                                INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline2});
@@ -495,6 +498,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                                 engine->getQueryManager(),
                                                                 1,
                                                                 0,
+                                                                INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
@@ -511,6 +515,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                                                          engine->getQueryManager(),
                                                                          2,
                                                                          1,
+                                                                         INVALID_STATISTIC_ID,
                                                                          12,
                                                                          "defaultPhysicalSourceName",
                                                                          {pipeline2});
@@ -561,6 +566,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                                 engine->getQueryManager(),
                                                                 1,
                                                                 0,
+                                                                INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
@@ -580,6 +586,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                                                          engine->getQueryManager(),
                                                                          2,
                                                                          3,
+                                                                         INVALID_STATISTIC_ID,
                                                                          12,
                                                                          "defaultPhysicalSourceName",
                                                                          {pipeline2});
@@ -632,6 +639,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
                                                                 engine->getQueryManager(),
                                                                 1,
                                                                 4,
+                                                                INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1, pipeline2});

@@ -19,24 +19,27 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalExternalOperator::PhysicalExternalOperator(OperatorId id,
+                                                   StatisticId statisticId,
                                                    SchemaPtr inputSchema,
                                                    SchemaPtr outputSchema,
                                                    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage)
-    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       executablePipelineStage(std::move(executablePipelineStage)) {}
 
 PhysicalOperatorPtr
-PhysicalExternalOperator::create(const SchemaPtr& inputSchema,
-                                 const SchemaPtr& outputSchema,
-                                 const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage) {
-    return create(getNextOperatorId(), inputSchema, outputSchema, executablePipelineStage);
-}
-PhysicalOperatorPtr
-PhysicalExternalOperator::create(OperatorId id,
+PhysicalExternalOperator::create(StatisticId statisticId,
                                  const SchemaPtr& inputSchema,
                                  const SchemaPtr& outputSchema,
                                  const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage) {
-    return std::make_shared<PhysicalExternalOperator>(id, inputSchema, outputSchema, executablePipelineStage);
+    return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, executablePipelineStage);
+}
+PhysicalOperatorPtr
+PhysicalExternalOperator::create(OperatorId id,
+                                 StatisticId statisticId,
+                                 const SchemaPtr& inputSchema,
+                                 const SchemaPtr& outputSchema,
+                                 const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage) {
+    return std::make_shared<PhysicalExternalOperator>(id, statisticId, inputSchema, outputSchema, executablePipelineStage);
 }
 
 std::string PhysicalExternalOperator::toString() const {
@@ -50,7 +53,7 @@ std::string PhysicalExternalOperator::toString() const {
 }
 
 OperatorPtr PhysicalExternalOperator::copy() {
-    auto result = create(id, inputSchema, outputSchema, executablePipelineStage);
+    auto result = create(id, statisticId, inputSchema, outputSchema, executablePipelineStage);
     result->addAllProperties(properties);
     return result;
 }

@@ -60,6 +60,19 @@ void RecordBuffer::setOriginId(const Value<UInt64>& originId) {
                    originId);
 }
 
+Value<UInt64> RecordBuffer::getStatisticId() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getStatisticId",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getStatisticId,
+                          tupleBufferRef);
+}
+
+void RecordBuffer::setStatisticId(const Value<UInt64>& statisticId) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setStatisticId",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setStatisticId,
+                   tupleBufferRef,
+                   statisticId);
+}
+
 void RecordBuffer::setSequenceNr(const Value<UInt64>& seqNumber) {
     FunctionCall<>("NES__Runtime__TupleBuffer__setSequenceNr",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setSequenceNumber,

@@ -272,7 +272,11 @@ uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return crea
 
 uint64_t BufferControlBlock::getOriginId() const noexcept { return originId; }
 
+uint64_t BufferControlBlock::getStatisticId() const noexcept { return statisticId; }
+
 void BufferControlBlock::setOriginId(OriginId originId) { this->originId = originId; }
+
+void BufferControlBlock::setStatisticId(StatisticId statisticId) { this->statisticId = statisticId; }
 
 void zmqBufferRecyclingCallback(void*, void* hint) {
     NES_VERIFY(hint != nullptr, "Hint cannot be null");

@@ -160,6 +160,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                       csvSourceType,
                                       1,
                                       0,
+                                      INVALID_STATISTIC_ID,
                                       12,
                                       defaultPhysicalStreamName,
                                       {sink});

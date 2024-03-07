@@ -26,10 +26,12 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalSliceMergingOperator : public PhysicalWindowOperator, public AbstractEmitOperator, public AbstractScanOperator {
   public:
     PhysicalSliceMergingOperator(OperatorId id,
+                                 StatisticId statisticId,
                                  SchemaPtr inputSchema,
                                  SchemaPtr outputSchema,
                                  Windowing::LogicalWindowDescriptorPtr windowDefinition);
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Windowing::LogicalWindowDescriptorPtr& windowDefinition);

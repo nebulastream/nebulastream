@@ -28,12 +28,14 @@ DataSourceProviderPtr QueryCompilation::SourceSharingDataSourceProvider::create(
 
 DataSourcePtr SourceSharingDataSourceProvider::lower(OperatorId operatorId,
                                                      OriginId originId,
+                                                     StatisticId statisticId,
                                                      SourceDescriptorPtr sourceDescriptor,
                                                      Runtime::NodeEnginePtr nodeEngine,
                                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
     if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                                 originId,
+                                                                statisticId,
                                                                 std::move(sourceDescriptor),
                                                                 std::move(nodeEngine),
                                                                 compilerOptions->getNumSourceLocalBuffers(),
@@ -52,6 +54,7 @@ DataSourcePtr SourceSharingDataSourceProvider::lower(OperatorId operatorId,
         NES_DEBUG("Create first source for source sharing for logical name  {}", sourceDescriptor->getLogicalSourceName());
         auto source = ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                                        originId,
+                                                                       statisticId,
                                                                        std::move(sourceDescriptor),
                                                                        std::move(nodeEngine),
                                                                        compilerOptions->getNumSourceLocalBuffers(),

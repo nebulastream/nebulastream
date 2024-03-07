@@ -575,7 +575,8 @@ message SerializableOperator{
   SerializableSchema leftInputSchema = 5;
   SerializableSchema rightInputSchema = 6;
   uint64 operatorId = 7;
-  repeated uint64 originIds = 8;
-  repeated uint64 leftOriginIds = 9;
-  repeated uint64 rightOriginIds = 10;
+  uint64 statisticId = 8;
+  repeated uint64 originIds = 9;
+  repeated uint64 leftOriginIds = 10;
+  repeated uint64 rightOriginIds = 11;
 }

@@ -240,6 +240,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                       zmqPort,
                                       1,
                                       0,
+                                      INVALID_STATISTIC_ID,
                                       12,
                                       "defaultPhysicalSourceName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
@@ -297,6 +298,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
                                       zmqPort,
                                       1,
                                       0,
+                                      INVALID_STATISTIC_ID,
                                       12,
                                       "defaultPhysicalSourceName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());

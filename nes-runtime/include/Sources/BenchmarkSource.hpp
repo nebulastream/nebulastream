@@ -45,6 +45,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param gatheringValue how many tuples to collect per interval
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param statisticId represents the unique identifier of components that we can track statistics for
      * @param numSourceLocalBuffers the number of buffers allocated to a source
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
      * @param sourceMode
@@ -63,6 +64,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              uint64_t gatheringValue,
                              OperatorId operatorId,
                              OriginId originId,
+                             StatisticId statisticId,
                              size_t numSourceLocalBuffers,
                              GatheringMode gatheringMode,
                              SourceMode sourceMode,

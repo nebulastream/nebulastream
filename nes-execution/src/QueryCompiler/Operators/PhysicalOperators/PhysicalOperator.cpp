@@ -15,7 +15,7 @@
 #include <sstream>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperator::PhysicalOperator(OperatorId id) : Operator(id) {}
+PhysicalOperator::PhysicalOperator(OperatorId id, StatisticId statisticId) : Operator(id, statisticId) {}
 
 std::string PhysicalOperator::toString() const {
     std::stringstream out;

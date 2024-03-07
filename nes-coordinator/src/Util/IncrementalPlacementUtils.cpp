@@ -41,10 +41,11 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
         //replace the system generated operators with their non system up- or downstream operators
         auto upstreamLogicalOperatorId =
             std::any_cast<OperatorId>(upstreamOperator->getProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID));
-        upstreamOperator = queryPlanForSharedQuery->getOperatorWithId(upstreamLogicalOperatorId)->as<LogicalOperator>();
+        upstreamOperator = queryPlanForSharedQuery->getOperatorWithOperatorId(upstreamLogicalOperatorId)->as<LogicalOperator>();
         auto downstreamLogicalOperatorId =
             std::any_cast<OperatorId>(downstreamOperator->getProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID));
-        downstreamOperator = queryPlanForSharedQuery->getOperatorWithId(downstreamLogicalOperatorId)->as<LogicalOperator>();
+        downstreamOperator =
+            queryPlanForSharedQuery->getOperatorWithOperatorId(downstreamLogicalOperatorId)->as<LogicalOperator>();
     }
 
     std::set<OperatorId> upstreamPinned;
@@ -52,10 +53,11 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     std::set<OperatorId> toRemove;
 
     for (const auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
-        const auto upstreamSharedQueryOperater = queryPlanForSharedQuery->getOperatorWithId(upstreamOperator->getId());
+        const auto upstreamSharedQueryOperater = queryPlanForSharedQuery->getOperatorWithOperatorId(upstreamOperator->getId());
         const auto upstreamWorkerId =
             std::any_cast<OperatorId>(upstreamSharedQueryOperater->getProperty(Optimizer::PINNED_WORKER_ID));
-        const auto downstreamSharedQueryOperator = queryPlanForSharedQuery->getOperatorWithId(downstreamOperator->getId());
+        const auto downstreamSharedQueryOperator =
+            queryPlanForSharedQuery->getOperatorWithOperatorId(downstreamOperator->getId());
         const auto downstreamWorkerId =
             std::any_cast<OperatorId>(downstreamSharedQueryOperator->getProperty(Optimizer::PINNED_WORKER_ID));
 
@@ -82,7 +84,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
             std::set<OperatorId> visitedOperators;
 
             //populate queue with the non system parents of the upstream operator
-            auto startOperatorInSharedQueryPlan = queryPlanForSharedQuery->getOperatorWithId(upstreamOperator->getId());
+            auto startOperatorInSharedQueryPlan = queryPlanForSharedQuery->getOperatorWithOperatorId(upstreamOperator->getId());
             for (const auto& parent : startOperatorInSharedQueryPlan->getParents()) {
                 queryPlanBFSQueue.push(parent->as<LogicalOperator>());
             }

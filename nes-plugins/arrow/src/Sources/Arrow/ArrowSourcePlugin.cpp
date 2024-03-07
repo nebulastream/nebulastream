@@ -27,6 +27,7 @@ class ArrowSourcePlugin : public DataSourcePlugin {
     std::optional<DataSourcePtr>
     createDataSource(OperatorId operatorId,
                      OriginId originId,
+                     StatisticId statisticId,
                      const SourceDescriptorPtr& sourceDescriptor,
                      const Runtime::NodeEnginePtr& nodeEngine,
                      size_t numSourceLocalBuffers,
@@ -43,6 +44,7 @@ class ArrowSourcePlugin : public DataSourcePlugin {
                                                  arrowSourceDescriptor->getSourceConfig(),
                                                  operatorId,
                                                  originId,
+                                                 statisticId,
                                                  numSourceLocalBuffers,
                                                  GatheringMode::INTERVAL_MODE,
                                                  sourceDescriptor->getPhysicalSourceName(),

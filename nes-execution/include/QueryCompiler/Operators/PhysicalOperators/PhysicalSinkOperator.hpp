@@ -25,10 +25,10 @@ namespace NES::QueryCompilation::PhysicalOperators {
  */
 class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
   public:
-    PhysicalSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    PhysicalSinkOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const SinkDescriptorPtr& sinkDescriptor);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const SinkDescriptorPtr& sinkDescriptor);
+    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     SinkDescriptorPtr getSinkDescriptor();
 
     std::string toString() const override;

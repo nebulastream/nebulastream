@@ -27,22 +27,25 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
     /**
      * @brief Constructor for the physical scan operator
      * @param id operator id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param outputSchema output schema
      */
-    PhysicalScanOperator(OperatorId id, const SchemaPtr& outputSchema);
+    PhysicalScanOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema);
 
     /**
      * @brief Creates for the physical scan operator
      * @param id operator id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param outputSchema output schema
      */
-    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& outputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema);
 
     /**
      * @brief Constructor for the physical scan operator
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param outputSchema output schema
      */
-    static PhysicalOperatorPtr create(SchemaPtr outputSchema);
+    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr outputSchema);
     std::string toString() const override;
     OperatorPtr copy() override;
 };

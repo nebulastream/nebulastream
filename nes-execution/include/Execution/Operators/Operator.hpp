@@ -14,6 +14,7 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
+#include <Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <memory>
 
@@ -71,10 +72,18 @@ class Operator {
      * @param child
      */
     void setChild(ExecuteOperatorPtr child);
+
+    /**
+     * @brief Sets the statisticId of this operator
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
+     */
+    void setStatisticId(StatisticId statisticId);
+
     virtual ~Operator();
 
   protected:
     mutable ExecuteOperatorPtr child;
+    StatisticId statisticId;
 };
 
 }// namespace NES::Runtime::Execution::Operators

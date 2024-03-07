@@ -59,6 +59,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @param queryManager pointer to the query manager
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param statisticId represents the unique identifier of components that we can track statistics for
      * @param numSourceLocalBuffers number of local source buffers
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
      * @param physicalSourceName the name and unique identifier of a physical source
@@ -71,6 +72,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         Runtime::QueryManagerPtr queryManager,
                         OperatorId operatorId,
                         OriginId originId,
+                        StatisticId statisticId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
                         const std::string& physicalSourceName,
@@ -273,6 +275,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     OriginId originId;
+    StatisticId statisticId;
     SchemaPtr schema;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};

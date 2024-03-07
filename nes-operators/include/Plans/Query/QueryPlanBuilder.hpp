@@ -80,12 +80,14 @@ class QueryPlanBuilder {
      * @brief Adds a synopsis build operator to this query
      * @param window
      * @param statisticDescriptor: Descriptor for the synopsis
+     * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
      * @param queryPlan the queryPlan the synopsis is added to
      * @return the updated queryPlanPtr
      */
     static QueryPlanPtr addStatisticBuildOperator(Windowing::WindowTypePtr window,
-                                                 Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                                                 QueryPlanPtr queryPlan);
+                                                  Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+                                                  Statistic::MetricHash metricHash,
+                                                  QueryPlanPtr queryPlan);
 
     /**
      * @brief: Map java udf according to the java method given in the descriptor.

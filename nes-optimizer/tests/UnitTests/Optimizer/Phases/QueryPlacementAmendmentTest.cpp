@@ -43,6 +43,7 @@
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
@@ -71,6 +72,7 @@ class QueryPlacementAmendmentTest : public Testing::BaseUnitTest {
     TopologyPtr topology;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    Optimizer::StatisticIdInferencePhasePtr statisticIdInferencePhase;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
 
@@ -111,21 +113,26 @@ class QueryPlacementAmendmentTest : public Testing::BaseUnitTest {
         sourceCatalog->addLogicalSource(carSourceName, carSchema);
         auto logicalSource = sourceCatalog->getLogicalSource(carSourceName);
 
-        CSVSourceTypePtr csvSourceTypeForCar = CSVSourceType::create(carSourceName, "carPhysicalSourceName");
-        csvSourceTypeForCar->setGatheringInterval(0);
-        csvSourceTypeForCar->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSourceForCar = PhysicalSource::create(csvSourceTypeForCar);
+        CSVSourceTypePtr csvSourceTypeForCar1 = CSVSourceType::create(carSourceName, "carPhysicalSourceName1");
+        csvSourceTypeForCar1->setGatheringInterval(0);
+        csvSourceTypeForCar1->setNumberOfTuplesToProducePerBuffer(0);
+        CSVSourceTypePtr csvSourceTypeForCar2 = CSVSourceType::create(carSourceName, "carPhysicalSourceName2");
+        csvSourceTypeForCar2->setGatheringInterval(0);
+        csvSourceTypeForCar2->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSourceForCar1 = PhysicalSource::create(csvSourceTypeForCar1);
+        auto physicalSourceForCar2 = PhysicalSource::create(csvSourceTypeForCar2);
 
         auto sourceCatalogEntry1 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceForCar, logicalSource, sourceNode1Id);
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceForCar1, logicalSource, sourceNode1Id);
         auto sourceCatalogEntry2 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceForCar, logicalSource, sourceNode2Id);
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceForCar2, logicalSource, sourceNode2Id);
 
         sourceCatalog->addPhysicalSource(carSourceName, sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource(carSourceName, sourceCatalogEntry2);
 
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+        statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -158,6 +165,7 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithBottomUpStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
     typeInferencePhase->execute(queryPlan);
+    statisticIdInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -248,6 +256,7 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithTopDownStrategy) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+    statisticIdInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -324,6 +333,7 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithMultipleSinkOperatorsWit
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+    statisticIdInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -564,6 +574,7 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
 
     queryPlan1 = queryReWritePhase->execute(queryPlan1);
     queryPlan1 = typeInferencePhase->execute(queryPlan1);
+    queryPlan1 = statisticIdInferencePhase->execute(queryPlan1);
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan1 = typeInferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan1);
@@ -593,6 +604,7 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
     queryPlan2 = queryReWritePhase->execute(queryPlan2);
     queryPlan2 = typeInferencePhase->execute(queryPlan2);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
+    queryPlan2 = statisticIdInferencePhase->execute(queryPlan2);
     queryPlan2 = typeInferencePhase->execute(queryPlan2);
     z3InferencePhase->execute(queryPlan2);
 
@@ -686,6 +698,7 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
 
     queryPlan1 = queryReWritePhase->execute(queryPlan1);
     queryPlan1 = typeInferencePhase->execute(queryPlan1);
+    queryPlan1 = statisticIdInferencePhase->execute(queryPlan1);
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan1 = typeInferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan1);
@@ -713,6 +726,7 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
 
     queryPlan2 = queryReWritePhase->execute(queryPlan2);
     queryPlan2 = typeInferencePhase->execute(queryPlan2);
+    queryPlan2 = statisticIdInferencePhase->execute(queryPlan2);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
     queryPlan2 = typeInferencePhase->execute(queryPlan2);
     z3InferencePhase->execute(queryPlan2);
@@ -731,6 +745,7 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
 
     queryPlan3 = queryReWritePhase->execute(queryPlan3);
     queryPlan3 = typeInferencePhase->execute(queryPlan3);
+    queryPlan3 = statisticIdInferencePhase->execute(queryPlan3);
     queryPlan3 = topologySpecificReWrite->execute(queryPlan3);
     queryPlan3 = typeInferencePhase->execute(queryPlan3);
     z3InferencePhase->execute(queryPlan3);
@@ -794,6 +809,7 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithMultipleSinkAndOnlySourc
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+    statisticIdInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -914,6 +930,7 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testIFCOPPlacement) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -1051,6 +1068,7 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testIFCOPPlacementOnBranchedTopolog
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -1193,6 +1211,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementOfSelfJoinQuery) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -1313,6 +1332,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementOfSelfJoinQuery) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -1423,6 +1443,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownPlacementWthTightResourcesConstra
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -1540,6 +1561,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -1681,6 +1703,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -1786,6 +1809,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingPessimis
         queryPlan = queryReWritePhase->execute(queryPlan);
         queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
         typeInferencePhase->execute(queryPlan);
+        statisticIdInferencePhase->execute(queryPlan);
 
         topologySpecificQueryRewrite->execute(queryPlan);
         typeInferencePhase->execute(queryPlan);
@@ -1886,6 +1910,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingPessimis
         queryPlan = queryReWritePhase->execute(queryPlan);
         queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::TopDown);
         typeInferencePhase->execute(queryPlan);
+        statisticIdInferencePhase->execute(queryPlan);
 
         topologySpecificQueryRewrite->execute(queryPlan);
         typeInferencePhase->execute(queryPlan);
@@ -1988,6 +2013,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingOptimist
         queryPlan = queryReWritePhase->execute(queryPlan);
         queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::TopDown);
         typeInferencePhase->execute(queryPlan);
+        statisticIdInferencePhase->execute(queryPlan);
 
         topologySpecificQueryRewrite->execute(queryPlan);
         typeInferencePhase->execute(queryPlan);
@@ -2090,6 +2116,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingOptimist
         queryPlan = queryReWritePhase->execute(queryPlan);
         queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
         typeInferencePhase->execute(queryPlan);
+        statisticIdInferencePhase->execute(queryPlan);
 
         topologySpecificQueryRewrite->execute(queryPlan);
         typeInferencePhase->execute(queryPlan);
@@ -2193,6 +2220,7 @@ TEST_F(QueryPlacementAmendmentTest,
     queryPlan1 = queryReWritePhase->execute(queryPlan1);
     queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
     typeInferencePhase->execute(queryPlan1);
+    statisticIdInferencePhase->execute(queryPlan1);
 
     topologySpecificQueryRewrite->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan1);
@@ -2210,6 +2238,7 @@ TEST_F(QueryPlacementAmendmentTest,
     queryPlan2 = queryReWritePhase->execute(queryPlan2);
     queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
     typeInferencePhase->execute(queryPlan2);
+    statisticIdInferencePhase->execute(queryPlan2);
 
     topologySpecificQueryRewrite->execute(queryPlan2);
     typeInferencePhase->execute(queryPlan2);
@@ -2282,6 +2311,7 @@ TEST_F(QueryPlacementAmendmentTest,
     queryPlan1 = queryReWritePhase->execute(queryPlan1);
     queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
     typeInferencePhase->execute(queryPlan1);
+    statisticIdInferencePhase->execute(queryPlan1);
 
     topologySpecificQueryRewrite->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan1);
@@ -2299,6 +2329,7 @@ TEST_F(QueryPlacementAmendmentTest,
     queryPlan2 = queryReWritePhase->execute(queryPlan2);
     queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
     typeInferencePhase->execute(queryPlan2);
+    statisticIdInferencePhase->execute(queryPlan2);
 
     topologySpecificQueryRewrite->execute(queryPlan2);
     typeInferencePhase->execute(queryPlan2);
@@ -2391,6 +2422,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -2632,6 +2664,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
@@ -2857,6 +2890,7 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQuer
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
+    statisticIdInferencePhase->execute(testQueryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());

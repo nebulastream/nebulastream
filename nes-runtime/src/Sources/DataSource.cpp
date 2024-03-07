@@ -55,6 +55,7 @@ DataSource::DataSource(SchemaPtr pSchema,
                        Runtime::QueryManagerPtr queryManager,
                        OperatorId operatorId,
                        OriginId originId,
+                       StatisticId statisticId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        const std::string& physicalSourceName,
@@ -63,8 +64,9 @@ DataSource::DataSource(SchemaPtr pSchema,
                        uint64_t taskQueueId)
     : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
-      originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), physicalSourceName(physicalSourceName) {
+      originId(originId), statisticId(statisticId), schema(std::move(pSchema)),
+      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity),
+      taskQueueId(taskQueueId), physicalSourceName(physicalSourceName) {
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -92,6 +94,7 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     buffer.setSequenceNumber(maxSequenceNumber);
     buffer.setChunkNumber(1);
     buffer.setLastChunk(true);
+    buffer.setStatisticId(statisticId);
     emitWork(buffer);
 }
 

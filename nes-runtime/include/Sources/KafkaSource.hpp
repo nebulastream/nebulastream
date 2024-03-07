@@ -45,6 +45,7 @@ class KafkaSource : public DataSource {
    * @param offsetMode instructs the broker from which point of a topic a consumer wants consume messages from
    * @param kafkaSourceType
    * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+   * @param statisticId represents the unique identifier of components that we can track statistics for
    * @param operatorId current operator id
    * @param numSourceLocalBuffers the number of buffers allocated to a source
    * @param batchSize the maximum amount of data (in bytes) that a Kafka producer can accumulate before sending a batch of messages to the Kafka
@@ -64,6 +65,7 @@ class KafkaSource : public DataSource {
                 std::string offsetMode,
                 const KafkaSourceTypePtr& kafkaSourceType,
                 OriginId originId,
+                StatisticId statisticId,
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers,
                 uint64_t batchSize,

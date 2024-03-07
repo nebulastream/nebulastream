@@ -98,6 +98,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
                                       *zmqPort,
                                       1,
                                       0,
+                                      INVALID_STATISTIC_ID,
                                       12,
                                       "defaultPhysicalStreamName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());

@@ -77,6 +77,7 @@ OperatorPtr LogicalUnionOperator::copy() {
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOutputSchema(outputSchema);
     copy->setOperatorState(operatorState);
+    copy->setStatisticId(statisticId);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }

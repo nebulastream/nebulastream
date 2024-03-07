@@ -41,7 +41,7 @@ class StatisticRegistryTest : public Testing::BaseUnitTest {
 std::vector<Statistic::StatisticKey> createRandomStatisticKey(const uint64_t numberOfKeys) {
     std::vector<Statistic::StatisticKey> randomKeys;
     for (auto i = 0_u64; i < numberOfKeys; ++i) {
-        randomKeys.emplace_back(Statistic::InfrastructureStatistic::create(Statistic::IngestionRate::create(), i));
+        randomKeys.emplace_back(Statistic::IngestionRate::create(), i);
     }
     return randomKeys;
 }

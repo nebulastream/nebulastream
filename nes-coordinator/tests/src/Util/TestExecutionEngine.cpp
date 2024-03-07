@@ -70,6 +70,7 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
         [&](SchemaPtr inputSchema,
             OperatorId id,
             OriginId originId,
+            StatisticId statisticId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr& nodeEngine,
             size_t numSourceLocalBuffers,
@@ -79,6 +80,7 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
                                            nodeEngine->getQueryManager(),
                                            id,
                                            originId,
+                                           statisticId,
                                            numSourceLocalBuffers,
                                            successors,
                                            Runtime::QueryTerminationType::Graceful);

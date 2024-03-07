@@ -298,8 +298,14 @@ class TupleBuffer {
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }
 
+    ///@brief get the buffer's statistic id (where it was last touched).
+    [[nodiscard]] constexpr StatisticId getStatisticId() const noexcept { return controlBlock->getStatisticId(); }
+
     ///@brief set the buffer's origin id (the operator id that creates this buffer).
     inline void setOriginId(uint64_t id) noexcept { controlBlock->setOriginId(id); }
+
+    ///@brief set the buffer's statistic id (where it was last touched).
+    inline void setStatisticId(StatisticId statisticId) noexcept { controlBlock->setStatisticId(statisticId); }
 
     ///@brief set the buffer's recycle callback.
     inline void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept {

@@ -30,5 +30,4 @@ bool BufferRate::operator==(const Metric& rhs) const {
 BufferRate::BufferRate() : Metric(FieldAccessExpressionNode::create(BUFFER_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
 
 std::string BufferRate::toString() const { return "BufferRate"; }
-
 }// namespace NES::Statistic

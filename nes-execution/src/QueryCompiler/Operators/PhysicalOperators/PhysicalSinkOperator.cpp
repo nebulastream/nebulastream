@@ -19,22 +19,24 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
+                                           StatisticId statisticId,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            SinkDescriptorPtr sinkDescriptor)
-    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       sinkDescriptor(std::move(sinkDescriptor)) {}
 
 PhysicalOperatorPtr
-PhysicalSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor) {
-    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(sinkDescriptor));
+PhysicalSinkOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor) {
+    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(sinkDescriptor));
 }
 
 PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId id,
+                                                 StatisticId statisticId,
                                                  const SchemaPtr& inputSchema,
                                                  const SchemaPtr& outputSchema,
                                                  const SinkDescriptorPtr& sinkDescriptor) {
-    return std::make_shared<PhysicalSinkOperator>(id, inputSchema, outputSchema, sinkDescriptor);
+    return std::make_shared<PhysicalSinkOperator>(id, statisticId, inputSchema, outputSchema, sinkDescriptor);
 }
 
 SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() { return sinkDescriptor; }
@@ -52,7 +54,7 @@ std::string PhysicalSinkOperator::toString() const {
 }
 
 OperatorPtr PhysicalSinkOperator::copy() {
-    auto result = create(id, inputSchema, outputSchema, sinkDescriptor);
+    auto result = create(id, statisticId, inputSchema, outputSchema, sinkDescriptor);
     result->addAllProperties(properties);
     return result;
 }

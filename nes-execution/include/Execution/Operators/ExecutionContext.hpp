@@ -102,10 +102,22 @@ class ExecutionContext final {
     const Value<UInt64>& getOriginId() const;
 
     /**
+     * @brief Returns the current statistic id. This is set in the Operator::open()
+     * @return Value<UInt64> statistic id
+     */
+    const Value<UInt64>& getCurrentStatisticId() const;
+
+    /**
      * @brief Sets the current origin id.
      * @param origin
      */
     void setOrigin(Value<UInt64> origin);
+
+    /**
+     * @brief Sets the current statistic id of the current tuple buffer in this execution context
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
+     */
+    void setCurrentStatisticId(Value<UInt64> statisticId);
 
     /**
      * @brief Returns the current watermark ts. This is set in the scan.
@@ -189,6 +201,7 @@ class ExecutionContext final {
     Value<MemRef> workerContext;
     Value<MemRef> pipelineContext;
     Value<UInt64> origin;
+    Value<UInt64> statisticId;
     Value<UInt64> watermarkTs;
     Value<UInt64> currentTs;
     Value<UInt64> sequenceNumber;

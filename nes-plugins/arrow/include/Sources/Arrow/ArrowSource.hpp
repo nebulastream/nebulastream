@@ -55,6 +55,7 @@ class ArrowSource : public DataSource {
                          ArrowSourceTypePtr arrowSourceType,
                          OperatorId operatorId,
                          OriginId originId,
+                         StatisticId statisticId,
                          size_t numSourceLocalBuffers,
                          GatheringMode gatheringMode,
                          const std::string& physicalSourceName,

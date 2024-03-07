@@ -19,6 +19,7 @@
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>
+#include <unordered_map>
 
 namespace NES {
 
@@ -43,6 +44,7 @@ class LogicalSourceExpansionRule;
 using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
 
 const std::string LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS = "ListOfBlockingDownStreamOperatorIds";
+const std::string LIST_OF_SIBLING_STATISTIC_IDS = "ListOfSiblingStatisticIds";
 
 /**
  * @brief This class will expand the logical query graph by adding information about the physical sources and expand the
@@ -133,6 +135,15 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      * @return true if blocking else false
      */
     bool isBlockingOperator(const NodePtr& operatorNode);
+
+    /**
+     * @brief Distributes the new statistic ids to all siblings. After this method, all sibling operators have different
+     * statistic ids.
+     * @param queryPlan
+     * @param siblingStatisticIdToNewStatisticIds: Stores for each sibling id their new statistic ids.
+     */
+    void distributeSiblingStatisticId(QueryPlan& queryPlan,
+                                      std::unordered_map<StatisticId, std::vector<StatisticId>>& siblingStatisticIdToNewStatisticIds) const;
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     bool expandSourceOnly;

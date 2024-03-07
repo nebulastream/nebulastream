@@ -21,6 +21,7 @@
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
+#include <unordered_set>
 #include <set>
 #include <vector>
 
@@ -149,6 +150,12 @@ class QueryPlan {
     std::vector<OperatorPtr> getLeafOperators();
 
     /**
+     * @brief Get all operators in the query plan
+     * @return unordered_set of operators
+     */
+    std::unordered_set<OperatorPtr> getAllOperators();
+
+    /**
      * Find if the operator with the input Id exists in the plan.
      * Note: This method only check if there exists another operator with same Id or not.
      * Note: The system generated operators are ignored from this check.
@@ -162,7 +169,14 @@ class QueryPlan {
      * @param operatorId : the input operator id
      * @return operator with the input id
      */
-    OperatorPtr getOperatorWithId(uint64_t operatorId);
+    OperatorPtr getOperatorWithOperatorId(uint64_t operatorId);
+
+    /**
+     * @brief Gets the operator node for the statistic id. This method traverses all operators in the query plan.
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
+     * @return Operator with the statistic id
+     */
+    OperatorPtr getOperatorWithStatisticId(StatisticId statisticId);
 
     /**
      * Set the query Id for the plan

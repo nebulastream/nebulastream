@@ -27,24 +27,27 @@ class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOp
     /**
      * @brief Constructor for the physical emit operator
      * @param id operator id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema input schema for the emit operator
      */
-    PhysicalEmitOperator(OperatorId id, const SchemaPtr& inputSchema);
+    PhysicalEmitOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema);
 
     /**
      * @brief Creates a physical emit operator
      * @param id operator id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema
      * @return PhysicalOperatorPtr
      */
-    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema);
 
     /**
      * @brief Creates a physical emit operator
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema
      * @return PhysicalOperatorPtr
      */
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema);
+    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema);
 
     std::string toString() const override;
 

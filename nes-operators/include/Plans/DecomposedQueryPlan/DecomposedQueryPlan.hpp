@@ -20,6 +20,7 @@
 #include <Operators/Operator.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
+#include <unordered_set>
 #include <set>
 #include <vector>
 
@@ -181,7 +182,7 @@ class DecomposedQueryPlan {
      * @param operatorId: the id of the operator
      * @return the shared pointer to the operator node
      */
-    OperatorPtr getOperatorWithId(OperatorId operatorId);
+    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId);
 
     /**
      * @brief Check if the decomposed query plan contains an operator with input id
@@ -206,7 +207,7 @@ class DecomposedQueryPlan {
      * @brief Get all operators in the query plan
      * @return vector of operators
      */
-    std::set<OperatorPtr> getAllOperators();
+    std::unordered_set<OperatorPtr> getAllOperators();
 
     /**
      * @brief Create copy of the decomposed query plan

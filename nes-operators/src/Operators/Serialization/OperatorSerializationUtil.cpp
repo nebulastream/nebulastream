@@ -170,6 +170,9 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     // serialize operator id
     serializedOperator.set_operatorid(operatorNode->getId());
 
+    // serialize statistic id
+    serializedOperator.set_statisticid(operatorNode->getStatisticId());
+
     // serialize and append children if the node has any
     for (const auto& child : operatorNode->getChildren()) {
         serializedOperator.add_childrenids(child->as<Operator>()->getId());
@@ -330,6 +333,8 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
         joinOp->getBatchJoinDefinition()->updateInputSchemas(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
         joinOp->getBatchJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
     }
+
+    operatorNode->setStatisticId(serializedOperator.statisticid());
 
     // de-serialize and append origin id
     if (operatorNode->instanceOf<BinaryOperator>()) {
