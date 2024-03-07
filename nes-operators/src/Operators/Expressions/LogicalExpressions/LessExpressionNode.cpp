@@ -34,7 +34,7 @@ bool LessExpressionNode::equal(NodePtr const& rhs) const {
 
 std::string LessExpressionNode::toString() const {
     std::stringstream ss;
-    ss << children[0]->toString() << "<" << children[1]->toString();
+    ss << children[0]->toString() << " < " << children[1]->toString();
     return ss.str();
 }
 

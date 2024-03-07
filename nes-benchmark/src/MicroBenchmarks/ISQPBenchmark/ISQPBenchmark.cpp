@@ -54,13 +54,6 @@ using namespace NES::Benchmark;
 using std::filesystem::directory_iterator;
 
 std::chrono::nanoseconds Runtime;
-NES::NesCoordinatorPtr coordinator;
-
-TopologyPtr topology;
-SourceCatalogServicePtr sourceCatalogService;
-RequestHandlerServicePtr requestHandlerService;
-Catalogs::Source::SourceCatalogPtr sourceCatalog;
-Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
 class ErrorHandler : public Exceptions::ErrorListener {
   public:
@@ -77,7 +70,7 @@ class ErrorHandler : public Exceptions::ErrorListener {
  * @brief Set up the physical sources for the benchmark
  * @param leafWorkerIds: leaf worker ids
  */
-void setupSources(std::vector<WorkerId> leafWorkerIds) {
+void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr sourceCatalogService) {
 
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
@@ -136,7 +129,12 @@ void setupSources(std::vector<WorkerId> leafWorkerIds) {
     }
 }
 
-void setupTopology(uint16_t rootNodes, uint16_t intermediateNodes, uint16_t sourceNodes) {
+void setupTopology(uint16_t rootNodes,
+                   uint16_t intermediateNodes,
+                   uint16_t sourceNodes,
+                   RequestHandlerServicePtr requestHandlerService,
+                   SourceCatalogServicePtr sourceCatalogService,
+                   TopologyPtr topology) {
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -166,6 +164,7 @@ void setupTopology(uint16_t rootNodes, uint16_t intermediateNodes, uint16_t sour
 
     // Fetch worker Ids
     std::vector<WorkerId> rootWorkerIds;
+    rootWorkerIds.emplace_back(topology->getRootTopologyNodeId());
     for (const auto& rootISQPAddNodeEvent : rootISQPAddNodeEvents) {
         const auto& response = rootISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
         auto workerId = std::static_pointer_cast<RequestProcessor::ISQPAddNodeResponse>(response)->workerId;
@@ -215,7 +214,7 @@ void setupTopology(uint16_t rootNodes, uint16_t intermediateNodes, uint16_t sour
     requestHandlerService->queueISQPRequest(linkAddEvents);
 
     // create logical and physical sources
-    setupSources(leafWorkerIds);
+    setupSources(leafWorkerIds, sourceCatalogService);
 };
 
 /**
@@ -224,8 +223,13 @@ void setupTopology(uint16_t rootNodes, uint16_t intermediateNodes, uint16_t sour
  * @param noOfPhysicalSources : total number of physical sources
  * @param batchSize : the batch size for query processing
  */
-void setUp(uint16_t rootNodes, uint16_t intermediateNodes, uint16_t leafNodes) {
-    setupTopology(rootNodes, intermediateNodes, leafNodes);
+void setUp(uint16_t rootNodes,
+           uint16_t intermediateNodes,
+           uint16_t leafNodes,
+           RequestHandlerServicePtr requestHandlerService,
+           SourceCatalogServicePtr sourceCatalogService,
+           TopologyPtr topology) {
+    setupTopology(rootNodes, intermediateNodes, leafNodes, requestHandlerService, sourceCatalogService, topology);
 }
 
 /**
@@ -384,41 +388,38 @@ int main(int argc, const char* argv[]) {
 
     std::cout << "Parsed all queries." << std::endl;
 
-    auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
-    //Set optimizer configuration
-    OptimizerConfiguration optimizerConfiguration;
-    optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
-    coordinatorConfiguration->optimizer = optimizerConfiguration;
-
     //Perform benchmark for each run configuration
     auto runConfig = configs["RunConfig"];
     for (auto entry = runConfig.Begin(); entry != runConfig.End(); entry++) {
         auto node = (*entry).second;
         auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
         auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
-        coordinatorConfiguration->optimizer.enableIncrementalPlacement = incrementalPlacement;
+        auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
+        //Set optimizer configuration
+        OptimizerConfiguration optimizerConfiguration;
+        optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+        optimizerConfiguration.enableIncrementalPlacement = incrementalPlacement;
+        coordinatorConfiguration->optimizer = optimizerConfiguration;
 
         for (uint32_t run = 0; run < numberOfRun; run++) {
             std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
 
             auto nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
             nesCoordinator->startCoordinator(false);
-            requestHandlerService = nesCoordinator->getRequestHandlerService();
-            sourceCatalogService = nesCoordinator->getSourceCatalogService();
+            auto requestHandlerService = nesCoordinator->getRequestHandlerService();
+            auto sourceCatalogService = nesCoordinator->getSourceCatalogService();
+            auto topology = nesCoordinator->getTopology();
 
             std::cout << "Setting up the topology." << std::endl;
 
             //Setup topology and source catalog
-            setUp(1, 10, 100);
-
-            nesCoordinator->getTopology()->print();
+            setUp(1, 10, 100, requestHandlerService, sourceCatalogService, topology);
 
             auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
-
             //Perform steps to optimize queries
             for (uint64_t i = 0; i < numOfQueries; i++) {
                 auto queryPlan = queryObjects[i];
-                auto addQueryRequest = RequestProcessor::ISQPAddQueryEvent::create(queryPlan, placement);
+                auto addQueryRequest = RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement);
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
