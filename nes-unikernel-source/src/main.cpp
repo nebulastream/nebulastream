@@ -171,8 +171,10 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
 class TcpServer {
   public:
     TcpServer(boost::asio::io_service& ioService, const Options& option, std::unique_ptr<APrioriDataGenerator> generator)
-        : acceptor(ioService, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), option.port)), delay(option.delayInMS),
-          dataGenerator(std::move(generator)), print(option.print) {
+        : acceptor(ioService,
+                   boost::asio::ip::tcp::endpoint(boost::asio::ip::address_v4::from_string(option.hostIp), option.port)),
+          delay(option.delayInMS), dataGenerator(std::move(generator)), print(option.print) {
+        NES_INFO("TCP Server listening on {}:{}", option.hostIp, option.port)
         startAccept();
     }
 
