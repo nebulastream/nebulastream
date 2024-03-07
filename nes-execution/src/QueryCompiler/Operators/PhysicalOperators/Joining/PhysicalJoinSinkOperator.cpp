@@ -17,28 +17,31 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalJoinSinkOperator::create(const SchemaPtr& leftInputSchema,
-                                                     const SchemaPtr& rightInputSchema,
-                                                     const SchemaPtr& outputSchema,
-                                                     const Join::JoinOperatorHandlerPtr& joinOperatorHandler) {
-    return create(getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
-}
-
-PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id,
+PhysicalOperatorPtr PhysicalJoinSinkOperator::create(StatisticId statisticId,
                                                      const SchemaPtr& leftInputSchema,
                                                      const SchemaPtr& rightInputSchema,
                                                      const SchemaPtr& outputSchema,
                                                      const Join::JoinOperatorHandlerPtr& joinOperatorHandler) {
-    return std::make_shared<PhysicalJoinSinkOperator>(id, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
+    return create(getNextOperatorId(), statisticId, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
+}
+
+PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id,
+                                                     StatisticId statisticId,
+                                                     const SchemaPtr& leftInputSchema,
+                                                     const SchemaPtr& rightInputSchema,
+                                                     const SchemaPtr& outputSchema,
+                                                     const Join::JoinOperatorHandlerPtr& joinOperatorHandler) {
+    return std::make_shared<PhysicalJoinSinkOperator>(id, statisticId, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
 
 PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id,
+                                                   StatisticId statisticId,
                                                    SchemaPtr leftInputSchema,
                                                    SchemaPtr rightInputSchema,
                                                    SchemaPtr outputSchema,
                                                    Join::JoinOperatorHandlerPtr joinOperatorHandler)
     : Operator(id), PhysicalJoinOperator(std::move(joinOperatorHandler)),
-      PhysicalBinaryOperator(id, std::move(leftInputSchema), std::move(rightInputSchema), std::move(outputSchema)){};
+      PhysicalBinaryOperator(id, statisticId, std::move(leftInputSchema), std::move(rightInputSchema), std::move(outputSchema)){};
 
 std::string PhysicalJoinSinkOperator::toString() const {
     std::stringstream out;
@@ -51,6 +54,7 @@ std::string PhysicalJoinSinkOperator::toString() const {
 OperatorPtr PhysicalJoinSinkOperator::copy() {
     auto result = create(
         id,
+        statisticId,
         leftInputSchema,
         rightInputSchema,
         outputSchema,

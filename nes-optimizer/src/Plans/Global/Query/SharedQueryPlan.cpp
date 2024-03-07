@@ -385,12 +385,12 @@ void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& ups
 
     std::set<LogicalOperatorPtr> upstreamLogicalOperators;
     for (const auto& upstreamOperatorId : upstreamOperatorIds) {
-        upstreamLogicalOperators.emplace(queryPlan->getOperatorWithId(upstreamOperatorId)->as<LogicalOperator>());
+        upstreamLogicalOperators.emplace(queryPlan->getOperatorWithOperatorId(upstreamOperatorId)->as<LogicalOperator>());
     }
 
     std::set<LogicalOperatorPtr> downstreamLogicalOperators;
     for (const auto& downstreamOperatorId : downstreamOperatorIds) {
-        downstreamLogicalOperators.emplace(queryPlan->getOperatorWithId(downstreamOperatorId)->as<LogicalOperator>());
+        downstreamLogicalOperators.emplace(queryPlan->getOperatorWithOperatorId(downstreamOperatorId)->as<LogicalOperator>());
     }
 
     std::set<OperatorPtr> downstreamOperator{downstreamLogicalOperators.begin(), downstreamLogicalOperators.end()};
@@ -414,7 +414,7 @@ void SharedQueryPlan::updateOperators(const std::set<LogicalOperatorPtr>& update
     //Iterate over all updated operators and update the corresponding operator in the shared query plan with correct properties and state.
     for (const auto& placedOperator : updatedOperators) {
         auto topologyNodeId = std::any_cast<WorkerId>(placedOperator->getProperty(PINNED_NODE_ID));
-        auto operatorInQueryPlan = queryPlan->getOperatorWithId(placedOperator->getId());
+        auto operatorInQueryPlan = queryPlan->getOperatorWithOperatorId(placedOperator->getId());
         operatorInQueryPlan->addProperty(PINNED_NODE_ID, topologyNodeId);
         placedOperator->setOperatorState(OperatorState::PLACED);
     }

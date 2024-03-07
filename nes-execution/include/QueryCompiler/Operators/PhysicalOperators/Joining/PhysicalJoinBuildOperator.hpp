@@ -27,15 +27,18 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Join::JoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSideType buildSide);
-    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Join::JoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSideType buildSide);
     PhysicalJoinBuildOperator(OperatorId id,
+                              StatisticId statisticId,
                               SchemaPtr inputSchema,
                               SchemaPtr outputSchema,
                               Join::JoinOperatorHandlerPtr operatorHandler,

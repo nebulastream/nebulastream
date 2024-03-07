@@ -24,24 +24,24 @@ namespace NES::Statistic {
  * The StatisticHash uniquely identifies a statistic anywhere in our system, which means we do not need to send
  * characteristics and windows to all workers to uniquely identify a statistic.
  */
-using StatisticHash = std::size_t;
+using StatisticHash = uint64_t;
+// a fixed-point representation of the fractional part of the golden ratio to provide better distribution properties in hash functions
+constexpr auto goldenRatio = 0x9e3779b97f4a7c15;
 
 /**
- * @brief This class represents how to uniquely identify a statistic in the system
+ * @brief This class represents how to uniquely identify a statistic in the system. It consists of a metric (Type over a field)
+ * and a StatisticId. The statistic id is unique across all components, e.g., physical sources and operators.
+ * By combining them, we can specify what metric is being tracked for what component. One example might be tracking
+ * the selectivity over the physical source `car_1`.
  */
 class StatisticKey {
   public:
     /**
      * @brief Constructor for a StatisticKey
-     * @param characteristic
+     * @param metric
+     * @param statisticId represents the unique identifier of components that we can track statistics for
      */
-    StatisticKey(CharacteristicPtr characteristic);
-
-    /**
-     * @brief Getter for the characteristic
-     * @return CharacteristicPtr
-     */
-    [[nodiscard]] CharacteristicPtr getCharacteristic() const;
+    StatisticKey(MetricPtr metric, StatisticId statisticId);
 
     /**
      * @brief Checks for equality
@@ -58,10 +58,20 @@ class StatisticKey {
     bool operator!=(const StatisticKey& rhs) const;
 
     /**
-     * @brief Calculates the hash
+     * @brief Calculates the hash for this statistic key
      * @return std::size_t
      */
-    std::size_t hash() const;
+    StatisticHash hash() const;
+
+    /**
+     * @brief Combines the metricHash and the statisticId to a StatisticHash. We need this as a static hash function,
+     * as we can therefore provide the metricHash to the nautilus operator instead of having to send the whole metric
+     * down to the nautilus operator.
+     * @param metricHash: Hash of the metric, i.e., metric->hash()
+     * @param statisticId: StatisticId identifying the component over which we want to collect statistics
+     * @return StatisticHash
+     */
+    static StatisticHash combineStatisticIdWithMetricHash(MetricHash metricHash, StatisticId statisticId);
 
     /**
      * @brief Creates a string representation
@@ -70,14 +80,15 @@ class StatisticKey {
     std::string toString() const;
 
   private:
-    const CharacteristicPtr characteristic;
+    const MetricPtr metric;
+    const StatisticId statisticId;
 };
 
 /**
  * @brief Necessary for unordered_map with StatisticKey as the key
  */
 struct StatisticKeyHash {
-    std::size_t operator()(const StatisticKey& key) const { return key.hash(); }
+    StatisticHash operator()(const StatisticKey& key) const { return key.hash(); }
 };
 
 }// namespace NES::Statistic

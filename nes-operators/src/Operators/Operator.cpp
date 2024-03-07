@@ -22,11 +22,19 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-Operator::Operator(OperatorId id) : id(id), properties() { NES_INFO("Creating Operator {}", id); }
+Operator::Operator(OperatorId id) : Operator(id, INVALID_STATISTIC_ID) {}
+
+Operator::Operator(OperatorId id, StatisticId statisticId) : id(id), statisticId(statisticId), properties() {
+    NES_INFO("Creating Operator {}", id);
+}
 
 OperatorId Operator::getId() const { return id; }
 
 void Operator::setId(OperatorId id) { Operator::id = id; }
+
+StatisticId Operator::getStatisticId() const { return statisticId; }
+
+void Operator::setStatisticId(StatisticId statisticId) { Operator::statisticId = statisticId; }
 
 bool Operator::hasMultipleChildrenOrParents() {
     //has multiple child operator
@@ -151,13 +159,29 @@ NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) {
 
     for (const auto& child : children) {
 
-        // If the child has a matching Id then return it
+        // If the child has a matching operator id then return it
         if(child->as<Operator>()->getId() == operatorId){
             return child;
         }
 
         // Look in for a matching operator in the grand children list
         auto found = child->as<Operator>()->getChildWithOperatorId(operatorId);
+        if (found) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+NodePtr Operator::getChildWithStatisticId(StatisticId statisticId) {
+    for (const auto& child : children) {
+        // If the child has a matching statistic id then return it
+        if(child->as<Operator>()->getStatisticId() == statisticId){
+            return child;
+        }
+
+        // Look in all children for a matching operator in the grand children list
+        auto found = child->as<Operator>()->getChildWithStatisticId(statisticId);
         if (found) {
             return found;
         }
@@ -208,14 +232,20 @@ void Operator::addAllProperties(const OperatorProperties& properties) {
 }
 
 OperatorId getNextOperatorId() {
-    static std::atomic_uint64_t id = 0;
+    static std::atomic_uint64_t id = INVALID_OPERATOR_ID;
     return ++id;
+}
+
+OperatorId getNextStatisticId() {
+    static std::atomic<StatisticId> statisticId = INVALID_STATISTIC_ID;
+    return ++statisticId;
 }
 
 std::string Operator::toString() const {
     std::stringstream out;
     out << std::endl;
     out << "operatorId: " << id << "\n";
+    out << "statisticId: " << statisticId << "\n";
     out << "properties: ";
     for (const auto& item : properties) {
         if (item.first != properties.begin()->first) {

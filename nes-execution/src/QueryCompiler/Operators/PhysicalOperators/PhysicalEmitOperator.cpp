@@ -16,14 +16,14 @@
 #include <utility>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const SchemaPtr& inputSchema)
-    : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
+PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
 
-PhysicalOperatorPtr PhysicalEmitOperator::create(SchemaPtr inputSchema) {
-    return create(getNextOperatorId(), std::move(inputSchema));
+PhysicalOperatorPtr PhysicalEmitOperator::create(StatisticId statisticId,SchemaPtr inputSchema) {
+    return create(getNextOperatorId(), statisticId, std::move(inputSchema));
 }
-PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, const SchemaPtr& inputSchema) {
-    return std::make_shared<PhysicalEmitOperator>(id, inputSchema);
+PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema) {
+    return std::make_shared<PhysicalEmitOperator>(id, statisticId, inputSchema);
 }
 
 std::string PhysicalEmitOperator::toString() const {
@@ -35,7 +35,7 @@ std::string PhysicalEmitOperator::toString() const {
 }
 
 OperatorPtr PhysicalEmitOperator::copy() {
-    auto result = create(id, inputSchema);
+    auto result = create(id, statisticId, inputSchema);
     result->addAllProperties(properties);
     return result;
 }

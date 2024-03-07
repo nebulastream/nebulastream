@@ -24,15 +24,17 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator {
   public:
     PhysicalWatermarkAssignmentOperator(OperatorId id,
+                                        StatisticId statisticId,
                                         SchemaPtr inputSchema,
                                         SchemaPtr outputSchema,
                                         Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
     static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     std::string toString() const override;
     OperatorPtr copy() override;
 

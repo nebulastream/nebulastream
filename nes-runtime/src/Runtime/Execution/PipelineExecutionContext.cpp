@@ -69,7 +69,7 @@ bool PipelineExecutionContext::isLastChunk(const SeqNumberOriginId seqNumberOrig
         chunkState.lastChunkNumber = chunkNumber;
     }
     chunkState.seenChunks++;
-    NES_INFO("seqNumberOriginId = {} chunkNumber = {} isLastChunk = {} seenChunks = {} lastChunkNumber = {}",
+    NES_TRACE("seqNumberOriginId = {} chunkNumber = {} isLastChunk = {} seenChunks = {} lastChunkNumber = {}",
              seqNumberOriginId.toString(),
              chunkNumber,
              isLastChunk,

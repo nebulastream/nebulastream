@@ -135,14 +135,14 @@ void DecomposedQueryPlan::setVersion(DecomposedQueryPlanVersion newVersion) { de
 
 bool DecomposedQueryPlan::hasOperatorWithId(OperatorId operatorId) {
     NES_DEBUG("Checking if the operator exists in the query plan or not");
-    if (getOperatorWithId(operatorId)) {
+    if (getOperatorWithOperatorId(operatorId)) {
         return true;
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return false;
 }
 
-OperatorPtr DecomposedQueryPlan::getOperatorWithId(OperatorId operatorId) {
+OperatorPtr DecomposedQueryPlan::getOperatorWithOperatorId(OperatorId operatorId) {
     NES_DEBUG("Checking if the operator with id {} exists in the query plan or not", operatorId);
     for (auto rootOperator : rootOperators) {
 
@@ -186,10 +186,10 @@ void DecomposedQueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNod
     rootOperators.push_back(operatorNode);
 }
 
-std::set<OperatorPtr> DecomposedQueryPlan::getAllOperators() {
+std::unordered_set<OperatorPtr> DecomposedQueryPlan::getAllOperators() {
 
     // Maintain a list of visited nodes as there are multiple root nodes
-    std::set<OperatorPtr> visitedOperators;
+    std::unordered_set<OperatorPtr> visitedOperators;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);

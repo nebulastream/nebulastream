@@ -100,12 +100,14 @@ class LogicalOperatorFactory {
      * @brief Creates a synopsis build operator
      * @param window: Window properties
      * @param statisticDescriptor: Descriptor on how to build the statistic
+     * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
      * @param id: The id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorPtr createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
-                                                                    const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
-                                                                    OperatorId id = getNextOperatorId());
+                                                                const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
+                                                                const Statistic::MetricHash metricHash,
+                                                                OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source operator with source descriptor.

@@ -35,10 +35,16 @@ using OperatorProperties = std::unordered_map<std::string, std::any>;
  */
 OperatorId getNextOperatorId();
 
+/**
+ * @brief Returns the next free statistic id
+ * @return StatisticId
+ */
+StatisticId getNextStatisticId();
+
 class Operator : public Node {
   public:
     explicit Operator(OperatorId id);
-    explicit Operator(OperatorId id, std::vector<OriginId> inputOriginIds);
+    explicit Operator(OperatorId id, StatisticId statisticId);
 
     ~Operator() noexcept override = default;
 
@@ -50,12 +56,24 @@ class Operator : public Node {
     OperatorId getId() const;
 
     /**
+     * @brief Gets the statisticId of this operator for example to pass it down to the physical operator
+     * @return StatisticId
+     */
+    StatisticId getStatisticId() const;
+
+    /**
      * NOTE: this method is only called from Logical Plan Expansion Rule
      * @brief gets the operator id.
      * Unique Identifier of the operator within a query.
      * @param operator id
      */
     void setId(OperatorId id);
+
+    /**
+     * @brief Sets the statistic id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
+     */
+    void setStatisticId(StatisticId statisticId);
 
     /**
      * @brief Create duplicate of this operator by copying its context information and also its parent and child operator set.
@@ -103,10 +121,17 @@ class Operator : public Node {
 
     /**
      * @brief Get the operator with input operator id
-     * @param operatorId : the if of the operator to find
+     * @param operatorId : the operator id of the operator to find
      * @return nullptr if not found else the operator node
      */
     NodePtr getChildWithOperatorId(OperatorId operatorId);
+
+    /**
+     * @brief Get the operator with statisticId id
+     * @param operatorId : the statisticId id of the operator to find
+     * @return nullptr if not found else the operator node
+     */
+    NodePtr getChildWithStatisticId(StatisticId statisticId);
 
     /**
      * Check if a node with the id is either a child or a grandchild of this operator
@@ -198,6 +223,11 @@ class Operator : public Node {
      * @brief Unique Identifier of the operator within a query.
      */
     OperatorId id;
+
+    /**
+     * @brief Unique Identifier of the operator across the whole system.
+     */
+    StatisticId statisticId;
 
     /*
      * @brief Map of properties of the current node

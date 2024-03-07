@@ -32,6 +32,7 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
     /**
      * @brief creates a PhysicalStreamJoinProbeOperator with a provided operatorId
      * @param id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -44,6 +45,7 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      * @return PhysicalStreamJoinProbeOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
@@ -58,6 +60,7 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
 
     /**
      * @brief Creates a PhysicalStreamJoinProbeOperator that retrieves a new operatorId by calling method
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -69,7 +72,8 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      * @param windowKeyFieldName
      * @return PhysicalStreamJoinProbeOperator
      */
-    static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
                                       const std::string& joinFieldNameLeft,
@@ -84,6 +88,7 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
     /**
      * @brief Constructor for a PhysicalStreamJoinProbeOperator
      * @param id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -92,6 +97,7 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      * @param operatorHandler
      */
     PhysicalStreamJoinProbeOperator(OperatorId id,
+                                    StatisticId statisticId,
                                     const SchemaPtr& leftSchema,
                                     const SchemaPtr& rightSchema,
                                     const SchemaPtr& outputSchema,

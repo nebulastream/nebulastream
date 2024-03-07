@@ -187,6 +187,18 @@ class alignas(64) BufferControlBlock {
     void setOriginId(OriginId originId);
 
     /**
+     * @brief get the statistic Id where this buffer was last touched
+     * @return StatisticId
+     */
+    [[nodiscard]] StatisticId getStatisticId() const noexcept;
+
+    /**
+     * @brief set statisticId
+     * @param statisticId represents the unique identifier of components that we can track statistics for
+     */
+    void setStatisticId(StatisticId statisticId);
+
+    /**
     * @brief method to set the watermark with a timestamp
     * @param value timestamp
     */
@@ -216,6 +228,7 @@ class alignas(64) BufferControlBlock {
     bool lastChunk = true;
     int64_t creationTimestamp{};
     OriginId originId = INVALID_ORIGIN_ID;
+    StatisticId statisticId = INVALID_STATISTIC_ID;
     std::vector<MemorySegment*> children;
 
   public:

@@ -103,7 +103,7 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
                     auto pipelineCPPSourceCode = lp.lower(ir);
                     auto& operatorsInPipeline = pipeline->getOperatorIds();
                     for (auto& operatorId : operatorsInPipeline) {
-                        auto op = inputPlan->getOperatorWithId(operatorId);
+                        auto op = inputPlan->getOperatorWithOperatorId(operatorId);
                         if (op) {
                             op->addProperty(NES::Optimizer::ElegantPlacementStrategy::sourceCodeKey, pipelineCPPSourceCode);
                             op->addProperty("PIPELINE_ID", pipeline->getPipelineId());

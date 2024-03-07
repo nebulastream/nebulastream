@@ -25,7 +25,8 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
   public:
     LogicalStatisticWindowOperator(OperatorId id,
                                    Windowing::WindowTypePtr windowType,
-                                   WindowStatisticDescriptorPtr windowStatisticDescriptor);
+                                   WindowStatisticDescriptorPtr windowStatisticDescriptor,
+                                   MetricHash metricHash);
 
     /**
      * @brief Infers the schema for this StatisticWindowOperatorNode
@@ -80,6 +81,7 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
     Windowing::WindowTypePtr windowType;
     std::vector<OriginId> inputOriginIds;
     WindowStatisticDescriptorPtr windowStatisticDescriptor;
+    MetricHash metricHash;
 };
 
 }// namespace NES::Statistic

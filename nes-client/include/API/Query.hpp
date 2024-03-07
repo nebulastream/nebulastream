@@ -406,9 +406,12 @@ class Query {
      * @brief Add a synopsis build operator to the query
      * @param window
      * @param statisticDescriptor
+     * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
      * @return The query
      */
-    Query& buildStatistic(Windowing::WindowTypePtr window, Statistic::WindowStatisticDescriptorPtr statisticDescriptor);
+    Query& buildStatistic(Windowing::WindowTypePtr window,
+                          Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+                          Statistic::MetricHash metricHash);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.

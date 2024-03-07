@@ -30,5 +30,4 @@ bool IngestionRate::operator==(const Metric& rhs) const {
 }
 
 std::string IngestionRate::toString() const { return "IngestionRate"; }
-
 }// namespace NES::Statistic

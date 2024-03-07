@@ -34,6 +34,7 @@
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -197,6 +198,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
+        auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
         auto topologySpecificQueryRewritePhase =
             Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
         auto signatureInferencePhase =
@@ -270,34 +272,37 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         //9. Perform signature inference phase for sharing identification among query plans
         signatureInferencePhase->execute(queryPlan);
 
-        //10. Perform topology specific rewrites to the query plan
+        //10. Assign a unique statisticId to all logical operators
+        queryPlan = statisticIdInferencePhase->execute(queryPlan);
+
+        //11. Perform topology specific rewrites to the query plan
         queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
-        //11. Add the updated query plan to the query catalog
+        //12. Add the updated query plan to the query catalog
         queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
-        //12. Perform type inference over re-written query plan
+        //13. Perform type inference over re-written query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
 
-        //13. Identify the number of origins and their ids for all logical operators
+        //14. Identify the number of origins and their ids for all logical operators
         queryPlan = originIdInferencePhase->execute(queryPlan);
 
-        //14. Set memory layout of each logical operator in the rewritten query
+        //15. Set memory layout of each logical operator in the rewritten query
         NES_DEBUG("Performing query choose memory layout phase:  {}", queryId);
         queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
 
-        //15. Add the updated query plan to the query catalog
+        //16. Add the updated query plan to the query catalog
         queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
 
-        //16. Add the updated query plan to the global query plan
+        //17. Add the updated query plan to the global query plan
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
         globalQueryPlan->addQueryPlan(queryPlan);
 
-        //17. Perform query merging for newly added query plan
+        //18. Perform query merging for newly added query plan
         NES_DEBUG("Applying Query Merger Rules as Query Merging is enabled.");
         queryMergerPhase->execute(globalQueryPlan);
 
-        //18. Get the shared query plan id for the added query
+        //19. Get the shared query plan id for the added query
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             throw Exceptions::SharedQueryPlanNotFoundException(
@@ -305,7 +310,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                 sharedQueryId);
         }
 
-        //19. Get the shared query plan for the added query
+        //20. Get the shared query plan for the added query
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
         if (!sharedQueryPlan) {
             throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.",
@@ -320,13 +325,13 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         //Link both catalogs
         queryCatalog->linkSharedQuery(queryId, sharedQueryId);
 
-        //20. Perform placement of updated shared query plan
+        //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
         auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-        //21. Perform deployment of re-placed shared query plan
+        //22. Perform deployment of re-placed shared query plan
         deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
-        //22. Update the shared query plan as deployed
+        //23. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
         // Iterate over deployment context and update execution plan

@@ -18,23 +18,26 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalMapUDFOperator::PhysicalMapUDFOperator(OperatorId id,
+                                               StatisticId statisticId,
                                                const SchemaPtr& inputSchema,
                                                const SchemaPtr& outputSchema,
                                                const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
-    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       udfDescriptor(std::move(udfDescriptor)) {}
 
-PhysicalOperatorPtr PhysicalMapUDFOperator::create(const SchemaPtr& inputSchema,
+PhysicalOperatorPtr PhysicalMapUDFOperator::create(StatisticId statisticId,
+                                                   const SchemaPtr& inputSchema,
                                                    const SchemaPtr& outputSchema,
                                                    const Catalogs::UDF::UDFDescriptorPtr udfDescriptor) {
-    return create(getNextOperatorId(), inputSchema, outputSchema, udfDescriptor);
+    return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, udfDescriptor);
 }
 
 PhysicalOperatorPtr PhysicalMapUDFOperator::create(OperatorId id,
+                                                   StatisticId statisticId,
                                                    const SchemaPtr& inputSchema,
                                                    const SchemaPtr& outputSchema,
                                                    const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor) {
-    return std::make_shared<PhysicalMapUDFOperator>(id, inputSchema, outputSchema, udfDescriptor);
+    return std::make_shared<PhysicalMapUDFOperator>(id, statisticId, inputSchema, outputSchema, udfDescriptor);
 }
 
 std::string PhysicalMapUDFOperator::toString() const {
@@ -50,7 +53,7 @@ std::string PhysicalMapUDFOperator::toString() const {
 }
 
 OperatorPtr PhysicalMapUDFOperator::copy() {
-    auto result = create(id, inputSchema, outputSchema, udfDescriptor);
+    auto result = create(id, statisticId, inputSchema, outputSchema, udfDescriptor);
     result->addAllProperties(properties);
     return result;
 }

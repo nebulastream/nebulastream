@@ -30,5 +30,4 @@ bool MinVal::operator==(const Metric& rhs) const {
 }
 
 std::string MinVal::toString() const { return "MinVal over " + field->toString(); }
-
 }// namespace NES::Statistic

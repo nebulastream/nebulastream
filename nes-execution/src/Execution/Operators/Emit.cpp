@@ -67,6 +67,7 @@ void Emit::emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& recordBuffer, c
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
     recordBuffer.setOriginId(ctx.getOriginId());
+    recordBuffer.setStatisticId(ctx.getCurrentStatisticId());
     recordBuffer.setSequenceNr(ctx.getSequenceNumber());
     recordBuffer.setChunkNr(ctx.getNextChunkNr());
     recordBuffer.setLastChunk(lastChunk);

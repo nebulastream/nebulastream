@@ -32,5 +32,4 @@ bool Cardinality::operator==(const Metric& rhs) const {
 std::string Cardinality::toString() const { return "Cardinality over " + field->toString(); }
 
 Cardinality::Cardinality(const FieldAccessExpressionNodePtr& field) : Metric(field) {}
-
 }// namespace NES::Statistic

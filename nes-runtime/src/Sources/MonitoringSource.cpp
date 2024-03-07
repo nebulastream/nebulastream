@@ -32,6 +32,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                                    Runtime::QueryManagerPtr queryManager,
                                    OperatorId operatorId,
                                    OriginId originId,
+                                   StatisticId statisticId,
                                    size_t numSourceLocalBuffers,
                                    const std::string& physicalSourceName,
                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -40,6 +41,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                  queryManager,
                  operatorId,
                  originId,
+                 statisticId,
                  numSourceLocalBuffers,
                  GatheringMode::INTERVAL_MODE,
                  physicalSourceName,

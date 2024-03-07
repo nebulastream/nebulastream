@@ -71,6 +71,8 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
     }
 
     // We add a statistic sink with issue #4632 here
-    return Query::from(logicalSourceName).buildStatistic(window, synopsisDescriptor).sink(NullOutputSinkDescriptor::create());
+    return Query::from(logicalSourceName)
+        .buildStatistic(window, synopsisDescriptor, metricType->hash())
+        .sink(NullOutputSinkDescriptor::create());
 }
 }// namespace NES::Statistic

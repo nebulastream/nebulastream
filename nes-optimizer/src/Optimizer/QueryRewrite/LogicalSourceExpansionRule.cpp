@@ -68,6 +68,15 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         }
     }
 
+
+    // After we duplicate all non-blocking logical operators, we have the same statistic id for multiple operators.
+    // Furthermore, we require to know all statistic ids that belong to one non-duplicated logical operator.
+    // Therefore, we do the following two steps:
+    //      1. First, we create new statistic id so that the statistic id is unique across the whole system
+    //      2. We store for the old statistic ids, all sibling statistic ids in the property. This way, we can still
+    //         deduce the new statistic ids from an old one.
+    std::unordered_map<StatisticId, std::vector<StatisticId>> siblingStatisticIdToNewStatisticIds;
+
     //Iterate over all source operators
     for (const auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
@@ -99,6 +108,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         }
         NES_TRACE("LogicalSourceExpansionRule: Create {} duplicated logical sub-graph and add to original graph",
                   sourceCatalogEntries.size());
+
         //Create one duplicate operator for each physical source
         for (const auto& sourceCatalogEntry : sourceCatalogEntries) {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
@@ -110,10 +120,12 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             auto duplicateSourceDescriptor = sourceDescriptor->copy();
             duplicateSourceDescriptor->setPhysicalSourceName(sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
             duplicateSourceOperator->setSourceDescriptor(duplicateSourceDescriptor);
+            duplicateSourceOperator->setStatisticId(sourceCatalogEntry->getPhysicalSource()->getStatisticId());
 
             //Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
             const std::vector<NodePtr>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
 
+            std::unordered_set<OperatorId> visitedOperators;
             for (const auto& node : allOperators) {
                 auto operatorNode = node->as<Operator>();
 
@@ -131,21 +143,76 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                                 "LogicalSourceExpansionRule: Unable to find blocking operator with id "
                                 + std::to_string(blockingParentId));
                         }
+                        // Check, if we have visited this operator already
+                        if (!visitedOperators.contains(operatorNode->getId())) {
+                            visitedOperators.insert(operatorNode->getId());
+
+                            // Getting a new statistic id and storing this statistic id
+                            auto newStatisticId = getNextStatisticId();
+                            auto siblingStatisticId = operatorNode->getStatisticId();
+                            siblingStatisticIdToNewStatisticIds[siblingStatisticId].emplace_back(newStatisticId);
+                        }
+
                         //Assign new operator id
                         operatorNode->setId(getNextOperatorId());
                         blockingOperator->addChild(operatorNode);
+                        visitedOperators.insert(operatorNode->getId());
                     }
                     //Remove the property
                     operatorNode->removeProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
                 } else {
+                    // Check, if we have visited this operator already
+                    if (!visitedOperators.contains(operatorNode->getId())) {
+                        visitedOperators.insert(operatorNode->getId());
+
+                        // Getting a new statistic id and storing this statistic id
+                        auto newStatisticId = getNextStatisticId();
+                        auto siblingStatisticId = operatorNode->getStatisticId();
+                        siblingStatisticIdToNewStatisticIds[siblingStatisticId].emplace_back(newStatisticId);
+                    }
+
                     //Assign new operator id
                     operatorNode->setId(getNextOperatorId());
+                    visitedOperators.insert(operatorNode->getId());
                 }
             }
         }
     }
+
+    distributeSiblingStatisticId(*queryPlan, siblingStatisticIdToNewStatisticIds);
+
     NES_DEBUG("LogicalSourceExpansionRule: Plan after\n{}", queryPlan->toString());
     return queryPlan;
+}
+
+void LogicalSourceExpansionRule::distributeSiblingStatisticId(
+    QueryPlan& queryPlan,
+    std::unordered_map<StatisticId, std::vector<StatisticId>>& siblingStatisticIdToNewStatisticIds) const {
+
+    NES_DEBUG("LogicalSourceExpansionRule: Plan before updating the statistic ids\n{}", queryPlan.toString());
+
+    // For each statisticId, we store all new statistic ids in the property map and distribute the new statistic ids
+    for (auto& [oldStatisticId, allNewStatisticIds] : siblingStatisticIdToNewStatisticIds) {
+        for (auto& newStatisticId : allNewStatisticIds) {
+            const auto operatorNode = queryPlan.getOperatorWithStatisticId(oldStatisticId);
+            if (operatorNode->instanceOf<SourceLogicalOperator>()) {
+                NES_INFO("We do not update the statistic id of a source!");
+                continue;
+            }
+
+            auto value = operatorNode->as<Operator>()->getProperty(LIST_OF_SIBLING_STATISTIC_IDS);
+            std::vector<StatisticId> listOfStatisticIds;
+            if (value.has_value()) {
+                listOfStatisticIds = std::any_cast<std::vector<StatisticId>>(value);
+            } else {
+                listOfStatisticIds = std::vector<OperatorId>();
+            }
+            listOfStatisticIds.insert(listOfStatisticIds.end(), allNewStatisticIds.begin(), allNewStatisticIds.end());
+            operatorNode->as<Operator>()->addProperty(LIST_OF_SIBLING_STATISTIC_IDS,
+                                                         listOfStatisticIds);
+            operatorNode->setStatisticId(newStatisticId);
+        }
+    }
 }
 
 void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr& operatorNode) {

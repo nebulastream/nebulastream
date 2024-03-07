@@ -21,10 +21,11 @@
 namespace NES::Statistic {
 
 LogicalStatisticWindowOperator::LogicalStatisticWindowOperator(OperatorId id,
-                                                         Windowing::WindowTypePtr windowType,
-                                                         WindowStatisticDescriptorPtr windowStatisticDescriptor)
-    : Operator(id), LogicalUnaryOperator(id),
-      windowType(std::move(windowType)), windowStatisticDescriptor(std::move(windowStatisticDescriptor)) {}
+                                                               Windowing::WindowTypePtr windowType,
+                                                               WindowStatisticDescriptorPtr windowStatisticDescriptor,
+                                                               MetricHash metricHash)
+    : Operator(id), LogicalUnaryOperator(id), windowType(std::move(windowType)),
+      windowStatisticDescriptor(std::move(windowStatisticDescriptor)), metricHash(metricHash) {}
 
 bool LogicalStatisticWindowOperator::inferSchema() {
     if (!LogicalUnaryOperator::inferSchema()) {
@@ -49,7 +50,8 @@ bool LogicalStatisticWindowOperator::equal(const NodePtr& rhs) const {
         auto rhsStatisticOperatorNode = rhs->as<LogicalStatisticWindowOperator>();
         return windowType->equal(rhsStatisticOperatorNode->windowType)
             && inputOriginIds == rhsStatisticOperatorNode->inputOriginIds
-            && windowStatisticDescriptor->equal(rhsStatisticOperatorNode->windowStatisticDescriptor);
+            && windowStatisticDescriptor->equal(rhsStatisticOperatorNode->windowStatisticDescriptor)
+            && metricHash == rhsStatisticOperatorNode->metricHash;
     }
     return false;
 }
@@ -70,6 +72,7 @@ std::string LogicalStatisticWindowOperator::toString() const {
                                                          return str + ", " + std::to_string(id);
                                                      }
                                                  });
+    oss << "MetricHash: " << metricHash;
 
     return oss.str();
 }
@@ -82,6 +85,10 @@ OperatorPtr LogicalStatisticWindowOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
+    copy->setStatisticId(statisticId);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
     return copy;
 }
 

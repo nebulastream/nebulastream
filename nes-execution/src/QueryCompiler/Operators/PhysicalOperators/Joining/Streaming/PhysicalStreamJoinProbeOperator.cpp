@@ -18,6 +18,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr
 PhysicalStreamJoinProbeOperator::create(OperatorId id,
+                                        StatisticId statisticId,
                                         const SchemaPtr& leftSchema,
                                         const SchemaPtr& rightSchema,
                                         const SchemaPtr& outputSchema,
@@ -30,6 +31,7 @@ PhysicalStreamJoinProbeOperator::create(OperatorId id,
                                         QueryCompilation::StreamJoinStrategy joinStrategy,
                                         QueryCompilation::WindowingStrategy windowingStrategy) {
     return std::make_shared<PhysicalStreamJoinProbeOperator>(id,
+                                                             statisticId,
                                                              leftSchema,
                                                              rightSchema,
                                                              outputSchema,
@@ -44,7 +46,8 @@ PhysicalStreamJoinProbeOperator::create(OperatorId id,
 }
 
 PhysicalOperatorPtr
-PhysicalStreamJoinProbeOperator::create(const SchemaPtr& leftSchema,
+PhysicalStreamJoinProbeOperator::create(StatisticId statisticId,
+                                        const SchemaPtr& leftSchema,
                                         const SchemaPtr& rightSchema,
                                         const SchemaPtr& outputSchema,
                                         const std::string& joinFieldNameLeft,
@@ -56,6 +59,7 @@ PhysicalStreamJoinProbeOperator::create(const SchemaPtr& leftSchema,
                                         QueryCompilation::StreamJoinStrategy joinStrategy,
                                         QueryCompilation::WindowingStrategy windowingStrategy) {
     return create(getNextOperatorId(),
+                  statisticId,
                   leftSchema,
                   rightSchema,
                   outputSchema,
@@ -71,6 +75,7 @@ PhysicalStreamJoinProbeOperator::create(const SchemaPtr& leftSchema,
 
 PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     OperatorId id,
+    StatisticId statisticId,
     const SchemaPtr& leftSchema,
     const SchemaPtr& rightSchema,
     const SchemaPtr& outputSchema,
@@ -83,7 +88,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     QueryCompilation::StreamJoinStrategy joinStrategy,
     QueryCompilation::WindowingStrategy windowingStrategy)
     : Operator(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
-      PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema), joinFieldNameLeft(joinFieldNameLeft),
+      PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema), joinFieldNameLeft(joinFieldNameLeft),
       joinFieldNameRight(joinFieldNameRight), windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName) {}
 
 std::string PhysicalStreamJoinProbeOperator::toString() const {
@@ -102,6 +107,7 @@ std::string PhysicalStreamJoinProbeOperator::toString() const {
 
 OperatorPtr PhysicalStreamJoinProbeOperator::copy() {
     return create(id,
+                  statisticId,
                   leftInputSchema,
                   rightInputSchema,
                   outputSchema,

@@ -74,7 +74,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysica
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType->setGatheringInterval(1000);
     SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, csvSourceType);
-    DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
+    DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, INVALID_STATISTIC_ID, sourceDescriptor, engine, 12);
     EXPECT_EQ(csvFileSource->getType(), SourceType::CSV_SOURCE);
 }
 
@@ -82,7 +82,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingTCPLogicalToPhysicalSou
     SchemaPtr schema = Schema::create();
     auto tcpSourceType = TCPSourceType::create("logical", "physical");
     SourceDescriptorPtr sourceDescriptor = TCPSourceDescriptor::create(schema, tcpSourceType);
-    DataSourcePtr tcpSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
+    DataSourcePtr tcpSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, INVALID_STATISTIC_ID, sourceDescriptor, engine, 12);
     EXPECT_EQ(tcpSource->getType(), SourceType::TCP_SOURCE);
 }
 
@@ -90,28 +90,28 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogicalToPhys
     std::string filePath = std::filesystem::path(TEST_DATA_DIRECTORY) / "ysb-tuples-100-campaign-100.bin";
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = BinarySourceDescriptor::create(schema, filePath);
-    DataSourcePtr binaryFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
+    DataSourcePtr binaryFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, INVALID_STATISTIC_ID, sourceDescriptor, engine, 12);
     EXPECT_EQ(binaryFileSource->getType(), SourceType::BINARY_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = ZmqSourceDescriptor::create(schema, "127.0.0.1", 10000);
-    DataSourcePtr zqmSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
+    DataSourcePtr zqmSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, INVALID_STATISTIC_ID, sourceDescriptor, engine, 12);
     EXPECT_EQ(zqmSource->getType(), SourceType::ZMQ_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = SenseSourceDescriptor::create(schema, "some_udf");
-    DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
+    DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, INVALID_STATISTIC_ID, sourceDescriptor, engine, 12);
     EXPECT_EQ(senseSource->getType(), SourceType::SENSE_SOURCE);
 }
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/ 1000);
-    DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
+    DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, INVALID_STATISTIC_ID, sourceDescriptor, engine, 12);
     EXPECT_EQ(senseSource->getType(), SourceType::DEFAULT_SOURCE);
 }
 
@@ -128,7 +128,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingNetworkLogicalToPhysica
                                                                                     NSOURCE_RETRIES,
                                                                                     version,
                                                                                     uniqueId);
-    DataSourcePtr networkSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
+    DataSourcePtr networkSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, INVALID_STATISTIC_ID, sourceDescriptor, engine, 12);
     EXPECT_EQ(networkSource->getType(), SourceType::NETWORK_SOURCE);
 }
 }// namespace NES

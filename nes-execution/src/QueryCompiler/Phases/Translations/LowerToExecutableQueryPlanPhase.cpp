@@ -175,6 +175,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
 
     auto source = sourceProvider->lower(sourceOperator->getId(),
                                         sourceOperator->getOriginId(),
+                                        sourceOperator->getStatisticId(),
                                         sourceDescriptor,
                                         nodeEngine,
                                         executableSuccessorPipelines);

@@ -27,7 +27,7 @@ current_time=$(date +%s)
 
 if [ -f "$file" ]; then
     age=$(file_age_in_days "$file")
-    if [ $((age)) -gt cleanupThresholdInDays ]; then
+    if [ $((age)) -gt $cleanupThresholdInDays ]; then
         echo "$current_time" > "$file"
         echo 1
     else

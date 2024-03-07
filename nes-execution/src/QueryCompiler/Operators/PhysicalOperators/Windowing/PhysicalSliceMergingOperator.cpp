@@ -18,18 +18,20 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalSliceMergingOperator::create(OperatorId id,
+                                                         StatisticId statisticId,
                                                          const SchemaPtr& inputSchema,
                                                          const SchemaPtr& outputSchema,
                                                          const Windowing::LogicalWindowDescriptorPtr& windowDefinition) {
-    return std::make_shared<PhysicalSliceMergingOperator>(id, inputSchema, outputSchema, windowDefinition);
+    return std::make_shared<PhysicalSliceMergingOperator>(id, statisticId, inputSchema, outputSchema, windowDefinition);
 }
 
 PhysicalSliceMergingOperator::PhysicalSliceMergingOperator(OperatorId id,
+                                                           StatisticId statisticId,
                                                            SchemaPtr inputSchema,
                                                            SchemaPtr outputSchema,
                                                            Windowing::LogicalWindowDescriptorPtr windowDefinition)
     : Operator(id),
-      PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
+      PhysicalWindowOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
 
 std::string PhysicalSliceMergingOperator::toString() const {
     std::stringstream out;
@@ -39,6 +41,6 @@ std::string PhysicalSliceMergingOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalSliceMergingOperator::copy() { return create(id, inputSchema, outputSchema, windowDefinition); }
+OperatorPtr PhysicalSliceMergingOperator::copy() { return create(id, statisticId, inputSchema, outputSchema, windowDefinition); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

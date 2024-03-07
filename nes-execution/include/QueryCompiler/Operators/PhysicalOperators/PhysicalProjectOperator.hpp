@@ -24,14 +24,16 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalProjectOperator : public PhysicalUnaryOperator {
   public:
     PhysicalProjectOperator(OperatorId id,
+                            StatisticId statisticId,
                             SchemaPtr inputSchema,
                             SchemaPtr outputSchema,
                             std::vector<ExpressionNodePtr> expressions);
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const std::vector<ExpressionNodePtr>& expressions);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
+    static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
     /**
      * @brief returns the list of fields that remain in the output schema.
      * @return  std::vector<ExpressionNodePtr>

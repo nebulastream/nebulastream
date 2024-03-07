@@ -125,16 +125,35 @@ std::vector<OperatorPtr> QueryPlan::getLeafOperators() {
     return leafOperators;
 }
 
+std::unordered_set<OperatorPtr> QueryPlan::getAllOperators() {
+    // Maintain a list of visited nodes as there are multiple root nodes
+    std::unordered_set<OperatorPtr> visitedOperators;
+    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
+    for (const auto& rootOperator : rootOperators) {
+        auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
+        for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
+            auto visitingOp = (*itr)->as<Operator>();
+            if (visitedOperators.contains(visitingOp)) {
+                // skip rest of the steps as the node found in already visited node list
+                continue;
+            }
+            NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
+            visitedOperators.insert(visitingOp);
+        }
+    }
+    return visitedOperators;
+}
+
 bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
-    if (getOperatorWithId(operatorId)) {
+    if (getOperatorWithOperatorId(operatorId)) {
         return true;
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return false;
 }
 
-OperatorPtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
+OperatorPtr QueryPlan::getOperatorWithOperatorId(uint64_t operatorId) {
     NES_DEBUG("QueryPlan: Checking if the operator with id {} exists in the query plan or not", operatorId);
     for (auto rootOperator : rootOperators) {
 
@@ -144,12 +163,31 @@ OperatorPtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
         }
 
         //Look up in the child operators
-        auto matchedOperator = rootOperator->getChildWithOperatorId(operatorId);
-        if (matchedOperator) {
-            return matchedOperator->as<Operator>();
+        auto matchingOperator = rootOperator->getChildWithOperatorId(operatorId);
+        if (matchingOperator) {
+            return matchingOperator->as<Operator>();
         }
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
+    return nullptr;
+}
+
+OperatorPtr QueryPlan::getOperatorWithStatisticId(StatisticId statisticId) {
+    NES_DEBUG("QueryPlan: Checking if the operator with statisticId {} exists in the query plan or not", statisticId);
+    for (auto rootOperator : rootOperators) {
+        if (rootOperator->getStatisticId() == statisticId) {
+            NES_DEBUG("QueryPlan: Found operator {} in the query plan", rootOperator->toString());
+            return rootOperator;
+        }
+
+        //Look up in the child operators
+        auto matchingOperator = rootOperator->getChildWithStatisticId(statisticId);
+        if (matchingOperator) {
+            NES_DEBUG("QueryPlan: Found operator {} in the query plan", matchingOperator->toString());
+            return matchingOperator->as<Operator>();
+        }
+    }
+    NES_WARNING("QueryPlan: Unable to find operator with matching statisticId {}", statisticId);
     return nullptr;
 }
 

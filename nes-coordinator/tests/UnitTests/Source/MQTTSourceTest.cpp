@@ -48,6 +48,10 @@
 #define ORIGINID 1
 #endif
 
+#ifndef STATISTICID
+#define STATISTICID 1
+#endif
+
 #ifndef NUMSOURCELOCALBUFFERS
 #define NUMSOURCELOCALBUFFERS 12
 #endif
@@ -115,6 +119,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        mqttSourceType,
                                        OPERATORID,
                                        ORIGINID,
+                                       STATISTICID,
                                        NUMSOURCELOCALBUFFERS,
                                        PHYSICALSOURCENAME,
                                        SUCCESSORS);
@@ -140,6 +145,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        mqttSourceType,
                                        OPERATORID,
                                        ORIGINID,
+                                       STATISTICID,
                                        NUMSOURCELOCALBUFFERS,
                                        PHYSICALSOURCENAME,
                                        SUCCESSORS);
@@ -168,6 +174,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
                                        mqttSourceType,
                                        OPERATORID,
                                        ORIGINID,
+                                       STATISTICID,
                                        NUMSOURCELOCALBUFFERS,
                                        PHYSICALSOURCENAME,
                                        SUCCESSORS);

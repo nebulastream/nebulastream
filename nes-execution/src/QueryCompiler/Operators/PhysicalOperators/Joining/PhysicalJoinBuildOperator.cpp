@@ -18,28 +18,31 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalJoinBuildOperator::create(const SchemaPtr& inputSchema,
-                                                      const SchemaPtr& outputSchema,
-                                                      const Join::JoinOperatorHandlerPtr& operatorHandler,
-                                                      JoinBuildSideType buildSide) {
-    return create(getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
-}
-
-PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id,
+PhysicalOperatorPtr PhysicalJoinBuildOperator::create(StatisticId statisticId,
                                                       const SchemaPtr& inputSchema,
                                                       const SchemaPtr& outputSchema,
                                                       const Join::JoinOperatorHandlerPtr& operatorHandler,
                                                       JoinBuildSideType buildSide) {
-    return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler, buildSide);
+    return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, operatorHandler, buildSide);
+}
+
+PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id,
+                                                      StatisticId statisticId,
+                                                      const SchemaPtr& inputSchema,
+                                                      const SchemaPtr& outputSchema,
+                                                      const Join::JoinOperatorHandlerPtr& operatorHandler,
+                                                      JoinBuildSideType buildSide) {
+    return std::make_shared<PhysicalJoinBuildOperator>(id, statisticId, inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
 PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id,
+                                                     StatisticId statisticId,
                                                      SchemaPtr inputSchema,
                                                      SchemaPtr outputSchema,
                                                      Join::JoinOperatorHandlerPtr operatorHandler,
                                                      JoinBuildSideType buildSide)
     : Operator(id), PhysicalJoinOperator(std::move(operatorHandler)),
-      PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), joinBuildSide(buildSide){};
+      PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)), joinBuildSide(buildSide){};
 
 std::string PhysicalJoinBuildOperator::toString() const {
     std::stringstream out;
@@ -52,7 +55,7 @@ std::string PhysicalJoinBuildOperator::toString() const {
 }
 
 OperatorPtr PhysicalJoinBuildOperator::copy() {
-    auto result = create(id, inputSchema, outputSchema, operatorHandler, joinBuildSide);
+    auto result = create(id, statisticId, inputSchema, outputSchema, operatorHandler, joinBuildSide);
     result->addAllProperties(properties);
     return result;
 }

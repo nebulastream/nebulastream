@@ -21,6 +21,8 @@ Metric::Metric(FieldAccessExpressionNodePtr field) : field(std::move(field)) {}
 
 FieldAccessExpressionNodePtr Metric::getField() const { return field; }
 
+MetricHash Metric::hash() const { return std::hash<std::string>()(toString()); }
+
 FieldAccessExpressionNodePtr Over(std::string name) {
     return FieldAccessExpressionNode::create(std::move(name))->as<FieldAccessExpressionNode>();
 }

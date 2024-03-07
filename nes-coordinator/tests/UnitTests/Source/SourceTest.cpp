@@ -178,6 +178,7 @@ class MockDataSource : public DataSource {
                      queryManager,
                      operatorId,
                      0,
+                     INVALID_STATISTIC_ID,
                      numSourceLocalBuffers,
                      gatheringMode,
                      "defaultPhysicalStreamName",
@@ -224,6 +225,7 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                      queryManager,
                      operatorId,
                      0,
+                     INVALID_STATISTIC_ID,
                      numSourceLocalBuffers,
                      gatheringMode,
                      "defaultPhysicalStreamName",
@@ -258,6 +260,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
                      queryManager,
                      operatorId,
                      0,
+                     INVALID_STATISTIC_ID,
                      numSourceLocalBuffers,
                      gatheringMode,
                      "defaultPhysicalStreamName",
@@ -305,6 +308,7 @@ class BinarySourceProxy : public BinarySource {
                        file_path,
                        operatorId,
                        0,
+                       INVALID_STATISTIC_ID,
                        numSourceLocalBuffers,
                        GatheringMode::INTERVAL_MODE,
                        "defaultPhysicalStreamName",
@@ -334,6 +338,7 @@ class CSVSourceProxy : public CSVSource {
                     sourceConfig,
                     operatorId,
                     0,
+                    INVALID_STATISTIC_ID,
                     numSourceLocalBuffers,
                     GatheringMode::INTERVAL_MODE,
                     "defaultPhysicalStreamName",
@@ -364,6 +369,7 @@ class TCPSourceProxy : public TCPSource {
                     sourceConfig,
                     operatorId,
                     0,
+                    INVALID_STATISTIC_ID,
                     numSourceLocalBuffers,
                     GatheringMode::INTERVAL_MODE,
                     "defaultPhysicalStreamName",
@@ -391,6 +397,7 @@ class GeneratorSourceProxy : public GeneratorSource {
                           numbersOfBufferToProduce,
                           operatorId,
                           0,
+                          INVALID_STATISTIC_ID,
                           numSourceLocalBuffers,
                           gatheringMode,
                           successors,
@@ -415,6 +422,7 @@ class DefaultSourceProxy : public DefaultSource {
                         gatheringInterval,
                         operatorId,
                         0,
+                        INVALID_STATISTIC_ID,
                         numSourceLocalBuffers,
                         successors,
                         "defaultPhysicalStreamName"){};
@@ -441,6 +449,7 @@ class LambdaSourceProxy : public LambdaSource {
                        std::move(generationFunction),
                        operatorId,
                        0,
+                       INVALID_STATISTIC_ID,
                        numSourceLocalBuffers,
                        gatheringMode,
                        0,
@@ -468,6 +477,7 @@ class MonitoringSourceProxy : public MonitoringSource {
                            queryManager,
                            operatorId,
                            0,
+                           INVALID_STATISTIC_ID,
                            numSourceLocalBuffers,
                            "defaultPhysicalStreamName",
                            successors){};
@@ -612,7 +622,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
     std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head, path_to_decimals_file;
     SchemaPtr schema, lambdaSchema, decimalsSchema;
     uint8_t* singleMemoryArea;
-    uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId,
+    uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId, statisticId,
         numSourceLocalBuffersDefault, gatheringInterval, queryId, sourceAffinity;
     size_t bufferAreaSize;
     std::shared_ptr<uint8_t> singleBufferMemoryArea;
@@ -625,6 +635,7 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->originId,
+                                                      this->statisticId,
                                                       this->numSourceLocalBuffersDefault,
                                                       "defaultPhysicalSourceName",
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
@@ -638,6 +649,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceEmptySuccessors) {
                                                                                    this->nodeEngine->getQueryManager(),
                                                                                    this->operatorId,
                                                                                    this->originId,
+                                                                                   this->statisticId,
                                                                                    this->numSourceLocalBuffersDefault,
                                                                                    "defaultPhysicalSourceName",
                                                                                    {});
@@ -655,6 +667,7 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->originId,
+                                                      this->statisticId,
                                                       this->numSourceLocalBuffersDefault,
                                                       "defaultPhysicalSourceName",
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});

@@ -46,7 +46,10 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  std::move(bufferManager),
                  std::move(queryManager),
                  nesPartition.getOperatorId(),
-                 /*default origin id for the network source this is always zero*/ 0,
+                 /*invalid origin id for the network source, as the network source does not change the origin id*/
+                 INVALID_ORIGIN_ID,
+                 /*invalid statistic id for the network source, as the network source does not change the statistic id*/
+                 INVALID_STATISTIC_ID,
                  numSourceLocalBuffers,
                  GatheringMode::INTERVAL_MODE,
                  physicalSourceName,

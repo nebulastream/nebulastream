@@ -42,6 +42,7 @@ namespace NES {
  * @param queryManager pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -53,6 +54,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
                                               const Runtime::QueryManagerPtr& queryManager,
                                               OperatorId operatorId,
                                               OriginId originId,
+                                              StatisticId statisticId,
                                               size_t numSourceLocalBuffers,
                                               const std::string& physicalSourceName,
                                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -66,6 +68,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
  * @param gatheringInterval the interval at which new buffers are produced
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -79,6 +82,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                                uint64_t gatheringInterval,
                                                OperatorId operatorId,
                                                OriginId originId,
+                                               StatisticId statisticId,
                                                size_t numSourceLocalBuffers,
                                                const std::string& physicalSourceName,
                                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -89,6 +93,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
  * @param queryManager pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
  * @return a data source pointer
@@ -98,6 +103,7 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
                                              const Runtime::QueryManagerPtr& queryManager,
                                              OperatorId operatorId,
                                              OriginId originId,
+                                             StatisticId statisticId,
                                              size_t numSourceLocalBuffers,
                                              const std::string& physicalSourceName,
                                              const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -112,6 +118,7 @@ createDefaultSourceWithoutSchemaForOneBuffer(const Runtime::BufferManagerPtr& bu
  * @param generationFunction that creates with which the data is created
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+* @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
  * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
@@ -129,6 +136,7 @@ createLambdaSource(const SchemaPtr& schema,
                    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
                    OperatorId operatorId,
                    OriginId originId,
+                   StatisticId statisticId,
                    size_t numSourceLocalBuffers,
                    GatheringMode gatheringMode,
                    uint64_t sourceAffinity,
@@ -145,6 +153,7 @@ createLambdaSource(const SchemaPtr& schema,
  * @param port the port through which to connect to the ZMQSource(ZMQSource)
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+* @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -157,6 +166,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
                               uint16_t port,
                               OperatorId operatorId,
                               OriginId originId,
+                              StatisticId statisticId,
                               size_t numSourceLocalBuffers,
                               const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -169,6 +179,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
  * @param pathToFile path to the binary file
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+* @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -180,6 +191,7 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                      const std::string& pathToFile,
                                      OperatorId operatorId,
                                      OriginId originId,
+                                     StatisticId statisticId,
                                      size_t numSourceLocalBuffers,
                                      const std::string& physicalSourceName,
                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -192,6 +204,7 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
  * @param udfs of the file
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+* @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -203,6 +216,7 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
                                 const std::string& udfs,
                                 OperatorId operatorId,
                                 OriginId originId,
+                                StatisticId statisticId,
                                 size_t numSourceLocalBuffers,
                                 const std::string& physicalSourceName,
                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -215,6 +229,7 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
  * @param csvSourceType points to the current source configuration object
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+* @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -226,6 +241,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   const CSVSourceTypePtr& csvSourceType,
                                   OperatorId operatorId,
                                   OriginId originId,
+                                  StatisticId statisticId,
                                   size_t numSourceLocalBuffers,
                                   const std::string& physicalSourceName,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -241,6 +257,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
  * @param gatheringValue how many tuples to collect per interval
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+* @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
  * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
@@ -258,6 +275,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  uint64_t gatheringValue,
                                  OperatorId operatorId,
                                  OriginId originId,
+                                 StatisticId statisticId,
                                  size_t numSourceLocalBuffers,
                                  GatheringMode gatheringMode,
                                  uint64_t sourceAffinity,
@@ -273,6 +291,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
  * @param queryManager pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+* @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -286,6 +305,7 @@ DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
                                      const Runtime::QueryManagerPtr& queryManager,
                                      OperatorId operatorId,
                                      OriginId originId,
+                                     StatisticId statisticId,
                                      size_t numSourceLocalBuffers,
                                      const std::string& physicalSourceName,
                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -301,6 +321,7 @@ DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
  * @param gatheringValue how many tuples to collect per interval
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
  * @param sourceMode
@@ -319,6 +340,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     uint64_t gatheringValue,
                                     OperatorId operatorId,
                                     OriginId originId,
+                                    StatisticId statisticId,
                                     size_t numSourceLocalBuffers,
                                     GatheringMode gatheringMode,
                                     SourceMode sourceMode,
@@ -366,6 +388,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
  * @param queryManager a pointer to the query manager
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -377,6 +400,7 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
                                      Runtime::QueryManagerPtr queryManager,
                                      OperatorId operatorId,
                                      OriginId originId,
+                                     StatisticId statisticId,
                                      size_t numSourceLocalBuffers,
                                      const std::string& physicalSourceName,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
@@ -397,6 +421,7 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
  * @param kafkaSourceType
  * @param operatorId operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param batchSize the maximum amount of data (in bytes) that a Kafka producer can accumulate before sending a batch of messages to the Kafka
  * @param physicalSourceName the name and unique identifier of a physical source
@@ -416,6 +441,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       const KafkaSourceTypePtr& kafkaSourceType,
                                       OperatorId operatorId,
                                       OriginId originId,
+                                      StatisticId statisticId,
                                       size_t numSourceLocalBuffers,
                                       size_t batchSize,
                                       const std::string& physicalSourceName,
@@ -461,6 +487,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
  * @param mqttSourceType mqttSourceType for MQTT
  * @param operatorId current operator id
  * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+ * @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers the number of buffers allocated to a source
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -472,6 +499,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const MQTTSourceTypePtr& mqttSourceType,
                                OperatorId operatorId,
                                OriginId originId,
+                               StatisticId statisticId,
                                size_t numSourceLocalBuffers,
                                const std::string& physicalSourceName,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -487,6 +515,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
  * @param tcpSourceType see TCPSourceType.hpp for information on this object
  * @param operatorId represents a locally running query execution plan
  * @param originId represents an origin
+ * @param statisticId represents the unique identifier of components that we can track statistics for
  * @param numSourceLocalBuffers number of local source buffers
  * @param physicalSourceName the name and unique identifier of a physical source
  * @param successors executable operators coming after this source
@@ -498,6 +527,7 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const TCPSourceTypePtr& tcpSourceType,
                               OperatorId operatorId,
                               OriginId originId,
+                              StatisticId statisticId,
                               size_t numSourceLocalBuffers,
                               const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);

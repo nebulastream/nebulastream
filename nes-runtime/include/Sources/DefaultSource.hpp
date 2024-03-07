@@ -31,6 +31,7 @@ class DefaultSource : public GeneratorSource {
    * @param gatheringInterval the interval at which new buffers are produced
    * @param operatorId current operator id
    * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+   * @param statisticId represents the unique identifier of components that we can track statistics for
    * @param numSourceLocalBuffers number of local source buffers
    * @param successors the subsequent operators in the pipeline to which the data is pushed
    * @param physicalSourceName the name and unique identifier of a physical source
@@ -42,6 +43,7 @@ class DefaultSource : public GeneratorSource {
                   uint64_t gatheringInterval,
                   OperatorId operatorId,
                   OriginId originId,
+                  StatisticId statisticId,
                   size_t numSourceLocalBuffers,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {},
                   const std::string& physicalSourceName = std::string("defaultPhysicalSourceName"));

@@ -20,20 +20,26 @@
 
 namespace NES::Statistic {
 
-StatisticKey::StatisticKey(CharacteristicPtr characteristic) : characteristic(std::move(characteristic)) {}
+StatisticKey::StatisticKey(MetricPtr metric, StatisticId statisticId)
+    : metric(std::move(metric)), statisticId(statisticId) {}
 
-CharacteristicPtr StatisticKey::getCharacteristic() const { return characteristic; }
-
-bool StatisticKey::operator==(const StatisticKey& rhs) const { return (*characteristic) == (*rhs.characteristic); }
+bool StatisticKey::operator==(const StatisticKey& rhs) const {
+    return (*metric) == (*rhs.metric) && statisticId == rhs.statisticId;
+}
 
 bool StatisticKey::operator!=(const StatisticKey& rhs) const { return !(rhs == *this); }
 
 std::string StatisticKey::toString() const {
     std::ostringstream oss;
-    oss << "Characteristic(" << characteristic->toString() << ")";
+    oss << "Metric(" << metric->toString() << ")";
+    oss << "StatisticId(" << statisticId << ")";
     return oss.str();
 }
 
-std::size_t StatisticKey::hash() const { return characteristic->hash(); }
+StatisticHash StatisticKey::combineStatisticIdWithMetricHash(MetricHash metricHash, StatisticId statisticId) {
+    return statisticId ^ (metricHash + goldenRatio);
+}
+
+StatisticHash StatisticKey::hash() const { return combineStatisticIdWithMetricHash(metric->hash(), statisticId); }
 
 }// namespace NES::Statistic

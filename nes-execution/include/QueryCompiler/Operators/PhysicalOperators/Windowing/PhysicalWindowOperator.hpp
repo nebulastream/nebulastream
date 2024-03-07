@@ -25,6 +25,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalWindowOperator : public PhysicalUnaryOperator {
   public:
     PhysicalWindowOperator(OperatorId id,
+                           StatisticId statisticId,
                            SchemaPtr inputSchema,
                            SchemaPtr outputSchema,
                            Windowing::LogicalWindowDescriptorPtr windowDefinition);
