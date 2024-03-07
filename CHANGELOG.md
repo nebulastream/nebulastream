@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.62](https://github.com/nebulastream/nebulastream/tree/v0.6.62) (2024-03-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.61...v0.6.62)
+
+**Implemented enhancements:**
+
+- \[TASK\] LogicalStatisticWindowOperator use MetricTypePtr [\#4657](https://github.com/nebulastream/nebulastream/issues/4657)
+- \[TASK\] Add StatisticID into System [\#4656](https://github.com/nebulastream/nebulastream/issues/4656)
+- \[TASK\] StatisticKey use StatisticId [\#4655](https://github.com/nebulastream/nebulastream/issues/4655)
+
 ## [v0.6.61](https://github.com/nebulastream/nebulastream/tree/v0.6.61) (2024-03-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.60...v0.6.61)
