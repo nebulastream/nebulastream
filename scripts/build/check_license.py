@@ -33,7 +33,7 @@ license_text_cpp = """/*
 if __name__ == "__main__":
     exclude_dirs = set(
         ['cmake-build-unikernel-release', 'cmake-build-unikernel-debug', 'cmake-build-unikernel-release-original-deps',
-         'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
+         'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker', 'nes-unikernel',
          'build', 'yaml', 'jitify', 'magicenum', '.idea', 'gen'])
     exclude_files = ['backward.hpp',
                      'apex_memmove.hpp',

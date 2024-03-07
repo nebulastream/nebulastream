@@ -23,7 +23,7 @@ namespace NES::Windowing {
 class SlidingWindow : public TimeBasedWindowType {
   public:
     static WindowTypePtr
-    of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide, std::optional<TimeCharacteristicPtr> other);
+    of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide, std::optional<TimeCharacteristicPtr> other = std::nullopt);
 
     /**
     * @brief return size of the window

@@ -509,6 +509,7 @@ configuration:
                                      tcpSourceType,
                                      OPERATORID,
                                      ORIGINID,
+                                     1,
                                      NUMSOURCELOCALBUFFERS,
                                      "tcp-source",
                                      SUCCESSORS);
