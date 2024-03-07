@@ -1655,6 +1655,83 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
+/*
+ * @brief Test if sliding windows properly trigger the join
+ */
+TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
+    struct Car {
+        uint64_t key;
+        uint64_t value;
+        uint64_t value2;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+                         ->addField("key", DataTypeFactory::createUInt64())
+                         ->addField("value", DataTypeFactory::createUInt64())
+                         ->addField("value2", DataTypeFactory::createUInt64())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    auto queryWithWindowOperator =
+        Query::from("car1")
+            .joinWith(Query::from("car2")
+                          .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                          .byKey(Attribute("key"))
+                          .apply(Count())
+                          .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("key"), Attribute("count")))
+            .where(Attribute("key"))
+            .equalsTo(Attribute("key"))
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)));
+
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("car1", carSchema)
+                           .addLogicalSource("car2", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car1")
+                           .attachWorkerWithMemorySourceToCoordinator("car2");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
+    // Sliding Windows Produced (start, end, key, value)
+    //[0, 1000, 1, 3]
+    //[500, 1500, 1, 2]
+    //[1000, 2000, 1, 1]
+    //[1500, 2500, 1, 1]
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 100ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 700ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 800ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1600ULL}, 2);
+
+    // Tumbling Windows of the Join (start, end, listofentries)
+    //[0, 1000, {1,2,3}]
+    //[1000, 2000, {4}]
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 100ULL}, 3);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 700ULL}, 3);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 800ULL}, 3);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1600ULL}, 3);
+
+    testHarness.validate().setupTopology();
+
+    // Run the query and get the actual dynamic buffers
+    auto expectedOutput = "0,1000,1,1,15,15,100,0,1000,1,3\n"
+                          "0,1000,1,1,15,15,100,500,1500,1,2\n"
+                          "0,1000,1,1,15,15,700,0,1000,1,3\n"
+                          "0,1000,1,1,15,15,700,500,1500,1,2\n"
+                          "0,1000,1,1,15,15,800,0,1000,1,3\n"
+                          "0,1000,1,1,15,15,800,500,1500,1,2\n"
+                          "1000,2000,1,1,15,15,1600,1000,2000,1,1\n"
+                          "1000,2000,1,1,15,15,1600,1500,2500,1,1\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+}
+
 /**
  * Test deploying join with different three sources
  */

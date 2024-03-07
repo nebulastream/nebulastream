@@ -48,8 +48,8 @@ namespace NES::Runtime::Execution::Operators {
 
 class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest {
   public:
-    std::shared_ptr<BufferManager> bm;
-    std::shared_ptr<WorkerContext> wc;
+    std::shared_ptr<BufferManager> bufferManager;
+    std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
     /* Will be called before any test in this class are executed. */
@@ -58,24 +58,26 @@ class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        bm = std::make_shared<BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        bufferManager = std::make_shared<BufferManager>();
+        workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
     }
 
-    void emitWatermark(KeyedSlicePreAggregation& slicePreAggregation,
-                       ExecutionContext& ctx,
+    void emitWatermark(const KeyedSlicePreAggregation& slicePreAggregation,
+                       ExecutionContext& context,
                        uint64_t wts,
                        uint64_t originId,
                        uint64_t sequenceNumber) {
-        auto buffer = bm->getBufferBlocking();
+        auto buffer = bufferManager->getBufferBlocking();
         buffer.setWatermark(wts);
         buffer.setOriginId(originId);
         buffer.setSequenceNumber(sequenceNumber);
-        auto rb = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
-        slicePreAggregation.close(ctx, rb);
+        auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
+        context.setWatermarkTs(wts);
+        context.setOrigin(originId);
+        slicePreAggregation.close(context, recordBuffer);
     }
 
-    void emitRecord(KeyedSlicePreAggregation& slicePreAggregation, ExecutionContext& ctx, Record record) {
+    void emitRecord(const KeyedSlicePreAggregation& slicePreAggregation, ExecutionContext& ctx, Record record) {
         slicePreAggregation.execute(ctx, record);
     }
 };
@@ -99,12 +101,12 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
     auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
-    auto buffer = bm->getBufferBlocking();
+    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>((int8_t*) &pipelineContext));
+    auto buffer = bufferManager->getBufferBlocking();
 
-    auto rb = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
+    auto rb = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
     slicePreAggregation.setup(ctx);
-    auto stateStore = handler->getThreadLocalSliceStore(wc->getId());
+    auto stateStore = handler->getThreadLocalSliceStore(workerContext->getId());
 
     slicePreAggregation.open(ctx, rb);
 
@@ -122,11 +124,19 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
         uint64_t value;
     };
 
-    auto entries = (KVPair*) hashMap->getPage(0);
+    auto entries = reinterpret_cast<KVPair*>(hashMap->getPage(0));
     ASSERT_EQ(entries[0].key, 11);
     ASSERT_EQ(entries[0].value, 5);
     ASSERT_EQ(entries[1].key, 12);
     ASSERT_EQ(entries[1].value, 42);
+
+    emitWatermark(slicePreAggregation, ctx, 22, 0, 1);
+    auto smt = reinterpret_cast<SliceMergeTask<KeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
+    ASSERT_EQ(smt->startSlice, 10);
+    ASSERT_EQ(smt->endSlice, 20);
+    ASSERT_EQ(smt->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER);
+    ASSERT_EQ(smt->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+    ASSERT_EQ(smt->lastChunk, true);
 }
 
 }// namespace NES::Runtime::Execution::Operators

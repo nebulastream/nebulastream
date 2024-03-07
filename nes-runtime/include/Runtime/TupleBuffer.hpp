@@ -85,6 +85,12 @@ class TupleBuffer {
     ///@brief This is the logical identifier of a child tuple buffer
     using NestedTupleBufferKey = uint32_t;
 
+    ///@brief The initial sequence number of a stream of tuple buffers is 1.
+    constexpr static uint64_t INITIAL_SEQUENCE_NUMBER = 1;
+    ///@brief When the content of a tuple buffer outgrows the buffer size tuple buffers are chunked to preserve the order of
+    ///sequencenumbers (or prevent duplicated). The initial chunk number is 1.
+    constexpr static uint64_t INITIAL_CHUNK_NUMBER = 1;
+
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] constexpr TupleBuffer() noexcept = default;
 
