@@ -31,8 +31,13 @@ DataSourcePtr TestSourceProvider::lower(OperatorId operatorId,
                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
     if (sourceDescriptor->instanceOf<TestSourceDescriptor>()) {
         auto testSourceDescriptor = sourceDescriptor->as<TestSourceDescriptor>();
-        return testSourceDescriptor
-            ->create(operatorId, originId, statisticId, sourceDescriptor, nodeEngine, compilerOptions->getNumSourceLocalBuffers(), successors);
+        return testSourceDescriptor->create(operatorId,
+                                            originId,
+                                            statisticId,
+                                            sourceDescriptor,
+                                            nodeEngine,
+                                            compilerOptions->getNumSourceLocalBuffers(),
+                                            successors);
     }
     return DefaultDataSourceProvider::lower(operatorId, originId, statisticId, sourceDescriptor, nodeEngine, successors);
 }

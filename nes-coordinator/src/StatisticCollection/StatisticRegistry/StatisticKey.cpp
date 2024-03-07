@@ -20,8 +20,7 @@
 
 namespace NES::Statistic {
 
-StatisticKey::StatisticKey(MetricPtr metric, StatisticId statisticId)
-    : metric(std::move(metric)), statisticId(statisticId) {}
+StatisticKey::StatisticKey(MetricPtr metric, StatisticId statisticId) : metric(std::move(metric)), statisticId(statisticId) {}
 
 bool StatisticKey::operator==(const StatisticKey& rhs) const {
     return (*metric) == (*rhs.metric) && statisticId == rhs.statisticId;

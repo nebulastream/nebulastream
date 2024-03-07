@@ -64,9 +64,9 @@ DataSource::DataSource(SchemaPtr pSchema,
                        uint64_t taskQueueId)
     : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
-      originId(originId), statisticId(statisticId), schema(std::move(pSchema)),
-      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity),
-      taskQueueId(taskQueueId), physicalSourceName(physicalSourceName) {
+      originId(originId), statisticId(statisticId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers),
+      gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId),
+      physicalSourceName(physicalSourceName) {
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");

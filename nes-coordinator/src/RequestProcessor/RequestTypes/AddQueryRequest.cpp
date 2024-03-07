@@ -34,11 +34,11 @@
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
