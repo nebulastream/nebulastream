@@ -12,45 +12,17 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_SRC_EXECUTION_OPERATORS_STATISTICS_COUNTMINOPERATORHANDLER_HPP_
-#define NES_NES_RUNTIME_SRC_EXECUTION_OPERATORS_STATISTICS_COUNTMINOPERATORHANDLER_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STATISTICS_RESERVOIRSAMPLEOPERATORHANDLER_HPP_
+#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STATISTICS_RESERVOIRSAMPLEOPERATORHANDLER_HPP_
 
-#include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Identifiers.hpp>
 #include <Execution/Operators/Statistics/StatisticOperatorHandler.hpp>
-#include <Statistics/CountMin.hpp>
-#include <Statistics/Interval.hpp>
-#include <unordered_map>
-#include <vector>
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
+class Interval;
 
-namespace Runtime {
-
-class BufferManager;
-using BufferManagerPtr = std::shared_ptr<BufferManager>;
-
-namespace MemoryLayouts {
-class DynamicTupleBuffer;
-}
-
-namespace Execution::Operators {
-class MultiOriginWatermarkProcessor;
-using MultiOriginWatermarkProcessorPtr = std::unique_ptr<MultiOriginWatermarkProcessor>;
-}// namespace Execution::Operators
-}// namespace Runtime
-
-namespace Experimental::Statistics {
-
-/**
- * @brief the class that defines the state of the CountMinBuildOperator
- */
-class CountMinOperatorHandler : public StatisticOperatorHandler {
+class ReservoirSampleOperatorHandler : public StatisticOperatorHandler {
   public:
-
     /**
      * @param windowSize the windowSize over which the CountMin sketches are generated
      * @param slideFactor the slideFactor with which the sketches are generated
@@ -62,20 +34,17 @@ class CountMinOperatorHandler : public StatisticOperatorHandler {
      * @param physicalSources a vector of physicalSources over which we create the sketches. Also needed for our MultiOriginWatermarkProcessors
      * @param allOriginIds a vector of the orginIds which is needed to initilize our MultiOriginWatermarkProcessors
      */
-    CountMinOperatorHandler(uint64_t windowSize,
-                            uint64_t slideFactor,
-                            const std::string& logicalSourceName,
-                            const std::string& fieldName,
-                            uint64_t depth,
-                            uint64_t width,
-                            SchemaPtr schema,
-                            std::vector<uint64_t> h3Seeds,
-                            const std::vector<OriginId>& allOriginIds);
+    ReservoirSampleOperatorHandler(uint64_t windowSize,
+                                   uint64_t slideFactor,
+                                   const std::string& fieldName,
+                                   uint64_t depth,
+                                   SchemaPtr schema,
+                                   const std::vector<OriginId>& allOriginIds);
 
     /**
      * @brief the default destructor of the CountMinOperatorHandler
      */
-    virtual ~CountMinOperatorHandler() = default;
+    virtual ~ReservoirSampleOperatorHandler() = default;
 
     /**
      * @return returns a void pointer to the H3 seeds
@@ -101,9 +70,8 @@ class CountMinOperatorHandler : public StatisticOperatorHandler {
      * @param originId the originId retrieved from the execution context
      * @return a vector of TupleBuffers that are finished processing and can be dispatched to the next operator in the pipeline
      */
-    std::vector<Runtime::TupleBuffer> getFinishedCountMinSketches(uint64_t localWatermarkTs,
-                                                                  uint64_t sequenceNumber,
-                                                                  OriginId originId0);
+    std::vector<Runtime::TupleBuffer>
+    getFinishedReservoirSamples(uint64_t localWatermarkTs, uint64_t sequenceNumber, OriginId originId0);
 
     /**
      * @brief
@@ -113,7 +81,6 @@ class CountMinOperatorHandler : public StatisticOperatorHandler {
   private:
     uint64_t width;
     const std::vector<uint64_t> h3Seeds;
-    std::unordered_map<std::string, std::string> fieldsToFullyQualifiedFields;
 
     /**
      * @brief This function initializes the fields of the buffer with starting values (important for observed tuples), which is
@@ -122,11 +89,9 @@ class CountMinOperatorHandler : public StatisticOperatorHandler {
      * @param interval the interval over which the sketch is constructed
      * @param physicalSourceName the physicalSourceName over which the sketch is constructed for which we write the meta data
      */
-    Runtime::TupleBuffer writeMetaData(NES::Runtime::TupleBuffer buffer,
-                                              const Interval& interval,
-                                              const std::string& physicalSourceName);
+    Runtime::TupleBuffer
+    writeMetaData(NES::Runtime::TupleBuffer buffer, const Interval& interval, const std::string& physicalSourceName);
 };
-}// namespace Experimental::Statistics
-}// namespace NES
+}// namespace NES::Experimental::Statistics
 
-#endif//NES_NES_RUNTIME_SRC_EXECUTION_OPERATORS_STATISTICS_COUNTMINOPERATORHANDLER_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STATISTICS_RESERVOIRSAMPLEOPERATORHANDLER_HPP_

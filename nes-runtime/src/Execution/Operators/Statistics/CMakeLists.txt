@@ -12,4 +12,5 @@
 
 add_source_files(nes-runtime
         CountMinBuildOperator.cpp
-        CountMinOperatorHandler.cpp)
+        CountMinOperatorHandler.cpp
+        StatisticOperatorHandler.cpp)

@@ -113,6 +113,14 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
                                Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode);
 
     /**
+     * @brief lowers a WindowStatisticLogicalOperatorNode to a physical ReservoirSampleOperator
+     * @param queryPlan the query plan
+     * @param statisticOperatorNode the statistic node that will be lowered to a physical ReservoirSampleOperator
+     */
+    void lowerReservoirSampleOperator(const QueryPlanPtr& queryPlan,
+                                      Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode);
+
+    /**
      * @brief Lowers a binary operator
      * @param queryPlan current plan
      * @param operatorNode current operator

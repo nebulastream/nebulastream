@@ -191,6 +191,9 @@ void DefaultPhysicalOperatorProvider::lowerStatisticOperator(
     Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode) {
     if (statisticOperatorNode->getStatisticDescriptor()->instanceOf<const Experimental::Statistics::CountMinDescriptor>()) {
         lowerCountMinOperator(queryPlan, statisticOperatorNode);
+    } else if (statisticOperatorNode->getStatisticDescriptor()
+                   ->instanceOf<const Experimental::Statistics::ReservoirSampleDescriptor>()) {
+        lowerReservoirSampleOperator(queryPlan, statisticOperatorNode);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -223,6 +226,30 @@ void DefaultPhysicalOperatorProvider::lowerCountMinOperator(
                                                                         statisticOperatorNode->getOutputSchema(),
                                                                         countMinOperatorHandler);
     statisticOperatorNode->replace(physicalCountMin);
+}
+
+void DefaultPhysicalOperatorProvider::lowerReservoirSampleOperator(
+    const NES::QueryPlanPtr& queryPlan,
+    Experimental::Statistics::WindowStatisticLogicalOperatorNodePtr& statisticOperatorNode) {
+
+    auto reservoirSampleDesc =
+        std::dynamic_pointer_cast<Experimental::Statistics::CountMinDescriptor>(statisticOperatorNode->getStatisticDescriptor());
+    auto outputSchema = statisticOperatorNode->getOutputSchema();
+
+    auto reservoirSampleDescOperatorHandler =
+        std::make_shared<Experimental::Statistics::ReservoirSampleOperatorHandler>(reservoirSampleDesc->getWindowSize(),
+                                                                                   reservoirSampleDesc->getSlideFactor(),
+                                                                                   reservoirSampleDesc->getFieldName(),
+                                                                                   reservoirSampleDesc->getDepth(),
+                                                                                   outputSchema,
+                                                                                   statisticOperatorNode->getInputOriginIds());
+
+    auto physicalReservoirSample =
+        Experimental::Statistics::PhysicalCountMinBuildOperator::create(statisticOperatorNode->getStatisticDescriptor(),
+                                                                        statisticOperatorNode->getInputSchema(),
+                                                                        statisticOperatorNode->getOutputSchema(),
+                                                                        reservoirSampleDescOperatorHandler);
+    statisticOperatorNode->replace(physicalReservoirSample);
 }
 
 void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const QueryPlanPtr& queryPlan,

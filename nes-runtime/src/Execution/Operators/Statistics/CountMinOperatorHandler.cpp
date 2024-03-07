@@ -34,9 +34,8 @@ CountMinOperatorHandler::CountMinOperatorHandler(uint64_t windowSize,
                                                  SchemaPtr schema,
                                                  std::vector<uint64_t> h3Seeds,
                                                  const std::vector<OriginId>& allOriginIds)
-    : sliceAssigner(windowSize, slideFactor), logicalSourceName(logicalSourceName), fieldName(fieldName), depth(depth),
-      width(width), h3Seeds(std::move(h3Seeds)), schema(std::move(schema)),
-      watermarkProcessor(std::make_unique<Runtime::Execution::Operators::MultiOriginWatermarkProcessor>(allOriginIds)) {
+    : StatisticOperatorHandler(windowSize, slideFactor, logicalSourceName, fieldName, depth, std::move(schema), allOriginIds),
+      width(width), h3Seeds(std::move(h3Seeds)) {
 
     auto logSrcNameWSep = logicalSourceName + "$";
     fieldsToFullyQualifiedFields[LOGICAL_SOURCE_NAME] = logSrcNameWSep + LOGICAL_SOURCE_NAME;
@@ -89,7 +88,7 @@ Runtime::TupleBuffer CountMinOperatorHandler::getTupleBuffer(const std::string& 
     auto interval = Interval(startTime, endTime);
 
     NES_DEBUG("Tuple with timestamp: {}, which lies in the Interval: [{},{}]", ts, startTime, endTime)
-    for (auto& countMinBuffer : allCountMin) {
+    for (auto& countMinBuffer : allStatistics) {
         auto dynBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(countMinBuffer, schema);
         auto sketchStartTime = dynBuffer[0][fieldsToFullyQualifiedFields[START_TIME]].read<uint64_t>();
         auto sketchEndTime = dynBuffer[0][fieldsToFullyQualifiedFields[END_TIME]].read<uint64_t>();
@@ -112,7 +111,7 @@ Runtime::TupleBuffer CountMinOperatorHandler::getTupleBuffer(const std::string& 
     tupleBuffer.setNumberOfTuples(1);
     tupleBuffer.setWatermark(interval.getEndTime());
 
-    allCountMin.emplace_back(tupleBuffer);
+    allStatistics.emplace_back(tupleBuffer);
 
     return tupleBuffer;
 }
@@ -127,21 +126,14 @@ CountMinOperatorHandler::getFinishedCountMinSketches(uint64_t localWatermarkTs, 
     NES_INFO("LocalWatermarkTS: {}   currentGlobalWatermarkTS: {}", localWatermarkTs, currentGlobalWatermarkTS);
 
     auto removeIt =
-        std::remove_if(allCountMin.begin(), allCountMin.end(), [currentGlobalWatermarkTS](const Runtime::TupleBuffer& buf) {
+        std::remove_if(allStatistics.begin(), allStatistics.end(), [currentGlobalWatermarkTS](const Runtime::TupleBuffer& buf) {
             auto endTime = buf.getWatermark();
             return endTime <= currentGlobalWatermarkTS;
         });
 
-    std::vector<Runtime::TupleBuffer> allFinishedCMSKetches(removeIt, allCountMin.end());
-    allCountMin.erase(removeIt, allCountMin.end());
+    std::vector<Runtime::TupleBuffer> allFinishedCMSKetches(removeIt, allStatistics.end());
+    allStatistics.erase(removeIt, allStatistics.end());
 
     return allFinishedCMSKetches;
 }
-
-void CountMinOperatorHandler::discardUnfinishedRemainingStatistics() { allCountMin.clear(); }
-
-void CountMinOperatorHandler::setBufferManager(const Runtime::BufferManagerPtr& bufferManager) {
-    CountMinOperatorHandler::bufferManager = bufferManager;
-}
-
 }// namespace NES::Experimental::Statistics

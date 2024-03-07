@@ -127,6 +127,18 @@ class LowerPhysicalToNautilusOperators {
                                 std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerStatisticOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerPhysicalCountMin(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerPhysicalReservoirSample(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                 std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerNonKeyedPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                         const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);

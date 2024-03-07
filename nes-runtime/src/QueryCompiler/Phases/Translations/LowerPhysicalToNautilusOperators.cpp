@@ -68,6 +68,7 @@
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/Statistics/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -85,6 +86,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalCountMinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalReservoirSampleBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
@@ -413,33 +415,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(joinBuildNautilus);
         return joinBuildNautilus;
     } else if (operatorNode->instanceOf<Experimental::Statistics::PhysicalCountMinBuildOperator>()) {
-        auto cmBuildOperator = operatorNode->as<Experimental::Statistics::PhysicalCountMinBuildOperator>();
-        auto cmDesc = std::dynamic_pointer_cast<Experimental::Statistics::CountMinDescriptor>(cmBuildOperator->getDescriptor());
-        auto cmBuildOperatorHandler = cmBuildOperator->getCountMinOperatorHandler();
-        operatorHandlers.push_back(cmBuildOperatorHandler);
-        auto operatorHandlerIndex = operatorHandlers.size() - 1;
-
-        auto inputSchema = cmBuildOperator->getInputSchema();
-        auto tsField = inputSchema->getField(cmDesc->gettimestampField());
-        auto timeStampFieldRecord =
-            std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(tsField->getName());
-        Runtime::Execution::Operators::TimeFunctionPtr timeFunction =
-            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
-        if (cmDesc->gettimestampField() == "IngestionTime") {
-            timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
-        }
-        auto sizeInBit = 64;
-
-        auto cmOperator =
-            std::make_shared<NES::Experimental::Statistics::CountMinBuildOperator>(operatorHandlerIndex,
-                                                                                   cmDesc->getWidth(),
-                                                                                   cmDesc->getDepth(),
-                                                                                   cmDesc->getFieldName(),
-                                                                                   sizeInBit,
-                                                                                   std::move(timeFunction),
-                                                                                   cmBuildOperator->getOutputSchema());
-        parentOperator->setChild(cmOperator);
-        return cmOperator;
+        auto statisticOperator = lowerStatisticOperator(operatorNode, operatorHandlers);
+        parentOperator->setChild(statisticOperator);
     }
 
     // Check if a plugin is registered that handles this physical operator
@@ -770,6 +747,77 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     } else {
         return lowerNonKeyedPreAggregationOperator(pipeline, physicalPreAggregation, operatorHandlers);
     }
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerStatisticOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+
+    auto statisticOperator = physicalOperator->as<Experimental::Statistics::PhysicalCountMinBuildOperator>();
+    if (statisticOperator->getDescriptor()->instanceOf<const Experimental::Statistics::CountMinDescriptor>()) {
+        return lowerPhysicalCountMin(physicalOperator, operatorHandlers);
+    } else if (statisticOperator->getDescriptor()->instanceOf<const Experimental::Statistics::ReservoirSampleDescriptor>()) {
+        return lowerPhysicalReservoirSample(physicalOperator, operatorHandlers);
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerPhysicalCountMin(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto cmBuildOperator = physicalOperator->as<Experimental::Statistics::PhysicalCountMinBuildOperator>();
+    auto cmDesc = std::dynamic_pointer_cast<Experimental::Statistics::CountMinDescriptor>(cmBuildOperator->getDescriptor());
+    auto buildOperatorHandler = cmBuildOperator->getCountMinOperatorHandler();
+    operatorHandlers.push_back(buildOperatorHandler);
+    auto operatorHandlerIndex = operatorHandlers.size() - 1;
+
+    auto timeStampFieldRecord =
+        std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(cmDesc->gettimestampField());
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction =
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
+    if (cmDesc->gettimestampField() == "IngestionTime") {
+        timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
+    }
+    auto sizeInBit = 64;
+
+    auto cmOperator = std::make_shared<NES::Experimental::Statistics::CountMinBuildOperator>(operatorHandlerIndex,
+                                                                                             cmDesc->getLogicalSourceName(),
+                                                                                             cmDesc->getWidth(),
+                                                                                             cmDesc->getDepth(),
+                                                                                             cmDesc->getFieldName(),
+                                                                                             sizeInBit,
+                                                                                             std::move(timeFunction),
+                                                                                             cmBuildOperator->getOutputSchema());
+    return cmOperator;
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerPhysicalReservoirSample(
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+
+    auto physicalReservoirSampleOperator = physicalOperator->as<Experimental::Statistics::PhysicalReservoirSampleBuildOperator>();
+    auto reservoirSampleDesc =
+        std::dynamic_pointer_cast<Experimental::Statistics::CountMinDescriptor>(physicalReservoirSampleOperator->getDescriptor());
+    auto buildOperatorHandler = physicalReservoirSampleOperator->getCountMinOperatorHandler();
+    operatorHandlers.push_back(buildOperatorHandler);
+    auto operatorHandlerIndex = operatorHandlers.size() - 1;
+
+    auto timeStampFieldRecord =
+        std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(reservoirSampleDesc->gettimestampField());
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction =
+        std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
+    if (cmDesc->gettimestampField() == "IngestionTime") {
+        timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
+    }
+
+    auto reservoirSampleOperator = std::make_shared<NES::Experimental::Statistics::ReservoirSampleOperator>(
+        operatorHandlerIndex,
+        reservoirSampleDesc->getDepth(),
+        reservoirSampleDesc->getFieldName(),
+        std::move(timeFunction),
+        physicalReservoirSampleOperator->getOutputSchema());
+
+    return reservoirSampleOperator;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
