@@ -41,7 +41,7 @@ class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListe
 };
 
 int main() {
-    NES::Logger::setupLogging(static_cast<NES::LogLevel>(NES_COMPILE_TIME_LOG_LEVEL));
+    NES::Logger::setupLogging(NES::LogLevel::LOG_DEBUG);
     errno = 0;
     auto partition_manager = std::make_shared<NES::Network::PartitionManager>();
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
