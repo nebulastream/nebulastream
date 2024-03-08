@@ -93,6 +93,7 @@ concept NetworkSourceConfig = requires(T* t) {
     { T::UpstreamNodeId } -> std::same_as<const size_t&>;
     { T::UpstreamNodeHostname } -> std::same_as<const char* const&>;
     { T::UpstreamNodePort } -> std::same_as<const size_t&>;
+    { T::WaitTime } -> std::same_as<const std::chrono::milliseconds&>;
     requires(std::same_as<typename T::Schema, Schema<>>);
 };
 
@@ -174,7 +175,7 @@ class UnikernelNetworkSource : DataEmitter {
         auto channel = TheNetworkManager->registerSubpartitionEventProducer(sinkLocation,
                                                                             nesPartition,
                                                                             TheBufferManager,
-                                                                            waitTime,
+                                                                            Config::WaitTime,
                                                                             retryTimes);
         if (!channel) {
             NES_ERROR("Could not register SubpartitionEventProducer!");
@@ -208,7 +209,6 @@ class UnikernelNetworkSource : DataEmitter {
                                        Config::UpstreamSubPartitionId};
     Network::NodeLocation sinkLocation{Config::UpstreamNodeId, Config::UpstreamNodeHostname, Config::UpstreamNodePort};
     // for event channel
-    std::chrono::milliseconds waitTime{2000};
     uint8_t retryTimes = 255;
 };
 
