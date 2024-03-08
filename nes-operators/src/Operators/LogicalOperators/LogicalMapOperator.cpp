@@ -43,7 +43,7 @@ bool LogicalMapOperator::inferSchema() {
     }
 
     // use the default input schema to calculate the out schema of this operator.
-    mapExpression->inferStamp( getInputSchema());
+    mapExpression->inferStamp(getInputSchema());
 
     auto assignedField = mapExpression->getField();
     std::string fieldName = assignedField->getFieldName();
@@ -64,12 +64,12 @@ bool LogicalMapOperator::inferSchema() {
 
 std::string LogicalMapOperator::toString() const {
     std::stringstream ss;
-    ss << "MAP(opId: " << id << ", statisticId: " << statisticId << ")";
+    ss << "MAP(opId: " << id << ", statisticId: " << statisticId << ", predicate: " << mapExpression->toString() << ")";
     return ss.str();
 }
 
 OperatorPtr LogicalMapOperator::copy() {
-    auto copy = LogicalOperatorFactory::createMapOperator(mapExpression, id);
+    auto copy = LogicalOperatorFactory::createMapOperator(mapExpression->copy()->as<FieldAssignmentExpressionNode>(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

@@ -43,7 +43,7 @@ bool LogicalFilterOperator::equal(NodePtr const& rhs) const {
 
 std::string LogicalFilterOperator::toString() const {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ", statisticId: " << statisticId << ")";
+    ss << "FILTER(opId: " << id << ", statisticId: " << statisticId << ", predicate: "<< predicate->toString() <<")";
     return ss.str();
 }
 
@@ -59,7 +59,7 @@ bool LogicalFilterOperator::inferSchema() {
 }
 
 OperatorPtr LogicalFilterOperator::copy() {
-    auto copy = LogicalOperatorFactory::createFilterOperator(predicate, id);
+    auto copy = LogicalOperatorFactory::createFilterOperator(predicate->copy(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

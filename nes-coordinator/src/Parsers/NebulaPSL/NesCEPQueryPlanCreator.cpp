@@ -266,7 +266,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                         ExpressionNodePtr predicate;
 
                         if (min == max) {
-                            predicate = Attribute("Count") = min;
+                            predicate = Attribute("Count") == min;
                         } else if (min == 0) {
                             predicate = Attribute("Count") <= max;
                         } else if (max == 0) {
@@ -396,8 +396,8 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                 Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), timeMeasurements.first, timeMeasurements.second);
 
             //Next, we add artificial key attributes to the sources in order to reuse the join-logic later
-            std::string cepLeftKey = keyAssignment("cep_leftLeft");
-            std::string cepRightKey = keyAssignment("cep_rightkey");
+            std::string cepLeftKey = keyAssignment("cep_leftKey");
+            std::string cepRightKey = keyAssignment("cep_rightKey");
 
             //next: add Map operator that maps the attributes with value 1 to the left and right source
             leftQueryPlan = QueryPlanBuilder::addMap(Attribute(cepLeftKey) = 1, leftQueryPlan);
