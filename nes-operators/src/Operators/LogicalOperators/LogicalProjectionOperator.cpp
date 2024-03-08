@@ -14,10 +14,10 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -55,7 +55,7 @@ bool LogicalProjectionOperator::inferSchema() {
     for (auto& expression : expressions) {
 
         //Infer schema of the field expression
-        expression->inferStamp( inputSchema);
+        expression->inferStamp(inputSchema);
 
         // Build the output schema
         if (expression->instanceOf<FieldRenameExpressionNode>()) {
@@ -77,7 +77,11 @@ bool LogicalProjectionOperator::inferSchema() {
 }
 
 OperatorPtr LogicalProjectionOperator::copy() {
-    auto copy = LogicalOperatorFactory::createProjectionOperator(expressions, id);
+    std::vector<ExpressionNodePtr> copyOfProjectionExpressions;
+    for (const auto& originalExpression : expressions) {
+        copyOfProjectionExpressions.emplace_back(originalExpression->copy());
+    }
+    auto copy = LogicalOperatorFactory::createProjectionOperator(copyOfProjectionExpressions, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

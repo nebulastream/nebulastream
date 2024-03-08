@@ -23,6 +23,7 @@ add_nes_unit_test(optimizer-unit-tests "UnitTests/Optimizer/Phases/TypeInference
         "UnitTests/Optimizer/Phases/OriginIdInferencePhaseTest.cpp"
         "UnitTests/Optimizer/Phases/MemoryLayoutSelectionPhaseTest.cpp"
         "UnitTests/Optimizer/Phases/QueryPlacementAmendmentTest.cpp"
+        "UnitTests/Optimizer/Phases/QueryRewritePhaseTest.cpp"
         "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp"
         "UnitTests/Optimizer/Phases/StatisticIdInferenceTest.cpp"
         "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp"

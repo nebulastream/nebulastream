@@ -42,10 +42,12 @@ class PatternParsingServiceTest : public Testing::BaseUnitTest {
 };
 
 std::string queryPlanToString(const QueryPlanPtr queryPlan) {
-    std::regex r2("[0-9]");
     std::regex r1("  ");
+    std::regex r2("[0-9]");
+    std::regex r3("\\(.*?\\$");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
     queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
+    queryPlanStr = std::regex_replace(queryPlanStr, r3, "");
     return queryPlanStr;
 }
 
@@ -76,18 +78,19 @@ TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
                                 "A.random INTO Print :: testSink ";
     std::shared_ptr<QueryParsingService> patternParsingService;
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
+
     // expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-    queryPlan->appendOperatorAsNewRoot(source);
     LogicalOperatorPtr filter1 = LogicalOperatorFactory::createFilterOperator(
         ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
                                                      NES::Attribute("allowedSpeed").getExpressionNode())));
-    queryPlan->appendOperatorAsNewRoot(filter1);
     LogicalOperatorPtr filter2 = LogicalOperatorFactory::createFilterOperator(
         ExpressionNodePtr(GreaterExpressionNode::create(NES::Attribute("value").getExpressionNode(),
                                                         NES::Attribute("random").getExpressionNode())));
+    queryPlan->appendOperatorAsNewRoot(source);
     queryPlan->appendOperatorAsNewRoot(filter2);
+    queryPlan->appendOperatorAsNewRoot(filter1);
     LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
@@ -154,9 +157,9 @@ TEST_F(PatternParsingServiceTest, ConjunctionPattern) {
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
     LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-    queryPlan->addRootOperator(source1);
     LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
+    queryPlan->addRootOperator(source1);
     subQueryPlan->addRootOperator(source2);
     NES::Query query = Query(queryPlan)
                            .andWith(Query(subQueryPlan))
