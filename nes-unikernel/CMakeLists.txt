@@ -30,11 +30,13 @@ if (UNIKERNEL_TRACE_PIPELINE_EXECUTION)
 endif ()
 
 if (UNIKERNEL_USE_LIB_DWARF)
+    message("-- Using Libdw")
     set(UNIKERNEL_LINK_OPTIONS ${UNIKERNEL_LINK_OPTIONS} "-ldw")
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUSE_LIB_DWARF")
 endif ()
 
 if (UNIKERNEL_USE_KAFKA)
+    message("-- Using kafka")
     SET(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} cppkafka::cppkafka RdKafka::rdkafka RdKafka::rdkafka++)
     SET(UNIKERNEL_COMPILE_OPTIONS ${UNIKERNEL_COMPILE_OPTIONS} "-DUSE_KAFKA")
 endif ()
@@ -75,7 +77,7 @@ target_include_directories(unikernel-lib PRIVATE
 target_compile_options(unikernel-lib PRIVATE ${UNIKERNEL_COMPILE_OPTIONS}
         -Wno-error=unused-parameter
 )
-target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork scn::scn ${UNIKERNEL_LIBS})
+target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork scn::scn ${UNIKERNEL_LIBS} -static)
 
 add_executable(pipeline-test tests/pipelineTest.cpp)
 target_compile_options(pipeline-test PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
@@ -128,7 +130,7 @@ foreach (PIPELINE_FILE ${PIPELINE_FILES})
 
     set_target_properties(unikernel${PIPELINE_NUMBER} PROPERTIES OUTPUT_NAME "unikernel${PIPELINE_NUMBER}")
     target_compile_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline${PIPELINE_NUMBER}.hpp")
-    target_link_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_LINK_OPTIONS})
+    target_link_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_LINK_OPTIONS} -static)
     target_compile_definitions(unikernel${PIPELINE_NUMBER} PRIVATE NES_LOGLEVEL_INFO)
 
     # Link libraries and include directories

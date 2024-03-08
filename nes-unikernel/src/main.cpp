@@ -19,6 +19,10 @@
 #include <Runtime/WorkerContext.hpp>
 #include <UnikernelExecutionPlan.hpp>
 
+#ifndef UNIKERNEL_NUM_BUFS
+#define UNIKERNEL_NUM_BUFS 1024
+#endif
+
 NES::Network::NetworkManagerPtr TheNetworkManager = nullptr;
 NES::Runtime::BufferManagerPtr TheBufferManager = nullptr;
 NES::Runtime::WorkerContextPtr TheWorkerContext = nullptr;
@@ -45,8 +49,7 @@ int main() {
     errno = 0;
     auto partition_manager = std::make_shared<NES::Network::PartitionManager>();
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
-    TheBufferManager = std::make_shared<NES::Runtime::BufferManager>();
-    TheBufferManager->createFixedSizeBufferPool(128);
+    TheBufferManager = std::make_shared<NES::Runtime::BufferManager>(8192, UNIKERNEL_NUM_BUFS);
     TheWorkerContext = new NES::Runtime::WorkerContext(NES::Unikernel::CTConfiguration::NodeId, TheBufferManager, 1, 1);
     NES::Network::ExchangeProtocol exchange_protocol(partition_manager, exchange_listener);
     TheNetworkManager = NES::Network::NetworkManager::create(NES::Unikernel::CTConfiguration::NodeId,
