@@ -260,6 +260,12 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         nljWorks = nljWorks && (resultBuffer.getNumberOfTuples() == expectedSinkBuffers[0].getNumberOfTuples());
         nljWorks =
             nljWorks && (Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffers[0], joinSchema->getSchemaSizeInBytes()));
+
+        if(nljOperatorHandler->getNumberOfSlices() > 0) {
+            nljOperatorHandler->deleteAllSlices();
+        }
+        nljWorks = nljWorks && nljOperatorHandler->getNumberOfSlices() == 0;
+
         return nljWorks;
     }
 };

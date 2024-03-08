@@ -179,17 +179,6 @@ void StreamJoinOperatorHandler::setBufferManager(const NES::Runtime::BufferManag
     this->bufferManager = bufManager;
 }
 
-uint64_t StreamJoinOperatorHandler::getNumberOfSlicesForTimePeriod(uint64_t start, uint64_t end) {
-    uint64_t count = 0;
-    auto slicesLocked = slices.rlock();
-    for (const auto& slice : *slicesLocked) {
-        if (slice->getSliceStart() >= start && slice->getSliceEnd() <= end) {
-            ++count;
-        }
-    }
-    return count;
-}
-
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                                      const OriginId outputOriginId,
                                                      const uint64_t windowSize,

@@ -318,6 +318,11 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         }
 
         checkWindowsInBuild(maxTimestamp, allLeftRecords, allRightRecords);
+
+        if(nljOperatorHandler->getNumberOfSlices() > 0) {
+            nljOperatorHandler->deleteAllSlices();
+        }
+        ASSERT_EQ(nljOperatorHandler->getNumberOfSlices(), 0);
     }
 
     /**
@@ -483,6 +488,11 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
         NES_INFO("left: {} right: {}", allLeftRecords.size(), allRightRecords.size());
         checkWindowsInProbe(maxTimestamp, allLeftRecords, allRightRecords);
+
+        if(nljOperatorHandler->getNumberOfSlices() > 0) {
+            nljOperatorHandler->deleteAllSlices();
+        }
+        ASSERT_EQ(nljOperatorHandler->getNumberOfSlices(), 0);
     }
 };
 

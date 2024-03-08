@@ -177,14 +177,6 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
 
     void setBufferManager(const BufferManagerPtr& bufManager);
 
-    /**
-     * @brief Returns the number of slices for a given time period
-     * @param start
-     * @param end
-     * @return uint64_t
-     */
-    uint64_t getNumberOfSlicesForTimePeriod(uint64_t start, uint64_t end);
-
   protected:
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
