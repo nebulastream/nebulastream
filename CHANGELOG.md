@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.64](https://github.com/nebulastream/nebulastream/tree/v0.6.64) (2024-03-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.63...v0.6.64)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Query rewrite phase produces wrong predicates  [\#4679](https://github.com/nebulastream/nebulastream/issues/4679)
+
 ## [v0.6.63](https://github.com/nebulastream/nebulastream/tree/v0.6.63) (2024-03-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.62...v0.6.63)
