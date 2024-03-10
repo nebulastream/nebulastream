@@ -142,8 +142,13 @@ void setupTopology(uint16_t rootNodes,
 
     std::vector<RequestProcessor::ISQPEventPtr> rootISQPAddNodeEvents;
     for (uint16_t counter = 0; counter < rootNodes; counter++) {
-        rootISQPAddNodeEvents.emplace_back(
-            RequestProcessor::ISQPAddNodeEvent::create(INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
+        rootISQPAddNodeEvents.emplace_back(RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::CLOUD,
+                                                                                      INVALID_WORKER_NODE_ID,
+                                                                                      "localhost",
+                                                                                      0,
+                                                                                      0,
+                                                                                      UINT16_MAX,
+                                                                                      properties));
     }
 
     requestHandlerService->queueISQPRequest(rootISQPAddNodeEvents);
@@ -151,20 +156,30 @@ void setupTopology(uint16_t rootNodes,
     std::vector<RequestProcessor::ISQPEventPtr> intermediateISQPAddNodeEvents;
     for (uint16_t counter = 0; counter < intermediateNodes; counter++) {
         intermediateISQPAddNodeEvents.emplace_back(
-            RequestProcessor::ISQPAddNodeEvent::create(INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
+            RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::SENSOR,
+                                                       INVALID_WORKER_NODE_ID,
+                                                       "localhost",
+                                                       0,
+                                                       0,
+                                                       100,
+                                                       properties));
     }
     requestHandlerService->queueISQPRequest(intermediateISQPAddNodeEvents);
 
     std::vector<RequestProcessor::ISQPEventPtr> leafISQPAddNodeEvents;
     for (uint16_t counter = 0; counter < sourceNodes; counter++) {
-        leafISQPAddNodeEvents.emplace_back(
-            RequestProcessor::ISQPAddNodeEvent::create(INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
+        leafISQPAddNodeEvents.emplace_back(RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::SENSOR,
+                                                                                      INVALID_WORKER_NODE_ID,
+                                                                                      "localhost",
+                                                                                      0,
+                                                                                      0,
+                                                                                      100,
+                                                                                      properties));
     }
     requestHandlerService->queueISQPRequest(leafISQPAddNodeEvents);
 
     // Fetch worker Ids
-    std::vector<WorkerId> rootWorkerIds;
-    rootWorkerIds.emplace_back(topology->getRootTopologyNodeId());
+    std::vector<WorkerId> rootWorkerIds = topology->getRootWorkerNodeIds();
     for (const auto& rootISQPAddNodeEvent : rootISQPAddNodeEvents) {
         const auto& response = rootISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
         auto workerId = std::static_pointer_cast<RequestProcessor::ISQPAddNodeResponse>(response)->workerId;
@@ -200,7 +215,7 @@ void setupTopology(uint16_t rootNodes,
     std::vector<RequestProcessor::ISQPEventPtr> linkAddEvents;
     uint16_t intermediateNodeCounter = 0;
     for (const auto& intermediateWorkerId : intermediateWorkerIds) {
-        uint16_t connectivityCounter = 0;
+        uint16_t connectivityCounter = 1;
         for (; intermediateNodeCounter < leafWorkerIds.size(); intermediateNodeCounter++) {
             auto linkAddEvent =
                 RequestProcessor::ISQPAddLinkEvent::create(intermediateWorkerId, leafWorkerIds[intermediateNodeCounter]);
@@ -212,6 +227,8 @@ void setupTopology(uint16_t rootNodes,
         }
     }
     requestHandlerService->queueISQPRequest(linkAddEvents);
+
+    topology->print();
 
     // create logical and physical sources
     setupSources(leafWorkerIds, sourceCatalogService);
@@ -287,10 +304,11 @@ int main(int argc, const char* argv[]) {
     auto listener = std::make_shared<ErrorHandler>();
     Exceptions::installGlobalErrorListener(listener);
 
-    NES::Logger::setupLogging("BenchmarkIncrementalPlacement.log", NES::LogLevel::LOG_INFO);
+    NES::Logger::setupLogging("BenchmarkIncrementalPlacement.log", NES::LogLevel::LOG_NONE);
     std::cout << "Setup BenchmarkIncrementalPlacement test class." << std::endl;
     std::stringstream benchmarkOutput;
-    benchmarkOutput << "Time,BM_Name,PlacementRule,IncrementalPlacement,Run_Num,Query_Num,Start_Time,End_Time,Total_Run_Time"
+    benchmarkOutput << "Time,BM_Name,PlacementRule,IncrementalPlacement,PlacementAmendmentMode,BatchSize,Run_Num,Query_Num,Start_"
+                       "Time,End_Time,Total_Run_Time"
                     << std::endl;
 
     //Load all command line arguments
@@ -318,7 +336,6 @@ int main(int argc, const char* argv[]) {
     auto numberOfRun = configs["NumOfRuns"].As<uint16_t>();
     auto startupSleepInterval = configs["StartupSleepIntervalInSeconds"].As<uint16_t>();
     NES::Logger::setupLogging("BM.log", magic_enum::enum_cast<LogLevel>(logLevel).value());
-
     //Load queries from the query set location and run the benchmark
     auto querySetLocation = configs["QuerySetLocation"].As<std::string>();
     std::vector<std::string> queries;
@@ -394,43 +411,63 @@ int main(int argc, const char* argv[]) {
         auto node = (*entry).second;
         auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
         auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
+        auto batchSize = node["BatchSize"].As<uint16_t>();
+        auto placementAmendmentMode = node["PlacementAmendmentMode"].As<std::string>();
         auto coordinatorConfiguration = CoordinatorConfiguration::createDefault();
+        coordinatorConfiguration->logLevel = magic_enum::enum_cast<LogLevel>(logLevel).value();
         //Set optimizer configuration
         OptimizerConfiguration optimizerConfiguration;
         optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
         optimizerConfiguration.enableIncrementalPlacement = incrementalPlacement;
+        optimizerConfiguration.placementAmendmentMode =
+            magic_enum::enum_cast<Optimizer::PlacementAmendmentMode>(placementAmendmentMode).value();
         coordinatorConfiguration->optimizer = optimizerConfiguration;
 
         for (uint32_t run = 0; run < numberOfRun; run++) {
-            std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
 
+            std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
             auto nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
             nesCoordinator->startCoordinator(false);
             auto requestHandlerService = nesCoordinator->getRequestHandlerService();
             auto sourceCatalogService = nesCoordinator->getSourceCatalogService();
             auto topology = nesCoordinator->getTopology();
-
             std::cout << "Setting up the topology." << std::endl;
-
             //Setup topology and source catalog
             setUp(1, 10, 100, requestHandlerService, sourceCatalogService, topology);
-
             auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
-            //Perform steps to optimize queries
+
+            std::vector<std::vector<RequestProcessor::ISQPEventPtr>> isqpBatches;
+            std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
+            uint16_t batchIncrement = 1;
             for (uint64_t i = 0; i < numOfQueries; i++) {
                 auto queryPlan = queryObjects[i];
-                auto addQueryRequest = RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement);
-                auto startTime =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
-                requestHandlerService->queueISQPRequest({addQueryRequest});
-                auto endTime =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
-                benchmarkOutput << startTime << ",BM_Name," << placementStrategy << "," << incrementalPlacement << "," << run
-                                << "," << queryPlan->getQueryId() << "," << startTime << "," << endTime << ","
-                                << (endTime - startTime) << std::endl;
+                if (batchIncrement == 1) {
+                    isqpEvents.clear();
+                }
+                isqpEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
+                if (batchIncrement == batchSize || i == numOfQueries - 1) {
+                    isqpBatches.emplace_back(isqpEvents);
+                    batchIncrement = 1;
+                    continue;
+                }
+                batchIncrement++;
             }
+
+            auto startTime =
+                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                    .count();
+            uint32_t count = 0;
+            //Perform steps to optimize queries
+            for (auto const& isqpBatch : isqpBatches) {
+                count++;
+                requestHandlerService->queueISQPRequest(isqpBatch);
+            }
+            auto endTime =
+                std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                    .count();
+            benchmarkOutput << startTime << ",BM_Name," << placementStrategy << "," << placementAmendmentMode << "," << batchSize
+                            << "," << incrementalPlacement << "," << run << "," << count << "," << startTime << "," << endTime
+                            << "," << (endTime - startTime) << std::endl;
             std::cout << "Finished Run " << run;
             nesCoordinator->stopCoordinator(true);
         }

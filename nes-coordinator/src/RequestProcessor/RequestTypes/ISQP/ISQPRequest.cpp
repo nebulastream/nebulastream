@@ -73,42 +73,43 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
     coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
     auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
 
-    // Apply all topology events
-    for (const auto& event : events) {
-        if (event->instanceOf<ISQPRemoveNodeEvent>()) {
-            auto removeNodeEvent = event->as<ISQPRemoveNodeEvent>();
-            topology->unregisterWorker(removeNodeEvent->getWorkerId());
-        } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
-            auto removeLinkEvent = event->as<ISQPRemoveLinkEvent>();
-            topology->removeTopologyNodeAsChild(removeLinkEvent->getParentNodeId(), removeLinkEvent->getChildNodeId());
-        } else if (event->instanceOf<ISQPAddLinkEvent>()) {
-            auto addLinkEvent = event->as<ISQPAddLinkEvent>();
-            topology->addTopologyNodeAsChild(addLinkEvent->getParentNodeId(), addLinkEvent->getChildNodeId());
-            event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
-        } else if (event->instanceOf<ISQPAddNodeEvent>()) {
-            auto addNodeEvent = event->as<ISQPAddNodeEvent>();
-            if (addNodeEvent->getWorkerType() == WorkerType::CLOUD) {
-                topology->registerWorkerAsRoot(addNodeEvent->getWorkerId(),
-                                               addNodeEvent->getIpAddress(),
-                                               addNodeEvent->getGrpcPort(),
-                                               addNodeEvent->getDataPort(),
-                                               addNodeEvent->getResources(),
-                                               addNodeEvent->getProperties(),
-                                               0,
-                                               0);
-            } else {
-                topology->registerWorker(addNodeEvent->getWorkerId(),
-                                         addNodeEvent->getIpAddress(),
-                                         addNodeEvent->getGrpcPort(),
-                                         addNodeEvent->getDataPort(),
-                                         addNodeEvent->getResources(),
-                                         addNodeEvent->getProperties(),
-                                         0,
-                                         0);
+        // Apply all topology events
+        for (const auto& event : events) {
+            if (event->instanceOf<ISQPRemoveNodeEvent>()) {
+                auto removeNodeEvent = event->as<ISQPRemoveNodeEvent>();
+                topology->unregisterWorker(removeNodeEvent->getWorkerId());
+            } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
+                auto removeLinkEvent = event->as<ISQPRemoveLinkEvent>();
+                topology->removeTopologyNodeAsChild(removeLinkEvent->getParentNodeId(), removeLinkEvent->getChildNodeId());
+            } else if (event->instanceOf<ISQPAddLinkEvent>()) {
+                auto addLinkEvent = event->as<ISQPAddLinkEvent>();
+                topology->addTopologyNodeAsChild(addLinkEvent->getParentNodeId(), addLinkEvent->getChildNodeId());
+                event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
+            } else if (event->instanceOf<ISQPAddNodeEvent>()) {
+                auto addNodeEvent = event->as<ISQPAddNodeEvent>();
+                WorkerId workerId;
+                if (addNodeEvent->getWorkerType() == WorkerType::CLOUD) {
+                    workerId = topology->registerWorkerAsRoot(addNodeEvent->getWorkerId(),
+                                                              addNodeEvent->getIpAddress(),
+                                                              addNodeEvent->getGrpcPort(),
+                                                              addNodeEvent->getDataPort(),
+                                                              addNodeEvent->getResources(),
+                                                              addNodeEvent->getProperties(),
+                                                              0,
+                                                              0);
+                } else {
+                    workerId = topology->registerWorker(addNodeEvent->getWorkerId(),
+                                                        addNodeEvent->getIpAddress(),
+                                                        addNodeEvent->getGrpcPort(),
+                                                        addNodeEvent->getDataPort(),
+                                                        addNodeEvent->getResources(),
+                                                        addNodeEvent->getProperties(),
+                                                        0,
+                                                        0);
+                }
+                event->response.set_value(std::make_shared<ISQPAddNodeResponse>(workerId, true));
             }
-            event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
         }
-    }
 
         // Identify affected operator placements
         for (const auto& event : events) {
