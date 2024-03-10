@@ -93,13 +93,15 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {//Ben
             std::string req = request.getValue("{}");
             nlohmann::json requestJson = nlohmann::json::parse(req);
 
-            const auto workloadType = requestJson["workloadType"].get<std::string>();
-            const auto noOfQueries = requestJson["noOfQueries"].get<uint64_t>();
+//            const auto workloadType = requestJson["workloadType"].get<std::string>();
+//            const auto noOfQueries = requestJson["noOfQueries"].get<uint64_t>();
+            const std::vector<std::string> queryStrings = requestJson["queries"].get<std::vector<std::string>>();
             const auto queryMergerRule = static_cast<Optimizer::QueryMergerRule>(requestJson["queryMergerRule"].get<uint8_t>());
 
+            //send the queryset from request
+
             const auto response = requestHandlerService->validateAndQueueSharingIdentificationBenchmarkRequest(
-                workloadType,
-                noOfQueries,
+                queryStrings,
                 queryMergerRule,
                 Optimizer::PlacementStrategy::TopDown);
 

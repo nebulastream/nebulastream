@@ -1,0 +1,146 @@
+# ~~~ Configurations for the NES Coordinator ~~~
+
+# ~~ IPs and Ports ~~
+# Set NES ip of the REST server
+#restIp: 127.0.0.1
+
+# Set RPC IP address of NES Coordinator
+#coordinatorIp: 127.0.0.1
+
+# Set RPC Server port of NES Coordinator
+#rpcPort: 4000
+
+# Set port exposed for REST endpoints
+#restPort: 8081
+
+# Set the data port of the network manager
+#dataPort: 3001
+
+
+# ~~ Processing Configurations ~~
+# Set the number of computing slots in NES Coordinator
+#numberOfSlots: 65535
+
+# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
+#logLevel: LOG_DEBUG
+
+# Number buffers in global buffer pool
+#numberOfBuffersInGlobalBufferManager: 1024
+
+# Number buffers in task local buffer pool
+#numberOfBuffersPerWorker: 128
+
+# Number buffers in source local buffer pool
+#numberOfBuffersInSourceLocalBufferPool: 64
+
+# Size of buffer to pass data through the system
+#bufferSizeInBytes: 4096
+
+# Number of threads available for the worker node. Defines how many queries can run in parallel.
+#numWorkerThreads: 1
+
+# The number of queries to be processed together
+#queryBatchSize: 1
+
+# Enable monitoring
+#enableMonitoring: false
+
+# Enable reconfiguration of running query plans. Default: false
+#enableQueryReconfiguration:
+
+#optimizer:
+# The rule to be used for performing query merging
+#queryMergerRule: DefaultQueryMergerRule
+
+# Advance Semantic Query Validation Feature
+#advanceSemanticValidation: false
+
+# Selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]
+#memoryLayoutPolicy: FORCE_ROW_LAYOUT
+
+# Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule
+#performOnlySourceOperatorExpansion: false
+
+# The number of queries to be processed together
+#queryBatchSize: 1
+
+# Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule.
+#performOnlySourceOperatorExpansion: false
+
+# Set a single logical source with multiple fields in the schema
+# Valid types are: INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, FLOAT32, UINT64, FLOAT64, BOOLEAN, CHAR
+# CHARS require the length key
+# FLOAT32 is float, FLOAT64 is double
+logicalSources:
+  - logicalSourceName: "example1"
+    fields:
+      - name: "a"
+        type: "UINT64"
+      - name: "b"
+        type: "UINT64"
+      - name: "c"
+        type: "UINT64"
+      - name: "d"
+        type: "UINT64"
+      - name: "e"
+        type: "UINT64"
+      - name: "f"
+        type: "UINT64"
+      - name: "time1"
+        type: "UINT64"
+      - name: "time2"
+        type: "UINT64"
+  - logicalSourceName: "example2"
+    fields:
+      - name: "g"
+        type: "UINT64"
+      - name: "h"
+        type: "UINT64"
+      - name: "i"
+        type: "UINT64"
+      - name: "j"
+        type: "UINT64"
+      - name: "k"
+        type: "UINT64"
+      - name: "l"
+        type: "UINT64"
+      - name: "time1"
+        type: "UINT64"
+      - name: "time2"
+        type: "UINT64"
+  - logicalSourceName: "example3"
+    fields:
+      - name: "m"
+        type: "UINT64"
+      - name: "n"
+        type: "UINT64"
+      - name: "o"
+        type: "UINT64"
+      - name: "p"
+        type: "UINT64"
+      - name: "q"
+        type: "UINT64"
+      - name: "r"
+        type: "UINT64"
+      - name: "time1"
+        type: "UINT64"
+      - name: "time2"
+        type: "UINT64"
+  - logicalSourceName: "example4"
+    fields:
+      - name: "s"
+        type: "UINT64"
+      - name: "t"
+        type: "UINT64"
+      - name: "u"
+        type: "UINT64"
+      - name: "v"
+        type: "UINT64"
+      - name: "w"
+        type: "UINT64"
+      - name: "x"
+        type: "UINT64"
+      - name: "time1"
+        type: "UINT64"
+      - name: "time2"
+        type: "UINT64"

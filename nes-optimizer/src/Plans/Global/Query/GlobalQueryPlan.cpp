@@ -215,4 +215,11 @@ std::vector<QueryId> GlobalQueryPlan::getQueryIds(SharedQueryId sharedQueryPlanI
     return sharedQueryPlan->getQueryIds();
 }
 
+void GlobalQueryPlan::reset() {
+    sourceNamesAndPlacementStrategyToSharedQueryPlanMap.clear();
+    sharedQueryIdToPlanMap.clear();
+    queryIdToSharedQueryIdMap.clear();
+    queryPlansToAdd.clear();
+}
+
 }// namespace NES

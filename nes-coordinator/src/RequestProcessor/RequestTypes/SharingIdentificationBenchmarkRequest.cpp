@@ -87,24 +87,14 @@
 
 namespace {
 
-using std::filesystem::directory_iterator;
 using SourceCatalogPtr = std::shared_ptr<NES::Catalogs::Source::SourceCatalog>;
-uint64_t noOfPhysicalSources;
-uint64_t noOfMeasurementsToCollect;
-uint64_t numberOfDistinctSources;
-uint64_t startupSleepIntervalInSeconds;
-std::vector<bool> enableQueryMerging;
-//std::vector<uint64_t> batchSizes; not needed right?
-std::string querySetLocation;
-std::chrono::nanoseconds Runtime;
-//std::string logLevel; not needed right?
+
 }// namespace
 
 namespace NES::RequestProcessor {
 
 SharingIdentificationBenchmarkRequest::SharingIdentificationBenchmarkRequest(
-    const std::string& workloadType,
-    const uint64_t noOfQueries,
+    const std::vector<std::string>& queryStrings,
     const Optimizer::QueryMergerRule queryMergerRule,
     const Optimizer::PlacementStrategy queryPlacementStrategy,
     const uint8_t maxRetries,
@@ -118,20 +108,18 @@ SharingIdentificationBenchmarkRequest::SharingIdentificationBenchmarkRequest(
                           ResourceType::SourceCatalog,
                           ResourceType::CoordinatorConfiguration},
                          maxRetries),
-      workloadType(workloadType), noOfQueries(noOfQueries), queryMergerRule(queryMergerRule),
+      queryStrings(queryStrings), queryMergerRule(queryMergerRule),
       queryPlacementStrategy(queryPlacementStrategy), z3Context(z3Context), queryParsingService(queryParsingService) {}
 
 SharingIdentificationBenchmarkRequestPtr
-SharingIdentificationBenchmarkRequest::create(const std::string& workloadType,
-                                              const uint64_t noOfQueries,
+SharingIdentificationBenchmarkRequest::create(const std::vector<std::string>& queryStrings,
                                               const Optimizer::QueryMergerRule queryMergerRule,
                                               const Optimizer::PlacementStrategy queryPlacementStrategy,
                                               const uint8_t maxRetries,
                                               const z3::ContextPtr& z3Context,
                                               const QueryParsingServicePtr& queryParsingService) {
 
-    return std::make_shared<SharingIdentificationBenchmarkRequest>(workloadType,
-                                                                   noOfQueries,
+    return std::make_shared<SharingIdentificationBenchmarkRequest>(queryStrings,
                                                                    queryMergerRule,
                                                                    queryPlacementStrategy,
                                                                    maxRetries,
@@ -152,81 +140,9 @@ void SharingIdentificationBenchmarkRequest::postRollbackHandle([[maybe_unused]] 
                                                                [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
 
-/**
- * @brief Set up the physical sources for the benchmark
- * @param nesCoordinator : the coordinator shared object
- * @param noOfPhysicalSource : number of physical sources
- */
-
-void setupSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalSource) {
-
-    //register logical stream with different schema
-    NES::SchemaPtr schema1 = NES::Schema::create()
-                                 ->addField("a", BasicType::UINT64)
-                                 ->addField("b", BasicType::UINT64)
-                                 ->addField("c", BasicType::UINT64)
-                                 ->addField("d", BasicType::UINT64)
-                                 ->addField("e", BasicType::UINT64)
-                                 ->addField("f", BasicType::UINT64)
-                                 ->addField("time1", BasicType::UINT64)
-                                 ->addField("time2", BasicType::UINT64);
-
-    NES::SchemaPtr schema2 = NES::Schema::create()
-                                 ->addField("g", BasicType::UINT64)
-                                 ->addField("h", BasicType::UINT64)
-                                 ->addField("i", BasicType::UINT64)
-                                 ->addField("j", BasicType::UINT64)
-                                 ->addField("k", BasicType::UINT64)
-                                 ->addField("l", BasicType::UINT64)
-                                 ->addField("time1", BasicType::UINT64)
-                                 ->addField("time2", BasicType::UINT64);
-
-    NES::SchemaPtr schema3 = NES::Schema::create()
-                                 ->addField("m", BasicType::UINT64)
-                                 ->addField("n", BasicType::UINT64)
-                                 ->addField("o", BasicType::UINT64)
-                                 ->addField("p", BasicType::UINT64)
-                                 ->addField("q", BasicType::UINT64)
-                                 ->addField("r", BasicType::UINT64)
-                                 ->addField("time1", BasicType::UINT64)
-                                 ->addField("time2", BasicType::UINT64);
-
-    NES::SchemaPtr schema4 = NES::Schema::create()
-                                 ->addField("s", BasicType::UINT64)
-                                 ->addField("t", BasicType::UINT64)
-                                 ->addField("u", BasicType::UINT64)
-                                 ->addField("v", BasicType::UINT64)
-                                 ->addField("w", BasicType::UINT64)
-                                 ->addField("x", BasicType::UINT64)
-                                 ->addField("time1", BasicType::UINT64)
-                                 ->addField("time2", BasicType::UINT64);
-
-    //Add the logical and physical stream to the stream catalog
-    uint64_t counter = 1;
-    for (uint64_t j = 0; j < numberOfDistinctSources; j++) {
-        //We increment the counter till 3 and then reset it to 0
-        //When the counter is 1 we add the logical stream with schema type 1
-        //When the counter is 2 we add the logical stream with schema type 2
-        //When the counter is 3 we add the logical stream with schema type 3
-
-        if (counter == 1) {
-            sourceCatalog->addLogicalSource("example" + std::to_string(j + 1), schema1);
-        } else if (counter == 2) {
-            sourceCatalog->addLogicalSource("example" + std::to_string(j + 1), schema2);
-        } else if (counter == 3) {
-            sourceCatalog->addLogicalSource("example" + std::to_string(j + 1), schema3);
-        } else if (counter == 4) {
-            sourceCatalog->addLogicalSource("example" + std::to_string(j + 1), schema4);
-            counter = 0;
-        }//max 4 logicalSources, what if > 4
+void setupPhysicalSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalSource=1) { //TODO
+    for (uint64_t j = 0; j < 4; j++) { //TODO: parameterize
         LogicalSourcePtr logicalSource = sourceCatalog->getLogicalSource("example" + std::to_string(j + 1));
-        counter++;
-
-        std::map<std::string, std::any> properties;
-        properties[NES::Worker::Properties::MAINTENANCE] = false;//map[key]=value
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-
-        // Add Physical topology node and stream catalog entry
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             //Create physical source
             auto physicalSource =
@@ -238,22 +154,9 @@ void setupSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalSource) {
 }
 
 
-std::vector<std::string> readQuerySet(const std::string& filePath) {
-    //Read the input query set and load the query string in the queries vector
-    std::ifstream infile(filePath);
-    std::vector<std::string> queries;
-    std::string line;
-    while (std::getline(infile, line)) {
-        queries.emplace_back(line);
-    }
-    return queries;
-}
-
-
 std::vector<AbstractRequestPtr>
 SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
 
-    std::cout<<noOfQueries;
 
     try {
         NES_DEBUG("Acquiring required resources.");
@@ -286,18 +189,18 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
                                                        udfCatalog,
                                                        coordinatorConfiguration->optimizer.performAdvanceSemanticValidation);
 
-        uint64_t totalOperators = 0;
+        setupPhysicalSources(sourceCatalog);
 
-        std::string querySetPath = "";//TODO: set querySetPath
-        const auto queryStrings = readQuerySet(querySetPath);
+        uint64_t totalOperators = 0;
+        std::vector<QueryId> queryIds = {};
 
         auto startTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        for (auto queryString : queryStrings) {
+        for (const auto& queryString : queryStrings) {
 
             // Compile and perform syntactic check if necessary
-            if (!queryString.empty() && !queryPlan) {
+            if (!queryString.empty()) {
                 // Checking the syntactic validity and compiling the query string to an object
                 queryPlan = syntacticQueryValidation->validate(queryString);
             } else {
@@ -307,6 +210,7 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
 
             // Set unique identifier and additional properties to the query
             queryId = PlanIdGenerator::getNextQueryId();
+            queryIds.push_back(queryId);
             queryPlan->setQueryId(queryId);
             queryPlan->setPlacementStrategy(queryPlacementStrategy);
 
@@ -351,6 +255,9 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
         NES_DEBUG("Applying Query Merger Rules as Query Merging is enabled.");
         queryMergerPhase->execute(globalQueryPlan);
 
+        auto endTime =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
         auto allSQP = globalQueryPlan->getAllSharedQueryPlans();
 
         uint64_t mergedOperators = 0;
@@ -359,18 +266,23 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             mergedOperators = mergedOperators + planSize;
         }
 
-        //Compute efficiency
-        float efficiency = (((float) totalOperators - (float) mergedOperators) / (float) totalOperators) * 100;
-        //TODO check time
-        auto endTime =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        // NES_INFO("Total operators" + std::to_string(totalOperators) + " , merged operators" + std::to_string(mergedOperators));
 
+        //Compute efficiency
+        float efficiency = (((float) totalOperators - (float) mergedOperators) / (float) totalOperators) * 100.0;
+
+        //Compute optimizationTime
         auto optimizationTime = endTime - startTime;
 
+        //get Response as Json
         auto response = getResAsJson(allSQP, efficiency, optimizationTime);
 
         // respond to the calling service with the needed data
-        responsePromise.set_value(std::make_shared<AddQueryResponse>(response));
+        responsePromise.set_value(std::make_shared<BenchmarkQueryResponse>(response));
+
+        //clear old queries after one query-merging run
+        queryCatalogService->clearQueries();
+        globalQueryPlan->reset();
 
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
@@ -380,17 +292,30 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
     return {};
 }
 
+nlohmann::json mergeSharedQueryPlanJson(const std::vector<nlohmann::json>& sharedQueryPlanJsons) {
+
+    nlohmann::json result{};
+    auto merge = [&](const std::string& elementName) {
+        std::vector<nlohmann::json> elements{};
+        for (const auto& item : sharedQueryPlanJsons) {
+            const auto& toInsert = item[elementName];
+            std::copy(toInsert.begin(), toInsert.end(), std::back_inserter(elements));
+        }
+        return elements;
+    };
+    result["nodes"] = merge("nodes");
+    result["edges"] = merge("edges");
+    return result;
+}
+
 nlohmann::json
 SharingIdentificationBenchmarkRequest::getResAsJson(std::vector<SharedQueryPlanPtr> allSQP, float efficiency, long optTime) {
 
-    NES_INFO("UtilityFunctions: getting all shared query plan,efficiency,optimizationTime as JSON");
-    nlohmann::json resJson{};
-    std::vector<nlohmann::json> nodes = {};
+    NES_INFO("UtilityFunctions: getting all shared query plan,sharingEfficiency,optimizationTime as JSON");
 
-    nlohmann::json sharedQueryPlan{};
-    nlohmann::json sharingEfficiency{};
-    nlohmann::json optimizationTime{};
+    nlohmann::json resJson = {};
 
+    //convert allSharedQueryPlan format:  std::vector<SharedQueryPlanPtr>  to  std::vector<nlohmann::json>
     std::vector<nlohmann::json> sharedQueryPlans;
     for (auto& item : allSQP) {
         auto shareQueryPlan = item->getQueryPlan();
@@ -398,17 +323,10 @@ SharingIdentificationBenchmarkRequest::getResAsJson(std::vector<SharedQueryPlanP
         sharedQueryPlans.push_back(sharedQueryPlanJson);
     }
 
-    //TODO :  change output format
+    resJson["sharedQueryPlans"] = mergeSharedQueryPlanJson(sharedQueryPlans);
+    resJson["sharingEfficiency"] = efficiency;
+    resJson["optimizationTime"] = optTime;
 
-    //    sharedQueryPlan["sharedQueryPlan"] = allSQP;
-    sharingEfficiency["sharingEfficiency"] = efficiency;
-    optimizationTime["optimizationTime"] = optTime;
-
-    nodes.push_back(sharedQueryPlan);
-    nodes.push_back(sharingEfficiency);
-    nodes.push_back(optimizationTime);
-
-    resJson["response"] = nodes;
     return resJson;
 }
 

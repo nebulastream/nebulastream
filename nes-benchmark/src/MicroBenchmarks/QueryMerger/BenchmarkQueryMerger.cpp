@@ -389,7 +389,7 @@ int main(int argc, const char* argv[]) {
                 uint64_t mergedOperators = 0;
                 for (auto& sqp : allSQP){
                     //auto allSQP2=
-                    unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
+                    unsigned long planSize = PlanIterator(sqp->getQueryPlan()).snapshot().size();
                     mergedOperators = mergedOperators + planSize;
                 }
 

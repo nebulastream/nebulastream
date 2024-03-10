@@ -38,16 +38,14 @@ using SharingIdentificationBenchmarkRequestPtr = std::shared_ptr<SharingIdentifi
 
 class SharingIdentificationBenchmarkRequest : public AbstractUniRequest {
   public:
-    SharingIdentificationBenchmarkRequest(const std::string& workloadType,
-                                          const uint64_t noOfQueries,
+    SharingIdentificationBenchmarkRequest(const std::vector<std::string>& queryStrings,
                                           const Optimizer::QueryMergerRule queryMergerRule,
                                           const Optimizer::PlacementStrategy queryPlacementStrategy,
                                           const uint8_t maxRetries,
                                           const z3::ContextPtr& z3Context,
                                           const QueryParsingServicePtr& queryParsingService);
 
-    static SharingIdentificationBenchmarkRequestPtr create(const std::string& workloadType,
-                                                           const uint64_t noOfQueries,
+    static SharingIdentificationBenchmarkRequestPtr create(const std::vector<std::string>& queryStrings,
                                                            const Optimizer::QueryMergerRule queryMergerRule,
                                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
                                                            const uint8_t maxRetries,
@@ -88,8 +86,7 @@ class SharingIdentificationBenchmarkRequest : public AbstractUniRequest {
     nlohmann::json getResAsJson(std::vector<SharedQueryPlanPtr> allSQP, float efficiency, long optimizationTime);
 
   private:
-    const std::string workloadType;
-    const uint64_t noOfQueries;
+    const std::vector<std::string> queryStrings;
     const Optimizer::QueryMergerRule queryMergerRule;
 
     QueryId queryId;

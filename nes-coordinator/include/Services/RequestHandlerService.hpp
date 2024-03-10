@@ -153,8 +153,7 @@ class RequestHandlerService {
                                                const std::vector<TopologyLinkInformation>& addedLinks);
 
     nlohmann::json
-    validateAndQueueSharingIdentificationBenchmarkRequest(const std::string& workloadType,
-                                                          const uint64_t noOfQueries,
+    validateAndQueueSharingIdentificationBenchmarkRequest(const std::vector<std::string>& queryStrings,
                                                           const Optimizer::QueryMergerRule queryMergerRule,
                                                           const Optimizer::PlacementStrategy queryPlacementStrategy);
 

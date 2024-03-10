@@ -212,12 +212,10 @@ bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId share
 }
 
 nlohmann::json RequestHandlerService::validateAndQueueSharingIdentificationBenchmarkRequest(
-    const std::string& workloadType,
-    const uint64_t noOfQueries,
+    const std::vector<std::string>& queryStrings,
     const Optimizer::QueryMergerRule queryMergerRule,
     const Optimizer::PlacementStrategy queryPlacementStrategy) {
-    auto benchmarkRequest = RequestProcessor::SharingIdentificationBenchmarkRequest::create(workloadType,
-                                                                                            noOfQueries,
+    auto benchmarkRequest = RequestProcessor::SharingIdentificationBenchmarkRequest::create(queryStrings,
                                                                                             queryMergerRule,
                                                                                             queryPlacementStrategy,
                                                                                             RequestProcessor::DEFAULT_RETRIES,
