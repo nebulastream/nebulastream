@@ -153,6 +153,8 @@ class GlobalQueryPlan {
     getSharedQueryPlansConsumingSourcesAndPlacementStrategy(const std::string& sourceNames,
                                                             NES::Optimizer::PlacementStrategy placementStrategy);
 
+    void reset();
+
   private:
     GlobalQueryPlan();
 
