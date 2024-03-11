@@ -12,14 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-optimizer
-		BasePlacementAdditionStrategy.cpp
-        BottomUpStrategy.cpp
-        TopDownStrategy.cpp
-        MlHeuristicStrategy.cpp
-        IFCOPStrategy.cpp
-		ILPStrategy.cpp
-        ElegantPlacementStrategy.cpp
+		AbstractCostBasedOptimizer.cpp
 )
-
-add_subdirectory(CostBasedStrategy)
-add_subdirectory(CostFunction)
