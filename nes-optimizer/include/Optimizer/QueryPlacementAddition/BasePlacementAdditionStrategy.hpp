@@ -297,7 +297,7 @@ class BasePlacementAdditionStrategy {
     //Time interval in which to retry
     static constexpr auto SOURCE_RETRY_WAIT = std::chrono::milliseconds(10);
     //Max retires for path selection before failing the placement
-    static constexpr auto MAX_PATH_SELECTION_RETRIES = 3;
+    static constexpr auto MAX_PATH_SELECTION_RETRIES = 10;
     //Time interval in which to retry
     static constexpr auto PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(1000);
     static constexpr auto MAX_PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(120000);

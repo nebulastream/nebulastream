@@ -182,8 +182,8 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
                         "path selection.");
             std::this_thread::sleep_for(backOffTime);
             retryCount++;
-            backOffTime *= 2;
-            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
+            /*backOffTime *= 2;
+            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);*/
         }
     }
     return success;
