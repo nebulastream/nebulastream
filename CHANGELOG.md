@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.65](https://github.com/nebulastream/nebulastream/tree/v0.6.65) (2024-03-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.64...v0.6.65)
+
+**Implemented enhancements:**
+
+- \[TASK\] MQTTSinkDeploymentTest disabled test. [\#4543](https://github.com/nebulastream/nebulastream/issues/4543)
+- \[TASK\] E2ECoordinatorMultiWorkerTest disabled tests [\#4538](https://github.com/nebulastream/nebulastream/issues/4538)
+
 ## [v0.6.64](https://github.com/nebulastream/nebulastream/tree/v0.6.64) (2024-03-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.63...v0.6.64)
