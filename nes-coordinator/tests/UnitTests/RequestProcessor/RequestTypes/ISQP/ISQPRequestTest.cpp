@@ -469,9 +469,9 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     int nodeId2 = 2;
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 3, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 3, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -957,18 +957,14 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    uint16_t numberOfSlots = 4;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, numberOfSlots, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 =
-        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, numberOfSlots, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 =
-        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, numberOfSlots, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 =
-        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, numberOfSlots, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -983,7 +979,7 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
 
     // Disable query merging
     coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::DefaultQueryMergerRule;
-    // Enable incremental placement
+    // Disable incremental placement
     coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
     // Number of amender threads
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
@@ -1065,7 +1061,7 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
 
     auto sharedQueryPlanToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     // Only two requests should be processed
-    ASSERT_EQ(sharedQueryPlanToDeploy.size(), 2);
+    EXPECT_EQ(sharedQueryPlanToDeploy.size(), 2);
     // Assert that the change log still exists in the failed shared query plans and the status of the query is in optimizing
     for (const auto& unDeployedSharedQueryPlan : sharedQueryPlanToDeploy) {
         auto hostedQueryIds = unDeployedSharedQueryPlan->getQueryIds();
