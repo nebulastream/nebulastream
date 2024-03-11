@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.66](https://github.com/nebulastream/nebulastream/tree/v0.6.66) (2024-03-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.65...v0.6.66)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create an Interface for Cost-Based Placement [\#4599](https://github.com/nebulastream/nebulastream/issues/4599)
+
 ## [v0.6.65](https://github.com/nebulastream/nebulastream/tree/v0.6.65) (2024-03-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.64...v0.6.65)
