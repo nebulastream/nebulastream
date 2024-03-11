@@ -46,7 +46,7 @@ using namespace NES;
 //FIXME tests right now rely on setting up a broker manually. Moreover, they intentionally fail. (covered in issue #1599)
 // - find a way to fully automate tests (e.time::WorkerContext workerContext(g. using redBoltz c++ MQTT library, which offers a broker
 // - fix tests, so they do not intentionally fail, but always succeed, if right behaviour is shown
-class MQTTTSinkTest : public Testing::BaseIntegrationTest {
+class MQTTSinkTest : public Testing::BaseIntegrationTest {
   public:
     // constants used throughout the tests
     const std::string LOCAL_ADDRESS = "127.0.0.1:1883";
@@ -126,7 +126,7 @@ class MQTTTSinkTest : public Testing::BaseIntegrationTest {
            a std::shared_ptr<SinkMedium> to a std::shared_ptr<MQTTSink>. As it seems, shared pointers should be initialized with
            std::make_shared.  */
         MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
-                                                          nullptr,
+                                                          nodeEngine,
                                                           1,
                                                           0,
                                                           0,
@@ -169,7 +169,7 @@ class MQTTTSinkTest : public Testing::BaseIntegrationTest {
 /* ------------------------------------------------------------------------------ */
 /* ------------------------ ASYNCHRONOUS CLIENT TESTS --------------------------- */
 /* ------------------------------------------------------------------------------ */
-TEST_F(MQTTTSinkTest, testMQTTClientCreation) {
+TEST_F(MQTTSinkTest, testMQTTClientCreation) {
     uint64_t maxBufferedMSGs = 120;
     const MQTTSinkDescriptor::TimeUnits timeUnit = MQTTSinkDescriptor::TimeUnits::milliseconds;
     uint64_t msgDelay = 500;
@@ -194,7 +194,7 @@ TEST_F(MQTTTSinkTest, testMQTTClientCreation) {
 }
 
 /* - MQTT Client SetUp / Connect to Broker ---------------------------------------------------- */
-TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
+TEST_F(MQTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
     uint64_t maxBufferedMSGs = 120;
     const MQTTSinkDescriptor::TimeUnits timeUnit = MQTTSinkDescriptor::TimeUnits::milliseconds;
     uint64_t msgDelay = 500;
@@ -202,7 +202,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
     bool asynchronousClient = true;
     SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
     MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
-                                                      nullptr,
+                                                      nodeEngine,
                                                       1,
                                                       0,
                                                       0,
@@ -221,7 +221,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
 }
 
 /* - MQTT Client send a finite amount of Data to Broker ---------------------------------------------------- */
-TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerAsynchronous) {
+TEST_F(MQTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker =
         createMQTTSinkConnectToBrokerWriteData(5,
                                                5,
@@ -236,7 +236,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerAsynchronous) {
 /* - MQTT Client kill broker, does client stop? ---------------------------------------------------- */
 /* This test is meant to be done manually and to crash. Kill the client during the sending process. The MQTTSink writeData()
    call should fail and log: 'No more messages can be buffered' If the test is not stopped, it RUNS FOR AN HOUR" */
-TEST_F(MQTTTSinkTest, DISABLED_testMQTTbrokerDeathToClientStopAsynchronous) {
+TEST_F(MQTTSinkTest, DISABLED_testMQTTbrokerDeathToClientStopAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker =
         createMQTTSinkConnectToBrokerWriteData(3600,
                                                5,
@@ -249,7 +249,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTbrokerDeathToClientStopAsynchronous) {
 }
 
 /* - MQTT Client kill disconnect and reconnect to broker, payloads lost? --------------------------- */
-TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendMassiveDataQuicklyAsynchronous) {
+TEST_F(MQTTSinkTest, DISABLED_testMQTTsendMassiveDataQuicklyAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker =
         createMQTTSinkConnectToBrokerWriteData(50000,
                                                1000,
@@ -266,7 +266,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendMassiveDataQuicklyAsynchronous) {
    the result. TEST 1: Kill the broker during the sending process. The writeData() function should return false and the
    MQTTSink should log: 'Unsent messages'. TEST2: Kill the broker during the sending process, but this time reconnect before
    the client is finished sending messages. The test should succeed. */
-TEST_F(MQTTTSinkTest, DISABLED_testMQTTUnsentMessagesAsynchronous) {
+TEST_F(MQTTSinkTest, DISABLED_testMQTTUnsentMessagesAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker =
         createMQTTSinkConnectToBrokerWriteData(20,
                                                20,
@@ -282,7 +282,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTUnsentMessagesAsynchronous) {
 /* ------------------------- SYNCHRONOUS CLIENT TESTS --------------------------- */
 /* ------------------------------------------------------------------------------ */
 /* - MQTT Client SetUp / Connect to Broker ---------------------------------------------------- */
-TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
+TEST_F(MQTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
     uint64_t maxBufferedMSGs = 120;
     const MQTTSinkDescriptor::TimeUnits timeUnit = MQTTSinkDescriptor::TimeUnits::milliseconds;
     uint64_t msgDelay = 500;
@@ -314,7 +314,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
    evaluate the result. TEST 1: Kill the broker during the sending process. The writeData() function should return false and
    the MQTTSink should log: 'Connection Lost'. TEST2: Do not kill the broker during the sending process. The client should
    send all messages successfully and the test should pass. */
-TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerSynchronously) {
+TEST_F(MQTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerSynchronously) {
 
     bool bufferDataSuccessfullyWrittenToBroker =
         createMQTTSinkConnectToBrokerWriteData(20,
