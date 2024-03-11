@@ -18,6 +18,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -28,7 +29,14 @@
 using namespace std;
 
 namespace NES {
+/**
+ * Due to a LACK OF BROKER in the most common MQTT-CPP libraries, the broker must be set up manually.
+ * An easy way is to use the Mosquitto broker. On Ubuntu: 'sudo apt install mosquitto'.
+ * In order to start the broker with information for every received payload: 'mosquitto -v' (uses default port 1883).
+ */
 
+//FIXME test right now relies on setting up a broker manually.
+// - find a way to fully automate test (e.time::WorkerContext workerContext(g. using redBoltz c++ MQTT library, which offers a broker
 class MQTTSinkDeploymentTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coConf;
@@ -43,6 +51,11 @@ class MQTTSinkDeploymentTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         coConf = CoordinatorConfiguration::createDefault();
         wrkConf = WorkerConfiguration::create();
+
+        // Manually add SourceType since 'SourceCatalogue' cannot be found
+        auto defaultSourceType1 = DefaultSourceType::create("default_logical", "physical_MQTTSinkDeployment");
+        wrkConf->physicalSourceTypes.add(defaultSourceType1);
+
         coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;
         wrkConf->coordinatorPort = *rpcCoordinatorPort;
@@ -85,8 +98,9 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     NES_INFO("MQTTSinkDeploymentTest: Submit query");
 
     // arguments are given so that ThingsBoard accepts the messages sent by the MQTT client
-    string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("ws://127.0.0.1:9001",
-            "/nesui", "rfRqLGZRChg8eS30PEeR", 5, MQTTSinkDescriptor::milliseconds, 500, MQTTSinkDescriptor::atLeastOnce, false));)";
+    // uses tcp on default port for local mosquitto broker.
+    string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("tcp://127.0.0.1:1883",
+            "/nesui", "rfRqLGZRChg8eS30PEeR", 5, MQTTSinkDescriptor::TimeUnits::milliseconds, 500, MQTTSinkDescriptor::ServiceQualities::atLeastOnce, false));)";
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
