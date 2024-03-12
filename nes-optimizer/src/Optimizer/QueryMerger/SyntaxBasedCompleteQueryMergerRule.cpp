@@ -48,7 +48,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
             //TODO: we need to check how this will pan out when we will have more than 1 sink
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             //create a map of matching target to address operator id map
-            std::map<uint64_t, uint64_t> targetToHostSinkOperatorMap;
+            std::map<OperatorId, OperatorId> targetToHostSinkOperatorMap;
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetToHostSinkOperatorMap)) {
                 NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
@@ -61,7 +61,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                 //Iterate over all target sink global query nodes and try to identify a matching address global query node
                 // using the target address operator map
                 for (auto& targetSinkOperator : targetQueryPlan->getSinkOperators()) {
-                    uint64_t hostSinkOperatorId = targetToHostSinkOperatorMap[targetSinkOperator->getId()];
+                    auto hostSinkOperatorId = targetToHostSinkOperatorMap.at(targetSinkOperator->getId());
 
                     auto hostSinkOperator = std::find_if(hostSinkOperators.begin(),
                                                          hostSinkOperators.end(),
@@ -101,7 +101,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
 
 bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
                                                             const QueryPlanPtr& hostQueryPlan,
-                                                            std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
+                                                            std::map<OperatorId, OperatorId>& targetHostOperatorMap) {
 
     NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: check if the target and address query plans are syntactically equal or not");
     std::vector<OperatorPtr> targetSourceOperators = targetQueryPlan->getLeafOperators();
@@ -126,11 +126,11 @@ bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& 
 
 bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorPtr& targetOperator,
                                                           const OperatorPtr& hostOperator,
-                                                          std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
+                                                          std::map<OperatorId, OperatorId>& targetHostOperatorMap) {
 
     NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if the target and address operator are syntactically equal or not.");
-    if (targetHostOperatorMap.find(targetOperator->getId()) != targetHostOperatorMap.end()) {
-        if (targetHostOperatorMap[targetOperator->getId()] == hostOperator->getId()) {
+    if (targetHostOperatorMap.contains(targetOperator->getId())) {
+        if (targetHostOperatorMap.at(targetOperator->getId()) == hostOperator->getId()) {
             NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Already matched so skipping rest of the check.");
             return true;
         }
@@ -141,7 +141,7 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorPtr& tar
 
     if (targetOperator->instanceOf<SinkLogicalOperator>() && hostOperator->instanceOf<SinkLogicalOperator>()) {
         NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Both address and target operators are of sink type.");
-        targetHostOperatorMap[targetOperator->getId()] = hostOperator->getId();
+        targetHostOperatorMap.insert_or_assign(targetOperator->getId(), hostOperator->getId());
         return true;
     }
 
@@ -150,7 +150,7 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorPtr& tar
 
     NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Compare address and target operators.");
     if (targetOperator->equal(hostOperator)) {
-        targetHostOperatorMap[targetOperator->getId()] = hostOperator->getId();
+        targetHostOperatorMap.insert_or_assign(targetOperator->getId(), hostOperator->getId());
 
         NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if parents of target and address operators are equal.");
         for (const auto& targetParent : targetOperator->getParents()) {

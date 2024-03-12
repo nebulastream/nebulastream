@@ -20,7 +20,7 @@
 
 namespace NES {
 
-LogicalFilterOperator::LogicalFilterOperator(ExpressionNodePtr const& predicate, uint64_t id)
+LogicalFilterOperator::LogicalFilterOperator(ExpressionNodePtr const& predicate, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), predicate(predicate) {
     selectivity = 1.0;
 }

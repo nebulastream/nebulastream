@@ -14,7 +14,8 @@
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <BaseIntegrationTest.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -57,7 +58,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -93,7 +94,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
 
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -155,7 +156,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVaria
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
 
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -215,7 +216,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -272,7 +273,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
 
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -371,7 +372,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -431,7 +432,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -496,7 +497,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -563,7 +564,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
     NES_INFO("string submit={}", ss.str());
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
@@ -597,7 +598,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     sleep(5);
@@ -680,7 +681,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
 
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -787,7 +788,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -874,7 +875,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
     nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    QueryId queryId = json_return["queryId"].get<QueryId>();
     NES_INFO("Query ID: {}", queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 

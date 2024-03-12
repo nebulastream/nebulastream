@@ -16,6 +16,7 @@
 #define NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
 #include <Exceptions/NotImplementedException.hpp>
 #include <Exceptions/SignalHandling.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/StacktraceLoader.hpp>

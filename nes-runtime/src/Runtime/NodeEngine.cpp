@@ -52,7 +52,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
                        OpenCLManagerPtr&& openCLManager,
-                       uint64_t nodeEngineId,
+                       WorkerId nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker,
@@ -400,7 +400,7 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     return bufferManagers[bufferManagerIndex];
 }
 
-uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
+WorkerId NodeEngine::getWorkerId() { return nodeEngineId; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 
@@ -560,24 +560,25 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 
 const std::vector<PhysicalSourceTypePtr>& NodeEngine::getPhysicalSourceTypes() const { return physicalSources; }
 
-std::shared_ptr<const Execution::ExecutableQueryPlan> NodeEngine::getExecutableQueryPlan(uint64_t querySubPlanId) const {
+std::shared_ptr<const Execution::ExecutableQueryPlan>
+NodeEngine::getExecutableQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId) const {
     std::unique_lock lock(engineMutex);
-    auto iterator = deployedExecutableQueryPlans.find(querySubPlanId);
+    auto iterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId);
     if (iterator != deployedExecutableQueryPlans.end()) {
         return iterator->second;
     }
     return nullptr;
 }
 
-bool NodeEngine::bufferData(DecomposedQueryPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
+bool NodeEngine::bufferData(DecomposedQueryPlanId decomposedQueryPlanId, OperatorId uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sink");
     std::unique_lock lock(engineMutex);
-    if (deployedExecutableQueryPlans.find(querySubPlanId) == deployedExecutableQueryPlans.end()) {
-        NES_DEBUG("Deployed QEP with ID:  {}  not found", querySubPlanId);
+    if (deployedExecutableQueryPlans.find(decomposedQueryPlanId) == deployedExecutableQueryPlans.end()) {
+        NES_DEBUG("Deployed QEP with ID:  {}  not found", decomposedQueryPlanId);
         return false;
     } else {
-        auto qep = deployedExecutableQueryPlans.at(querySubPlanId);
+        auto qep = deployedExecutableQueryPlans.at(decomposedQueryPlanId);
         auto sinks = qep->getSinks();
         //make sure that query sub plan has network sink with specified id
         auto it = std::find_if(sinks.begin(), sinks.end(), [uniqueNetworkSinkDescriptorId](const DataSinkPtr& dataSink) {
@@ -594,26 +595,26 @@ bool NodeEngine::bufferData(DecomposedQueryPlanId querySubPlanId, uint64_t uniqu
         }
         //query sub plan did not have network sink with specified id
         NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                  querySubPlanId,
+                  decomposedQueryPlanId,
                   uniqueNetworkSinkDescriptorId);
         return false;
     }
 }
 
-bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
+bool NodeEngine::updateNetworkSink(WorkerId newNodeId,
                                    const std::string& newHostname,
                                    uint32_t newPort,
-                                   DecomposedQueryPlanId querySubPlanId,
-                                   uint64_t uniqueNetworkSinkDescriptorId) {
+                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                   OperatorId uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_ERROR("NodeEngine: Received request to update Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
-    if (deployedExecutableQueryPlans.find(querySubPlanId) == deployedExecutableQueryPlans.end()) {
-        NES_DEBUG("Deployed QEP with ID:  {}  not found", querySubPlanId);
+    if (deployedExecutableQueryPlans.find(decomposedQueryPlanId) == deployedExecutableQueryPlans.end()) {
+        NES_DEBUG("Deployed QEP with ID:  {}  not found", decomposedQueryPlanId);
         return false;
     } else {
-        auto qep = deployedExecutableQueryPlans.at(querySubPlanId);
+        auto qep = deployedExecutableQueryPlans.at(decomposedQueryPlanId);
         auto networkSinks = qep->getSinks();
         //make sure that query sub plan has network sink with specified id
         auto it =
@@ -631,27 +632,27 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
         }
         //query sub plan did not have network sink with specified id
         NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                  querySubPlanId,
+                  decomposedQueryPlanId,
                   uniqueNetworkSinkDescriptorId);
         return false;
     }
 }
 
-bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
+bool NodeEngine::experimentalReconfigureNetworkSink(WorkerId newNodeId,
                                                     const std::string& newHostname,
                                                     uint32_t newPort,
-                                                    DecomposedQueryPlanId querySubPlanId,
-                                                    uint64_t uniqueNetworkSinkDescriptorId,
+                                                    DecomposedQueryPlanId decomposedQueryPlanId,
+                                                    OperatorId uniqueNetworkSinkDescriptorId,
                                                     Network::NesPartition newPartition,
                                                     DecomposedQueryPlanVersion version) {
     NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
-    if (deployedExecutableQueryPlans.find(querySubPlanId) == deployedExecutableQueryPlans.end()) {
-        NES_DEBUG("Deployed QEP with ID:  {}  not found", querySubPlanId);
+    if (deployedExecutableQueryPlans.find(decomposedQueryPlanId) == deployedExecutableQueryPlans.end()) {
+        NES_DEBUG("Deployed QEP with ID:  {}  not found", decomposedQueryPlanId);
         return false;
     } else {
-        auto qep = deployedExecutableQueryPlans.at(querySubPlanId);
+        auto qep = deployedExecutableQueryPlans.at(decomposedQueryPlanId);
         auto networkSinks = qep->getSinks();
         Network::NetworkSinkPtr networkSink;
         //make sure that query sub plan has network sink with specified id
@@ -678,7 +679,7 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
         }
         //query sub plan did not have network sink with specified id
         NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
-                  querySubPlanId,
+                  decomposedQueryPlanId,
                   uniqueNetworkSinkDescriptorId);
         return false;
     }

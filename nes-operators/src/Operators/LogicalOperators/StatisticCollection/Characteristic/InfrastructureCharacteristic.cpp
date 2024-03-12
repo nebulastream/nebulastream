@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 
 namespace NES::Statistic {
 
@@ -29,7 +30,7 @@ bool InfrastructureStatistic::operator==(const Characteristic& rhs) const {
 
 size_t InfrastructureStatistic::hash() const { return std::hash<WorkerId>()(nodeId); }
 
-std::string InfrastructureStatistic::toString() const { return "{ NodeId: " + std::to_string(nodeId) + " }"; }
+std::string InfrastructureStatistic::toString() const { return fmt::format("{{ NodeId: {} }}", nodeId); }
 
 WorkerId InfrastructureStatistic::getNodeId() const { return nodeId; }
 

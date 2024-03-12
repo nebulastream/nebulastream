@@ -54,7 +54,7 @@ void termFunc(int) {
 
 namespace NES {
 
-constexpr uint64_t NES_COORDINATOR_ID = 1;
+constexpr WorkerId NES_COORDINATOR_ID = WorkerId(1);
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr workerConfig, Monitoring::MetricStorePtr metricStore)
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), metricStore(metricStore),
@@ -128,7 +128,7 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
 }
 
-uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
+WorkerId NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking {} workerId={} coordinatorIp={} coordinatorPort={} localWorkerIp={} "
@@ -198,7 +198,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(con, "cannot connect");
     }
 
-    if (parentId > NES_COORDINATOR_ID) {
+    if (parentId.getRawValue() > NES_COORDINATOR_ID.getRawValue()) {
         NES_DEBUG("NesWorker: add parent id={}", parentId);
         bool success = replaceParent(NES_COORDINATOR_ID, parentId);
         NES_DEBUG("parent add= {}", success);
@@ -327,7 +327,7 @@ bool NesWorker::connect() {
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
 
     RegisterWorkerRequest registrationRequest;
-    registrationRequest.set_workerid(workerConfig->workerId.getValue());
+    registrationRequest.set_workerid(workerConfig->workerId.getValue().getRawValue());
     registrationRequest.set_address(workerConfig->localWorkerIp.getValue());
     registrationRequest.set_grpcport(localWorkerRpcPort.load());
     registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
@@ -464,7 +464,7 @@ bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>
     return success;
 }
 
-bool NesWorker::addParent(uint64_t pParentId) {
+bool NesWorker::addParent(WorkerId pParentId) {
     bool con = waitForConnect();
 
     NES_ASSERT(con, "Connection failed");
@@ -473,7 +473,7 @@ bool NesWorker::addParent(uint64_t pParentId) {
     return success;
 }
 
-bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
+bool NesWorker::replaceParent(WorkerId oldParentId, WorkerId newParentId) {
     bool con = waitForConnect();
 
     NES_ASSERT(con, "Connection failed");
@@ -485,7 +485,7 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     return success;
 }
 
-bool NesWorker::removeParent(uint64_t pParentId) {
+bool NesWorker::removeParent(WorkerId pParentId) {
     bool con = waitForConnect();
 
     NES_ASSERT(con, "Connection failed");
@@ -494,8 +494,8 @@ bool NesWorker::removeParent(uint64_t pParentId) {
     return success;
 }
 
-std::vector<Runtime::QueryStatisticsPtr> NesWorker::getQueryStatistics(QueryId queryId) {
-    return nodeEngine->getQueryStatistics(queryId);
+std::vector<Runtime::QueryStatisticsPtr> NesWorker::getQueryStatistics(SharedQueryId sharedQueryId) {
+    return nodeEngine->getQueryStatistics(sharedQueryId);
 }
 
 bool NesWorker::waitForConnect() const {
@@ -516,59 +516,60 @@ bool NesWorker::waitForConnect() const {
     return false;
 }
 
-bool NesWorker::notifyQueryStatusChange(QueryId queryId,
-                                        DecomposedQueryPlanId subQueryId,
+bool NesWorker::notifyQueryStatusChange(SharedQueryId sharedQueryId,
+                                        DecomposedQueryPlanId decomposedQueryPlanId,
                                         Runtime::Execution::ExecutableQueryPlanStatus newStatus) {
     NES_ASSERT(waitForConnect(), "cannot connect");
     NES_ASSERT2_FMT(newStatus != Runtime::Execution::ExecutableQueryPlanStatus::Stopped,
-                    "Hard Stop called for query=" << queryId << " subQueryId=" << subQueryId
+                    "Hard Stop called for query=" << sharedQueryId << " subQueryId=" << decomposedQueryPlanId
                                                   << " should not call notifyQueryStatusChange");
     if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
         NES_DEBUG("NesWorker {} about to notify soft stop completion for query {} subPlan {}",
                   getWorkerId(),
-                  queryId,
-                  subQueryId);
-        return coordinatorRpcClient->notifySoftStopCompleted(queryId, subQueryId);
+                  sharedQueryId,
+                  decomposedQueryPlanId);
+        return coordinatorRpcClient->notifySoftStopCompleted(sharedQueryId, decomposedQueryPlanId);
     } else if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::ErrorState) {
         return true;// rpc to coordinator executed from async runner
     }
     return false;
 }
 
-bool NesWorker::canTriggerEndOfStream(QueryId queryId,
-                                      DecomposedQueryPlanId subPlanId,
+bool NesWorker::canTriggerEndOfStream(SharedQueryId sharedQueryId,
+                                      DecomposedQueryPlanId decomposedQueryPlanId,
                                       OperatorId sourceId,
                                       Runtime::QueryTerminationType terminationType) {
     NES_ASSERT(waitForConnect(), "cannot connect");
     NES_ASSERT(terminationType == Runtime::QueryTerminationType::Graceful, "invalid termination type");
-    return coordinatorRpcClient->checkAndMarkForSoftStop(queryId, subPlanId, sourceId);
+    return coordinatorRpcClient->checkAndMarkForSoftStop(sharedQueryId, decomposedQueryPlanId, sourceId);
 }
 
-bool NesWorker::notifySourceTermination(QueryId queryId,
-                                        DecomposedQueryPlanId subPlanId,
+bool NesWorker::notifySourceTermination(SharedQueryId sharedQueryId,
+                                        DecomposedQueryPlanId decomposedQueryPlanId,
                                         OperatorId sourceId,
                                         Runtime::QueryTerminationType queryTermination) {
     NES_ASSERT(waitForConnect(), "cannot connect");
-    return coordinatorRpcClient->notifySourceStopTriggered(queryId, subPlanId, sourceId, queryTermination);
+    return coordinatorRpcClient->notifySourceStopTriggered(sharedQueryId, decomposedQueryPlanId, sourceId, queryTermination);
 }
 
-bool NesWorker::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, std::string errorMsg) {
+bool NesWorker::notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) {
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, getWorkerId(), 0, errorMsg);
+    bool success =
+        coordinatorRpcClient->notifyQueryFailure(sharedQueryId, subQueryId, getWorkerId(), INVALID_OPERATOR_ID, errorMsg);
     NES_DEBUG("NesWorker::notifyQueryFailure success={}", success);
     return success;
 }
 
-bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
+bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->notifyEpochTermination(timestamp, queryId);
+    bool success = coordinatorRpcClient->notifyEpochTermination(timestamp, querySubPlanId);
     NES_DEBUG("NesWorker::propagatePunctuation success={}", success);
     return success;
 }
 
-bool NesWorker::notifyErrors(uint64_t pWorkerId, std::string errorMsg) {
+bool NesWorker::notifyErrors(WorkerId pWorkerId, std::string errorMsg) {
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
     NES_DEBUG("NesWorker::sendErrors worker {} going to send error={}", pWorkerId, errorMsg);

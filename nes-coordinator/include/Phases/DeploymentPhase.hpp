@@ -15,7 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_
 #define NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/RequestType.hpp>
 #include <iostream>
 #include <memory>

@@ -173,7 +173,7 @@ bool MultiQueueQueryManager::registerQuery(const Execution::ExecutableQueryPlanP
                     "AbstractQueryManager::registerQuery: not enough queues are free for numberOfQueues="
                         << numberOfQueues << " query cnt=" << queryToStatisticsMap.size());
     //currently we asume all queues have same number of threads so we can do this.
-    queryToTaskQueueIdMap[qep->getSharedQueryId()] = currentTaskQueueId++;
+    queryToTaskQueueIdMap[qep->getDecomposedQueryPlanId()] = currentTaskQueueId++;
     NES_DEBUG("queryToTaskQueueIdMap add for= {}  queue= {}", qep->getSharedQueryId(), currentTaskQueueId - 1);
     return ret;
 }
@@ -402,8 +402,11 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source) {
     // send EOS to `source` itself, iff a network source
     if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
         //add soft eaos for network source
-        auto reconfMessage = ReconfigurationMessage(-1, -1, ReconfigurationType::SoftEndOfStream, netSource);
-        addReconfigurationMessage(-1, -1, reconfMessage, false);
+        auto reconfMessage = ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                                    INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                    ReconfigurationType::SoftEndOfStream,
+                                                    netSource);
+        addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, reconfMessage, false);
     }
 
     for (auto successor : pipelineSuccessors) {

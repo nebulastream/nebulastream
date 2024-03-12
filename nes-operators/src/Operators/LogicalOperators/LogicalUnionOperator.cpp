@@ -115,7 +115,7 @@ void LogicalUnionOperator::inferStringSignature() {
 void LogicalUnionOperator::inferInputOrigins() {
 
     // in the default case we collect all input origins from the children/upstream operators
-    std::vector<uint64_t> combinedInputOriginIds;
+    std::vector<OriginId> combinedInputOriginIds;
     for (auto child : this->children) {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
 
 namespace NES::Statistic {
 
@@ -34,7 +35,7 @@ bool WorkloadCharacteristic::operator==(const Characteristic& rhs) const {
 size_t WorkloadCharacteristic::hash() const { return std::hash<QueryId>{}(queryId) ^ std::hash<OperatorId>{}(operatorId); }
 
 std::string WorkloadCharacteristic::toString() const {
-    return "{ QueryId: " + std::to_string(queryId) + " OperatorId: " + std::to_string(operatorId) + " }";
+    return fmt::format("{{ QueryId: {} OperatorId: {} }}", queryId, operatorId);
 }
 
 WorkloadCharacteristic::WorkloadCharacteristic(MetricPtr type, QueryId queryId, OperatorId operatorId)

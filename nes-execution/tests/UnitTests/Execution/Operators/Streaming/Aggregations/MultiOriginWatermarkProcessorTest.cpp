@@ -24,10 +24,6 @@
 using namespace std;
 namespace NES::Runtime::Execution::Operators {
 
-using WatermarkTs = uint64_t;
-using SequenceNumber = uint64_t;
-using OriginId = uint64_t;
-
 class MultiOriginWatermarkProcessorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
@@ -39,11 +35,11 @@ class MultiOriginWatermarkProcessorTest : public Testing::BaseUnitTest {
 
 TEST_F(MultiOriginWatermarkProcessorTest, singleThreadWatermarkUpdaterTest) {
     auto updates = 10000_u64;
-    auto watermarkManager = MultiOriginWatermarkProcessor::create({0});
+    auto watermarkManager = MultiOriginWatermarkProcessor::create(std::vector{INVALID_ORIGIN_ID});
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
     for (auto i = 1_u64; i <= updates; i++) {
-        watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, 0));
+        watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, INVALID_ORIGIN_ID));
     }
     for (auto i = 0_u64; i < updates; i++) {
         auto currentWatermarkBarrier = watermarkBarriers[i];
@@ -60,12 +56,12 @@ TEST_F(MultiOriginWatermarkProcessorTest, singleThreadWatermarkUpdaterTest) {
 TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterTest) {
     const auto updates = 100000_u64;
     const auto threadsCount = 10;
-    auto watermarkManager = MultiOriginWatermarkProcessor::create({0});
+    auto watermarkManager = MultiOriginWatermarkProcessor::create({INVALID_ORIGIN_ID});
 
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
     for (auto i = 1_u64; i <= updates * threadsCount; i++) {
-        watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, 0));
+        watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, INVALID_ORIGIN_ID));
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
@@ -98,12 +94,21 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterTest) {
 TEST_F(MultiOriginWatermarkProcessorTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
     auto updates = 10000_u64;
     auto origins = 10;
-    auto watermarkManager = MultiOriginWatermarkProcessor::create({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+    auto watermarkManager = MultiOriginWatermarkProcessor::create({INVALID_ORIGIN_ID,
+                                                                   OriginId(1),
+                                                                   OriginId(2),
+                                                                   OriginId(3),
+                                                                   OriginId(4),
+                                                                   OriginId(5),
+                                                                   OriginId(6),
+                                                                   OriginId(7),
+                                                                   OriginId(8),
+                                                                   OriginId(9)});
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
     for (auto i = 1_u64; i <= updates; i++) {
         for (int o = 0; o < origins; o++) {
-            watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, o));
+            watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, OriginId(o)));
         }
     }
 
@@ -122,13 +127,22 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterMultipleOrig
     const auto updates = 100000;
     const auto origins = 10;
     const auto threadsCount = 10;
-    auto watermarkManager = MultiOriginWatermarkProcessor::create({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+    auto watermarkManager = MultiOriginWatermarkProcessor::create({INVALID_ORIGIN_ID,
+                                                                   OriginId(1),
+                                                                   OriginId(2),
+                                                                   OriginId(3),
+                                                                   OriginId(4),
+                                                                   OriginId(5),
+                                                                   OriginId(6),
+                                                                   OriginId(7),
+                                                                   OriginId(8),
+                                                                   OriginId(9)});
 
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
     for (auto i = 1_u64; i <= updates; i++) {
         for (int o = 0; o < origins; o++) {
-            watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, o));
+            watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, OriginId(o)));
         }
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;

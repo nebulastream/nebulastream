@@ -37,25 +37,25 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
     auto bfsIterator = PlanIterator(queryPlan);
     for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<Operator>();
-        if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
+        if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end()) {
             // skip rest of the steps as the operator is already serialized
             continue;
         }
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp, isClientOriginated);
-        serializedOperatorMap[visitingOp->getId()] = serializeOperator;
+        serializedOperatorMap[visitingOp->getId().getRawValue()] = serializeOperator;
     }
 
     //Serialize the root operator ids
     for (const auto& rootOperator : rootOperators) {
-        uint64_t rootOperatorId = rootOperator->getId();
-        serializableQueryPlan->add_rootoperatorids(rootOperatorId);
+        auto rootOperatorId = rootOperator->getId();
+        serializableQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
     }
 
     if (!isClientOriginated) {
         //Serialize the sub query plan and query plan id
         NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-        serializableQueryPlan->set_queryid(queryPlan->getQueryId());
+        serializableQueryPlan->set_queryid(queryPlan->getQueryId().getRawValue());
     }
 }
 
@@ -86,10 +86,10 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     }
 
     //set properties of the query plan
-    uint64_t queryId = INVALID_QUERY_ID;
+    QueryId queryId = INVALID_QUERY_ID;
 
     if (serializedQueryPlan->has_queryid()) {
-        queryId = serializedQueryPlan->queryid();
+        queryId = QueryId(serializedQueryPlan->queryid());
     }
 
     return QueryPlan::create(queryId, rootOperators);

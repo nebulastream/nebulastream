@@ -62,11 +62,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
-                           .attachWorkerWithMemorySourceToCoordinator("test")     //idx=2
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //idx=3
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //idx=4
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //idx=5
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2);//idx=6
+                           .attachWorkerWithMemorySourceToCoordinator("test")               //idx=2
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //idx=3
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //idx=4
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //idx=5
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2));//idx=6
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 2)
@@ -121,12 +121,12 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
-                           .attachWorkerWithMemorySourceToCoordinator("test")     //id=2
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //id=3
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //id=4
-                           .attachWorkerWithMemorySourceToCoordinator("test")     //id=5
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 5) //id=6
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 5);//id=7
+                           .attachWorkerWithMemorySourceToCoordinator("test")               //id=2
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //id=3
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //id=4
+                           .attachWorkerWithMemorySourceToCoordinator("test")               //id=5
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(5)) //id=6
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(5));//id=7
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 2)
@@ -180,11 +180,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
-                           .attachWorkerWithMemorySourceToCoordinator("test")     //2
-                           .attachWorkerToWorkerWithId(2)                         //3
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //4
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //5
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2);//6
+                           .attachWorkerWithMemorySourceToCoordinator("test")               //2
+                           .attachWorkerToWorkerWithId(WorkerId(2))                         //3
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //4
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //5
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2));//6
 
     for (int i = 0; i < 10; ++i) {
         testHarness
@@ -240,12 +240,12 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
-                           .attachWorkerToCoordinator()                           //2
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //3
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //4
-                           .attachWorkerToCoordinator()                           //5
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 5) //6
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 5);//7
+                           .attachWorkerToCoordinator()                                     //2
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //3
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(2)) //4
+                           .attachWorkerToCoordinator()                                     //5
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(5)) //6
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(5));//7
 
     for (int i = 0; i < 10; ++i) {
         // worker with idx 0 does not produce data
@@ -307,17 +307,17 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
                            // Workers
-                           .attachWorkerToCoordinator()  //2
-                           .attachWorkerToWorkerWithId(2)//3
-                           .attachWorkerToWorkerWithId(2)//4
-                           .attachWorkerToCoordinator()  //5
-                           .attachWorkerToWorkerWithId(5)//6
-                           .attachWorkerToWorkerWithId(5)//7
+                           .attachWorkerToCoordinator()            //2
+                           .attachWorkerToWorkerWithId(WorkerId(2))//3
+                           .attachWorkerToWorkerWithId(WorkerId(2))//4
+                           .attachWorkerToCoordinator()            //5
+                           .attachWorkerToWorkerWithId(WorkerId(5))//6
+                           .attachWorkerToWorkerWithId(WorkerId(5))//7
                            // Sensors
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 3) //8
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 4) //9
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 6) //10
-                           .attachWorkerWithMemorySourceToWorkerWithId("test", 7);//11
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(3)) //8
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(4)) //9
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(6)) //10
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(7));//11
 
     for (int i = 0; i < 10; ++i) {
         // worker with idx 1-7 do not produce data
@@ -391,17 +391,17 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
                                   .addLogicalSource("testStream", testSchema)
                                   // Workers
-                                  .attachWorkerToCoordinator()  // id=2
-                                  .attachWorkerToWorkerWithId(2)// id=3
-                                  .attachWorkerToWorkerWithId(2)// id=4
-                                  .attachWorkerToCoordinator()  // id=5
-                                  .attachWorkerToWorkerWithId(5)// id=6
-                                  .attachWorkerToWorkerWithId(5)// id=7
+                                  .attachWorkerToCoordinator()            // id=2
+                                  .attachWorkerToWorkerWithId(WorkerId(2))// id=3
+                                  .attachWorkerToWorkerWithId(WorkerId(2))// id=4
+                                  .attachWorkerToCoordinator()            // id=5
+                                  .attachWorkerToWorkerWithId(WorkerId(5))// id=6
+                                  .attachWorkerToWorkerWithId(WorkerId(5))// id=7
                                   // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), 7)// id=11
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), WorkerId(3))// id=8
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), WorkerId(4))// id=9
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), WorkerId(6))// id=10
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), WorkerId(7))// id=11
                                   .validate()
                                   .setupTopology();
 
@@ -459,17 +459,17 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
                                   .addLogicalSource("truck", testSchema)
                                   .addLogicalSource("car", testSchema)
                                   // Workers
-                                  .attachWorkerToCoordinator()  // idx=2
-                                  .attachWorkerToWorkerWithId(2)// idx=3
-                                  .attachWorkerToWorkerWithId(2)// idx=4
-                                  .attachWorkerToCoordinator()  // idx=5
-                                  .attachWorkerToWorkerWithId(5)// idx=6
-                                  .attachWorkerToWorkerWithId(5)// idx=7
+                                  .attachWorkerToCoordinator()            // idx=2
+                                  .attachWorkerToWorkerWithId(WorkerId(2))// idx=3
+                                  .attachWorkerToWorkerWithId(WorkerId(2))// idx=4
+                                  .attachWorkerToCoordinator()            // idx=5
+                                  .attachWorkerToWorkerWithId(WorkerId(5))// idx=6
+                                  .attachWorkerToWorkerWithId(WorkerId(5))// idx=7
                                   // Sensors
-                                  .attachWorkerWithMemorySourceToWorkerWithId("truck", 3)// idx=8
-                                  .attachWorkerWithMemorySourceToWorkerWithId("car", 4)  // idx=9
-                                  .attachWorkerWithMemorySourceToWorkerWithId("truck", 6)// idx=10
-                                  .attachWorkerWithMemorySourceToWorkerWithId("car", 7); // idx=11
+                                  .attachWorkerWithMemorySourceToWorkerWithId("truck", WorkerId(3))// idx=8
+                                  .attachWorkerWithMemorySourceToWorkerWithId("car", WorkerId(4))  // idx=9
+                                  .attachWorkerWithMemorySourceToWorkerWithId("truck", WorkerId(6))// idx=10
+                                  .attachWorkerWithMemorySourceToWorkerWithId("car", WorkerId(7)); // idx=11
 
     for (int i = 0; i < 10; ++i) {
         // worker with idx 0-5 do not produce data
@@ -546,12 +546,12 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerToCoordinator()                                     //2
-                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 2)//3
-                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), 2)//4
-                           .attachWorkerToCoordinator()                                     //5
-                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), 5)//6
-                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), 5)//7
+                           .attachWorkerToCoordinator()                                               //2
+                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), WorkerId(2))//3
+                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), WorkerId(2))//4
+                           .attachWorkerToCoordinator()                                               //5
+                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), WorkerId(5))//6
+                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), WorkerId(5))//7
                            .validate()
                            .setupTopology();
 
@@ -597,8 +597,8 @@ TEST_F(DeepHierarchyTopologyTest, testMapAndAggregationQuery) {
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerToCoordinator()                                                   //2
-                           .attachWorkerWithMemorySourceToWorkerWithId("window", 2, workerConfigEdgeNode);//3
+                           .attachWorkerToCoordinator()                                                             //2
+                           .attachWorkerWithMemorySourceToWorkerWithId("window", WorkerId(2), workerConfigEdgeNode);//3
 
     const auto bufferCapacity = workerConfigEdgeNode->bufferSizeInBytes / testSchema->getSchemaSizeInBytes();
     NES_INFO("testHarness.getBufferManager()->getBufferSize = {} bufferCapacity = {}",

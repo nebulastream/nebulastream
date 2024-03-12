@@ -251,10 +251,10 @@ TEST_P(StatisticSinkTest, testCountMin) {
         createRandomCountMinSketches(numberOfStatistics, countMinStatisticSchema, nodeEngine->getBufferManager());
     auto statisticSink = createStatisticSink(countMinStatisticSchema,
                                              nodeEngine,
-                                             1,// numOfProducers
-                                             1,// queryId
-                                             1,// querySubPlanId
-                                             1,// numberOfOrigins
+                                             1,                       // numOfProducers
+                                             SharedQueryId(1),        // queryId
+                                             DecomposedQueryPlanId(1),// querySubPlanId
+                                             1,                       // numberOfOrigins
                                              Statistic::StatisticSinkFormatType::COUNT_MIN);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
 
@@ -288,8 +288,8 @@ TEST_P(StatisticSinkTest, testHyperLogLog) {
     auto statisticSink = createStatisticSink(hyperLogLogStatisticSchema,
                                              nodeEngine,
                                              1,// numOfProducers
-                                             1,// queryId
-                                             1,// querySubPlanId
+                                             SharedQueryId(1),
+                                             DecomposedQueryPlanId(1),
                                              1,// numberOfOrigins
                                              Statistic::StatisticSinkFormatType::HLL);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);

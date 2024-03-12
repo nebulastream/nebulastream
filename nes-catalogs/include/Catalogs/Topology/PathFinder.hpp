@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PATHFINDER_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <map>
 #include <memory>
 #include <optional>

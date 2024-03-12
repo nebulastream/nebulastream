@@ -18,10 +18,10 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
@@ -47,7 +47,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     std::vector<SourceLogicalOperatorPtr> sourceOperators = queryPlan->getSourceOperators();
 
     //Compute a map of all blocking operators in the query plan
-    std::unordered_map<uint64_t, OperatorPtr> blockingOperators;
+    std::unordered_map<OperatorId, OperatorPtr> blockingOperators;
     if (expandSourceOnly) {
         //Add downstream operators of the source operators as blocking operator
         for (const auto& sourceOperator : sourceOperators) {
@@ -140,8 +140,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                         auto blockingOperator = blockingOperators[blockingParentId];
                         if (!blockingOperator) {
                             throw Exceptions::OperatorNotFoundException(
-                                "LogicalSourceExpansionRule: Unable to find blocking operator with id "
-                                + std::to_string(blockingParentId));
+                                fmt::format("LogicalSourceExpansionRule: Unable to find blocking operator with id {}",
+                                            blockingParentId));
                         }
                         // Check, if we have visited this operator already
                         if (!visitedOperators.contains(operatorNode->getId())) {
@@ -205,7 +205,7 @@ void LogicalSourceExpansionRule::distributeSiblingStatisticId(
             if (value.has_value()) {
                 listOfStatisticIds = std::any_cast<std::vector<StatisticId>>(value);
             } else {
-                listOfStatisticIds = std::vector<OperatorId>();
+                listOfStatisticIds = std::vector<StatisticId>();
             }
             listOfStatisticIds.insert(listOfStatisticIds.end(), allNewStatisticIds.begin(), allNewStatisticIds.end());
             operatorNode->as<Operator>()->addProperty(LIST_OF_SIBLING_STATISTIC_IDS,

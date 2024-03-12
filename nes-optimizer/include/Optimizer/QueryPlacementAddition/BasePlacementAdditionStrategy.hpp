@@ -203,23 +203,23 @@ class BasePlacementAdditionStrategy {
   private:
     /**
      * @brief create a new network sink operator
-     * @param queryId : the query id to which the sink belongs to
+     * @param sharedQueryId : the query id to which the sink belongs to
      * @param sourceOperatorId : the operator id of the corresponding source operator
      * @param sourceTopologyNode : the topology node to which sink operator will send the data
      * @return the instance of network sink operator
      */
     static LogicalOperatorPtr
-    createNetworkSinkOperator(QueryId queryId, OperatorId sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
+    createNetworkSinkOperator(SharedQueryId sharedQueryId, OperatorId sourceOperatorId, const TopologyNodePtr& sourceTopologyNode);
 
     /**
      * @brief create a new network source operator
-     * @param queryId : the query id to which the source belongs to
+     * @param sharedQueryId : the query id to which the source belongs to
      * @param inputSchema : the schema for input event stream
      * @param operatorId : the operator id of the source network operator
      * @param sinkTopologyNode: sink topology node
      * @return the instance of network source operator
      */
-    static LogicalOperatorPtr createNetworkSourceOperator(QueryId queryId,
+    static LogicalOperatorPtr createNetworkSourceOperator(SharedQueryId sharedQueryId,
                                                           SchemaPtr inputSchema,
                                                           OperatorId operatorId,
                                                           const TopologyNodePtr& sinkTopologyNode);

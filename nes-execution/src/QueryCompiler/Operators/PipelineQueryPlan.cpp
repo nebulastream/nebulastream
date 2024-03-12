@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <algorithm>
@@ -19,12 +19,12 @@
 
 namespace NES::QueryCompilation {
 
-PipelineQueryPlanPtr PipelineQueryPlan::create(QueryId queryId, DecomposedQueryPlanId querySubPlanId) {
-    return std::make_shared<PipelineQueryPlan>(PipelineQueryPlan(queryId, querySubPlanId));
+PipelineQueryPlanPtr PipelineQueryPlan::create(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
+    return std::make_shared<PipelineQueryPlan>(PipelineQueryPlan(sharedQueryId, decomposedQueryPlanId));
 }
 
-PipelineQueryPlan::PipelineQueryPlan(QueryId queryId, DecomposedQueryPlanId querySubPlanId)
-    : queryId(queryId), querySubPlanId(querySubPlanId){};
+PipelineQueryPlan::PipelineQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId)
+    : sharedQueryId(sharedQueryId), decomposedQueryPlanId(decomposedQueryPlanId){};
 
 void PipelineQueryPlan::addPipeline(const OperatorPipelinePtr& pipeline) { pipelines.emplace_back(pipeline); }
 
@@ -52,14 +52,14 @@ std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines() const {
 
 std::vector<OperatorPipelinePtr> const& PipelineQueryPlan::getPipelines() const { return pipelines; }
 
-QueryId PipelineQueryPlan::getQueryId() const { return queryId; }
+SharedQueryId PipelineQueryPlan::getQueryId() const { return sharedQueryId; }
 
-DecomposedQueryPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId PipelineQueryPlan::getQuerySubPlanId() const { return decomposedQueryPlanId; }
 
 std::string PipelineQueryPlan::toString() const {
     std::ostringstream oss;
     oss << "PipelineQueryPlan: " << std::endl
-        << "- queryId: " << queryId << ", subPlanId: " << querySubPlanId << ", no. pipelines: " << pipelines.size() << std::endl;
+        << "- queryId: " << sharedQueryId << ", subPlanId: " << decomposedQueryPlanId << ", no. pipelines: " << pipelines.size() << std::endl;
 
     for (auto& pipeline : pipelines) {
         oss << "- pipeline: " << pipeline->toString() << std::endl;

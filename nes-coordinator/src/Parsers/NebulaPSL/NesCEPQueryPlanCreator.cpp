@@ -354,7 +354,7 @@ std::string NesCEPQueryPlanCreator::keyAssignment(std::string keyName) const {
     //first, get unique ids for the key attributes
     auto cepRightId = getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepRightKey = keyName + std::to_string(cepRightId);
+    std::string cepRightKey = fmt::format("{}{}", keyName, cepRightId);
     return cepRightKey;
 }
 

@@ -38,7 +38,7 @@
 #endif
 namespace NES::Runtime {
 
-ThreadPool::ThreadPool(uint64_t nodeId,
+ThreadPool::ThreadPool(WorkerId nodeId,
                        QueryManagerPtr queryManager,
                        uint32_t numThreads,
                        std::vector<BufferManagerPtr> bufferManagers,

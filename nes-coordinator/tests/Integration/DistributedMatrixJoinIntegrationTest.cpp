@@ -88,7 +88,7 @@ class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
 
         std::vector<uint64_t> nodes;
         std::vector<uint64_t> parents;
-        uint64_t nodeId = 1;
+        auto nodeId = 1;
         uint64_t leafNodes = 0;
         nodes.emplace_back(1);
         parents.emplace_back(1);
@@ -118,11 +118,11 @@ class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
                         auto csvSource = createCSVSourceType(sourceName,
                                                              "src_" + std::to_string(leafNodes),
                                                              std::string(TEST_DATA_DIRECTORY) + "window.csv");
-                        testHarness.attachWorkerWithCSVSourceToWorkerWithId(csvSource, parent);
+                        testHarness.attachWorkerWithCSVSourceToWorkerWithId(csvSource, WorkerId(parent));
                         NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding CSV source:{} for node:{}", sourceName, nodeId);
                         continue;
                     }
-                    testHarness.attachWorkerToWorkerWithId(parent);
+                    testHarness.attachWorkerToWorkerWithId(WorkerId(parent));
                     NES_DEBUG("DistributedMatrixJoinIntegrationTest: Adding worker to worker with ID:{}", parent);
                 }
             }

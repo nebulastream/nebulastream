@@ -14,15 +14,16 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
-NetworkMetricsWrapper::NetworkMetricsWrapper() : NetworkMetricsWrapper(0) {}
+NetworkMetricsWrapper::NetworkMetricsWrapper() : NetworkMetricsWrapper(INVALID_WORKER_NODE_ID) {}
 
-NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId)
+NetworkMetricsWrapper::NetworkMetricsWrapper(WorkerId nodeId)
     : nodeId(nodeId),
       timestamp(duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) {}
 
@@ -132,9 +133,9 @@ bool NetworkMetricsWrapper::operator==(const NetworkMetricsWrapper& rhs) const {
 
 bool NetworkMetricsWrapper::operator!=(const NetworkMetricsWrapper& rhs) const { return !(rhs == *this); }
 
-uint64_t NetworkMetricsWrapper::getNodeId() const { return nodeId; }
+WorkerId NetworkMetricsWrapper::getNodeId() const { return nodeId; }
 
-void NetworkMetricsWrapper::setNodeId(uint64_t nodeId) {
+void NetworkMetricsWrapper::setNodeId(WorkerId nodeId) {
     this->nodeId = nodeId;
     if (!networkMetrics.empty()) {
         for (auto& nMetric : networkMetrics) {

@@ -27,8 +27,8 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(bool logSeenSeqCh
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler,
                                                                bool logSeenSeqChunk)
     : PipelineExecutionContext(
-        -1,// mock pipeline id
-        0, // mock query id
+        INVALID_PIPELINE_ID,// mock pipeline id
+        INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
         nullptr,
         1,
         [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef) {

@@ -13,13 +13,12 @@
 */
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STORAGERESOURCELOCKER_HPP_
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <cstdint>
 #include <future>
 #include <vector>
 
 namespace NES::RequestProcessor {
-using RequestId = uint64_t;
 enum class ResourceType : uint8_t;
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;

@@ -31,10 +31,15 @@ FileSink::FileSink(SinkFormatPtr format,
                    uint32_t numOfProducers,
                    const std::string& filePath,
                    bool append,
-                   QueryId queryId,
-                   DecomposedQueryPlanId querySubPlanId,
+                   SharedQueryId sharedQueryId,
+                   DecomposedQueryPlanId decomposedQueryPlanId,
                    uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins) {
+    : SinkMedium(std::move(format),
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 sharedQueryId,
+                 decomposedQueryPlanId,
+                 numberOfOrigins) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {

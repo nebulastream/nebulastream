@@ -19,7 +19,7 @@
 
 namespace NES {
 
-RenameSourceOperator::RenameSourceOperator(const std::string& newSourceName, uint64_t id)
+RenameSourceOperator::RenameSourceOperator(const std::string& newSourceName, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), newSourceName(newSourceName) {}
 
 bool RenameSourceOperator::isIdentical(NodePtr const& rhs) const {

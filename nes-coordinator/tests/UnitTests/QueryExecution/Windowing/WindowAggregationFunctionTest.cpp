@@ -62,8 +62,8 @@ class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
 
     SchemaPtr sourceSchema;
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
-    static constexpr uint64_t defaultSharedQueryId = 0;
+    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 
     void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf, uint64_t ts) {
         for (int64_t recordIndex = 0; recordIndex < (int64_t) recordsPerBuffer; recordIndex++) {

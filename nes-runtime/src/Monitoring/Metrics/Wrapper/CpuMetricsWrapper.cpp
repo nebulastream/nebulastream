@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -118,9 +119,9 @@ bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
 
 bool CpuMetricsWrapper::operator!=(const CpuMetricsWrapper& rhs) const { return !(rhs == *this); }
 
-uint64_t CpuMetricsWrapper::getNodeId() const { return nodeId; }
+WorkerId CpuMetricsWrapper::getNodeId() const { return nodeId; }
 
-void CpuMetricsWrapper::setNodeId(uint64_t nodeId) {
+void CpuMetricsWrapper::setNodeId(WorkerId nodeId) {
     this->nodeId = nodeId;
     if (!cpuMetrics.empty()) {
         for (auto& nMetric : cpuMetrics) {

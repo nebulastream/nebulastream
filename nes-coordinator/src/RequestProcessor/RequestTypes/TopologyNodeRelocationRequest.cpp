@@ -138,8 +138,8 @@ std::vector<AbstractRequestPtr> TopologyNodeRelocationRequest::executeRequestLog
     return {};
 }
 
-std::set<WorkerId> TopologyNodeRelocationRequest::identifyImpactedSharedQueries(WorkerId upstreamNodeId,
-                                                                                WorkerId downstreamNodeId) {
+std::set<SharedQueryId> TopologyNodeRelocationRequest::identifyImpactedSharedQueries(WorkerId upstreamNodeId,
+                                                                                     WorkerId downstreamNodeId) {
 
     // Step1. Identify the impacted SQPs
     auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
@@ -192,7 +192,7 @@ std::set<WorkerId> TopologyNodeRelocationRequest::identifyImpactedSharedQueries(
         sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
     }
 
-    return impactedSharedQueryIds;
+    return {impactedSharedQueryIds.begin(), impactedSharedQueryIds.end()};
 }
 
 //todo #4493: call from this when all links to and from a node are removed

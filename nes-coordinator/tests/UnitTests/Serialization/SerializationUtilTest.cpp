@@ -271,8 +271,8 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        Network::NodeLocation nodeLocation{0, "*", 31337};
-        Network::NesPartition nesPartition{1, 22, 33, 44};
+        Network::NodeLocation nodeLocation{WorkerId(0), "*", 31337};
+        Network::NesPartition nesPartition{SharedQueryId(1), OperatorId(22), PartitionId(33), SubpartitionId(44)};
         uint16_t version = 55;
         auto uniqueId = 66;
         auto source = Network::NetworkSourceDescriptor::create(schema,
@@ -281,7 +281,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
                                                                NSOURCE_RETRY_WAIT,
                                                                NSOURCE_RETRIES,
                                                                version,
-                                                               uniqueId);
+                                                               OperatorId(uniqueId));
         SerializableOperator_SourceDetails sourceDetails;
         OperatorSerializationUtil::serializeSourceDescriptor(*source, sourceDetails);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(sourceDetails);
@@ -378,12 +378,12 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     }
 
     {
-        Network::NodeLocation nodeLocation{1, "localhost", 31337};
-        Network::NesPartition nesPartition{1, 22, 33, 44};
+        Network::NodeLocation nodeLocation{WorkerId(1), "localhost", 31337};
+        Network::NesPartition nesPartition{SharedQueryId(1), OperatorId(22), PartitionId(33), SubpartitionId(44)};
         auto retryTimes = 8;
         DecomposedQueryPlanVersion version = 5;
         auto numberOfOrigins = 6;
-        OperatorId uniqueId = 7;
+        OperatorId uniqueId = OperatorId(7);
         auto sink = Network::NetworkSinkDescriptor::create(nodeLocation,
                                                            nesPartition,
                                                            std::chrono::seconds(1),
@@ -636,7 +636,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
             NES::Join::LogicalJoinDescriptor::JoinType::INNER_JOIN);
 
         auto join = LogicalOperatorFactory::createJoinOperator(joinDef)->as<LogicalJoinOperator>();
-        join->setOriginId(42);
+        join->setOriginId(OriginId(42));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(join->equal(joinOperator));
@@ -740,7 +740,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     sink->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, {sink});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -762,7 +762,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationMultipleFilters) {
     filter3->addChild(filter2);
     sink->addChild(filter3);
 
-    auto queryPlan = QueryPlan::create(1, {sink});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -781,7 +781,7 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     sink->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, {sink});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -829,7 +829,7 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
     sink1->addChild(map);
     sink2->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, {sink1, sink2});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink1, sink2});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -863,7 +863,7 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     sink1->addChild(map);
     sink2->addChild(map);
 
-    auto queryPlan = QueryPlan::create(1, {sink1, sink2});
+    auto queryPlan = QueryPlan::create(QueryId(1), {sink1, sink2});
 
     auto serializedQueryPlan = new SerializableQueryPlan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);

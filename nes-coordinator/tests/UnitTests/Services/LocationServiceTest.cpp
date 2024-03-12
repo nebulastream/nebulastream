@@ -19,6 +19,7 @@
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -85,24 +86,24 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     topology->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     // test querying for node which does not exist in the system
-    ASSERT_EQ(topology->requestNodeLocationDataAsJson(1234), nullptr);
+    ASSERT_EQ(topology->requestNodeLocationDataAsJson(WorkerId(1234)), nullptr);
 
     //test getting location of node which does not have a location
     nodeLocationInfoJson = topology->requestNodeLocationDataAsJson(node1Id);
-    EXPECT_EQ(nodeLocationInfoJson["id"], node1Id);
+    EXPECT_EQ(nodeLocationInfoJson["id"].get<WorkerId>(), node1Id);
     ASSERT_TRUE(nodeLocationInfoJson["location"].empty());
 
     //test getting location of field node
     nodeLocationInfoJson = topology->requestNodeLocationDataAsJson(node2Id);
     auto entry = nodeLocationInfoJson.get<std::map<std::string, nlohmann::json>>();
-    EXPECT_EQ(entry.at("id").get<uint64_t>(), node2Id);
+    EXPECT_EQ(entry.at("id").get<WorkerId>(), node2Id);
     locationJson = nodeLocationInfoJson.at("location");
     EXPECT_EQ(locationJson["latitude"], 13.4);
     EXPECT_EQ(locationJson["longitude"], -23);
 
     //test getting location of a mobile node
     nodeLocationInfoJson = topology->requestNodeLocationDataAsJson(node3Id);
-    ASSERT_EQ(nodeLocationInfoJson["id"], node3Id);
+    ASSERT_EQ(nodeLocationInfoJson["id"].get<WorkerId>(), node3Id);
     locationJson = nodeLocationInfoJson.at("location");
     EXPECT_EQ(locationJson["latitude"], 52.55227464714949);
     EXPECT_EQ(locationJson["longitude"], 13.351743136322877);
@@ -179,7 +180,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto entry = nodes[0];
     EXPECT_EQ(entry.size(), 2);
     EXPECT_TRUE(entry.find("id") != entry.end());
-    EXPECT_EQ(entry.at("id"), node3Id);
+    EXPECT_EQ(entry.at("id").get<WorkerId>(), node3Id);
     EXPECT_TRUE(entry.find("location") != entry.end());
     locationJson = entry.at("location");
     EXPECT_EQ(locationJson["latitude"], 52.55227464714949);
@@ -193,7 +194,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     const auto& edge = edges[0];
     EXPECT_EQ(edge.size(), 4);
     EXPECT_NE(edge.find("source"), edge.end());
-    EXPECT_EQ(edge.at("source"), node3Id);
+    EXPECT_EQ(edge.at("source").get<WorkerId>(), node3Id);
     EXPECT_NE(edge.find("target"), edge.end());
     EXPECT_EQ(edge.at("target"), 1);
 
@@ -217,10 +218,10 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
         EXPECT_TRUE(node.contains("location"));
         EXPECT_TRUE(node.contains("id"));
         const auto nodeLocation = node.at("location");
-        if (node.at("id") == node3Id) {
+        if (node.at("id").get<WorkerId>() == node3Id) {
             EXPECT_EQ(nodeLocation.at("latitude"), 52.55227464714949);
             EXPECT_EQ(nodeLocation["longitude"], 13.351743136322877);
-        } else if (node.at("id") == node4Id) {
+        } else if (node.at("id").get<WorkerId>() == node4Id) {
             EXPECT_EQ(nodeLocation["latitude"], 53.55227464714949);
             EXPECT_EQ(nodeLocation["longitude"], -13.351743136322877);
         } else {
@@ -232,7 +233,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     std::vector sources = {node3Id, node4Id};
     for (const auto& topologyEdge : edges) {
         ASSERT_EQ(topologyEdge.at("target"), 1);
-        auto edgeSource = topologyEdge.at("source");
+        auto edgeSource = topologyEdge.at("source").get<WorkerId>();
         auto sourcesIterator = std::find(sources.begin(), sources.end(), edgeSource);
         ASSERT_NE(sourcesIterator, sources.end());
         sources.erase(sourcesIterator);

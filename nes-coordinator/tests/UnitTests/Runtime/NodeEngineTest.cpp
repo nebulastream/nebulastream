@@ -53,7 +53,7 @@ using namespace NES::Runtime::Execution;
 #define DEBUG_OUTPUT
 namespace NES {
 
-uint64_t testQueryId = 123;
+SharedQueryId testQueryId = SharedQueryId(123);
 
 std::string expectedOutput = "sum:INTEGER(32 bits)\n10\n";
 
@@ -111,14 +111,17 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
           public:
             virtual ~DummyQueryListener() {}
 
-            bool canTriggerEndOfStream(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+            bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
                 return true;
             }
-            bool notifySourceTermination(QueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+            bool
+            notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
                 return true;
             }
-            bool notifyQueryFailure(QueryId, DecomposedQueryPlanId, std::string) override { return true; }
-            bool notifyQueryStatusChange(QueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
+            bool notifyQueryFailure(SharedQueryId, DecomposedQueryPlanId, std::string) override { return true; }
+            bool notifyQueryStatusChange(SharedQueryId,
+                                         DecomposedQueryPlanId,
+                                         Runtime::Execution::ExecutableQueryPlanStatus) override {
                 return true;
             }
             bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
@@ -128,16 +131,16 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         std::vector<PhysicalSourceTypePtr> physicalSources{defaultSourceType};
 
         auto partitionManager = std::make_shared<Network::PartitionManager>();
-        std::vector<BufferManagerPtr> bufferManager = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
+        std::vector bufferManager = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
 
         auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(std::make_shared<DummyQueryListener>(),
                                                                            bufferManager,
-                                                                           0,
+                                                                           INVALID_WORKER_NODE_ID,
                                                                            1,
                                                                            nullptr,
                                                                            100);
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
-            return Network::NetworkManager::create(0,
+            return Network::NetworkManager::create(INVALID_WORKER_NODE_ID,
                                                    hostname,
                                                    port,
                                                    Network::ExchangeProtocol(partitionManager, engine),
@@ -156,7 +159,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
                                                              std::move(networkManagerCreator),
                                                              std::move(partitionManager),
                                                              std::move(queryCompiler),
-                                                             0,
+                                                             INVALID_WORKER_NODE_ID,
                                                              1024,
                                                              12,
                                                              12);
@@ -286,8 +289,8 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, const DataSinkPtr& sink)
         : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
+            INVALID_PIPELINE_ID,             // mock pipeline id
+            INVALID_DECOMPOSED_QUERY_PLAN_ID,// mock query id
             queryManager->getBufferManager(),
             queryManager->getNumberOfWorkerThreads(),
             [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
@@ -300,23 +303,31 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
         };
 };
 
-auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& outPath) {
+auto setupQEP(const NodeEnginePtr& engine, SharedQueryId sharedQueryId, const std::string& outPath) {
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
 
-    DataSinkPtr sink = createCSVFileSink(sch, queryId, queryId, engine, 1, outPath, false);
+    DataSinkPtr sink =
+        createCSVFileSink(sch, sharedQueryId, DecomposedQueryPlanId(sharedQueryId.getRawValue()), engine, 1, outPath, false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, 0, queryId, engine->getQueryManager(), context, executable, 1, {sink});
+    auto pipeline = ExecutablePipeline::create(INVALID_PIPELINE_ID,
+                                               INVALID_SHARED_QUERY_ID,
+                                               DecomposedQueryPlanId(sharedQueryId.getRawValue()),
+                                               engine->getQueryManager(),
+                                               context,
+                                               executable,
+                                               1,
+                                               {sink});
     auto source = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                engine->getQueryManager(),
-                                                               1,
-                                                               0,
+                                                               OperatorId(1),
+                                                               INVALID_ORIGIN_ID,
                                                                INVALID_STATISTIC_ID,
                                                                12,
                                                                "defaultPhysicalSourceName",
                                                                {pipeline});
-    auto executionPlan = ExecutableQueryPlan::create(queryId,
-                                                     queryId,
+    auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(sharedQueryId.getRawValue()),
+                                                     DecomposedQueryPlanId(sharedQueryId.getRawValue()),
                                                      {source},
                                                      {sink},
                                                      {pipeline},
@@ -421,59 +432,97 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     //  GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 = createCSVFileSink(sch1, 1, 1, engine, 1, getTestResourceFolder() / "qep1.csv", false);
+    auto sink1 = createCSVFileSink(sch1,
+                                   SharedQueryId(1),
+                                   DecomposedQueryPlanId(1),
+                                   engine,
+                                   1,
+                                   getTestResourceFolder() / "qep1.csv",
+                                   false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(0, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sink1});
+    auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
+                                                SharedQueryId(1),
+                                                DecomposedQueryPlanId(1),
+                                                engine->getQueryManager(),
+                                                context1,
+                                                executable1,
+                                                1,
+                                                {sink1});
     auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                 engine->getQueryManager(),
-                                                                1,
-                                                                0,
+                                                                OperatorId(1),
+                                                                INVALID_ORIGIN_ID,
                                                                 INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
-    auto executionPlan =
-        ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
+    auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(1),
+                                                     DecomposedQueryPlanId(1),
+                                                     {source1},
+                                                     {sink1},
+                                                     {pipeline1},
+                                                     engine->getQueryManager(),
+                                                     engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sink2 = createCSVFileSink(sch2, 2, 2, engine, 1, getTestResourceFolder() / "qep2.csv", false);
+    auto sink2 = createCSVFileSink(sch2,
+                                   SharedQueryId(2),
+                                   DecomposedQueryPlanId(2),
+                                   engine,
+                                   1,
+                                   getTestResourceFolder() / "qep2.csv",
+                                   false);
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(0, 2, 2, engine->getQueryManager(), context2, executable2, 1, {sink2});
+    auto pipeline2 = ExecutablePipeline::create(PipelineId(0),
+                                                SharedQueryId(2),
+                                                DecomposedQueryPlanId(2),
+                                                engine->getQueryManager(),
+                                                context2,
+                                                executable2,
+                                                1,
+                                                {sink2});
     auto source2 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                 engine->getQueryManager(),
-                                                                2,
-                                                                0,
+                                                                OperatorId(2),
+                                                                INVALID_ORIGIN_ID,
                                                                 INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline2});
-    auto executionPlan2 =
-        ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
+    auto executionPlan2 = ExecutableQueryPlan::create(SharedQueryId(2),
+                                                      DecomposedQueryPlanId(2),
+                                                      {source2},
+                                                      {sink2},
+                                                      {pipeline2},
+                                                      engine->getQueryManager(),
+                                                      engine->getBufferManager());
 
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
-    ASSERT_TRUE(engine->startQuery(1, executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->startQuery(2, executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Running);
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->stopQuery(1, executionPlan->getDecomposedQueryPlanId(), Runtime::QueryTerminationType::HardStop));
-    ASSERT_TRUE(engine->stopQuery(2, executionPlan2->getDecomposedQueryPlanId(), Runtime::QueryTerminationType::HardStop));
+    ASSERT_TRUE(
+        engine->stopQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId(), Runtime::QueryTerminationType::HardStop));
+    ASSERT_TRUE(
+        engine->stopQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId(), Runtime::QueryTerminationType::HardStop));
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Stopped);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Stopped);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Stopped);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Stopped);
 
     ASSERT_TRUE(engine->stop());
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Invalid);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Invalid);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Invalid);
 
     testOutput(getTestResourceFolder() / "qep1.csv");
     testOutput(getTestResourceFolder() / "qep2.csv");
@@ -490,57 +539,93 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 = createCSVFileSink(sch1, 1, 1, engine, 1, getTestResourceFolder() / "qep1.txt", true);
+    auto sink1 = createCSVFileSink(sch1,
+                                   SharedQueryId(1),
+                                   DecomposedQueryPlanId(1),
+                                   engine,
+                                   1,
+                                   getTestResourceFolder() / "qep1.txt",
+                                   true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(0, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sink1});
+    auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
+                                                SharedQueryId(1),
+                                                DecomposedQueryPlanId(1),
+                                                engine->getQueryManager(),
+                                                context1,
+                                                executable1,
+                                                1,
+                                                {sink1});
     auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                 engine->getQueryManager(),
-                                                                1,
-                                                                0,
+                                                                OperatorId(1),
+                                                                INVALID_ORIGIN_ID,
                                                                 INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
-    auto executionPlan =
-        ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
+    auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(1),
+                                                     DecomposedQueryPlanId(1),
+                                                     {source1},
+                                                     {sink1},
+                                                     {pipeline1},
+                                                     engine->getQueryManager(),
+                                                     engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createCSVFileSink(sch2, 2, 2, engine, 1, getTestResourceFolder() / "qep2.txt", true);
+    DataSinkPtr sink2 = createCSVFileSink(sch2,
+                                          SharedQueryId(2),
+                                          DecomposedQueryPlanId(2),
+                                          engine,
+                                          1,
+                                          getTestResourceFolder() / "qep2.txt",
+                                          true);
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(1, 2, 2, engine->getQueryManager(), context2, executable2, 1, {sink2});
+    auto pipeline2 = ExecutablePipeline::create(PipelineId(1),
+                                                SharedQueryId(2),
+                                                DecomposedQueryPlanId(2),
+                                                engine->getQueryManager(),
+                                                context2,
+                                                executable2,
+                                                1,
+                                                {sink2});
     DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                          engine->getQueryManager(),
-                                                                         2,
-                                                                         1,
+                                                                         OperatorId(2),
+                                                                         OriginId(1),
                                                                          INVALID_STATISTIC_ID,
                                                                          12,
                                                                          "defaultPhysicalSourceName",
                                                                          {pipeline2});
-    auto executionPlan2 =
-        ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
+    auto executionPlan2 = ExecutableQueryPlan::create(SharedQueryId(2),
+                                                      DecomposedQueryPlanId(2),
+                                                      {source2},
+                                                      {sink2},
+                                                      {pipeline2},
+                                                      engine->getQueryManager(),
+                                                      engine->getBufferManager());
 
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
-    ASSERT_TRUE(engine->startQuery(1, executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->startQuery(2, executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    while (engine->getQueryStatus(2) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+    while (engine->getQueryStatus(SharedQueryId(2)) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
-    while (engine->getQueryStatus(1) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+    while (engine->getQueryStatus(SharedQueryId(1)) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
-    ASSERT_TRUE(engine->undeployQuery(1, executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->undeployQuery(2, executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "qep1.txt");
@@ -558,20 +643,33 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
 
     // create two executable query plans, which emit to the same sink
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sharedSink = createCSVFileSink(sch1, 0, 0, engine, 1, getTestResourceFolder() / "qep12.txt", false);
+    auto sharedSink = createCSVFileSink(sch1,
+                                        SharedQueryId(0),
+                                        INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                        engine,
+                                        1,
+                                        getTestResourceFolder() / "qep12.txt",
+                                        false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(1, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sharedSink});
+    auto pipeline1 = ExecutablePipeline::create(PipelineId(1),
+                                                SharedQueryId(1),
+                                                DecomposedQueryPlanId(1),
+                                                engine->getQueryManager(),
+                                                context1,
+                                                executable1,
+                                                1,
+                                                {sharedSink});
     auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                 engine->getQueryManager(),
-                                                                1,
-                                                                0,
+                                                                OperatorId(1),
+                                                                INVALID_ORIGIN_ID,
                                                                 INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1});
-    auto executionPlan = ExecutableQueryPlan::create(1,
-                                                     1,
+    auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(1),
+                                                     DecomposedQueryPlanId(1),
                                                      {source1},
                                                      {sharedSink},
                                                      {pipeline1},
@@ -580,19 +678,26 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(2, 2, 2, engine->getQueryManager(), context2, executable2, 1, {sharedSink});
+    auto pipeline2 = ExecutablePipeline::create(PipelineId(2),
+                                                SharedQueryId(2),
+                                                DecomposedQueryPlanId(2),
+                                                engine->getQueryManager(),
+                                                context2,
+                                                executable2,
+                                                1,
+                                                {sharedSink});
 
     DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                          engine->getQueryManager(),
-                                                                         2,
-                                                                         3,
+                                                                         OperatorId(2),
+                                                                         OriginId(3),
                                                                          INVALID_STATISTIC_ID,
                                                                          12,
                                                                          "defaultPhysicalSourceName",
                                                                          {pipeline2});
 
-    auto executionPlan2 = ExecutableQueryPlan::create(2,
-                                                      2,
+    auto executionPlan2 = ExecutableQueryPlan::create(SharedQueryId(2),
+                                                      DecomposedQueryPlanId(2),
                                                       {source2},
                                                       {sharedSink},
                                                       {pipeline2},
@@ -602,17 +707,17 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
-    ASSERT_TRUE(engine->startQuery(1, executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->startQuery(2, executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Running);
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->undeployQuery(1, executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->undeployQuery(2, executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->stop());
     testOutput(getTestResourceFolder() / "qep12.txt", joinedExpectedOutput);
 }
@@ -627,27 +732,57 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
                       .build();
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sink1 = createCSVFileSink(sch1, 0, 0, engine, 1, getTestResourceFolder() / "qep3.txt", true);
+    auto sink1 = createCSVFileSink(sch1,
+                                   SharedQueryId(0),
+                                   INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                   engine,
+                                   1,
+                                   getTestResourceFolder() / "qep3.txt",
+                                   true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(0, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sink1});
+    auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
+                                                SharedQueryId(1),
+                                                DecomposedQueryPlanId(1),
+                                                engine->getQueryManager(),
+                                                context1,
+                                                executable1,
+                                                1,
+                                                {sink1});
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(1, 2, 2, engine->getQueryManager(), context2, executable2, 1, {sink1});
+    auto pipeline2 = ExecutablePipeline::create(PipelineId(1),
+                                                SharedQueryId(2),
+                                                DecomposedQueryPlanId(2),
+                                                engine->getQueryManager(),
+                                                context2,
+                                                executable2,
+                                                1,
+                                                {sink1});
     auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                 engine->getQueryManager(),
-                                                                1,
-                                                                4,
+                                                                OperatorId(1),
+                                                                OriginId(4),
                                                                 INVALID_STATISTIC_ID,
                                                                 12,
                                                                 "defaultPhysicalSourceName",
                                                                 {pipeline1, pipeline2});
-    auto executionPlan =
-        ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
+    auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(1),
+                                                     DecomposedQueryPlanId(1),
+                                                     {source1},
+                                                     {sink1},
+                                                     {pipeline1},
+                                                     engine->getQueryManager(),
+                                                     engine->getBufferManager());
 
-    auto executionPlan2 =
-        ExecutableQueryPlan::create(2, 2, {source1}, {sink1}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
+    auto executionPlan2 = ExecutableQueryPlan::create(SharedQueryId(2),
+                                                      DecomposedQueryPlanId(2),
+                                                      {source1},
+                                                      {sink1},
+                                                      {pipeline2},
+                                                      engine->getQueryManager(),
+                                                      engine->getBufferManager());
 
     //GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     //DataSourcePtr source1 =
@@ -688,17 +823,17 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
-    ASSERT_TRUE(engine->startQuery(1, executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->startQuery(2, executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Running);
+    ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Running);
 
-    ASSERT_TRUE(engine->undeployQuery(1, executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->undeployQuery(2, executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "qep3.txt", joinedExpectedOutput);
@@ -736,7 +871,7 @@ TEST_F(NodeEngineTest, testBufferData) {
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                       .build();
-    EXPECT_FALSE(engine->bufferData(0, 0));
+    EXPECT_FALSE(engine->bufferData(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_OPERATOR_ID));
 }
 
 TEST_F(NodeEngineTest, testReconfigureSink) {
@@ -748,7 +883,8 @@ TEST_F(NodeEngineTest, testReconfigureSink) {
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                       .build();
-    EXPECT_FALSE(engine->updateNetworkSink(0, "test", 0, 0, 0));
+    EXPECT_FALSE(
+        engine->updateNetworkSink(INVALID_WORKER_NODE_ID, "test", 0, INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_OPERATOR_ID));
 }
 
 namespace detail {
@@ -766,7 +902,7 @@ void assertKiller() {
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId,
+                                  WorkerId nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerWorker)
@@ -811,7 +947,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId,
+                                  WorkerId nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerWorker)
@@ -853,7 +989,13 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     //DataSourcePtr source =
     //    createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createCSVFileSink(sch, 0, 0, engine, 1, getTestResourceFolder() / "test.out", true);
+    DataSinkPtr sink = createCSVFileSink(sch,
+                                         INVALID_SHARED_QUERY_ID,
+                                         INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                         engine,
+                                         1,
+                                         getTestResourceFolder() / "test.out",
+                                         true);
     // builder.addSource(source);
     // builder.addSink(sink);
     // builder.setQueryId(testQueryId);
@@ -885,7 +1027,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager,
                                   QueryCompilation::QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId,
+                                  WorkerId nodeEngineId,
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerWorker)
@@ -924,7 +1066,13 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     //DataSourcePtr source =
     //    createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createCSVFileSink(sch, 0, 0, engine, 1, getTestResourceFolder() / "test.out", true);
+    DataSinkPtr sink = createCSVFileSink(sch,
+                                         INVALID_SHARED_QUERY_ID,
+                                         INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                         engine,
+                                         1,
+                                         getTestResourceFolder() / "test.out",
+                                         true);
     //builder.addSource(source);
     // builder.addSink(sink);
     //builder.setQueryId(testQueryId);

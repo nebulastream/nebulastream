@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
@@ -90,7 +91,7 @@ class CpuMetrics {
     bool operator==(const CpuMetrics& rhs) const;
     bool operator!=(const CpuMetrics& rhs) const;
 
-    uint64_t nodeId;
+    WorkerId nodeId;
     uint64_t timestamp;
     uint64_t coreNum;
     uint64_t user;

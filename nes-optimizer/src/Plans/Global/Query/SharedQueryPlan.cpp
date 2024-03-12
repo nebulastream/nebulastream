@@ -31,7 +31,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
 
     //Create a new query plan
     this->queryPlan = queryPlan->copy();
-    this->queryPlan->setQueryId(sharedQueryId);//overwrite the query id with shared query plan id
+    this->queryPlan->setQueryId(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId));//overwrite the query id with shared query plan id
     //Compute sink operators
     std::set<LogicalOperatorPtr> sinkOperators;
     for (const auto& rootOperator : this->queryPlan->getRootOperators()) {

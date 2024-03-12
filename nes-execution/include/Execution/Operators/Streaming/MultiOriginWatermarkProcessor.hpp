@@ -14,6 +14,7 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Util/Common.hpp>
 #include <cstdint>
@@ -22,7 +23,6 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-using OriginId = uint64_t;
 /**
  * @brief A multi origin version of the lock free watermark processor.
  */
@@ -55,7 +55,7 @@ class MultiOriginWatermarkProcessor {
 
   private:
     const std::vector<OriginId> origins;
-    std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};
+    std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors = {};
 };
 
 }// namespace NES::Runtime::Execution::Operators

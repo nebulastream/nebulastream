@@ -77,7 +77,7 @@ std::string LogicalWindowDescriptor::toString() {
     ss << std::endl;
     return ss.str();
 }
-uint64_t LogicalWindowDescriptor::getOriginId() const { return originId; }
+OriginId LogicalWindowDescriptor::getOriginId() const { return originId; }
 void LogicalWindowDescriptor::setOriginId(OriginId originId) { this->originId = originId; }
 uint64_t LogicalWindowDescriptor::getAllowedLateness() const { return allowedLateness; }
 

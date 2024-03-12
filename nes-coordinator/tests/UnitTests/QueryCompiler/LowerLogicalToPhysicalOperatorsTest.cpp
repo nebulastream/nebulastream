@@ -129,8 +129,8 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
     LogicalOperatorPtr projectPp;
     LogicalJoinOperatorPtr joinOp1;
     QueryCompilation::QueryCompilerOptionsPtr options;
-    static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
-    static constexpr uint64_t defaultSharedQueryId = 0;
+    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 
 /**
@@ -325,7 +325,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleJoinQuery) {
     auto rightSchema = Schema::create()->addField("right$f2", DataTypeFactory::createInt64());
     joinOp1->setLeftInputSchema(leftSchema);
     joinOp1->setRightInputSchema(rightSchema);
-    joinOp1->setOriginId(1);
+    joinOp1->setOriginId(OriginId(1));
     sourceOp1->setOutputSchema(leftSchema);
     queryPlan->appendOperatorAsNewRoot(joinOp1);
 

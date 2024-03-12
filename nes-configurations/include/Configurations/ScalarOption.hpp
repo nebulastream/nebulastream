@@ -49,7 +49,10 @@ class ScalarOption : public TypedBaseOption<T> {
      * @param description of the option.
      * @param validator class to validate the configuration value
      */
-    ScalarOption(const std::string& name, const std::string& defaultValue, const std::string& description, std::shared_ptr<ConfigurationValidation> validator);
+    ScalarOption(const std::string& name,
+                 const std::string& defaultValue,
+                 const std::string& description,
+                 std::shared_ptr<ConfigurationValidation> validator);
     /**
      * @brief Operator to assign a new value as a value of this option.
      * @param value that will be assigned
@@ -91,7 +94,7 @@ class ScalarOption : public TypedBaseOption<T> {
     template<typename Type>
     static Type convertFromString(const std::string& strValue) {
         if constexpr (std::is_same<Type, std::string>::value) {
-            return strValue; // No conversion needed
+            return strValue;// No conversion needed
         } else if constexpr (std::is_same<Type, float>::value) {
             return std::stof(strValue);
         } else if constexpr (std::is_same<Type, uint64_t>::value) {
@@ -99,6 +102,8 @@ class ScalarOption : public TypedBaseOption<T> {
         } else if constexpr (std::is_same<Type, bool>::value) {
             // Simple boolean conversion (true for "true", false otherwise)
             return strValue == "true";
+        } else if constexpr (NESIdentifier<Type>) {
+            return Type(convertFromString<typename Type::Underlying>(strValue));
         } else {
             throw std::logic_error("Unsupported type for ScalarOption");
         }
@@ -132,7 +137,10 @@ ScalarOption<T>::ScalarOption(const std::string& name, const std::string& value,
     : TypedBaseOption<T>(name, convertFromString<T>(value), description) {}
 
 template<class T>
-ScalarOption<T>::ScalarOption(const std::string& name, const std::string& value, const std::string& description, std::shared_ptr<ConfigurationValidation> validator)
+ScalarOption<T>::ScalarOption(const std::string& name,
+                              const std::string& value,
+                              const std::string& description,
+                              std::shared_ptr<ConfigurationValidation> validator)
     : TypedBaseOption<T>(name, convertFromString<T>(value), description, validator) {
     if (!validator->isValid(value)) {
         throw ConfigurationException("Validation failed for " + name + " with value: " + value);
@@ -178,7 +186,8 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::stri
     try {
         this->value = Yaml::impl::StringConverter<T>::Get(value);
     } catch (const std::exception& e) {
-        throw ConfigurationException("Conversion failed for " + identifier + " with value: " + value + ". Exception: " + e.what());
+        throw ConfigurationException("Conversion failed for " + identifier + " with value: " + value
+                                     + ". Exception: " + e.what());
     }
 }
 
@@ -189,4 +198,4 @@ using BoolOption = ScalarOption<bool>;
 
 }// namespace NES::Configurations
 
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_

@@ -139,7 +139,7 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
             //Fetch the leaf node of the topology and add all sources to it
             auto logicalSourceName = "example" + std::to_string(j + 1);
             auto physicalSourceName = "example" + std::to_string(j + 1) + std::to_string(i);
-            int sourceTopologyId = 5;
+            auto sourceTopologyId = WorkerId(5);
             sourceCatalogService->registerPhysicalSource(physicalSourceName, logicalSourceName, sourceTopologyId);
         }
     }
@@ -172,18 +172,18 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
                                  latencyInMs);
     }
 
-    topology->addLinkProperty(1, 2, 512, 100);
-    topology->addLinkProperty(2, 3, 512, 100);
-    topology->addLinkProperty(3, 4, 512, 100);
-    topology->addLinkProperty(4, 5, 512, 100);
-    topology->addTopologyNodeAsChild(3, 2);
-    topology->removeTopologyNodeAsChild(3, 1);
+    topology->addLinkProperty(WorkerId(1), WorkerId(2), 512, 100);
+    topology->addLinkProperty(WorkerId(2), WorkerId(3), 512, 100);
+    topology->addLinkProperty(WorkerId(3), WorkerId(4), 512, 100);
+    topology->addLinkProperty(WorkerId(4), WorkerId(5), 512, 100);
+    topology->addTopologyNodeAsChild(WorkerId(3), WorkerId(2));
+    topology->removeTopologyNodeAsChild(WorkerId(3), WorkerId(1));
 
-    topology->addTopologyNodeAsChild(4, 3);
-    topology->removeTopologyNodeAsChild(4, 1);
+    topology->addTopologyNodeAsChild(WorkerId(4), WorkerId(3));
+    topology->removeTopologyNodeAsChild(WorkerId(4), WorkerId(1));
 
-    topology->addTopologyNodeAsChild(5, 4);
-    topology->removeTopologyNodeAsChild(5, 1);
+    topology->addTopologyNodeAsChild(WorkerId(5), WorkerId(4));
+    topology->removeTopologyNodeAsChild(WorkerId(5), WorkerId(1));
 }
 
 /**
@@ -240,7 +240,7 @@ void compileQuery(const std::string& stringQuery,
                   const std::shared_ptr<QueryParsingService>& queryParsingService,
                   std::promise<QueryPlanPtr> promise) {
     auto queryplan = queryParsingService->createQueryFromCodeString(stringQuery);
-    queryplan->setQueryId(id);
+    queryplan->setQueryId(QueryId(id));
     promise.set_value(queryplan);
 }
 
@@ -347,7 +347,7 @@ int main(int argc, const char* argv[]) {
         for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
             auto query = futures[futureNum].get();
             auto queryID = query->getQueryId();
-            queryObjects[queryID - 1] = query;//Add the parsed query to the (queryID - 1)th index
+            queryObjects[queryID.getRawValue() - 1] = query;//Add the parsed query to the (queryID - 1)th index
         }
     }
 

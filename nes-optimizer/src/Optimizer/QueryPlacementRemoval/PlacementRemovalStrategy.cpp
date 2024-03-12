@@ -189,10 +189,10 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
                     workerIdsInBFS.emplace(sysPlanMetaData.workerId);
                     if (workerIdToDecomposedQueryPlanIds.contains(sysPlanMetaData.workerId)) {
                         auto subQueryPlanIds = workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId];
-                        subQueryPlanIds.emplace(sysPlanMetaData.querySubPlanId);
+                        subQueryPlanIds.emplace(sysPlanMetaData.decomposedQueryPlanId);
                         workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId] = subQueryPlanIds;
                     } else {
-                        workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId] = {sysPlanMetaData.querySubPlanId};
+                        workerIdToDecomposedQueryPlanIds[sysPlanMetaData.workerId] = {sysPlanMetaData.decomposedQueryPlanId};
                     }
                 }
             }

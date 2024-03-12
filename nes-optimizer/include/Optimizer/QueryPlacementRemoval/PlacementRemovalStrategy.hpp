@@ -16,7 +16,7 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_
 
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/CopiedPinnedOperators.hpp>
 #include <folly/Synchronized.h>
 #include <set>

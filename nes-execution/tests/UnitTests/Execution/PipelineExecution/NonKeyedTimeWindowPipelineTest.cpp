@@ -99,7 +99,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     auto sliceMergingAction = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions,
                                                                                     "start",
                                                                                     "end",
-                                                                                    /*origin id*/ 0);
+                                                                                    INVALID_ORIGIN_ID);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                           aggregationFunctions,
                                                                           std::move(sliceMergingAction));
@@ -131,10 +131,10 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceData({1, 1, true});
-    buffer.setOriginId(0);
+    buffer.setOriginId(INVALID_ORIGIN_ID);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
-    std::vector<OriginId> origins = {0};
+    std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
@@ -195,7 +195,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto sliceMergingAction = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions,
                                                                                     "start",
                                                                                     "end",
-                                                                                    /*origin id*/ 0);
+                                                                                    INVALID_ORIGIN_ID);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                           aggregationFunctions,
                                                                           std::move(sliceMergingAction));
@@ -230,10 +230,10 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceData({1, 1, true});
-    buffer.setOriginId(0);
+    buffer.setOriginId(INVALID_ORIGIN_ID);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
-    std::vector<OriginId> origins = {0};
+    std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
@@ -299,7 +299,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     auto sliceMergingAction = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions,
                                                                                     "start",
                                                                                     "end",
-                                                                                    /*origin id*/ 0);
+                                                                                    INVALID_ORIGIN_ID);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                           aggregationFunctions,
                                                                           std::move(sliceMergingAction));
@@ -336,10 +336,10 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceData({1, 1, true});
-    buffer.setOriginId(0);
+    buffer.setOriginId(INVALID_ORIGIN_ID);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
-    std::vector<OriginId> origins = {0};
+    std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});

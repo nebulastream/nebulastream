@@ -64,13 +64,13 @@ class MetricValidator {
 
     static bool isValidRegistrationMetrics(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);
 
-    static bool checkNodeIds(nlohmann::json json, uint64_t nodeId);
+    static bool checkNodeIds(nlohmann::json json, WorkerId nodeId);
 
-    static bool checkNodeIdsStorage(nlohmann::json json, uint64_t nodeId);
+    static bool checkNodeIdsStorage(nlohmann::json json, WorkerId nodeId);
 
     static bool checkEntriesOfStream(std::set<std::string> setOfStr, nlohmann::json jsons);
 
-    static bool checkNodeIds(Monitoring::MetricPtr metric, uint64_t nodeId);
+    static bool checkNodeIds(Monitoring::MetricPtr metric, WorkerId nodeId);
 
     static bool waitForMonitoringStreamsOrTimeout(const std::set<Monitoring::MetricType>& monitoringStreams,
                                                   uint16_t maxTimeout,

@@ -45,7 +45,7 @@ class LowerToExecutableQueryPlanPhase {
                        std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
                        const Runtime::NodeEnginePtr& nodeEngine,
                        const PipelineQueryPlanPtr& pipelineQueryPlan,
-                       std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+                       std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
     Runtime::Execution::SuccessorExecutablePipeline
     processSuccessor(const OperatorPipelinePtr& pipeline,
@@ -54,7 +54,7 @@ class LowerToExecutableQueryPlanPhase {
                      std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
                      const Runtime::NodeEnginePtr& nodeEngine,
                      const PipelineQueryPlanPtr& pipelineQueryPlan,
-                     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+                     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
     Runtime::Execution::SuccessorExecutablePipeline
     processSink(const OperatorPipelinePtr& pipeline,
@@ -71,7 +71,7 @@ class LowerToExecutableQueryPlanPhase {
                             std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
                             const Runtime::NodeEnginePtr& nodeEngine,
                             const PipelineQueryPlanPtr& pipelineQueryPlan,
-                            std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+                            std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
     /**
      * @brief Create Actual Source descriptor from default source descriptor and Physical source properties

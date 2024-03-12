@@ -22,7 +22,7 @@
 
 namespace NES::Network {
 
-NetworkManager::NetworkManager(uint64_t nodeEngineId,
+NetworkManager::NetworkManager(WorkerId nodeEngineId,
                                const std::string& hostname,
                                uint16_t port,
                                ExchangeProtocol&& exchangeProtocol,
@@ -46,7 +46,7 @@ NetworkManager::NetworkManager(uint64_t nodeEngineId,
 
 NetworkManager::~NetworkManager() { destroy(); }
 
-NetworkManagerPtr NetworkManager::create(uint64_t nodeEngineId,
+NetworkManagerPtr NetworkManager::create(WorkerId nodeEngineId,
                                          const std::string& hostname,
                                          uint16_t port,
                                          Network::ExchangeProtocol&& exchangeProtocol,

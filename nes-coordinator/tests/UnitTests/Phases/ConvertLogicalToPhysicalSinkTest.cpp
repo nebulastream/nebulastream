@@ -50,7 +50,7 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::BaseIntegrationTest {
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
 
-        testPlan = QueryCompilation::PipelineQueryPlan::create(0, 0);
+        testPlan = QueryCompilation::PipelineQueryPlan::create(SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID);
     }
 
     void TearDown() override {
@@ -68,7 +68,7 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::BaseIntegrationTest {
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create("file.log", "CSV_FORMAT", "APPEND");
-    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, 0);
+    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, INVALID_OPERATOR_ID);
     testSink->setOutputSchema(schema);
     DataSinkPtr fileOutputSink =
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
@@ -79,7 +79,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create("127.0.0.1", 2000);
 
-    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, 0);
+    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, INVALID_OPERATOR_ID);
     DataSinkPtr zmqSink =
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
     EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(), HOST=127.0.0.1, PORT=2000, INTERNAL=0)");
@@ -88,7 +88,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("CSV_FORMAT", "test", "localhost:9092", 1000);
 
-    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, 0);
+    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, INVALID_OPERATOR_ID);
     testSink->setOutputSchema(schema);
     DataSinkPtr kafkaSink =
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
@@ -97,7 +97,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
-    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, 0);
+    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, INVALID_OPERATOR_ID);
     testSink->setOutputSchema(schema);
     DataSinkPtr printSink =
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
@@ -106,12 +106,12 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSin
 
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
-    Network::NodeLocation nodeLocation{1, "localhost", 31337};
-    Network::NesPartition nesPartition{1, 22, 33, 44};
+    Network::NodeLocation nodeLocation{WorkerId(1), "localhost", 31337};
+    Network::NesPartition nesPartition{SharedQueryId(1), OperatorId(22), PartitionId(33), SubpartitionId(44)};
     auto retryTimes = 0;
     DecomposedQueryPlanVersion version = 1;
     auto numberOfOrigins = 1;
-    OperatorId uniqueId = 1;
+    OperatorId uniqueId = OperatorId(1);
     SinkDescriptorPtr sinkDescriptor = Network::NetworkSinkDescriptor::create(nodeLocation,
                                                                               nesPartition,
                                                                               std::chrono::seconds(1),
@@ -120,7 +120,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
                                                                               numberOfOrigins,
                                                                               uniqueId);
 
-    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, 0);
+    SinkLogicalOperatorPtr testSink = std::make_shared<SinkLogicalOperator>(sinkDescriptor, INVALID_OPERATOR_ID);
     testSink->setOutputSchema(schema);
     DataSinkPtr networkSink =
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);

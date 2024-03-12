@@ -28,7 +28,8 @@ using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
 class QueryStatistics {
   public:
-    QueryStatistics(uint64_t queryId, uint64_t subQueryId) : queryId(queryId), subQueryId(subQueryId){};
+    QueryStatistics(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId)
+        : queryId(sharedQueryId), subQueryId(subQueryId){};
 
     QueryStatistics(const QueryStatistics& other);
 
@@ -129,12 +130,12 @@ class QueryStatistics {
      * @param pipelineId
      * @param workerId
     */
-    void incTasksPerPipelineId(uint64_t pipelineId, uint64_t workerId);
+    void incTasksPerPipelineId(PipelineId pipelineId, uint64_t workerId);
 
     /**
     * @brief get pipeline id task map
     */
-    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>>& getPipelineIdToTaskMap();
+    folly::Synchronized<std::map<PipelineId, std::map<uint64_t, std::atomic<uint64_t>>>>& getPipelineIdToTaskMap();
 
     /**
      * @brief get sum of all latencies
@@ -196,13 +197,13 @@ class QueryStatistics {
     * @brief get the query id of this queriy
     * @return queryId
     */
-    [[nodiscard]] uint64_t getQueryId() const;
+    [[nodiscard]] SharedQueryId getQueryId() const;
 
     /**
      * @brief get the sub id of this qep (the pipeline stage)
      * @return subqueryID
      */
-    [[nodiscard]] uint64_t getSubQueryId() const;
+    [[nodiscard]] DecomposedQueryPlanId getSubQueryId() const;
 
     /**
      * Add for the current time stamp (now) a new latency value
@@ -236,10 +237,10 @@ class QueryStatistics {
     std::atomic<uint64_t> timestampFirstProcessedTask = 0;
     std::atomic<uint64_t> timestampLastProcessedTask = 0;
 
-    std::atomic<uint64_t> queryId = 0;
-    std::atomic<uint64_t> subQueryId = 0;
+    std::atomic<SharedQueryId> queryId = INVALID_SHARED_QUERY_ID;
+    std::atomic<DecomposedQueryPlanId> subQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>> tsToLatencyMap;
-    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>> pipelineIdToTaskThroughputMap;
+    folly::Synchronized<std::map<PipelineId, std::map<uint64_t, std::atomic<uint64_t>>>> pipelineIdToTaskThroughputMap;
 };
 
 }// namespace NES::Runtime

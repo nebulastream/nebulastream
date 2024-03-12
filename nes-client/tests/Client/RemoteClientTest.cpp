@@ -77,7 +77,7 @@ class RemoteClientTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::TearDown();
     }
 
-    bool stopQuery(int64_t queryId) {
+    bool stopQuery(QueryId queryId) {
         auto res = client->stopQuery(queryId);
         if (!!res) {
             while (true) {
@@ -94,7 +94,7 @@ class RemoteClientTest : public Testing::BaseIntegrationTest {
         return false;
     }
 
-    void checkForQueryStart(int64_t queryId) {
+    void checkForQueryStart(QueryId queryId) {
         auto defaultTimeout = std::chrono::seconds(10);
         auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto startTs = std::chrono::system_clock::now();
@@ -130,7 +130,7 @@ TEST_F(RemoteClientTest, TestConnectionTest) {
  */
 TEST_F(RemoteClientTest, DeployQueryTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
-    int64_t queryId = client->submitQuery(query);
+    auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
     ASSERT_TRUE(stopQuery(queryId));
 }
@@ -142,7 +142,7 @@ TEST_F(RemoteClientTest, DeployQueryTest) {
 TEST_F(RemoteClientTest, SubmitQueryTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
-    int64_t queryId = client->submitQuery(queryPlan);
+    auto queryId = client->submitQuery(queryPlan);
     checkForQueryStart(queryId);
     ASSERT_TRUE(stopQuery(queryId));
 }
@@ -178,7 +178,7 @@ TEST_F(RemoteClientTest, GetTopologyTest) {
  */
 TEST_F(RemoteClientTest, GetQueryPlanTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
-    int64_t queryId = client->submitQuery(query);
+    auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
     std::string query_plan = client->getQueryPlan(queryId);
 
@@ -194,14 +194,14 @@ TEST_F(RemoteClientTest, GetQueryPlanTest) {
  */
 TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
-    int64_t queryId = client->submitQuery(query);
+    auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
-    int64_t nonExistingQueryId = queryId + 1;
+    auto nonExistingQueryId = QueryId(queryId.getRawValue() + 1);
     std::string response = client->getQueryPlan(nonExistingQueryId);
     auto jsonResponse = nlohmann::json::parse(response);
 
-    std::string restSDKResponse = "Provided QueryId: " + to_string(nonExistingQueryId) + " does not exist";
-    std::string oatppResponse = "No query with given ID: " + to_string(nonExistingQueryId);
+    std::string restSDKResponse = "Provided QueryId: " + nonExistingQueryId.toString() + " does not exist";
+    std::string oatppResponse = "No query with given ID: " + nonExistingQueryId.toString();
     EXPECT_TRUE(jsonResponse["message"] == restSDKResponse || jsonResponse["message"] == oatppResponse);
     ASSERT_TRUE(stopQuery(queryId));
 }
@@ -212,7 +212,7 @@ TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
  */
 TEST_F(RemoteClientTest, StopQueryTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
-    int64_t queryId = client->submitQuery(query);
+    auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
     auto res = client->stopQuery(queryId);
     ASSERT_TRUE(!!res);
@@ -225,7 +225,7 @@ TEST_F(RemoteClientTest, StopQueryTest) {
  */
 TEST_F(RemoteClientTest, GetExecutionPlanTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
-    int64_t queryId = client->submitQuery(query);
+    auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
     std::string execution_plan = client->getQueryExecutionPlan(queryId);
     NES_DEBUG("GetExecutionPlanTest: {}", execution_plan);
@@ -276,7 +276,7 @@ TEST_F(RemoteClientTest, GetPhysicalSourceTest) {
  */
 TEST_F(RemoteClientTest, GetQueriesTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
-    int64_t queryId = client->submitQuery(query);
+    auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
     std::string queries = client->getQueries();
     std::string expect = "[{\"queryId\":";
@@ -289,7 +289,7 @@ TEST_F(RemoteClientTest, GetQueriesTest) {
  */
 TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
-    int64_t queryId = client->submitQuery(query);
+    auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
     std::string queryStatus = client->getQueryStatus(queryId);
 
@@ -304,7 +304,7 @@ TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
  */
 TEST_F(RemoteClientTest, StopAStoppedQuery) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
-    int64_t queryId = client->submitQuery(query);
+    auto queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
     EXPECT_TRUE(stopQuery(queryId));
     sleep(3);
@@ -315,7 +315,7 @@ TEST_F(RemoteClientTest, StopAStoppedQuery) {
   * @brief Test if retrieving the execution plan works properly
   * @result execution plan is as expected
   */
-TEST_F(RemoteClientTest, StopInvalidQueryId) { ASSERT_FALSE(stopQuery(21)); }
+TEST_F(RemoteClientTest, StopInvalidQueryId) { ASSERT_FALSE(stopQuery(QueryId(21))); }
 
 /**
  * @brief Test if retrieving the execution plan works properly

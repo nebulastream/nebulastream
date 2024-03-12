@@ -95,11 +95,11 @@ struct HashJoinBuildHelper {
 };
 
 bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
-    OriginId outputOriginId = 1;
+    OriginId outputOriginId = OriginId(1);
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
     auto hashJoinOpHandler = std::dynamic_pointer_cast<Operators::HJOperatorHandlerSlicing>(
-        Operators::HJOperatorHandlerSlicing::create(std::vector<OriginId>({1}),
+        Operators::HJOperatorHandlerSlicing::create(std::vector({OriginId(1)}),
                                                     outputOriginId,
                                                     buildHelper.windowSize,
                                                     buildHelper.windowSize,
@@ -113,8 +113,8 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        -1,// mock pipeline id
-        0, // mock query id
+        INVALID_PIPELINE_ID,// mock pipeline id
+        INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
         nullptr,
         buildHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
@@ -225,8 +225,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
                                                          hashJoinProbeHelper.bufferManager,
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
-    auto inputOriginIds = std::vector<OriginId>({1, 2});
-    OriginId outputOriginId = 3;
+    auto inputOriginIds = std::vector({OriginId(1), OriginId(2)});
+    OriginId outputOriginId = OriginId(3);
     auto hashJoinOpHandler = Operators::HJOperatorHandlerSlicing::create(inputOriginIds,
                                                                          outputOriginId,
                                                                          hashJoinProbeHelper.windowSize,
@@ -241,8 +241,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        0,// mock pipeline id
-        1,// mock query id
+        INVALID_PIPELINE_ID,// mock pipeline id
+        DecomposedQueryPlanId(1),// mock query id
         hashJoinProbeHelper.bufferManager,
         hashJoinProbeHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
@@ -355,7 +355,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         }
         executionContext.setWatermarkTs(leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setCurrentTs(leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft).as<UInt64>());
-        executionContext.setOrigin(inputOriginIds[0]);
+        executionContext.setOrigin(inputOriginIds[0].getRawValue());
         executionContext.setSequenceNumber(uint64_t(i + 1));
         executionContext.setChunkNumber(uint64_t(1));
         executionContext.setLastChunk(true);
@@ -380,7 +380,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         }
         executionContext.setWatermarkTs(rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight).as<UInt64>());
         executionContext.setCurrentTs(rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight).as<UInt64>());
-        executionContext.setOrigin(inputOriginIds[1]);
+        executionContext.setOrigin(inputOriginIds[1].getRawValue());
         executionContext.setSequenceNumber(uint64_t(i + 1));
         executionContext.setChunkNumber(uint64_t(1));
         executionContext.setLastChunk(true);
