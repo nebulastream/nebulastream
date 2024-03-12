@@ -14,8 +14,8 @@
 
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
-#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <StatisticCollection/StatisticCoordinator.hpp>
 
 namespace NES::Statistic {
 std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
@@ -25,7 +25,8 @@ std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const Characteris
                                                                std::function<void(CharacteristicPtr)>&& callBack) {
 
     // 1. Creating a query that collects the required statistic
-    const auto statisticQuery = statisticQueryGenerator->createStatisticQuery(*characteristic, window, sendingPolicy, triggerCondition);
+    const auto statisticQuery =
+        statisticQueryGenerator->createStatisticQuery(*characteristic, window, sendingPolicy, triggerCondition);
 
     // 2. Submitting the query to the system
     const auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(statisticQuery.getQueryPlan(),
@@ -67,7 +68,7 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
                                                    const Windowing::TimeMeasure& endTs,
                                                    const Windowing::TimeMeasure& granularity,
                                                    const ProbeExpression& probeExpression,
-                                                   const bool&, // #4682 will implement this
+                                                   const bool&,// #4682 will implement this
                                                    std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) {
     // 1. Check if there exist a statistic for this key
     if (!statisticRegistry.contains(statisticKey)) {
@@ -84,7 +85,7 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
     // 3. Receiving all statistics for the period [startTs, endTs] and creating the ProbeResult
     const auto statistics = statisticStore->getStatistics(statisticKey.hash(), startTs, endTs);
     ProbeResult<> probeResult;
-    for (const auto& stat : statistics){
+    for (const auto& stat : statistics) {
         probeResult.addStatisticValue(stat->getStatisticValue(probeExpression));
     }
 
@@ -98,7 +99,12 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
                                                    const Windowing::TimeMeasure& granularity,
                                                    const ProbeExpression& probeExpression,
                                                    const bool& estimationAllowed) {
-    return probeStatistic(statisticKey, startTs, endTs, granularity, probeExpression, estimationAllowed,
+    return probeStatistic(statisticKey,
+                          startTs,
+                          endTs,
+                          granularity,
+                          probeExpression,
+                          estimationAllowed,
                           [](const ProbeResult<>& probeResult) {
                               return probeResult;
                           });

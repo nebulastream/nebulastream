@@ -13,22 +13,22 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <vector>
@@ -49,7 +49,6 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
         const auto metric = Statistic::IngestionRate::create();
         statisticDescriptor = Statistic::HyperLogLogDescriptor::create(metric->getField());
         metricHash = metric->hash();
-
 
         const auto numberOfSources = StatisticIdsExtractorTest::GetParam();
         sourceCatalog = setUpSourceCatalog(numberOfSources);
@@ -106,8 +105,12 @@ TEST_P(StatisticIdsExtractorTest, oneOperator) {
     // 2. Checking if the newStatisticIds contain the statisticId of the map operator
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     std::vector<StatisticId> expectedStatisticIds;
-    std::transform(mapOperators.begin(), mapOperators.end(), std::back_inserter(expectedStatisticIds),
-                   [](const LogicalMapOperatorPtr& op) { return op->getStatisticId(); });
+    std::transform(mapOperators.begin(),
+                   mapOperators.end(),
+                   std::back_inserter(expectedStatisticIds),
+                   [](const LogicalMapOperatorPtr& op) {
+                       return op->getStatisticId();
+                   });
 
     EXPECT_THAT(newStatisticIds, ::testing::UnorderedElementsAreArray(expectedStatisticIds));
 }
@@ -132,14 +135,15 @@ TEST_P(StatisticIdsExtractorTest, noOperators) {
     // 2. Checking if the newStatisticIds contain the statisticId of the physical source
     auto allPhysicalSources = sourceCatalog->getPhysicalSources("default_logical");
     std::vector<StatisticId> expectedStatisticIds;
-    std::transform(allPhysicalSources.begin(), allPhysicalSources.end(), std::back_inserter(expectedStatisticIds),
+    std::transform(allPhysicalSources.begin(),
+                   allPhysicalSources.end(),
+                   std::back_inserter(expectedStatisticIds),
                    [](const Catalogs::Source::SourceCatalogEntryPtr& sourceCatalogEntry) {
                        return sourceCatalogEntry->getPhysicalSource()->getStatisticId();
                    });
 
     EXPECT_THAT(newStatisticIds, ::testing::UnorderedElementsAreArray(expectedStatisticIds));
 }
-
 
 /**
  * @brief Tests if we extract the correct statistic ids for a query containing two operators
@@ -162,8 +166,12 @@ TEST_P(StatisticIdsExtractorTest, twoOperators) {
     // 2. Checking if the newStatisticIds contain the statisticId of the map operator
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     std::vector<StatisticId> expectedStatisticIds;
-    std::transform(mapOperators.begin(), mapOperators.end(), std::back_inserter(expectedStatisticIds),
-                   [](const LogicalMapOperatorPtr& op) { return op->getStatisticId(); });
+    std::transform(mapOperators.begin(),
+                   mapOperators.end(),
+                   std::back_inserter(expectedStatisticIds),
+                   [](const LogicalMapOperatorPtr& op) {
+                       return op->getStatisticId();
+                   });
 
     EXPECT_THAT(newStatisticIds, ::testing::UnorderedElementsAreArray(expectedStatisticIds));
 }
@@ -175,4 +183,4 @@ INSTANTIATE_TEST_CASE_P(TestInputs,
                             return std::to_string(info.param) + "_PhysicalSources";
                         });
 
-} // namespace NES
+}// namespace NES
