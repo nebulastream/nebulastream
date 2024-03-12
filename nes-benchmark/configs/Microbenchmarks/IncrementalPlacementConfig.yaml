@@ -2,7 +2,7 @@
 # For each query set we will run the experiments
 QuerySetLocation: '/home/ankit/dima/nes-2/nes-benchmark/src/MicroBenchmarks/ISQPBenchmark/QuerySet/generated_queries.txt'
 # LOG level
-LogLevel: LOG_ERROR
+LogLevel: LOG_NONE
 # Sleep interval between each run
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
@@ -10,30 +10,40 @@ NumOfRuns: 3
 
 RunConfig:
   - QueryPlacementStrategy: BottomUp
-    IncrementalPlacement: true
-    PlacementAmendmentThreadCount: 1
-    PlacementAmendmentMode: PESSIMISTIC
-    BatchSize: 2
-  - QueryPlacementStrategy: BottomUp
-    IncrementalPlacement: true
-    PlacementAmendmentThreadCount: 1
-    PlacementAmendmentMode: OPTIMISTIC
-    BatchSize: 2
-  - QueryPlacementStrategy: BottomUp
-    IncrementalPlacement: false
-    PlacementAmendmentThreadCount: 1
-    PlacementAmendmentMode: PESSIMISTIC
-    BatchSize: 2
-  - QueryPlacementStrategy: BottomUp
-    IncrementalPlacement: false
-    PlacementAmendmentThreadCount: 1
-    PlacementAmendmentMode: OPTIMISTIC
-    BatchSize: 2
-  - QueryPlacementStrategy: BottomUp
     IncrementalPlacement: false
     PlacementAmendmentThreadCount: 1
     PlacementAmendmentMode: PESSIMISTIC
     BatchSize: 1
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 2
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 2
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 2
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 2
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 2
 #  - QueryPlacementStrategy: ILP
 #    IncrementalPlacement: true
 #  - QueryPlacementStrategy: ILP
