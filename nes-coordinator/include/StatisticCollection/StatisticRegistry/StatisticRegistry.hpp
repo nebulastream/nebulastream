@@ -20,6 +20,7 @@
 #include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 #include <folly/Synchronized.h>
 #include <functional>
+#include <optional>
 #include <map>
 
 namespace NES::Statistic {
@@ -37,6 +38,15 @@ class StatisticRegistry {
     StatisticInfoWLock getStatisticInfo(const StatisticKey statisticKey);
 
     /**
+     * @brief Gets a StatisticInfo for a StatisticKey and checks if the StatisticInfo has the same granularity
+     * @param statisticKey
+     * @param granularity: Granularity, i.e., 5 Seconds, of the window the statistic is built on
+     * @return std::optional<StatisticInfoWLock>
+     */
+    std::optional<StatisticInfoWLock> getStatisticInfoWithGranularity(const StatisticKey statisticKey,
+                                                                      const Windowing::TimeMeasure& granularity);
+
+    /**
      * @brief Gets a StatisticInfo for a StatisticKey
      * @param statisticKey
      * @return StatisticInfoWLock
@@ -49,6 +59,13 @@ class StatisticRegistry {
      * @param statisticInfo
      */
     void insert(const StatisticKey statisticKey, const StatisticInfo statisticInfo);
+
+    /**
+     * @brief Checks if this registry contains the statisticKey already
+     * @param statisticKey
+     * @return True, if this registry contains the statisticKey already. False, otherwise.
+     */
+    bool contains(const StatisticKey statisticKey);
 
     /**
      * @brief Query belonging to this StatisticKey is stopped. Therefore, we set the queryId to INVALID_QUERY_ID.

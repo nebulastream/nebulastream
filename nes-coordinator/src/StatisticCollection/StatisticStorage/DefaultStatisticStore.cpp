@@ -16,6 +16,10 @@
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 namespace NES::Statistic {
 
+AbstractStatisticStorePtr DefaultStatisticStore::create() {
+    return std::make_shared<DefaultStatisticStore>();
+}
+
 std::vector<StatisticPtr> DefaultStatisticStore::getStatistics(const StatisticHash& statisticHash,
                                                                const Windowing::TimeMeasure& startTs,
                                                                const Windowing::TimeMeasure& endTs) {
@@ -63,4 +67,6 @@ bool DefaultStatisticStore::deleteStatistics(const StatisticHash& statisticHash,
     statisticVec.erase(removeBeginIt, statisticVec.end());
     return foundAnyStatistic;
 }
+
+DefaultStatisticStore::~DefaultStatisticStore() = default;
 }// namespace NES::Statistic

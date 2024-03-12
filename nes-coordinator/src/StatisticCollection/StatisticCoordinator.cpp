@@ -15,38 +15,102 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <StatisticCollection/StatisticCoordinator.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 
 namespace NES::Statistic {
-void StatisticCoordinator::trackStatistic(const CharacteristicPtr&,
-                                          const Windowing::WindowTypePtr&,
-                                          const TriggerCondition&,
-                                          const SendingPolicyPtr&,
-                                          std::function<void(CharacteristicPtr)>&&) {}
+std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
+                                                               const Windowing::WindowTypePtr& window,
+                                                               const TriggerConditionPtr& triggerCondition,
+                                                               const SendingPolicyPtr& sendingPolicy,
+                                                               std::function<void(CharacteristicPtr)>&& callBack) {
 
-void StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic, const Windowing::WindowTypePtr& window) {
-    trackStatistic(characteristic, window, SENDING_LAZY);
+    // 1. Creating a query that collects the required statistic
+    const auto statisticQuery = statisticQueryGenerator->createStatisticQuery(*characteristic, window, sendingPolicy, triggerCondition);
+
+    // 2. Submitting the query to the system
+    const auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(statisticQuery.getQueryPlan(),
+                                                                                Optimizer::PlacementStrategy::BottomUp);
+
+    // 3. Extracting all statistic ids from the submitted queries to create StatisticKeys out of the statistic ids
+    const auto newStatisticIds = statisticIdsExtractor.extractStatisticIdsFromQueryId(queryCatalog, queryId);
+    const auto metric = characteristic->getType();
+
+    // 4. For each statistic id, we create a new StatisticKey and also insert it into the registry, if the StatisticKey
+    // is not already contained in the registry
+    std::vector<StatisticKey> statisticKeysForThisTrackRequest;
+    for (const auto& statisticId : newStatisticIds) {
+        StatisticKey newKey(metric, statisticId);
+        statisticKeysForThisTrackRequest.emplace_back(newKey);
+        if (!statisticRegistry.contains(newKey)) {
+            StatisticInfo statisticInfo(window, triggerCondition, callBack, queryId, metric);
+            statisticRegistry.insert(newKey, statisticInfo);
+        }
+    }
+
+    // We return all statisticKeys that belong to this track request, so that they can be used for probing the statistics
+    return statisticKeysForThisTrackRequest;
 }
 
-void StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
-                                          const Windowing::WindowTypePtr& window,
-                                          const SendingPolicyPtr& sendingPolicy) {
-    trackStatistic(characteristic, window, NeverTrigger(), sendingPolicy, nullptr);
+std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
+                                                               const Windowing::WindowTypePtr& window) {
+    return trackStatistic(characteristic, window, SENDING_LAZY);
 }
 
-ProbeResult<> StatisticCoordinator::probeStatistic(const CharacteristicPtr&,
-                                                   const Windowing::TimeMeasure&,
-                                                   const Windowing::TimeMeasure&,
-                                                   const bool&,
-                                                   std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) {
-    return aggFunction(ProbeResult<>());
+std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
+                                                               const Windowing::WindowTypePtr& window,
+                                                               const SendingPolicyPtr& sendingPolicy) {
+    return trackStatistic(characteristic, window, NeverTrigger::create(), sendingPolicy, nullptr);
 }
-ProbeResult<> StatisticCoordinator::probeStatistic(const CharacteristicPtr& characteristic,
-                                                   const Windowing::TimeMeasure& period,
+
+ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statisticKey,
+                                                   const Windowing::TimeMeasure& startTs,
+                                                   const Windowing::TimeMeasure& endTs,
                                                    const Windowing::TimeMeasure& granularity,
-                                                   const bool& estimationAllowed) {
-    return probeStatistic(characteristic, period, granularity, estimationAllowed, [](const ProbeResult<>& probeResult) {
-        return probeResult;
-    });
+                                                   const ProbeExpression& probeExpression,
+                                                   const bool&, // #4682 will implement this
+                                                   std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) {
+    // 1. Check if there exist a statistic for this key
+    if (!statisticRegistry.contains(statisticKey)) {
+        NES_INFO("Could not find a statistic collection query for StatisticKey={}", statisticKey.toString());
+        return {};
+    }
+
+    // 2. Check if the statistic is tracked with the same granularity as wished
+    const auto statisticInfo = statisticRegistry.getStatisticInfoWithGranularity(statisticKey, granularity);
+    if (!statisticInfo.has_value()) {
+        return {};
+    }
+
+    // 3. Receiving all statistics for the period [startTs, endTs] and creating the ProbeResult
+    const auto statistics = statisticStore->getStatistics(statisticKey.hash(), startTs, endTs);
+    ProbeResult<> probeResult;
+    for (const auto& stat : statistics){
+        probeResult.addStatisticValue(stat->getStatisticValue(probeExpression));
+    }
+
+    // 4. Calling the aggregation function and then returning the result
+    return aggFunction(probeResult);
 }
+
+ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statisticKey,
+                                                   const Windowing::TimeMeasure& startTs,
+                                                   const Windowing::TimeMeasure& endTs,
+                                                   const Windowing::TimeMeasure& granularity,
+                                                   const ProbeExpression& probeExpression,
+                                                   const bool& estimationAllowed) {
+    return probeStatistic(statisticKey, startTs, endTs, granularity, probeExpression, estimationAllowed,
+                          [](const ProbeResult<>& probeResult) {
+                              return probeResult;
+                          });
+}
+
+StatisticCoordinator::StatisticCoordinator(const RequestHandlerServicePtr& requestHandlerService,
+                                           const AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
+                                           const AbstractStatisticStorePtr& statisticStore,
+                                           const Catalogs::Query::QueryCatalogPtr& queryCatalog)
+    : requestHandlerService(requestHandlerService), statisticQueryGenerator(statisticQueryGenerator),
+      statisticStore(statisticStore), queryCatalog(queryCatalog) {}
+
+StatisticCoordinator::~StatisticCoordinator() = default;
 
 }// namespace NES::Statistic

@@ -36,12 +36,13 @@ class StatisticInfo {
      * @param triggerCondition: Condition that is checked for each newly created window of a given statistic.
      * @param callBack: Function that is called, if triggerCondition returns true
      * @param queryId: Id of the StatisticQuery
+     * @param metric: Metric for this statistic
      */
     StatisticInfo(const Windowing::WindowTypePtr window,
                   const TriggerConditionPtr triggerCondition,
-                  // Using an rvalue reference here to avoid unnecessary copies
-                  const std::function<void(CharacteristicPtr)>&& callBack,
-                  const QueryId& queryId);
+                  const std::function<void(CharacteristicPtr)> callBack,
+                  const QueryId& queryId,
+                  const MetricPtr metric);
 
     /**
      * @brief Gets the TriggerCondition
@@ -109,6 +110,7 @@ class StatisticInfo {
     TriggerConditionPtr triggerCondition;
     std::function<void(CharacteristicPtr)> callBack;
     QueryId queryId;
+    MetricPtr metric;
 };
 using StatisticInfoWLock = std::shared_ptr<folly::Synchronized<StatisticInfo>::WLockedPtr>;
 

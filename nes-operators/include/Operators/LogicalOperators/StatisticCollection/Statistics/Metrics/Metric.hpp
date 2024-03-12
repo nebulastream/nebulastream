@@ -59,7 +59,14 @@ class Metric : public std::enable_shared_from_this<Metric> {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    virtual bool operator==(const Metric&) const = 0;
+    virtual bool operator==(const Metric& rhs) const = 0;
+
+    /**
+     * @brief Checks for equality
+     * @param rhs
+     * @return True, if equal otherwise false
+     */
+    virtual bool equal(const Metric&) const;
 
     /**
      * @brief Checks for equality

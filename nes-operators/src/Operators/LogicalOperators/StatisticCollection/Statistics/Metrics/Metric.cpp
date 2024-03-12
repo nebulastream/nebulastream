@@ -23,6 +23,8 @@ FieldAccessExpressionNodePtr Metric::getField() const { return field; }
 
 MetricHash Metric::hash() const { return std::hash<std::string>()(toString()); }
 
+bool Metric::equal(const Metric& rhs) const { return *this == rhs; }
+
 FieldAccessExpressionNodePtr Over(std::string name) {
     return FieldAccessExpressionNode::create(std::move(name))->as<FieldAccessExpressionNode>();
 }

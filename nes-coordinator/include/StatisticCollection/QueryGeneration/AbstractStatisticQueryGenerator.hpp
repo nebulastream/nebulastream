@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_STATISTICQUERYGENERATORINTERFACE_HPP_
-#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_STATISTICQUERYGENERATORINTERFACE_HPP_
+#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_ABSTRACTSTATISTICQUERYGENERATOR_HPP_
+#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_ABSTRACTSTATISTICQUERYGENERATOR_HPP_
 
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
@@ -21,10 +21,14 @@
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 
 namespace NES::Statistic {
+
+class AbstractStatisticQueryGenerator;
+using AbstractStatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerator>;
+
 /**
  * @brief Interface for creating a statistic query
  */
-class StatisticQueryGeneratorInterface {
+class AbstractStatisticQueryGenerator {
   public:
     /**
      * @brief Creates a query that is used for creating the statistics
@@ -38,8 +42,13 @@ class StatisticQueryGeneratorInterface {
                                        const Windowing::WindowTypePtr& window,
                                        const SendingPolicyPtr& sendingPolicy,
                                        const TriggerConditionPtr& triggerCondition) = 0;
+
+    /**
+     * @brief Virtual destructor
+     */
+    virtual ~AbstractStatisticQueryGenerator() = default;
 };
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_STATISTICQUERYGENERATORINTERFACE_HPP_
+#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_ABSTRACTSTATISTICQUERYGENERATOR_HPP_

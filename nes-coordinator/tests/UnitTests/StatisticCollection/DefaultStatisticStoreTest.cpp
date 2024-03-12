@@ -37,7 +37,7 @@ class DummyStatistic : public Statistic {
         return std::make_shared<DummyStatistic>(DummyStatistic(startTs, endTs));
     }
 
-    StatisticValue<> getStatisticValue(const Characteristic&) const override { return StatisticValue<>(randomValue); }
+    StatisticValue<> getStatisticValue(const ProbeExpression&) const override { return StatisticValue<>(randomValue); }
     std::string toString() const override {
         return "DummyStatistic (" + startTs.toString() + ", " + endTs.toString() + ", " + std::to_string(observedTuples) + ", "
             + std::to_string(randomValue) + ")";

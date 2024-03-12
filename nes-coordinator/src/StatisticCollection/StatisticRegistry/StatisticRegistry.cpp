@@ -13,6 +13,9 @@
 */
 
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
@@ -20,6 +23,29 @@ StatisticInfoWLock StatisticRegistry::getStatisticInfo(const StatisticKey statis
     auto lockedMap = keyToStatisticInfo.wlock();
     auto lockedStatisticInfo = (*lockedMap)[statisticKey].wlock();
     return std::make_shared<folly::Synchronized<StatisticInfo>::WLockedPtr>(std::move(lockedStatisticInfo));
+}
+
+std::optional<StatisticInfoWLock> StatisticRegistry::getStatisticInfoWithGranularity(const StatisticKey statisticKey,
+                                                                                     const Windowing::TimeMeasure& granularity) {
+    // If there exists no StatisticInfo to this StatisticKey, then return no value
+    if (!contains(statisticKey)) {
+        return {};
+    }
+
+    // Checking if the window is a TimeBasedWindowType, as we currently on support those
+    const auto statisticInfo = getStatisticInfo(statisticKey);
+    const auto window = (*statisticInfo)->getWindow();
+    if (!window->instanceOf<Windowing::TimeBasedWindowType>()) {
+        NES_WARNING("Can only infer the granularity of a TimeBasedWindowType.");
+        return {};
+    }
+
+    // Checking if the window has the same size as the expected granularity
+    const auto timeBasedWindow = window->as<Windowing::TimeBasedWindowType>();
+    if (timeBasedWindow->getSize() != granularity) {
+        return {};
+    }
+    return statisticInfo;
 }
 
 std::vector<StatisticInfoWLock> StatisticRegistry::getStatisticInfo(const QueryId queryId) {
@@ -38,6 +64,11 @@ std::vector<StatisticInfoWLock> StatisticRegistry::getStatisticInfo(const QueryI
 void StatisticRegistry::insert(const StatisticKey statisticKey, const StatisticInfo statisticInfo) {
     auto lockedMap = keyToStatisticInfo.wlock();
     (*lockedMap).insert_or_assign(statisticKey, statisticInfo);
+}
+
+bool StatisticRegistry::contains(const StatisticKey statisticKey) {
+    auto lockedMap = keyToStatisticInfo.rlock();
+    return lockedMap->contains(statisticKey);
 }
 
 void StatisticRegistry::queryStopped(const StatisticKey statisticKey) {

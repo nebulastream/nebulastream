@@ -15,7 +15,7 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_DEFAULTSTATISTICSTORE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_DEFAULTSTATISTICSTORE_HPP_
 
-#include <StatisticCollection/StatisticStorage/StatisticStoreInterface.hpp>
+#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <folly/Synchronized.h>
 #include <unordered_map>
 namespace NES::Statistic {
@@ -24,8 +24,14 @@ namespace NES::Statistic {
  * @brief This is a thread-safe StatisticStore that simply stores all data in an unordered_map that is made thread-safe
  * by using folly::Synchronized
  */
-class DefaultStatisticStore : public StatisticStoreInterface {
+class DefaultStatisticStore : public AbstractStatisticStore {
   public:
+    /**
+     * @brief Creates a DefaultStatisticStore
+     * @return AbstractStatisticStorePtr
+     */
+    static AbstractStatisticStorePtr create();
+
     std::vector<StatisticPtr> getStatistics(const StatisticHash& statisticHash,
                                             const Windowing::TimeMeasure& startTs,
                                             const Windowing::TimeMeasure& endTs) override;
@@ -49,6 +55,11 @@ class DefaultStatisticStore : public StatisticStoreInterface {
     bool deleteStatistics(const StatisticHash& statisticHash,
                           const Windowing::TimeMeasure& startTs,
                           const Windowing::TimeMeasure& endTs) override;
+
+    /**
+     * @brief Virtual destructor
+     */
+    virtual ~DefaultStatisticStore();
 
   private:
     folly::Synchronized<std::unordered_map<StatisticHash, std::vector<StatisticPtr>>> keyToStatistics;
