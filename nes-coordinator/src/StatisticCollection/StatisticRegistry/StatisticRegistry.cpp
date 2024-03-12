@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {

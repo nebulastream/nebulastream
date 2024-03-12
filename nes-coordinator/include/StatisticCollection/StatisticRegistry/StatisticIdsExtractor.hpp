@@ -15,14 +15,14 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICIDSEXTRACTOR_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICIDSEXTRACTOR_HPP_
 
-#include <Identifiers.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Identifiers.hpp>
 
 namespace NES {
 namespace Catalogs::Query {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-} //namespace Catalogs::Query
+}//namespace Catalogs::Query
 
 namespace Statistic {
 
@@ -33,7 +33,8 @@ class StatisticIdsExtractor {
      * @param queryCatalog: In this catalog, we search for the queryPlan with the queryId and then extract statistic ids in this queryPlan
      * @param queryId: QueryId to extract the statistic ids from its queryPlan
      */
-    static std::vector<StatisticId> extractStatisticIdsFromQueryId(Catalogs::Query::QueryCatalogPtr queryCatalog, const QueryId& queryId);
+    static std::vector<StatisticId> extractStatisticIdsFromQueryId(Catalogs::Query::QueryCatalogPtr queryCatalog,
+                                                                   const QueryId& queryId);
 
     /**
      * @brief Extracts the statistic ids of the operator over which some statistic is being built

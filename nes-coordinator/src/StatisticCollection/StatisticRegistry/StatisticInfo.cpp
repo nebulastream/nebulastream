@@ -53,8 +53,8 @@ std::string StatisticInfo::toString() const {
 void StatisticInfo::setQueryId(const QueryId queryId) { this->queryId = queryId; }
 
 bool StatisticInfo::operator==(const StatisticInfo& rhs) const {
-    return triggerCondition == rhs.triggerCondition && queryId == rhs.queryId && window->equal(rhs.window) &&
-        metric->equal(*rhs.metric);
+    return triggerCondition == rhs.triggerCondition && queryId == rhs.queryId && window->equal(rhs.window)
+        && metric->equal(*rhs.metric);
 }
 
 bool StatisticInfo::operator!=(const StatisticInfo& rhs) const { return !(rhs == *this); }

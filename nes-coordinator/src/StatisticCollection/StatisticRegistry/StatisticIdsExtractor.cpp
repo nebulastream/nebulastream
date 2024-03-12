@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
-#include <Nodes/Node.hpp>
 
 namespace NES::Statistic {
 std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryId(Catalogs::Query::QueryCatalogPtr queryCatalog,
@@ -36,8 +36,12 @@ std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryPlan
         const auto& buildOperatorChildren = statisticBuildOperator->getChildren();
 
         // Iterates over all children and extracts the statistic id for each child and writes the statistic id in extractedStatisticIds
-        std::transform(buildOperatorChildren.begin(), buildOperatorChildren.end(), std::back_inserter(extractedStatisticIds),
-                       [] (const auto& childOp) { return childOp->template as<Operator>()->getStatisticId(); });
+        std::transform(buildOperatorChildren.begin(),
+                       buildOperatorChildren.end(),
+                       std::back_inserter(extractedStatisticIds),
+                       [](const auto& childOp) {
+                           return childOp->template as<Operator>()->getStatisticId();
+                       });
     }
 
     return extractedStatisticIds;

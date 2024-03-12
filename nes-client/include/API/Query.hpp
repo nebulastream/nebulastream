@@ -17,8 +17,8 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <memory>
 #include <string>

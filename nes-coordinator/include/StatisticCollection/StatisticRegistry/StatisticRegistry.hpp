@@ -20,8 +20,8 @@
 #include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 #include <folly/Synchronized.h>
 #include <functional>
-#include <optional>
 #include <map>
+#include <optional>
 
 namespace NES::Statistic {
 

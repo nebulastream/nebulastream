@@ -23,7 +23,6 @@
 #include <memory>
 namespace NES {
 
-
 /*
  * NOTE: Dear reviewer, once we have implemented some actual executable operators, this test suite makes more sense.
  * As we then can spawn a topology and multiple workers and check if it works for various topologies.
@@ -49,27 +48,23 @@ class StatisticCoordinatorTest : public Testing::BaseIntegrationTest {
         configuration->worker.numWorkerThreads = 3;
         configuration->worker.physicalSourceTypes.add(DefaultSourceType::create("default_logical", "default_logical_1"));
 
-
         NES_DEBUG("Starting coordinator...");
         nesCoordinator = std::make_shared<NesCoordinator>(configuration);
         nesCoordinator->startCoordinator(false);
 
-
         // Creating the statisticCoordinator
         statisticStore = Statistic::DefaultStatisticStore::create();
-        statisticCoordinator = std::make_shared<Statistic::StatisticCoordinator>(nesCoordinator->getRequestHandlerService(),
-                                                                                 Statistic::DefaultStatisticQueryGenerator::create(),
-                                                                                 statisticStore,
-                                                                                 nesCoordinator->getQueryCatalog());
+        statisticCoordinator =
+            std::make_shared<Statistic::StatisticCoordinator>(nesCoordinator->getRequestHandlerService(),
+                                                              Statistic::DefaultStatisticQueryGenerator::create(),
+                                                              statisticStore,
+                                                              nesCoordinator->getQueryCatalog());
     }
 
     Statistic::StatisticCoordinatorPtr statisticCoordinator;
     Statistic::AbstractStatisticStorePtr statisticStore;
     std::shared_ptr<NesCoordinator> nesCoordinator;
 };
-
-
-
 
 /**
  * @brief Tests if the StatisticCoordinator
@@ -83,11 +78,12 @@ TEST_F(StatisticCoordinatorTest, trackOneStatisticProbeOnce) {
     auto statisticKey = statisticCoordinator->trackStatistic(characteristic, window);
 
     // Wait some time and let the statistic build during this time and then get the statistics from [0, 10]
-    auto probeResult = statisticCoordinator->probeStatistic(statisticKey[0], Seconds(0), Seconds(100), Seconds(10),
+    auto probeResult = statisticCoordinator->probeStatistic(statisticKey[0],
+                                                            Seconds(0),
+                                                            Seconds(100),
+                                                            Seconds(10),
                                                             ProbeExpression(Attribute("f1") < 10),
                                                             false);
-
 }
 
-
-} // namespace NES
+}// namespace NES

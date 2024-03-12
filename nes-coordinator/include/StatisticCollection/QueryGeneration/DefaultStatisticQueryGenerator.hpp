@@ -25,7 +25,6 @@ namespace NES::Statistic {
  */
 class DefaultStatisticQueryGenerator : public AbstractStatisticQueryGenerator {
   public:
-
     /**
      * @brief Creates a DefaultStatisticQueryGenerator
      * @return AbstractStatisticQueryGeneratorPtr
