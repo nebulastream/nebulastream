@@ -138,7 +138,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     //root node
     //id = 1
     topology->registerWorker(workerIdCounter, workerAddress, restPort, dataPort, 1, {}, 0, 0);
-    topology->setRootTopologyNodeId(workerIdCounter);
+    topology->addAsRootWorkerId(workerIdCounter);
     workerIdCounter++;
 
     //id = 2

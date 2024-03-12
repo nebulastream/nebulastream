@@ -69,16 +69,37 @@ class Topology {
     static TopologyPtr create();
 
     /**
-     * @brief Get the ID of root topology node
-     * @return root of the worker id of the root topology node
+     * @brief Get IDs of root workers
+     * @return vector of root worker ids
      */
-    WorkerId getRootTopologyNodeId();
+    std::vector<WorkerId> getRootWorkerNodeIds();
 
     /**
      * @brief Set as a topology node as the root node of the topology
      * @param workerId: id of root topology node
      */
-    void setRootTopologyNodeId(WorkerId workerId);
+    void addAsRootWorkerId(WorkerId workerId);
+
+    /**
+     * @brief Register worker as the root of the topology
+     * @param newRootWorkerId : the id of the topology node
+     * @param address : the host name
+     * @param grpcPort : the grpc post
+     * @param dataPort : data post
+     * @param numberOfSlots : number of slots
+     * @param workerProperties : the properties
+     * @param bandwidthInMbps: bandwidth in Mbps
+     * @param latencyInMs: latency in ms
+     * @return worker id
+     */
+    WorkerId registerWorkerAsRoot(WorkerId newRootWorkerId,
+                            const std::string& address,
+                            const int64_t grpcPort,
+                            const int64_t dataPort,
+                            const uint16_t numberOfSlots,
+                            std::map<std::string, std::any> workerProperties,
+                            uint32_t bandwidthInMbps,
+                            uint32_t latencyInMs);
 
     /**
      * @brief Register a new topology node in the topology
@@ -390,8 +411,7 @@ class Topology {
      */
     WorkerId getNextWorkerId();
 
-    //TODO: At present we assume that we have only one root node
-    WorkerId rootWorkerId;
+    std::vector<WorkerId> rootWorkerIds;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;

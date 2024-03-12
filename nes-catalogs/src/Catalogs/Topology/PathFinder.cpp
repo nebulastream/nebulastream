@@ -20,7 +20,7 @@
 
 namespace NES {
 
-PathFinder::PathFinder(NES::WorkerId rootTopologyNodeId) : rootTopologyNodeId(rootTopologyNodeId) {}
+PathFinder::PathFinder(std::vector<WorkerId> rootWorkerIds) : rootWorkerIds(rootWorkerIds) {}
 
 TopologyNodePtr PathFinder::findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes) {
 
@@ -33,7 +33,8 @@ TopologyNodePtr PathFinder::findCommonAncestor(std::vector<TopologyNodePtr> topo
 
     //Check if one of the input node is a root node of the topology
     auto found = std::find_if(topologyNodes.begin(), topologyNodes.end(), [&](const TopologyNodePtr& topologyNode) {
-        return rootTopologyNodeId == topologyNode->getId();
+        auto foundInRootWorkerIds = std::find(rootWorkerIds.begin(), rootWorkerIds.end(), topologyNode->getId());
+        return foundInRootWorkerIds != rootWorkerIds.end();
     });
 
     // If a root node found in the input nodes then return the root topology node
@@ -165,7 +166,7 @@ TopologyNodePtr PathFinder::findCommonNodeBetween(std::vector<TopologyNodePtr> c
 }
 
 std::vector<TopologyNodePtr> PathFinder::findNodesBetween(const TopologyNodePtr& sourceNode,
-                                                        const TopologyNodePtr& destinationNode) {
+                                                          const TopologyNodePtr& destinationNode) {
 
     NES_DEBUG("Topology: Find topology nodes between source and destination nodes.");
     if (sourceNode->getId() == destinationNode->getId()) {
@@ -194,7 +195,7 @@ std::vector<TopologyNodePtr> PathFinder::findNodesBetween(const TopologyNodePtr&
 }
 
 std::vector<TopologyNodePtr> PathFinder::findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
-                                                        std::vector<TopologyNodePtr> destinationNodes) {
+                                                          std::vector<TopologyNodePtr> destinationNodes) {
     NES_DEBUG("Topology: Find a common ancestor node for the input children nodes.");
     TopologyNodePtr commonAncestorForChildren = findCommonAncestor(std::move(sourceNodes));
     if (!commonAncestorForChildren) {

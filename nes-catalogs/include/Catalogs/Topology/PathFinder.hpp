@@ -33,7 +33,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class PathFinder {
 
   public:
-    PathFinder(WorkerId rootTopologyNodeId);
+    PathFinder(std::vector<WorkerId> rootWorkerIds);
 
     virtual ~PathFinder() = default;
 
@@ -77,7 +77,7 @@ class PathFinder {
                                                   std::vector<TopologyNodePtr> destinationNodes);
 
   private:
-    WorkerId rootTopologyNodeId;
+    std::vector<WorkerId> rootWorkerIds;
 };
 }// namespace NES
 

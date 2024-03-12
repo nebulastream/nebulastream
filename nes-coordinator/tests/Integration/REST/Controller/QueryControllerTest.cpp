@@ -210,7 +210,10 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     EXPECT_EQ(response2.size(), 1);
     for (auto executionNode : response2["ExecutionNodes"]) {
-        EXPECT_EQ(coordinator->getTopology()->getRootTopologyNodeId(), executionNode["ExecutionNodeId"].get<uint64_t>());
+        const auto& rootWorkerNodeIds = coordinator->getTopology()->getRootWorkerNodeIds();
+        const auto& executionNodeId = executionNode["ExecutionNodeId"].get<uint64_t>();
+        auto foundInRootWorkerId = std::find(rootWorkerNodeIds.begin(), rootWorkerNodeIds.end(), executionNodeId);
+        EXPECT_NE(foundInRootWorkerId, rootWorkerNodeIds.end());
         EXPECT_TRUE(executionNode["ScheduledDecomposedQueries"].size() != 0);
     }
 

@@ -74,7 +74,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         int rootNodeId = 1;
         topology = Topology::create();
         topology->registerWorker(rootNodeId, "localhost", 4000, 4002, 4, properties, 0, 0);
-        topology->setRootTopologyNodeId(rootNodeId);
+        topology->addAsRootWorkerId(rootNodeId);
         auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
         auto physicalSource = PhysicalSource::create(defaultSourceType);
         auto logicalSource = LogicalSource::create("test2", Schema::create());

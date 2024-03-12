@@ -145,13 +145,13 @@ class BasePlacementAdditionStrategy {
      * @brief Add the computed query sub plans tot he global execution plan
      * @param sharedQueryId: the shared query plan id
      * @param computedSubQueryPlans: the computed query sub plans
-     * @param querySubPlanVersion: the version of the query sub plan
+     * @param decomposedQueryPlanVersion: the version of the query sub plan
      * @return vector of deployment contexts
      */
     std::map<DecomposedQueryPlanId, DeploymentContextPtr>
     updateExecutionNodes(SharedQueryId sharedQueryId,
                          ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                         DecomposedQueryPlanVersion querySubPlanVersion);
+                         DecomposedQueryPlanVersion decomposedQueryPlanVersion);
 
     /**
      * @brief Get the Topology node with the input id

@@ -34,25 +34,37 @@ using ISQPAddNodeResponsePtr = std::shared_ptr<ISQPAddNodeResponse>;
 class ISQPAddNodeEvent;
 using ISQPAddNodeEventPtr = std::shared_ptr<ISQPAddNodeEvent>;
 
+enum class WorkerType : uint8_t {
+    CLOUD = 0,// Indicates if the node is in the cloud layer. Nodes in the cloud layer are always the root nodes of the topology
+    FOG = 1,  // Indicates if the node is in the fog layer. Nodes in the fog layer connects either with cloud nodes,
+              // other fog nodes, or sensor nodes
+    SENSOR = 2// Indicates if the node is in the sensor layer. Nodes in the sensor layer are always the leaf nodes of the topology
+              // and host physical sources
+};
+
 /**
  * @brief ISQP add node represent the event for registering a worker node
  */
 class ISQPAddNodeEvent : public ISQPEvent {
 
   public:
-    static ISQPEventPtr create(WorkerId workerId,
+    static ISQPEventPtr create(WorkerType workerType,
+                               WorkerId workerId,
                                const std::string& ipAddress,
                                uint32_t grpcPort,
                                uint32_t dataPort,
                                uint16_t resources,
                                const std::map<std::string, std::any>& properties);
 
-    ISQPAddNodeEvent(WorkerId workerId,
+    ISQPAddNodeEvent(WorkerType workerType,
+                     WorkerId workerId,
                      const std::string& ipAddress,
                      uint32_t grpcPort,
                      uint32_t dataPort,
                      uint16_t resources,
                      const std::map<std::string, std::any>& properties);
+
+    WorkerType getWorkerType() const;
 
     WorkerId getWorkerId() const;
 
@@ -67,6 +79,7 @@ class ISQPAddNodeEvent : public ISQPEvent {
     const std::map<std::string, std::any>& getProperties() const;
 
   private:
+    WorkerType workerType;
     WorkerId workerId;
     std::string ipAddress;
     uint32_t grpcPort;

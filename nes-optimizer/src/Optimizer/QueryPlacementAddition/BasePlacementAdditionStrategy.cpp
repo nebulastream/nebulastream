@@ -44,7 +44,7 @@ BasePlacementAdditionStrategy::BasePlacementAdditionStrategy(const GlobalExecuti
     : globalExecutionPlan(globalExecutionPlan), topology(topology), typeInferencePhase(typeInferencePhase),
       placementAmendmentMode(placementAmendmentMode) {
     //Initialize path finder
-    pathFinder = std::make_shared<PathFinder>((topology->getRootTopologyNodeId()));
+    pathFinder = std::make_shared<PathFinder>((topology->getRootWorkerNodeIds()));
 }
 
 void BasePlacementAdditionStrategy::performPathSelection(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators,
@@ -713,7 +713,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 std::map<DecomposedQueryPlanId, DeploymentContextPtr>
 BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
+                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion) {
 
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
 
@@ -815,11 +815,11 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
 
                                             bool mergedOperator = false;
                                             if (pinnedDownstreamOperator->instanceOf<SinkLogicalOperator>()) {
-                                                mergedOperator = tryMergingNetworkSink(
-                                                    querySubPlanVersion,
-                                                    computedDecomposedQueryPlan,
-                                                    matchingPlacedLeafOperator,
-                                                    pinnedDownstreamOperator->as<SinkLogicalOperator>());
+                                                mergedOperator =
+                                                    tryMergingNetworkSink(decomposedQueryPlanVersion,
+                                                                          computedDecomposedQueryPlan,
+                                                                          matchingPlacedLeafOperator,
+                                                                          pinnedDownstreamOperator->as<SinkLogicalOperator>());
                                             }
                                             if (!mergedOperator) {
                                                 pinnedDownstreamOperator->removeChild(computedOperator);
@@ -863,7 +863,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
                         updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
-                        updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
+                        updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
                         //Add decomposed query plan to the global execution plan
                         globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
@@ -916,7 +916,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                             bool mergedSource = false;
                                             if (upstreamOperator->instanceOf<SourceLogicalOperator>()) {
                                                 mergedSource =
-                                                    tryMergingNetworkSource(querySubPlanVersion,
+                                                    tryMergingNetworkSource(decomposedQueryPlanVersion,
                                                                             matchingPinnedRootOperator,
                                                                             upstreamOperator->as<SourceLogicalOperator>());
                                             }
@@ -956,7 +956,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
                         updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
-                        updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
+                        updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
                         globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
@@ -973,7 +973,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 } else {
                     auto updatedDecomposedQueryPlan = typeInferencePhase->execute(computedDecomposedQueryPlan);
                     updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-                    updatedDecomposedQueryPlan->setVersion(querySubPlanVersion);
+                    updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
                     globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
                     // 1.6. Update state and properties of all operators placed on the execution node
                     markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
@@ -1129,8 +1129,8 @@ TopologyNodePtr BasePlacementAdditionStrategy::getTopologyNode(WorkerId workerId
 }
 
 LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(QueryId queryId,
-                                                                                OperatorId sourceOperatorId,
-                                                                                const TopologyNodePtr& sourceTopologyNode) {
+                                                                            OperatorId sourceOperatorId,
+                                                                            const TopologyNodePtr& sourceTopologyNode) {
 
     NES_TRACE("create Network Sink operator");
     Network::NodeLocation nodeLocation(sourceTopologyNode->getId(),
@@ -1151,9 +1151,9 @@ LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSinkOperator(Quer
 }
 
 LogicalOperatorPtr BasePlacementAdditionStrategy::createNetworkSourceOperator(QueryId queryId,
-                                                                                  SchemaPtr inputSchema,
-                                                                                  OperatorId operatorId,
-                                                                                  const TopologyNodePtr& sinkTopologyNode) {
+                                                                              SchemaPtr inputSchema,
+                                                                              OperatorId operatorId,
+                                                                              const TopologyNodePtr& sinkTopologyNode) {
     NES_TRACE("create Network Source operator");
     NES_ASSERT2_FMT(sinkTopologyNode, "Invalid sink node while placing query " << queryId);
     Network::NodeLocation upstreamNodeLocation(sinkTopologyNode->getId(),
@@ -1180,8 +1180,8 @@ BasePlacementAdditionStrategy::getTopologyNodesForChildrenOperators(const Logica
             NES_WARNING("unable to find topology for child operator.");
             return {};
         }
-        TopologyNodePtr childTopologyNode = workerIdToTopologyNodeMap[std::any_cast<uint64_t>(
-            child->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID))];
+        TopologyNodePtr childTopologyNode =
+            workerIdToTopologyNodeMap[std::any_cast<uint64_t>(child->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID))];
 
         auto existingNode =
             std::find_if(childTopologyNodes.begin(), childTopologyNodes.end(), [&childTopologyNode](const auto& node) {

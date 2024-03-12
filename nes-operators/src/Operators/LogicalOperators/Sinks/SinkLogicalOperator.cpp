@@ -36,9 +36,7 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const {
     return false;
 };
 
-bool SinkLogicalOperator::inferSchema() {
-    return LogicalUnaryOperator::inferSchema();
-}
+bool SinkLogicalOperator::inferSchema() { return LogicalUnaryOperator::inferSchema(); }
 
 std::string SinkLogicalOperator::toString() const {
     std::stringstream ss;
@@ -47,7 +45,8 @@ std::string SinkLogicalOperator::toString() const {
 }
 
 OperatorPtr SinkLogicalOperator::copy() {
-    auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, id);
+    //We pass invalid worker id here because the properties will be copied later automatically.
+    auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

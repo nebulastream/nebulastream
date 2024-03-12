@@ -367,9 +367,9 @@ Query& Query::inferModel(const std::string model,
     return *this;
 }
 
-Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
+Query& Query::sink(const SinkDescriptorPtr sinkDescriptor, WorkerId workerId) {
     NES_DEBUG("Query: add sink operator to query");
-    this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor);
+    this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor, workerId);
     return *this;
 }
 
