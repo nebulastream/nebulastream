@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 #include <functional>
 
 namespace NES::Statistic {
@@ -35,26 +36,35 @@ class StatisticInterface {
      * @param sendingPolicy
      * @param callBack
      */
-    virtual void trackStatistic(const CharacteristicPtr& characteristic,
-                                const Windowing::WindowTypePtr& window,
-                                const TriggerCondition& triggerCondition,
-                                const SendingPolicyPtr& sendingPolicy,
-                                std::function<void(CharacteristicPtr)>&& callBack) = 0;
+    virtual std::vector<StatisticKey> trackStatistic(const CharacteristicPtr& characteristic,
+                                                     const Windowing::WindowTypePtr& window,
+                                                     const TriggerConditionPtr& triggerCondition,
+                                                     const SendingPolicyPtr& sendingPolicy,
+                                                     std::function<void(CharacteristicPtr)>&& callBack) = 0;
 
     /**
      * @brief Creates a request to probe a specific statistic and returns the statistic in a ProbeResult
-     * @param characteristic
-     * @param period
+     * @param statisticKey
+     * @param startTs
+     * @param endTs
      * @param granularity
+     * @param probeExpression
      * @param estimationAllowed
      * @param aggFunction
-     * @return ProbeResult
+     * @return ProbeResult<> containing at least one StatisticValue
      */
-    virtual ProbeResult<> probeStatistic(const CharacteristicPtr& characteristic,
-                                         const Windowing::TimeMeasure& period,
+    virtual ProbeResult<> probeStatistic(const StatisticKey& statisticKey,
+                                         const Windowing::TimeMeasure& startTs,
+                                         const Windowing::TimeMeasure& endTs,
                                          const Windowing::TimeMeasure& granularity,
+                                         const ProbeExpression& probeExpression,
                                          const bool& estimationAllowed,
                                          std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) = 0;
+
+    /**
+     * @brief Virtual destructor
+     */
+    virtual ~StatisticInterface() = default;
 };
 
 }// namespace NES::Statistic

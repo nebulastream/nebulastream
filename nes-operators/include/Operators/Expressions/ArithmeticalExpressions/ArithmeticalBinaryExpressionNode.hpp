@@ -18,7 +18,7 @@
 #include <Operators/Expressions/BinaryExpressionNode.hpp>
 namespace NES {
 /**
- * @brief This node rresents a arithmetical expression.
+ * @brief This node represents a arithmetical expression.
  */
 class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public ArithmeticalExpressionNode {
   public:

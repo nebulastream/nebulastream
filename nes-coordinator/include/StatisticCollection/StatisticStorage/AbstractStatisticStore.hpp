@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_STATISTICSTOREINTERFACE_HPP_
-#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_STATISTICSTOREINTERFACE_HPP_
+#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_ABSTRACTSTATISTICSTORE_HPP_
+#define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_ABSTRACTSTATISTICSTORE_HPP_
 
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Statistic.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
 
 namespace NES::Statistic {
 
+class AbstractStatisticStore;
+using AbstractStatisticStorePtr = std::shared_ptr<AbstractStatisticStore>;
+
 /**
  * @brief An interface for any statistic store
  */
-class StatisticStoreInterface {
+class AbstractStatisticStore {
   public:
     /**
      * @brief Gets all statistics belonging to the statisticHash in the period of [startTs, endTs]
@@ -54,7 +57,12 @@ class StatisticStoreInterface {
     virtual bool deleteStatistics(const StatisticHash& statisticHash,
                                   const Windowing::TimeMeasure& startTs,
                                   const Windowing::TimeMeasure& endTs) = 0;
+
+    /**
+     * @brief Virtual destructor
+     */
+    virtual ~AbstractStatisticStore() = default;
 };
 }// namespace NES::Statistic
 
-#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_STATISTICSTOREINTERFACE_HPP_
+#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_ABSTRACTSTATISTICSTORE_HPP_

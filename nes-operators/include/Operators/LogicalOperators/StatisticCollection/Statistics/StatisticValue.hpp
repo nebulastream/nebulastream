@@ -50,6 +50,19 @@ class StatisticValue {
  */
 template<typename StatType = double>
 class ProbeResult {
+  public:
+    void addStatisticValue(StatisticValue<StatType> statisticValue) {
+        probeItems.emplace_back(statisticValue);
+    }
+
+    /**
+     * @brief Returns a const reference to the probeItems
+     * @return const std::vector<StatisticValue<StatType>>&
+     */
+    const std::vector<StatisticValue<StatType>>& getProbeItems() const {
+        return probeItems;
+    }
+
   private:
     std::vector<StatisticValue<StatType>> probeItems;
 };

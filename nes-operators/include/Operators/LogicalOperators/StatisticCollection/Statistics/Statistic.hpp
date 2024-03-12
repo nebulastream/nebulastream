@@ -15,7 +15,7 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTIC_HPP_
 
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/ProbeExpression.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 namespace NES::Statistic {
@@ -26,7 +26,7 @@ using StatisticPtr = std::shared_ptr<Statistic>;
 /**
  * @brief This class acts as the parent class for all statistics, e.g., synopses or any other statistic
  */
-class Statistic : public std::enable_shared_from_this<Statistic>{
+class Statistic : public std::enable_shared_from_this<Statistic> {
   public:
     /**
      * @brief Constructor for a Statistic
@@ -41,7 +41,7 @@ class Statistic : public std::enable_shared_from_this<Statistic>{
      * @param characteristic: The characteristic, e.g., Selectivity("f1" > 4)
      * @return
      */
-    [[nodiscard]] virtual StatisticValue<> getStatisticValue(const Characteristic& characteristic) const = 0;
+    [[nodiscard]] virtual StatisticValue<> getStatisticValue(const ProbeExpression& probeExpression) const = 0;
 
     /**
      * @brief Checks for equality

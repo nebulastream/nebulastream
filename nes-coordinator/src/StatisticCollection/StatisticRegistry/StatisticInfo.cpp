@@ -18,9 +18,11 @@
 namespace NES::Statistic {
 StatisticInfo::StatisticInfo(const Windowing::WindowTypePtr window,
                              const TriggerConditionPtr triggerCondition,
-                             const std::function<void(CharacteristicPtr)>&& callBack,
-                             const QueryId& queryId)
-    : window(window), triggerCondition(std::move(triggerCondition)), callBack(callBack), queryId(queryId) {}
+                             const std::function<void(CharacteristicPtr)> callBack,
+                             const QueryId& queryId,
+                             const MetricPtr metric)
+    : window(window), triggerCondition(std::move(triggerCondition)), callBack(callBack), queryId(queryId),
+      metric(std::move(metric)) {}
 
 [[maybe_unused]] TriggerConditionPtr StatisticInfo::getTriggerCondition() const { return triggerCondition; }
 
@@ -38,7 +40,8 @@ std::string StatisticInfo::toString() const {
     std::ostringstream oss;
     oss << "TriggerCondition: " << triggerCondition->toString() << " "
         << "Window: " << window->toString() << " "
-        << "QueryId: " << queryId << " ";
+        << "QueryId: " << queryId << " "
+        << "Metric: " << metric->toString() << " ";
     if (callBack != nullptr) {
         oss << "Callback: " << callBack.target_type().name() << std::endl;
     } else {
@@ -50,7 +53,8 @@ std::string StatisticInfo::toString() const {
 void StatisticInfo::setQueryId(const QueryId queryId) { this->queryId = queryId; }
 
 bool StatisticInfo::operator==(const StatisticInfo& rhs) const {
-    return triggerCondition == rhs.triggerCondition && queryId == rhs.queryId && window->equal(rhs.window);
+    return triggerCondition == rhs.triggerCondition && queryId == rhs.queryId && window->equal(rhs.window) &&
+        metric->equal(*rhs.metric);
 }
 
 bool StatisticInfo::operator!=(const StatisticInfo& rhs) const { return !(rhs == *this); }

@@ -29,6 +29,10 @@
 
 namespace NES::Statistic {
 
+AbstractStatisticQueryGeneratorPtr DefaultStatisticQueryGenerator::create() {
+    return std::make_shared<DefaultStatisticQueryGenerator>();
+}
+
 Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic& characteristic,
                                                            const Windowing::WindowTypePtr& window,
                                                            const SendingPolicyPtr& sendingPolicy,
@@ -75,4 +79,6 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
         .buildStatistic(window, synopsisDescriptor, metricType->hash())
         .sink(NullOutputSinkDescriptor::create());
 }
+
+DefaultStatisticQueryGenerator::~DefaultStatisticQueryGenerator() = default;
 }// namespace NES::Statistic

@@ -18,7 +18,7 @@
 namespace NES {
 
 /**
- * @brief This node represents a greater comparision between the two children.
+ * @brief This node represents a greater comparison between the two children.
  */
 class GreaterEqualsExpressionNode : public LogicalBinaryExpressionNode {
   public:

@@ -16,6 +16,7 @@
 #define NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_
 
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 

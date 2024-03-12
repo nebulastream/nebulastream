@@ -18,6 +18,7 @@
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/Operator.hpp>

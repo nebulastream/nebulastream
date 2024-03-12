@@ -16,4 +16,5 @@ add_subdirectory(Metrics)
 add_source_files(nes-operators
         Statistic.cpp
         StatisticValue.cpp
+        ProbeExpression.cpp
 )

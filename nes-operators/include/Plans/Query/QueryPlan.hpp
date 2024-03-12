@@ -120,7 +120,7 @@ class QueryPlan {
      * @return returns a vector of operators
      */
     template<class T>
-    std::vector<std::shared_ptr<T>> getOperatorByType() {
+    std::vector<std::shared_ptr<T>> getOperatorByType() const {
         // Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
