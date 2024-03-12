@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.67](https://github.com/nebulastream/nebulastream/tree/v0.6.67) (2024-03-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.66...v0.6.67)
+
+**Implemented enhancements:**
+
+- StatisticCoordinator track and probe implementation [\#4654](https://github.com/nebulastream/nebulastream/issues/4654)
+- \[TASK\] Uniquely identify statistic in BuildOperator [\#4653](https://github.com/nebulastream/nebulastream/issues/4653)
+- \[TASK\] StatisticProbe [\#4633](https://github.com/nebulastream/nebulastream/issues/4633)
+
 ## [v0.6.66](https://github.com/nebulastream/nebulastream/tree/v0.6.66) (2024-03-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.65...v0.6.66)
