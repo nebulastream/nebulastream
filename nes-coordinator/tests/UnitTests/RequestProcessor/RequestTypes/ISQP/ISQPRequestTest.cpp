@@ -97,13 +97,13 @@ TEST_F(ISQPRequestTest, testISQPAddNodeAndLinkEvents) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -141,13 +141,13 @@ TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -203,13 +203,13 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -283,13 +283,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -374,13 +374,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -465,13 +465,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -556,13 +556,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -649,13 +649,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -751,13 +751,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -853,13 +853,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     int nodeId1 = 1;
-    auto addNodeEvent1 = ISQPAddNodeEvent::create(nodeId1, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
     int nodeId2 = 2;
-    auto addNodeEvent2 = ISQPAddNodeEvent::create(nodeId2, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
     int nodeId3 = 3;
-    auto addNodeEvent3 = ISQPAddNodeEvent::create(nodeId3, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);

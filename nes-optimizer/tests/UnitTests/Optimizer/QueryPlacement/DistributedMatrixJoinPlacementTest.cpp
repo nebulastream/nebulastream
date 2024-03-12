@@ -90,7 +90,7 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
         // Setup the topology
         TopologyPtr topology = Topology::create();
         topology->registerWorker(nodeId, "localhost", 4000, 5000, resources, properties, 0, 0);
-        topology->setRootTopologyNodeId(nodeId);
+        topology->addAsRootWorkerId(nodeId);
         nodes.emplace_back(nodeId);
         parents.emplace_back(nodeId);
 

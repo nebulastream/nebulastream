@@ -72,7 +72,7 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
     int srcNodeId = 3;
     topology->registerWorker(srcNodeId, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId, srcNodeId));
 
@@ -116,7 +116,7 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
     WorkerId srcNodeId2 = 4;
     topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
@@ -168,7 +168,7 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
     WorkerId srcNodeId2 = 6;
     topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
@@ -226,7 +226,7 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
     WorkerId srcNodeId2 = 6;
     topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
@@ -289,7 +289,7 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
     WorkerId srcNodeId2 = 6;
     topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId3));
@@ -365,7 +365,7 @@ TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
     WorkerId srcNodeId4 = 7;
     topology->registerWorker(srcNodeId4, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
     ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));

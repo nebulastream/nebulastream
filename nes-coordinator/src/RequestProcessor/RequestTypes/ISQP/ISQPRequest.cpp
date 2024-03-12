@@ -84,14 +84,25 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
             event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
         } else if (event->instanceOf<ISQPAddNodeEvent>()) {
             auto addNodeEvent = event->as<ISQPAddNodeEvent>();
-            topology->registerWorker(addNodeEvent->getWorkerId(),
-                                     addNodeEvent->getIpAddress(),
-                                     addNodeEvent->getGrpcPort(),
-                                     addNodeEvent->getDataPort(),
-                                     addNodeEvent->getResources(),
-                                     addNodeEvent->getProperties(),
-                                     0,
-                                     0);
+            if (addNodeEvent->getWorkerType() == WorkerType::CLOUD) {
+                topology->registerWorkerAsRoot(addNodeEvent->getWorkerId(),
+                                               addNodeEvent->getIpAddress(),
+                                               addNodeEvent->getGrpcPort(),
+                                               addNodeEvent->getDataPort(),
+                                               addNodeEvent->getResources(),
+                                               addNodeEvent->getProperties(),
+                                               0,
+                                               0);
+            } else {
+                topology->registerWorker(addNodeEvent->getWorkerId(),
+                                         addNodeEvent->getIpAddress(),
+                                         addNodeEvent->getGrpcPort(),
+                                         addNodeEvent->getDataPort(),
+                                         addNodeEvent->getResources(),
+                                         addNodeEvent->getProperties(),
+                                         0,
+                                         0);
+            }
             event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
         }
     }

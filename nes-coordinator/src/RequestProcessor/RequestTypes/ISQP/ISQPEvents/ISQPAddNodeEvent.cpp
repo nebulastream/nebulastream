@@ -16,23 +16,27 @@
 
 namespace NES::RequestProcessor {
 
-ISQPAddNodeEvent::ISQPAddNodeEvent(NES::WorkerId workerId,
+ISQPAddNodeEvent::ISQPAddNodeEvent(WorkerType workerType,
+                                   WorkerId workerId,
                                    const std::string& ipAddress,
                                    uint32_t grpcPort,
                                    uint32_t dataPort,
                                    uint16_t resources,
                                    const std::map<std::string, std::any>& properties)
-    : ISQPEvent(ISQP_ADD_NODE_EVENT_PRIORITY), workerId(workerId), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort),
-      resources(resources), properties(properties) {}
+    : ISQPEvent(ISQP_ADD_NODE_EVENT_PRIORITY), workerType(workerType), workerId(workerId), ipAddress(ipAddress),
+      grpcPort(grpcPort), dataPort(dataPort), resources(resources), properties(properties) {}
 
-ISQPEventPtr ISQPAddNodeEvent::create(NES::WorkerId workerId,
+ISQPEventPtr ISQPAddNodeEvent::create(WorkerType workerType,
+                                      WorkerId workerId,
                                       const std::string& ipAddress,
                                       uint32_t grpcPort,
                                       uint32_t dataPort,
                                       uint16_t resources,
                                       const std::map<std::string, std::any>& properties) {
-    return std::make_shared<ISQPAddNodeEvent>(workerId, ipAddress, grpcPort, dataPort, resources, properties);
+    return std::make_shared<ISQPAddNodeEvent>(workerType, workerId, ipAddress, grpcPort, dataPort, resources, properties);
 }
+
+WorkerType ISQPAddNodeEvent::getWorkerType() const { return workerType; }
 
 WorkerId ISQPAddNodeEvent::getWorkerId() const { return workerId; }
 
@@ -43,7 +47,6 @@ uint32_t ISQPAddNodeEvent::getGrpcPort() const { return grpcPort; }
 uint32_t ISQPAddNodeEvent::getDataPort() const { return dataPort; }
 
 uint16_t ISQPAddNodeEvent::getResources() const { return resources; }
-
 const std::map<std::string, std::any>& ISQPAddNodeEvent::getProperties() const { return properties; }
 
 }// namespace NES::RequestProcessor

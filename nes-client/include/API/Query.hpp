@@ -503,8 +503,9 @@ class Query {
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor
+     * @param workerId: location where sink is to be placed
      */
-    virtual Query& sink(SinkDescriptorPtr sinkDescriptor);
+    virtual Query& sink(SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Gets the query plan from the current query.

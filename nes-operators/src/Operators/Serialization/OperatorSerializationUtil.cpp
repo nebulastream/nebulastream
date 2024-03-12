@@ -431,7 +431,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
 LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
-    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, getNextOperatorId());
+    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeMapOperator(const LogicalMapOperator& mapOperator,

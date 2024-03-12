@@ -30,15 +30,61 @@
 
 namespace NES {
 
-Topology::Topology() : rootWorkerId(INVALID_WORKER_NODE_ID) {
-    locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
-}
+Topology::Topology() { locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>(); }
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
-WorkerId Topology::getRootTopologyNodeId() { return rootWorkerId; }
+std::vector<WorkerId> Topology::getRootWorkerNodeIds() { return rootWorkerIds; }
 
-void Topology::setRootTopologyNodeId(WorkerId workerId) { rootWorkerId = workerId; }
+void Topology::addAsRootWorkerId(WorkerId workerId) { rootWorkerIds.emplace_back(workerId); }
+
+WorkerId Topology::registerWorkerAsRoot(WorkerId newRootWorkerId,
+                                        const std::string& address,
+                                        const int64_t grpcPort,
+                                        const int64_t dataPort,
+                                        const uint16_t numberOfSlots,
+                                        std::map<std::string, std::any> workerProperties,
+                                        uint32_t bandwidthInMbps,
+                                        uint32_t latencyInMs) {
+
+    NES_TRACE("Register Node as root address={} numberOfSlots={}", address, numberOfSlots);
+    NES_DEBUG("Topology before insert");
+    NES_DEBUG("", toString());
+
+    // if worker is started with a workerId
+    // then check if invalid worker id or an active worker with given workerId already exists
+    if (newRootWorkerId == INVALID_WORKER_NODE_ID || nodeWithWorkerIdExists(newRootWorkerId)) {
+        NES_WARNING("Worker id {} either invalid or a node with this id already "
+                    "exists. A new worker id will be assigned.",
+                    newRootWorkerId);
+        newRootWorkerId = getNextWorkerId();
+    }
+
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    if (!lockedWorkerIdToTopologyNodeMap->contains(newRootWorkerId)) {
+        TopologyNodePtr newTopologyNode =
+            TopologyNode::create(newRootWorkerId, address, grpcPort, dataPort, numberOfSlots, workerProperties);
+        NES_INFO("Adding New Node {} to the catalog of nodes.", newTopologyNode->toString());
+        (*lockedWorkerIdToTopologyNodeMap)[newRootWorkerId] = newTopologyNode;
+        lockedWorkerIdToTopologyNodeMap.unlock();
+        if (!rootWorkerIds.empty()) {
+            //Get the first root worker id and then add all its upstream workers as the upstream worker to the new root
+            auto firstRootWorkerId = rootWorkerIds[0];
+            auto childWorkerIds = getChildTopologyNodeIds(firstRootWorkerId);
+            for (const auto& childWorkerId : childWorkerIds) {
+                NES_DEBUG("Add link between the root node {} and child {}", newRootWorkerId, childWorkerId);
+                addTopologyNodeAsChild(newRootWorkerId, childWorkerId);
+                addLinkProperty(newRootWorkerId, childWorkerId, bandwidthInMbps, latencyInMs);
+            }
+        }
+        //Register as the root worker
+        addAsRootWorkerId(newRootWorkerId);
+        NES_DEBUG(" topology after insert {} ", toString());
+        return newRootWorkerId;
+    }
+    NES_WARNING("Topology node with id {} already exists. Failed to register the new topology node.", newRootWorkerId);
+    return INVALID_WORKER_NODE_ID;
+}
 
 WorkerId Topology::registerWorker(WorkerId workerId,
                                   const std::string& address,
@@ -50,13 +96,13 @@ WorkerId Topology::registerWorker(WorkerId workerId,
                                   uint32_t latencyInMs) {
 
     NES_TRACE("TopologyManagerService: Register Node address={} numberOfSlots={}", address, numberOfSlots);
-    NES_DEBUG("TopologyManagerService::registerWorker: topology before insert");
+    NES_DEBUG(" topology before insert");
     NES_DEBUG("", toString());
 
     // if worker is started with a workerId
     // then check if invalid worker id or an active worker with given workerId already exists
     if (workerId == INVALID_WORKER_NODE_ID || nodeWithWorkerIdExists(workerId)) {
-        NES_WARNING("TopologyManagerService::registerWorker: worker id {} either invalid or a node with this id already "
+        NES_WARNING(" worker id {} either invalid or a node with this id already "
                     "exists. A new worker id will be assigned.",
                     workerId);
         workerId = getNextWorkerId();
@@ -69,24 +115,25 @@ WorkerId Topology::registerWorker(WorkerId workerId,
         NES_INFO("Adding New Node {} to the catalog of nodes.", newTopologyNode->toString());
         (*lockedWorkerIdToTopologyNodeMap)[workerId] = newTopologyNode;
         lockedWorkerIdToTopologyNodeMap.unlock();
-        NES_DEBUG("TopologyManagerService::registerWorker: register node");
-        auto rootTopologyNodeId = getRootTopologyNodeId();
-        if (rootTopologyNodeId == INVALID_WORKER_NODE_ID) {
-            NES_DEBUG("TopologyManagerService::registerWorker: tree is empty so this becomes new root");
-            setRootTopologyNodeId(workerId);
+        NES_DEBUG(" register node");
+        if (rootWorkerIds.empty()) {
+            NES_DEBUG(" tree is empty so this becomes new root");
+            addAsRootWorkerId(workerId);
         } else {
-            NES_DEBUG("TopologyManagerService::registerWorker: add link to the root node {}", rootTopologyNodeId);
-            addTopologyNodeAsChild(rootTopologyNodeId, workerId);
-            addLinkProperty(rootTopologyNodeId, workerId, bandwidthInMbps, latencyInMs);
+            for (const auto& rootWorkerId : rootWorkerIds) {
+                NES_DEBUG(" add link to the root node {}", rootWorkerId);
+                addTopologyNodeAsChild(rootWorkerId, workerId);
+                addLinkProperty(rootWorkerId, workerId, bandwidthInMbps, latencyInMs);
+            }
         }
-        NES_DEBUG("TopologyManagerService::registerWorker: topology after insert {} ", toString());
+        NES_DEBUG(" topology after insert {} ", toString());
         return workerId;
     }
     NES_WARNING("Topology node with id {} already exists. Failed to register the new topology node.", workerId);
     return INVALID_WORKER_NODE_ID;
 }
 
-std::vector<WorkerId> Topology::getParentTopologyNodeIds(NES::WorkerId nodeId) {
+std::vector<WorkerId> Topology::getParentTopologyNodeIds(WorkerId nodeId) {
 
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     if (!lockedWorkerIdToTopologyNodeMap->contains(nodeId)) {
@@ -103,7 +150,7 @@ std::vector<WorkerId> Topology::getParentTopologyNodeIds(NES::WorkerId nodeId) {
     return parentIds;
 }
 
-std::vector<WorkerId> Topology::getChildTopologyNodeIds(NES::WorkerId nodeId) {
+std::vector<WorkerId> Topology::getChildTopologyNodeIds(WorkerId nodeId) {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     if (!lockedWorkerIdToTopologyNodeMap->contains(nodeId)) {
         NES_WARNING("No topology node with id {} registered.", nodeId);
@@ -161,9 +208,11 @@ bool Topology::unregisterWorker(WorkerId topologyNodeId) {
         return false;
     }
 
-    if (rootWorkerId == topologyNodeId) {
+    auto found = std::find(rootWorkerIds.begin(), rootWorkerIds.end(), topologyNodeId);
+
+    if (found != rootWorkerIds.end()) {
         NES_WARNING("Removing the root node {}.", topologyNodeId);
-        rootWorkerId = INVALID_WORKER_NODE_ID;
+        rootWorkerIds.erase(found);
     }
 
     // Fetch topology node and clear parent child nodes
@@ -245,10 +294,7 @@ bool Topology::removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId child
     return (*lockedParentTopologyNode)->removeChild((*lockedChildTopologyNode));
 }
 
-bool Topology::addLinkProperty(NES::WorkerId parentWorkerId,
-                               NES::WorkerId childWorkerId,
-                               uint64_t bandwidthInMBPS,
-                               uint64_t latencyInMS) {
+bool Topology::addLinkProperty(WorkerId parentWorkerId, WorkerId childWorkerId, uint64_t bandwidthInMBPS, uint64_t latencyInMS) {
     NES_INFO("Adding link properties between parent node {} and child node {}", childWorkerId, parentWorkerId);
 
     if (parentWorkerId == childWorkerId) {
@@ -653,20 +699,24 @@ nlohmann::json Topology::toJson() {
 
     nlohmann::json topologyJson{};
 
-    if (rootWorkerId == INVALID_WORKER_NODE_ID) {
+    if (rootWorkerIds.empty()) {
         NES_WARNING("No root node found");
         return topologyJson;
     }
 
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     auto lockedLocationIndex = locationIndex.wlock();
-    auto root = (*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock();
-    std::deque<TopologyNodePtr> nodesToProcess{(*root)};
-    std::deque<TopologyNodePtr> childrenToProcess;
-
     std::vector<nlohmann::json> nodes = {};
     std::vector<nlohmann::json> edges = {};
 
+    std::deque<TopologyNodePtr> nodesToProcess{};
+    for (const auto& rootWorkerId : rootWorkerIds) {
+        auto rootNode = (*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock();
+        nodesToProcess.emplace_back((*rootNode));
+    }
+
+    std::set<WorkerId> visitedNodes;
+    std::deque<TopologyNodePtr> childrenToProcess;
     while (!nodesToProcess.empty()) {
         // Current topology node to add to the JSON
         TopologyNodePtr currentNode = nodesToProcess.front();
@@ -701,15 +751,20 @@ nlohmann::json Topology::toJson() {
 
         // Once all parent nodes are processed, we add the observed children nodes to be the next processing queue
         if (nodesToProcess.empty()) {
-            nodesToProcess.insert(nodesToProcess.end(), childrenToProcess.begin(), childrenToProcess.end());
+            for (const auto& childToProcess : childrenToProcess) {
+                WorkerId childWorkerId = childToProcess->getId();
+                if (!visitedNodes.contains(childWorkerId)) {
+                    nodesToProcess.emplace_back(childToProcess);
+                    visitedNodes.emplace(childWorkerId);
+                }
+            }
             // Clear the children queue
             childrenToProcess.clear();
         }
-
         nodes.push_back(currentNodeJsonValue);
     }
-    NES_INFO("TopologyController: no more topology node to add");
 
+    NES_INFO("TopologyController: no more topology node to add");
     // add `nodes` and `edges` JSON array to the final JSON result
     topologyJson["nodes"] = nodes;
     topologyJson["edges"] = edges;
@@ -718,7 +773,7 @@ nlohmann::json Topology::toJson() {
 
 std::string Topology::toString() {
 
-    if (rootWorkerId == INVALID_WORKER_NODE_ID) {
+    if (rootWorkerIds.empty()) {
         NES_WARNING("No root node found");
         return "";
     }
@@ -727,10 +782,13 @@ std::string Topology::toString() {
     topologyInfo << std::endl;
 
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
-    auto root = (*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock();
 
     // store pair of TopologyNodePtr and its depth in when printed
-    std::deque<std::pair<TopologyNodePtr, uint64_t>> parentToPrint{std::make_pair((*root), 0)};
+    std::deque<std::pair<TopologyNodePtr, uint64_t>> parentToPrint;
+    for (const auto& rootWorkerId : rootWorkerIds) {
+        auto root = (*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock();
+        parentToPrint.emplace_back(std::make_pair((*root), 0));
+    }
 
     // indent offset
     int indent = 2;
@@ -845,18 +903,23 @@ void Topology::getElegantPayload(nlohmann::json& payload) {
 
     NES_DEBUG("Getting the json representation of available nodes");
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
-    auto root = (*(*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock());
-    std::deque<TopologyNodePtr> nodesToBeProcessed{std::move(root)};
-    std::deque<TopologyNodePtr> childrenToProcess;
-
+    auto lockedLocationIndex = locationIndex.wlock();
     std::vector<nlohmann::json> nodes = {};
     std::vector<nlohmann::json> edges = {};
 
-    while (!nodesToBeProcessed.empty()) {
+    std::deque<TopologyNodePtr> nodesToProcess{};
+    for (const auto& rootWorkerId : rootWorkerIds) {
+        auto rootNode = (*lockedWorkerIdToTopologyNodeMap)[rootWorkerId].rlock();
+        nodesToProcess.emplace_back((*rootNode));
+    }
+
+    std::set<WorkerId> visitedNodes;
+    std::deque<TopologyNodePtr> childrenToProcess;
+    while (!nodesToProcess.empty()) {
         // Current topology node to add to the JSON
-        TopologyNodePtr currentNode = nodesToBeProcessed.front();
+        TopologyNodePtr currentNode = nodesToProcess.front();
         nlohmann::json currentNodeJsonValue{};
-        nodesToBeProcessed.pop_front();
+        nodesToProcess.pop_front();
 
         // Add properties for current topology node
         currentNodeJsonValue[NODE_ID_KEY] = currentNode->getId();
@@ -878,8 +941,14 @@ void Topology::getElegantPayload(nlohmann::json& payload) {
         }
 
         // Once all parent nodes are processed, we add the observed children nodes to be the next processing queue
-        if (nodesToBeProcessed.empty()) {
-            nodesToBeProcessed.insert(nodesToBeProcessed.end(), childrenToProcess.begin(), childrenToProcess.end());
+        if (nodesToProcess.empty()) {
+            for (const auto& childToProcess : childrenToProcess) {
+                WorkerId childWorkerId = childToProcess->getId();
+                if (!visitedNodes.contains(childWorkerId)) {
+                    nodesToProcess.emplace_back(childToProcess);
+                    visitedNodes.emplace(childWorkerId);
+                }
+            }
             // Clear the children queue
             childrenToProcess.clear();
         }

@@ -87,8 +87,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(2u));// first worker should get id 2
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(3u));// second worker should get id 3
 
-    auto rootTopologyNodeId = topology->getRootTopologyNodeId();
-    const TopologyNodeWLock& lockTopologyNode = topology->lockTopologyNode(rootTopologyNodeId);
+    auto rootWorkerNodeIds = topology->getRootWorkerNodeIds();
+    EXPECT_EQ(rootWorkerNodeIds.size(), 1);
+    const TopologyNodeWLock& lockTopologyNode = topology->lockTopologyNode(rootWorkerNodeIds[0]);
     auto rootNode = lockTopologyNode->operator*();
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     EXPECT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
@@ -166,8 +167,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
 
     TopologyPtr topology = crd->getTopology();
 
-    auto rootTopologyNodeId = topology->getRootTopologyNodeId();
-    const TopologyNodeWLock& lockTopologyNode = topology->lockTopologyNode(rootTopologyNodeId);
+    auto rootWorkerNodeIds = topology->getRootWorkerNodeIds();
+    EXPECT_EQ(rootWorkerNodeIds.size(), 1);
+    const TopologyNodeWLock& lockTopologyNode = topology->lockTopologyNode(rootWorkerNodeIds[0]);
     auto rootNode = lockTopologyNode->operator*();
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();

@@ -221,7 +221,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
 
 bool QueryPlacementAmendmentPhase::containsOnlyPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedOperators) {
 
-    //Find if one of the operator does not have PINNED_NODE_ID property
+    //Find if one of the operator does not have PINNED_WORKER_ID property
     return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const LogicalOperatorPtr& pinnedOperator) {
         return !pinnedOperator->hasProperty(PINNED_WORKER_ID);
     });
@@ -243,7 +243,7 @@ bool QueryPlacementAmendmentPhase::containsOperatorsForRemoval(const std::set<Lo
 }
 
 void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOperatorPtr>& operators) {
-    uint64_t rootNodeId = topology->getRootTopologyNodeId();
+    uint64_t rootNodeId = topology->getRootWorkerNodeIds()[0];
     for (const auto& operatorToCheck : operators) {
         if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperator>()) {
             operatorToCheck->addProperty(PINNED_WORKER_ID, rootNodeId);

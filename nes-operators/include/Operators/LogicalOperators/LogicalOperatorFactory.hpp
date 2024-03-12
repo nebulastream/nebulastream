@@ -20,8 +20,8 @@
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/Operator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
 
@@ -38,8 +38,7 @@ class LogicalOperatorFactory {
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createFilterOperator(ExpressionNodePtr const& predicate,
-                                                            OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createFilterOperator(ExpressionNodePtr const& predicate, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source rename operator.
@@ -47,7 +46,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr createRenameSourceOperator(std::string const& newSourceName,
-                                                                  OperatorId id = getNextOperatorId());
+                                                              OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new logical limit operator.
@@ -64,16 +63,18 @@ class LogicalOperatorFactory {
     * @return LogicalOperatorPtr
     */
     static LogicalUnaryOperatorPtr createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions,
-                                                                OperatorId id = getNextOperatorId());
+                                                            OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.
      * @param sinkDescriptor the SinkDescriptor.
+     * @param workerId: the id of the worker where the sink is placed
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return LogicalOperatorPtr
      */
     static LogicalUnaryOperatorPtr createSinkOperator(SinkDescriptorPtr const& sinkDescriptor,
-                                                          OperatorId id = getNextOperatorId());
+                                                      WorkerId workerId = INVALID_WORKER_NODE_ID,
+                                                      OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new map operator with a field assignment expression as a map expression.
@@ -82,7 +83,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression,
-                                                         OperatorId id = getNextOperatorId());
+                                                     OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new infer model operator.
@@ -93,9 +94,9 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr createInferModelOperator(std::string model,
-                                                                std::vector<ExpressionNodePtr> inputFields,
-                                                                std::vector<ExpressionNodePtr> outputFields,
-                                                                OperatorId id = getNextOperatorId());
+                                                            std::vector<ExpressionNodePtr> inputFields,
+                                                            std::vector<ExpressionNodePtr> outputFields,
+                                                            OperatorId id = getNextOperatorId());
 
     /**
      * @brief Creates a synopsis build operator
@@ -105,10 +106,11 @@ class LogicalOperatorFactory {
      * @param id: The id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorNodePtr
      */
-    static LogicalUnaryOperatorPtr createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
-                                                                const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
-                                                                const Statistic::MetricHash metricHash,
-                                                                OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr
+    createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
+                                 const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
+                                 const Statistic::MetricHash metricHash,
+                                 OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source operator with source descriptor.
@@ -117,8 +119,8 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr createSourceOperator(SourceDescriptorPtr const& sourceDescriptor,
-                                                            OperatorId id = getNextOperatorId(),
-                                                            OriginId originId = INVALID_ORIGIN_ID);
+                                                        OperatorId id = getNextOperatorId(),
+                                                        OriginId originId = INVALID_ORIGIN_ID);
 
     /**
     * @brief Create a specialized watermark assigner operator.
@@ -136,7 +138,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr createWindowOperator(Windowing::LogicalWindowDescriptorPtr const& windowDefinition,
-                                                            OperatorId id = getNextOperatorId());
+                                                        OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a specialized union operator.
@@ -151,7 +153,7 @@ class LogicalOperatorFactory {
     * @return BinaryOperator
     */
     static LogicalBinaryOperatorPtr createJoinOperator(const Join::LogicalJoinDescriptorPtr& joinDefinition,
-                                                           OperatorId id = getNextOperatorId());
+                                                       OperatorId id = getNextOperatorId());
 
     // todo put in experimental namespace
     /**
@@ -177,7 +179,7 @@ class LogicalOperatorFactory {
      * @return A logical operator node which encapsulates the Java UDF.
      */
     static LogicalUnaryOperatorPtr createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
-                                                                   OperatorId id = getNextOperatorId());
+                                                               OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new FlatMapJavaUDFLogicalOperator.
@@ -186,7 +188,7 @@ class LogicalOperatorFactory {
      * @return A logical operator node which encapsulates the Java UDF.
      */
     static LogicalUnaryOperatorPtr createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
-                                                                       OperatorId id = getNextOperatorId());
+                                                                   OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new OpenCL logical operator
@@ -195,9 +197,9 @@ class LogicalOperatorFactory {
      * @return a logical operator of type OpenCL logical operator
      */
     static LogicalUnaryOperatorPtr createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                                                                   OperatorId id = getNextOperatorId());
+                                                               OperatorId id = getNextOperatorId());
 };
 
 }// namespace NES
 
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_

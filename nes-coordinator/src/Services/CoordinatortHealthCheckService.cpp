@@ -49,7 +49,9 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                     }
                 } else {
                     NES_WARNING("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
-                    if (topology->getRootTopologyNodeId() == node.first) {
+                    const auto& rootWorkerNodeIds = topology->getRootWorkerNodeIds();
+                    auto found = std::find(rootWorkerNodeIds.begin(), rootWorkerNodeIds.end(), node.first);
+                    if (found != rootWorkerNodeIds.end()) {
                         NES_WARNING("The failing node is the root node so we cannot delete it");
                         shutdownRPC->set_value(true);
                         return;

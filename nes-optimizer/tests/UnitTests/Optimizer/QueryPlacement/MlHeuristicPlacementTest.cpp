@@ -99,7 +99,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
 
             workerId = topology->registerWorker(workerId, "localhost", 123, 124, resources[i], properties, 0, 0);
             if (i == 0) {
-                topology->setRootTopologyNodeId(workerId);
+                topology->addAsRootWorkerId(workerId);
             } else if (i > 1) {
                 topology->addTopologyNodeAsChild(workerId - 1, workerId);
                 topology->removeTopologyNodeAsChild(1, workerId);

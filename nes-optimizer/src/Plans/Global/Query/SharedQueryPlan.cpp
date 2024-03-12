@@ -21,6 +21,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
 
 namespace NES {
@@ -83,8 +84,7 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
         switch (matchedOperatorPair->containmentRelationship) {
             case Optimizer::ContainmentRelationship::EQUALITY:
                 //If host and target operator are of sink type then connect the target sink to the upstream of the host sink.
-                if (hostOperator->instanceOf<SinkLogicalOperator>()
-                    && targetOperator->instanceOf<SinkLogicalOperator>()) {
+                if (hostOperator->instanceOf<SinkLogicalOperator>() && targetOperator->instanceOf<SinkLogicalOperator>()) {
 
                     //Make a copy of the target operator so that we do not have to perform additional operation to
                     // add it to the shared query plan.
@@ -413,9 +413,9 @@ void SharedQueryPlan::updateOperators(const std::set<LogicalOperatorPtr>& update
 
     //Iterate over all updated operators and update the corresponding operator in the shared query plan with correct properties and state.
     for (const auto& placedOperator : updatedOperators) {
-        auto topologyNodeId = std::any_cast<WorkerId>(placedOperator->getProperty(PINNED_NODE_ID));
+        auto topologyNodeId = std::any_cast<WorkerId>(placedOperator->getProperty(Optimizer::PINNED_WORKER_ID));
         auto operatorInQueryPlan = queryPlan->getOperatorWithOperatorId(placedOperator->getId());
-        operatorInQueryPlan->addProperty(PINNED_NODE_ID, topologyNodeId);
+        operatorInQueryPlan->addProperty(Optimizer::PINNED_WORKER_ID, topologyNodeId);
         placedOperator->setOperatorState(OperatorState::PLACED);
     }
 }

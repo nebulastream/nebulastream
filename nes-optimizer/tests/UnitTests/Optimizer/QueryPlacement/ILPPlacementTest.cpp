@@ -92,7 +92,7 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
 
         WorkerId rootNodeId = 1;
         topologyForILP->registerWorker(rootNodeId, "localhost", 123, 124, 100, properties, 0,0);
-        topologyForILP->setRootTopologyNodeId(rootNodeId);
+        topologyForILP->addAsRootWorkerId(rootNodeId);
 
         WorkerId middleNodeId = 2;
         properties["slots"] = 10;
