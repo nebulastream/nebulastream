@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.68](https://github.com/nebulastream/nebulastream/tree/v0.6.68) (2024-03-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.67...v0.6.68)
+
+**Implemented enhancements:**
+
+- \[TASK\] Allow topology with multiple root nodes and possibility of deciding where to place a sink operator [\#4680](https://github.com/nebulastream/nebulastream/issues/4680)
+
 ## [v0.6.67](https://github.com/nebulastream/nebulastream/tree/v0.6.67) (2024-03-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.66...v0.6.67)
