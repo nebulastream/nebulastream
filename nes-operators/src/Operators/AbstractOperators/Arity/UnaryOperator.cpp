@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
-#include <Util/OperatorsUtil.hpp>
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <Util/OperatorsUtil.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
+#include <fmt/format.h>
 
 namespace NES {
 
-UnaryOperator::UnaryOperator(OperatorId id)
-    : Operator(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
+UnaryOperator::UnaryOperator(OperatorId id) : Operator(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
 
 void UnaryOperator::setInputSchema(SchemaPtr inputSchema) {
     if (inputSchema) {
@@ -44,12 +45,12 @@ const std::vector<OriginId> UnaryOperator::getInputOriginIds() const { return in
 const std::vector<OriginId> UnaryOperator::getOutputOriginIds() const { return inputOriginIds; }
 
 std::string UnaryOperator::toString() const {
-    std::stringstream out;
-    out << Operator::toString();
-    out << "inputSchema: " << inputSchema->toString() << "\n";
-    out << "outputSchema: " << outputSchema->toString() << "\n";
-    out << "inputOriginIds: " << Util::concatenateVectorAsString<uint64_t>(inputOriginIds);
-    return out.str();
+    return fmt::format("inputSchema: {}\n"
+                       "outputSchema: {}\n"
+                       "inputOriginIds: {}",
+                       inputSchema->toString(),
+                       outputSchema->toString(),
+                       fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
 }
 
 }// namespace NES

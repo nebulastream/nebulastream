@@ -152,7 +152,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     auto query = Query::from("test");
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
-                                  .attachWorkerWithMemorySourceToWorkerWithId("test", 1, workerConfig);
+                                  .attachWorkerWithMemorySourceToWorkerWithId("test", WorkerId(1), workerConfig);
 
     const auto noTuplesInBuffer = workerConfig->bufferSizeInBytes / defaultLogicalSchema->getSchemaSizeInBytes();
     const auto tuplesForThreeBuffers = noTuplesInBuffer * 3;
@@ -1939,7 +1939,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 3");
@@ -1954,7 +1954,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("QueryDeploymentTest: Worker3 started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 4");
@@ -1968,7 +1968,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1, 2);
+    wrk4->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("QueryDeploymentTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
@@ -2097,7 +2097,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 3");
@@ -2111,7 +2111,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("QueryDeploymentTest: Worker3 started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 4");
@@ -2125,7 +2125,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1, 2);
+    wrk4->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("QueryDeploymentTest: Worker4 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowDistributed.out";

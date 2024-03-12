@@ -15,7 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <any>
 #include <folly/Synchronized.h>
@@ -415,7 +415,7 @@ class Topology {
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
-    std::atomic_uint64_t topologyNodeIdCounter = 0;
+    std::atomic_uint64_t topologyNodeIdCounter = INITIAL_WORKER_NODE_ID.getRawValue();
 };
 }// namespace NES
 #endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

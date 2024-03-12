@@ -44,7 +44,7 @@ class MetricCollectorTest : public Testing::BaseUnitTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     Monitoring::AbstractSystemResourcesReaderPtr reader;
-    WorkerId nodeId;
+    WorkerId nodeId = INVALID_WORKER_NODE_ID;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MetricCollectorTest.log", NES::LogLevel::LOG_DEBUG);

@@ -48,8 +48,8 @@ class NLJBuildPipelineExecutionContext : public PipelineExecutionContext {
   public:
     NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
+            INVALID_PIPELINE_ID,// mock pipeline id
+            INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
             bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {
@@ -64,8 +64,8 @@ class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
     std::vector<TupleBuffer> emittedBuffers;
     NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
+            INVALID_PIPELINE_ID,// mock pipeline id
+            INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
             bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {
@@ -112,8 +112,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         timestampFieldNameLeft = leftSchema->get(2)->getName();
         timestampFieldNameRight = rightSchema->get(2)->getName();
 
-        nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({0},
-                                                                          1,
+        nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
+                                                                          OriginId(1),
                                                                           windowSize,
                                                                           windowSize,
                                                                           leftSchema,
@@ -513,8 +513,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
     auto numberOfRecordsLeft = 200;
     auto numberOfRecordsRight = 200;
     windowSize = 10;
-    nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({0},
-                                                                      1,
+    nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
+                                                                      OriginId(1),
                                                                       windowSize,
                                                                       windowSize,
                                                                       leftSchema,

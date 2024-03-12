@@ -62,7 +62,7 @@ class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest {
                        uint64_t sequenceNumber) {
         auto buffer = bufferManager->getBufferBlocking();
         buffer.setWatermark(wts);
-        buffer.setOriginId(originId);
+        buffer.setOriginId(OriginId(originId));
         buffer.setSequenceNumber(sequenceNumber);
         auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
         context.setWatermarkTs(wts);
@@ -90,7 +90,7 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
                                  {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readV1, "sum")},
                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
-    std::vector<OriginId> origins = {0};
+    std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 

@@ -289,7 +289,7 @@ std::shared_ptr<PhysicalOperatorPipeline> createThirdPipeline(const MemoryLayout
     auto sliceMergingAction = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions,
                                                                                     "start",
                                                                                     "end",
-                                                                                    /*origin id*/ 0);
+                                                                                    INVALID_ORIGIN_ID);
     auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
                                                                           aggregationFunctions,
                                                                           std::move(sliceMergingAction));
@@ -342,7 +342,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
     // Creating operator handlers
     constexpr auto windowSize = 10;
     constexpr auto windowSlide = 10;
-    std::vector<OriginId> origins = {0};
+    std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(windowSize,
                                                                                                  windowSlide,
                                                                                                  origins);
@@ -371,7 +371,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
         }
         buffer.setNumberOfTuples(testBuffer.getCapacity());
         buffer.setSequenceData({bufCnt + 1, 1, true});
-        buffer.setOriginId(0);
+        buffer.setOriginId(INVALID_ORIGIN_ID);
         buffer.setWatermark(ts - 1);
 
         pipeline1->execute(buffer, pipeline1Context, *wc);

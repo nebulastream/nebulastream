@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -29,7 +30,7 @@ namespace NES::Monitoring {
 class NetworkMetricsWrapper {
   public:
     NetworkMetricsWrapper();
-    NetworkMetricsWrapper(uint64_t nodeId);
+    NetworkMetricsWrapper(WorkerId nodeId);
     NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr);
 
     /**
@@ -59,8 +60,8 @@ class NetworkMetricsWrapper {
 
     std::vector<std::string> getInterfaceNames();
 
-    uint64_t getNodeId() const;
-    void setNodeId(uint64_t nodeId);
+    WorkerId getNodeId() const;
+    void setNodeId(WorkerId nodeId);
 
     /**
      * @brief Returns the metrics as json
@@ -73,7 +74,7 @@ class NetworkMetricsWrapper {
 
   private:
     std::vector<NetworkMetrics> networkMetrics;
-    uint64_t nodeId;
+    WorkerId nodeId;
     uint64_t timestamp;
 } __attribute__((packed));
 

@@ -15,6 +15,7 @@
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -521,7 +522,7 @@ std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopol
     const auto& destinationTopologyNode = (*(readLockedDestinationTopologyNode));
 
     std::vector<TopologyNodePtr> searchedNodes{destinationTopologyNode};
-    std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
+    std::map<WorkerId, TopologyNodePtr> mapOfUniqueNodes;
     TopologyNodePtr found = find(sourceTopologyNode, searchedNodes, mapOfUniqueNodes);
     if (found) {
         NES_DEBUG("Topology: Found path between {} and {}", sourceTopologyNode->toString(), destinationTopologyNode->toString());
@@ -931,7 +932,7 @@ void Topology::getElegantPayload(nlohmann::json& payload) {
             // Add edge information for current topology node
             nlohmann::json currentEdgeJsonValue{};
             WorkerId childNodeId = child->as<TopologyNode>()->getId();
-            currentEdgeJsonValue[LINK_ID_KEY] = std::to_string(childNodeId) + "-" + std::to_string(currentNode->getId());
+            currentEdgeJsonValue[LINK_ID_KEY] = fmt::format("{}-{}", childNodeId, currentNode->getId());
             auto linkProperty = currentNode->getLinkProperty(childNodeId);
             currentEdgeJsonValue[TRANSFER_RATE_KEY] = std::to_string(linkProperty->bandwidth);
             edges.push_back(currentEdgeJsonValue);
@@ -1032,5 +1033,5 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
     return nodeInfo;
 }
 
-WorkerId Topology::getNextWorkerId() { return ++topologyNodeIdCounter; }
+WorkerId Topology::getNextWorkerId() { return WorkerId(topologyNodeIdCounter++); }
 }// namespace NES

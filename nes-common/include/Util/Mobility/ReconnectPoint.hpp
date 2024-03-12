@@ -15,6 +15,7 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_
 #define NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <cstdint>
 
@@ -32,7 +33,7 @@ namespace Spatial::Mobility::Experimental {
  */
 struct ReconnectPoint {
     NES::Spatial::DataTypes::Experimental::GeoLocation pointGeoLocation;
-    uint64_t newParentId;
+    WorkerId newParentId;
     Timestamp expectedTime;
 };
 }// namespace Spatial::Mobility::Experimental

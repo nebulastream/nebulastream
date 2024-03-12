@@ -17,6 +17,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -197,12 +198,12 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
-    uint64_t queryId = response1["queryId"];
+    auto queryId = response1["queryId"].get<QueryId>();
     NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalog());
     ASSERT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execution-plan"},
-                            cpr::Parameters{{"queryId", std::to_string(queryId)}});
+                            cpr::Parameters{{"queryId", queryId.toString()}});
     f2.wait();
     auto r2 = f2.get();
     EXPECT_EQ(r2.status_code, 200l);
@@ -211,7 +212,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     EXPECT_EQ(response2.size(), 1);
     for (auto executionNode : response2["ExecutionNodes"]) {
         const auto& rootWorkerNodeIds = coordinator->getTopology()->getRootWorkerNodeIds();
-        const auto& executionNodeId = executionNode["ExecutionNodeId"].get<uint64_t>();
+        const auto& executionNodeId = executionNode["WorkerId"].get<WorkerId>();
         auto foundInRootWorkerId = std::find(rootWorkerNodeIds.begin(), rootWorkerNodeIds.end(), executionNodeId);
         EXPECT_NE(foundInRootWorkerId, rootWorkerNodeIds.end());
         EXPECT_TRUE(executionNode["ScheduledDecomposedQueries"].size() != 0);
@@ -264,7 +265,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
 
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
-    uint64_t queryId = response1["queryId"];
+    auto queryId = response1["queryId"].get<QueryId>();
     NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalog());
     ASSERT_TRUE(started);
@@ -314,13 +315,13 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
 
     nlohmann::json response1;
     ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
-    uint64_t queryId = response1["queryId"];
+    auto queryId = response1["queryId"].get<QueryId>();
     NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalog());
     EXPECT_TRUE(started);
 
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
-                            cpr::Parameters{{"queryId", std::to_string(queryId)}});
+                            cpr::Parameters{{"queryId", queryId.toString()}});
     f2.wait();
     auto r2 = f2.get();
     EXPECT_EQ(r2.status_code, 200l);
@@ -369,7 +370,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
 
     nlohmann::json response1;
     EXPECT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
-    uint64_t queryId = response1["queryId"];
+    auto queryId = response1["queryId"].get<QueryId>();
     NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalog());
     EXPECT_TRUE(started);

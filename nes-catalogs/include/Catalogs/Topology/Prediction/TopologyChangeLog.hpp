@@ -14,7 +14,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <cstdint>
 #include <unordered_map>
 #include <vector>

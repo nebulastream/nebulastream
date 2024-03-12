@@ -35,17 +35,17 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestUtils.hpp>
 
 #ifndef OPERATORID
-#define OPERATORID 1
+#define OPERATORID OperatorId(1)
 #endif
 
 #ifndef ORIGINID
-#define ORIGINID 1
+#define ORIGINID OriginId(1)
 #endif
 
 #ifndef STATISTICID

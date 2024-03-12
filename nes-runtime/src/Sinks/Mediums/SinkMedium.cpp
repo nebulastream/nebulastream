@@ -41,7 +41,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
 }
 
-OperatorId SinkMedium::getOperatorId() const { return 0; }
+OperatorId SinkMedium::getOperatorId() const { return INVALID_OPERATOR_ID; }
 
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);

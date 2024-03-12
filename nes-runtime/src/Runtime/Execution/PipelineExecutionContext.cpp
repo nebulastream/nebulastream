@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution {
 
-PipelineExecutionContext::PipelineExecutionContext(uint64_t pipelineId,
+PipelineExecutionContext::PipelineExecutionContext(PipelineId pipelineId,
                                                    DecomposedQueryPlanId queryId,
                                                    Runtime::BufferManagerPtr bufferProvider,
                                                    size_t numberOfWorkerThreads,
@@ -45,7 +45,7 @@ void PipelineExecutionContext::dispatchBuffer(TupleBuffer buffer) {
 
 std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() { return operatorHandlers; }
 
-std::string PipelineExecutionContext::toString() const { return "PipelineContext(queryID:" + std::to_string(queryId); }
+std::string PipelineExecutionContext::toString() const { return fmt::format("PipelineContext(queryID: {})", queryId); }
 uint64_t PipelineExecutionContext::getNumberOfWorkerThreads() const { return numberOfWorkerThreads; }
 Runtime::BufferManagerPtr PipelineExecutionContext::getBufferManager() const { return bufferProvider; }
 

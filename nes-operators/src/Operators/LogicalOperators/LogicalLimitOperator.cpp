@@ -18,7 +18,7 @@
 
 namespace NES {
 
-LogicalLimitOperator::LogicalLimitOperator(uint64_t limit, uint64_t id)
+LogicalLimitOperator::LogicalLimitOperator(uint64_t limit, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), limit(limit) {}
 
 uint64_t LogicalLimitOperator::getLimit() const { return limit; }

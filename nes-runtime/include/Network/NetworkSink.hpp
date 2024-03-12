@@ -41,9 +41,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param version The initial version of this sink when it starts
     */
     explicit NetworkSink(const SchemaPtr& schema,
-                         uint64_t uniqueNetworkSinkDescriptorId,
-                         QueryId queryId,
-                         DecomposedQueryPlanId querySubPlanId,
+                         OperatorId uniqueNetworkSinkDescriptorId,
+                         SharedQueryId sharedQueryId,
+                         DecomposedQueryPlanId decomposedQueryPlanId,
                          NodeLocation const& destination,
                          NesPartition nesPartition,
                          Runtime::NodeEnginePtr nodeEngine,
@@ -115,7 +115,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @brief method to return the network sinks descriptor id
      * @return id
      */
-    uint64_t getUniqueNetworkSinkDescriptorId() const;
+    OperatorId getUniqueNetworkSinkDescriptorId() const;
 
     /**
      * @brief method to return the node engine pointer
@@ -175,7 +175,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext);
 
-    uint64_t uniqueNetworkSinkDescriptorId;
+    OperatorId uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;

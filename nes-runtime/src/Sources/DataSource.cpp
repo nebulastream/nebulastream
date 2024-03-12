@@ -149,7 +149,7 @@ bool DataSource::start() {
                     CPU_SET(sourceAffinity, &cpuset);
                     int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
                     if (rc != 0) {
-                        NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " + std::to_string(operatorId));
+                        NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " << operatorId);
                     }
                 } else {
                     NES_WARNING("Use default affinity for source");
@@ -313,9 +313,9 @@ void DataSource::runningRoutine() {
 }
 
 void DataSource::runningRoutineWithIngestionRate() {
-    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
+    NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
     NES_ASSERT(gatheringIngestionRate >= 10, "As we generate on 100 ms base we need at least an ingestion rate of 10");
-    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    std::string thName = fmt::format("DataSrc-{}", operatorId);
     setThreadName(thName.c_str());
 
     NES_DEBUG("DataSource {} Running Data Source of type={} ingestion rate={}",
@@ -403,8 +403,8 @@ void DataSource::runningRoutineWithIngestionRate() {
 }
 
 void DataSource::runningRoutineWithGatheringInterval() {
-    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
-    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
+    std::string thName = fmt::format("DataSrc-{}", operatorId);
     setThreadName(thName.c_str());
 
     NES_DEBUG("DataSource {}: Running Data Source of type={} interval={}",

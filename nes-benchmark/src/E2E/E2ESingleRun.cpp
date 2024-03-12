@@ -29,6 +29,7 @@
 #include <cppkafka/cppkafka.h>
 #endif
 
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <fstream>
 
 namespace NES::Benchmark {
@@ -174,7 +175,8 @@ void E2ESingleRun::runQueries() {
     uint64_t found = 0;
     while (found != submittedIds.size()) {
         for (auto id : submittedIds) {
-            auto stats = coordinator->getNodeEngine()->getQueryStatistics(id);
+            auto sharedQueryId = coordinator->getGlobalQueryPlan()->getSharedQueryId(id);
+            auto stats = coordinator->getNodeEngine()->getQueryStatistics(sharedQueryId);
             for (auto iter : stats) {
                 while (iter->getProcessedTuple() < 1) {
                     NES_DEBUG("Query with id = {} not ready with no. tuples = {}. Sleeping for a second now...",
@@ -444,7 +446,8 @@ void E2ESingleRun::collectMeasurements() {
         measurements.addNewTimestamp(timeStamp);
 
         for (auto id : submittedIds) {
-            auto statisticsCoordinator = coordinator->getNodeEngine()->getQueryStatistics(id);
+            auto sharedQueryId = coordinator->getGlobalQueryPlan()->getSharedQueryId(id);
+            auto statisticsCoordinator = coordinator->getNodeEngine()->getQueryStatistics(sharedQueryId);
             size_t processedTasks = 0;
             size_t processedBuffers = 0;
             size_t processedTuples = 0;

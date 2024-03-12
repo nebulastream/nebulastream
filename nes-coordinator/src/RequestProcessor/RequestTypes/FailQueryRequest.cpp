@@ -80,7 +80,7 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     //todo 4255: allow requests to skip to the front of the line
     queryCatalog->checkAndMarkSharedQueryForFailure(sharedQueryId, decomposedQueryPlanId);
 
-    globalQueryPlan->removeQuery(sharedQueryId, RequestType::FailQuery);
+    globalQueryPlan->removeQuery(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), RequestType::FailQuery);
 
     auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                         topology,
@@ -95,7 +95,7 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
         deploymentPhase->execute(deploymentContexts, RequestType::FailQuery);
     } catch (NES::Exceptions::RuntimeException& e) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,
-                                                     "Failed to undeploy shared query with id " + std::to_string(sharedQueryId));
+                                                     fmt::format("Failed to undeploy shared query with id {}", sharedQueryId));
     }
 
     queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::FAILED, failureReason);
@@ -105,14 +105,14 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
 
     // Iterate over deployment context and update execution plan
     for (const auto& deploymentContext : deploymentContexts) {
-        auto executionNodeId = deploymentContext->getWorkerId();
+        auto WorkerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
         auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
         switch (decomposedQueryPlanState) {
             case QueryState::MARKED_FOR_REDEPLOYMENT:
             case QueryState::MARKED_FOR_DEPLOYMENT: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                     sharedQueryId,
                                                                     decomposedQueryPlanId,
                                                                     decomposedQueryPlanVersion,
@@ -120,12 +120,12 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                     sharedQueryId,
                                                                     decomposedQueryPlanId,
                                                                     decomposedQueryPlanVersion,
                                                                     QueryState::STOPPED);
-                globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
                                                                sharedQueryId,
                                                                decomposedQueryPlanId,
                                                                decomposedQueryPlanVersion);

@@ -18,7 +18,7 @@
 #include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
 #include <string>

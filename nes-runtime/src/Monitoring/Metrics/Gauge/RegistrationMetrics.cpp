@@ -16,6 +16,7 @@
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <CoordinatorRPCService.pb.h>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -78,7 +79,7 @@ void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupl
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<WorkerId>(nodeId);
     buffer[tupleIndex][cnt++].write<uint64_t>(totalMemoryBytes);
     buffer[tupleIndex][cnt++].write<uint64_t>(cpuCoreNum);
     buffer[tupleIndex][cnt++].write<uint64_t>(totalCPUJiffies);
@@ -95,7 +96,7 @@ void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tup
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
     uint64_t cnt = 0;
 
-    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    nodeId = buffer[tupleIndex][cnt++].read<WorkerId>();
     totalMemoryBytes = buffer[tupleIndex][cnt++].read<uint64_t>();
     cpuCoreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
     totalCPUJiffies = buffer[tupleIndex][cnt++].read<uint64_t>();

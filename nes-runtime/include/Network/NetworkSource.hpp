@@ -59,7 +59,7 @@ class NetworkSource : public DataSource {
                   uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                   DecomposedQueryPlanVersion version,
-                  uint64_t uniqueNetworkSourceIdentifier,
+                  OperatorId uniqueNetworkSourceIdentifier,
                   const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**
@@ -177,7 +177,7 @@ class NetworkSource : public DataSource {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
-    const uint64_t uniqueNetworkSourceIdentifier;
+    const OperatorId uniqueNetworkSourceIdentifier;
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
 };
 

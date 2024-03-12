@@ -337,7 +337,7 @@ TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
-    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    EXPECT_EQ(wrk1->getWorkerId(), WorkerId(2));
     NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
     // start worker 2, with no configured workerId
@@ -348,7 +348,7 @@ TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     // expected behavior: worker 2 gets assigned the next available workerId, 3
-    EXPECT_EQ(wrk2->getWorkerId(), 3u);
+    EXPECT_EQ(wrk2->getWorkerId(), WorkerId(3));
     NES_DEBUG("Worker 2 started successfully with workerId {}", wrk2->getWorkerId());
 
     // stop worker 1
@@ -385,18 +385,18 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
-    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    EXPECT_EQ(wrk1->getWorkerId(), WorkerId(2u));
     NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
     NES_DEBUG("Starting another worker with the workerId of an active worker");
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = port;
-    wrkConf2->workerId = 2u;
+    wrkConf2->workerId = WorkerId(2);
     NesWorkerPtr wrk2copy = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2copy = wrk2copy->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2copy);
     // expected behavior: this workerId belongs to an active worker, therefore the next available workerId will be assigned
-    EXPECT_EQ(wrk2copy->getWorkerId(), 3u);
+    EXPECT_EQ(wrk2copy->getWorkerId(), WorkerId(3u));
     NES_DEBUG("Worker 2 started successfully with workerId {}", wrk2copy->getWorkerId());
 
     // stop worker 1
@@ -431,12 +431,12 @@ TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
     NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
-    wrkConf->workerId = 123;
+    wrkConf->workerId = WorkerId(123);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
-    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    EXPECT_EQ(wrk1->getWorkerId(), WorkerId(2u));
     NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
     NES_DEBUG("Stopping worker 1");
@@ -464,12 +464,12 @@ TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
     NES_DEBUG("Starting worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
-    wrkConf->workerId = 2;
+    wrkConf->workerId = WorkerId(2);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
-    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    EXPECT_EQ(wrk1->getWorkerId(), WorkerId(2u));
     NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
 
     // start worker 2, with no configured workerId
@@ -480,7 +480,7 @@ TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     // expected behavior: worker 2 gets assigned the next available workerId, 3
-    EXPECT_EQ(wrk2->getWorkerId(), 3u);
+    EXPECT_EQ(wrk2->getWorkerId(), WorkerId(3u));
     NES_DEBUG("Worker 2 started successfully with workerId {}", wrk2->getWorkerId());
 
     NES_DEBUG("Stopping worker 1");
@@ -517,7 +517,7 @@ TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
-    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    EXPECT_EQ(wrk1->getWorkerId(), WorkerId(2u));
     NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
     std::ifstream configFile(configPath);
     std::stringstream ss;
@@ -557,7 +557,7 @@ TEST_F(MultiWorkerTest, checkPersistenceOfWorkerIdWithNonExistingConfigFile) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
-    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    EXPECT_EQ(wrk1->getWorkerId(), WorkerId(2u));
     NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
     std::ifstream configFile(configPath);
     std::stringstream ss;
@@ -597,12 +597,12 @@ TEST_F(MultiWorkerTest, DISABLED_checkPersistenceOfOverwrittenWorkerIdInYaml) {
     wrkConf->coordinatorPort = port;
     std::string configPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyWorker.yaml";
     wrkConf->configPath = configPath;
-    wrkConf->workerId = 3u;
+    wrkConf->workerId = WorkerId(3);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     // expected behavior: worker 1 gets assigned the next available workerId, 2
-    EXPECT_EQ(wrk1->getWorkerId(), 2u);
+    EXPECT_EQ(wrk1->getWorkerId(), WorkerId(2u));
     NES_DEBUG("Worker 1 started successfully with workerId {}", wrk1->getWorkerId());
     std::ifstream configFile(configPath);
     std::stringstream ss;

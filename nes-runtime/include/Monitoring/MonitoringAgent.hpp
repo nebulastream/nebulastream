@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
@@ -92,7 +92,7 @@ class MonitoringAgent {
     void setNodeId(WorkerId nodeId);
 
   private:
-    WorkerId nodeId;
+    WorkerId nodeId = INVALID_WORKER_NODE_ID;
     MonitoringPlanPtr monitoringPlan;
     MonitoringCatalogPtr catalog;
     bool enabled;

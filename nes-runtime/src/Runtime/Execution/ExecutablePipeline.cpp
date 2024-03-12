@@ -27,7 +27,7 @@
 
 using namespace std::chrono_literals;
 namespace NES::Runtime::Execution {
-ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
+ExecutablePipeline::ExecutablePipeline(PipelineId pipelineId,
                                        SharedQueryId sharedQueryId,
                                        DecomposedQueryPlanId decomposedQueryPlanId,
                                        QueryManagerPtr queryManager,
@@ -153,7 +153,7 @@ void ExecutablePipeline::onEvent(Runtime::BaseEvent& event, WorkerContextRef wor
     }
 }
 
-uint64_t ExecutablePipeline::getPipelineId() const { return pipelineId; }
+PipelineId ExecutablePipeline::getPipelineId() const { return pipelineId; }
 
 SharedQueryId ExecutablePipeline::getSharedQueryId() const { return sharedQueryId; }
 
@@ -161,9 +161,9 @@ DecomposedQueryPlanId ExecutablePipeline::getDecomposedQueryPlanId() const { ret
 
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
-ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
-                                                 QueryId queryId,
-                                                 DecomposedQueryPlanId querySubPlanId,
+ExecutablePipelinePtr ExecutablePipeline::create(PipelineId pipelineId,
+                                                 SharedQueryId sharedQueryId,
+                                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                                  const QueryManagerPtr& queryManager,
                                                  const PipelineExecutionContextPtr& pipelineExecutionContext,
                                                  const ExecutablePipelineStagePtr& executablePipelineStage,
@@ -172,13 +172,14 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
                                                  bool reconfiguration) {
     NES_ASSERT2_FMT(executablePipelineStage != nullptr,
                     "Executable pipelinestage is null for " << pipelineId
-                                                            << "within the following query sub plan: " << querySubPlanId);
+                                                            << "within the following query sub plan: " << decomposedQueryPlanId);
     NES_ASSERT2_FMT(pipelineExecutionContext != nullptr,
-                    "Pipeline context is null for " << pipelineId << "within the following query sub plan: " << querySubPlanId);
+                    "Pipeline context is null for " << pipelineId
+                                                    << "within the following query sub plan: " << decomposedQueryPlanId);
 
     return std::make_shared<ExecutablePipeline>(pipelineId,
-                                                queryId,
-                                                querySubPlanId,
+                                                sharedQueryId,
+                                                decomposedQueryPlanId,
                                                 queryManager,
                                                 pipelineExecutionContext,
                                                 executablePipelineStage,

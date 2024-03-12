@@ -20,7 +20,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -747,7 +747,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 3");
@@ -765,7 +765,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("MultipleWindowsTest: Worker3 started SUCCESSFULLY");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
@@ -904,7 +904,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    wrk2->replaceParent(1, 2);
+    wrk2->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 3");
@@ -922,7 +922,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
+    wrk3->replaceParent(WorkerId(1), WorkerId(2));
     NES_INFO("MultipleWindowsTest: Worker3 started SUCCESSFULLY");
 
     std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";

@@ -15,6 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <map>
 #include <vector>
@@ -97,11 +98,11 @@ class SyntaxBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
      */
     bool areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
                             const QueryPlanPtr& hostQueryPlan,
-                            std::map<uint64_t, uint64_t>& targetHostOperatorMap);
+                            std::map<OperatorId, OperatorId>& targetHostOperatorMap);
 
     bool areOperatorEqual(const OperatorPtr& targetOperator,
                           const OperatorPtr& hostOperator,
-                          std::map<uint64_t, uint64_t>& targetHostOperatorMap);
+                          std::map<OperatorId, OperatorId>& targetHostOperatorMap);
 };
 }// namespace NES::Optimizer
 #endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP_

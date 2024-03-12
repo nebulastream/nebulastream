@@ -158,7 +158,6 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address,
         NES_THROW_RUNTIME_ERROR("CoordinatorRPCClient::connecting error while creating channel");
     }
     coordinatorStub = CoordinatorRPCService::NewStub(rpcChannel);
-    workerId = SIZE_MAX;
 }
 
 bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes) {
@@ -168,7 +167,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
               workerId);
 
     RegisterPhysicalSourcesRequest request;
-    request.set_workerid(workerId);
+    request.set_workerid(workerId.getRawValue());
 
     for (const auto& physicalSourceType : physicalSourceTypes) {
         PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsourcetypes();
@@ -203,7 +202,7 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
     std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     RegisterLogicalSourceRequest request;
-    request.set_workerid(workerId);
+    request.set_workerid(workerId.getRawValue());
     request.set_logicalsourcename(logicalSourceName);
     request.set_sourceschema(fileContent);
     NES_DEBUG("CoordinatorRPCClient::RegisterLogicalSourceRequest request={}", request.DebugString());
@@ -225,7 +224,7 @@ bool CoordinatorRPCClient::unregisterPhysicalSource(const std::vector<PhysicalSo
                   physicalSourceType->toString());
 
         UnregisterPhysicalSourceRequest request;
-        request.set_workerid(workerId);
+        request.set_workerid(workerId.getRawValue());
         const std::string& physicalSourceName = physicalSourceType->getPhysicalSourceName();
         request.set_physicalsourcename(physicalSourceName);
         const std::string& logicalSourceName = physicalSourceType->getLogicalSourceName();
@@ -254,7 +253,7 @@ bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSou
     NES_DEBUG("CoordinatorRPCClient: unregisterLogicalSource source{}", logicalSourceName);
 
     UnregisterLogicalSourceRequest request;
-    request.set_workerid(workerId);
+    request.set_workerid(workerId.getRawValue());
     request.set_logicalsourcename(logicalSourceName);
     NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalSourceRequest request={}", request.DebugString());
 
@@ -267,12 +266,12 @@ bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSou
         });
 }
 
-bool CoordinatorRPCClient::addParent(uint64_t parentId) {
+bool CoordinatorRPCClient::addParent(WorkerId parentId) {
     NES_DEBUG("CoordinatorRPCClient: addParent parentId={} workerId={}", parentId, workerId);
 
     AddParentRequest request;
-    request.set_parentid(parentId);
-    request.set_childid(workerId);
+    request.set_parentid(parentId.getRawValue());
+    request.set_childid(workerId.getRawValue());
     NES_DEBUG("CoordinatorRPCClient::AddParentRequest request={}", request.DebugString());
 
     return detail::processGenericRpc<bool, AddParentRequest, AddParentReply>(
@@ -284,16 +283,16 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
         });
 }
 
-bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
+bool CoordinatorRPCClient::replaceParent(WorkerId oldParentId, WorkerId newParentId) {
     NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId={} newParentId={} workerId={}",
               oldParentId,
               newParentId,
               workerId);
 
     ReplaceParentRequest request;
-    request.set_childid(workerId);
-    request.set_oldparent(oldParentId);
-    request.set_newparent(newParentId);
+    request.set_childid(workerId.getRawValue());
+    request.set_oldparent(oldParentId.getRawValue());
+    request.set_newparent(newParentId.getRawValue());
     NES_DEBUG("CoordinatorRPCClient::replaceParent request={}", request.DebugString());
 
     class ReplaceParentListener : public detail::RpcExecutionListener<bool, ReplaceParentRequest, ReplaceParentReply> {
@@ -326,14 +325,14 @@ bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParen
     return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
-uint64_t CoordinatorRPCClient::getId() const { return workerId; }
+WorkerId CoordinatorRPCClient::getId() const { return workerId; }
 
-bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
+bool CoordinatorRPCClient::removeParent(WorkerId parentId) {
     NES_DEBUG("CoordinatorRPCClient: removeAsParent parentId{} workerId={}", parentId, workerId);
 
     RemoveParentRequest request;
-    request.set_parentid(parentId);
-    request.set_childid(workerId);
+    request.set_parentid(parentId.getRawValue());
+    request.set_childid(workerId.getRawValue());
     NES_DEBUG("CoordinatorRPCClient::RemoveParentRequest request={}", request.DebugString());
 
     class RemoveParentListener : public detail::RpcExecutionListener<bool, RemoveParentRequest, RemoveParentReply> {
@@ -370,7 +369,7 @@ bool CoordinatorRPCClient::unregisterNode() {
     NES_DEBUG("CoordinatorRPCClient::unregisterNode workerId={}", workerId);
 
     UnregisterWorkerRequest request;
-    request.set_workerid(workerId);
+    request.set_workerid(workerId.getRawValue());
     NES_DEBUG("CoordinatorRPCClient::unregisterNode request={}", request.DebugString());
 
     class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterWorkerRequest, UnregisterWorkerReply> {
@@ -409,10 +408,10 @@ bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrat
 
     class RegisterWorkerListener : public detail::RpcExecutionListener<bool, RegisterWorkerRequest, RegisterWorkerReply> {
       public:
-        uint64_t& workerId;
+        WorkerId& workerId;
         std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
 
-        explicit RegisterWorkerListener(uint64_t& workerId, std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
+        explicit RegisterWorkerListener(WorkerId& workerId, std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
             : workerId(workerId), coordinatorStub(coordinatorStub) {}
 
         virtual ~RegisterWorkerListener() = default;
@@ -423,7 +422,7 @@ bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrat
             return coordinatorStub->RegisterWorker(&context, request, reply);
         }
         bool onSuccess(const RegisterWorkerReply& reply) override {
-            workerId = reply.workerid();
+            workerId = WorkerId(reply.workerid());
             return true;
         }
         bool onPartialFailure(const Status& status) override {
@@ -445,18 +444,18 @@ bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrat
     return detail::processRpc(registrationRequest, rpcRetryAttempts, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
-                                              uint64_t subQueryId,
-                                              uint64_t pWorkerId,
-                                              uint64_t operatorId,
+bool CoordinatorRPCClient::notifyQueryFailure(SharedQueryId sharedQueryId,
+                                              DecomposedQueryPlanId subQueryId,
+                                              WorkerId pWorkerId,
+                                              OperatorId operatorId,
                                               std::string errorMsg) {
 
     // create & fill the protobuf
     QueryFailureNotification request;
-    request.set_queryid(queryId);
-    request.set_subqueryid(subQueryId);
-    request.set_workerid(pWorkerId);
-    request.set_operatorid(operatorId);
+    request.set_queryid(sharedQueryId.getRawValue());
+    request.set_subqueryid(subQueryId.getRawValue());
+    request.set_workerid(pWorkerId.getRawValue());
+    request.set_operatorid(operatorId.getRawValue());
     request.set_errormsg(errorMsg);
 
     class NotifyQueryFailureListener
@@ -487,7 +486,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttempts, rpcBackoff, listener);
 }
 
-std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>>
+std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
 CoordinatorRPCClient::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius) {
     if (!geoLocation.isValid()) {
         return {};
@@ -502,7 +501,7 @@ CoordinatorRPCClient::getNodeIdsInRange(const Spatial::DataTypes::Experimental::
 
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
-    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> nodesInRange;
+    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>> nodesInRange;
     for (const auto& workerLocation : *reply.mutable_nodes()) {
         nodesInRange.emplace_back(workerLocation.id(), workerLocation.geolocation());
     }
@@ -542,11 +541,11 @@ bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t q
     return false;
 }
 
-bool CoordinatorRPCClient::sendErrors(uint64_t pWorkerId, std::string errorMsg) {
+bool CoordinatorRPCClient::sendErrors(WorkerId pWorkerId, std::string errorMsg) {
 
     // create & fill the protobuf
     SendErrorsMessage request;
-    request.set_workerid(pWorkerId);
+    request.set_workerid(pWorkerId.getRawValue());
     request.set_errormsg(errorMsg);
 
     ErrorReply reply;
@@ -562,13 +561,15 @@ bool CoordinatorRPCClient::sendErrors(uint64_t pWorkerId, std::string errorMsg) 
     return false;
 }
 
-bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId, DecomposedQueryPlanId subPlanId, OperatorId sourceId) {
+bool CoordinatorRPCClient::checkAndMarkForSoftStop(SharedQueryId sharedQueryId,
+                                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                                   OperatorId sourceId) {
 
     //Build request
     RequestSoftStopMessage requestSoftStopMessage;
-    requestSoftStopMessage.set_queryid(queryId);
-    requestSoftStopMessage.set_subqueryid(subPlanId);
-    requestSoftStopMessage.set_sourceid(sourceId);
+    requestSoftStopMessage.set_queryid(sharedQueryId.getRawValue());
+    requestSoftStopMessage.set_subqueryid(decomposedQueryPlanId.getRawValue());
+    requestSoftStopMessage.set_sourceid(sourceId.getRawValue());
 
     //Build response
     StopRequestReply stopRequestReply;
@@ -580,17 +581,17 @@ bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId, DecomposedQu
     return stopRequestReply.success();
 }
 
-bool CoordinatorRPCClient::notifySourceStopTriggered(QueryId queryId,
-                                                     DecomposedQueryPlanId querySubPlanId,
+bool CoordinatorRPCClient::notifySourceStopTriggered(SharedQueryId sharedQueryId,
+                                                     DecomposedQueryPlanId decomposedQueryPlanId,
                                                      OperatorId sourceId,
                                                      Runtime::QueryTerminationType queryTermination) {
     NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful, "Wrong termination requested");
 
     //Build request
     SoftStopTriggeredMessage softStopTriggeredMessage;
-    softStopTriggeredMessage.set_queryid(queryId);
-    softStopTriggeredMessage.set_querysubplanid(querySubPlanId);
-    softStopTriggeredMessage.set_sourceid(sourceId);
+    softStopTriggeredMessage.set_queryid(sharedQueryId.getRawValue());
+    softStopTriggeredMessage.set_querysubplanid(decomposedQueryPlanId.getRawValue());
+    softStopTriggeredMessage.set_sourceid(sourceId.getRawValue());
 
     //Build response
     SoftStopTriggeredReply softStopTriggeredReply;
@@ -602,11 +603,11 @@ bool CoordinatorRPCClient::notifySourceStopTriggered(QueryId queryId,
     return softStopTriggeredReply.success();
 }
 
-bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, DecomposedQueryPlanId querySubPlanId) {
+bool CoordinatorRPCClient::notifySoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
     //Build request
     SoftStopCompletionMessage softStopCompletionMessage;
-    softStopCompletionMessage.set_queryid(queryId);
-    softStopCompletionMessage.set_querysubplanid(querySubPlanId);
+    softStopCompletionMessage.set_queryid(sharedQueryId.getRawValue());
+    softStopCompletionMessage.set_querysubplanid(decomposedQueryPlanId.getRawValue());
 
     //Build response
     SoftStopCompletionReply softStopCompletionReply;
@@ -625,11 +626,11 @@ bool CoordinatorRPCClient::sendReconnectPrediction(
     SendScheduledReconnectRequest request;
     SendScheduledReconnectReply reply;
 
-    request.set_deviceid(workerId);
+    request.set_deviceid(workerId.getRawValue());
     auto pointsToAdd = request.mutable_addreconnects();
     for (const auto addedPrediction : addPredictions) {
         auto addedPoint = pointsToAdd->Add();
-        addedPoint->set_id(addedPrediction.newParentId);
+        addedPoint->set_id(addedPrediction.newParentId.getRawValue());
         addedPoint->set_time(addedPrediction.expectedTime);
         auto pointLocation = addedPoint->mutable_geolocation();
         pointLocation->set_lat(addedPrediction.pointGeoLocation.getLatitude());
@@ -637,7 +638,7 @@ bool CoordinatorRPCClient::sendReconnectPrediction(
     }
     for (const auto removedPrediction : removePredictions) {
         auto addedPoint = pointsToAdd->Add();
-        addedPoint->set_id(removedPrediction.newParentId);
+        addedPoint->set_id(removedPrediction.newParentId.getRawValue());
         addedPoint->set_time(removedPrediction.expectedTime);
         auto pointLocation = addedPoint->mutable_geolocation();
         pointLocation->set_lat(removedPrediction.pointGeoLocation.getLatitude());
@@ -653,7 +654,7 @@ bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experime
     LocationUpdateRequest request;
     LocationUpdateReply reply;
 
-    request.set_workerid(workerId);
+    request.set_workerid(workerId.getRawValue());
 
     NES::Spatial::Protobuf::Waypoint* waypoint = request.mutable_waypoint();
     NES::Spatial::Protobuf::GeoLocation* geoLocation = waypoint->mutable_geolocation();
@@ -672,12 +673,12 @@ std::vector<WorkerId> CoordinatorRPCClient::getParents(WorkerId pWorkerId) {
     GetParentsRequest request;
     GetParentsReply reply;
 
-    request.set_nodeid(pWorkerId);
+    request.set_nodeid(pWorkerId.getRawValue());
 
     coordinatorStub->GetParents(&context, request, &reply);
     std::vector<WorkerId> parentWorkerIds;
     for (auto parentId : reply.parentids()) {
-        parentWorkerIds.push_back(parentId);
+        parentWorkerIds.push_back(WorkerId(parentId));
     }
     return parentWorkerIds;
 }
@@ -690,13 +691,13 @@ bool CoordinatorRPCClient::relocateTopologyNode(const std::vector<TopologyLinkIn
 
     for (const auto& removedLink : removedTopologyLinks) {
         auto removed = request.add_removedlinks();
-        removed->set_upstream(removedLink.upstreamTopologyNode);
-        removed->set_downstream(removedLink.downstreamTopologyNode);
+        removed->set_upstream(removedLink.upstreamTopologyNode.getRawValue());
+        removed->set_downstream(removedLink.downstreamTopologyNode.getRawValue());
     }
     for (const auto& addedLink : addedTopologyLinks) {
         auto added = request.add_addedlinks();
-        added->set_upstream(addedLink.upstreamTopologyNode);
-        added->set_downstream(addedLink.downstreamTopologyNode);
+        added->set_upstream(addedLink.upstreamTopologyNode.getRawValue());
+        added->set_downstream(addedLink.downstreamTopologyNode.getRawValue());
     }
     coordinatorStub->RelocateTopologyNode(&context, request, &reply);
     return reply.success();

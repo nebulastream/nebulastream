@@ -97,13 +97,13 @@ TEST_F(ISQPRequestTest, testISQPAddNodeAndLinkEvents) {
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -121,7 +121,7 @@ TEST_F(ISQPRequestTest, testISQPAddNodeAndLinkEvents) {
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest = ISQPRequest::create(z3Context, isqpEvents, ZERO_RETRIES);
-    constexpr RequestId requestId = 1;
+    constexpr auto requestId = RequestId(1);
     isqpRequest->setId(requestId);
     // Execute add request until deployment phase
     try {
@@ -141,13 +141,13 @@ TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes) {
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -165,7 +165,7 @@ TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes) {
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -185,7 +185,7 @@ TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes) {
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -203,13 +203,13 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -232,7 +232,7 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -254,7 +254,7 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
 
     auto query1 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
-    queryPlan1->setQueryId(1);
+    queryPlan1->setQueryId(QueryId(1));
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest2;
@@ -262,7 +262,7 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -282,13 +282,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -313,7 +313,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -335,12 +335,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
 
     auto query1 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
-    queryPlan1->setQueryId(1);
+    queryPlan1->setQueryId(QueryId(1));
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
     auto query2 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
-    queryPlan2->setQueryId(2);
+    queryPlan2->setQueryId(QueryId(2));
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest2;
@@ -349,7 +349,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -372,13 +372,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -403,7 +403,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -426,13 +426,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     auto query1 =
         Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
-    queryPlan1->setQueryId(1);
+    queryPlan1->setQueryId(QueryId(1));
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
     auto query2 =
         Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
-    queryPlan2->setQueryId(2);
+    queryPlan2->setQueryId(QueryId(2));
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest2;
@@ -441,7 +441,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -464,13 +464,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -495,7 +495,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -518,13 +518,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto query1 =
         Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
-    queryPlan1->setQueryId(1);
+    queryPlan1->setQueryId(QueryId(1));
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
     auto query2 =
         Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
-    queryPlan2->setQueryId(2);
+    queryPlan2->setQueryId(QueryId(2));
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest2;
@@ -533,7 +533,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -556,13 +556,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -589,7 +589,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -614,7 +614,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
                       .map(Attribute("value") = Attribute("value") + 1)
                       .sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
-    queryPlan1->setQueryId(1);
+    queryPlan1->setQueryId(QueryId(1));
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
     auto query2 = Query::from(logicalSourceName)
@@ -622,7 +622,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
                       .map(Attribute("value") = Attribute("value") + 1)
                       .sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
-    queryPlan2->setQueryId(2);
+    queryPlan2->setQueryId(QueryId(2));
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest2;
@@ -631,7 +631,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -654,13 +654,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -685,7 +685,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -714,7 +714,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -735,7 +735,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
 
     // Prepare
     auto isqpRequest3 = ISQPRequest::create(z3Context, isqpEventsForRequest3, ZERO_RETRIES);
-    constexpr RequestId requestId3 = 3;
+    constexpr auto requestId3 = RequestId(3);
     isqpRequest3->setId(requestId3);
     // Execute add request until deployment phase
     try {
@@ -755,13 +755,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -786,7 +786,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -815,7 +815,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -836,7 +836,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
 
     // Prepare
     auto isqpRequest3 = ISQPRequest::create(z3Context, isqpEventsForRequest3, ZERO_RETRIES);
-    constexpr RequestId requestId3 = 3;
+    constexpr auto requestId3 = RequestId(3);
     isqpRequest3->setId(requestId3);
     // Execute add request until deployment phase
     try {
@@ -856,13 +856,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, 4, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, 4, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
@@ -887,7 +887,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -916,7 +916,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {
@@ -937,7 +937,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
 
     // Prepare
     auto isqpRequest3 = ISQPRequest::create(z3Context, isqpEventsForRequest3, ZERO_RETRIES);
-    constexpr RequestId requestId3 = 3;
+    constexpr auto requestId3 = RequestId(3);
     isqpRequest3->setId(requestId3);
     // Execute add request until deployment phase
     try {
@@ -958,15 +958,15 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     uint16_t numberOfSlots = 4;
-    int nodeId1 = 1;
+    auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, numberOfSlots, properties);
-    int nodeId2 = 2;
+    auto nodeId2 = WorkerId(2);
     auto addNodeEvent2 =
         ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, numberOfSlots, properties);
-    int nodeId3 = 3;
+    auto nodeId3 = WorkerId(3);
     auto addNodeEvent3 =
         ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, numberOfSlots, properties);
-    int nodeId4 = 4;
+    auto nodeId4 = WorkerId(4);
     auto addNodeEvent4 =
         ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, numberOfSlots, properties);
 
@@ -994,7 +994,7 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
     auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
-    constexpr RequestId requestId1 = 1;
+    constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
     try {
@@ -1019,7 +1019,7 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
                       .map(Attribute("value") = Attribute("value") + 1)
                       .sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
-    queryPlan1->setQueryId(1);
+    queryPlan1->setQueryId(QueryId(1));
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
     auto query2 = Query::from(logicalSourceName)
@@ -1027,7 +1027,7 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
                       .map(Attribute("value") = Attribute("value") + 1)
                       .sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
-    queryPlan2->setQueryId(2);
+    queryPlan2->setQueryId(QueryId(2));
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
 
     auto query3 = Query::from(logicalSourceName)
@@ -1035,7 +1035,7 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
                       .map(Attribute("value") = Attribute("value") + 1)
                       .sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan3 = query3.getQueryPlan();
-    queryPlan3->setQueryId(3);
+    queryPlan3->setQueryId(QueryId(3));
     auto queryAddEvent3 = ISQPAddQueryEvent::create(queryPlan3, TEST_PLACEMENT_STRATEGY);
 
     auto query4 = Query::from(logicalSourceName)
@@ -1043,7 +1043,7 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
                       .map(Attribute("value") = Attribute("value") + 1)
                       .sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan4 = query4.getQueryPlan();
-    queryPlan4->setQueryId(4);
+    queryPlan4->setQueryId(QueryId(4));
     auto queryAddEvent4 = ISQPAddQueryEvent::create(queryPlan4, TEST_PLACEMENT_STRATEGY);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest2;
@@ -1054,7 +1054,7 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
 
     // Prepare
     auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
-    constexpr RequestId requestId2 = 2;
+    constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
     try {

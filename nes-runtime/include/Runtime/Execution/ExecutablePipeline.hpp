@@ -14,7 +14,7 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -55,8 +55,8 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
      * @return ExecutablePipelinePtr
      */
-    explicit ExecutablePipeline(uint64_t pipelineId,
-                                QueryId sharedQueryId,
+    explicit ExecutablePipeline(PipelineId pipelineId,
+                                SharedQueryId sharedQueryId,
                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                 QueryManagerPtr queryManager,
                                 PipelineExecutionContextPtr pipelineExecutionContext,
@@ -68,7 +68,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     /**
      * @brief Factory method to create a new executable pipeline.
      * @param pipelineId The Id of this pipeline
-     * @param querySubPlanId the id of the query sub plan
+     * @param decomposedQueryPlanId the id of the query sub plan
      * @param pipelineContext the pipeline context
      * @param executablePipelineStage the executable pipeline stage
      * @param numOfProducingPipelines number of producing pipelines
@@ -76,9 +76,9 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
      * @return ExecutablePipelinePtr
      */
-    static ExecutablePipelinePtr create(uint64_t pipelineId,
-                                        QueryId queryId,
-                                        DecomposedQueryPlanId querySubPlanId,
+    static ExecutablePipelinePtr create(PipelineId pipelineId,
+                                        SharedQueryId sharedQueryId,
+                                        DecomposedQueryPlanId decomposedQueryPlanId,
                                         const QueryManagerPtr& queryManager,
                                         const PipelineExecutionContextPtr& pipelineExecutionContext,
                                         const ExecutablePipelineStagePtr& executablePipelineStage,
@@ -124,7 +124,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     * @brief Get id of pipeline stage
     * @return pipeline id
     */
-    uint64_t getPipelineId() const;
+    PipelineId getPipelineId() const;
 
     /**
      * @brief Get query sub plan id.
@@ -165,7 +165,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @brief Get query plan id.
      * @return QueryId.
      */
-    QueryId getSharedQueryId() const;
+    SharedQueryId getSharedQueryId() const;
 
     /**
      * @brief Gets the successor pipelines
@@ -188,7 +188,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     PipelineExecutionContextPtr getContext() { return pipelineContext; };
 
   private:
-    const uint64_t pipelineId;
+    const PipelineId pipelineId;
     const SharedQueryId sharedQueryId;
     const DecomposedQueryPlanId decomposedQueryPlanId;
     QueryManagerPtr queryManager;

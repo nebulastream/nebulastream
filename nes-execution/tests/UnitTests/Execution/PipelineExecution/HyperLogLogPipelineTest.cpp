@@ -41,8 +41,8 @@ class HyperLogLogPipelineExecutionContext : public Runtime::Execution::PipelineE
   public:
     HyperLogLogPipelineExecutionContext(BufferManagerPtr bufferManager, OperatorHandlerPtr operatorHandler)
         : PipelineExecutionContext(
-              1,         // mock pipeline id
-              1,         // mock query id
+              PipelineId(1),              // mock pipeline id
+              DecomposedQueryPlanId(1),   // mock query id
               bufferManager,
               1, // numberOfWorkerThreads
               [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
@@ -158,7 +158,7 @@ class HyperLogLogPipelineTest : public Testing::BaseUnitTest, public AbstractPip
  */
 TEST_P(HyperLogLogPipelineTest, singleInputTuple) {
     constexpr auto windowSize = 10, windowSlide = 10, width = 4;
-    const std::vector<OriginId> inputOrigins = {0};
+    const std::vector inputOrigins = {OriginId(0)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, inputOrigins);
     
     auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
@@ -186,7 +186,7 @@ TEST_P(HyperLogLogPipelineTest, singleInputTuple) {
  */
 TEST_P(HyperLogLogPipelineTest, multipleInputBuffers) {
     constexpr auto windowSize = 1000, windowSlide = 1000, width = 8;
-    const std::vector<OriginId> inputOrigins = {0};
+    const std::vector inputOrigins = {OriginId(0)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, inputOrigins);
 
     auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);

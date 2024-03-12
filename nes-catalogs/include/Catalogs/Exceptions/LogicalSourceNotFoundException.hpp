@@ -14,7 +14,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_LOGICALSOURCENOTFOUNDEXCEPTION_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_LOGICALSOURCENOTFOUNDEXCEPTION_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
 namespace NES::Exceptions {
 

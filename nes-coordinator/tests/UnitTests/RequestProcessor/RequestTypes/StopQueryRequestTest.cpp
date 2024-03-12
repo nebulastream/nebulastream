@@ -44,10 +44,10 @@ class StopQueryRequestTest : public Testing::BaseIntegrationTest {
  * @brief Test that the constructor of StopQueryRequest works as expected
  */
 TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
-    constexpr QueryId queryId = 1;
+    constexpr auto queryId = QueryId(1);
     const uint8_t retries = 0;
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto stopQueryRequest = StopQueryRequest::create(queryId, retries);
-    EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
+    EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + queryId.toString() + "}");
 }
 }// namespace NES::RequestProcessor

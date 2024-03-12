@@ -60,7 +60,7 @@ void ChangeLog::performChangeLogCompactionTillTimestamp(uint64_t timestamp) {
             // comparing their respective poset.
             for (uint32_t j = i + 1; j < changeLogEntriesToCompact.size(); j++) {
                 auto destinationChangeLog = changeLogEntriesToCompact.at(j);
-                std::set<uint32_t> diff;
+                std::set<OperatorId> diff;
                 //compute intersection among the poset of two change log entries
                 std::set_intersection(sourceChangeLogPoSet.begin(),
                                       sourceChangeLogPoSet.end(),

@@ -16,6 +16,6 @@
 
 namespace NES {
 QueryDeploymentException::QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message)
-    : Exceptions::RequestExecutionException(sharedQueryId, message) {}
+    : Exceptions::RequestExecutionException(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), message) {}
 
 }// namespace NES

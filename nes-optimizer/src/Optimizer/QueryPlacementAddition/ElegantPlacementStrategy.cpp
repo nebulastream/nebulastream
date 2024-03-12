@@ -25,6 +25,7 @@
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cpp-base64/base64.h>
@@ -69,10 +70,11 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
       serviceURL(serviceURL), timeWeight(timeWeight) {}
 
-PlacementAdditionResult ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                         const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                                         const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                         DecomposedQueryPlanVersion querySubPlanVersion) {
+PlacementAdditionResult
+ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                    const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
         NES_ASSERT(serviceURL != EMPTY_STRING, "ELEGANT planner URL is not set in elegant.plannerServiceURL");
@@ -113,18 +115,17 @@ PlacementAdditionResult ElegantPlacementStrategy::updateGlobalExecutionPlan(Shar
     }
 }
 
-void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
-    SharedQueryId sharedQueryId,
-    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-    cpr::Response& response) const {
+void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(SharedQueryId sharedQueryId,
+                                                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                                 cpr::Response& response) const {
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
     //Fetch the placement data
     auto placementData = jsonResponse[PLACEMENT_KEY];
 
     // fill with true where nodeId is present
     for (const auto& placement : placementData) {
-        OperatorId operatorId = placement[OPERATOR_ID_KEY];
-        WorkerId topologyNodeId = placement[NODE_ID_KEY];
+        OperatorId operatorId = OperatorId(placement[OPERATOR_ID_KEY]);
+        WorkerId topologyNodeId = WorkerId(placement[NODE_ID_KEY]);
 
         bool pinned = false;
         for (const auto& item : pinnedDownStreamOperators) {
@@ -143,16 +144,15 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
         }
 
         if (!pinned) {
-            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                              "Unable to find operator with id " + std::to_string(operatorId)
-                                                                  + " in the given list of operators.");
+            throw Exceptions::QueryPlacementAdditionException(
+                sharedQueryId,
+                fmt::format("Unable to find operator with id {} in the given list of operators.", operatorId));
         }
     }
 }
 
 void ElegantPlacementStrategy::addJavaUdfByteCodeField(const OperatorPtr& logicalOperator, nlohmann::json& node) {
-    if (logicalOperator->instanceOf<MapUDFLogicalOperator>()
-        || logicalOperator->instanceOf<FlatMapUDFLogicalOperator>()) {
+    if (logicalOperator->instanceOf<MapUDFLogicalOperator>() || logicalOperator->instanceOf<FlatMapUDFLogicalOperator>()) {
         const auto* udfDescriptor =
             dynamic_cast<Catalogs::UDF::JavaUDFDescriptor*>(logicalOperator->as<UDFLogicalOperator>()->getUDFDescriptor().get());
         const auto& byteCode = udfDescriptor->getByteCodeList();
@@ -196,8 +196,7 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             nlohmann::json node;
             node[OPERATOR_ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_WORKER_ID);
-            node[CONSTRAINT_KEY] =
-                pinnedNodeId.has_value() ? std::to_string(std::any_cast<WorkerId>(pinnedNodeId)) : EMPTY_STRING;
+            node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::any_cast<WorkerId>(pinnedNodeId).toString() : EMPTY_STRING;
             auto sourceCode = logicalOperator->getProperty(sourceCodeKey);
             node[sourceCodeKey] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();

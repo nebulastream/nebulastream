@@ -16,6 +16,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
+#include <Identifiers/Identifiers.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -31,7 +32,7 @@ class KeyedWindowEmitAction : public SliceMergingAction {
                           const uint64_t valueSize,
                           const std::vector<std::string> resultKeyFields,
                           const std::vector<PhysicalTypePtr> keyDataTypes,
-                          const uint64_t resultOriginId);
+                          const OriginId resultOriginId);
 
     void emitSlice(ExecutionContext& ctx,
                    ExecuteOperatorPtr& child,
@@ -50,7 +51,7 @@ class KeyedWindowEmitAction : public SliceMergingAction {
     const uint64_t valueSize;
     const std::vector<std::string> resultKeyFields;
     const std::vector<PhysicalTypePtr> keyDataTypes;
-    const uint64_t resultOriginId;
+    const OriginId resultOriginId;
 };
 }// namespace NES::Runtime::Execution::Operators
 

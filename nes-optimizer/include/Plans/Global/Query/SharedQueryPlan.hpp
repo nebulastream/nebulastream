@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>
@@ -137,8 +137,8 @@ class SharedQueryPlan {
      * @param upstreamOperatorIds: upstream operator ids
      * @param downstreamOperatorIds: downstream Operator ids
      */
-    void performReOperatorPlacement(const std::set<uint64_t>& upstreamOperatorIds,
-                                    const std::set<uint64_t>& downstreamOperatorIds);
+    void performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds,
+                                    const std::set<OperatorId>& downstreamOperatorIds);
 
     /**
      * @brief Method to update the placement information and state of the shared query plan operators

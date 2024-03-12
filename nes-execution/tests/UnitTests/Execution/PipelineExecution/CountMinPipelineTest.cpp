@@ -42,8 +42,8 @@ class CountMinPipelineExecutionContext : public Runtime::Execution::PipelineExec
   public:
     CountMinPipelineExecutionContext(BufferManagerPtr bufferManager, OperatorHandlerPtr operatorHandler)
         : PipelineExecutionContext(
-              1,         // mock pipeline id
-              1,         // mock query id
+              PipelineId(1),         // mock pipeline id
+              DecomposedQueryPlanId(1),         // mock query id
               bufferManager,
               1, // numberOfWorkerThreads
               [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
@@ -166,7 +166,7 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
 TEST_P(CountMinPipelineTest, singleInputTuple) {
     constexpr auto windowSize = 10, windowSlide = 10, width = 32, depth = 3;
     constexpr auto numberOfBitsInKey = sizeof(64) * 8;
-    const std::vector<OriginId> inputOrigins = {0};
+    const std::vector inputOrigins = {OriginId(0)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, depth, inputOrigins, numberOfBitsInKey);
 
     auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);
@@ -195,7 +195,7 @@ TEST_P(CountMinPipelineTest, singleInputTuple) {
 TEST_P(CountMinPipelineTest, multipleInputBuffers) {
     constexpr auto windowSize = 1000, windowSlide = 1000, width = 8096, depth = 10;
     constexpr auto numberOfBitsInKey = sizeof(64) * 8;
-    const std::vector<OriginId> inputOrigins = {0};
+    const std::vector inputOrigins = {OriginId(0)};
     auto executablePipeline = createExecutablePipeline(windowSize, windowSlide, width, depth, inputOrigins, numberOfBitsInKey);
 
     auto inputBuffers = Util::createDataForOneFieldAndTimeStamp(1, *bufferManager, inputSchema, fieldToBuildCountMinOver, timestampFieldName);

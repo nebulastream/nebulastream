@@ -39,8 +39,8 @@ class KafkaSink : public SinkMedium {
     * @param numOfProducers
     * @param brokers list of brokers to connect to
     * @param topic list of topics to push to
-    * @param queryId
-    * @param querySubPlanId
+    * @param sharedQueryId
+    * @param decomposedQueryPlanId
     * @param kafkaProducerTimeout timeout how long to wait until the push fails
     * @param numberOfOrigins
     */
@@ -49,8 +49,8 @@ class KafkaSink : public SinkMedium {
               uint32_t numOfProducers,
               const std::string& brokers,
               const std::string& topic,
-              QueryId queryId,
-              DecomposedQueryPlanId querySubPlanId,
+              SharedQueryId sharedQueryId,
+              DecomposedQueryPlanId decomposedQueryPlanId,
               const uint64_t kafkaProducerTimeout = 10 * 1000,
               uint64_t numberOfOrigins = 1);
 

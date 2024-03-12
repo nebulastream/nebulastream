@@ -355,7 +355,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
                      .filter(Attribute("f1") < 10)
                      .map(Attribute("f1") = Attribute("f1"))
                      .sink(FileSinkDescriptor::create(""));
-    QueryId queryId = 42;
+    auto queryId = QueryId(42);
     query.getQueryPlan()->setQueryId(queryId);
     auto operatorId = query.getQueryPlan()->getOperatorByType<LogicalMapOperator>()[0]->getId();
     queryCatalog->createQueryCatalogEntry(query.getQueryPlan()->toString(),
@@ -427,7 +427,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
                      .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
                      .map(Attribute("f1") = Attribute("f1"))
                      .sink(FileSinkDescriptor::create(""));
-    QueryId queryId = 42;
+    auto queryId = QueryId(42);
     query.getQueryPlan()->setQueryId(queryId);
     auto operatorId = query.getQueryPlan()->getOperatorByType<LogicalMapOperator>()[0]->getId();
     queryCatalog->createQueryCatalogEntry(query.getQueryPlan()->toString(),

@@ -100,7 +100,7 @@ class TypeInferencePhase {
      * @throws TypeInferenceException if inferring the data types into the query failed
      * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
      */
-    void performTypeInference(uint64_t planId,
+    void performTypeInference(QueryId planId,
                               std::vector<SourceLogicalOperatorPtr> sourceOperators,
                               std::vector<SinkLogicalOperatorPtr> sinkOperators);
 

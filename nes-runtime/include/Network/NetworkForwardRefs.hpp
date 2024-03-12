@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_NETWORKFORWARDREFS_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_NETWORKFORWARDREFS_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <memory>
 
 #define FORWARD_DECLARE_CLASS_UP(T)                                                                                              \

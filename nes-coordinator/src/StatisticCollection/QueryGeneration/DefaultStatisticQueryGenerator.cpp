@@ -111,8 +111,7 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
             logicalSourceName = dataCharacteristic->getLogicalSourceName();
         } else if (characteristic.instanceOf<InfrastructureStatistic>()) {
             auto infrastructureCharacteristic = characteristic.as<const InfrastructureStatistic>();
-            logicalSourceName =
-                INFRASTRUCTURE_BASE_LOGICAL_SOURCE_NAME + std::to_string(infrastructureCharacteristic->getNodeId());
+            logicalSourceName = INFRASTRUCTURE_BASE_LOGICAL_SOURCE_NAME + infrastructureCharacteristic->getNodeId().toString();
         } else {
             NES_NOT_IMPLEMENTED();
         }

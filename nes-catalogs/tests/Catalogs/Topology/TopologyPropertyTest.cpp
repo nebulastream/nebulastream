@@ -45,7 +45,7 @@ TEST_F(TopologyPropertiesTest, testAssignTopologyNodeProperties) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     // create a node
-    auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
+    auto node = TopologyNode::create(WorkerId(1), "localhost", grpcPort, dataPort, 8, properties);
     node->addNodeProperty("cores", 2);
     node->addNodeProperty("architecture", std::string("arm64"));
     node->addNodeProperty("withGPU", false);
@@ -70,7 +70,7 @@ TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     // create a node
-    auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
+    auto node = TopologyNode::create(WorkerId(1), "localhost", grpcPort, dataPort, 8, properties);
     node->addNodeProperty("cores", 2);
 
     EXPECT_TRUE(node->getNodeProperty("cores").has_value());
@@ -90,12 +90,12 @@ TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     // create src and dst nodes
-    int sourceWorkerId = 1;
+    auto sourceWorkerId = WorkerId(1);
     topology->registerWorker(sourceWorkerId, "localhost", grpcPort, dataPort, 8, properties, 0, 0);
 
     grpcPort++;
     dataPort++;
-    int destinationWorkerId = 2;
+    auto destinationWorkerId = WorkerId(2);
     topology->registerWorker(destinationWorkerId, "localhost", grpcPort, dataPort, 8, properties, 0, 0);
 
     topology->addTopologyNodeAsChild(destinationWorkerId, sourceWorkerId);
@@ -125,12 +125,12 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     // create src and dst nodes
-    int sourceWorkerId = 1;
+    auto sourceWorkerId = WorkerId(1);
     topology->registerWorker(sourceWorkerId, "localhost", grpcPort, dataPort, 8, properties, 0, 0);
 
     grpcPort++;
     dataPort++;
-    int destinationWorkerId = 2;
+    auto destinationWorkerId = WorkerId(2);
     topology->registerWorker(destinationWorkerId, "localhost", grpcPort, dataPort, 8, properties, 0, 0);
     topology->addTopologyNodeAsChild(destinationWorkerId, sourceWorkerId);
     topology->addLinkProperty(destinationWorkerId, sourceWorkerId, 512, 100);

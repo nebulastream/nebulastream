@@ -45,7 +45,7 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryStatusListener(AbstractQueryStatus
     return *this;
 };
 
-NodeEngineBuilder& NodeEngineBuilder::setNodeEngineId(uint64_t nodeEngineId) {
+NodeEngineBuilder& NodeEngineBuilder::setWorkerId(WorkerId nodeEngineId) {
     this->nodeEngineId = nodeEngineId;
     return *this;
 }
@@ -93,7 +93,7 @@ NodeEngineBuilder& NodeEngineBuilder::setOpenCLManager(NES::Runtime::OpenCLManag
 NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
     NES_ASSERT(nesWorker, "NesWorker is null");
     try {
-        auto nodeEngineId = (this->nodeEngineId == 0) ? getNextNodeEngineId() : this->nodeEngineId;
+        auto nodeEngineId = (this->nodeEngineId == INVALID<WorkerId>) ? getNextWorkerId() : this->nodeEngineId;
         auto partitionManager =
             (!this->partitionManager) ? std::make_shared<Network::PartitionManager>() : this->partitionManager;
         auto hardwareManager = (!this->hardwareManager) ? std::make_shared<Runtime::HardwareManager>() : this->hardwareManager;
@@ -196,7 +196,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(bufferManagers),
             std::move(queryManager),
             [this](const std::shared_ptr<NodeEngine>& engine) {
-            return Network::NetworkManager::create(engine->getNodeEngineId(),
+            return Network::NetworkManager::create(engine->getWorkerId(),
                                                    this->workerConfiguration->localWorkerIp.getValue(),
                                                    this->workerConfiguration->dataPort.getValue(),
                                                    Network::ExchangeProtocol(engine->getPartitionManager(), engine),
@@ -273,9 +273,9 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     return queryCompilationOptions;
 }
 
-uint64_t NodeEngineBuilder::getNextNodeEngineId() {
+WorkerId NodeEngineBuilder::getNextWorkerId() {
     const uint64_t max = -1;
     uint64_t id = time(nullptr) ^ getpid();
-    return (++id % max);
+    return WorkerId(++id % max);
 }
 }//namespace NES::Runtime

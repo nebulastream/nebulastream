@@ -51,7 +51,7 @@ void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
                                        uint64_t sequenceNumber,
                                        uint64_t chunkNumber,
                                        bool lastChunk,
-                                       OriginId originId,
+                                       uint64_t originId,
                                        Statistic::MetricHash metricHash,
                                        StatisticId statisticId) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
@@ -60,7 +60,7 @@ void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
 
     // Calling the operator handler method now
-    const BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, originId);
+    const BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, OriginId(originId));
     const auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
     opHandler->checkStatisticsSending(bufferMetaData, statisticHash, pipelineCtx);
 }

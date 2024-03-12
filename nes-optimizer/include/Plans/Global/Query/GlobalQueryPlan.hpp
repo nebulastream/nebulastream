@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/RequestType.hpp>
 #include <algorithm>
@@ -89,7 +89,7 @@ class GlobalQueryPlan {
      * @brief This method will remove the shared query plan if all involved queries are either stopped or failed
      * @param sharedQueryPlanId id of the shared query plan to be removed
      */
-    void removeSharedQueryPlan(QueryId sharedQueryPlanId);
+    void removeSharedQueryPlan(SharedQueryId sharedQueryPlanId);
 
     /**
      * @brief Get the all the Query Meta Data to be deployed

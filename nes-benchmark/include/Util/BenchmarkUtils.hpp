@@ -17,7 +17,7 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Common.hpp>
 

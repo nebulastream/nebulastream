@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <cstdint>
@@ -129,7 +129,7 @@ class LogicalJoinDescriptor {
      * @brief Getter for the origin id of this window.
      * @return origin id
      */
-    [[nodiscard]] uint64_t getOriginId() const;
+    [[nodiscard]] OriginId getOriginId() const;
 
     /**
      * @brief Setter for the origin id

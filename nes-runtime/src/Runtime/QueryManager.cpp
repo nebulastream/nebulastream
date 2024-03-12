@@ -42,7 +42,7 @@ static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
 
 AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                            std::vector<BufferManagerPtr> bufferManagers,
-                                           uint64_t nodeEngineId,
+                                           WorkerId nodeEngineId,
                                            uint16_t numThreads,
                                            HardwareManagerPtr hardwareManager,
                                            uint64_t numberOfBuffersPerEpoch,
@@ -58,7 +58,7 @@ AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusLi
 
 DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                          std::vector<BufferManagerPtr> bufferManagers,
-                                         uint64_t nodeEngineId,
+                                         WorkerId nodeEngineId,
                                          uint16_t numThreads,
                                          HardwareManagerPtr hardwareManager,
                                          uint64_t numberOfBuffersPerEpoch,
@@ -76,7 +76,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
 
 MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                                std::vector<BufferManagerPtr> bufferManagers,
-                                               uint64_t nodeEngineId,
+                                               WorkerId nodeEngineId,
                                                uint16_t numThreads,
                                                HardwareManagerPtr hardwareManager,
                                                uint64_t numberOfBuffersPerEpoch,
@@ -241,7 +241,7 @@ SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId decom
     if (iterator != runningQEPs.end()) {
         return iterator->second->getSharedQueryId();
     }
-    return -1;
+    return INVALID_SHARED_QUERY_ID;
 }
 
 Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(DecomposedQueryPlanId id) {
@@ -312,7 +312,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
     }
 }
 
-uint64_t AbstractQueryManager::getNodeId() const { return nodeEngineId; }
+WorkerId AbstractQueryManager::getNodeId() const { return nodeEngineId; }
 
 bool AbstractQueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 

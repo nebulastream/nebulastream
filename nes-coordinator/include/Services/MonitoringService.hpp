@@ -60,7 +60,7 @@ class MonitoringService {
      * @brief Requests from a remote worker node its monitoring data.
      * @return a json with all metrics indicated by the registered MonitoringPlan.
      */
-    nlohmann::json requestMonitoringDataAsJson(uint64_t nodeId);
+    nlohmann::json requestMonitoringDataAsJson(WorkerId nodeId);
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.

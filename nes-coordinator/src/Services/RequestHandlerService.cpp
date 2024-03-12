@@ -103,11 +103,11 @@ bool RequestHandlerService::validateAndQueueStopQueryRequest(QueryId queryId) {
 }
 
 bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
-                                                             DecomposedQueryPlanId querySubPlanId,
+                                                             DecomposedQueryPlanId decomposedQueryPlanId,
                                                              const std::string& failureReason) {
 
     auto failRequest = RequestProcessor::FailQueryRequest::create(sharedQueryId,
-                                                                  querySubPlanId,
+                                                                  decomposedQueryPlanId,
                                                                   failureReason,
                                                                   RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(failRequest);

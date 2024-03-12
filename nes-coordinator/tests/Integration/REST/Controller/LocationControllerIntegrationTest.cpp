@@ -15,6 +15,7 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Identifiers/NESStrongTypeJson.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -91,16 +92,16 @@ TEST_F(LocationControllerIntegrationTest, testGetLocationNoSuchNodeId) {
     //test request without nodeId parameter
     nlohmann::json request;
     // node id that doesn't exist
-    uint64_t nodeId = 0;
+    auto nodeId = INVALID_WORKER_NODE_ID;
     auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"},
-                                cpr::Parameters{{"nodeId", std::to_string(nodeId)}});
+                                cpr::Parameters{{"nodeId", nodeId.toString()}});
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
-    ASSERT_EQ(errorMessage, "No node with Id: " + std::to_string(nodeId));
+    ASSERT_EQ(errorMessage, "No node with Id: " + nodeId.toString());
     stopCoordinator();
 }
 
@@ -140,12 +141,12 @@ TEST_F(LocationControllerIntegrationTest, testGetSingleLocation) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
-    uint64_t workerNodeId1 = wrk1->getWorkerId();
+    auto workerNodeId1 = wrk1->getWorkerId();
 
     //test request of node location
     nlohmann::json request;
     auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"},
-                                cpr::Parameters{{"nodeId", std::to_string(workerNodeId1)}});
+                                cpr::Parameters{{"nodeId", workerNodeId1.toString()}});
     future.wait();
     auto response = future.get();
 
@@ -155,7 +156,7 @@ TEST_F(LocationControllerIntegrationTest, testGetSingleLocation) {
     //check if correct location was received
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    EXPECT_EQ(res["id"], workerNodeId1);
+    EXPECT_EQ(res["id"].get<WorkerId>(), workerNodeId1);
     nlohmann::json locationData = res["location"];
     EXPECT_EQ(locationData["latitude"], latitude);
     ASSERT_EQ(locationData["longitude"], longitude);
@@ -178,12 +179,12 @@ TEST_F(LocationControllerIntegrationTest, testGetSingleLocationWhenNoLocationDat
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
-    uint64_t workerNodeId1 = wrk1->getWorkerId();
+    auto workerNodeId1 = wrk1->getWorkerId();
 
     //test request of node location
     nlohmann::json request;
     auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"},
-                                cpr::Parameters{{"nodeId", std::to_string(workerNodeId1)}});
+                                cpr::Parameters{{"nodeId", workerNodeId1.toString()}});
     future.wait();
     auto response = future.get();
 
@@ -289,8 +290,8 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 3));
 
     //get node ids
-    uint64_t workerNodeId2 = wrk2->getWorkerId();
-    uint64_t workerNodeId3 = wrk3->getWorkerId();
+    auto workerNodeId2 = wrk2->getWorkerId();
+    auto workerNodeId3 = wrk3->getWorkerId();
 
     nlohmann::json request;
     auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location/allMobile"});
@@ -317,10 +318,10 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
         EXPECT_TRUE(node.contains("location"));
         EXPECT_TRUE(node.contains("id"));
         const auto nodeLocation = node["location"];
-        if (node["id"] == workerNodeId2) {
+        if (node["id"].get<WorkerId>() == workerNodeId2) {
             EXPECT_EQ(nodeLocation.at("latitude"), 52.5523);
             EXPECT_EQ(nodeLocation["longitude"], 13.3517);
-        } else if (node["id"] == workerNodeId3) {
+        } else if (node["id"].get<WorkerId>() == workerNodeId3) {
             EXPECT_EQ(nodeLocation["latitude"], 53.5523);
             EXPECT_EQ(nodeLocation["longitude"], -13.3517);
         } else {
@@ -332,7 +333,7 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
     std::vector sources = {workerNodeId3, workerNodeId2};
     for (const auto& edge : edges) {
         ASSERT_EQ(edge["target"], 1);
-        auto edgeSource = edge.at("source");
+        auto edgeSource = edge["source"].get<WorkerId>();
         auto sourcesIterator = std::find(sources.begin(), sources.end(), edgeSource);
         ASSERT_NE(sourcesIterator, sources.end());
         sources.erase(sourcesIterator);

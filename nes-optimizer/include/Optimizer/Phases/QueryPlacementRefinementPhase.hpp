@@ -15,7 +15,7 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTREFINEMENTPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTREFINEMENTPHASE_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <memory>
 
 namespace NES {

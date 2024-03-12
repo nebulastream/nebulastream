@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Util/OperatorState.hpp>
 #include <stdexcept>

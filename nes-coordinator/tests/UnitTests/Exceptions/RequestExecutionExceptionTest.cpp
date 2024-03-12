@@ -51,7 +51,7 @@ TEST_F(RequestExecutionExceptionTest, testInstanceOf) {
     ASSERT_TRUE(test2.instanceOf<QueryNotFoundException>());
     ASSERT_FALSE(test2.instanceOf<Exceptions::QueryUndeploymentException>());
 
-    Exceptions::QueryUndeploymentException queryUndeploymentException(1, "could not undeploy");
+    Exceptions::QueryUndeploymentException queryUndeploymentException(SharedQueryId(1), "could not undeploy");
     RequestExecutionException& test3 = queryUndeploymentException;
     ASSERT_FALSE(test3.instanceOf<InvalidQueryStateException>());
     ASSERT_FALSE(test3.instanceOf<QueryNotFoundException>());

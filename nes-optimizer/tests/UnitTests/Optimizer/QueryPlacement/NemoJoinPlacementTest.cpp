@@ -78,8 +78,8 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
      */
     static TopologyPtr setupTopology(uint64_t layers, uint64_t nodesPerNode, uint64_t leafNodesPerNode) {
         uint64_t resources = 100;
-        uint64_t rootId = 1;
-        uint64_t nodeId = rootId;
+        auto rootId = WorkerId(1);
+        auto nodeId = rootId.getRawValue();
         uint64_t leafNodes = 0;
 
         std::vector<WorkerId> nodes;
@@ -107,9 +107,16 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
                         leafNodes++;
                     }
                     nodeId++;
-                    topology->registerWorker(nodeId, "localhost", 4000 + nodeId, 5000 + nodeId, resources, properties, 0, 0);
-                    topology->removeTopologyNodeAsChild(rootId, nodeId);
-                    topology->addTopologyNodeAsChild(parent, nodeId);
+                    topology->registerWorker(WorkerId(nodeId),
+                                             "localhost",
+                                             4000 + nodeId,
+                                             5000 + nodeId,
+                                             resources,
+                                             properties,
+                                             0,
+                                             0);
+                    topology->removeTopologyNodeAsChild(rootId, WorkerId(nodeId));
+                    topology->addTopologyNodeAsChild(parent, WorkerId(nodeId));
                     nodes.emplace_back(nodeId);
                     newParents.emplace_back(nodeId);
                 }
@@ -135,9 +142,9 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
         sourceCatalog->addLogicalSource(logSourceNameRight, schema);
 
         for (auto nodeId : sourceNodes) {
-            const auto isEven = nodeId % 2 == 0;
+            const auto isEven = nodeId.getRawValue() % 2 == 0;
             std::string logSourceName = isEven ? logSourceNameLeft : logSourceNameRight;
-            std::string phySourceName = isEven ? "left_" + std::to_string(nodeId) : "right_" + std::to_string(nodeId);
+            std::string phySourceName = isEven ? "left_" + nodeId.toString() : "right_" + nodeId.toString();
             CSVSourceTypePtr csvSourceType = CSVSourceType::create(logSourceName, phySourceName);
 
             auto physicalSource = PhysicalSource::create(csvSourceType);
@@ -152,10 +159,10 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
     /**
      * Performs an operator placement based on the given query, topology, source catalog and optimizer config.
      */
-    static std::tuple<uint64_t, GlobalExecutionPlanPtr> runPlacement(const Query& query,
-                                                                     const TopologyPtr& topology,
-                                                                     const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                                     const OptimizerConfiguration& optimizerConfig) {
+    static std::tuple<SharedQueryId, GlobalExecutionPlanPtr> runPlacement(const Query& query,
+                                                                          const TopologyPtr& topology,
+                                                                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                                          const OptimizerConfiguration& optimizerConfig) {
         std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog = Catalogs::UDF::UDFCatalog::create();
         auto testQueryPlan = query.getQueryPlan();
         testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
@@ -222,7 +229,7 @@ class NemoJoinPlacementTest : public Testing::BaseUnitTest {
 
 TEST_F(NemoJoinPlacementTest, testNemoJoin) {
     // create flat topology with 1 coordinator, 3 workers and 6 sources
-    const std::vector<WorkerId>& sourceNodes = {5, 6, 7, 8, 9, 10};
+    const std::vector<WorkerId>& sourceNodes = {WorkerId(5), WorkerId(6), WorkerId(7), WorkerId(8), WorkerId(9), WorkerId(10)};
     auto topology = setupTopology(3, 3, 2);
     auto sourceCatalog = setupJoinSourceCatalog(sourceNodes);
 

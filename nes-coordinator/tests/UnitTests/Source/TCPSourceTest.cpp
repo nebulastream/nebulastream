@@ -30,7 +30,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -41,11 +41,11 @@
 #include <netinet/in.h>
 
 #ifndef OPERATORID
-#define OPERATORID 1
+#define OPERATORID OperatorId(1)
 #endif
 
 #ifndef ORIGINID
-#define ORIGINID 1
+#define ORIGINID OriginId(1)
 #endif
 
 #ifndef STATISTICID
@@ -158,7 +158,7 @@ class TCPSourceTest : public Testing::BaseIntegrationTest {
         bufferManager = std::make_shared<Runtime::BufferManager>();
         queryManager = std::make_shared<Runtime::DynamicQueryManager>(nullptr,
                                                                       std::vector{bufferManager},
-                                                                      1,
+                                                                      WorkerId(1),
                                                                       1,
                                                                       std::make_shared<Runtime::HardwareManager>(),
                                                                       1);

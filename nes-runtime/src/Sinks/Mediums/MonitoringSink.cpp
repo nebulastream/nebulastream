@@ -29,10 +29,15 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                                Monitoring::MetricCollectorType collectorType,
                                Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
-                               QueryId queryId,
-                               DecomposedQueryPlanId querySubPlanId,
+                               SharedQueryId sharedQueryId,
+                               DecomposedQueryPlanId decomposedQueryPlanId,
                                uint64_t numberOfOrigins)
-    : SinkMedium(std::move(sinkFormat), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins),
+    : SinkMedium(std::move(sinkFormat),
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 sharedQueryId,
+                 decomposedQueryPlanId,
+                 numberOfOrigins),
       metricStore(metricStore), collectorType(collectorType) {
     NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");
 }
@@ -50,15 +55,15 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
 
     Monitoring::MetricPtr parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
     Monitoring::readFromBuffer(parsedMetric, inputBuffer, 0);
-    auto nodeIdPtr = (uint64_t*) inputBuffer.getBuffer();
-    uint64_t nodeId = nodeIdPtr[0];
+    WorkerId workerId = INVALID_WORKER_NODE_ID;
+    std::memcpy(&workerId, inputBuffer.getBuffer(), sizeof(workerId));
     NES_TRACE("MonitoringSink: Received buffer for {} with {} tuple and size {}:{}",
-              nodeId,
+              workerId,
               inputBuffer.getNumberOfTuples(),
               getSchemaPtr()->getSchemaSizeInBytes(),
               asJson(parsedMetric));
 
-    metricStore->addMetrics(nodeId, std::move(parsedMetric));
+    metricStore->addMetrics(workerId, std::move(parsedMetric));
     return true;
 }
 

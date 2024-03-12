@@ -38,8 +38,8 @@ namespace NES {
  */
 
 DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
-                              QueryId queryId,
-                              DecomposedQueryPlanId querySubPlanId,
+                              SharedQueryId sharedQueryId,
+                              DecomposedQueryPlanId decomposedQueryPlanId,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               uint32_t activeProducers,
                               const std::string& filePath,
@@ -57,8 +57,8 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
-                                    QueryId queryId,
-                                    DecomposedQueryPlanId querySubPlanId,
+                                    SharedQueryId sharedQueryId,
+                                    DecomposedQueryPlanId decomposedQueryPlanId,
                                     const Runtime::NodeEnginePtr& nodeEngine,
                                     uint32_t numOfProducers,
                                     const std::string& filePath,
@@ -75,8 +75,8 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
-                               QueryId queryId,
-                               DecomposedQueryPlanId querySubPlanId,
+                               SharedQueryId sharedQueryId,
+                               DecomposedQueryPlanId decomposedQueryPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t numOfProducers,
                                const std::string& filePath,
@@ -94,8 +94,8 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
-                             QueryId queryId,
-                             DecomposedQueryPlanId querySubPlanId,
+                             SharedQueryId sharedQueryId,
+                             DecomposedQueryPlanId decomposedQueryPlanId,
                              const Runtime::NodeEnginePtr& nodeEngine,
                              uint32_t numOfProducers,
                              const std::string& host,
@@ -114,7 +114,7 @@ DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createOPCSink(SchemaPtr schema,
-                          QueryId queryId,
+                          SharedQueryId queryId,
                           QuerySubPlanId querySubPlanId,
                           Runtime::NodeEnginePtr nodeEngine,
                           std::string url,
@@ -132,8 +132,8 @@ DataSinkPtr createOPCSink(SchemaPtr schema,
  * @return a data sink pointer
  */
 DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
-                             QueryId queryId,
-                             DecomposedQueryPlanId querySubPlanId,
+                             SharedQueryId sharedQueryId,
+                             DecomposedQueryPlanId decomposedQueryPlanId,
                              const Runtime::NodeEnginePtr& nodeEngine,
                              uint32_t numOfProducers,
                              const std::string& host,
@@ -150,8 +150,8 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
-                                QueryId queryId,
-                                DecomposedQueryPlanId querySubPlanId,
+                                SharedQueryId sharedQueryId,
+                                DecomposedQueryPlanId decomposedQueryPlanId,
                                 const Runtime::NodeEnginePtr& nodeEngine,
                                 uint32_t activeProducers,
                                 const std::string& host,
@@ -168,8 +168,8 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
-                               QueryId queryId,
-                               DecomposedQueryPlanId querySubPlanId,
+                               SharedQueryId sharedQueryId,
+                               DecomposedQueryPlanId decomposedQueryPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                std::ostream& out,
@@ -179,8 +179,8 @@ DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
  * @brief create a print that does not output something
  * @return a data sink pointer
  */
-DataSinkPtr createNullOutputSink(QueryId queryId,
-                                 DecomposedQueryPlanId querySubPlanId,
+DataSinkPtr createNullOutputSink(SharedQueryId sharedQueryId,
+                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                  const Runtime::NodeEnginePtr& nodeEngine,
                                  uint32_t activeProducers,
                                  uint64_t numberOfOrigins = 1);
@@ -195,8 +195,8 @@ DataSinkPtr createNullOutputSink(QueryId queryId,
  * @return a data sink pointer
  */
 DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
-                               QueryId queryId,
-                               DecomposedQueryPlanId querySubPlanId,
+                               SharedQueryId sharedQueryId,
+                               DecomposedQueryPlanId decomposedQueryPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                std::ostream& out,
@@ -214,9 +214,9 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
-                              uint64_t uniqueNetworkSinkDescriptorId,
-                              QueryId queryId,
-                              DecomposedQueryPlanId querySubPlanId,
+                              OperatorId uniqueNetworkSinkDescriptorId,
+                              SharedQueryId sharedQueryId,
+                              DecomposedQueryPlanId decomposedQueryPlanId,
                               const Network::NodeLocation& nodeLocation,
                               Network::NesPartition nesPartition,
                               const Runtime::NodeEnginePtr& nodeEngine,
@@ -231,8 +231,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
  * @param metricStore
  * @param nodeEngine
  * @param numOfProducers
- * @param queryId
- * @param querySubPlanId
+ * @param sharedQueryId
+ * @param decomposedQueryPlanId
  * @param numberOfOrigins
  * @return a data sink pointer
  */
@@ -241,8 +241,8 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  const SchemaPtr& schema,
                                  Runtime::NodeEnginePtr nodeEngine,
                                  uint32_t numOfProducers,
-                                 QueryId queryId,
-                                 DecomposedQueryPlanId querySubPlanId,
+                                 SharedQueryId sharedQueryId,
+                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                  uint64_t numberOfOrigins = 1);
 
 /**
@@ -250,8 +250,8 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
  * @param schema
  * @param nodeEngine
  * @param numOfProducers
- * @param queryId
- * @param querySubPlanId
+ * @param sharedQueryId
+ * @param decomposedQueryPlanId
  * @param numberOfOrigins
  * @param sinkFormatType
  * @return DataSinkPtr
@@ -259,8 +259,8 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
 DataSinkPtr createStatisticSink(const SchemaPtr& schema,
                                 const Runtime::NodeEnginePtr& nodeEngine,
                                 size_t numOfProducers,
-                                QueryId queryId,
-                                DecomposedQueryPlanId querySubPlanId,
+                                SharedQueryId sharedQueryId,
+                                DecomposedQueryPlanId decomposedQueryPlanId,
                                 uint64_t numberOfOrigins,
                                 Statistic::StatisticSinkFormatType sinkFormatType);
 
@@ -268,8 +268,8 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
 /**
  * @brief create kafka sink
  * @param schema: schema of the data
- * @param queryId of the query that writes to the sink
- * @param querySubPlanId of the query that writes to the sink
+ * @param sharedQueryId of the query that writes to the sink
+ * @param decomposedQueryPlanId of the query that writes to the sink
  * @param nodeEngine
  * @param activeProducers how many different queries write to this sink which is needed for sink shutdown
  * @param brokers: broker list
@@ -279,8 +279,8 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
-                               QueryId queryId,
-                               DecomposedQueryPlanId querySubPlanId,
+                               SharedQueryId sharedQueryId,
+                               DecomposedQueryPlanId decomposedQueryPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                const std::string& brokers,
@@ -307,8 +307,8 @@ DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
  * @return a data sink pointer
  */
 DataSinkPtr createMQTTSink(const SchemaPtr& schema,
-                           QueryId queryId,
-                           DecomposedQueryPlanId querySubPlanId,
+                           SharedQueryId sharedQueryId,
+                           DecomposedQueryPlanId decomposedQueryPlanId,
                            const Runtime::NodeEnginePtr& nodeEngine,
                            uint32_t numOfProducers,
                            std::string const& address,

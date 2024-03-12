@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWDESCRIPTOR_HPP_
 
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <vector>
 
@@ -135,7 +135,7 @@ class LogicalWindowDescriptor {
      * @brief Getter for the origin id of this window.
      * @return origin id
      */
-    [[nodiscard]] uint64_t getOriginId() const;
+    [[nodiscard]] OriginId getOriginId() const;
 
     /**
      * @brief Setter for the origin id
@@ -177,7 +177,7 @@ class LogicalWindowDescriptor {
     std::vector<FieldAccessExpressionNodePtr> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
-    OriginId originId{};
+    OriginId originId = INVALID_ORIGIN_ID;
     uint64_t allowedLateness;
 };
 

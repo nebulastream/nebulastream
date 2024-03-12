@@ -14,6 +14,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
 #include <memory>
@@ -23,7 +24,6 @@ namespace NES {
 
 //todo #3610: currently we only have handle that allow reading and writing. but we should also define also handles that allow only const operations
 
-using RequestId = uint64_t;
 class UnlockDeleter;
 template<typename T>
 //on deletion, of the resource handle, the unlock deleter will only unlock the resource instead of freeing it
@@ -66,7 +66,7 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 
 namespace RequestProcessor {
 
-static constexpr RequestId MAX_REQUEST_ID = std::numeric_limits<RequestId>::max();
+static constexpr RequestId MAX_REQUEST_ID = RequestId(std::numeric_limits<RequestId::Underlying>::max());
 
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;

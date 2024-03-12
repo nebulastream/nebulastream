@@ -83,9 +83,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     NES_INFO("worker started successfully");
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_TRUE(topology->nodeWithWorkerIdExists(1u));// worker inside the coordinator
-    EXPECT_TRUE(topology->nodeWithWorkerIdExists(2u));// first worker should get id 2
-    EXPECT_TRUE(topology->nodeWithWorkerIdExists(3u));// second worker should get id 3
+    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(1)));// worker inside the coordinator
+    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(2)));// first worker should get id 2
+    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(3)));// second worker should get id 3
 
     auto rootWorkerNodeIds = topology->getRootWorkerNodeIds();
     EXPECT_EQ(rootWorkerNodeIds.size(), 1);

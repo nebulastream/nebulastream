@@ -14,7 +14,7 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_CHARACTERISTIC_INFRASTRUCTURECHARACTERISTIC_HPP_
-#include <Identifiers.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
 namespace NES::Statistic {
 

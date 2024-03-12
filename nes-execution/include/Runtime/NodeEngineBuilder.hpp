@@ -58,11 +58,11 @@ class NodeEngineBuilder {
     NodeEngineBuilder& setQueryStatusListener(AbstractQueryStatusListenerPtr nesWorker);
 
     /**
-     * setter used to pass a NodeEngineId to NodeEngineBuilder. Optional
+     * setter used to pass a WorkerId to NodeEngineBuilder. Optional
      * @param nodeEngineId
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setNodeEngineId(uint64_t nodeEngineId);
+    NodeEngineBuilder& setWorkerId(WorkerId nodeEngineId);
 
     /**
      * setter used to pass a partition manager to NodeEngineBuilder. Optional
@@ -128,7 +128,7 @@ class NodeEngineBuilder {
     explicit NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
 
     std::shared_ptr<AbstractQueryStatusListener> nesWorker;
-    uint64_t nodeEngineId = 0;
+    WorkerId nodeEngineId = INVALID<WorkerId>;
     Network::PartitionManagerPtr partitionManager;
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
@@ -153,7 +153,7 @@ class NodeEngineBuilder {
      * @brief Returns the next free node id
      * @return node id
      */
-    static uint64_t getNextNodeEngineId();
+    static WorkerId getNextWorkerId();
 };
 }// namespace Runtime
 }// namespace NES

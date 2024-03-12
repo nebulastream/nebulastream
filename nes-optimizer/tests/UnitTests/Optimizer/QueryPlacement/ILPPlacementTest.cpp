@@ -89,15 +89,15 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        WorkerId rootNodeId = 1;
+        auto rootNodeId = WorkerId(1);
         topologyForILP->registerWorker(rootNodeId, "localhost", 123, 124, 100, properties, 0,0);
         topologyForILP->addAsRootWorkerId(rootNodeId);
 
-        WorkerId middleNodeId = 2;
+        auto middleNodeId = WorkerId(2);
         topologyForILP->registerWorker(middleNodeId, "localhost", 123, 124, 10, properties, 0,0);
         topologyForILP->addTopologyNodeAsChild(rootNodeId, middleNodeId);
 
-        WorkerId srcNodeId = 3;
+        auto srcNodeId = WorkerId(3);
         topologyForILP->registerWorker(srcNodeId, "localhost", 123, 124, 3, properties, 0,0);
         topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
         topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId);
@@ -282,7 +282,7 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     //Assertion
     ASSERT_EQ(lockedExecutionNodes.size(), 3U);
     for (const auto& executionNode : lockedExecutionNodes) {
-        if (executionNode->operator*()->getId() == 3) {
+        if (executionNode->operator*()->getId() == WorkerId(3)) {
             // place filter on source node
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -293,7 +293,7 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-        } else if (executionNode->operator*()->getId() == 1) {
+        } else if (executionNode->operator*()->getId() == WorkerId(1)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -346,7 +346,7 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
     //Assertion
     ASSERT_EQ(lockedExecutionNodes.size(), 3U);
     for (const auto& executionNode : lockedExecutionNodes) {
-        if (executionNode->operator*()->getId() == 1) {
+        if (executionNode->operator*()->getId() == WorkerId(1)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -356,7 +356,7 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-        } else if (executionNode->operator*()->getId() == 2) {
+        } else if (executionNode->operator*()->getId() == WorkerId(2)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -371,7 +371,7 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
                             ->getChildren()[0]
                             ->getChildren()[0]
                             ->instanceOf<SourceLogicalOperator>());
-        } else if (executionNode->operator*()->getId() == 3) {
+        } else if (executionNode->operator*()->getId() == WorkerId(3)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -424,7 +424,7 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3U);
     for (const auto& executionNode : executionNodes) {
-        if (executionNode->operator*()->getId() == 1) {
+        if (executionNode->operator*()->getId() == WorkerId(1)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -434,7 +434,7 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-        } else if (executionNode->operator*()->getId() == 2) {
+        } else if (executionNode->operator*()->getId() == WorkerId(2)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -449,7 +449,7 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
                             ->getChildren()[0]
                             ->getChildren()[0]
                             ->instanceOf<SourceLogicalOperator>());
-        } else if (executionNode->operator*()->getId() == 3) {
+        } else if (executionNode->operator*()->getId() == WorkerId(3)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -505,7 +505,7 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
     ASSERT_EQ(executionNodes.size(), 3U);
     for (const auto& executionNode : executionNodes) {
-        if (executionNode->operator*()->getId() == 3) {
+        if (executionNode->operator*()->getId() == WorkerId(3)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -514,7 +514,7 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
             OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-        } else if (executionNode->operator*()->getId() == 1) {
+        } else if (executionNode->operator*()->getId() == WorkerId(1)) {
             // both map operators should be placed on cloud node
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -572,7 +572,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3U);
     for (const auto& executionNode : executionNodes) {
-        if (executionNode->operator*()->getId() == 3) {
+        if (executionNode->operator*()->getId() == WorkerId(3)) {
             // filter should be placed on source node
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -583,7 +583,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-        } else if (executionNode->operator*()->getId() == 1) {
+        } else if (executionNode->operator*()->getId() == WorkerId(1)) {
             // map should be placed on cloud node
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -679,7 +679,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
         //Assertions to check correct placement
         ASSERT_EQ(executionNodes.size(), 3U);
         for (const auto& executionNode : executionNodes) {
-            if (executionNode->operator*()->getId() == 3) {
+            if (executionNode->operator*()->getId() == WorkerId(3)) {
                 // filter should be placed on source node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -690,7 +690,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-            } else if (executionNode->operator*()->getId() == 1) {
+            } else if (executionNode->operator*()->getId() == WorkerId(1)) {
                 // map should be placed on cloud node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -728,7 +728,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
         //Assertions to check correct placement
         ASSERT_EQ(executionNodes.size(), 3U);
         for (const auto& executionNode : executionNodes) {
-            if (executionNode->operator*()->getId() == 3) {
+            if (executionNode->operator*()->getId() == WorkerId(3)) {
                 // filter should be placed on source node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -739,7 +739,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-            } else if (executionNode->operator*()->getId() == 2) {
+            } else if (executionNode->operator*()->getId() == WorkerId(2)) {
                 // map should be placed on cloud node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 2U);
@@ -759,7 +759,7 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
                 OperatorPtr rootOperator2 = rootOperatorsForPlan2[0];
                 EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperator>());
                 ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            } else if (executionNode->operator*()->getId() == 1) {
+            } else if (executionNode->operator*()->getId() == WorkerId(1)) {
                 // map should be placed on cloud node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 2U);
@@ -881,7 +881,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
         //Assertions to check correct placement
         ASSERT_EQ(executionNodes.size(), 3U);
         for (const auto& executionNode : executionNodes) {
-            if (executionNode->operator*()->getId() == 3) {
+            if (executionNode->operator*()->getId() == WorkerId(3)) {
                 // filter should be placed on source node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -892,7 +892,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-            } else if (executionNode->operator*()->getId() == 1) {
+            } else if (executionNode->operator*()->getId() == WorkerId(1)) {
                 // map should be placed on cloud node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -930,7 +930,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
         //Assertions to check correct placement
         ASSERT_EQ(executionNodes.size(), 3U);
         for (const auto& executionNode : executionNodes) {
-            if (executionNode->operator*()->getId() == 3) {
+            if (executionNode->operator*()->getId() == WorkerId(3)) {
                 // filter should be placed on source node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -941,7 +941,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-            } else if (executionNode->operator*()->getId() == 2) {
+            } else if (executionNode->operator*()->getId() == WorkerId(2)) {
                 // map should be placed on cloud node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 3U);
@@ -961,7 +961,7 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
                 OperatorPtr rootOperator2 = rootOperatorsForPlan2[0];
                 EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperator>());
                 ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            } else if (executionNode->operator*()->getId() == 1) {
+            } else if (executionNode->operator*()->getId() == WorkerId(1)) {
                 // map should be placed on cloud node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 3U);
@@ -1092,7 +1092,7 @@ TEST_F(ILPPlacementTest, testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) 
         //Assertions to check correct placement
         ASSERT_EQ(executionNodes.size(), 3U);
         for (const auto& executionNode : executionNodes) {
-            if (executionNode->operator*()->getId() == 3) {
+            if (executionNode->operator*()->getId() == WorkerId(3)) {
                 // filter should be placed on source node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 1U);
@@ -1103,7 +1103,7 @@ TEST_F(ILPPlacementTest, testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) 
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
                 EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-            } else if (executionNode->operator*()->getId() == 2) {
+            } else if (executionNode->operator*()->getId() == WorkerId(2)) {
                 // map should be placed on cloud node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 2U);
@@ -1124,7 +1124,7 @@ TEST_F(ILPPlacementTest, testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) 
                 EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperator>());
                 ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
                 EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-            } else if (executionNode->operator*()->getId() == 1) {
+            } else if (executionNode->operator*()->getId() == WorkerId(1)) {
                 // map should be placed on cloud node
                 auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
                 ASSERT_EQ(decomposedQueryPlans.size(), 2U);
@@ -1190,7 +1190,7 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
     //Assertion
     ASSERT_EQ(lockedExecutionNodes.size(), 3U);
     for (const auto& executionNode : lockedExecutionNodes) {
-        if (executionNode->operator*()->getId() == 3) {
+        if (executionNode->operator*()->getId() == WorkerId(3)) {
             // place filter on source node
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 2U);
@@ -1200,7 +1200,7 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
             OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
-        } else if (executionNode->operator*()->getId() == 2) {
+        } else if (executionNode->operator*()->getId() == WorkerId(2)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
@@ -1208,7 +1208,7 @@ TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorPtr actualRootOperator = actualRootOperators[0];
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalUnionOperator>());
-        } else if (executionNode->operator*()->getId() == 1) {
+        } else if (executionNode->operator*()->getId() == WorkerId(1)) {
             auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
