@@ -146,4 +146,4 @@ class QueryPlacementAmendmentPhase {
     PlacementAmendmentMode placementAmendmentMode;
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTAMENDMENTPHASE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTAMENDMENTPHASE_HPP_

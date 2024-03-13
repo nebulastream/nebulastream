@@ -19,9 +19,9 @@
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -56,10 +56,10 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
       z3Context(z3Context) {}
 
-std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                            const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                            const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                            DecomposedQueryPlanVersion querySubPlanVersion) {
+PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                               const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                               const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                               DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
         NES_INFO("Performing placement of the input query plan with id {}", sharedQueryId);
@@ -105,7 +105,7 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
 
                 if (downstreamOperators.empty()) {
                     NES_ERROR("Unable to find pinned downstream operator.");
-                    return {};
+                    return {false, {}};
                 }
 
                 uint16_t unplacedDownStreamOperatorCount = 0;
@@ -115,7 +115,7 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
                     //  multiple sinks or parents.
                     if (unplacedDownStreamOperatorCount > 1) {
                         NES_ERROR("Current implementation can not place plan with multiple downstream operators.");
-                        return {};
+                        return {false, {}};
                     }
 
                     // Only include unplaced operators in the path
@@ -139,7 +139,7 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
                 //FIXME #2290: path with multiple parents not supported
                 if (topologyPath[0]->getParents().size() > 1) {
                     NES_ERROR("Current implementation can not place operators on topology with multiple paths.");
-                    return {};
+                    return {false, {}};
                 }
                 topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
             }
@@ -212,7 +212,7 @@ std::map<DecomposedQueryPlanId, DeploymentContextPtr> ILPStrategy::updateGlobalE
         // 6. Check if we have solution, return false if that is not the case
         if (z3::sat != opt.check()) {
             NES_ERROR("Solver failed.");
-            return {};
+            return {false, {}};
         }
 
         // At this point, we already get the solution.

@@ -40,11 +40,10 @@ BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecution
                                    PlacementAmendmentMode placementAmendmentMode)
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
-std::map<DecomposedQueryPlanId, DeploymentContextPtr>
-BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                            const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                            const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                            DecomposedQueryPlanVersion querySubPlanVersion) {
+PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                                    const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                                    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
 
@@ -87,9 +86,7 @@ void BottomUpStrategy::pinOperators(const std::set<LogicalOperatorPtr>& pinnedUp
         if (pinnedUpStreamOperator->getOperatorState() == OperatorState::PLACED) {
             //Place all downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
-                identifyPinningLocation(downStreamNode->as<LogicalOperator>(),
-                                        candidateTopologyNode,
-                                        pinnedDownStreamOperators);
+                identifyPinningLocation(downStreamNode->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
             }
         } else {// 2. If pinned operator is not placed then start by placing the operator
             if (candidateTopologyNode->getAvailableResources() == 0) {

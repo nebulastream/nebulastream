@@ -209,7 +209,6 @@ bool Topology::unregisterWorker(WorkerId topologyNodeId) {
     }
 
     auto found = std::find(rootWorkerIds.begin(), rootWorkerIds.end(), topologyNodeId);
-
     if (found != rootWorkerIds.end()) {
         NES_WARNING("Removing the root node {}.", topologyNodeId);
         rootWorkerIds.erase(found);

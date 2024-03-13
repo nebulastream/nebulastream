@@ -710,12 +710,12 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
     }
 }
 
-std::map<DecomposedQueryPlanId, DeploymentContextPtr>
+PlacementAdditionResult
 BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     ComputedDecomposedQueryPlans& computedSubQueryPlans,
                                                     DecomposedQueryPlanVersion decomposedQueryPlanVersion) {
 
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
+    std::unordered_map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
 
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
@@ -740,7 +740,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
             if (!lockedTopologyNode->operator*()->occupySlots(consumedResources)) {
                 NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
-                return deploymentContexts;
+                return PlacementAdditionResult(false, deploymentContexts);
             }
 
             // 1.3. Check if the worker node contains pinned upstream operators
@@ -992,7 +992,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             throw ex;
         }
     }
-    return deploymentContexts;
+    return PlacementAdditionResult(true, deploymentContexts);
 }
 
 void BasePlacementAdditionStrategy::markOperatorsAsPlaced(WorkerId workerId, DecomposedQueryPlanPtr decomposedQueryPlan) {

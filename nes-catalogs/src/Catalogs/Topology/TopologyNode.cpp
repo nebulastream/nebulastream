@@ -76,8 +76,10 @@ bool TopologyNode::occupySlots(uint16_t occupySlots) {
               workerId,
               occupiedSlots,
               totalSlots);
-    NES_ASSERT(occupySlots <= (totalSlots - occupiedSlots),
-               "Amount of resources to be used should not be more than available resources.");
+    if(occupySlots > (totalSlots - occupiedSlots)) {
+        NES_WARNING("Amount of resources to be used should not be more than available resources.");
+        return false;
+    }
     occupiedSlots = occupiedSlots + occupySlots;
     return true;
 }

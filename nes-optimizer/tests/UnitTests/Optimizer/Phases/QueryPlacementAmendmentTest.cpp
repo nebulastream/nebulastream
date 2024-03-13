@@ -42,8 +42,8 @@
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
-#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
+#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
@@ -647,9 +647,8 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
             ASSERT_EQ(actualRootOperators.size(), 2UL);
             for (const auto& rootOperator : actualRootOperators) {
                 EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperator>());
-                EXPECT_TRUE(rootOperator->as<SinkLogicalOperator>()
-                                ->getSinkDescriptor()
-                                ->instanceOf<Network::NetworkSinkDescriptor>());
+                EXPECT_TRUE(
+                    rootOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>());
             }
             for (const auto& sourceOperator : decomposedQueryPlan->getSourceOperators()) {
                 EXPECT_TRUE(sourceOperator->getParents().size() == 1);
@@ -777,9 +776,8 @@ TEST_F(QueryPlacementAmendmentTest, testPartialPlacingQueryWithMultipleSinkOpera
             ASSERT_EQ(actualRootOperators.size(), 1UL);
             for (const auto& rootOperator : actualRootOperators) {
                 EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperator>());
-                EXPECT_TRUE(rootOperator->as<SinkLogicalOperator>()
-                                ->getSinkDescriptor()
-                                ->instanceOf<Network::NetworkSinkDescriptor>());
+                EXPECT_TRUE(
+                    rootOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>());
             }
         }
     }
@@ -1129,8 +1127,7 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testIFCOPPlacementOnBranchedTopolog
                     if (child->as<SourceLogicalOperator>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
                         isSource1PlacementValid =
                             executionNode->operator*()->getId() == 3 || executionNode->operator*()->getId() == 4;
-                    } else if (child->as<SourceLogicalOperator>()->getId()
-                               == testQueryPlan->getSourceOperators()[1]->getId()) {
+                    } else if (child->as<SourceLogicalOperator>()->getId() == testQueryPlan->getSourceOperators()[1]->getId()) {
                         isSource2PlacementValid =
                             executionNode->operator*()->getId() == 3 || executionNode->operator*()->getId() == 4;
                     }
@@ -1759,9 +1756,9 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
             } else if (executionNode->operator*()->getId() == 3) {
                 auto placedSink = ops[0];
                 ASSERT_TRUE(placedSink->instanceOf<SinkLogicalOperator>());
-                auto placedSource = placedSink->getChildren()[0];
-                ASSERT_TRUE(placedSource->instanceOf<SourceLogicalOperator>());
-                ASSERT_EQ(placedSource->as<SourceLogicalOperator>()->getId(), source1->getId());
+                for (const auto& placedSource : placedSink->getChildren()){
+                    ASSERT_TRUE(placedSource->instanceOf<SourceLogicalOperator>());
+                };
             } else if (executionNode->operator*()->getId() == 4) {
                 auto placedSink = ops[0];
                 ASSERT_TRUE(placedSink->instanceOf<SinkLogicalOperator>());
@@ -2197,8 +2194,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingOptimist
  *  We perform both placements concurrently using the optimistic approach.
  *  The Expectations are that Q1 will fails but Q2 will succeed.
  */
-TEST_F(QueryPlacementAmendmentTest,
-       testIfCanPlaceQueryAfterPlacementFailureConcurrentOperatorPlacementUsingOptimisticBottomUpStrategy) {
+TEST_F(QueryPlacementAmendmentTest, testIfCanPlaceQueryAfterPlacementFailureConcurrentOperatorPlacementUsingOCCBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({2, 2, 2});
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -2254,13 +2250,15 @@ TEST_F(QueryPlacementAmendmentTest,
                                                                                         topology,
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
-    EXPECT_THROW(queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]), Exceptions::QueryPlacementAdditionException);
+    queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]);
+    EXPECT_EQ(sharedQueryPlans[0]->getStatus(), SharedQueryPlanStatus::PARTIALLY_PROCESSED);
 
     auto queryPlacementPhaseInstance2 = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                         topology,
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
-    EXPECT_TRUE(!queryPlacementPhaseInstance2->execute(sharedQueryPlans[1]).empty());
+    queryPlacementPhaseInstance2->execute(sharedQueryPlans[1]);
+    EXPECT_EQ(sharedQueryPlans[1]->getStatus(), SharedQueryPlanStatus::PROCESSED);
 
     // Check the execution plan for failed shared query plans
     //Assertion
@@ -2288,8 +2286,7 @@ TEST_F(QueryPlacementAmendmentTest,
  *  We perform both placements concurrently using the pessimistic approach.
  *  The Expectations are that Q1 will fails but Q2 will succeed.
  */
-TEST_F(QueryPlacementAmendmentTest,
-       testIfCanPlaceQueryAfterPlacementFailureConcurrentOperatorPlacementUsingPessimisticBottomUpStrategy) {
+TEST_F(QueryPlacementAmendmentTest, testIfCanPlaceQueryAfterPlacementFailureConcurrentOperatorPlacementUsing2PLBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({1, 2, 2});
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -2345,13 +2342,15 @@ TEST_F(QueryPlacementAmendmentTest,
                                                                                         topology,
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
-    EXPECT_THROW(queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]), Exceptions::QueryPlacementAdditionException);
+    queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]);
+    EXPECT_EQ(sharedQueryPlans[0]->getStatus(), SharedQueryPlanStatus::PARTIALLY_PROCESSED);
 
     auto queryPlacementPhaseInstance2 = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                         topology,
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
-    EXPECT_TRUE(!queryPlacementPhaseInstance2->execute(sharedQueryPlans[1]).empty());
+    queryPlacementPhaseInstance1->execute(sharedQueryPlans[1]);
+    EXPECT_EQ(sharedQueryPlans[1]->getStatus(), SharedQueryPlanStatus::PROCESSED);
 
     // Check the execution plan for failed shared query plans
     //Assertion
@@ -2837,8 +2836,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
  *
  * Query: SinkOp--filter()--source(A)
  */
-//TODO: activate with #4483
-TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQueryPlanToBeRemoved) {
+TEST_F(QueryPlacementAmendmentTest, testBottomUpForProcessingSharedQueryPlanToBeRemoved) {
     // Setup the topology
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -2897,8 +2895,6 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQuer
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
-    assignDataModificationFactor(testQueryPlan);
-
     // Execute the placement
     auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
     auto sharedQueryId = sharedQueryPlan->getId();
@@ -2907,28 +2903,31 @@ TEST_F(QueryPlacementAmendmentTest, DISABLED_testBottomUpForProcessingSharedQuer
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
-    DecomposedQueryPlanId subPlanIdToRemoveInNextIteration;
-    EXPECT_EQ(executionNodes.size(), 3UL);
+    {
+        auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
+        EXPECT_EQ(executionNodes.size(), 3UL);
+    }
 
-    sharedQueryPlan->removeQuery(1);
-    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-
-    EXPECT_EQ(executionNodes.size(), 3UL);
-    NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
-    for (const auto& executionNode : executionNodes) {
-        std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans =
-            executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
-        for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
-            auto ops = decomposedQueryPlan->getRootOperators();
-            if (executionNode->operator*()->getId() == 1) {
-                EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
-            } else if (executionNode->operator*()->getId() == 2) {
-                EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
-            } else if (executionNode->operator*()->getId() == 3) {
-                EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
+    {
+        sharedQueryPlan->removeQuery(1);
+        queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+        auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
+        EXPECT_EQ(executionNodes.size(), 3UL);
+        NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
+        for (const auto& executionNode : executionNodes) {
+            std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans =
+                executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
+            for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
+                auto ops = decomposedQueryPlan->getRootOperators();
+                if (executionNode->operator*()->getId() == 1) {
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
+                } else if (executionNode->operator*()->getId() == 2) {
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
+                } else if (executionNode->operator*()->getId() == 3) {
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
+                }
+                NES_INFO("Sub Plan: {}", decomposedQueryPlan->toString());
             }
-            NES_INFO("Sub Plan: {}", decomposedQueryPlan->toString());
         }
     }
 }

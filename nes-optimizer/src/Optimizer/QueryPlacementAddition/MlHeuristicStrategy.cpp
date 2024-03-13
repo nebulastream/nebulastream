@@ -48,7 +48,7 @@ MlHeuristicStrategy::MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExe
                                          PlacementAmendmentMode placementAmendmentMode)
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode) {}
 
-std::map<DecomposedQueryPlanId, DeploymentContextPtr> MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+PlacementAdditionResult MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                     const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                     const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                     DecomposedQueryPlanVersion querySubPlanVersion) {

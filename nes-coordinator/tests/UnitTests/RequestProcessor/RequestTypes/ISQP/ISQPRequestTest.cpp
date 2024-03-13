@@ -60,7 +60,7 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
-    Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::TopDown;
+    Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::BottomUp;
     uint8_t ZERO_RETRIES = 0;
     std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
     TopologyPtr topology;
@@ -398,7 +398,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     // Disable incremental placement
     coordinatorConfiguration->optimizer.enableIncrementalPlacement = false;
     // Number of amender threads
-    coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 2;
+    coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
 
     // Prepare
     auto storageHandler = TwoPhaseLockingStorageHandler::create(
@@ -425,12 +425,14 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
 
-    auto query1 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
+    auto query1 =
+        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(1);
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
-    auto query2 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
+    auto query2 =
+        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(2);
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
@@ -516,12 +518,14 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
 
-    auto query1 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
+    auto query1 =
+        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(1);
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
-    auto query2 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
+    auto query2 =
+        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(2);
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
@@ -577,8 +581,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
 
     // Disable query merging
     coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::DefaultQueryMergerRule;
-    // Disable incremental placement
-    coordinatorConfiguration->optimizer.enableIncrementalPlacement = false;
+    // Enable incremental placement
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
     // Number of amender threads
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 2;
     // placement amendment mode
@@ -609,12 +613,18 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
 
-    auto query1 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
+    auto query1 = Query::from(logicalSourceName)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(1);
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
-    auto query2 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
+    auto query2 = Query::from(logicalSourceName)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(2);
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
@@ -946,4 +956,134 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
     auto queryId2 = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response2)->queryId;
     EXPECT_EQ(queryCatalog->getQueryState(queryId2), QueryState::RUNNING);
 }
+
+//test adding multiple queries without merging and perform placement using OCC startegy
+TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
+
+    // init topology nodes
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+    uint16_t numberOfSlots = 4;
+    int nodeId1 = 1;
+    auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, numberOfSlots, properties);
+    int nodeId2 = 2;
+    auto addNodeEvent2 =
+        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, numberOfSlots, properties);
+    int nodeId3 = 3;
+    auto addNodeEvent3 =
+        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, numberOfSlots, properties);
+    int nodeId4 = 4;
+    auto addNodeEvent4 =
+        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, numberOfSlots, properties);
+
+    auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
+    auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
+
+    std::vector<ISQPEventPtr> isqpEventsForRequest1;
+    isqpEventsForRequest1.emplace_back(addNodeEvent1);
+    isqpEventsForRequest1.emplace_back(addNodeEvent2);
+    isqpEventsForRequest1.emplace_back(addNodeEvent3);
+    isqpEventsForRequest1.emplace_back(addNodeEvent4);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink14);
+    isqpEventsForRequest1.emplace_back(isqpAddLink34);
+
+    // Disable query merging
+    coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::DefaultQueryMergerRule;
+    // Enable incremental placement
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
+    // Number of amender threads
+    coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
+    // placement amendment mode
+    coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
+
+    // Prepare
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog});
+    auto isqpRequest1 = ISQPRequest::create(z3Context, isqpEventsForRequest1, ZERO_RETRIES);
+    constexpr RequestId requestId1 = 1;
+    isqpRequest1->setId(requestId1);
+    // Execute add request until deployment phase
+    try {
+        isqpRequest1->execute(storageHandler);
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+        FAIL();
+    }
+    EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
+
+    // Register physical and logical sources
+    std::string logicalSourceName = "test";
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
+    auto physicalSource = PhysicalSource::create(defaultSourceType);
+    auto schema =
+        Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32));
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
+    sourceCatalog->addPhysicalSource(logicalSourceName, sce);
+
+    auto query1 = Query::from(logicalSourceName)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .sink(NullOutputSinkDescriptor::create());
+    const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
+    queryPlan1->setQueryId(1);
+    auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
+
+    auto query2 = Query::from(logicalSourceName)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .sink(NullOutputSinkDescriptor::create());
+    const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
+    queryPlan2->setQueryId(2);
+    auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
+
+    auto query3 = Query::from(logicalSourceName)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .sink(NullOutputSinkDescriptor::create());
+    const QueryPlanPtr& queryPlan3 = query3.getQueryPlan();
+    queryPlan3->setQueryId(3);
+    auto queryAddEvent3 = ISQPAddQueryEvent::create(queryPlan3, TEST_PLACEMENT_STRATEGY);
+
+    auto query4 = Query::from(logicalSourceName)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .map(Attribute("value") = Attribute("value") + 1)
+                      .sink(NullOutputSinkDescriptor::create());
+    const QueryPlanPtr& queryPlan4 = query4.getQueryPlan();
+    queryPlan4->setQueryId(4);
+    auto queryAddEvent4 = ISQPAddQueryEvent::create(queryPlan4, TEST_PLACEMENT_STRATEGY);
+
+    std::vector<ISQPEventPtr> isqpEventsForRequest2;
+    isqpEventsForRequest2.emplace_back(queryAddEvent1);
+    isqpEventsForRequest2.emplace_back(queryAddEvent2);
+    isqpEventsForRequest2.emplace_back(queryAddEvent3);
+    isqpEventsForRequest2.emplace_back(queryAddEvent4);
+
+    // Prepare
+    auto isqpRequest2 = ISQPRequest::create(z3Context, isqpEventsForRequest2, ZERO_RETRIES);
+    constexpr RequestId requestId2 = 2;
+    isqpRequest2->setId(requestId2);
+    // Execute add request until deployment phase
+    try {
+        isqpRequest2->execute(storageHandler);
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+        FAIL();
+    }
+
+    auto sharedQueryPlanToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    // Only two requests should be processed
+    ASSERT_EQ(sharedQueryPlanToDeploy.size(), 2);
+    // Assert that the change log still exists in the failed shared query plans and the status of the query is in optimizing
+    for (const auto& unDeployedSharedQueryPlan : sharedQueryPlanToDeploy) {
+        auto hostedQueryIds = unDeployedSharedQueryPlan->getQueryIds();
+        EXPECT_EQ(hostedQueryIds.size(), 1);
+        EXPECT_EQ(queryCatalog->getQueryState(hostedQueryIds[0]), QueryState::OPTIMIZING);
+        uint64_t nowInMicroSec =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        const ChangeLogEntries& changeLogEntries = unDeployedSharedQueryPlan->getChangeLogEntries(nowInMicroSec);
+        EXPECT_EQ(changeLogEntries.size(), 1);
+    }
+}
+
 }// namespace NES::RequestProcessor
