@@ -29,9 +29,9 @@ namespace NES::Runtime::Execution {
  */
 static SchemaPtr createValueIdTimeStamp() {
     return Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-        ->addField("value", BasicType::UINT64)
-        ->addField("id", BasicType::UINT64)
-        ->addField("timestamp", BasicType::UINT64);
+        ->addField("test1$value", BasicType::UINT64)
+        ->addField("test1$id", BasicType::UINT64)
+        ->addField("test1$timestamp", BasicType::UINT64);
 }
 
 class JoinDeploymentTest : public Testing::BaseIntegrationTest,
@@ -119,12 +119,14 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value1", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("value2", BasicType::UINT64)
                                  ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
     auto query = Query::from("test1")
@@ -143,12 +145,14 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value1", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("value2", BasicType::UINT64)
                                  ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink2.csv");
     auto query = Query::from("test1")
@@ -167,11 +171,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value1", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink3.csv");
     auto query = Query::from("test1")
@@ -208,11 +214,13 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value1", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
     const auto windowSize = 1000UL;
@@ -230,15 +238,23 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
 /**
  * @brief Test a join query that uses fixed-array as keys
  */
-// TODO this test can be enabled once #3638 is merged
-TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
+TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING ||
+        joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE ||
+        joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+        GTEST_SKIP();
+    }
+
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$id1", BasicType::TEXT)
-                                ->addField("test1$timestamp", BasicType::UINT64);
+                                ->addField("test1$timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("test2$id2", BasicType::TEXT)
-                                 ->addField("test2$timestamp", BasicType::UINT64);
+                                 ->addField("test2$timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
+
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window5.csv", "window6.csv", "window_sink4.csv");
     auto query = Query::from("test1")
@@ -254,11 +270,14 @@ TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("id2", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
+
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window8.csv", "window9.csv", "window_sink8.csv");
     auto query = Query::from("test1")

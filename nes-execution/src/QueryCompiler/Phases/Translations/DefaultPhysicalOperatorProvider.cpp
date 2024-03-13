@@ -381,19 +381,19 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
                                                             joinOperator->getOutputOriginIds()[0],
                                                             streamJoinConfig.windowSize,
                                                             streamJoinConfig.windowSlide,
-                                                            joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                            joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
-                                                            Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                                            Nautilus::Interface::PagedVector::PAGE_SIZE);
+                                                            joinOperator->getLeftInputSchema(),
+                                                            joinOperator->getRightInputSchema(),
+                                                            Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
+                                                            Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE);
     } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::NLJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
                                                               joinOperator->getOutputOriginIds()[0],
                                                               streamJoinConfig.windowSize,
                                                               streamJoinConfig.windowSlide,
-                                                              joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                              joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
-                                                              Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                                              Nautilus::Interface::PagedVector::PAGE_SIZE);
+                                                              joinOperator->getLeftInputSchema(),
+                                                              joinOperator->getRightInputSchema(),
+                                                              Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
+                                                              Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -410,8 +410,8 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
                                                            joinOperator->getOutputOriginIds()[0],
                                                            streamJoinConfig.windowSize,
                                                            streamJoinConfig.windowSlide,
-                                                           joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                           joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                           joinOperator->getLeftInputSchema(),
+                                                           joinOperator->getRightInputSchema(),
                                                            streamJoinConfig.joinStrategy,
                                                            options->getHashJoinOptions()->getTotalSizeForDataStructures(),
                                                            options->getHashJoinOptions()->getPreAllocPageCnt(),
@@ -422,8 +422,8 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
                                                              joinOperator->getOutputOriginIds()[0],
                                                              streamJoinConfig.windowSize,
                                                              streamJoinConfig.windowSlide,
-                                                             joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                             joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                             joinOperator->getLeftInputSchema(),
+                                                             joinOperator->getRightInputSchema(),
                                                              streamJoinConfig.joinStrategy,
                                                              options->getHashJoinOptions()->getTotalSizeForDataStructures(),
                                                              options->getHashJoinOptions()->getPreAllocPageCnt(),
