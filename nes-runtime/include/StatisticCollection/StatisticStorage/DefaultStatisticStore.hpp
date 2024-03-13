@@ -36,6 +36,8 @@ class DefaultStatisticStore : public AbstractStatisticStore {
                                             const Windowing::TimeMeasure& startTs,
                                             const Windowing::TimeMeasure& endTs) override;
 
+    std::vector<StatisticPtr> getAllStatistics() override;
+
     /**
      * @brief Implements the insert of the interface. If a statistic exists with the same startTs and endTs, we do not
      * allow the insertion.

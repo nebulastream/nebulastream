@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/MinVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -45,16 +46,22 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
     // Creating the synopsisDescriptor depending on the metric type
     const auto metricType = characteristic.getType();
     WindowStatisticDescriptorPtr synopsisDescriptor;
+    StatisticSinkFormatType sinkFormatType;
     if (metricType->instanceOf<Selectivity>()) {
         synopsisDescriptor = CountMinDescriptor::create(metricType->getField());
+        sinkFormatType = StatisticSinkFormatType::COUNT_MIN;
     } else if (metricType->instanceOf<IngestionRate>()) {
         synopsisDescriptor = CountMinDescriptor::create(metricType->getField());
+        sinkFormatType = StatisticSinkFormatType::COUNT_MIN;
     } else if (metricType->instanceOf<BufferRate>()) {
         synopsisDescriptor = CountMinDescriptor::create(metricType->getField());
+        sinkFormatType = StatisticSinkFormatType::COUNT_MIN;
     } else if (metricType->instanceOf<Cardinality>()) {
         synopsisDescriptor = HyperLogLogDescriptor::create(metricType->getField());
+        sinkFormatType = StatisticSinkFormatType::HLL;
     } else if (metricType->instanceOf<MinVal>()) {
         synopsisDescriptor = CountMinDescriptor::create(metricType->getField());
+        sinkFormatType = StatisticSinkFormatType::COUNT_MIN;
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -74,10 +81,9 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
         NES_NOT_IMPLEMENTED();
     }
 
-    // We add a statistic sink with issue #4632 here
     return Query::from(logicalSourceName)
         .buildStatistic(window, synopsisDescriptor, metricType->hash())
-        .sink(NullOutputSinkDescriptor::create());
+        .sink(StatisticSinkDescriptor::create(sinkFormatType));
 }
 
 DefaultStatisticQueryGenerator::~DefaultStatisticQueryGenerator() = default;

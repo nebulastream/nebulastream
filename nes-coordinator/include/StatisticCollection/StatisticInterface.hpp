@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
+#include <StatisticCollection/StatisticKey.hpp>
 #include <functional>
 
 namespace NES::Statistic {

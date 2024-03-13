@@ -20,6 +20,7 @@
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
 #include <map>
@@ -310,6 +311,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
+    const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
+
     /**
      * @brief This function is only to be used for experiments. Do not call from other classes. reconfigure the network sink to point to a new source. Buffer all tuples that are received while the new connection
      * is being established.
@@ -375,6 +378,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::PartitionManagerPtr partitionManager;
     AbstractQueryStatusListenerPtr nesWorker;
     Network::NetworkManagerPtr networkManager;
+    Statistic::AbstractStatisticStorePtr statisticStore;
     OpenCLManagerPtr openCLManager;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;

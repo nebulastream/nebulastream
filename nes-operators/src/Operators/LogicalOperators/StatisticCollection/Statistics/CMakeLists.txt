@@ -12,6 +12,7 @@
 # limitations under the License.
 
 add_subdirectory(Metrics)
+add_subdirectory(Synopses)
 
 add_source_files(nes-operators
         Statistic.cpp

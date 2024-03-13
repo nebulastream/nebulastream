@@ -59,7 +59,7 @@ class DefaultStatisticQueryGeneratorTest : public Testing::BaseUnitTest {
                                         ->addField("car$" + Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
                                         ->addField("car$" + Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                                         ->addField("car$" + Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
-                                        ->addField("car$" + Statistic::STATISTIC_KEY_FIELD_NAME, BasicType::UINT64)
+                                        ->addField("car$" + Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
                                         ->addField("car$" + Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64);
 
         // Creating the TypeInferencePhase

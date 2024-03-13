@@ -47,6 +47,15 @@ std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& f
     return {nameFieldIt->second};
 }
 
+std::optional<uint64_t> MemoryLayout::getFieldOffset(uint64_t tupleIndex, std::string_view fieldName) const {
+    const auto fieldIndex = getFieldIndexFromName(std::string(fieldName));
+    if (fieldIndex.has_value()) {
+        const auto fieldIndexValue = fieldIndex.value();
+        return getFieldOffset(tupleIndex, fieldIndexValue);
+    }
+    return {};
+}
+
 uint64_t MemoryLayout::getCapacity() const { return capacity; }
 
 const SchemaPtr& MemoryLayout::getSchema() const { return schema; }

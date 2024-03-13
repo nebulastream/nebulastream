@@ -12,27 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        FileSink.cpp
-        ZmqSink.cpp
-        SinkMedium.cpp
-        PrintSink.cpp
-        NullOutputSink.cpp
-        MonitoringSink.cpp
-        KafkaSink.cpp
-        MultiOriginWatermarkProcessor.cpp
-        WatermarkProcessor.cpp
-        StatisticSink.cpp
+    DefaultStatisticStore.cpp
 )
-
-
-if (NES_USE_OPC)
-    add_source_files(nes-runtime
-            OPCSink.cpp
-    )
-endif ()
-
-if (NES_USE_MQTT)
-    add_source_files(nes-runtime
-            MQTTSink.cpp
-    )
-endif ()

@@ -16,7 +16,7 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICSTORAGE_ABSTRACTSTATISTICSTORE_HPP_
 
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Statistic.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
+#include <StatisticCollection/StatisticKey.hpp>
 
 namespace NES::Statistic {
 
@@ -38,6 +38,12 @@ class AbstractStatisticStore {
     virtual std::vector<StatisticPtr> getStatistics(const StatisticHash& statisticHash,
                                                     const Windowing::TimeMeasure& startTs,
                                                     const Windowing::TimeMeasure& endTs) = 0;
+
+    /**
+     * @brief Returns all statistics currently in this store
+     * @return Vector of StatisticPtr
+     */
+    virtual std::vector<StatisticPtr> getAllStatistics() = 0;
 
     /**
      * @brief Inserts statistic with the statisticHash into a StatisticStore.

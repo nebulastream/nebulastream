@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include <API/QueryAPI.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
+#include <StatisticCollection/StatisticKey.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <utility>

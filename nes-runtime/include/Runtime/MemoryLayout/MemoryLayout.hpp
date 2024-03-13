@@ -41,9 +41,9 @@ class MemoryLayout {
     virtual ~MemoryLayout() = default;
 
     /**
-     * Gets the field index for a specific field name. If the field name not exists, we return an invalid optional.
+     * Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
      * @param fieldName
-     * @return either field index for fieldName or empty optinal
+     * @return either field index for fieldName or empty optional
      */
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;
 
@@ -68,6 +68,16 @@ class MemoryLayout {
      * @return offset in the tuple buffer.
      */
     [[nodiscard]] virtual uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const = 0;
+
+    /**
+     * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
+     * Depending on the concrete MemoryLayout, e.g., Columnar or Row-Layout, this may result in different calculations.
+     * @param tupleIndex index of the tuple.
+     * @param fieldName name of the field.
+     * @throws BufferAccessException if the record of the field is out of bounds.
+     * @return either offset in the tuple buffer for fieldName or empty optional.
+     */
+    [[nodiscard]] virtual std::optional<uint64_t> getFieldOffset(uint64_t tupleIndex, const std::string_view fieldName) const;
 
     /**
      * @brief Gets the number of tuples a tuple buffer with this memory layout could occupy.

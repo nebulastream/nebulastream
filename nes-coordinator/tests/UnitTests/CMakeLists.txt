@@ -177,6 +177,9 @@ add_nes_unit_test(buffer-storage-tests "Runtime/BufferStorageTest.cpp")
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)
 
+### Statistic Sink Tests ###
+add_nes_unit_test(statistic-sink-tests "Sink/StatisticSinkTest.cpp" Sink/StatisticSinkTest.cpp)
+
 ### Topology Node Relocation Request Tests ###
 add_nes_unit_test(topology-node-relocation-request-tests "RequestProcessor/RequestTypes/TopologyNodeRelocationRequestTest.cpp" RequestProcessor/RequestTypes/TopologyNodeRelocationRequestTest.cpp)
 

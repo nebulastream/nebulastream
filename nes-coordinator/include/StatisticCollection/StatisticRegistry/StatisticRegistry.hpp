@@ -17,7 +17,7 @@
 
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
+#include <StatisticCollection/StatisticKey.hpp>
 #include <folly/Synchronized.h>
 #include <functional>
 #include <map>
