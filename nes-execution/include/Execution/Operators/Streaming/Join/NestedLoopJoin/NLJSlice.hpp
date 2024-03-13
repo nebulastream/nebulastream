@@ -16,7 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_
 
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <cstdint>
 #include <mutex>
 #include <ostream>
@@ -35,17 +35,19 @@ class NLJSlice : public StreamSlice {
      * @param sliceStart: Start timestamp of this slice
      * @param sliceEnd: End timestamp of this slice
      * @param numWorkerThreads: The number of worker threads that will operate on this slice
-     * @param leftEntrySize: Size of the tuple on the left
-     * @param rightEntrySize: Size of the tuple on the right tuple
+     * @param bufferManager: Allocates pages for both pagedVectorVarSized
+     * @param leftSchema: schema of the tuple on the left
+     * @param rightSchema: schema of the tuple on the right
      * @param leftPageSize: Size of a single page for the left paged vectors
      * @param rightPageSize: Size of a singe page for the right paged vectors
      */
     explicit NLJSlice(uint64_t sliceStart,
                       uint64_t sliceEnd,
                       uint64_t numWorkerThreads,
-                      uint64_t leftEntrySize,
+                      BufferManagerPtr& bufferManager,
+                      SchemaPtr& leftSchema,
                       uint64_t leftPageSize,
-                      uint64_t rightEntrySize,
+                      SchemaPtr& rightSchema,
                       uint64_t rightPageSize);
 
     ~NLJSlice() override = default;
@@ -89,8 +91,8 @@ class NLJSlice : public StreamSlice {
     std::string toString() override;
 
   private:
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftTuples;
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightTuples;
+    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftTuples;
+    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> rightTuples;
 };
 }// namespace NES::Runtime::Execution
 

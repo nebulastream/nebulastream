@@ -15,6 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJBUILDSLICING_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJBUILDSLICING_HPP_
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -32,12 +33,12 @@ class NLJBuildSlicing : public StreamJoinBuild {
       public:
         LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
                                  const Value<MemRef>& sliceReference,
-                                 Nautilus::Interface::PagedVectorRef pagedVectorRef)
-            : joinOperatorHandler(operatorHandler), sliceReference(sliceReference), pagedVectorRef(std::move(pagedVectorRef)),
+                                 Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef)
+            : joinOperatorHandler(operatorHandler), sliceReference(sliceReference), pagedVectorVarSizedRef(std::move(pagedVectorVarSizedRef)),
               sliceStart(0_u64), sliceEnd(0_u64){};
         Value<MemRef> joinOperatorHandler;
         Value<MemRef> sliceReference;
-        Nautilus::Interface::PagedVectorRef pagedVectorRef;
+        Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef;
         Value<UInt64> sliceStart;
         Value<UInt64> sliceEnd;
     };
@@ -70,12 +71,10 @@ class NLJBuildSlicing : public StreamJoinBuild {
      * @param localJoinState: The pointer to the joinstate that we want to update
      * @param operatorHandlerMemRef: MemRef to the operator handler
      * @param timestamp: Timestamp, for which to get the sliceRef, sliceStart, and sliceEnd
-     * @param workerId: WorkerId necessary for getting the correct pagedVectorRef
      */
     void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                               Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
-                              Nautilus::Value<Nautilus::UInt64>& timestamp,
-                              Nautilus::Value<Nautilus::UInt64>& workerId) const;
+                              Nautilus::Value<Nautilus::UInt64>& timestamp) const;
 };
 }// namespace NES::Runtime::Execution::Operators
 

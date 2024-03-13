@@ -170,8 +170,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                                                               joinFieldNameLeft,
                                                               joinFieldNameRight,
                                                               windowMetaData,
-                                                              leftEntrySize,
-                                                              rightEntrySize,
+                                                              leftSchema,
+                                                              rightSchema,
                                                               QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                                               QueryCompilation::WindowingStrategy::SLICING);
 
@@ -182,8 +182,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                                                                                outputOriginId,
                                                                                windowSize,
                                                                                windowSize,
-                                                                               leftEntrySize,
-                                                                               rightEntrySize,
+                                                                               leftSchema,
+                                                                               rightSchema,
                                                                                leftPageSize,
                                                                                rightPageSize);
 

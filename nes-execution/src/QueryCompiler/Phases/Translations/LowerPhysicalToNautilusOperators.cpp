@@ -342,16 +342,16 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                              probeOperator->getWindowingStrategy());
                 break;
             case StreamJoinStrategy::NESTED_LOOP_JOIN:
-                const auto leftEntrySize = probeOperator->getLeftInputSchema()->getSchemaSizeInBytes();
-                const auto rightEntrySize = probeOperator->getRightInputSchema()->getSchemaSizeInBytes();
+                const auto leftSchema = probeOperator->getLeftInputSchema();
+                const auto rightSchema = probeOperator->getRightInputSchema();
                 joinProbeNautilus =
                     std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
                                                                               probeOperator->getJoinSchema(),
                                                                               probeOperator->getJoinFieldNameLeft(),
                                                                               probeOperator->getJoinFieldNameRight(),
                                                                               probeOperator->getWindowMetaData(),
-                                                                              leftEntrySize,
-                                                                              rightEntrySize,
+                                                                              leftSchema,
+                                                                              rightSchema,
                                                                               probeOperator->getJoinStrategy(),
                                                                               probeOperator->getWindowingStrategy());
                 break;

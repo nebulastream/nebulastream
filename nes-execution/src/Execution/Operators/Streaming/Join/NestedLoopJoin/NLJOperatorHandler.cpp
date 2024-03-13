@@ -56,9 +56,10 @@ StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t 
     return std::make_shared<NLJSlice>(sliceStart,
                                       sliceEnd,
                                       numberOfWorkerThreads,
-                                      sizeOfRecordLeft,
+                                      bufferManager,
+                                      leftSchema,
                                       pageSizeLeft,
-                                      sizeOfRecordRight,
+                                      rightSchema,
                                       pageSizeRight);
 }
 
@@ -66,11 +67,11 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
                                        const OriginId outputOriginId,
                                        const uint64_t windowSize,
                                        const uint64_t windowSlide,
-                                       const uint64_t sizeOfRecordLeft,
-                                       const uint64_t sizeOfRecordRight,
+                                       const SchemaPtr& leftSchema,
+                                       const SchemaPtr& rightSchema,
                                        const uint64_t pageSizeLeft,
                                        const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
       pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
 
 void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {

@@ -21,21 +21,20 @@ namespace NES::Runtime::Execution {
 NLJSlice::NLJSlice(uint64_t windowStart,
                    uint64_t windowEnd,
                    uint64_t numberOfWorker,
-                   uint64_t leftEntrySize,
+                   BufferManagerPtr& bufferManager,
+                   SchemaPtr& leftSchema,
                    uint64_t leftPageSize,
-                   uint64_t rightEntrySize,
+                   SchemaPtr& rightSchema,
                    uint64_t rightPageSize)
     : StreamSlice(windowStart, windowEnd) {
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
-        auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
         leftTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), leftEntrySize, leftPageSize));
+            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, leftSchema, leftPageSize));
     }
 
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
-        auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
         rightTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), rightEntrySize, rightPageSize));
+            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, rightSchema, rightPageSize));
     }
     NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} leftTuples.size() and {} rightTuples.size()",
               NLJSlice::toString(),
