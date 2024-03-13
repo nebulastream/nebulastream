@@ -26,9 +26,8 @@
 
 namespace NES {
 
-class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<int>  {
+class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<int> {
   public:
-
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StatisticSinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup StatisticSinkTest class.");
@@ -55,8 +54,7 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
      * @param right
      * @return True, if vector contain the same, false otherwise
      */
-    bool sameStatisticsInVectors(std::vector<Statistic::StatisticPtr>& left,
-                                 std::vector<Statistic::StatisticPtr>& right) {
+    bool sameStatisticsInVectors(std::vector<Statistic::StatisticPtr>& left, std::vector<Statistic::StatisticPtr>& right) {
         if (left.size() != right.size()) {
             NES_ERROR("Vectors are not equal with {} and {} items!", left.size(), right.size());
             return false;
@@ -88,7 +86,9 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
      * @return Pair<Vector of TupleBuffers, Vector of Statistics>
      */
     static std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
-    createRandomCountMinSketches(uint64_t numberOfSketches, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
+    createRandomCountMinSketches(uint64_t numberOfSketches,
+                                 const SchemaPtr& schema,
+                                 const Runtime::BufferManagerPtr& bufferManager) {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         std::vector<Statistic::StatisticPtr> expectedStatistics;
         constexpr auto windowSize = 10;
@@ -115,7 +115,6 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
             const uint64_t depth = rand() % 5 + 1;
             const std::string countMinData = "abcdef";
 
-
             // Now using the values for writing a tuple to the tuple buffer
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
             dynamicBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_HASH_FIELD_NAME].write(statisticHash);
@@ -125,12 +124,14 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
             dynamicBuffer[curBufTuplePos]["test$" + Statistic::OBSERVED_TUPLES_FIELD_NAME].write(observedTuples);
             dynamicBuffer[curBufTuplePos]["test$" + Statistic::WIDTH_FIELD_NAME].write(width);
             dynamicBuffer[curBufTuplePos]["test$" + Statistic::DEPTH_FIELD_NAME].write(depth);
-            dynamicBuffer[curBufTuplePos].writeVarSized("test$" + Statistic::STATISTIC_DATA_FIELD_NAME, countMinData,
+            dynamicBuffer[curBufTuplePos].writeVarSized("test$" + Statistic::STATISTIC_DATA_FIELD_NAME,
+                                                        countMinData,
                                                         bufferManager.get());
             curBufTuplePos += 1;
 
             // Creating now the expected CountMinStatistic
-            expectedStatistics.emplace_back(Statistic::CountMinStatistic::create(startTs, endTs, observedTuples, width, depth, countMinData));
+            expectedStatistics.emplace_back(
+                Statistic::CountMinStatistic::create(startTs, endTs, observedTuples, width, depth, countMinData));
         }
 
         // If the current tuple buffer has tuples, but we have not emplaced it
@@ -162,14 +163,14 @@ TEST_P(StatisticSinkTest, testCountMin) {
                                        ->updateSourceName("test");
 
     // Creating the number of buffers
-    auto [buffers, expectedStatistics] = createRandomCountMinSketches(numberOfStatistics, countMinStatisticSchema,
-                                                nodeEngine->getBufferManager());
+    auto [buffers, expectedStatistics] =
+        createRandomCountMinSketches(numberOfStatistics, countMinStatisticSchema, nodeEngine->getBufferManager());
     auto statisticSink = createStatisticSink(countMinStatisticSchema,
                                              nodeEngine,
-                                             1, // numOfProducers
-                                             1, // queryId
-                                             1, // querySubPlanId
-                                             1, // numberOfOrigins
+                                             1,// numOfProducers
+                                             1,// queryId
+                                             1,// querySubPlanId
+                                             1,// numberOfOrigins
                                              Statistic::StatisticSinkFormatType::COUNT_MIN);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
 
@@ -179,7 +180,6 @@ TEST_P(StatisticSinkTest, testCountMin) {
 
     auto storedStatistics = nodeEngine->getStatisticStore()->getAllStatistics();
     EXPECT_TRUE(sameStatisticsInVectors(storedStatistics, expectedStatistics));
-
 }
 
 INSTANTIATE_TEST_CASE_P(testStatisticSink,
@@ -188,4 +188,4 @@ INSTANTIATE_TEST_CASE_P(testStatisticSink,
                         [](const testing::TestParamInfo<StatisticSinkTest::ParamType>& info) {
                             return std::string(std::to_string(info.param) + "_Statistics");
                         });
-} // namespace NES
+}// namespace NES

@@ -16,9 +16,7 @@
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 namespace NES::Statistic {
 
-AbstractStatisticStorePtr DefaultStatisticStore::create() {
-    return std::make_shared<DefaultStatisticStore>();
-}
+AbstractStatisticStorePtr DefaultStatisticStore::create() { return std::make_shared<DefaultStatisticStore>(); }
 
 std::vector<StatisticPtr> DefaultStatisticStore::getStatistics(const StatisticHash& statisticHash,
                                                                const Windowing::TimeMeasure& startTs,

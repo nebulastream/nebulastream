@@ -32,9 +32,7 @@ class StatisticSinkFormatFactory {
      * @param type
      * @return AbstractStatisticSinkFormatPtr
      */
-    static AbstractStatisticSinkFormatPtr createFromSchema(SchemaPtr schema,
-                                                           uint64_t bufferSize,
-                                                           StatisticSinkFormatType type);
+    static AbstractStatisticSinkFormatPtr createFromSchema(SchemaPtr schema, uint64_t bufferSize, StatisticSinkFormatType type);
 
   private:
     /**

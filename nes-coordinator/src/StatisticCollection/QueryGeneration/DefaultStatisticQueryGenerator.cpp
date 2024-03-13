@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
@@ -24,7 +25,6 @@
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/MinVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
-#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 
