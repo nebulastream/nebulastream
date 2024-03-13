@@ -239,9 +239,9 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
  * @brief Test a join query that uses fixed-array as keys
  */
 TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
-    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING ||
-        joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE ||
-        joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
         GTEST_SKIP();
     }
 
