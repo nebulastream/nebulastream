@@ -32,10 +32,10 @@ class IFCOPStrategy : public BasePlacementAdditionStrategy {
 
     ~IFCOPStrategy() override = default;
 
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamNodes,
-                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamNodes,
-                                                                DecomposedQueryPlanVersion querySubPlanVersion) override;
+    PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                      const std::set<LogicalOperatorPtr>& pinnedUpStreamNodes,
+                                                      const std::set<LogicalOperatorPtr>& pinnedDownStreamNodes,
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
   private:
     IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -115,4 +115,4 @@ class IFCOPStrategy : public BasePlacementAdditionStrategy {
     std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;
 };
 }// namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_IFCOPSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_IFCOPSTRATEGY_HPP_

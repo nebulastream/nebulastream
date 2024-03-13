@@ -42,10 +42,10 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     static const bool DEFAULT_LOW_THROUGHPUT_SOURCE = false;
     static const bool DEFAULT_ML_HARDWARE = false;
 
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                                DecomposedQueryPlanVersion querySubPlanVersion) override;
+    PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     /**
      * @brief creates an Object of this class through a static create function
@@ -89,4 +89,4 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_MLHEURISTICSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_MLHEURISTICSTRATEGY_HPP_

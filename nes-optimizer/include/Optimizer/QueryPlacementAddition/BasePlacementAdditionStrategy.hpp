@@ -83,6 +83,15 @@ using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementAdditionStrategy>;
 class DeploymentContext;
 using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 
+struct PlacementAdditionResult {
+    PlacementAdditionResult(bool completedSuccessfully,
+                            std::unordered_map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts)
+        : completedSuccessfully(completedSuccessfully), deploymentContexts(deploymentContexts){};
+
+    bool completedSuccessfully;
+    std::unordered_map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
+};
+
 using PlacementMatrix = std::vector<std::vector<bool>>;
 using ComputedDecomposedQueryPlans = std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>>;
 using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
@@ -109,11 +118,10 @@ class BasePlacementAdditionStrategy {
      * @param querySubPlanVersion: the new version of the updated query sub plans
      * @return vector of deployment contexts
      */
-    virtual std::map<DecomposedQueryPlanId, DeploymentContextPtr>
-    updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                              const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                              DecomposedQueryPlanVersion querySubPlanVersion) = 0;
+    virtual PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                              const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                              DecomposedQueryPlanVersion querySubPlanVersion) = 0;
 
   protected:
     /**
@@ -148,10 +156,9 @@ class BasePlacementAdditionStrategy {
      * @param decomposedQueryPlanVersion: the version of the query sub plan
      * @return vector of deployment contexts
      */
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr>
-    updateExecutionNodes(SharedQueryId sharedQueryId,
-                         ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                         DecomposedQueryPlanVersion decomposedQueryPlanVersion);
+    PlacementAdditionResult updateExecutionNodes(SharedQueryId sharedQueryId,
+                                                 ComputedDecomposedQueryPlans& computedSubQueryPlans,
+                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion);
 
     /**
      * @brief Get the Topology node with the input id
@@ -211,9 +218,9 @@ class BasePlacementAdditionStrategy {
      * @return the instance of network source operator
      */
     static LogicalOperatorPtr createNetworkSourceOperator(QueryId queryId,
-                                                              SchemaPtr inputSchema,
-                                                              OperatorId operatorId,
-                                                              const TopologyNodePtr& sinkTopologyNode);
+                                                          SchemaPtr inputSchema,
+                                                          OperatorId operatorId,
+                                                          const TopologyNodePtr& sinkTopologyNode);
 
     /**
      * @brief Select path for placement using pessimistic 2PL strategy. If attempt fails then an exponential retries are performed.
@@ -302,4 +309,4 @@ class BasePlacementAdditionStrategy {
 };
 }// namespace Optimizer
 }// namespace NES
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BASEPLACEMENTADDITIONSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BASEPLACEMENTADDITIONSTRATEGY_HPP_

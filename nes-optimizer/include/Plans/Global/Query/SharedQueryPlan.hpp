@@ -195,6 +195,16 @@ class SharedQueryPlan {
     ChangeLogEntries getChangeLogEntries(Timestamp timestamp);
 
     /**
+     * @brief Create and store new change log entries from all input failed change log entries. Following is the logic:
+     * 1. Iterate over the upstream pinned operators to compute an updated upstream pinned operator set by finding
+     * connected downstream operators that are pinned during the previous process.
+     * 2. Iterate over the downstream pinned operators to compute an updated downstream pinned operator set by finding
+     * connected upstream operators that are pinned during the previous process.
+     * @param changeLogEntries : failed change log entries
+     */
+    void recordFailedChangeLogEntries(std::vector<Optimizer::Experimental::ChangeLogEntryPtr> failedChangeLogEntries);
+
+    /**
      * @brief: update the timestamp till which the changes have been processed
      * @param timestamp: the new timestamp in micro seconds
      */

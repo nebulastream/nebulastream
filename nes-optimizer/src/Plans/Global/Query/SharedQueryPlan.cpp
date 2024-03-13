@@ -358,6 +358,88 @@ ChangeLogEntries SharedQueryPlan::getChangeLogEntries(Timestamp timestamp) {
     return changeLog->getCompactChangeLogEntriesBeforeTimestamp(timestamp);
 }
 
+void SharedQueryPlan::recordFailedChangeLogEntries(std::vector<Optimizer::Experimental::ChangeLogEntryPtr> changeLogEntries) {
+    for (const auto& changeLogEntry : changeLogEntries) {
+
+        // Find the most downstream pinned operator
+        std::set<LogicalOperatorPtr> newDownStreamOperators;
+
+        std::queue<LogicalOperatorPtr> downStreamOperatorsToCheck;
+        for (const auto& downstreamOperator : changeLogEntry->downstreamOperators) {
+            downStreamOperatorsToCheck.emplace(downstreamOperator);
+        }
+
+        while (!downStreamOperatorsToCheck.empty()) {
+            auto downstreamOperator = downStreamOperatorsToCheck.front();
+            downStreamOperatorsToCheck.pop();
+            auto upstreamOperators = downstreamOperator->getChildren();
+            // Check if at least one the upstream operator is not in the state placed
+            bool isDownStreamCandidate = false;
+            for (const auto& upstreamOperator : upstreamOperators) {
+                if (upstreamOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::PLACED) {
+                    newDownStreamOperators.insert(downstreamOperator);
+                    isDownStreamCandidate = true;
+                    break;
+                }
+            }
+
+            if (!isDownStreamCandidate) {
+                for (const auto& upstreamOperator : upstreamOperators) {
+                    downStreamOperatorsToCheck.emplace(upstreamOperator->as<LogicalOperator>());
+                }
+            }
+        }
+
+        if (newDownStreamOperators.empty()) {
+            NES_ERROR("Unable to find the most downstream operator. Skipping rest of the operation. The failed changelog will "
+                      "not be processed.");
+            continue;
+        }
+
+        // Find the most upstream pinned operator
+        std::set<LogicalOperatorPtr> newUpstreamOperators;
+
+        std::queue<LogicalOperatorPtr> upStreamOperatorsToCheck;
+        for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+            upStreamOperatorsToCheck.emplace(upstreamOperator);
+        }
+
+        while (!upStreamOperatorsToCheck.empty()) {
+            auto upstreamOperator = upStreamOperatorsToCheck.front();
+            upStreamOperatorsToCheck.pop();
+            auto downstreamOperators = upstreamOperator->getParents();
+            // Check if at least one the upstream operator is not in the state placed
+            bool isDownStreamCandidate = false;
+            for (const auto& downstreamOperator : downstreamOperators) {
+                if (downstreamOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::PLACED) {
+                    newUpstreamOperators.insert(upstreamOperator);
+                    isDownStreamCandidate = true;
+                    break;
+                }
+            }
+
+            if (!isDownStreamCandidate) {
+                for (const auto& downstreamOperator : downstreamOperators) {
+                    upStreamOperatorsToCheck.emplace(downstreamOperator->as<LogicalOperator>());
+                }
+            }
+        }
+
+        if (newUpstreamOperators.empty()) {
+            NES_ERROR("Unable to find the most upstream operator. Skipping rest of the operation. The failed changelog will "
+                      "not be processed.");
+            continue;
+        }
+
+        // Compute a new change log entry
+        auto now =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        changeLog->addChangeLogEntry(
+            now,
+            Optimizer::Experimental::ChangeLogEntry::create(newUpstreamOperators, newDownStreamOperators));
+    }
+}
+
 std::map<size_t, std::set<std::string>> SharedQueryPlan::getHashBasedSignature() { return hashBasedSignatures; }
 
 void SharedQueryPlan::updateHashBasedSignature(size_t hashValue, const std::string& stringSignature) {

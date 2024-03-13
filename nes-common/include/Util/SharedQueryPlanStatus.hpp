@@ -24,13 +24,16 @@ namespace NES {
 /**
      * @brief Represents various states a Shared query Plan goes through.
      *
-     * Created: Shared query plan was just created
-     * Deployed: Shared Query Plan was deployed successfully.
-     * Updated: A request arrived into the system that either added or removed operators from a Shared Query Plan.
-     * Stopped: Shared Query Plan was stopped by user.
-     * Failed: Shared Query Plan failed because of some reason.
+     * CREATED: Shared query plan was just created and need to be processed
+     * DEPLOYED: Shared Query Plan was deployed successfully.
+     * PROCESSED: Shared query plan was processed by placement amendment phase.
+     * PARTIALLY_PROCESSED: Shared query plan was only partially processed by placement amendment phase.
+     * UPDATED: A request arrived into the system that either added or removed operators from a Shared Query Plan.
+     * STOPPED: Shared Query Plan was stopped by user.
+     * FAILED: Shared Query Plan failed because of some reason.
+     * MIGRATING: shared query plan is currently being migrated
      */
-enum class SharedQueryPlanStatus : uint8_t { CREATED = 0, DEPLOYED, UPDATED, STOPPED, FAILED, MIGRATING };
+enum class SharedQueryPlanStatus : uint8_t { CREATED = 0, DEPLOYED, PROCESSED, PARTIALLY_PROCESSED, UPDATED, STOPPED, FAILED, MIGRATING };
 
 }// namespace NES
 

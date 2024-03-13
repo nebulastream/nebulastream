@@ -40,7 +40,7 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
                                            const TypeInferencePhasePtr& typeInferencePhase,
                                            PlacementAmendmentMode placementAmendmentMode);
 
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+    PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                 const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                                 DecomposedQueryPlanVersion querySubPlanVersion) override;

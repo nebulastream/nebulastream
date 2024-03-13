@@ -474,9 +474,14 @@ bool PlacementAmemderInstance::execute() {
             default: NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
         }
     }
-    sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
-    //FIXME: figure out how to change the status if the query is to be removed
-    queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::RUNNING, "");
+    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::PROCESSED) {
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
+        queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::RUNNING, "");
+    } else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::PARTIALLY_PROCESSED) {
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::UPDATED);
+    } else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::STOPPED) {
+        queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::STOPPED, "");
+    }
     return true;
 }
 }// namespace NES::RequestProcessor
