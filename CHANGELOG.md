@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.69](https://github.com/nebulastream/nebulastream/tree/v0.6.69) (2024-03-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.68...v0.6.69)
+
+**Implemented enhancements:**
+
+- \[TASK\] StatisticSink [\#4632](https://github.com/nebulastream/nebulastream/issues/4632)
+
 ## [v0.6.68](https://github.com/nebulastream/nebulastream/tree/v0.6.68) (2024-03-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.67...v0.6.68)
