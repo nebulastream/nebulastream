@@ -33,7 +33,16 @@ namespace NES {
      * FAILED: Shared Query Plan failed because of some reason.
      * MIGRATING: shared query plan is currently being migrated
      */
-enum class SharedQueryPlanStatus : uint8_t { CREATED = 0, DEPLOYED, PROCESSED, PARTIALLY_PROCESSED, UPDATED, STOPPED, FAILED, MIGRATING };
+enum class SharedQueryPlanStatus : uint8_t {
+    CREATED = 0,
+    DEPLOYED,
+    PROCESSED,
+    PARTIALLY_PROCESSED,
+    UPDATED,
+    STOPPED,
+    FAILED,
+    MIGRATING
+};
 
 }// namespace NES
 
