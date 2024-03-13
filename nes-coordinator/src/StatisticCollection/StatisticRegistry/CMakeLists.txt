@@ -13,7 +13,6 @@
 
 add_source_files(nes-coordinator
         StatisticInfo.cpp
-        StatisticKey.cpp
         StatisticRegistry.cpp
         StatisticIdsExtractor.cpp
 )

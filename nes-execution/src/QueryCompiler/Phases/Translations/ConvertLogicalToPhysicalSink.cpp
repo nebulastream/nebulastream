@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -52,8 +53,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                   numOfProducers,
                                   std::cout,
                                   printSinkDescriptor->getNumberOfOrigins());
-    }
-    if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
+    } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink {}", schema->toString());
         return createNullOutputSink(pipelineQueryPlan->getQueryId(),
@@ -186,6 +186,15 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getVersion(),
                                  networkSinkDescriptor->getNumberOfOrigins(),
                                  networkSinkDescriptor->getRetryTimes());
+    } else if (sinkDescriptor->instanceOf<Statistic::StatisticSinkDescriptor>()) {
+        const auto statisticSinkDescriptor = sinkDescriptor->as<Statistic::StatisticSinkDescriptor>();
+        return createStatisticSink(schema,
+                                   nodeEngine,
+                                   numOfProducers,
+                                   pipelineQueryPlan->getQueryId(),
+                                   pipelineQueryPlan->getQuerySubPlanId(),
+                                   statisticSinkDescriptor->getNumberOfOrigins(),
+                                   statisticSinkDescriptor->getSinkFormatType());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

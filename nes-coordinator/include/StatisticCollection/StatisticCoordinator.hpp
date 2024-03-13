@@ -19,7 +19,7 @@
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <StatisticCollection/StatisticInterface.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticKey.hpp>
+#include <StatisticCollection/StatisticKey.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <functional>

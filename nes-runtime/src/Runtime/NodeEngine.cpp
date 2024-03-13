@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 
 #include <QueryCompiler/QueryCompilationRequest.hpp>// request = QueryCompilation::QueryCompilationRequest::create(..)
@@ -57,8 +58,11 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        bool sourceSharing)
     : nodeId(INVALID_WORKER_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
-      partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)), openCLManager(std::move(openCLManager)),
-      nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
+      partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)),
+      // TODO for now, we always use the DefaultStatisticStore. A configuration will be done with #4687
+      statisticStore(Statistic::DefaultStatisticStore::create()),
+      openCLManager(std::move(openCLManager)), nodeEngineId(nodeEngineId),
+      numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
 
@@ -747,4 +751,6 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 }
 
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
+
+const Statistic::AbstractStatisticStorePtr NodeEngine::getStatisticStore() const { return statisticStore; }
 }// namespace NES::Runtime

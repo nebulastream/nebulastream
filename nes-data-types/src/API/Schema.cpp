@@ -178,11 +178,11 @@ AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(std::move(name), DataTypeFactory::createType(type));
 }
 
-std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() {
+std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const {
     return getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR;
 }
 
-std::string Schema::getQualifierNameForSystemGeneratedFields() {
+std::string Schema::getQualifierNameForSystemGeneratedFields() const {
     if (!fields.empty()) {
         return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
     }

@@ -13,16 +13,20 @@
 */
 
 #include <Network/NetworkSink.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticSinkFormatFactory.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
+#include <Sinks/Mediums/StatisticSink.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 
@@ -200,6 +204,31 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   retryTimes,
                                                   numberOfOrigins,
                                                   version);
+}
+
+DataSinkPtr createStatisticSink(const SchemaPtr& schema,
+                                const Runtime::NodeEnginePtr& nodeEngine,
+                                size_t numOfProducers,
+                                QueryId queryId,
+                                DecomposedQueryPlanId querySubPlanId,
+                                uint64_t numberOfOrigins,
+                                Statistic::StatisticSinkFormatType sinkFormatType) {
+    // We can not use the existing SinkFormat, as the interface only returns a std::string. Therefore, we create our own
+    // As the SinkMedium expects a SinkFormat, we choose here arbitrary one.
+    auto sinkFormat = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+
+    // We create the correct StatisticSinkFormat and then pass everything to the StatisticSink
+    auto statisticSinkFormat = Statistic::StatisticSinkFormatFactory::createFromSchema(schema,
+                                                                                       nodeEngine->getBufferManager()->getBufferSize(),
+                                                                                       sinkFormatType);
+    return std::make_shared<Statistic::StatisticSink>(sinkFormat,
+                                                      nodeEngine,
+                                                      numOfProducers,
+                                                      queryId,
+                                                      querySubPlanId,
+                                                      numberOfOrigins,
+                                                      nodeEngine->getStatisticStore(),
+                                                      statisticSinkFormat);
 }
 
 DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,

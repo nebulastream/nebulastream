@@ -61,7 +61,7 @@ class StatisticKey {
      * @brief Calculates the hash for this statistic key
      * @return std::size_t
      */
-    StatisticHash hash() const;
+    [[nodiscard]] StatisticHash hash() const;
 
     /**
      * @brief Combines the metricHash and the statisticId to a StatisticHash. We need this as a static hash function,
@@ -77,7 +77,7 @@ class StatisticKey {
      * @brief Creates a string representation
      * @return std::string
      */
-    std::string toString() const;
+    [[nodiscard]] std::string toString() const;
 
   private:
     const MetricPtr metric;

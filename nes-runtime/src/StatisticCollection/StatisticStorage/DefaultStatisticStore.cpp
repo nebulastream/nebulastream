@@ -16,7 +16,9 @@
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 namespace NES::Statistic {
 
-AbstractStatisticStorePtr DefaultStatisticStore::create() { return std::make_shared<DefaultStatisticStore>(); }
+AbstractStatisticStorePtr DefaultStatisticStore::create() {
+    return std::make_shared<DefaultStatisticStore>();
+}
 
 std::vector<StatisticPtr> DefaultStatisticStore::getStatistics(const StatisticHash& statisticHash,
                                                                const Windowing::TimeMeasure& startTs,
@@ -64,6 +66,16 @@ bool DefaultStatisticStore::deleteStatistics(const StatisticHash& statisticHash,
     const bool foundAnyStatistic = removeBeginIt != statisticVec.end();
     statisticVec.erase(removeBeginIt, statisticVec.end());
     return foundAnyStatistic;
+}
+
+std::vector<StatisticPtr> DefaultStatisticStore::getAllStatistics() {
+    auto lockedKeyToStatisticMap = keyToStatistics.wlock();
+    std::vector<StatisticPtr> returnStatisticsVector;
+
+    for (const auto& [statisticHash, statisticVec] : *lockedKeyToStatisticMap) {
+        std::copy(statisticVec.begin(), statisticVec.end(), std::back_inserter(returnStatisticsVector));
+    }
+    return returnStatisticsVector;
 }
 
 DefaultStatisticStore::~DefaultStatisticStore() = default;

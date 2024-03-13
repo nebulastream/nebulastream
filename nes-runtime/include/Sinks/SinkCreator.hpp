@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
@@ -243,6 +244,25 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  QueryId queryId,
                                  DecomposedQueryPlanId querySubPlanId,
                                  uint64_t numberOfOrigins = 1);
+
+/**
+ * @brief Creates a StatisticSink
+ * @param schema
+ * @param nodeEngine
+ * @param numOfProducers
+ * @param queryId
+ * @param querySubPlanId
+ * @param numberOfOrigins
+ * @param sinkFormatType
+ * @return DataSinkPtr
+ */
+DataSinkPtr createStatisticSink(const SchemaPtr& schema,
+                                const Runtime::NodeEnginePtr& nodeEngine,
+                                size_t numOfProducers,
+                                QueryId queryId,
+                                DecomposedQueryPlanId querySubPlanId,
+                                uint64_t numberOfOrigins,
+                                Statistic::StatisticSinkFormatType sinkFormatType);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

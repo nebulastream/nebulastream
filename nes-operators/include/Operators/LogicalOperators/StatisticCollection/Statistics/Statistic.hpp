@@ -17,6 +17,7 @@
 
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/ProbeExpression.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/ProbeExpression.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 namespace NES::Statistic {
 
@@ -34,12 +35,12 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
      * @param endTs
      * @param observedTuples
      */
-    Statistic(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t observedTuples);
+    explicit Statistic(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t observedTuples);
 
     /**
      * @brief Returns the statistic value for this statistic, i.e., a selectivity of 0.5
-     * @param characteristic: The characteristic, e.g., Selectivity("f1" > 4)
-     * @return
+     * @param probeExpression: The expression for probing the statistic, e.g., Selectivity("f1" > 4)
+     * @return StatisticValue<>
      */
     [[nodiscard]] virtual StatisticValue<> getStatisticValue(const ProbeExpression& probeExpression) const = 0;
 

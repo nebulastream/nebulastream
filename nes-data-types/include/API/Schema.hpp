@@ -215,13 +215,13 @@ class Schema {
      * @brief method to get the qualifier of the source without $
      * @return qualifier without $
      */
-    std::string getQualifierNameForSystemGeneratedFields();
+    std::string getQualifierNameForSystemGeneratedFields() const;
 
     /**
      * @brief method to get the qualifier of the source with $
      * @return qualifier with $
      */
-    std::string getQualifierNameForSystemGeneratedFieldsWithSeparator();
+    std::string getQualifierNameForSystemGeneratedFieldsWithSeparator() const;
 
     /**
      * @brief Remove all fields and qualifying name

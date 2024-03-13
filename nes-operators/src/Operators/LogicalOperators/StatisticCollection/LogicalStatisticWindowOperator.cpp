@@ -35,7 +35,7 @@ bool LogicalStatisticWindowOperator::inferSchema() {
     outputSchema->clear();
     outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_START, BasicType::UINT64);
     outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_END, BasicType::UINT64);
-    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_KEY_FIELD_NAME, BasicType::UINT64);
+    outputSchema->addField(qualifierNameWithSeparator + STATISTIC_HASH_FIELD_NAME, BasicType::UINT64);
     outputSchema->addField(qualifierNameWithSeparator + STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64);
     outputSchema->addField(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64);
     windowStatisticDescriptor->addDescriptorFields(*outputSchema, qualifierNameWithSeparator);
