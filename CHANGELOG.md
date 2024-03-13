@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.70](https://github.com/nebulastream/nebulastream/tree/v0.6.70) (2024-03-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.69...v0.6.70)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add PagedVector build on TupleBuffer [\#4512](https://github.com/nebulastream/nebulastream/issues/4512)
+
 ## [v0.6.69](https://github.com/nebulastream/nebulastream/tree/v0.6.69) (2024-03-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.68...v0.6.69)
