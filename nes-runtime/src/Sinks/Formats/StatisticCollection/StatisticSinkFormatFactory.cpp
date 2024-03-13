@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Sinks/Formats/StatisticCollection/StatisticSinkFormatFactory.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticSinkFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticSinkFormatFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
@@ -42,8 +42,8 @@ StatisticSinkFormatFactory::createFromSchema(SchemaPtr schema, uint64_t bufferSi
     }
 }
 
-AbstractStatisticSinkFormatPtr StatisticSinkFormatFactory::createCountMinFormat(
-    const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout) {
+AbstractStatisticSinkFormatPtr
+StatisticSinkFormatFactory::createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout) {
     return CountMinStatisticSinkFormat::create(memoryLayout);
 }
 

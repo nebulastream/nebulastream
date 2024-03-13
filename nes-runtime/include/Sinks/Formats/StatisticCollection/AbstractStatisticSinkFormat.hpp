@@ -34,8 +34,7 @@ using AbstractStatisticSinkFormatPtr = std::shared_ptr<AbstractStatisticSinkForm
  */
 class AbstractStatisticSinkFormat {
   public:
-    explicit AbstractStatisticSinkFormat(const Schema& schema,
-                                         const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
+    explicit AbstractStatisticSinkFormat(const Schema& schema, const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
     explicit AbstractStatisticSinkFormat(const std::string& qualifierNameWithSeparator,
                                          Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 

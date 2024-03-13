@@ -24,7 +24,6 @@ namespace NES::Statistic {
  */
 class CountMinStatisticSinkFormat : public AbstractStatisticSinkFormat {
   public:
-
     static AbstractStatisticSinkFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     std::vector<std::pair<StatisticHash, StatisticPtr>> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) override;

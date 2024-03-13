@@ -14,6 +14,4 @@
 
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticSinkFormat.hpp>
 
-namespace NES::Statistic {
-
-}// namespace NES::Statistic
+namespace NES::Statistic {}// namespace NES::Statistic

@@ -16,8 +16,8 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_HPP_
 
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
-#include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticKey.hpp>
+#include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <folly/Synchronized.h>
 #include <functional>
 #include <map>

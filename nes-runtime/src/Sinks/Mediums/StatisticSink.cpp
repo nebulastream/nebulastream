@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
 #include <Sinks/Mediums/StatisticSink.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
-#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
 #include <utility>
 
 namespace NES::Statistic {
@@ -47,7 +47,6 @@ std::string StatisticSink::toString() const {
     ss << "SinkFormat(" << statisticSinkFormat->toString() << ")";
     ss << ")";
     return ss.str();
-
 }
 
 SinkMediumTypes StatisticSink::getSinkMediumType() { return SinkMediumTypes::STATISTIC_SINK; }

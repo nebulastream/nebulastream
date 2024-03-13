@@ -13,8 +13,8 @@
 */
 
 #include <API/Schema.hpp>
-#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
 #include <utility>
 
 namespace NES::Statistic {

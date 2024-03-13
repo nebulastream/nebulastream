@@ -14,8 +14,8 @@
 
 #include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -218,9 +218,10 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
     auto sinkFormat = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
 
     // We create the correct StatisticSinkFormat and then pass everything to the StatisticSink
-    auto statisticSinkFormat = Statistic::StatisticSinkFormatFactory::createFromSchema(schema,
-                                                                                       nodeEngine->getBufferManager()->getBufferSize(),
-                                                                                       sinkFormatType);
+    auto statisticSinkFormat =
+        Statistic::StatisticSinkFormatFactory::createFromSchema(schema,
+                                                                nodeEngine->getBufferManager()->getBufferSize(),
+                                                                sinkFormatType);
     return std::make_shared<Statistic::StatisticSink>(sinkFormat,
                                                       nodeEngine,
                                                       numOfProducers,

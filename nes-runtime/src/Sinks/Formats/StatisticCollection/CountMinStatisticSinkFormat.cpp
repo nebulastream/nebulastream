@@ -13,20 +13,20 @@
 */
 
 #include <API/Schema.hpp>
-#include <Util/StdInt.hpp>
-#include <Sinks/Formats/StatisticCollection/CountMinStatisticSinkFormat.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Formats/StatisticCollection/CountMinStatisticSinkFormat.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <utility>
 
 namespace NES::Statistic {
 
 AbstractStatisticSinkFormatPtr CountMinStatisticSinkFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout) {
     const auto qualifierNameWithSeparator = memoryLayout->getSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator();
-    return std::make_shared<CountMinStatisticSinkFormat>(CountMinStatisticSinkFormat(qualifierNameWithSeparator,
-                                                                                     std::move(memoryLayout)));
+    return std::make_shared<CountMinStatisticSinkFormat>(
+        CountMinStatisticSinkFormat(qualifierNameWithSeparator, std::move(memoryLayout)));
 }
 
 CountMinStatisticSinkFormat::CountMinStatisticSinkFormat(const std::string& qualifierNameWithSeparator,
@@ -35,7 +35,6 @@ CountMinStatisticSinkFormat::CountMinStatisticSinkFormat(const std::string& qual
       widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
       depthFieldName(qualifierNameWithSeparator + DEPTH_FIELD_NAME),
       countMinDataFieldName(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME) {}
-
 
 std::vector<HashStatisticPair> CountMinStatisticSinkFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) {
     std::vector<HashStatisticPair> createdStatisticsWithTheirHash;
@@ -52,11 +51,12 @@ std::vector<HashStatisticPair> CountMinStatisticSinkFormat::readStatisticsFromBu
         const auto countMinDataFieldOffset = memoryLayout->getFieldOffset(curTupleCnt, countMinDataFieldName);
 
         // Checking if all field offsets are valid and have a value
-        if (!startTsFieldOffset.has_value() || !endTsFieldOffset.has_value() || !hashFieldOffset.has_value() ||
-            !observedTuplesFieldOffset.has_value() || !widthFieldOffset.has_value() || !depthFieldOffset.has_value() ||
-            !countMinDataFieldOffset.has_value()) {
+        if (!startTsFieldOffset.has_value() || !endTsFieldOffset.has_value() || !hashFieldOffset.has_value()
+            || !observedTuplesFieldOffset.has_value() || !widthFieldOffset.has_value() || !depthFieldOffset.has_value()
+            || !countMinDataFieldOffset.has_value()) {
             NES_ERROR("Expected to receive an offset for all required fields! Skipping creating a statistic for "
-                      "the {}th tuple in the buffer!", curTupleCnt);
+                      "the {}th tuple in the buffer!",
+                      curTupleCnt);
             continue;
         }
 
@@ -75,25 +75,26 @@ std::vector<HashStatisticPair> CountMinStatisticSinkFormat::readStatisticsFromBu
 
         auto countMinStatistic = CountMinStatistic::create(Windowing::TimeMeasure(startTs),
                                                            Windowing::TimeMeasure(endTs),
-                                                           observedTuples, width, depth,
+                                                           observedTuples,
+                                                           width,
+                                                           depth,
                                                            countMinDataString);
 
         createdStatisticsWithTheirHash.emplace_back(hash, countMinStatistic);
     }
 
-
     return createdStatisticsWithTheirHash;
 }
 std::string CountMinStatisticSinkFormat::toString() const {
     std::ostringstream oss;
-    oss << "startTsFieldName: "  << startTsFieldName << " ";
-    oss << "endTsFieldName: "  << endTsFieldName << " ";
-    oss << "statisticHashFieldName: "  << statisticHashFieldName << " ";
-    oss << "statisticTypeFieldName: "  << statisticTypeFieldName << " ";
-    oss << "observedTuplesFieldName: "  << observedTuplesFieldName << " ";
-    oss << "widthFieldName: "  << widthFieldName << " ";
-    oss << "depthFieldName: "  << depthFieldName << " ";
-    oss << "countMinDataFieldName: "  << countMinDataFieldName << " ";
+    oss << "startTsFieldName: " << startTsFieldName << " ";
+    oss << "endTsFieldName: " << endTsFieldName << " ";
+    oss << "statisticHashFieldName: " << statisticHashFieldName << " ";
+    oss << "statisticTypeFieldName: " << statisticTypeFieldName << " ";
+    oss << "observedTuplesFieldName: " << observedTuplesFieldName << " ";
+    oss << "widthFieldName: " << widthFieldName << " ";
+    oss << "depthFieldName: " << depthFieldName << " ";
+    oss << "countMinDataFieldName: " << countMinDataFieldName << " ";
     return oss.str();
 }
 

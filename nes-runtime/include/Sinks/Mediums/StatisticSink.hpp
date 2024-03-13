@@ -19,7 +19,6 @@
 
 namespace NES::Statistic {
 
-
 class AbstractStatisticStore;
 using AbstractStatisticStorePtr = std::shared_ptr<AbstractStatisticStore>;
 
