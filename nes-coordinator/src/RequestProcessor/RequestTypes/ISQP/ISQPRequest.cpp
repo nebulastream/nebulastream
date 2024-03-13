@@ -19,7 +19,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -435,13 +435,13 @@ PlacementAmemderInstance::PlacementAmemderInstance(SharedQueryPlanPtr sharedQuer
       typeInferencePhase(typeInferencePhase), coordinatorConfiguration(coordinatorConfiguration), queryCatalog(queryCatalog){};
 
 bool PlacementAmemderInstance::execute() {
-    auto queryPlacementPhaseInstance = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                        topology,
                                                                                        typeInferencePhase,
                                                                                        coordinatorConfiguration);
 
     auto sharedQueryId = sharedQueryPlan->getId();
-    auto deploymentContexts = queryPlacementPhaseInstance->execute(sharedQueryPlan);
+    auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     // Iterate over deployment context and update execution plan
     for (const auto& deploymentContext : deploymentContexts) {

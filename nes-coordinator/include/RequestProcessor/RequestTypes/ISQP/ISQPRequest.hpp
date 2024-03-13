@@ -16,7 +16,6 @@
 #define NES_ISQPREQUEST_HPP
 
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
-#include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 #include <thread>
 
@@ -139,40 +138,6 @@ class ISQPRequest : public AbstractUniRequest {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     folly::USPMCQueue<PlacementAmemderInstancePtr, false> amendmentInstanceQueue;
     std::vector<std::thread> amendmentRunners;
-};
-
-/**
- * @brief class representing the placement amender instance
- */
-class PlacementAmemderInstance {
-  public:
-    static PlacementAmemderInstancePtr create(SharedQueryPlanPtr sharedQueryPlan,
-                                              Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                              TopologyPtr topology,
-                                              Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                              Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                              Catalogs::Query::QueryCatalogPtr queryCatalog);
-
-    PlacementAmemderInstance(SharedQueryPlanPtr sharedQueryPlan,
-                             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                             TopologyPtr topology,
-                             Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                             Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                             Catalogs::Query::QueryCatalogPtr queryCatalog);
-
-    /**
-     * @brief Perform the placement amendment
-     * @return true if success else false
-     */
-    bool execute();
-
-  private:
-    SharedQueryPlanPtr sharedQueryPlan;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    TopologyPtr topology;
-    Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
 };
 
 }// namespace RequestProcessor

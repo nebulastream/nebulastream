@@ -21,7 +21,7 @@
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAmendmentException.hpp>
-#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
+#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
