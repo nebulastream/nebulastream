@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.71](https://github.com/nebulastream/nebulastream/tree/v0.6.71) (2024-03-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.70...v0.6.71)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Handle placement amendment failure by creating new changelog entry for the failed placement delta [\#4688](https://github.com/nebulastream/nebulastream/issues/4688)
+
 ## [v0.6.70](https://github.com/nebulastream/nebulastream/tree/v0.6.70) (2024-03-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.69...v0.6.70)
