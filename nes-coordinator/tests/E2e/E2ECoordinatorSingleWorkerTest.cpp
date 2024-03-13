@@ -911,4 +911,52 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
     EXPECT_TRUE(response == 0);
 }
 
+TEST_F(E2ECoordinatorSingleWorkerTest, testMoritz) {
+
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+    std::stringstream schema;
+    schema << "{\"logicalSourceName\" : \"defaultLogicalSourceName\",\"schema\" "
+              ":\"Schema::create()->addField(createField(\\\"f1\\\",BasicType::UINT64))->"
+              "addField(createField(\\\"ts\\\",BasicType::UINT64));\"}";
+    schema << endl;
+    NES_INFO("schema submit={}", schema.str());
+    ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+
+    auto path = std::filesystem::path(TEST_DATA_DIRECTORY) / "countMinInput.csv";
+
+    auto worker = TestUtils::startWorker({
+        TestUtils::rpcPort(0),
+        TestUtils::dataPort(0),
+        TestUtils::coordinatorPort(*rpcCoordinatorPort),
+        TestUtils::sourceType(SourceType::CSV_SOURCE),
+        TestUtils::csvSourceFilePath(std::filesystem::path(path)),
+        TestUtils::logicalSourceName("defaultLogicalSourceName"),
+        TestUtils::physicalSourceName("defaultPhysicalSourceName"),
+        TestUtils::numberOfBuffersToProduce(1),
+        TestUtils::numberOfTuplesToProducePerBuffer(6),
+
+    });
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"defaultLogicalSourceName\"))";
+    ss << R"(.window(TumblingWindow::of(EventTime(Attribute(\"ts\")), Seconds(5))))";
+    ss << R"(.apply(Sum(Attribute(\"f1\"))).sink(PrintSinkDescriptor::create());")";
+    ss << R"(,"placement" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit={}", ss.str());
+
+    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return["queryId"].get<uint64_t>();
+    NES_INFO("Query ID: {}", queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
+}
+
 }// namespace NES

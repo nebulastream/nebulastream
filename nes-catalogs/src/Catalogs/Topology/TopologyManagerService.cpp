@@ -261,6 +261,8 @@ nlohmann::json TopologyManagerService::getTopologyAsJson() {
         // Add properties for current topology node
         currentNodeJsonValue["id"] = currentNode->getId();
         currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
+        currentNodeJsonValue["rpcPort"] = currentNode->getGrpcPort();
+        currentNodeJsonValue["dataPort"] = currentNode->getDataPort();
         currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
         if (currentNode->getSpatialNodeType() != NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
             auto geoLocation = getGeoLocationForNode(currentNode->getId());

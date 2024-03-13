@@ -2,17 +2,17 @@
 
 # ~~ IPs and Ports ~~
 # Set worker IP
-#localWorkerIp: 127.0.0.1
+localWorkerIp: 130.149.21.16
 
 # Set IP address of NES Coordinator to which the NES Worker should connect
-#coordinatorIp: 127.0.0.1
+coordinatorIp: 130.149.21.15
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
 # Needs to be the same as rpcPort in Coordinator
-#coordinatorPort: 4000
+coordinatorPort: 4000
 
 # Set RPC server port of NES Worker
-#rpcPort: 3000
+rpcPort: 3000
 
 # Set the data port of the NES Worker
 #dataPort: 3001
@@ -81,18 +81,18 @@
 # Available source Types: DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
 #                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
 #                         BinarySource (ToDo: Make source available))
-#physicalSources:
+physicalSources:
   # Set logical stream name where this stream is added to
-  #- logicalSourceName: default_source_log
+  - logicalSourceName: defaultLogicalSourceName
     # Set physical stream name
-    #physicalSourceName: default_source_phy
+    physicalSourceName: defaultPhysicalSourceName
     # Define source type, also need to specify source configurations for source type below
-    #type: CSV
+    type: CSV_SOURCE
     # CSVSource and its needed configuration params
-    #configuration:
+    configuration:
       ###### Define only the following configurations for CSV stream
       # Set file path
-      #filePath:
+      filePath: /home/moritz/nebulastream/nes-coordinator/tests/TestData/countMinInput.csv
       # Skip first line of the file
       #skipHeader: false
       # Set delimiter, e.g. ',' or '.'
@@ -104,7 +104,7 @@
       # Set sampling interval of source
       #sourceGatheringInterval: 1
       # Set gathering mode between [interval|ingestion|adaptive]
-      #sourceGatheringMode: interval
+      #sourceGatheringMode: ingestion
       # Set input data format
       #inputFormat: JSON
 
