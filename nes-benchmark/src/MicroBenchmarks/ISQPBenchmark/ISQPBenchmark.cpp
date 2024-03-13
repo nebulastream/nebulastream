@@ -436,7 +436,7 @@ int main(int argc, const char* argv[]) {
             auto topology = nesCoordinator->getTopology();
             std::cout << "Setting up the topology." << std::endl;
             //Setup topology and source catalog
-            setUp(1, 10, 100, requestHandlerService, sourceCatalogService, topology);
+            setUp(9, 10, 100, requestHandlerService, sourceCatalogService, topology);
 
             auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 
@@ -470,17 +470,25 @@ int main(int argc, const char* argv[]) {
             auto endTime =
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                     .count();
-            benchmarkOutput << placementStrategy << "," << incrementalPlacement << "," << placementAmendmentThreadCount << ","
+            benchmarkOutput << placementStrategy << "," << std::to_string(incrementalPlacement) << "," << placementAmendmentThreadCount << ","
                             << placementAmendmentMode << "," << batchSize << "," << run << ","
                             << count << "," << startTime << "," << endTime << "," << (endTime - startTime) << std::endl;
-            std::cout << "Finished Run " << run;
+            std::cout << "Finished Run " << run << std::endl;
             nesCoordinator->stopCoordinator(true);
         }
+
+        std::cout << benchmarkOutput.str() << std::endl;
+        std::ofstream out("ISQP-Benchmark.csv", std::ios::trunc);
+        out << benchmarkOutput.str();
+        out.close();
+        std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
+        std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
+        std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
     }
 
     //Print the benchmark output and same it to the CSV file for further processing
     std::cout << benchmarkOutput.str();
-    std::ofstream out("BenchmarkQueryMerger.csv");
+    std::ofstream out("ISQP-Benchmark.csv");
     out << benchmarkOutput.str();
     out.close();
     std::cout << "benchmark finish" << std::endl;
