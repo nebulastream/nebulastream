@@ -15,6 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_
 
+#include <folly/concurrency/UnboundedQueue.h>
 #include <memory>
 
 namespace NES {
@@ -35,6 +36,11 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class PlacementAmemderInstance;
+using PlacementAmemderInstancePtr = std::shared_ptr<PlacementAmemderInstance>;
+
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmemderInstancePtr, false>>;
 }// namespace Optimizer
 
 class GlobalQueryPlan;
@@ -61,7 +67,8 @@ struct StorageDataStructures {
                           GlobalQueryPlanPtr globalQueryPlan,
                           Catalogs::Query::QueryCatalogPtr queryCatalog,
                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                          Catalogs::UDF::UDFCatalogPtr udfCatalog);
+                          Catalogs::UDF::UDFCatalogPtr udfCatalog,
+                          Optimizer::UMPMCAmendmentQueuePtr amendmentQueue);
 
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
@@ -70,6 +77,7 @@ struct StorageDataStructures {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
 };
 }// namespace RequestProcessor
 }// namespace NES

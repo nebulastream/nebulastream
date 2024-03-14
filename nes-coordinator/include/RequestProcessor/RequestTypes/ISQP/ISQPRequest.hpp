@@ -136,8 +136,6 @@ class ISQPRequest : public AbstractUniRequest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    folly::USPMCQueue<PlacementAmemderInstancePtr, false> amendmentInstanceQueue;
-    std::vector<std::thread> amendmentRunners;
 };
 
 }// namespace RequestProcessor

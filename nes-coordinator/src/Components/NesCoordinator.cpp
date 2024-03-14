@@ -32,6 +32,7 @@
 #include <Health.pb.h>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -80,6 +81,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
+    placementAmendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();
@@ -93,8 +95,14 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     cfg.set("type_check", false);
     auto z3Context = std::make_shared<z3::context>(cfg);
 
-    RequestProcessor::StorageDataStructures storageDataStructures =
-        {this->coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog};
+    RequestProcessor::StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
+                                                                     topology,
+                                                                     globalExecutionPlan,
+                                                                     globalQueryPlan,
+                                                                     queryCatalog,
+                                                                     sourceCatalog,
+                                                                     udfCatalog,
+                                                                     placementAmendmentQueue};
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
     requestHandlerService = std::make_shared<RequestHandlerService>(this->coordinatorConfiguration->optimizer,
@@ -209,6 +217,13 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start health check");
     coordinatorHealthCheckService->startHealthCheck();
 
+    // Start placement amendment handler
+
+    auto amendmentThreadCount = coordinatorConfiguration->optimizer.placementAmendmentThreadCount.getValue();
+    placementAmendmentHandler =
+        std::make_shared<Optimizer::PlacementAmendmentHandler>(amendmentThreadCount, placementAmendmentQueue);
+    placementAmendmentHandler->start();
+
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
         restThread->join();
@@ -228,6 +243,10 @@ bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force={}", force);
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
+
+        NES_DEBUG("NesCoordinator::stop placement amendment handler");
+        //Terminate placement amendment handler
+        placementAmendmentHandler->shutDown();
 
         NES_DEBUG("NesCoordinator::stop health check");
         coordinatorHealthCheckService->stopHealthCheck();
@@ -268,7 +287,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
-
         return true;
     }
     NES_DEBUG("NesCoordinator: already stopped");

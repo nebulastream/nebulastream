@@ -16,6 +16,7 @@
 
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
+#include <folly/concurrency/UnboundedQueue.h>
 #include <memory>
 #include <vector>
 
@@ -53,6 +54,11 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class PlacementAmemderInstance;
+using PlacementAmemderInstancePtr = std::shared_ptr<PlacementAmemderInstance>;
+
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmemderInstancePtr, false>>;
 }// namespace Optimizer
 
 class GlobalQueryPlan;
@@ -143,6 +149,12 @@ class StorageHandler {
      * @return  a handle to the coordinator configuration
      */
     virtual Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId);
+
+    /**
+     * @brief Get placement amendment queue to perform concurrent placement amendment
+     * @return shared pointer to folly multi producer multi consumer queue
+     */
+    virtual Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue();
 
     /**
      * @brief obtain a new request id
