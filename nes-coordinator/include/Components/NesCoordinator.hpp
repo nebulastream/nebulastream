@@ -179,6 +179,12 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UDF::UDFCatalogPtr getUDFCatalog();
 
     /**
+     * @brief Get placement amendment queue
+     * @return pointer to the placement amendment queue
+     */
+    Optimizer::UMPMCAmendmentQueuePtr getPlacementAmendmentQueue();
+
+    /**
      * @brief Get instance of monitoring service
      * @return monitoring service pointer
      */

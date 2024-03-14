@@ -338,6 +338,8 @@ Catalogs::Query::QueryCatalogPtr NesCoordinator::getQueryCatalog() { return quer
 
 Catalogs::UDF::UDFCatalogPtr NesCoordinator::getUDFCatalog() { return udfCatalog; }
 
+Optimizer::UMPMCAmendmentQueuePtr NesCoordinator::getPlacementAmendmentQueue() { return placementAmendmentQueue; }
+
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }

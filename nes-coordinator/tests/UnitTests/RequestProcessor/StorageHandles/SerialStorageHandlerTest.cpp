@@ -43,8 +43,15 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    StorageDataStructures storageDataStructures =
-        {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog};
+    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+    StorageDataStructures storageDataStructures = {coordinatorConfiguration,
+                                                   topology,
+                                                   globalExecutionPlan,
+                                                   globalQueryPlan,
+                                                   queryCatalog,
+                                                   sourceCatalog,
+                                                   udfCatalog,
+                                                   amendmentQueue};
     auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
 
     //test if we can obtain the resource we passed to the constructor
