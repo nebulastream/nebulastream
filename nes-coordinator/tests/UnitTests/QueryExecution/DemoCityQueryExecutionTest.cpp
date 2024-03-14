@@ -84,7 +84,7 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==-------- SETUP TEST PARAMETERS --------==//
     //==---------------------------------------==//
     constexpr uint64_t numInputRecords = 13;
-    constexpr uint64_t numResultRecords = 12;
+    constexpr uint64_t numResultRecords = 11;
     constexpr uint64_t timeoutInMilliseconds = 2000;
     constexpr uint64_t milliSecondsToHours = 3600000;
 

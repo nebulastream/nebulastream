@@ -616,7 +616,7 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
                           numberOfRecordsToExpect);
                 return false;
             } else if (currentContentSize < numberOfRecordsToExpect) {
-                NES_DEBUG("number of expected bytes {} not reached yet with {} Bytes",
+                NES_DEBUG("number of expected lines {} not reached yet with {} lines",
                           numberOfRecordsToExpect,
                           currentContentSize);
             } else {
