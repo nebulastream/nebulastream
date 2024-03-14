@@ -61,17 +61,17 @@ ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<
 }
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
-
-    auto processingStartTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    topology = storageHandle->getTopologyHandle(requestId);
-    globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
-    globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
-    queryCatalog = storageHandle->getQueryCatalogHandle(requestId);
-    udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
-    sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
-    coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
-    auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
+    try {
+        auto processingStartTime =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        topology = storageHandle->getTopologyHandle(requestId);
+        globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
+        globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
+        queryCatalog = storageHandle->getQueryCatalogHandle(requestId);
+        udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
+        sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
+        coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
+        auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
 
         // Apply all topology events
         for (const auto& event : events) {
@@ -164,6 +164,11 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                     numOfSQPAffected,
                                                                     numOfFailedPlacements,
                                                                     true));
+    } catch (RequestExecutionException& exception) {
+        NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
+        responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, true));
+        handleError(std::current_exception(), storageHandle);
+    }
     return {};
 }
 

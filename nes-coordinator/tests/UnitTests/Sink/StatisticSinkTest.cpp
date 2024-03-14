@@ -21,6 +21,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sinks/Mediums/StatisticSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sinks/Mediums/StatisticSink.hpp>
 #include <StatisticIdentifiers.hpp>
