@@ -16,7 +16,6 @@
 #define NES_ISQPREQUEST_HPP
 
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
-#include <folly/concurrency/UnboundedQueue.h>
 #include <thread>
 
 namespace NES {
