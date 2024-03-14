@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.72](https://github.com/nebulastream/nebulastream/tree/v0.6.72) (2024-03-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.71...v0.6.72)
+
+### Bug Fixes 🐛
+
+- \[BUG\] ARM1 and ARM2 QueryDeploymentTest::testJoinWithSlidingWindow [\#4696](https://github.com/nebulastream/nebulastream/issues/4696)
+
 ## [v0.6.71](https://github.com/nebulastream/nebulastream/tree/v0.6.71) (2024-03-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.70...v0.6.71)
