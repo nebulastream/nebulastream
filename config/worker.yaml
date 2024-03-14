@@ -9,13 +9,13 @@ coordinatorIp: 130.149.21.15
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
 # Needs to be the same as rpcPort in Coordinator
-coordinatorPort: 4000
+coordinatorPort: 8434
 
 # Set RPC server port of NES Worker
-rpcPort: 3000
+rpcPort: 8433
 
 # Set the data port of the NES Worker
-#dataPort: 3001
+dataPort: 8432
 
 # Set number of computing slots in NES Worker
 #numberOfSlots: 65535
@@ -92,7 +92,7 @@ physicalSources:
     configuration:
       ###### Define only the following configurations for CSV stream
       # Set file path
-      filePath: /home/moritz/nebulastream/nes-coordinator/tests/TestData/countMinInput.csv
+      filePath: /home/mruge-ldap/remote-dev/tmp/tmp.gEL0Xvm0lQ/nes-coordinator/tests/TestData/countMinInput.csv
       # Skip first line of the file
       #skipHeader: false
       # Set delimiter, e.g. ',' or '.'

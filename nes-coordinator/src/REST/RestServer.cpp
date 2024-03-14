@@ -21,6 +21,7 @@
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/QueryController.hpp>
 #include <REST/Controller/SourceCatalogController.hpp>
+#include <REST/Controller/StatisticController.hpp>
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
@@ -138,6 +139,9 @@ void RestServer::run() {
                                                                                errorHandler,
                                                                                "/monitoring");
 
+    auto statisticController =
+        Experimental::Statistics::StatisticController::create(objectMapper, coordinator, "/statistics", errorHandler);
+
     router->addController(connectivityController);
     router->addController(queryCatalogController);
     router->addController(queryController);
@@ -148,6 +152,7 @@ void RestServer::run() {
     router->addController(connectivityController);
     router->addController(queryCatalogController);
     router->addController(monitoringController);
+    router->addController(statisticController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);

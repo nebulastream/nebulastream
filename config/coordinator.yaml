@@ -14,7 +14,7 @@ coordinatorIp: 127.0.0.1
 #restPort: 8081
 
 # Set the data port of the network manager
-#dataPort: 3001
+dataPort: 3001
 
 
 # ~~ Processing Configurations ~~
@@ -78,3 +78,9 @@ logicalSources:
         type: "UINT64"
       - name: "ts"
         type: "UINT64"
+
+
+worker:
+  coordinatorIp: 130.149.21.15
+  rpcPort: 9000
+  dataPort: 3001
