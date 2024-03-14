@@ -698,7 +698,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows)
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedSinkVector));
 }
 
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindows) {
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     struct __attribute__((packed)) ResultRecord {
         int64_t test1test2$start;
         int64_t test1test2$end;
