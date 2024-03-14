@@ -17,12 +17,15 @@
 add_subdirectory(src)
 get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
+# Find folly
+find_package(folly CONFIG REQUIRED)
+
 # Add Library
 add_library(nes-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
 target_include_directories(nes-optimizer PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes-optimizer PRIVATE nes-common  nes-data-types  nes-configurations nes-operators nes-catalogs)
+target_link_libraries(nes-optimizer PRIVATE nes-common  nes-data-types  nes-configurations nes-operators nes-catalogs Folly::folly)
 
 # CPR and CURL for Elegant optimizer
 target_link_libraries(nes-optimizer PRIVATE cpr::cpr ${CURL_LIBRARIES})
