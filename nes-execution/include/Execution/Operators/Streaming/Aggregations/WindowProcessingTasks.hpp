@@ -31,6 +31,16 @@ struct SliceMergeTask {
     uint64_t startSlice;
     uint64_t endSlice;
     std::vector<std::shared_ptr<SliceType>> slices;
+    SliceMergeTask(){};
+
+    SliceMergeTask(uint64_t sequence_number,
+                   uint64_t chunk_number,
+                   bool last_chunk,
+                   uint64_t start_slice,
+                   uint64_t end_slice,
+                   const std::vector<std::shared_ptr<SliceType>>& slices)
+        : sequenceNumber(sequence_number), chunkNumber(chunk_number), lastChunk(last_chunk), startSlice(start_slice),
+          endSlice(end_slice), slices(slices) {}
     ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber, chunkNumber, lastChunk); }
 };
 

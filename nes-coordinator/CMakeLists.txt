@@ -19,13 +19,10 @@ include(GNUInstallDirs)
 get_source(nes-coordinator NES_COORDINATOR_SOURCE_FILES)
 add_library(nes-coordinator SHARED ${NES_COORDINATOR_SOURCE_FILES})
 
-# Find folly
-find_package(folly CONFIG REQUIRED)
-
 target_include_directories(nes-coordinator PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes-coordinator PRIVATE nes-common nes-grpc nes-operators nes-compiler nes-catalogs nes-runtime nes-optimizer nes-worker nes-client nes-data-types nes-configurations nes-execution nes-nautilus Folly::folly)
+target_link_libraries(nes-coordinator PRIVATE nes-common nes-grpc nes-operators nes-compiler nes-catalogs nes-runtime nes-optimizer nes-worker nes-client nes-data-types nes-configurations nes-execution nes-nautilus)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-coordinator REUSE_FROM nes-common)
 endif ()
