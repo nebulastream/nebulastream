@@ -75,7 +75,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.0
+        uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: preamble-check
@@ -114,7 +114,7 @@ jobs:
   #          ssh-strict: 'false'
   #          fetch-depth: '0'
   #      - name: Cancel Previous Runs
-  #        uses: styfle/cancel-workflow-action@0.12.0
+  #        uses: styfle/cancel-workflow-action@0.12.1
   #        with:
   #          access_token: ${{ secrets.NES_CI_SECRET }}
   #      - name: Build Docker
@@ -150,7 +150,7 @@ jobs:
   #        run: |
   #          docker rm -f ${{ github.run_id }}_cc_${{ matrix.osversion }}_build
   #      - name: Notify Slack
-  #        uses: 8398a7/action-slack@v3.15.1
+  #        uses: 8398a7/action-slack@v3.16.2
   #        with:
   #          status: ${{ job.status }}
   #          author_name: ${{ github.actor }}
@@ -194,7 +194,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.0
+        uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: Build Docker for CleanUp
@@ -259,7 +259,7 @@ jobs:
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_test
       - name: Notify Slack
-        uses: 8398a7/action-slack@v3.15.1
+        uses: 8398a7/action-slack@v3.16.2
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
@@ -287,7 +287,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.0
+        uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
@@ -300,7 +300,7 @@ jobs:
           mkdir -p $build_dir
           $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh "$build_dir"
       - name: Notify Slack
-        uses: 8398a7/action-slack@v3.15.1
+        uses: 8398a7/action-slack@v3.16.2
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
@@ -467,7 +467,7 @@ jobs:
           external_repository: nebulastream/nebulastream-docs
           publish_branch: master
       - name: "Notify Slack"
-        uses: 8398a7/action-slack@v3.15.1
+        uses: 8398a7/action-slack@v3.16.2
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
