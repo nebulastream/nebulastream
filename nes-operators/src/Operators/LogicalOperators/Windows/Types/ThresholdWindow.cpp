@@ -15,7 +15,6 @@
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sstream>
 
 namespace NES::Windowing {
 
@@ -64,5 +63,12 @@ std::string ThresholdWindow::toString() const {
     ss << minimumCount;
     ss << std::endl;
     return ss.str();
+}
+
+uint64_t ThresholdWindow::hash() const {
+    uint64_t hashValue=0;
+    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(minimumCount);
+    hashValue=hashValue * 0x9e3779b1 + std::hash<std::string>{}(predicate->toString());
+    return hashValue;
 }
 }// namespace NES::Windowing

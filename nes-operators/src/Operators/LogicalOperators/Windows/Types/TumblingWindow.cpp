@@ -48,4 +48,11 @@ bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
     }
     return false;
 }
+
+uint64_t TumblingWindow::hash() const {
+    uint64_t hashValue=0;
+    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
+    hashValue=hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
+    return hashValue;
+}
 }// namespace NES::Windowing

@@ -40,7 +40,9 @@ class SlidingWindow : public TimeBasedWindowType {
 
     bool equal(WindowTypePtr otherWindowType) override;
 
-  private:
+    uint64_t hash() const override;
+
+private:
     SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
