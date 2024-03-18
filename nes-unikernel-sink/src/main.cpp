@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     auto buffer_manager = std::make_shared<BufferManager>();
     buffer_manager->createFixedSizeBufferPool(128);
 
-    boost::iostreams::stream os(NES_LOG_OS(NES::LogLevel::LOG_INFO));
+    boost::iostreams::stream os(NES_LOG_OS(NES::LogLevel::LOG_DEBUG));
 
     NES::DataSinkPtr statisticSink;
     if (!options.print) {
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
                                                     1,
                                                     options.subQueryId,
                                                     options.queryId,
-                                                    5s);
+                                                    2s);
     } else {
         NES_INFO("Using Printing Sink");
         statisticSink = std::make_shared<NES::PrintSink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
@@ -87,24 +87,26 @@ int main(int argc, char* argv[]) {
     auto manager =
         NetworkManager::create(options.nodeId, options.hostIp, options.port, std::move(exchange_protocol), buffer_manager);
 
-    NodeLocation location(options.upstreamId, options.upstreamIp, options.upstreamPort);
-    NesPartition partition(options.queryId, options.operatorId, options.partitionId, options.subPartitionId);
+    for (const auto& upstream : options.upstreams) {
+        NodeLocation location(upstream.second.nodeId, upstream.second.ip, upstream.second.port);
+        NesPartition partition(options.queryId, upstream.second.operatorId, upstream.second.partitionId, upstream.second.subpartitionId);
 
-    auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
-    std::vector pipelines{statisticSink};
-    auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema,
-                                                                buffer_manager,
-                                                                wc,
-                                                                manager,
-                                                                partition,
-                                                                location,
-                                                                1000,
-                                                                200ms,
-                                                                20,
-                                                                pipelines);
+        auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
+        std::vector pipelines{statisticSink};
+        auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema,
+                                                                    buffer_manager,
+                                                                    wc,
+                                                                    manager,
+                                                                    partition,
+                                                                    location,
+                                                                    1000,
+                                                                    200ms,
+                                                                    20,
+                                                                    pipelines);
 
-    NES_ASSERT(source->bind(), "Bind Failed");
-    source->start();
-    sleep(500);
-    source->stop(NES::Runtime::QueryTerminationType::Graceful);
+        NES_ASSERT(source->bind(), "Bind Failed");
+        source->start();
+    }
+
+    sleep(2000);
 }
