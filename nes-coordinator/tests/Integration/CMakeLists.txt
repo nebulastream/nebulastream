@@ -58,6 +58,8 @@ add_nes_integration_test(window-deployment-test "Windowing/WindowDeploymentTest.
 add_nes_integration_test(ysb-deployment-test "Windowing/YSBDeploymentTest.cpp")
 add_nes_integration_test(ktm-deployment-test "Windowing/KTMDeploymentTest.cpp")
 
+### WindowTypeHashTest ###
+add_nes_integration_test(window-type-hash "Windowing/WindowTypeHashTest.cpp")
 
 ### window integration tests ###
 add_nes_integration_test(keyed-tumbling-window-tests "Windowing/TumblingWindow/KeyedTumblingWindowTests.cpp")

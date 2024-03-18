@@ -32,6 +32,7 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
      * @return bool true if window is of WindowType
      */
     template<class WindowType>
+
     bool instanceOf() {
         if (dynamic_cast<WindowType*>(this)) {
             return true;
@@ -70,11 +71,18 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
      */
     virtual bool inferStamp(const SchemaPtr& schema) = 0;
 
-    // TODO this will be implemented for all window types with issue #4624
-    virtual std::size_t hash() const {
-        const auto str = toString();
-        return std::hash<std::string>()(str);
-    };
+    /**
+     * @brief Get the hash of the window type
+     *
+     * This function computes a hash value uniquely identifying the window type including characteristic attributes.
+     * The hash value is different for different WindowTypes and same WindowTypes with different attributes.
+     * Especially a SlidingWindow of same size and slide returns a different hash value,
+     * than a TumblingWindow with the same size.
+     *
+     * @return the hash of the window type
+     */
+    virtual uint64_t hash() const = 0;
+private:
 };
 
 }// namespace NES::Windowing
