@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.74](https://github.com/nebulastream/nebulastream/tree/v0.6.74) (2024-03-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.73...v0.6.74)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement std::hash\<\>\(\) for WindowTypes [\#4624](https://github.com/nebulastream/nebulastream/issues/4624)
+
 ## [v0.6.73](https://github.com/nebulastream/nebulastream/tree/v0.6.73) (2024-03-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.72...v0.6.73)
