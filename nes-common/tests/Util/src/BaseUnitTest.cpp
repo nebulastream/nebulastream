@@ -90,7 +90,6 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
             case std::future_status::deferred: {
                 NES_ERROR("Cannot terminate test [{}] within deadline", testName);
                 FAIL();
-                break;
             }
         }
     });

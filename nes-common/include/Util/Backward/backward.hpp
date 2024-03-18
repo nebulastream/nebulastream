@@ -648,7 +648,7 @@ struct demangler : public demangler_impl<system_tag::current_tag> {};
 inline std::vector<std::string> split_source_prefixes(const std::string &s) {
   std::vector<std::string> out;
   size_t last = 0;
-  size_t next = 0;
+  size_t next;
   size_t delimiter_size = sizeof(kBackwardPathDelimiter) - 1;
   while ((next = s.find(kBackwardPathDelimiter, last)) != std::string::npos) {
     out.push_back(s.substr(last, next - last));
@@ -1937,7 +1937,7 @@ private:
   struct inliners_search_cb {
     void operator()(Dwarf_Die *die) {
       switch (dwarf_tag(die)) {
-        const char *name;
+          const char *name;
       case DW_TAG_subprogram:
         if ((name = dwarf_diename(die))) {
           trace.source.function = name;
@@ -3735,13 +3735,6 @@ public:
       }
     }
 
-    // think of it like a lambda in C++98 ;)
-    // but look, I will reuse it two times!
-    // What a good boy am I.
-    struct isspace {
-      bool operator()(char c) { return std::isspace(c); }
-    };
-
     bool started = false;
     for (; line_idx < line_start + line_count; ++line_idx) {
       getline(*_file, line);
@@ -4162,7 +4155,7 @@ public:
 
   SignalHandling(const std::vector<int> &posix_signals = make_default_signals())
       : _loaded(false) {
-    bool success = true;
+    bool success;
 
     const size_t stack_size = 1024 * 1024 * 8;
     _stack_content.reset(static_cast<char *>(malloc(stack_size)));

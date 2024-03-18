@@ -19,7 +19,6 @@
 #include <mutex>
 #include <random>
 #if defined(__linux__)
-#include <pwd.h>
 #endif
 namespace NES::Testing {
 namespace detail::uuid {

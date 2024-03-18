@@ -35,8 +35,6 @@
  // (NebulaStream, https://nebula.stream)
  //
 #include <cpp-base64/base64.h>
-
-#include <algorithm>
 #include <stdexcept>
 
  //
