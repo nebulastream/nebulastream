@@ -26,8 +26,7 @@ std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const Characteris
 
     // 1. Creating a query that collects the required statistic
     const auto statisticQuery =
-        statisticQueryGenerator->createStatisticQuery(*characteristic, window, sendingPolicy, triggerCondition,
-                                                      *queryCatalog);
+        statisticQueryGenerator->createStatisticQuery(*characteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
 
     // 2. Submitting the query to the system
     const auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(statisticQuery.getQueryPlan(),

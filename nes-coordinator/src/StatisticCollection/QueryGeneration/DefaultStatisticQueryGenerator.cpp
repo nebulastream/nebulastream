@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#include <Plans/Query/QueryPlan.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
@@ -27,6 +26,7 @@
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/MinVal.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -87,10 +87,9 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
         auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(std::move(window),
                                                                                            std::move(statisticDescriptor),
                                                                                            metricType->hash());
-        auto statisticSinkOperator = LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(sinkFormatType),
-                                                                                INVALID_WORKER_NODE_ID);
+        auto statisticSinkOperator =
+            LogicalOperatorFactory::createSinkOperator(StatisticSinkDescriptor::create(sinkFormatType), INVALID_WORKER_NODE_ID);
         statisticBuildOperator->addParent(statisticSinkOperator);
-
 
         // As we are operating on a queryPlanCopy, we can replace the operatorUnderTest with a statistic build operator
         // and then cut all parents of it, so that we can insert our statistic sink
@@ -112,7 +111,8 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
             logicalSourceName = dataCharacteristic->getLogicalSourceName();
         } else if (characteristic.instanceOf<InfrastructureStatistic>()) {
             auto infrastructureCharacteristic = characteristic.as<const InfrastructureStatistic>();
-            logicalSourceName = INFRASTRUCTURE_BASE_LOGICAL_SOURCE_NAME + std::to_string(infrastructureCharacteristic->getNodeId());
+            logicalSourceName =
+                INFRASTRUCTURE_BASE_LOGICAL_SOURCE_NAME + std::to_string(infrastructureCharacteristic->getNodeId());
         } else {
             NES_NOT_IMPLEMENTED();
         }
@@ -123,8 +123,6 @@ Query DefaultStatisticQueryGenerator::createStatisticQuery(const Characteristic&
         NES_DEBUG("Created query: {}", query.getQueryPlan()->toString());
         return query;
     }
-
-
 }
 
 DefaultStatisticQueryGenerator::~DefaultStatisticQueryGenerator() = default;
