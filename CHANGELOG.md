@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.73](https://github.com/nebulastream/nebulastream/tree/v0.6.73) (2024-03-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.72...v0.6.73)
+
+**Implemented enhancements:**
+
+- \[TASK\] Bump all github action versions to support node 20 and also change runners to use node 20 by default [\#4643](https://github.com/nebulastream/nebulastream/issues/4643)
+- \[TASK\] StructuredControlFlowPhaseTest [\#4549](https://github.com/nebulastream/nebulastream/issues/4549)
+
 ## [v0.6.72](https://github.com/nebulastream/nebulastream/tree/v0.6.72) (2024-03-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.71...v0.6.72)
