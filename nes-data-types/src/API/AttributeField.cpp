@@ -49,9 +49,9 @@ bool AttributeField::isEqual(const AttributeFieldPtr& attr) {
 
 uint64_t AttributeField::hash() const {
 
-    uint64_t hashValue=0;
-    hashValue=hashValue * 0x9e3779b1 + std::hash<std::string>{}(name);
-    hashValue=hashValue * 0x9e3779b1 + std::hash<std::string>{}(dataType->toString());
+    uint64_t hashValue = 0;
+    hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(name);
+    hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(dataType->toString());
     return hashValue;
 }
 
