@@ -845,10 +845,9 @@ Value<> InterruptedMergeBlockForwarding_18() {
     }
     return agg;
 }
-// Will be fixed in #3017
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_18_InterruptedMergeBlockForwarding) {
+TEST_P(StructuredControlFlowPhaseTest, 18_InterruptedMergeBlockForwarding) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto dpsSortedBlocks = createTraceAndApplyPhases(&InterruptedMergeBlockForwarding_18);
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&InterruptedMergeBlockForwarding_18); 
     createCorrectBlock(correctBlocks, "0", 0, "4");
     createCorrectBlock(correctBlocks, "5", 0, "4");
     createCorrectBlock(correctBlocks, "7", 0, "4");
@@ -874,8 +873,7 @@ Value<> TracingBreaker_19() {
     }
     return agg;
 }
-// Will be fixed in #3017
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_19_TracingBreaker) {
+TEST_P(StructuredControlFlowPhaseTest, 19_TracingBreaker) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     auto dpsSortedBlocks = createTraceAndApplyPhases(&TracingBreaker_19);
     createCorrectBlock(correctBlocks, "0", 0, "2");
