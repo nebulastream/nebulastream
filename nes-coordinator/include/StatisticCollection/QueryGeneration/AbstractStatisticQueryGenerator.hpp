@@ -16,6 +16,7 @@
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_ABSTRACTSTATISTICQUERYGENERATOR_HPP_
 
 #include <API/Query.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
@@ -36,12 +37,14 @@ class AbstractStatisticQueryGenerator {
      * @param window
      * @param sendingPolicy
      * @param triggerCondition
+     * @param queryCatalog
      * @return Query
      */
     virtual Query createStatisticQuery(const Characteristic& characteristic,
                                        const Windowing::WindowTypePtr& window,
                                        const SendingPolicyPtr& sendingPolicy,
-                                       const TriggerConditionPtr& triggerCondition) = 0;
+                                       const TriggerConditionPtr& triggerCondition,
+                                       const Catalogs::Query::QueryCatalog& queryCatalog) = 0;
 
     /**
      * @brief Virtual destructor

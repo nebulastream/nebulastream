@@ -237,6 +237,11 @@ class QueryPlan {
      */
     void setQueryState(QueryState newState);
 
+    /**
+     * @brief Clears all root operators
+     */
+    void clearRootOperators();
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
