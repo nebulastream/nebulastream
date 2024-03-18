@@ -42,11 +42,6 @@ class DumpHelper {
      */
     void dump(const std::string_view& name, const std::string_view& output) const;
 
-    /**
-     * @brief get outputPath
-     */
-    const std::string& getOutputPath() const;
-
   private:
     explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath);
     const std::string contextIdentifier;

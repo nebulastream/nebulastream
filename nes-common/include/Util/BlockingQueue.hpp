@@ -40,9 +40,9 @@ class BlockingQueue {
 
     inline BlockingQueue(uint64_t capacity) : capacity(capacity) {}
 
-    inline void setCapacity(uint64_t capacity) {
+    inline void setCapacity(uint64_t capacityParam) {
         std::unique_lock<std::mutex> lock(queueMutex);
-        this->capacity = capacity;
+        this->capacity = capacityParam;
     }
 
     inline uint64_t getCapacity() {
@@ -108,7 +108,7 @@ class BlockingQueue {
             std::unique_lock<std::mutex> lock(queueMutex);
 
             // wait while the queue is empty
-            auto ret = notEmpty.wait_for(lock, timeout, [=]() {
+            auto ret = notEmpty.wait_for(lock, timeout, [=, this]() {
                 return bufferQueue.size() > 0;
             });
             if (!ret) {

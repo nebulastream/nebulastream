@@ -90,35 +90,35 @@
 #define MAGIC_ENUM_SUPPORTED_ALIASES 1
 #endif
 
-// Enum value must be greater or equals than MAGIC_ENUM_RANGE_MIN. By default MAGIC_ENUM_RANGE_MIN = -128.
-// If need another min range for all enum types by default, redefine the macro MAGIC_ENUM_RANGE_MIN.
+// Enum value must be greater or equals than MAGIC_ENUM_RANGE_MIN. By default, MAGIC_ENUM_RANGE_MIN = -128.
+// If there is a need for another min range for all enum types by default, then redefine the macro MAGIC_ENUM_RANGE_MIN.
 #if !defined(MAGIC_ENUM_RANGE_MIN)
 #define MAGIC_ENUM_RANGE_MIN -128
 #endif
 
-// Enum value must be less or equals than MAGIC_ENUM_RANGE_MAX. By default MAGIC_ENUM_RANGE_MAX = 128.
-// If need another max range for all enum types by default, redefine the macro MAGIC_ENUM_RANGE_MAX.
+// Enum value must be less or equals than MAGIC_ENUM_RANGE_MAX. By default, MAGIC_ENUM_RANGE_MAX = 128.
+// If there is a need for another max range for all enum types by default, then redefine the macro MAGIC_ENUM_RANGE_MAX.
 #if !defined(MAGIC_ENUM_RANGE_MAX)
 #define MAGIC_ENUM_RANGE_MAX 128
 #endif
 
 namespace magic_enum {
 
-// If need another optional type, define the macro MAGIC_ENUM_USING_ALIAS_OPTIONAL.
+// If there is a need for another optional type, then define the macro MAGIC_ENUM_USING_ALIAS_OPTIONAL.
 #if defined(MAGIC_ENUM_USING_ALIAS_OPTIONAL)
 MAGIC_ENUM_USING_ALIAS_OPTIONAL
 #else
 using std::optional;
 #endif
 
-// If need another string_view type, define the macro MAGIC_ENUM_USING_ALIAS_STRING_VIEW.
+// If there is need for another string_view type, then define the macro MAGIC_ENUM_USING_ALIAS_STRING_VIEW.
 #if defined(MAGIC_ENUM_USING_ALIAS_STRING_VIEW)
 MAGIC_ENUM_USING_ALIAS_STRING_VIEW
 #else
 using std::string_view;
 #endif
 
-// If need another string type, define the macro MAGIC_ENUM_USING_ALIAS_STRING.
+// If there is a need for another string type, then define the macro MAGIC_ENUM_USING_ALIAS_STRING.
 #if defined(MAGIC_ENUM_USING_ALIAS_STRING)
 MAGIC_ENUM_USING_ALIAS_STRING
 #else
@@ -127,9 +127,9 @@ using std::string;
 
 namespace customize {
 
-// Enum value must be in range [MAGIC_ENUM_RANGE_MIN, MAGIC_ENUM_RANGE_MAX]. By default MAGIC_ENUM_RANGE_MIN = -128, MAGIC_ENUM_RANGE_MAX = 128.
-// If need another range for all enum types by default, redefine the macro MAGIC_ENUM_RANGE_MIN and MAGIC_ENUM_RANGE_MAX.
-// If need another range for specific enum type, add specialization enum_range for necessary enum type.
+// Enum value must be in range [MAGIC_ENUM_RANGE_MIN, MAGIC_ENUM_RANGE_MAX]. By default, MAGIC_ENUM_RANGE_MIN = -128, MAGIC_ENUM_RANGE_MAX = 128.
+// If there is a need for another range for all enum types by default, then redefine the macro MAGIC_ENUM_RANGE_MIN and MAGIC_ENUM_RANGE_MAX.
+// If there is a need for another range for specific enum type, then add specialization enum_range for necessary enum type.
 template<typename E>
 struct enum_range {
     static_assert(std::is_enum_v<E>, "magic_enum::customize::enum_range requires enum type.");
@@ -163,13 +163,13 @@ inline constexpr auto default_tag = customize_t{detail::customize_tag::default_t
 // Invalid customize.
 inline constexpr auto invalid_tag = customize_t{detail::customize_tag::invalid_tag};
 
-// If need custom names for enum, add specialization enum_name for necessary enum type.
+// If there is need for custom names for enum, then add specialization enum_name for necessary enum type.
 template<typename E>
 constexpr customize_t enum_name(E) noexcept {
     return default_tag;
 }
 
-// If need custom type name for enum, add specialization enum_type_name for necessary enum type.
+// If there is need for custom type name for enum, then add specialization enum_type_name for necessary enum type.
 template<typename E>
 constexpr customize_t enum_type_name() noexcept {
     return default_tag;
@@ -1049,7 +1049,7 @@ constexpr bool all_invocable(std::index_sequence<I...>) {
 
 }// namespace detail
 
-// Checks is magic_enum supported compiler.
+// Checks whether magic_enum is a supported compiler.
 inline constexpr bool is_magic_enum_supported = detail::supported<void>::value;
 
 template<typename T>
@@ -1060,19 +1060,13 @@ using Enum = detail::enum_concept<T>;
 template<typename T>
 struct is_unscoped_enum : detail::is_unscoped_enum<T> {};
 
-template<typename T>
-inline constexpr bool is_unscoped_enum_v = is_unscoped_enum<T>::value;
-
-// Checks whether T is an Scoped enumeration type.
-// Provides the member constant value which is equal to true, if T is an [Scoped enumeration](https://en.cppreference.com/w/cpp/language/enum#Scoped_enumerations) type. Otherwise, value is equal to false.
+// Checks whether T is a Scoped enumeration type.
+// Provides the member constant value which is equal to true, if T is a [Scoped enumeration](https://en.cppreference.com/w/cpp/language/enum#Scoped_enumerations) type. Otherwise, value is equal to false.
 template<typename T>
 struct is_scoped_enum : detail::is_scoped_enum<T> {};
 
-template<typename T>
-inline constexpr bool is_scoped_enum_v = is_scoped_enum<T>::value;
-
 // If T is a complete enumeration type, provides a member typedef type that names the underlying type of T.
-// Otherwise, if T is not an enumeration type, there is no member type. Otherwise (T is an incomplete enumeration type), the program is ill-formed.
+// If T is not an enumeration type, there is no member type. Otherwise (T is an incomplete enumeration type), the program is ill-formed.
 template<typename T>
 struct underlying_type : detail::underlying_type<T> {};
 

@@ -34,6 +34,4 @@ std::string collectAndPrintStacktrace() {
     return buffer.str();
 }
 
-void nesErrorHandler() { collectAndPrintStacktrace(); }
-
 }// namespace NES

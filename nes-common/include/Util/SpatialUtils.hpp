@@ -25,12 +25,7 @@ namespace NES::SpatialUtils {
 // constants
 // mean earth radius defined by WGS84
 // see: https://earth-info.nga.mil/index.php?dir=wgs84&action=wgs84
-double const earthRadiusKms = 6378.1370;
 double const earthRadiusMeters = 6378137.0;
-const static double MIN_LAT = -(M_PI / 2);
-const static double MAX_LAT = (M_PI / 2);
-const static double MIN_LON = -M_PI;
-const static double MAX_LON = M_PI;
 
 /**
 * @brief converts an angle in degrees to radians
@@ -39,23 +34,6 @@ const static double MAX_LON = M_PI;
 */
 double degreesToRadians(double degrees);
 
-/**
-* @brief converts an angle in radians to degrees
-* @param radians is the angle in radians
-* @return the angle in degrees
-*/
-double radiansToDegrees(double radians);
-
-/**
-* @brief computes the Haversine Distance between the coordinate pair (lat1, lng1)
-* and (lat2, lng2)
-* @param lat1 is the latitude (in degrees) of the first point
-* @param lng1 is the longitude (in degrees) of the first point
-* @param lat2 is the latitude (in degrees) of the second point
-* @param lng2 is the longitude (in degrees) of the second point
-* @return the haversine distance (in meters) between (lat1, lng1) and (lat2, lng2)
-*/
-double haversineDistance(double lat1, double lng1, double lat2, double lng2);
 
 }// namespace NES::SpatialUtils
 

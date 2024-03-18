@@ -145,7 +145,7 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
                                         const std::string& delim,
                                         std::function<T(std::string)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION) {
     std::string copy = inputString;
-    size_t pos = 0;
+    size_t pos;
     std::vector<T> elems;
     while ((pos = copy.find(delim)) != std::string::npos) {
         elems.push_back(fromStringToT(copy.substr(0, pos)));

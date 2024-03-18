@@ -57,8 +57,6 @@ void DumpHelper::dump(const std::string_view& name, const std::string_view& outp
     }
 }
 
-const std::string& DumpHelper::getOutputPath() const { return outputPath; };
-
 DumpHelper::DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath)
     : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), dumpToFile(dumpToFile),
       outputPath(std::move(outputPath)) {}
