@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.75](https://github.com/nebulastream/nebulastream/tree/v0.6.75) (2024-03-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.74...v0.6.75)
+
+**Implemented enhancements:**
+
+- \[TASK\] CreateStatisticQuery for WorkloadCharacteristic [\#4630](https://github.com/nebulastream/nebulastream/issues/4630)
+
 ## [v0.6.74](https://github.com/nebulastream/nebulastream/tree/v0.6.74) (2024-03-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.73...v0.6.74)
