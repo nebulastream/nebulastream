@@ -31,6 +31,12 @@ template<typename T>
 PROXY_FN T max(T a, T b) {
     return std::max(a, b);
 }
+
+template<typename T>
+PROXY_FN T min(T a, T b) {
+    return std::min(a, b);
+}
+
 PROXY_FN uint64_t getWorkerIdProxy(void* workerContext) {
     TRACE_PROXY_FUNCTION_NO_ARG;
     auto* wc = static_cast<NES::Runtime::WorkerContext*>(workerContext);
