@@ -21,18 +21,14 @@ struct Options {
     size_t workerId;
     std::string hostIp = "127.0.0.1";
     uint32_t port = 8082;
-    std::string upstreamIp = "127.0.0.1";
-    uint32_t upstreamPort = 8080;
-    NES::NodeId upstreamId;
-    NES::PartitionId partitionId;
-    NES::SubpartitionId subPartitionId;
+    std::vector<std::pair<WorkerConfiguration, WorkerLinkConfiguration>> upstreams;
     NES::SchemaPtr outputSchema;
     bool print;
 
     using Result = boost::outcome_v2::result<Options, std::string>;
     static Result fromCLI(int argc, char** argv);
 
-    static std::pair<WorkerConfiguration, WorkerLinkConfiguration>
+    static std::vector<std::pair<WorkerConfiguration, WorkerLinkConfiguration>>
     findUpstreamWorker(const SinkEndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers);
 };
 

@@ -47,7 +47,7 @@ Options::Result Options::fromCLI(int argc, char** argv) {
     if (schemaResult.has_error())
         return schemaResult.as_failure();
     auto schema = schemaResult.value();
-    auto [worker, upstream] = findUpstreamWorker(sink, configuration.workers);
+    auto upstreams = findUpstreamWorker(sink, configuration.workers);
 
     return Options{sink.nodeId,
                    configuration.query.queryID,
@@ -56,25 +56,22 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                    configuration.query.workerID,
                    sink.ip,
                    sink.port,
-                   worker.ip,
-                   worker.port,
-                   worker.nodeId,
-                   upstream.partitionId,
-                   upstream.subpartitionId,
+                   upstreams,
                    schema,
                    print};
 }
 
-std::pair<WorkerConfiguration, WorkerLinkConfiguration>
+std::vector<std::pair<WorkerConfiguration, WorkerLinkConfiguration>>
 Options::findUpstreamWorker(const SinkEndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers) {
+    std::vector<std::pair<WorkerConfiguration, WorkerLinkConfiguration>> pairs;
     for (const auto& worker : workers) {
         for (const auto& sq : worker.subQueries) {
             NES_ASSERT(sq.type == WorkerDownStreamLinkConfigurationType::node && sq.worker.has_value(),
                        "Unikernel Sink is only needed if kafka is not used");
             if (sq.worker->ip == configuration.ip && sq.worker->port == configuration.port) {
-                return {worker, *sq.worker};
+                pairs.emplace_back(worker, *sq.worker);
             }
         }
     }
-    NES_THROW_RUNTIME_ERROR("Could not Find Sink");
+    return pairs;
 }
