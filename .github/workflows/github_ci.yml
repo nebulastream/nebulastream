@@ -54,6 +54,7 @@ jobs:
         run: |
           echo "Unauthorized user triggering release"
           exit 1
+      - uses: AutoModality/action-clean@v1
       - name: Checkout
         uses: actions/checkout@v4
       - name: Contextual QA Checklists
@@ -69,6 +70,7 @@ jobs:
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [ validateTrigger ]
     steps:
+      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
@@ -188,6 +190,7 @@ jobs:
             build_parallelism: "8"
             test_parallelism: "4"
     steps:
+      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
