@@ -93,13 +93,13 @@ class Topology {
      * @return worker id
      */
     WorkerId registerWorkerAsRoot(WorkerId newRootWorkerId,
-                            const std::string& address,
-                            const int64_t grpcPort,
-                            const int64_t dataPort,
-                            const uint16_t numberOfSlots,
-                            std::map<std::string, std::any> workerProperties,
-                            uint32_t bandwidthInMbps,
-                            uint32_t latencyInMs);
+                                  const std::string& address,
+                                  const int64_t grpcPort,
+                                  const int64_t dataPort,
+                                  const uint16_t numberOfSlots,
+                                  std::map<std::string, std::any> workerProperties,
+                                  uint32_t bandwidthInMbps,
+                                  uint32_t latencyInMs);
 
     /**
      * @brief Register a new topology node in the topology
@@ -114,13 +114,13 @@ class Topology {
      * @return worker id
      */
     WorkerId registerWorker(WorkerId workerId,
-                                  const std::string& address,
-                                  const int64_t grpcPort,
-                                  const int64_t dataPort,
-                                  const uint16_t numberOfSlots,
-                                  std::map<std::string, std::any> workerProperties,
-                                  uint32_t bandwidthInMbps,
-                                  uint32_t latencyInMs);
+                            const std::string& address,
+                            const int64_t grpcPort,
+                            const int64_t dataPort,
+                            const uint16_t numberOfSlots,
+                            std::map<std::string, std::any> workerProperties,
+                            uint32_t bandwidthInMbps,
+                            uint32_t latencyInMs);
 
     /**
      * @brief returns a vector of parent topology node ids connected to the specified topology node
@@ -412,7 +412,7 @@ class Topology {
     WorkerId getNextWorkerId();
 
     std::vector<WorkerId> rootWorkerIds;
-    folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
+    std::unordered_map<WorkerId, folly::Synchronized<TopologyNodePtr>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
     std::atomic_uint64_t topologyNodeIdCounter = 0;

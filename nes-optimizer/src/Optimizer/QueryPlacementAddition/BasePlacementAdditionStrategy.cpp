@@ -743,6 +743,9 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                 return PlacementAdditionResult(false, deploymentContexts);
             }
 
+            //Create execution node if doe not exists
+            globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+
             // 1.3. Check if the worker node contains pinned upstream operators
             bool containPinnedUpstreamOperator = false;
             bool containPinnedDownstreamOperator = false;
@@ -865,7 +868,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
                         //Add decomposed query plan to the global execution plan
-                        globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                        globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.7. Compute deployment context
@@ -957,7 +960,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
-                        globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                        globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.7. Compute deployment context
@@ -974,7 +977,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                     auto updatedDecomposedQueryPlan = typeInferencePhase->execute(computedDecomposedQueryPlan);
                     updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                     updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
-                    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                    globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                     // 1.6. Update state and properties of all operators placed on the execution node
                     markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                     // 1.7. Compute deployment context

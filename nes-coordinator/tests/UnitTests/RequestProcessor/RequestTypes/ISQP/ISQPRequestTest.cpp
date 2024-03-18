@@ -629,7 +629,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     int nodeId3 = 3;
     auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, 4, properties);
     int nodeId4 = 4;
-    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 6, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -1069,13 +1069,13 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
 }
 
 //test adding multiple queries without merging and perform placement using OCC startegy
-TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
+TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueriesUsingOptimisticStrategy) {
 
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    uint16_t numberOfSlots = 4;
+    uint16_t numberOfSlots = 6;
     int nodeId1 = 1;
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, numberOfSlots, properties);
     int nodeId2 = 2;

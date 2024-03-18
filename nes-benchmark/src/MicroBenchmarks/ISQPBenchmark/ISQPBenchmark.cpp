@@ -135,7 +135,8 @@ void setupTopology(uint16_t rootNodes,
                    uint16_t sourceNodes,
                    RequestHandlerServicePtr requestHandlerService,
                    SourceCatalogServicePtr sourceCatalogService,
-                   TopologyPtr topology) {
+                   TopologyPtr topology,
+                   Optimizer::GlobalExecutionPlanPtr globalExecutionPlan) {
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -231,6 +232,22 @@ void setupTopology(uint16_t rootNodes,
 
     topology->print();
 
+    //Create execution Nodes
+    for (const auto& workerId : rootWorkerIds) {
+        auto lockedTopologyNode = topology->lockTopologyNode(workerId);
+        globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+    }
+
+    for (const auto& workerId : intermediateWorkerIds) {
+        auto lockedTopologyNode = topology->lockTopologyNode(workerId);
+        globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+    }
+
+    for (const auto& workerId : leafWorkerIds) {
+        auto lockedTopologyNode = topology->lockTopologyNode(workerId);
+        globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+    }
+
     // create logical and physical sources
     setupSources(leafWorkerIds, sourceCatalogService);
 };
@@ -246,8 +263,15 @@ void setUp(uint16_t rootNodes,
            uint16_t leafNodes,
            RequestHandlerServicePtr requestHandlerService,
            SourceCatalogServicePtr sourceCatalogService,
-           TopologyPtr topology) {
-    setupTopology(rootNodes, intermediateNodes, leafNodes, requestHandlerService, sourceCatalogService, topology);
+           TopologyPtr topology,
+           Optimizer::GlobalExecutionPlanPtr globalExecutionPlan) {
+    setupTopology(rootNodes,
+                  intermediateNodes,
+                  leafNodes,
+                  requestHandlerService,
+                  sourceCatalogService,
+                  topology,
+                  globalExecutionPlan);
 }
 
 /**
@@ -434,9 +458,10 @@ int main(int argc, const char* argv[]) {
             auto requestHandlerService = nesCoordinator->getRequestHandlerService();
             auto sourceCatalogService = nesCoordinator->getSourceCatalogService();
             auto topology = nesCoordinator->getTopology();
+            auto globalExecutionPlan = nesCoordinator->getGlobalExecutionPlan();
             std::cout << "Setting up the topology." << std::endl;
             //Setup topology and source catalog
-            setUp(9, 10, 100, requestHandlerService, sourceCatalogService, topology);
+            setUp(9, 10, 100, requestHandlerService, sourceCatalogService, topology, globalExecutionPlan);
 
             auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 
@@ -470,9 +495,9 @@ int main(int argc, const char* argv[]) {
             auto endTime =
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                     .count();
-            benchmarkOutput << placementStrategy << "," << std::to_string(incrementalPlacement) << "," << placementAmendmentThreadCount << ","
-                            << placementAmendmentMode << "," << batchSize << "," << run << ","
-                            << count << "," << startTime << "," << endTime << "," << (endTime - startTime) << std::endl;
+            benchmarkOutput << placementStrategy << "," << std::to_string(incrementalPlacement) << ","
+                            << placementAmendmentThreadCount << "," << placementAmendmentMode << "," << batchSize << "," << run
+                            << "," << count << "," << startTime << "," << endTime << "," << (endTime - startTime) << std::endl;
             std::cout << "Finished Run " << run << std::endl;
             nesCoordinator->stopCoordinator(true);
         }
