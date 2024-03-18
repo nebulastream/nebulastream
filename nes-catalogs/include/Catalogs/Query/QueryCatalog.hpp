@@ -166,7 +166,14 @@ class QueryCatalog {
      * @param queryId: the query id
      * @return the copy of query plan ptr
      */
-    QueryPlanPtr getCopyOfExecutedQueryPlan(QueryId queryId);
+    QueryPlanPtr getCopyOfExecutedQueryPlan(QueryId queryId) const;
+
+    /**
+     * @brief Gets a copy of the logical input query plan without any rules applied
+     * @param queryId
+     * @return the copy of the query plan ptr
+     */
+    QueryPlanPtr getCopyOfLogicalInputQueryPlan(const QueryId& queryId) const;
 
     /**
      * @brief Get query with given id

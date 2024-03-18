@@ -530,17 +530,30 @@ void QueryCatalog::addUpdatedQueryPlan(QueryId queryId, std::string step, QueryP
     }
 }
 
-QueryPlanPtr QueryCatalog::getCopyOfExecutedQueryPlan(QueryId queryId) {
+QueryPlanPtr QueryCatalog::getCopyOfExecutedQueryPlan(QueryId queryId) const {
     //Fetch query catalogs
-    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.wlock();
+    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.rlock();
     if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
         NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
         throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     //Fetch the shared query plan
-    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping)[queryId];
+    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping).at(queryId);
     return queryCatalogEntry->getExecutedQueryPlan()->copy();
+}
+
+QueryPlanPtr QueryCatalog::getCopyOfLogicalInputQueryPlan(const QueryId& queryId) const {
+    //Fetch query catalogs
+    auto lockedQueryCatalogEntryMapping = queryCatalogEntryMapping.rlock();
+    if (!lockedQueryCatalogEntryMapping->contains(queryId)) {
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId {}", std::to_string(queryId));
+        throw Exceptions::QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    //Fetch the shared query plan
+    auto queryCatalogEntry = (*lockedQueryCatalogEntryMapping).at(queryId);
+    return queryCatalogEntry->getInputQueryPlan()->copy();
 }
 
 nlohmann::json QueryCatalog::getQueryEntry(QueryId queryId) {

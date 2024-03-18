@@ -83,9 +83,13 @@ void QueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNode) {
         }
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
-    rootOperators.clear();
+    clearRootOperators();
     NES_DEBUG("QueryPlan: Pushing input operator node as new root.");
     rootOperators.push_back(operatorNode);
+}
+
+void QueryPlan::clearRootOperators() {
+    rootOperators.clear();
 }
 
 std::string QueryPlan::toString() {

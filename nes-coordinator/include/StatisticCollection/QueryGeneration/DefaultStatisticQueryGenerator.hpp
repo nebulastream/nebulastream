@@ -37,12 +37,14 @@ class DefaultStatisticQueryGenerator : public AbstractStatisticQueryGenerator {
      * @param window
      * @param sendingPolicy
      * @param triggerCondition
+     * @param queryCatalog
      * @return Query
      */
     Query createStatisticQuery(const Characteristic& characteristic,
                                const Windowing::WindowTypePtr& window,
                                const SendingPolicyPtr& sendingPolicy,
-                               const TriggerConditionPtr& triggerCondition) override;
+                               const TriggerConditionPtr& triggerCondition,
+                               const Catalogs::Query::QueryCatalog& queryCatalog) override;
 
     /**
      * @brief Virtual destructor

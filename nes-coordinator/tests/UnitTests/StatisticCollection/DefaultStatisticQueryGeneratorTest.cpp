@@ -17,6 +17,11 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
@@ -56,17 +61,24 @@ class DefaultStatisticQueryGeneratorTest : public Testing::BaseUnitTest {
 
         // Add all fields that are general for all statistic descriptors
         outputSchemaBuildOperator = Schema::create()
-                                        ->addField("car$" + Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
-                                        ->addField("car$" + Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
-                                        ->addField("car$" + Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
-                                        ->addField("car$" + Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
-                                        ->addField("car$" + Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64);
+                                        ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
+                                        ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+                                        ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
+                                        ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
+                                        ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64);
 
-        // Creating the TypeInferencePhase
+        // Creating the SourceCatalog for car and truck
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource("car", inputSchema);
+        sourceCatalog->addLogicalSource("truck", inputSchema);
+
+
+        // Creating the typeInferencePhase
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+        // Creating a queryCatalog
+        queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     }
 
     LogicalOperatorPtr checkWindowStatisticOperatorCorrect(QueryPlan& queryPlan, Windowing::WindowType& window) const {
@@ -90,6 +102,7 @@ class DefaultStatisticQueryGeneratorTest : public Testing::BaseUnitTest {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
 };
 
 /**
@@ -100,8 +113,10 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
-                                    ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64);
+    outputSchemaBuildOperator = outputSchemaBuildOperator
+                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 512;
     const auto dataCharacteristic = DataCharacteristic::create(Cardinality::create(Over("f1")), "car", "car_1");
@@ -111,7 +126,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
 
     // Creating a statistic query and running the typeInference
     const auto statisticQuery =
-        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -137,9 +152,11 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
-                                    ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64)
-                                    ->addField("car$" + DEPTH_FIELD_NAME, BasicType::UINT64);
+    outputSchemaBuildOperator = outputSchemaBuildOperator
+                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
@@ -150,7 +167,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
 
     // Creating a statistic query and running the typeInference
     const auto statisticQuery =
-        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -177,9 +194,11 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
-                                    ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64)
-                                    ->addField("car$" + DEPTH_FIELD_NAME, BasicType::UINT64);
+    outputSchemaBuildOperator = outputSchemaBuildOperator
+                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
@@ -190,7 +209,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
 
     // Creating a statistic query and running the typeInference
     const auto statisticQuery =
-        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -217,9 +236,11 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
-                                    ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64)
-                                    ->addField("car$" + DEPTH_FIELD_NAME, BasicType::UINT64);
+    outputSchemaBuildOperator = outputSchemaBuildOperator
+                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
@@ -230,7 +251,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
 
     // Creating a statistic query and running the typeInference
     const auto statisticQuery =
-        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -257,9 +278,11 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField("car$" + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
-                                    ->addField("car$" + WIDTH_FIELD_NAME, BasicType::UINT64)
-                                    ->addField("car$" + DEPTH_FIELD_NAME, BasicType::UINT64);
+    outputSchemaBuildOperator = outputSchemaBuildOperator
+                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 55;
     constexpr auto EXPECTED_DEPTH = 3;
@@ -270,7 +293,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
 
     // Creating a statistic query and running the typeInference
     const auto statisticQuery =
-        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition);
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
     typeInferencePhase->execute(statisticQuery.getQueryPlan());
 
     // Checking if the operator is correct
@@ -288,4 +311,142 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
     EXPECT_EQ(countMinDescriptor->getDepth(), EXPECTED_DEPTH);
 }
+
+/**
+ * @brief Tests if we create a statistic query for collecting cardinality of a map operator
+ */
+TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCardinality) {
+    using namespace NES::Statistic;
+    using namespace Windowing;
+
+    // Creating the filter query and "submitting" it by inserting it into the queryCatalog
+    auto query = Query::from("car")
+                     .filter(Attribute("f1") < 10)
+                     .map(Attribute("f1") = Attribute("f1"))
+                     .sink(FileSinkDescriptor::create(""));
+    QueryId queryId = 42;
+    query.getQueryPlan()->setQueryId(queryId);
+    auto operatorId = query.getQueryPlan()->getOperatorByType<LogicalMapOperator>()[0]->getId();
+    queryCatalog->createQueryCatalogEntry(query.getQueryPlan()->toString(),
+                                          query.getQueryPlan(),
+                                          Optimizer::PlacementStrategy::BottomUp,
+                                          QueryState::REGISTERED);
+    queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", query.getQueryPlan());
+
+
+    // Adding here the specific descriptor fields
+    outputSchemaBuildOperator = outputSchemaBuildOperator
+                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->updateSourceName("car");
+
+    constexpr auto EXPECTED_WIDTH = 512;
+    const auto dataCharacteristic = WorkloadCharacteristic::create(Cardinality::create(Over("f1")), queryId, operatorId);
+    const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
+    const auto sendingPolicy = SENDING_ASAP;
+    const auto triggerCondition = NeverTrigger::create();
+
+    // Creating a statistic query and running the typeInference
+    const auto statisticQuery =
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
+    typeInferencePhase->execute(statisticQuery.getQueryPlan());
+
+    // Checking if the operator is correct
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
+    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+
+    // Checking if the descriptor is correct
+    ASSERT_TRUE(descriptor->instanceOf<HyperLogLogDescriptor>());
+    auto hyperLoglogDescriptor = descriptor->as<HyperLogLogDescriptor>();
+    auto operatorSendingPolicy = descriptor->getSendingPolicy();
+    auto operatorTriggerCondition = descriptor->getTriggerCondition();
+    EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(Over("f1")));
+    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyASAP>(operatorSendingPolicy));
+    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
+    EXPECT_EQ(hyperLoglogDescriptor->getWidth(), EXPECTED_WIDTH);
+
+    // Checking if the statistic query is correct, meaning that the source operator and the filter operator is still there
+    auto actualSourceOperator = statisticQuery.getQueryPlan()->getOperatorByType<SourceLogicalOperator>()[0];
+    auto actualFilterOperator = statisticQuery.getQueryPlan()->getOperatorByType<LogicalFilterOperator>()[0];
+
+    auto expectedSourceOperator = statisticQuery.getQueryPlan()->getOperatorByType<SourceLogicalOperator>()[0];
+    auto expectedFilterOperator = statisticQuery.getQueryPlan()->getOperatorByType<LogicalFilterOperator>()[0];
+    EXPECT_TRUE(actualSourceOperator->equal(expectedSourceOperator));
+    EXPECT_TRUE(actualFilterOperator->equal(expectedFilterOperator));
+    EXPECT_TRUE(statisticQuery.getQueryPlan()->getOperatorByType<LogicalMapOperator>().empty());
+}
+
+/**
+ * @brief Tests if we create a statistic query for collecting cardinality of a map operator that sits behind a join operator
+ */
+TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoinQueryCardinality) {
+    using namespace NES::Statistic;
+    using namespace Windowing;
+
+    // Creating the filter query and "submitting" it by inserting it into the queryCatalog
+    auto query = Query::from("car")
+                     .filter(Attribute("f1") < 10)
+                     .joinWith(Query::from("truck"))
+                        .where(Attribute("f1"))
+                        .equalsTo(Attribute("f1"))
+                     .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
+                     .map(Attribute("f1") = Attribute("f1"))
+                     .sink(FileSinkDescriptor::create(""));
+    QueryId queryId = 42;
+    query.getQueryPlan()->setQueryId(queryId);
+    auto operatorId = query.getQueryPlan()->getOperatorByType<LogicalMapOperator>()[0]->getId();
+    queryCatalog->createQueryCatalogEntry(query.getQueryPlan()->toString(),
+                                          query.getQueryPlan(),
+                                          Optimizer::PlacementStrategy::BottomUp,
+                                          QueryState::REGISTERED);
+    queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", query.getQueryPlan());
+
+
+    // Adding here the specific descriptor fields
+    outputSchemaBuildOperator = outputSchemaBuildOperator
+                                    ->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                    ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->updateSourceName("cartruck");
+
+    constexpr auto EXPECTED_WIDTH = 512;
+    const auto dataCharacteristic = WorkloadCharacteristic::create(Cardinality::create(Over("f1")), queryId, operatorId);
+    const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
+    const auto sendingPolicy = SENDING_ASAP;
+    const auto triggerCondition = NeverTrigger::create();
+
+    // Creating a statistic query and running the typeInference
+    const auto statisticQuery =
+        defaultStatisticQueryGenerator.createStatisticQuery(*dataCharacteristic, window, sendingPolicy, triggerCondition, *queryCatalog);
+    typeInferencePhase->execute(statisticQuery.getQueryPlan());
+
+    // Checking if the operator is correct
+    auto statisticWindowOperatorNode = checkWindowStatisticOperatorCorrect(*statisticQuery.getQueryPlan(), *window);
+    auto descriptor = statisticWindowOperatorNode->as<LogicalStatisticWindowOperator>()->getWindowStatisticDescriptor();
+
+    // Checking if the descriptor is correct
+    ASSERT_TRUE(descriptor->instanceOf<HyperLogLogDescriptor>());
+    auto hyperLoglogDescriptor = descriptor->as<HyperLogLogDescriptor>();
+    auto operatorSendingPolicy = descriptor->getSendingPolicy();
+    auto operatorTriggerCondition = descriptor->getTriggerCondition();
+    EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(Over("f1")));
+    EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyASAP>(operatorSendingPolicy));
+    EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
+    EXPECT_EQ(hyperLoglogDescriptor->getWidth(), EXPECTED_WIDTH);
+
+    // Checking if the statistic query is correct, meaning that the source operator, the filter operator and the join operator is still there
+    auto actualSourceOperator = statisticQuery.getQueryPlan()->getOperatorByType<SourceLogicalOperator>()[0];
+    auto actualFilterOperator = statisticQuery.getQueryPlan()->getOperatorByType<LogicalFilterOperator>()[0];
+    auto actualJoinOperator = statisticQuery.getQueryPlan()->getOperatorByType<LogicalJoinOperator>()[0];
+
+    auto expectedSourceOperator = statisticQuery.getQueryPlan()->getOperatorByType<SourceLogicalOperator>()[0];
+    auto expectedFilterOperator = statisticQuery.getQueryPlan()->getOperatorByType<LogicalFilterOperator>()[0];
+    auto expectedJoinOperator = statisticQuery.getQueryPlan()->getOperatorByType<LogicalJoinOperator>()[0];
+    EXPECT_TRUE(actualSourceOperator->equal(expectedSourceOperator));
+    EXPECT_TRUE(actualFilterOperator->equal(expectedFilterOperator));
+    EXPECT_TRUE(actualJoinOperator->equal(expectedJoinOperator));
+    EXPECT_TRUE(statisticQuery.getQueryPlan()->getOperatorByType<LogicalMapOperator>().empty());
+}
+
+
+
 }// namespace NES
