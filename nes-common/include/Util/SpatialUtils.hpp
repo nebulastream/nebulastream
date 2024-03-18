@@ -34,7 +34,6 @@ double const earthRadiusMeters = 6378137.0;
 */
 double degreesToRadians(double degrees);
 
-
 }// namespace NES::SpatialUtils
 
 #endif// NES_COMMON_INCLUDE_UTIL_SPATIALUTILS_HPP_
