@@ -61,10 +61,15 @@ void Options::createSource(std::shared_ptr<NES::Catalogs::Source::SourceCatalog>
                            std::vector<NES::PhysicalSourceTypePtr> physicalSources,
                            NES::TopologyNodePtr worker,
                            const ExportSourceConfiguration& source) {
-    sourceCatalog->addLogicalSource(source.name, parseSchema(source.schema));
+
+    if (!sourceCatalog->testIfLogicalSourceExistsInLogicalToPhysicalMapping(source.name)) {
+        sourceCatalog->addLogicalSource(source.name, parseSchema(source.schema));
+    }
+
     auto logicalSource = sourceCatalog->getLogicalSource(source.name);
+    auto physicalSourceName = fmt::format("{}_phys_{}", source.name, worker->getId());
     auto physicalSourceType =
-        std::make_shared<NES::NoOpPhysicalSourceType>(source.name, source.name, source.schema.type, source.tcp);
+        std::make_shared<NES::NoOpPhysicalSourceType>(source.name, physicalSourceName, source.schema.type, source.tcp);
     auto physicalSource = NES::PhysicalSource::create(physicalSourceType);
     sourceCatalog->addPhysicalSource(source.name,
                                      NES::Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, worker));
