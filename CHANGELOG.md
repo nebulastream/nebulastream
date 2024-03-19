@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.78](https://github.com/nebulastream/nebulastream/tree/v0.6.78) (2024-03-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.77...v0.6.78)
+
+**Implemented enhancements:**
+
+- \[TASK\] Write \(de-\)serialize StatisticBuildOperator [\#4636](https://github.com/nebulastream/nebulastream/issues/4636)
+
 ## [v0.6.77](https://github.com/nebulastream/nebulastream/tree/v0.6.77) (2024-03-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.76...v0.6.77)
