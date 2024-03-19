@@ -286,10 +286,10 @@ void MultiQueueQueryManager::updateStatistics(const Task& task,
 #endif
 }
 
-void AbstractQueryManager::updateStatistics(const Task& task,
-                                            QueryId queryId,
-                                            DecomposedQueryPlanId querySubPlanId,
-                                            PipelineId pipelineId,
+void AbstractQueryManager::updateStatistics([[maybe_unused]] const Task& task,
+                                            [[maybe_unused]]QueryId queryId,
+                                            [[maybe_unused]]DecomposedQueryPlanId querySubPlanId,
+                                            [[maybe_unused]]PipelineId pipelineId,
                                             WorkerContext& workerContext) {
     tempCounterTasksCompleted[workerContext.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
 #ifndef LIGHT_WEIGHT_STATISTICS
@@ -305,7 +305,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestampInMS();
-        NES_ASSERT((unsigned long) now >= creation, "timestamp is in the past");
+        NES_ASSERT((unsigned long) now >= creation, "timestamp is in the past creation: " << creation << ", now: " << now);
         statistics->incLatencySum(now - creation);
 
         for (auto& bufferManager : bufferManagers) {

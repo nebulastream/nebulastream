@@ -132,7 +132,7 @@ Value<UInt64> RecordBuffer::getCreatingTs() {
 }
 
 void RecordBuffer::setCreationTs(const Value<NES::Nautilus::UInt64>& creationTs) {
-    FunctionCall<>("NES__Runtime__TupleBuffer__setWatermark",
+    FunctionCall<>("NES__Runtime__TupleBuffer__setCreationTimestampInMS",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setCreationTimestampInMS,
                    tupleBufferRef,
                    creationTs);
