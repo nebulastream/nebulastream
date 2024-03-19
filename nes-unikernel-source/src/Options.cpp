@@ -161,7 +161,7 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                        0,
                        0,
                        schema,
-                       source.delayInMS.value_or(0),
+                       delayInMillies,
                        8192,
                        source.format.value_or(NES::FormatTypes::CSV_FORMAT),
                        source.schema.type,
