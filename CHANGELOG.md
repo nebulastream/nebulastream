@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.77](https://github.com/nebulastream/nebulastream/tree/v0.6.77) (2024-03-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.76...v0.6.77)
+
+**Implemented enhancements:**
+
+- \[TASK\] MultiWorkerTest disabled tests. [\#4541](https://github.com/nebulastream/nebulastream/issues/4541)
+
 ## [v0.6.76](https://github.com/nebulastream/nebulastream/tree/v0.6.76) (2024-03-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.75...v0.6.76)
