@@ -78,9 +78,14 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
      */
     WindowStatisticDescriptorPtr getWindowStatisticDescriptor() const;
 
+    /**
+     * @brief Getter for the metric hash
+     * @return MetricHash
+     */
+    MetricHash getMetricHash() const;
+
   private:
     Windowing::WindowTypePtr windowType;
-    std::vector<OriginId> inputOriginIds;
     WindowStatisticDescriptorPtr windowStatisticDescriptor;
     MetricHash metricHash;
 };

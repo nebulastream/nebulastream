@@ -107,12 +107,38 @@ class WindowStatisticDescriptor : public std::enable_shared_from_this<WindowStat
     };
 
     /**
-    * @brief Dynamically casts the node to a WindowStatisticDescriptorType
+     * @brief Checks if the current WindowStatisticDescriptor is of type WindowStatisticDescriptorType
+     * @tparam WindowStatisticDescriptorType
+     * @return bool true if WindowStatisticDescriptor is of WindowStatisticDescriptorType
+     */
+    template<class WindowStatisticDescriptorType>
+    bool instanceOf() const {
+        if (dynamic_cast<WindowStatisticDescriptorType*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    /**
+    * @brief Dynamically casts the WindowStatisticDescriptor to a WindowStatisticDescriptorType
     * @tparam WindowStatisticDescriptorType
     * @return returns a shared pointer of the WindowStatisticDescriptorType
     */
     template<class WindowStatisticDescriptorType>
     std::shared_ptr<WindowStatisticDescriptorType> as() {
+        if (instanceOf<WindowStatisticDescriptorType>()) {
+            return std::dynamic_pointer_cast<WindowStatisticDescriptorType>(this->shared_from_this());
+        }
+        throw std::logic_error("We performed an invalid cast of operator to type.");
+    }
+
+    /**
+    * @brief Dynamically casts the node to a WindowStatisticDescriptorType
+    * @tparam WindowStatisticDescriptorType
+    * @return returns a shared pointer of the WindowStatisticDescriptorType
+    */
+    template<class WindowStatisticDescriptorType>
+    std::shared_ptr<WindowStatisticDescriptorType> as() const {
         if (instanceOf<WindowStatisticDescriptorType>()) {
             return std::dynamic_pointer_cast<WindowStatisticDescriptorType>(this->shared_from_this());
         }

@@ -44,6 +44,8 @@ class SerializableOperator_ProjectionDetails;
 class SerializableOperator_FilterDetails;
 class SerializableOperator_UnionDetails;
 class SerializableOperator_BroadcastDetails;
+class StatisticWindowDescriptorMessage;
+class SerializableOperator_SinkDetails_StatisticSinkDescriptor;
 
 /**
  * @brief The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a
@@ -54,7 +56,7 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes an operator node and all its children to a SerializableOperator object.
      * @param operatorNode The operator node. Usually the root of the operator graph.
-     * @param serializedParent The corresponding protobuff object, which is used to capture the state of the object.
+     * @param serializedParent The corresponding protobuf object, which is used to capture the state of the object.
      * @param isClientOriginated Indicate if the source operator is originated from a client.
      * @return the modified serializableOperator
      */
@@ -346,6 +348,22 @@ class OperatorSerializationUtil {
      * @return LogicalOpenCLOperatorPtr
      */
     static LogicalUnaryOperatorPtr deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails);
+
+
+    /**
+     * @brief Serializes a LogicalStatisticWindowOperator
+     * @param statisticWindowOperator
+     * @param serializedOperator
+     */
+    static void serializeStatisticWindowOperator(const Statistic::LogicalStatisticWindowOperator& statisticWindowOperator,
+                                                 SerializableOperator& serializedOperator);
+
+    /**
+     * @brief Deserializes a LogicalStatisticWindowOperator
+     * @param statisticWindowDetails
+     * @param StatisticWindowOperator as LogicalUnaryOperator
+     */
+    static LogicalUnaryOperatorPtr deserializeStatisticWindowOperator(const SerializableOperator_StatisticWindowDetails& statisticWindowDetails);
 };
 }// namespace NES
 

@@ -19,4 +19,8 @@ namespace NES::Statistic {
 std::string SendingPolicyLazy::toString() const { return "LAZY"; }
 
 SendingPolicyPtr SendingPolicyLazy::create() { return std::make_shared<SendingPolicyLazy>(); }
+
+bool SendingPolicyLazy::operator==(const SendingPolicy& rhs) const {
+    return rhs.instanceOf<const SendingPolicyLazy>();
+}
 }// namespace NES::Statistic

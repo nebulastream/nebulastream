@@ -15,7 +15,12 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 
 namespace NES::Statistic {
+
 std::string SendingPolicyAdaptive::toString() const { return "ADAPTIVE"; }
 
 SendingPolicyPtr SendingPolicyAdaptive::create() { return std::make_shared<SendingPolicyAdaptive>(); }
+
+bool SendingPolicyAdaptive::operator==(const SendingPolicy& rhs) const {
+    return rhs.instanceOf<const SendingPolicyAdaptive>();
+}
 }// namespace NES::Statistic
