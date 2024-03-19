@@ -23,7 +23,10 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class Operator; 
+class SharedQueryPlan;
+using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
+
+class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 
 namespace Optimizer {
@@ -39,6 +42,17 @@ class PlanJsonGenerator {
   public:
     static nlohmann::json getQueryPlanAsJson(const QueryPlanPtr& queryPlan);
 
+    static nlohmann::json getSharedQueryPlanAsJson(const SharedQueryPlanPtr& sharedQueryPlan);
+
+    /**
+     * @brief get the json representation of execution plan of a query
+     * @param the global execution plan
+     * @param id of the query
+     * @return a JSON object representing the execution plan
+     */
+    static nlohmann::json getExecutionPlanAsJson(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                 QueryId queryId = INVALID_QUERY_ID);
+
   private:
     /**
      * @brief function to traverse to queryPlanChildren
@@ -48,11 +62,15 @@ class PlanJsonGenerator {
      */
     static void getChildren(OperatorPtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges);
 
+    static void getSharedChildren(const OperatorNodePtr& root, std::vector<nlohmann::json>& nodes,
+                                    std::vector<nlohmann::json>& edges, std::set<int32_t>& existingNodes);
     /**
      * @param an operator node
      * @return the type of operator in String
      */
     static std::string getOperatorType(const OperatorPtr& operatorNode);
+
+    static std::string getNodeName(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES
 #endif // NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_
