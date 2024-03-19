@@ -250,7 +250,7 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPl
         node["id"] = root->getId();
 
         // use concatenation of <operator type>(OP-<operator id>) to fill name field
-        node["name"] = rootOperatorType + +"(OP-" + std::to_string(root->getId()) + ")";
+        node["name"] = rootOperatorType + "(OP-" + std::to_string(root->getId()) + ")";
 
         node["nodeType"] = rootOperatorType;
 
