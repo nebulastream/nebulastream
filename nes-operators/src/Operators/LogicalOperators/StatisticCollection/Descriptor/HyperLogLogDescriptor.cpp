@@ -46,9 +46,11 @@ std::string HyperLogLogDescriptor::toString() { return "HyperLogLogDescriptor"; 
 
 bool HyperLogLogDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
     if (rhs->instanceOf<HyperLogLogDescriptor>()) {
-        auto rhsCountMinDescriptor = rhs->as<HyperLogLogDescriptor>();
-        return field->equal(rhsCountMinDescriptor->field)
-            && width == rhsCountMinDescriptor->width;
+        auto rhsHyperLogLogDescriptor = rhs->as<HyperLogLogDescriptor>();
+        return field->equal(rhsHyperLogLogDescriptor->field)
+            && *triggerCondition == *rhsHyperLogLogDescriptor->triggerCondition
+            && *sendingPolicy == *rhsHyperLogLogDescriptor->sendingPolicy
+            && width == rhsHyperLogLogDescriptor->width;
     }
     return false;
 }

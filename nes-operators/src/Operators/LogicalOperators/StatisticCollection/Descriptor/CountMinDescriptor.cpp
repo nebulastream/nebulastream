@@ -44,12 +44,14 @@ void CountMinDescriptor::addDescriptorFields(Schema& outputSchema, const std::st
 }
 CountMinDescriptor::~CountMinDescriptor() = default;
 
-std::string CountMinDescriptor::toString() {return "CountMinDescriptor"; }
+std::string CountMinDescriptor::toString() { return "CountMinDescriptor"; }
 
 bool CountMinDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const {
     if (rhs->instanceOf<CountMinDescriptor>()) {
         auto rhsCountMinDescriptor = rhs->as<CountMinDescriptor>();
         return field->equal(rhsCountMinDescriptor->field)
+            && *triggerCondition == *rhsCountMinDescriptor->triggerCondition
+            && *sendingPolicy == *rhsCountMinDescriptor->sendingPolicy
             && depth == rhsCountMinDescriptor->depth
             && width == rhsCountMinDescriptor->width;
     }

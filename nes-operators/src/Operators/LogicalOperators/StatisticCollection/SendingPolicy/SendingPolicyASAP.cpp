@@ -19,4 +19,8 @@ namespace NES::Statistic {
 std::string SendingPolicyASAP::toString() const { return "ASAP"; }
 
 SendingPolicyPtr SendingPolicyASAP::create() { return std::make_shared<SendingPolicyASAP>(); }
+
+bool SendingPolicyASAP::operator==(const SendingPolicy& rhs) const {
+    return rhs.instanceOf<const SendingPolicyASAP>();
+}
 }// namespace NES::Statistic

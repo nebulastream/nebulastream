@@ -25,7 +25,6 @@ std::string StatisticSinkDescriptor::toString() const {
 
 SinkDescriptorPtr StatisticSinkDescriptor::create(StatisticSinkFormatType sinkFormatType, uint64_t numberOfOrigins) {
     return std::make_shared<StatisticSinkDescriptor>(StatisticSinkDescriptor(sinkFormatType, numberOfOrigins));
-
 }
 
 bool StatisticSinkDescriptor::equal(const SinkDescriptorPtr& other) {

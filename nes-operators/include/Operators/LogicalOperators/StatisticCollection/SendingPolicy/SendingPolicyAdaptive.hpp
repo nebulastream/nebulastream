@@ -37,6 +37,8 @@ class SendingPolicyAdaptive : public SendingPolicy {
      */
     virtual ~SendingPolicyAdaptive() = default;
 
+    bool operator==(const SendingPolicy& rhs) const override;
+
     /**
      * @brief Creates an ADAPTIVE SendingPolicy
      * @return SendingPolicyPtr

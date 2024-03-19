@@ -37,6 +37,8 @@ class SendingPolicyASAP : public SendingPolicy {
      */
     virtual ~SendingPolicyASAP() = default;
 
+    bool operator==(const SendingPolicy& rhs) const override;
+
     /**
      * @brief Creates a ASAP SendingPolicy
      * @return SendingPolicyPtr

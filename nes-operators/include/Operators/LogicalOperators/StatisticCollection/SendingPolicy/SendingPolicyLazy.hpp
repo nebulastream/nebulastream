@@ -37,6 +37,8 @@ class SendingPolicyLazy : public SendingPolicy {
      */
     virtual ~SendingPolicyLazy() = default;
 
+    bool operator==(const SendingPolicy& rhs) const override;
+
     /**
      * @brief Creates a LAZY SendingPolicy
      * @return SendingPolicyPtr
