@@ -83,6 +83,7 @@
 #include <string>
 #include <utility>
 
+#include  <iostream>
 // TODO: reorganize header files
 
 namespace {
@@ -156,9 +157,10 @@ void setupPhysicalSources(SourceCatalogPtr sourceCatalog, uint64_t noOfPhysicalS
 
 std::vector<AbstractRequestPtr>
 SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
-
-
     try {
+        auto startTime =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
         NES_DEBUG("Acquiring required resources.");
         // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
@@ -174,7 +176,7 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-        optimizerConfigurations.queryMergerRule = queryMergerRule;
+        optimizerConfigurations.queryMergerRule = queryMergerRule; //TODO ?
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
@@ -190,15 +192,12 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
                                                        coordinatorConfiguration->optimizer.performAdvanceSemanticValidation);
 
         setupPhysicalSources(sourceCatalog);
+        std::cout<<"MergerRule is"<<optimizerConfigurations.queryMergerRule.toString();
 
         uint64_t totalOperators = 0;
         std::vector<QueryId> queryIds = {};
 
-        auto startTime =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
         for (const auto& queryString : queryStrings) {
-
             // Compile and perform syntactic check if necessary
             if (!queryString.empty()) {
                 // Checking the syntactic validity and compiling the query string to an object
@@ -266,6 +265,17 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
             mergedOperators = mergedOperators + planSize;
         }
 
+        std::cout << "==================" << std::endl;
+        for(auto& sqp: allSQP) {
+            auto sqpId = sqp->getId();
+            auto queryIds = globalQueryPlan->getQueryIds(sqpId);
+            std::cout << sqpId <<"\t:[";
+            for(const auto& queryId:queryIds) {
+                std::cout << queryId << ", ";
+            }
+            std::cout << "]" << std::endl;
+        }
+
         // NES_INFO("Total operators" + std::to_string(totalOperators) + " , merged operators" + std::to_string(mergedOperators));
 
         //Compute efficiency
@@ -293,7 +303,6 @@ SharingIdentificationBenchmarkRequest::executeRequestLogic(const StorageHandlerP
 }
 
 nlohmann::json mergeSharedQueryPlanJson(const std::vector<nlohmann::json>& sharedQueryPlanJsons) {
-
     nlohmann::json result{};
     auto merge = [&](const std::string& elementName) {
         std::vector<nlohmann::json> elements{};
@@ -310,7 +319,6 @@ nlohmann::json mergeSharedQueryPlanJson(const std::vector<nlohmann::json>& share
 
 nlohmann::json
 SharingIdentificationBenchmarkRequest::getResAsJson(std::vector<SharedQueryPlanPtr> allSQP, float efficiency, long optTime) {
-
     NES_INFO("UtilityFunctions: getting all shared query plan,sharingEfficiency,optimizationTime as JSON");
 
     nlohmann::json resJson = {};

@@ -86,7 +86,7 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {//Ben
     }
 
     // (HTTP method, path,name,para)
-    ENDPOINT("POST", "/test", test, BODY_STRING(String, request)) {
+    ENDPOINT("POST", "/micro", micro, BODY_STRING(String, request)) {
 
         NES_INFO("receive request with parameters");
         try {
@@ -123,6 +123,93 @@ class BenchmarkController : public oatpp::web::server::api::ApiController {//Ben
             return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
         }
     }
+
+
+    ENDPOINT("POST", "/test", test, BODY_STRING(String, request)) {
+        std::string req = request.getValue("{}");
+
+        const auto response=
+            R"(
+ {
+   "sharedQueryPlans": {
+       "edges": [
+           {
+               "source": "SOURCE1",
+               "target":"FILTER2"
+           },
+           {
+               "source": "FILTER2",
+               "target": "PROJECTION3"
+           },
+           {
+               "source": "PROJECTION3",
+               "target": "SINK5"
+           },
+           {
+               "source": "PROJECTION3",
+               "target": "MAP4"
+           },
+           {
+               "source": "MAP4",
+               "target": "SINK6"
+           },
+           {
+               "source": "SOURCE7",
+               "target": "SINK8"
+           }
+       ],
+       "nodes":[
+           {
+               "id":1,
+               "name":"SOURCE1",
+               "nodeType":"SOURCE"
+           },
+           {
+               "id": 2,
+               "name": "FILTER2",
+               "nodeType": "FILTER"
+           },
+           {
+               "id": 3,
+               "name": "PROJECTION3",
+               "nodeType": "PROJECTION3"
+           },
+           {
+               "id": 4,
+               "name": "MAP4",
+               "nodeType": "MAP"
+           },
+           {
+               "id": 5,
+               "name": "SINK5",
+               "nodeType": "SINK"
+           },
+           {
+               "id": 6,
+               "name": "SINK6",
+               "nodeType": "SINK"
+           },
+           {
+               "id": 7,
+               "name": "SOURCE7",
+               "nodeType": "SOURCE"
+           },
+           {
+               "id": 8,
+               "name": "SINK8",
+               "nodeType": "SINK"
+           }
+       ]
+   },
+   "sharingIdenTech":"ISQM",
+   "sharingEfficiency":64.8,
+   "optimizationTime":9.6
+}
+)"_json;
+
+        return createResponse(Status::CODE_200, response.dump());//serialize
+    }
+
 
   private:
     RequestHandlerServicePtr requestHandlerService;
