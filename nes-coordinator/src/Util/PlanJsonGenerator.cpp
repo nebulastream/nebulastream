@@ -28,6 +28,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanJsonGenerator.hpp>
@@ -73,6 +74,15 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
     }
     NES_DEBUG("UtilityFunctions: operatorType =  {}", operatorType);
     return operatorType;
+}
+
+std::string PlanJsonGenerator::getNodeName(const OperatorNodePtr& operatorNode) {
+    static constexpr auto WINDOW_AGGREGATION = "WINDOW AGGREGATION";
+    const auto operatorType = getOperatorType(operatorNode);
+    if(operatorType == WINDOW_AGGREGATION) {
+        return operatorNode->as<WindowLogicalOperatorNode>()->toString();
+    }
+    return operatorType + "(OP-" + std::to_string(operatorNode->getId()) + ")";
 }
 
 void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
@@ -134,6 +144,37 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
     }
 }
 
+void PlanJsonGenerator::getSharedChildren(const OperatorNodePtr& root, std::vector<nlohmann::json>& nodes,
+                                    std::vector<nlohmann::json>& edges, std::set<int32_t>& existingNodes) {
+    auto id = root->getId();
+    if(existingNodes.find(id) != existingNodes.end()) {
+        return; // id exists
+    } else {
+        existingNodes.insert(id);
+    }
+
+    auto rootOperatorType = getOperatorType(root);
+    auto name = getNodeName(root);
+
+    nlohmann::json node;
+    node["id"] = id;
+    node["name"] = name;
+    node["nodeType"] = rootOperatorType;
+    nodes.push_back(std::move(node));
+
+    const auto& children = root->getChildren();
+    if(!children.empty())
+    {
+        for(const auto& child: children) {
+            auto childLogicalOperatorNode = child->as<LogicalOperatorNode>();
+            nlohmann::json edge;
+            edge["source"] = getNodeName(childLogicalOperatorNode);
+            edge["target"] = name;
+            edges.push_back(std::move(edge));
+            getSharedChildren(childLogicalOperatorNode, nodes, edges, existingNodes);
+        }       
+    }
+}
 nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                          QueryId queryId) {
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
@@ -222,6 +263,33 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPl
     // add `nodes` and `edges` JSON array to the final JSON result
     result["nodes"] = nodes;
     result["edges"] = edges;
+    return result;
+}
+
+
+nlohmann::json PlanJsonGenerator::getSharedQueryPlanAsJson(const SharedQueryPlanPtr& sharedQueryPlan) {
+    NES_DEBUG("UtilityFunctions: Getting the json representation of a shared query plan");
+
+    nlohmann::json result{};
+    std::vector<nlohmann::json> nodes{};
+    std::vector<nlohmann::json> edges{};
+    std::set<int32_t> existingNodes;
+    const auto& queryPlan = sharedQueryPlan->getQueryPlan();
+    const auto& roots = queryPlan->getRootOperators();
+    if(roots.empty()) {
+        nlohmann::json node;
+        node["id"] = "NONE";
+        node["name"] = "NONE";
+        nodes.push_back(std::move(node));
+    } else {
+        for(const auto& root : roots) {
+            getSharedChildren(root, nodes, edges, existingNodes);
+        }
+    }
+
+    result["nodes"] = nodes;
+    result["edges"] = edges;
+    
     return result;
 }
 

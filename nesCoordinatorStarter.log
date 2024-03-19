@@ -1,6 +1,6 @@
-[10:48:19.136575] [I] [thread 26984] [nesCoordinatorStarter.cpp:47] [main] start coordinator with Name: restIp
+[01:01:21.993860] [I] [thread 30024] [nesCoordinatorStarter.cpp:47] [main] start coordinator with Name: restIp
 Description: NES ip of the REST server.
-Value: 127.0.0.1
+Value: 0.0.0.0
 Default Value: 127.0.0.1
 
 Name: coordinatorIp
@@ -10,7 +10,7 @@ Default Value: 127.0.0.1
 
 Name: rpcPort
 Description: RPC server port of the Coordinator
-Value: 4000
+Value: 12346
 Default Value: 4000
 
 Name: restPort
@@ -35,7 +35,7 @@ Default Value: 0
 
 Name: configPath
 Description: Path to configuration file.
-Value: 
+Value: ./config/coordinator-micro-benchmark.yaml
 Default Value: 
 
 Name: workerId
@@ -329,6 +329,16 @@ Description: Path to configuration file.
 Value: 
 Default Value: 
 
+Name: connectSinksAsync
+Description: Let network sinks use a separate thread to establish a connection
+Value: 0
+Default Value: 0
+
+Name: connectSourceEventChannelsAsync
+Description: Let network sources use a separate thread to establish a the upstream event channel
+Value: 0
+Default Value: 0
+
 
 Name: workerConfigPath
 Description: Path to a configuration file for the internal worker.
@@ -390,7 +400,7 @@ Description: Allow the containment based merging algorithms to identify if a new
 Value: 0
 Default Value: 0
 
-Name: placementAmenderMode
+Name: placementAmendmentMode
 Description: selects the placement amender mode to use [PESSIMISTIC|OPTIMISTIC]
 Value: PESSIMISTIC
 Default Value: PESSIMISTIC
@@ -426,17 +436,80 @@ Default Value: 100
 
 
 
-[10:48:19.136631] [I] [thread 26984] [nesCoordinatorStarter.cpp:49] [main] creating coordinator
-[10:48:19.136864] [I] [thread 26984] [ExecutablePath.cpp:115] [loadRuntimePathConfig] RuntimePathConfig: 
-clangBinaryPath: /home/rudi/dima/nebulastream/cmake-build-debug/nes-llvm-16-v2/clang/bin/clang-16
+[01:01:21.993963] [I] [thread 30024] [nesCoordinatorStarter.cpp:49] [main] creating coordinator
+[01:01:21.994445] [I] [thread 30024] [ExecutablePath.cpp:115] [loadRuntimePathConfig] RuntimePathConfig: 
+clangBinaryPath: /home/xiao/codes/nebulastream/build/nes-llvm-16-v2/clang/bin/clang-16
 includePaths: 
-	/home/rudi/dima/nebulastream/cmake-build-debug/include/nebulastream
+	/home/xiao/codes/nebulastream/build/include/nebulastream
 libPaths:
-	/home/rudi/dima/nebulastream/cmake-build-debug/nes-client/
-	/home/rudi/dima/nebulastream/cmake-build-debug/nes-runtime/
-	/home/rudi/dima/nebulastream/cmake-build-debug/nes-common/
-	/home/rudi/dima/nebulastream/cmake-build-debug/nes-data-types/
-	/home/rudi/dima/nebulastream/cmake-build-debug/nes-operators/
-[10:48:19.157817] [W] [thread 26984] [MonitoringManager.cpp:185] [registerLogicalMonitoringStreams] MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.
-[10:48:19.157837] [I] [thread 26984] [nesCoordinatorStarter.cpp:52] [main] Starting Coordinator
-[10:48:19.157970] [I] [thread 26991] [NesCoordinator.cpp:162] [operator()] NesCoordinator: started queryRequestProcessor
+	/home/xiao/codes/nebulastream/build/nes-client/
+	/home/xiao/codes/nebulastream/build/nes-runtime/
+	/home/xiao/codes/nebulastream/build/nes-common/
+	/home/xiao/codes/nebulastream/build/nes-data-types/
+	/home/xiao/codes/nebulastream/build/nes-operators/
+[01:01:22.017987] [W] [thread 30024] [MonitoringManager.cpp:189] [registerLogicalMonitoringStreams] MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.
+[01:01:22.018072] [I] [thread 30024] [nesCoordinatorStarter.cpp:52] [main] Starting Coordinator
+[01:01:22.019555] [I] [thread 30031] [NesCoordinator.cpp:163] [operator()] NesCoordinator: started queryRequestProcessor
+[01:01:22.022096] [I] [thread 30024] [PluginLoader.cpp:24] [loadDefaultPlugins] Found nes-plugins in local dir
+[01:01:22.022708] [I] [thread 30024] [SystemResourcesReaderFactory.cpp:25] [getSystemResourcesReader] SystemResourcesReaderFactory: Linux detected, return LinuxSystemResourcesReader
+[01:01:22.023028] [I] [thread 30024] [CpuCollector.cpp:29] [CpuCollector] CpuCollector: Init CpuCollector with schema node_id:INTEGER(64 bits) timestamp:INTEGER(64 bits) coreNum:INTEGER(64 bits) user:INTEGER(64 bits) nice:INTEGER(64 bits) system:INTEGER(64 bits) idle:INTEGER(64 bits) iowait:INTEGER(64 bits) irq:INTEGER(64 bits) softirq:INTEGER(64 bits) steal:INTEGER(64 bits) guest:INTEGER(64 bits) guestnice:INTEGER(64 bits)
+[01:01:22.023075] [I] [thread 30024] [SystemResourcesReaderFactory.cpp:25] [getSystemResourcesReader] SystemResourcesReaderFactory: Linux detected, return LinuxSystemResourcesReader
+[01:01:22.023151] [I] [thread 30024] [DiskCollector.cpp:30] [DiskCollector] DiskCollector: Init DiskCollector with schema node_id:INTEGER(64 bits) timestamp:INTEGER(64 bits) F_BSIZE:INTEGER(64 bits) F_FRSIZE:INTEGER(64 bits) F_BLOCKS:INTEGER(64 bits) F_BFREE:INTEGER(64 bits) F_BAVAIL:INTEGER(64 bits)
+[01:01:22.023171] [I] [thread 30024] [SystemResourcesReaderFactory.cpp:25] [getSystemResourcesReader] SystemResourcesReaderFactory: Linux detected, return LinuxSystemResourcesReader
+[01:01:22.023273] [I] [thread 30024] [MemoryCollector.cpp:29] [MemoryCollector] MemoryCollector: Init MemoryCollector with schema node_id:INTEGER(64 bits) timestamp:INTEGER(64 bits) TOTAL_RAM:INTEGER(64 bits) TOTAL_SWAP:INTEGER(64 bits) FREE_RAM:INTEGER(64 bits) SHARED_RAM:INTEGER(64 bits) BUFFER_RAM:INTEGER(64 bits) FREE_SWAP:INTEGER(64 bits) TOTAL_HIGH:INTEGER(64 bits) FREE_HIGH:INTEGER(64 bits) PROCS:INTEGER(64 bits) MEM_UNIT:INTEGER(64 bits) LOADS_1MIN:INTEGER(64 bits) LOADS_5MIN:INTEGER(64 bits) LOADS_15MIN:INTEGER(64 bits)
+[01:01:22.023314] [I] [thread 30024] [SystemResourcesReaderFactory.cpp:25] [getSystemResourcesReader] SystemResourcesReaderFactory: Linux detected, return LinuxSystemResourcesReader
+[01:01:22.023468] [I] [thread 30024] [NetworkCollector.cpp:30] [NetworkCollector] NetworkCollector: Init NetworkCollector with schema node_id:INTEGER(64 bits) timestamp:INTEGER(64 bits) name:INTEGER(64 bits) rBytes:INTEGER(64 bits) rPackets:INTEGER(64 bits) rErrs:INTEGER(64 bits) rDrop:INTEGER(64 bits) rFifo:INTEGER(64 bits) rFrame:INTEGER(64 bits) rCompressed:INTEGER(64 bits) rMulticast:INTEGER(64 bits) tBytes:INTEGER(64 bits) tPackets:INTEGER(64 bits) tErrs:INTEGER(64 bits) tDrop:INTEGER(64 bits) tFifo:INTEGER(64 bits) tColls:INTEGER(64 bits) tCarrier:INTEGER(64 bits) tCompressed:INTEGER(64 bits)
+[01:01:22.023995] [W] [thread 30024] [MonitoringAgent.cpp:117] [addMonitoringStreams] MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.
+[01:01:22.041902] [W] [thread 30024] [NodeEngineBuilder.cpp:243] [createQueryCompilationOptions] The LEGACY window strategy is not supported by Nautilus. Switch to SLICING!
+[01:01:22.042791] [W] [thread 30024] [ZmqServer.cpp:73] [ZmqServer] ZmqServer(127.0.0.1:0) numNetworkThreads is smaller than DEFAULT_NUM_SERVER_THREADS
+[01:01:22.045552] [I] [thread 30024] [NetworkManager.cpp:41] [NetworkManager] NetworkManager: Server started successfully on tcp://127.0.0.1:42437
+[01:01:22.047486] [W] [thread 30024] [MonitoringAgent.cpp:95] [getRegistrationMetrics] MonitoringAgent: Metrics disabled. Return empty metric object for registration.
+[01:01:22.049783] [W] [thread 30033] [Topology.cpp:669] [toString] No root node found
+[01:01:22.049854] [W] [thread 30033] [TopologyManagerService.cpp:51] [registerWorker] TopologyManagerService::registerWorker: worker id 0 either invalid or a node with this id already exists. A new worker id will be assigned.
+[01:01:22.050044] [I] [thread 30033] [Topology.cpp:54] [registerTopologyNode] Adding New Node PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0] to the catalog of nodes.
+[01:01:22.053568] [I] [thread 30024] [NesCoordinator.cpp:208] [startCoordinator] CORS: allow origin: *
+[01:01:22.054012] [I] [thread 30024] [CoordinatortHealthCheckService.cpp:34] [startHealthCheck] CoordinatorHealthCheckService::startHealthCheck
+[01:01:22.054042] [I] [thread 30046] [RestServer.cpp:65] [start] Starting Oatpp Server on 0.0.0.0:8081
+[01:01:22.058579] [I] [thread 30046] [RestServer.cpp:180] [run] NebulaStream REST Server listening on port 8081
+[01:01:22.058595] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:23.069895] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:24.079980] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:25.090534] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:26.100689] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:27.110838] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:28.121080] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:29.132289] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:30.142296] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:31.152200] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:32.162861] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:33.174605] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:34.185097] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:35.195614] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:36.206049] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:37.216454] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:38.227113] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:39.237129] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:40.247076] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:41.257301] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:42.267646] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:43.278118] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:44.289533] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:45.299725] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:46.311044] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:47.321699] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:48.331805] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:49.342483] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:50.353264] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:51.363597] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:52.373964] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:53.385051] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:54.395933] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:55.407137] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:56.417904] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:57.429229] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:58.439299] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:01:59.449667] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:02:00.459775] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:02:01.469865] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:02:02.479906] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749
+[01:02:03.490629] [I] [thread 30047] [CoordinatortHealthCheckService.cpp:44] [operator()] NesCoordinator::healthCheck: checking node= 127.0.0.1:35749

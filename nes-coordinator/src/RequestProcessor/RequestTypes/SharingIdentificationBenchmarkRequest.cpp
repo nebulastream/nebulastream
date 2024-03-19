@@ -318,8 +318,7 @@ SharingIdentificationBenchmarkRequest::getResAsJson(std::vector<SharedQueryPlanP
     //convert allSharedQueryPlan format:  std::vector<SharedQueryPlanPtr>  to  std::vector<nlohmann::json>
     std::vector<nlohmann::json> sharedQueryPlans;
     for (auto& item : allSQP) {
-        auto shareQueryPlan = item->getQueryPlan();
-        auto sharedQueryPlanJson = PlanJsonGenerator::getQueryPlanAsJson(shareQueryPlan);
+        auto sharedQueryPlanJson = PlanJsonGenerator::getSharedQueryPlanAsJson(item);
         sharedQueryPlans.push_back(sharedQueryPlanJson);
     }
 
