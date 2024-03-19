@@ -57,12 +57,11 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyASAP.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
@@ -720,9 +719,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
                 statisticDescriptor->setTriggerCondition(triggerCondition);
 
                 auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-                auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
-                                                                                                   statisticDescriptor,
-                                                                                                   metric->hash());
+                auto statisticBuildOperator =
+                    LogicalOperatorFactory::createStatisticBuildOperator(windowType, statisticDescriptor, metric->hash());
                 statisticBuildOperator->setStatisticId(getNextStatisticId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(statisticBuildOperator);
                 auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
