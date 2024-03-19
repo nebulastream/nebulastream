@@ -1,0 +1,114 @@
+
+## For now just works with the tutorial!
+## Network topology
+network:
+  coordinator:
+    image: nebulastream/nes-executable-image:latest
+    coordinatorIp: 127.0.0.1
+    restIp: 127.0.0.1
+    restPort: 8081
+    rpcPort: 4010
+  worker:
+    n_worker: 4
+    connections:
+      - from: "TODO: Specify source ID"
+        to: "TODO: Specify worker by name (worker_1)"
+  sources:
+    connections:
+      - physical_source_name: "car_1"
+        worker_id: "worker_1"
+      - physical_source_name: "car_2"
+        worker_id: "worker_2"
+      - physical_source_name: "truck_1"
+        worker_id: "worker_3"
+      - physical_source_name: "truck_2"
+        worker_id: "worker_4"
+
+## coordinator
+coordinator:
+  # configPath: "TODO: Link to the created config file (auto set)"
+  image: nebulastream/nes-executable-image:latest
+  logLevel: LOG_ERROR
+  localWorkerIp: 127.0.0.2
+  optimizer:
+        distributedWindowChildThreshold: 3
+
+## worker
+# dynamic define the first and for the others just the parameters which are different to the first 
+workers:
+    worker_1:
+      logLevel: "LOG_ERROR" 
+      coordinatorIp: 127.0.0.1
+      coordinatorPort: 4010 # read from coordinator config there's just one 
+      dataPort: 0 # default 
+      localWorkerIp: 127.0.0.1 # TODO: coordiantor and worker different localworkerip ips ?
+      rpcPort: 0 # auto select port # default
+      numWorkerThreads: 4
+      numberOfBuffersInGlobalBufferManager: 1250000
+      #numberOfBuffersInSourceLocalBufferPool: 32
+      bufferSizeInBytes: 1024
+      #numberOfBuffersPerWorker: 128
+      #numberOfPreAllocatedBuffer: 128
+    worker_2:
+      numWorkerThreads: 8
+    worker_3:
+      numWorkerThreads: 1
+    worker_4:
+      numWorkerThreads: 1
+
+
+## logical sources
+logicalSources:
+        - logicalSourceName: "cars"
+          fields:
+            - name: id
+              type: TEXT
+            - name: "speed"
+              type: "FLOAT32"
+            - name: "battery_level"
+              type: "FLOAT32"
+            - name: "power_consumption"
+              type: "FLOAT64"
+        - logicalSourceName: "trucks"
+          fields:
+            - name: id
+              type: TEXT
+            - name: payload
+              type: UINT64
+            - name: "speed"
+              type: "FLOAT32"
+            - name: "battery_level"
+              type: "FLOAT32"
+            - name: "power_consumption"
+              type: "FLOAT64"
+            
+
+
+
+### Physical source configuration
+physicalSources:
+        - logicalSourceName: "cars"
+          physicalSourceName: "car_1"
+          type: "CSV_SOURCE"
+          configuration:
+            filePath: "/home/tim/Documents/work/nebulastream/nes-benchmark/scripts/benchmark-config-tool/test_sources_data/cars_data_1.csv"
+            skipHeader: true
+        - logicalSourceName: "cars"
+          physicalSourceName: "car_2"
+          type: "CSV_SOURCE"
+          configuration:
+            filePath: "/home/tim/Documents/work/nebulastream/nes-benchmark/scripts/benchmark-config-tool/test_sources_data/cars_data_1.csv"
+            skipHeader: true
+        - logicalSourceName: trucks
+          physicalSourceName: truck_1
+          type: CSV_SOURCE
+          configuration:
+                  filePath: /home/tim/Documents/work/nebulastream/nes-benchmark/scripts/benchmark-config-tool/test_sources_data/trucks_data_1.csv
+                  skipHeader: true
+        - logicalSourceName: trucks
+          physicalSourceName: truck_2
+          type: CSV_SOURCE
+          configuration:
+                  filePath: /home/tim/Documents/work/nebulastream/nes-benchmark/scripts/benchmark-config-tool/test_sources_data/trucks_data_2.csv
+                  skipHeader: true
+         

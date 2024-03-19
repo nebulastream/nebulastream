@@ -25,19 +25,18 @@ def load_template(filepath):
         return file.read()
 
 # TODO: maybe not merge but coordinator. worker. in templates 
-# merge dictionaries
 def merge_dicts(*args):
     merged_dict = {}
     for dictionary in args:
         merged_dict.update(dictionary)
     return merged_dict
 
-# Render output and write to file
 def render_and_write_to_file(filepath, content, template):
 
     # Load tempaltes
     template_content = load_template(template)
     coordinator_template = Template(template_content)
+
     # Render the template with the configuration data
     rendered_template = coordinator_template.render(content)
 
@@ -59,12 +58,7 @@ def test_output_yaml():
             except Exception as e:
                 print(f"\n{file_path} is not valid: {e}\n")
 
-
-# TODO: write a function which write the oputput filels to the correct place for nes to read them
-# dynamic detection of the whole path of the curretn system and then write them correct 
-def move_output_files():
-    pass
-
+# Function to check if the REST API is available   
 def check_rest_api(base_url):
     conn_check_url = f"{base_url}/v1/nes/connectivity/check"
     try:
@@ -118,21 +112,12 @@ def run_query(base_url, query, placement):
         print("Failed to connect to the REST Server. Please check the URL and your network connection.")
 
 
-# # after quiting clean up all sub processes 
+# after quiting clean up all sub processes 
 def cleanup():
     # Kill all worker subprocesses
     for proc in worker_processes:
-        # proc.termiante()
-        # try:
-        #     proc.wait(timeout=2)
-        # except subprocess.TimeoutExpired:
         proc.kill()
 
-    # Kill the coordinator subprocess
-    # coordinator_process.terminate()
-    # try:
-    #     coordinator_process.wait(timeout=2)
-    # except subprocess.TimeoutExpired:
     coordinator_process.kill()
 
 # register cleanup function
@@ -155,7 +140,7 @@ output_paths = {
     'worker': 'output_files/workern.yml',
     'source': 'output_files/source.yml',
     'docker-compose': 'output_files/docker-compose.yml',
-    'test': 'output_test_file.yml'
+    'test': 'output_test_ file.yml'
 }
 
 
@@ -178,12 +163,6 @@ worker_phy_sources_conns = network_sources.get('connections', {})
 
 # coordinator 
 coordinator_network_config = network_config.get('coordinator', {})
-# print("coordinator_config: \n")
-# print(coordinator_config)
-# print("\ncoordinator_network_config: \n")
-# print(coordinator_network_config)
-# print("\nlogical_sources_config: \n")
-# print(logical_sources_config)
 merged_coordinator_config = merge_dicts(coordinator_config, coordinator_network_config)
 rendering_context = {
     "coordinator": merged_coordinator_config,
@@ -214,24 +193,6 @@ for i in range(0, len(workers_config)):
     # }
     worker_configs.append(worker_config)
 
-    # TODO: prepare coordinator and network values for worker
-    #remove localWorkerIp and logLevel from worker_config
-    # coordinator_config_worker = coordinator_config
-    # # Check if the key exists and delete it
-    # if 'localWorkerIp' in coordinator_config_worker:
-    #     del coordinator_config_worker['localWorkerIp']
-    # if 'logLevel' in coordinator_config_worker:
-    #     del coordinator_config_worker['logLevel']
-    # print(f"coordinator_config_worker: {coordinator_config_worker}")
-    # merged_worker_config = merge_dicts(worker_config, coordinator_config)
-
-    # TODO: logic to give individual worker just the physical sources it should have 
-
-    # TODO: first read all worker
-    # TODO: set first woprker as base worker
-    #TODO: set all worker to the base worker 
-    #TODO: override just he values wich are explicitly set in the not base worker configs to the workers
-    # Add the correct sources and then write the workers to the file 
     rendering_context = {
         "worker": worker_config,
         "physicalSources": physical_sources_config
@@ -332,21 +293,7 @@ for conn in worker_phy_sources_conns:
             worker_id = int(worker_id)
             worker_id = worker_id - 1
             print(worker_id)
-            #new_worker_configs[worker_id]['sources'] = conn["physical_source_name"]
-            #new_worker_configs[worker_id]['sources'] = conn['sources']
         
-
-
-# for i in range(0, len(new_worker_configs)):
-#     rendering_context = {
-#         "worker": new_worker_configs[i],
-#         "physicalSources": physical_sources_config
-#     }
-#     rendering_context_workers.append(rendering_context)
-#     render_and_write_to_file(output_paths['worker'].replace('n', str(i+ 1)), rendering_context, templates_paths['worker'])
-
-# print("\nWorker whole data:")
-# print(rendering_context_workers)
 
 
 # docker-compose
@@ -364,17 +311,12 @@ print(rendering_context)
 render_and_write_to_file(output_paths['docker-compose'], network_config, templates_paths['docker-compose'])
 
 
-
-# other stuff to do
-# create new image
-
 # chekc if yaml is valid
 test_output_yaml()
 
 
 
-# Test query run on nils topo
-
+# Test query run on nils topo example 
 
 coordinator_cmd = './nesCoordinator'
 # coordinator_cmd_with_args = './nesCoordinator --configPath=/home/tim/Documents/work/nebulastream/config/coordinator.yaml'
@@ -439,29 +381,12 @@ for test in worker_cmds_with_args:
     print(f"test: {test}")
 
 
-
-#subprocess.run(coordinator_cmd_with_args, cwd=coordinator_path, shell=True)
-# coordinator_process = subprocess.Popen(coordinator_cmd_with_args, cwd=coordinator_path, shell=True)
-# coordinator_process.wait()
-
-# worker1 = subprocess.Popen(worker_cmds_with_args[0], cwd=worker_path, shell=True)
-
-## ohne shell
-# so ungefähr:
-    
+# start coordinator and workers
 outputs = []
 coordinator_process = subprocess.Popen([coordinator_cmd, coordinator_arg], cwd=coordinator_path)
 # coordinator_process.wait() #TODO dass entfernen da es gerade solange wartet bis cooordinator wieder kaputt geht um worker zu starten 
-
-
 print("Coordinator started...")
 time.sleep(5)
-
-# try:
-#     process.wait(timeout=10)  # 10 Sekunden warten
-# except subprocess.TimeoutExpired:
-#     process.kill()  # Beenden, wenn das Timeout abgelaufen ist
-# TODO: Warum bleibt letzter worker laufen ?
 
 worker_processes = []
 
@@ -471,16 +396,11 @@ for arg in worker_args:
     print(f"{arg} started ")
     worker_process = subprocess.Popen([worker_cmd, arg], cwd=worker_path)
     worker_processes.append(worker_process)
-    time.sleep(5)
+    time.sleep(2)
 
 
-#TODO: use  hocks to close all  subprocesses 
-# time.sleep(20)
-    
 print("All nodes started...")
 
-# coordinator_process.kill()
-# worker_process.kill()
 
 while True:
 
@@ -500,8 +420,3 @@ while True:
         sys.exit()
     else:
         print("Type q to quit.")
-
-
-# Run queries with curl requests library
-
-
