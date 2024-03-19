@@ -577,7 +577,7 @@ TEST_F(MultiWorkerTest, checkPersistenceOfWorkerIdWithNonExistingConfigFile) {
     ASSERT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, DISABLED_checkPersistenceOfOverwrittenWorkerIdInYaml) {
+TEST_F(MultiWorkerTest, checkPersistenceOfOverwrittenWorkerIdInYaml) {
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
