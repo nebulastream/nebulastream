@@ -55,10 +55,10 @@ namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-class PlacementAmemderInstance;
-using PlacementAmemderInstancePtr = std::shared_ptr<PlacementAmemderInstance>;
+class PlacementAmendmentInstance;
+using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmemderInstancePtr, false>>;
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
 }// namespace Optimizer
 
 class GlobalQueryPlan;

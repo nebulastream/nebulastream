@@ -63,15 +63,25 @@ using ISQPRemoveLinkEventPtr = std::shared_ptr<ISQPRemoveLinkEvent>;
  * @brief Response to the execution of the ISQP request with the success, start time, and end time.
  */
 struct ISQPRequestResponse : AbstractRequestResponse {
-    explicit ISQPRequestResponse(uint64_t start, uint64_t end, bool success) : start(start), end(end), success(success){};
-    uint64_t start;
-    uint64_t end;
+    explicit ISQPRequestResponse(uint64_t processingStartTime,
+                                 uint64_t amendmentStartTime,
+                                 uint64_t processingEndTime,
+                                 uint64_t numOfSQPAffected,
+                                 uint64_t numOfFailedPlacements,
+                                 bool success)
+        : processingStartTime(processingStartTime), amendmentStartTime(amendmentStartTime), processingEndTime(processingEndTime),
+          numOfSQPAffected(numOfSQPAffected), numOfFailedPlacements(numOfFailedPlacements), success(success){};
+    uint64_t processingStartTime;
+    uint64_t amendmentStartTime;
+    uint64_t processingEndTime;
+    uint64_t numOfSQPAffected;
+    uint64_t numOfFailedPlacements;
     bool success;
 };
 using ISQPRequestResponsePtr = std::shared_ptr<ISQPRequestResponse>;
 
-class PlacementAmemderInstance;
-using PlacementAmemderInstancePtr = std::unique_ptr<PlacementAmemderInstance>;
+class PlacementAmendmentInstance;
+using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
 /**
  * @brief This is a meta request that is capable of handling a batch of external events.

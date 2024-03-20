@@ -19,6 +19,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
+#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentInstance.hpp>
 #include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -61,7 +62,7 @@ ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
 
-    auto startTime =
+    auto processingStartTime =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     topology = storageHandle->getTopologyHandle(requestId);
     globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
@@ -131,28 +132,37 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
+    auto amendmentStartTime =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::vector<std::future<bool>> completedAmendments;
     for (const auto& sharedQueryPlan : sharedQueryPlans) {
-        const auto& amendmentInstance = Optimizer::PlacementAmemderInstance::create(sharedQueryPlan,
-                                                                                    globalExecutionPlan,
-                                                                                    topology,
-                                                                                    typeInferencePhase,
-                                                                                    coordinatorConfiguration,
-                                                                                    queryCatalog);
+        const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
+                                                                                      globalExecutionPlan,
+                                                                                      topology,
+                                                                                      typeInferencePhase,
+                                                                                      coordinatorConfiguration,
+                                                                                      queryCatalog);
         completedAmendments.emplace_back(amendmentInstance->getFuture());
         placementAmendmentQueue->enqueue(amendmentInstance);
     }
 
+    uint64_t numOfFailedPlacements=0;
     // Wait for all amendment runners to finish processing
     for (auto& completedAmendment : completedAmendments) {
         if (!completedAmendment.get()) {
-            NES_WARNING("Amendment failed");
+            numOfFailedPlacements++;
         }
     }
 
-    auto endTime =
+    auto processingEndTime =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    responsePromise.set_value(std::make_shared<ISQPRequestResponse>(startTime, endTime, true));
+    auto numOfSQPAffected = sharedQueryPlans.size();
+    responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
+                                                                    amendmentStartTime,
+                                                                    processingEndTime,
+                                                                    numOfSQPAffected,
+                                                                    numOfFailedPlacements,
+                                                                    true));
     return {};
 }
 

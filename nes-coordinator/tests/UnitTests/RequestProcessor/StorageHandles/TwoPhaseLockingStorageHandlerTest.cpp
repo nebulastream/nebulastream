@@ -42,7 +42,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog, amendmentQueue});
 
@@ -64,7 +64,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog, amendmentQueue});
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
@@ -80,7 +80,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestDoubleLocking) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog, amendmentQueue});
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {ResourceType::Topology}));
@@ -100,7 +100,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog, amendmentQueue});
     thread = std::make_shared<std::thread>([&twoPLAccessHandle]() {
@@ -188,7 +188,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
                                                 ResourceType::UdfCatalog};
     auto reverseResourceVector = resourceVector;
     std::reverse(reverseResourceVector.begin(), reverseResourceVector.end());
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create(
         {coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog, amendmentQueue});
     std::vector<std::thread> threads;

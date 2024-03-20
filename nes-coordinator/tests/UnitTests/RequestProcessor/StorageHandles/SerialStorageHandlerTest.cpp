@@ -43,7 +43,7 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     StorageDataStructures storageDataStructures = {coordinatorConfiguration,
                                                    topology,
                                                    globalExecutionPlan,

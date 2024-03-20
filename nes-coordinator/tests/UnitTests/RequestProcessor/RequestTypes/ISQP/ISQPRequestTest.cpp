@@ -85,7 +85,7 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
         coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-        amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+        amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
         z3::config cfg;
         cfg.set("timeout", 50000);
         cfg.set("model", false);

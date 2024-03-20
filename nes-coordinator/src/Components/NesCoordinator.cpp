@@ -81,7 +81,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-    placementAmendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+    placementAmendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();

@@ -85,7 +85,7 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
 
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
-        amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmemderInstancePtr, false>>();
+        amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     }
 
     z3::ContextPtr context;
