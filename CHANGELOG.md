@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.6.80](https://github.com/nebulastream/nebulastream/tree/v0.6.80) (2024-03-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.79...v0.6.80)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add ability to transfer Java source to ELEGANT planner and ELEGANT acceleration service [\#4463](https://github.com/nebulastream/nebulastream/issues/4463)
+- \[TASK\] Create docker image from branch [\#4347](https://github.com/nebulastream/nebulastream/issues/4347)
+- \[TASK\] Add regression test for KTM lean angle query [\#3813](https://github.com/nebulastream/nebulastream/issues/3813)
+- \[TASK\] Prototype execution of OpenCL code [\#3434](https://github.com/nebulastream/nebulastream/issues/3434)
+
+### Bug Fixes 🐛
+
+- \[BUG\] FixedChar data type in API is not supported in query compiler [\#4678](https://github.com/nebulastream/nebulastream/issues/4678)
+- \[BUG\] Median aggregation is not working with THREAD\_LOCAL [\#2949](https://github.com/nebulastream/nebulastream/issues/2949)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Implement threshold windows [\#2957](https://github.com/nebulastream/nebulastream/issues/2957)
+
 ## [v0.6.79](https://github.com/nebulastream/nebulastream/tree/v0.6.79) (2024-03-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.78...v0.6.79)
