@@ -54,9 +54,9 @@ class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
 
     /* Generates an input buffer for each source schema, using the inputDataGenerators, creates a source and emits the 
        buffer using the newly created source. */
-    void generateAndEmitInputBuffers(
-        const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
-        const std::vector<SchemaPtr>& sourceSchemas,
+    void
+    generateAndEmitInputBuffers(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
+                                const std::vector<SchemaPtr>& sourceSchemas,
                                 std::vector<std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&)>> inputDataGenerators) {
         // Make sure that each source schema has one corresponding input data generator.
         EXPECT_EQ(sourceSchemas.size(), inputDataGenerators.size());

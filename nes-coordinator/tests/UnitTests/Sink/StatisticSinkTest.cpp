@@ -126,7 +126,7 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
             testBuffer[curBufTuplePos]["test$" + Statistic::DEPTH_FIELD_NAME].write(depth);
             testBuffer[curBufTuplePos].writeVarSized("test$" + Statistic::STATISTIC_DATA_FIELD_NAME,
                                                      countMinData,
-                                                        bufferManager.get());
+                                                     bufferManager.get());
             curBufTuplePos += 1;
 
             // Creating now the expected CountMinStatistic
