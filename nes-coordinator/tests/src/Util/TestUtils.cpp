@@ -558,6 +558,7 @@ std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> createDynamicBuffers(std
     }
     return dynamicBuffers;
 }
+
 bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& expectedBuffers,
                               std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& actualBuffers,
                               bool orderSensitive) {
@@ -789,9 +790,8 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
         }
     }
 
-    NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly {} but expected {}",
-              nodeNo,
-              expectedWorkers);
+    NES_ASSERT2_FMT(nodeNo == expectedWorkers,
+                    "Expected worker number not reached correctly " << nodeNo << " but expected " << expectedWorkers);
     return false;
 }
 

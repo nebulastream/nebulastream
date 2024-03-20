@@ -79,14 +79,17 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
                 return variableSizeBuffer;
             };
             default: {
-                std::stringstream typeAsString;
-                typeAsString << type;
-                NES_ERROR("MemoryProvider::load: Physical Type: {} is currently not supported", typeAsString.str());
+                NES_ERROR("Physical Type: {} is currently not supported", type->toString());
                 NES_NOT_IMPLEMENTED();
             };
         }
+    } else if (type->isArrayType()) {
+        NES_ERROR("Physical Type: array type {} is currently not supported", type->toString());
+        NES_NOT_IMPLEMENTED();
+    } else {
+        NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
+        NES_NOT_IMPLEMENTED();
     }
-    NES_NOT_IMPLEMENTED();
 }
 
 uint32_t storeAssociatedTextValue(void* tupleBuffer, const Nautilus::TextValue* textValue) {

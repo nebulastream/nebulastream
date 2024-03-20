@@ -123,7 +123,6 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
         return registerExecutableQueryPlan(executablePlan);
     } catch (std::exception const& error) {
         NES_ERROR("Error while building query execution plan: {}", error.what());
-        NES_ASSERT(false, "Error while building query execution plan: " << error.what());
         return false;
     }
 }
