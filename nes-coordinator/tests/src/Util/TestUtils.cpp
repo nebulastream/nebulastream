@@ -549,18 +549,18 @@ checkFailedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& qu
     return false;
 }
 
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> createDynamicBuffers(std::vector<Runtime::TupleBuffer>& buffers,
-                                                                             const SchemaPtr& schema) {
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> dynamicBuffers;
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer> createTestTupleBuffers(std::vector<Runtime::TupleBuffer>& buffers,
+                                                                            const SchemaPtr& schema) {
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> testBuffers;
     for (const auto& tupleBuffer : buffers) {
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
-        dynamicBuffers.emplace_back(dynamicTupleBuffer);
+        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
+        testBuffers.emplace_back(testTupleBuffer);
     }
-    return dynamicBuffers;
+    return testBuffers;
 }
 
-bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& expectedBuffers,
-                              std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& actualBuffers,
+bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& expectedBuffers,
+                              std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
                               bool orderSensitive) {
 
     auto numTuplesExpected =
@@ -895,7 +895,7 @@ uint64_t TestUtils::countTuples(std::vector<Runtime::TupleBuffer>& buffers) {
     });
 }
 
-uint64_t TestUtils::countTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& buffers) {
+uint64_t TestUtils::countTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& buffers) {
     return std::accumulate(buffers.begin(), buffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
         return sum + buf.getNumberOfTuples();
     });
@@ -935,8 +935,8 @@ std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBufferFromStream(std:
         NES_DEBUG("Skipping first line!");
     }
     while (std::getline(istream, line)) {
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicBuffer, schema, bufferManager);
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, testBuffer, schema, bufferManager);
         tupleCount++;
 
         if (tupleCount >= numTuplesPerBuffer) {

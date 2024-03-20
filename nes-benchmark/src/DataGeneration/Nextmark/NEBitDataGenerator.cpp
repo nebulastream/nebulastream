@@ -15,8 +15,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NexmarkCommon.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <algorithm>
@@ -38,8 +38,8 @@ std::vector<Runtime::TupleBuffer> NEBitDataGenerator::createData(size_t numberOf
 
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
             long auction, bidder;
 
             long epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
@@ -65,11 +65,11 @@ std::vector<Runtime::TupleBuffer> NEBitDataGenerator::createData(size_t numberOf
                 bidder = personId + activePersons - n;
             }
 
-            dynamicBuffer[currentRecord]["auctionId"].write<uint64_t>(auction);
-            dynamicBuffer[currentRecord]["bidderId"].write<uint64_t>(bidder);
-            dynamicBuffer[currentRecord]["price"].write<double>(0.1);
+            testBuffer[currentRecord]["auctionId"].write<uint64_t>(auction);
+            testBuffer[currentRecord]["bidderId"].write<uint64_t>(bidder);
+            testBuffer[currentRecord]["price"].write<double>(0.1);
         }
-        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        testBuffer.setNumberOfTuples(testBuffer.getCapacity());
         buffers.emplace_back(buffer);
     }
     return buffers;

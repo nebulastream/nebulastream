@@ -64,13 +64,13 @@ Runtime::TupleBuffer TestSink::get(uint64_t index) {
     return resultBuffers[index];
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer TestSink::getResultBuffer(uint64_t index) {
+Runtime::MemoryLayouts::TestTupleBuffer TestSink::getResultBuffer(uint64_t index) {
     auto buffer = get(index);
-    return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestSink::getResultBuffers() {
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> allBuffers;
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestSink::getResultBuffers() {
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> allBuffers;
     for (auto bufIdx = 0_u64; bufIdx < getNumberOfResultBuffers(); ++bufIdx) {
         allBuffers.emplace_back(getResultBuffer(bufIdx));
     }

@@ -36,12 +36,12 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -115,22 +115,22 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+1_s64);
-    dynamicBuffer[0]["f2"].write(+10_s64);
-    dynamicBuffer[0]["ts"].write(+1_s64);
-    dynamicBuffer[1]["f1"].write(+2_s64);
-    dynamicBuffer[1]["f2"].write(+20_s64);
-    dynamicBuffer[1]["ts"].write(+1_s64);
-    dynamicBuffer[2]["f1"].write(+3_s64);
-    dynamicBuffer[2]["f2"].write(+30_s64);
-    dynamicBuffer[2]["ts"].write(+2_s64);
-    dynamicBuffer[3]["f1"].write(+1_s64);
-    dynamicBuffer[3]["f2"].write(+40_s64);
-    dynamicBuffer[3]["ts"].write(+3_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["f1"].write(+1_s64);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[0]["ts"].write(+1_s64);
+    testBuffer[1]["f1"].write(+2_s64);
+    testBuffer[1]["f2"].write(+20_s64);
+    testBuffer[1]["ts"].write(+1_s64);
+    testBuffer[2]["f1"].write(+3_s64);
+    testBuffer[2]["f2"].write(+30_s64);
+    testBuffer[2]["ts"].write(+2_s64);
+    testBuffer[3]["f1"].write(+1_s64);
+    testBuffer[3]["f2"].write(+40_s64);
+    testBuffer[3]["ts"].write(+3_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
@@ -154,8 +154,8 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 100);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 100);
 
 }// namespace NES::Runtime::Execution
 
@@ -214,22 +214,22 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+1_s64);
-    dynamicBuffer[0]["f2"].write(+10_s64);
-    dynamicBuffer[0]["ts"].write(+1_s64);
-    dynamicBuffer[1]["f1"].write(+2_s64);
-    dynamicBuffer[1]["f2"].write(+20_s64);
-    dynamicBuffer[1]["ts"].write(+1_s64);
-    dynamicBuffer[2]["f1"].write(+3_s64);
-    dynamicBuffer[2]["f2"].write(+30_s64);
-    dynamicBuffer[2]["ts"].write(+2_s64);
-    dynamicBuffer[3]["f1"].write(+1_s64);
-    dynamicBuffer[3]["f2"].write(+40_s64);
-    dynamicBuffer[3]["ts"].write(+3_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["f1"].write(+1_s64);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[0]["ts"].write(+1_s64);
+    testBuffer[1]["f1"].write(+2_s64);
+    testBuffer[1]["f2"].write(+20_s64);
+    testBuffer[1]["ts"].write(+1_s64);
+    testBuffer[2]["f1"].write(+3_s64);
+    testBuffer[2]["f2"].write(+30_s64);
+    testBuffer[2]["ts"].write(+2_s64);
+    testBuffer[3]["f1"].write(+1_s64);
+    testBuffer[3]["f2"].write(+40_s64);
+    testBuffer[3]["ts"].write(+3_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
@@ -255,11 +255,11 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer[0][0].read<int64_t>(), 100);
-    EXPECT_EQ(resultDynamicBuffer[0][1].read<int64_t>(), 25);
-    EXPECT_EQ(resultDynamicBuffer[0][2].read<int64_t>(), 10);
-    EXPECT_EQ(resultDynamicBuffer[0][3].read<int64_t>(), 40);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer[0][0].read<int64_t>(), 100);
+    EXPECT_EQ(resulttestBuffer[0][1].read<int64_t>(), 25);
+    EXPECT_EQ(resulttestBuffer[0][2].read<int64_t>(), 10);
+    EXPECT_EQ(resulttestBuffer[0][3].read<int64_t>(), 40);
 
 }// namespace NES::Runtime::Execution
 
@@ -316,26 +316,26 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+1_s64);
-    dynamicBuffer[0]["f2"].write(+10_s64);
-    dynamicBuffer[0]["f3"].write((float) 0.5);
-    dynamicBuffer[0]["ts"].write(+1_s64);
-    dynamicBuffer[1]["f1"].write(+2_s64);
-    dynamicBuffer[1]["f2"].write(+20_s64);
-    dynamicBuffer[1]["f3"].write((float) 0.5);
-    dynamicBuffer[1]["ts"].write(+1_s64);
-    dynamicBuffer[2]["f1"].write(+3_s64);
-    dynamicBuffer[2]["f2"].write(+30_s64);
-    dynamicBuffer[2]["f3"].write((float) 0.5);
-    dynamicBuffer[2]["ts"].write(+2_s64);
-    dynamicBuffer[3]["f1"].write(+1_s64);
-    dynamicBuffer[3]["f2"].write(+40_s64);
-    dynamicBuffer[3]["f3"].write((float) 0.5);
-    dynamicBuffer[3]["ts"].write(+3_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["f1"].write(+1_s64);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[0]["f3"].write((float) 0.5);
+    testBuffer[0]["ts"].write(+1_s64);
+    testBuffer[1]["f1"].write(+2_s64);
+    testBuffer[1]["f2"].write(+20_s64);
+    testBuffer[1]["f3"].write((float) 0.5);
+    testBuffer[1]["ts"].write(+1_s64);
+    testBuffer[2]["f1"].write(+3_s64);
+    testBuffer[2]["f2"].write(+30_s64);
+    testBuffer[2]["f3"].write((float) 0.5);
+    testBuffer[2]["ts"].write(+2_s64);
+    testBuffer[3]["f1"].write(+1_s64);
+    testBuffer[3]["f2"].write(+40_s64);
+    testBuffer[3]["f3"].write((float) 0.5);
+    testBuffer[3]["ts"].write(+3_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
@@ -361,9 +361,9 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer[0][0].read<int64_t>(), 10);
-    EXPECT_EQ(resultDynamicBuffer[0][1].read<float>(), 0.5);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer[0][0].read<int64_t>(), 10);
+    EXPECT_EQ(resulttestBuffer[0][1].read<float>(), 0.5);
 }// namespace NES::Runtime::Execution
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

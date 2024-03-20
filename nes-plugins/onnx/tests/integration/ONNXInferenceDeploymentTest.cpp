@@ -83,7 +83,7 @@ TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase6
     // Expecting near a delta
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     auto actualTuples = TestUtils::countTuples(actualBuffers);
     for (auto i = 0_u64; i < actualTuples; ++i) {
         EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris0"].read<float>(),

@@ -24,11 +24,11 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -117,18 +117,18 @@ TEST_P(TensorflowPipelineTest, thresholdWindowWithSum) {
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0][f1].write((bool) false);
-    dynamicBuffer[0][f2].write((bool) true);
-    dynamicBuffer[0][f3].write((bool) false);
-    dynamicBuffer[0][f4].write((bool) true);
-    dynamicBuffer[1][f1].write((bool) false);
-    dynamicBuffer[1][f2].write((bool) true);
-    dynamicBuffer[1][f3].write((bool) false);
-    dynamicBuffer[1][f4].write((bool) true);
-    dynamicBuffer.setNumberOfTuples(2);
+    testBuffer[0][f1].write((bool) false);
+    testBuffer[0][f2].write((bool) true);
+    testBuffer[0][f3].write((bool) false);
+    testBuffer[0][f4].write((bool) true);
+    testBuffer[1][f1].write((bool) false);
+    testBuffer[1][f2].write((bool) true);
+    testBuffer[1][f3].write((bool) false);
+    testBuffer[1][f4].write((bool) true);
+    testBuffer.setNumberOfTuples(2);
 
     auto executablePipeline = provider->create(pipeline, options);
 
@@ -144,11 +144,11 @@ TEST_P(TensorflowPipelineTest, thresholdWindowWithSum) {
     auto resultBuffer = pipelineContext.buffers[0];
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, resultBuffer);
     float expectedValue = 0.43428239;
     auto delta = 0.0000001;
-    EXPECT_EQ(resultDynamicBuffer[0][iris0].read<float>(), expectedValue);
-    EXPECT_NEAR(resultDynamicBuffer[0][iris0].read<float>(), expectedValue, delta);
+    EXPECT_EQ(resulttestBuffer[0][iris0].read<float>(), expectedValue);
+    EXPECT_NEAR(resulttestBuffer[0][iris0].read<float>(), expectedValue, delta);
 }
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test

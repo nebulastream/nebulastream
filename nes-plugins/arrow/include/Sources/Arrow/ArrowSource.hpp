@@ -71,7 +71,7 @@ class ArrowSource : public DataSource {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 
     /**
      * @brief override the toString method for the Arrow source
@@ -118,7 +118,7 @@ class ArrowSource : public DataSource {
     // of fields, each a contiguous Arrow array
     // See: https://arrow.apache.org/docs/cpp/api/table.html#_CPPv4N5arrow11RecordBatchE
     // At any point in time that we read a record batch from the RecordBatchStreamReader, we maintain
-    // it in currentRecordBatch and subsequently transfer the records from it to the DynamicTupleBuffer
+    // it in currentRecordBatch and subsequently transfer the records from it to the TestTupleBuffer
     std::shared_ptr<arrow::RecordBatch> currentRecordBatch;
     // this keep track of the last record read from the currentRecordBatch
     uint64_t indexWithinCurrentRecordBatch{0};
@@ -154,18 +154,18 @@ class ArrowSource : public DataSource {
     void readNextBatch();
 
     /**
-     * @brief this function writes the data from the record batches to DynamicTupleBuffer
+     * @brief this function writes the data from the record batches to TestTupleBuffer
      * @param tupleCountInBuffer is the count of total filled buffers in tupleBuffer
      * @param tupleBuffer the tuple buffer to be written
      * @param recordBatch the arrow record batch to be written to tupleBuffer
      * @return returns true if success
      */
     void writeRecordBatchToTupleBuffer(uint64_t tupleCount,
-                                       Runtime::MemoryLayouts::DynamicTupleBuffer& buffer,
+                                       Runtime::MemoryLayouts::TestTupleBuffer& buffer,
                                        std::shared_ptr<arrow::RecordBatch> recordBatch);
 
     /**
-     * @brief this function writes the data from the record batches to DynamicTupleBuffer
+     * @brief this function writes the data from the record batches to TestTupleBuffer
      * @param tupleCountInBuffer is the count of total filled buffers in tupleBuffer
      * @param schemaFieldIndex the column to be written
      * @param tupleBuffer the tuple buffer to be written
@@ -174,7 +174,7 @@ class ArrowSource : public DataSource {
      */
     void writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                                       uint64_t schemaFieldIndex,
-                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                      Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                       const std::shared_ptr<arrow::Array> arrowArray);
 };
 

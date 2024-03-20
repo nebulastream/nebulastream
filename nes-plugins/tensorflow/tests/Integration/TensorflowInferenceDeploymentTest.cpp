@@ -168,7 +168,7 @@ TEST_F(TensorflowInferenceDeploymentTest, testSimpleMLModelDeploymentMixedTypes)
                                        "0.434282,0.312879,0.252839\n";
     auto tmpBuffers =
         TestUtils::createExpectedBufferFromCSVString(expectedOutputString, outputSchema, testHarness.getBufferManager(), false);
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     auto expectedTuples = TestUtils::countTuples(expectedBuffers);
 
     // Run the query and get the actual dynamic buffers
@@ -214,7 +214,7 @@ TEST_P(TensorflowInferenceDeploymentTest, testSimpleMLModelDeployment) {
     // Expecting near a delta
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     auto actualTuples = TestUtils::countTuples(actualBuffers);
     constexpr auto delta = 0.00001;
     for (auto i = 0_u64; i < actualTuples; ++i) {

@@ -112,7 +112,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers =
         TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -158,7 +158,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers =
         TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -203,7 +203,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers =
         TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 

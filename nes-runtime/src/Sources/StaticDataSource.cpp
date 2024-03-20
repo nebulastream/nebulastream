@@ -15,13 +15,13 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/internal/apex_memmove.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #ifdef __x86_64__
 #include <Runtime/internal/rte_memory.h>
 #endif
@@ -176,9 +176,9 @@ void StaticDataSource::preloadBuffers() {
 
     // preload buffers:
     for (size_t i = 0; i < numberOfBuffersToProduce; ++i) {
-        auto dynamicBuffer = DataSource::allocateBuffer();
-        fillBuffer(dynamicBuffer);
-        filledBuffers.push_back(dynamicBuffer.getBuffer());
+        auto testBuffer = DataSource::allocateBuffer();
+        fillBuffer(testBuffer);
+        filledBuffers.push_back(testBuffer.getBuffer());
     }
 }
 
@@ -199,12 +199,12 @@ std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData() {
     }
 
     NES_DEBUG("StaticDataSource::receiveData: Read and emit new buffer from {}", pathTableFile);
-    auto dynamicBuffer = DataSource::allocateBuffer();
-    fillBuffer(dynamicBuffer);
-    return dynamicBuffer.getBuffer();
+    auto testBuffer = DataSource::allocateBuffer();
+    fillBuffer(testBuffer);
+    return testBuffer.getBuffer();
 }
 
-void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     NES_DEBUG("StaticDataSource::fillBuffer: start at pos={}", currentPositionInFile);
     if (this->fileEnded) {
         NES_WARNING("StaticDataSource::fillBuffer: but file has already ended");

@@ -15,9 +15,9 @@
 #ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
 
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
+#include <Util/TestTupleBuffer.hpp>
 namespace NES::Testing {
 
 class NonRunnableDataSource : public NES::DefaultSource {
@@ -39,9 +39,9 @@ class NonRunnableDataSource : public NES::DefaultSource {
 
     bool stop(Runtime::QueryTerminationType termination) override;
 
-    Runtime::MemoryLayouts::DynamicTupleBuffer getBuffer();
+    Runtime::MemoryLayouts::TestTupleBuffer getBuffer();
 
-    void emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer);
+    void emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer);
 
     void emitBuffer(Runtime::TupleBuffer& buffer);
 

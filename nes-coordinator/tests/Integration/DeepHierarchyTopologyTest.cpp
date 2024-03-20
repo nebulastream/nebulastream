@@ -93,7 +93,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -155,7 +155,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -214,7 +214,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -276,7 +276,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -348,7 +348,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -428,7 +428,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -509,7 +509,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -601,7 +601,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -674,7 +674,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -752,7 +752,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -813,7 +813,7 @@ TEST_F(DeepHierarchyTopologyTest, testMapAndAggregationQuery) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(oss.str(), outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 }// namespace NES

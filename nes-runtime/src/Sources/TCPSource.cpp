@@ -145,7 +145,7 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     return tupleBuffer.getBuffer();
 }
 
-bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
+bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();

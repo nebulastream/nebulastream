@@ -114,11 +114,11 @@ bool TestExecutionEngine::stopQuery(std::shared_ptr<Runtime::Execution::Executab
     return nodeEngine->getQueryManager()->stopQuery(plan, type);
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer TestExecutionEngine::getBuffer(const SchemaPtr& schema) {
+Runtime::MemoryLayouts::TestTupleBuffer TestExecutionEngine::getBuffer(const SchemaPtr& schema) {
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     // add support for columnar layout
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
-    return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
 bool TestExecutionEngine::stop() { return nodeEngine->stop(); }

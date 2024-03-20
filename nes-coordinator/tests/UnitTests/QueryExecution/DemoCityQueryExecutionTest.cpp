@@ -57,7 +57,7 @@ class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
     void generateAndEmitInputBuffers(
         const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
         const std::vector<SchemaPtr>& sourceSchemas,
-        std::vector<std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&)>> inputDataGenerators) {
+                                std::vector<std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&)>> inputDataGenerators) {
         // Make sure that each source schema has one corresponding input data generator.
         EXPECT_EQ(sourceSchemas.size(), inputDataGenerators.size());
 
@@ -89,8 +89,8 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     constexpr uint64_t milliSecondsToHours = 3600000;
 
     // Define the input data generator functions.
-    std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&)> windTurbineDataGenerator;
-    windTurbineDataGenerator = [](Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+    std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&)> windTurbineDataGenerator;
+    windTurbineDataGenerator = [](Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
         for (size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx) {
             buffer[recordIdx][0].write<int64_t>(1);
             buffer[recordIdx][1].write<int64_t>(recordIdx);

@@ -37,11 +37,11 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -101,14 +101,14 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+10_s64);
-    dynamicBuffer[1]["f1"].write(+20_s64);
-    dynamicBuffer[2]["f1"].write(+30_s64);
-    dynamicBuffer[3]["f1"].write(+10_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["f1"].write(+10_s64);
+    testBuffer[1]["f1"].write(+20_s64);
+    testBuffer[2]["f1"].write(+30_s64);
+    testBuffer[3]["f1"].write(+10_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
@@ -135,8 +135,8 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline) {
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema = emitSchema->addField("f1", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 70);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 70);
 }
 
 TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
@@ -174,18 +174,18 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline) {
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+1_s64);
-    dynamicBuffer[0]["f2"].write(+10_s64);
-    dynamicBuffer[1]["f1"].write(+1_s64);
-    dynamicBuffer[1]["f2"].write(+1_s64);
-    dynamicBuffer[2]["f1"].write(+2_s64);
-    dynamicBuffer[2]["f2"].write(+2_s64);
-    dynamicBuffer[3]["f1"].write(+3_s64);
-    dynamicBuffer[3]["f2"].write(+10_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["f1"].write(+1_s64);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[1]["f1"].write(+1_s64);
+    testBuffer[1]["f2"].write(+1_s64);
+    testBuffer[2]["f1"].write(+2_s64);
+    testBuffer[2]["f2"].write(+2_s64);
+    testBuffer[3]["f1"].write(+3_s64);
+    testBuffer[3]["f2"].write(+10_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);

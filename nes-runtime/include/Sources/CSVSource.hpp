@@ -66,7 +66,7 @@ class CSVSource : public DataSource {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 
     /**
      * @brief override the toString method for the csv source

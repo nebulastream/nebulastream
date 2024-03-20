@@ -52,7 +52,7 @@ class MergeQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down MergeQueryExecutionTest test class."); }
 
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
         int numberOfTuples = 10;
         for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
             buf[recordIndex][0].write<int64_t>(recordIndex);

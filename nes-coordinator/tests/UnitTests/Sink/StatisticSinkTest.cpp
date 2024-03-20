@@ -116,16 +116,16 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
             const std::string countMinData = "abcdef";
 
             // Now using the values for writing a tuple to the tuple buffer
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
-            dynamicBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_HASH_FIELD_NAME].write(statisticHash);
-            dynamicBuffer[curBufTuplePos]["test$" + Statistic::BASE_FIELD_NAME_START].write(startTs.getTime());
-            dynamicBuffer[curBufTuplePos]["test$" + Statistic::BASE_FIELD_NAME_END].write(endTs.getTime());
-            dynamicBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_TYPE_FIELD_NAME].write(statisticType);
-            dynamicBuffer[curBufTuplePos]["test$" + Statistic::OBSERVED_TUPLES_FIELD_NAME].write(observedTuples);
-            dynamicBuffer[curBufTuplePos]["test$" + Statistic::WIDTH_FIELD_NAME].write(width);
-            dynamicBuffer[curBufTuplePos]["test$" + Statistic::DEPTH_FIELD_NAME].write(depth);
-            dynamicBuffer[curBufTuplePos].writeVarSized("test$" + Statistic::STATISTIC_DATA_FIELD_NAME,
-                                                        countMinData,
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+            testBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_HASH_FIELD_NAME].write(statisticHash);
+            testBuffer[curBufTuplePos]["test$" + Statistic::BASE_FIELD_NAME_START].write(startTs.getTime());
+            testBuffer[curBufTuplePos]["test$" + Statistic::BASE_FIELD_NAME_END].write(endTs.getTime());
+            testBuffer[curBufTuplePos]["test$" + Statistic::STATISTIC_TYPE_FIELD_NAME].write(statisticType);
+            testBuffer[curBufTuplePos]["test$" + Statistic::OBSERVED_TUPLES_FIELD_NAME].write(observedTuples);
+            testBuffer[curBufTuplePos]["test$" + Statistic::WIDTH_FIELD_NAME].write(width);
+            testBuffer[curBufTuplePos]["test$" + Statistic::DEPTH_FIELD_NAME].write(depth);
+            testBuffer[curBufTuplePos].writeVarSized("test$" + Statistic::STATISTIC_DATA_FIELD_NAME,
+                                                     countMinData,
                                                         bufferManager.get());
             curBufTuplePos += 1;
 

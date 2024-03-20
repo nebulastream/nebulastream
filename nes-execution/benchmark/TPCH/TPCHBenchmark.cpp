@@ -40,7 +40,6 @@
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TPCH/Query1.hpp>
@@ -50,6 +49,7 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/BasicTraceFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <benchmark/benchmark.h>
 #include <gtest/gtest.h>

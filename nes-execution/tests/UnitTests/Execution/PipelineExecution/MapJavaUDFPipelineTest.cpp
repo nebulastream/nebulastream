@@ -26,12 +26,12 @@
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -94,10 +94,10 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
     template<typename T>
     auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout) {
         auto buffer = bufferManager->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
         for (uint64_t i = 0; i < 10; i++) {
-            dynamicBuffer[i][variableName].write((T) i);
-            dynamicBuffer.setNumberOfTuples(i + 1);
+            testBuffer[i][variableName].write((T) i);
+            testBuffer.setNumberOfTuples(i + 1);
         }
         return buffer;
     }
@@ -133,9 +133,9 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
         auto resultBuffer = pipelineContext.buffers[0];
         ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-        auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+        auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
         for (uint64_t i = 0; i < 10; i++) {
-            ASSERT_EQ(resultDynamicBuffer[i][variableName].read<T>(), i + 10);
+            ASSERT_EQ(resulttestBuffer[i][variableName].read<T>(), i + 10);
         }
     }
 };
@@ -303,10 +303,10 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i][variableName].write((bool) true);
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i][variableName].write((bool) true);
+        testBuffer.setNumberOfTuples(i + 1);
     }
     auto executablePipeline = provider->create(pipeline, options);
     auto handler =
@@ -330,9 +330,9 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        ASSERT_EQ(resultDynamicBuffer[i][variableName].read<bool>(), false);
+        ASSERT_EQ(resulttestBuffer[i][variableName].read<bool>(), false);
     }
 }
 
@@ -347,10 +347,10 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i].writeVarSized("stringVariable", "X", bm.get());
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i].writeVarSized("stringVariable", "X", bm.get());
+        testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -375,9 +375,9 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        ASSERT_EQ(resultDynamicBuffer[i].readVarSized("stringVariable"), "Appended String:X");
+        ASSERT_EQ(resulttestBuffer[i].readVarSized("stringVariable"), "Appended String:X");
     }
 }
 
@@ -399,17 +399,17 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i]["byteVariable"].write((int8_t) i);
-        dynamicBuffer[i]["shortVariable"].write((int16_t) i);
-        dynamicBuffer[i]["intVariable"].write((int32_t) i);
-        dynamicBuffer[i]["longVariable"].write((int64_t) i);
-        dynamicBuffer[i]["floatVariable"].write((float) i);
-        dynamicBuffer[i]["doubleVariable"].write((double) i);
-        dynamicBuffer[i]["booleanVariable"].write(true);
-        dynamicBuffer[i].writeVarSized("stringVariable", "X", bm.get());
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i]["byteVariable"].write((int8_t) i);
+        testBuffer[i]["shortVariable"].write((int16_t) i);
+        testBuffer[i]["intVariable"].write((int32_t) i);
+        testBuffer[i]["longVariable"].write((int64_t) i);
+        testBuffer[i]["floatVariable"].write((float) i);
+        testBuffer[i]["doubleVariable"].write((double) i);
+        testBuffer[i]["booleanVariable"].write(true);
+        testBuffer[i].writeVarSized("stringVariable", "X", bm.get());
+        testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -435,16 +435,16 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        EXPECT_EQ(resultDynamicBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["longVariable"].read<int64_t>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
-        EXPECT_EQ(resultDynamicBuffer[i].readVarSized("stringVariable"), "XAppended String:");
+        EXPECT_EQ(resulttestBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["intVariable"].read<int32_t>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["longVariable"].read<int64_t>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["floatVariable"].read<float>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["doubleVariable"].read<double>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["booleanVariable"].read<bool>(), false);
+        EXPECT_EQ(resulttestBuffer[i].readVarSized("stringVariable"), "XAppended String:");
     }
 }
 

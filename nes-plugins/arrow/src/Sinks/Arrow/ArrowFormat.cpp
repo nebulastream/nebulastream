@@ -14,12 +14,12 @@
 
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Arrow/ArrowFormat.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <brotli/encode.h>
@@ -51,7 +51,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
     // TODO #4082: add support for column layout
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, inputBuffer.getBufferSize());
-    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, inputBuffer);
+    auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, inputBuffer);
 
     // iterate over all fields in the schema to create respective arrow builders
     for (uint64_t columnIndex = 0; columnIndex < numberOfFields; ++columnIndex) {
@@ -71,7 +71,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            int8_t value = dynamicTupleBuffer[rowIndex][columnIndex].read<int8_t>();
+                            int8_t value = testTupleBuffer[rowIndex][columnIndex].read<int8_t>();
                             auto append = int8Builder.Append(value);
                         }
 
@@ -92,7 +92,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            int16_t value = dynamicTupleBuffer[rowIndex][columnIndex].read<int16_t>();
+                            int16_t value = testTupleBuffer[rowIndex][columnIndex].read<int16_t>();
                             auto append = int16Builder.Append(value);
                         }
 
@@ -113,7 +113,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            int32_t value = dynamicTupleBuffer[rowIndex][columnIndex].read<int32_t>();
+                            int32_t value = testTupleBuffer[rowIndex][columnIndex].read<int32_t>();
                             auto append = int32Builder.Append(value);
                         }
 
@@ -134,7 +134,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            int64_t value = dynamicTupleBuffer[rowIndex][columnIndex].read<int64_t>();
+                            int64_t value = testTupleBuffer[rowIndex][columnIndex].read<int64_t>();
                             auto append = int64Builder.Append(value);
                         }
 
@@ -155,7 +155,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            uint8_t value = dynamicTupleBuffer[rowIndex][columnIndex].read<uint8_t>();
+                            uint8_t value = testTupleBuffer[rowIndex][columnIndex].read<uint8_t>();
                             auto append = uint8Builder.Append(value);
                         }
 
@@ -176,7 +176,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            uint16_t value = dynamicTupleBuffer[rowIndex][columnIndex].read<uint16_t>();
+                            uint16_t value = testTupleBuffer[rowIndex][columnIndex].read<uint16_t>();
                             auto append = uint16Builder.Append(value);
                         }
 
@@ -197,7 +197,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            uint32_t value = dynamicTupleBuffer[rowIndex][columnIndex].read<uint32_t>();
+                            uint32_t value = testTupleBuffer[rowIndex][columnIndex].read<uint32_t>();
                             auto append = uint32Builder.Append(value);
                         }
 
@@ -218,7 +218,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            uint64_t value = dynamicTupleBuffer[rowIndex][columnIndex].read<uint64_t>();
+                            uint64_t value = testTupleBuffer[rowIndex][columnIndex].read<uint64_t>();
                             auto append = uint64Builder.Append(value);
                         }
 
@@ -239,7 +239,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            float value = dynamicTupleBuffer[rowIndex][columnIndex].read<float>();
+                            float value = testTupleBuffer[rowIndex][columnIndex].read<float>();
                             auto append = floatBuilder.Append(value);
                         }
 
@@ -260,7 +260,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            double value = dynamicTupleBuffer[rowIndex][columnIndex].read<double>();
+                            double value = testTupleBuffer[rowIndex][columnIndex].read<double>();
                             auto append = doubleBuilder.Append(value);
                         }
 
@@ -326,7 +326,7 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
 
                         // iterate over all values in the column and add values to the builder
                         for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            bool value = dynamicTupleBuffer[rowIndex][columnIndex].read<bool>();
+                            bool value = testTupleBuffer[rowIndex][columnIndex].read<bool>();
                             auto append = booleanBuilder.Append(value);
                         }
 

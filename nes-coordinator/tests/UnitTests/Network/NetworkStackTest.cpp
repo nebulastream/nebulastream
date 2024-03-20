@@ -33,7 +33,6 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -47,6 +46,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <gtest/gtest.h>
@@ -106,10 +106,10 @@ class TestSink : public SinkMedium {
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
         std::unique_lock lock(m);
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(getSchemaPtr(), input_buffer.getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, input_buffer);
-        std::stringstream dynamicTupleBufferAsString;
-        dynamicTupleBufferAsString << dynamicTupleBuffer;
-        NES_DEBUG("TestSink:\n{}", dynamicTupleBufferAsString.str());
+        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowLayout, input_buffer);
+        std::stringstream testTupleBufferAsString;
+        testTupleBufferAsString << testTupleBuffer;
+        NES_DEBUG("TestSink:\n{}", testTupleBufferAsString.str());
 
         uint64_t sum = 0;
         for (uint64_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {

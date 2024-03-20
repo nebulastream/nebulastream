@@ -15,10 +15,10 @@
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Exceptions/RuntimeException.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <string>
 
 using namespace std::string_literals;
@@ -30,7 +30,7 @@ CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTyp
 
 bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
                                              uint64_t tupleCount,
-                                             Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                             Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                              const SchemaPtr& schema,
                                              const Runtime::BufferManagerPtr& bufferManager) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount:  {}", tupleCount);

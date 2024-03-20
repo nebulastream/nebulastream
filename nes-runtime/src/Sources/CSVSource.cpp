@@ -115,7 +115,7 @@ std::string CSVSource::toString() const {
     return ss.str();
 }
 
-void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");

@@ -17,7 +17,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/TestTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -189,8 +189,8 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     auto opcSink = createOPCSink(test_schema, 0, 0, nodeEngine, url, nodeId, user, password);
 
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, write_buffer.getBufferSize());
-    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, write_buffer);
-    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: {}", dynamicTupleBuffer.toString(test_schema));
+    auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowLayout, write_buffer);
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: {}", testTupleBuffer.toString(test_schema));
 
     opcSink->writeData(write_buffer, workerContext);
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");

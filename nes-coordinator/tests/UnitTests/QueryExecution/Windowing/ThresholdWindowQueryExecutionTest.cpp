@@ -57,7 +57,7 @@ class ThresholdWindowQueryExecutionTest : public Testing::BaseUnitTest,
 };
 
 template<typename T>
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 9; recordIndex++) {
         buf[recordIndex][0].write<int64_t>(recordIndex);
         buf[recordIndex][1].write<T>(recordIndex * 10);

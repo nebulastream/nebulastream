@@ -14,8 +14,8 @@
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/LightSaber/ClusterMonitoringDataGenerator.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
@@ -45,29 +45,29 @@ std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(siz
     uint64_t currentLineIndex = 0;
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
             // check if we reached the end of the file and start from the beginning
             if (currentLineIndex >= lines.size()) {
                 currentLineIndex = 0;
             }
 
             auto words = lines[currentLineIndex];
-            dynamicBuffer[currentRecord]["creationTS"].write<int64_t>(std::stol(words[0]));
-            dynamicBuffer[currentRecord]["jobId"].write<int64_t>(std::stol(words[1]));
-            dynamicBuffer[currentRecord]["taskId"].write<int64_t>(std::stol(words[2]));
-            dynamicBuffer[currentRecord]["machineId"].write<int64_t>(std::stol(words[3]));
-            dynamicBuffer[currentRecord]["eventType"].write<int16_t>((int16_t) std::stoi(words[4]));
-            dynamicBuffer[currentRecord]["userId"].write<int16_t>((int16_t) std::stoi(words[5]));
-            dynamicBuffer[currentRecord]["category"].write<int16_t>((int16_t) std::stoi(words[6]));
-            dynamicBuffer[currentRecord]["priority"].write<int16_t>((int16_t) std::stoi(words[7]));
-            dynamicBuffer[currentRecord]["cpu"].write<float>(std::stof(words[8]));
-            dynamicBuffer[currentRecord]["ram"].write<float>(std::stof(words[9]));
-            dynamicBuffer[currentRecord]["disk"].write<float>(std::stof(words[10]));
-            dynamicBuffer[currentRecord]["constraints"].write<int16_t>((int16_t) std::stoi(words[11]));
+            testBuffer[currentRecord]["creationTS"].write<int64_t>(std::stol(words[0]));
+            testBuffer[currentRecord]["jobId"].write<int64_t>(std::stol(words[1]));
+            testBuffer[currentRecord]["taskId"].write<int64_t>(std::stol(words[2]));
+            testBuffer[currentRecord]["machineId"].write<int64_t>(std::stol(words[3]));
+            testBuffer[currentRecord]["eventType"].write<int16_t>((int16_t) std::stoi(words[4]));
+            testBuffer[currentRecord]["userId"].write<int16_t>((int16_t) std::stoi(words[5]));
+            testBuffer[currentRecord]["category"].write<int16_t>((int16_t) std::stoi(words[6]));
+            testBuffer[currentRecord]["priority"].write<int16_t>((int16_t) std::stoi(words[7]));
+            testBuffer[currentRecord]["cpu"].write<float>(std::stof(words[8]));
+            testBuffer[currentRecord]["ram"].write<float>(std::stof(words[9]));
+            testBuffer[currentRecord]["disk"].write<float>(std::stof(words[10]));
+            testBuffer[currentRecord]["constraints"].write<int16_t>((int16_t) std::stoi(words[11]));
             currentLineIndex++;
         }
-        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        testBuffer.setNumberOfTuples(testBuffer.getCapacity());
         buffers.emplace_back(buffer);
     }
     return buffers;

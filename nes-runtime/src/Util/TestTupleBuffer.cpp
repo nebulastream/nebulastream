@@ -18,10 +18,10 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <numeric>
 #include <utility>
 
@@ -158,13 +158,13 @@ const PhysicalTypePtr& DynamicField::getPhysicalType() const { return physicalTy
 
 const uint8_t* DynamicField::getAddressPointer() const { return address; }
 
-uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
+uint64_t TestTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
 
-uint64_t DynamicTupleBuffer::getNumberOfTuples() const { return buffer.getNumberOfTuples(); }
+uint64_t TestTupleBuffer::getNumberOfTuples() const { return buffer.getNumberOfTuples(); }
 
-void DynamicTupleBuffer::setNumberOfTuples(uint64_t value) { buffer.setNumberOfTuples(value); }
+void TestTupleBuffer::setNumberOfTuples(uint64_t value) { buffer.setNumberOfTuples(value); }
 
-DynamicTuple DynamicTupleBuffer::operator[](std::size_t tupleIndex) const {
+DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const {
     if (tupleIndex >= getCapacity()) {
         throw BufferAccessException("index " + std::to_string(tupleIndex) + " is out of bound for capacity"
                                     + std::to_string(getCapacity()));
@@ -172,24 +172,24 @@ DynamicTuple DynamicTupleBuffer::operator[](std::size_t tupleIndex) const {
     return {tupleIndex, memoryLayout, buffer};
 }
 
-DynamicTupleBuffer::DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer)
+TestTupleBuffer::TestTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer)
     : memoryLayout(memoryLayout), buffer(buffer) {
     NES_ASSERT(memoryLayout->getBufferSize() == buffer.getBufferSize(),
                "Buffer size of layout has to be same then from the buffer.");
 }
 
-TupleBuffer DynamicTupleBuffer::getBuffer() { return buffer; }
-std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer) {
+TupleBuffer TestTupleBuffer::getBuffer() { return buffer; }
+std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer) {
     auto buf = buffer;
     auto str = buf.toString(buffer.memoryLayout->getSchema());
     os << str;
     return os;
 }
 
-DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::begin() const { return TupleIterator(*this); }
-DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::end() const { return TupleIterator(*this, getNumberOfTuples()); }
+TestTupleBuffer::TupleIterator TestTupleBuffer::begin() const { return TupleIterator(*this); }
+TestTupleBuffer::TupleIterator TestTupleBuffer::end() const { return TupleIterator(*this, getNumberOfTuples()); }
 
-std::string DynamicTupleBuffer::toString(const SchemaPtr& schema, bool showHeader) {
+std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader) {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
     std::vector<PhysicalTypePtr> types;
@@ -198,7 +198,7 @@ std::string DynamicTupleBuffer::toString(const SchemaPtr& schema, bool showHeade
         auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
         physicalSizes.push_back(physicalType->size());
         types.push_back(physicalType);
-        NES_TRACE("DynamicTupleBuffer: {} {} {} {}",
+        NES_TRACE("TestTupleBuffer: {} {} {} {}",
                   std::string("Field Size "),
                   schema->get(i)->toString(),
                   std::string(": "),
@@ -228,47 +228,47 @@ std::string DynamicTupleBuffer::toString(const SchemaPtr& schema, bool showHeade
     return str.str();
 }
 
-DynamicTupleBuffer::TupleIterator::TupleIterator(const DynamicTupleBuffer& buffer) : TupleIterator(buffer, 0) {}
+TestTupleBuffer::TupleIterator::TupleIterator(const TestTupleBuffer& buffer) : TupleIterator(buffer, 0) {}
 
-DynamicTupleBuffer::TupleIterator::TupleIterator(const DynamicTupleBuffer& buffer, const uint64_t currentIndex)
+TestTupleBuffer::TupleIterator::TupleIterator(const TestTupleBuffer& buffer, const uint64_t currentIndex)
     : buffer(buffer), currentIndex(currentIndex) {}
 
-DynamicTupleBuffer::TupleIterator& DynamicTupleBuffer::TupleIterator::operator++() {
+TestTupleBuffer::TupleIterator& TestTupleBuffer::TupleIterator::operator++() {
     currentIndex++;
     return *this;
 }
 
-DynamicTupleBuffer::TupleIterator::TupleIterator(const TupleIterator& other) : TupleIterator(other.buffer, other.currentIndex) {}
+TestTupleBuffer::TupleIterator::TupleIterator(const TupleIterator& other) : TupleIterator(other.buffer, other.currentIndex) {}
 
-const DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::TupleIterator::operator++(int) {
+const TestTupleBuffer::TupleIterator TestTupleBuffer::TupleIterator::operator++(int) {
     TupleIterator retval = *this;
     ++(*this);
     return retval;
 }
 
-bool DynamicTupleBuffer::TupleIterator::operator==(TupleIterator other) const {
+bool TestTupleBuffer::TupleIterator::operator==(TupleIterator other) const {
     return currentIndex == other.currentIndex && &buffer == &other.buffer;
 }
 
-bool DynamicTupleBuffer::TupleIterator::operator!=(TupleIterator other) const { return !(*this == other); }
+bool TestTupleBuffer::TupleIterator::operator!=(TupleIterator other) const { return !(*this == other); }
 
-DynamicTuple DynamicTupleBuffer::TupleIterator::operator*() const { return buffer[currentIndex]; }
+DynamicTuple TestTupleBuffer::TupleIterator::operator*() const { return buffer[currentIndex]; }
 
-MemoryLayoutPtr DynamicTupleBuffer::getMemoryLayout() const { return memoryLayout; }
+MemoryLayoutPtr TestTupleBuffer::getMemoryLayout() const { return memoryLayout; }
 
-DynamicTupleBuffer DynamicTupleBuffer::createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema) {
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema) {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
-        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
-        return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     } else {
         NES_NOT_IMPLEMENTED();
     }
 }
 
-uint64_t DynamicTupleBuffer::countOccurrences(DynamicTuple& tuple) const {
+uint64_t TestTupleBuffer::countOccurrences(DynamicTuple& tuple) const {
     uint64_t count = 0;
     for (auto&& currentTupleIt : *this) {
         if (currentTupleIt == tuple) {

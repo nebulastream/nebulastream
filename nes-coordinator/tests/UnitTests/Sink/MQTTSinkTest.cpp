@@ -16,7 +16,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Network/NetworkChannel.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -29,6 +28,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -146,10 +146,10 @@ class MQTTSinkTest : public Testing::BaseIntegrationTest {
         auto inputBuffer = createTupleBuffer(bufferSize, buffMgr);
         if (printBuffer) {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, inputBuffer.getBufferSize());
-            auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);
-            std::stringstream dynamicTupleBufferAsString;
-            dynamicTupleBufferAsString << dynamicTupleBuffer;
-            NES_DEBUG("bufferContent before write={}", dynamicTupleBufferAsString.str());
+            auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowLayout, inputBuffer);
+            std::stringstream testTupleBufferAsString;
+            testTupleBufferAsString << testTupleBuffer;
+            NES_DEBUG("bufferContent before write={}", testTupleBufferAsString.str());
         }
         bool connectSuccessful = mqttSink->connect();
         if (connectSuccessful) {

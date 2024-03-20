@@ -31,7 +31,7 @@
 #include <thread>
 
 namespace NES::Runtime::MemoryLayouts {
-class DynamicTupleBuffer;
+class TestTupleBuffer;
 }
 
 namespace NES {
@@ -306,7 +306,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     void emitWork(Runtime::TupleBuffer& buffer) override;
 
     void emitWorkFromSource(Runtime::TupleBuffer& buffer);
-    NES::Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
+    NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
 
   protected:
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;

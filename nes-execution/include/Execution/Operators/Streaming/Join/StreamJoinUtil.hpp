@@ -16,9 +16,9 @@
 
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Util/StdInt.hpp>
 #include <Util/Common.hpp>
+#include <Util/StdInt.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>

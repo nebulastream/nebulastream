@@ -151,7 +151,7 @@ std::string MQTTSource::toString() const {
     return ss.str();
 }
 
-bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
+bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();

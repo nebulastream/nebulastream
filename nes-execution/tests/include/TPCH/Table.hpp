@@ -15,8 +15,8 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TABLE_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TABLE_HPP_
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -120,13 +120,13 @@ class TableBuilder {
             NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");
         }
         auto& chunk = table->addChunk(buffer.value());
-        currentBuffer = std::make_unique<MemoryLayouts::DynamicTupleBuffer>(table->layout, chunk);
+        currentBuffer = std::make_unique<MemoryLayouts::TestTupleBuffer>(table->layout, chunk);
     }
 
   private:
     Runtime::BufferManagerPtr bm;
     std::unique_ptr<Table> table;
-    std::unique_ptr<MemoryLayouts::DynamicTupleBuffer> currentBuffer;
+    std::unique_ptr<MemoryLayouts::TestTupleBuffer> currentBuffer;
 };
 
 }// namespace NES::Runtime

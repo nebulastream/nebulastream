@@ -17,11 +17,11 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <chrono>
 #include <functional>
@@ -441,7 +441,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
 
                 if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-                    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+                    auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
                     NES_TRACE("DataSource produced buffer content={}", buffer.toString(schema));
                 }
 
@@ -490,9 +490,9 @@ bool DataSource::checkSupportedLayoutTypes(SchemaPtr& schema) {
     return std::find(supportedLayouts.begin(), supportedLayouts.end(), schema->getLayoutType()) != supportedLayouts.end();
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer DataSource::allocateBuffer() {
+Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() {
     auto buffer = bufferManager->getBufferBlocking();
-    return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
 void DataSource::onEvent(Runtime::BaseEvent& event) {

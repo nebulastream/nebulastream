@@ -136,7 +136,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
     size_t numTuplesEmitted = 0;
     size_t numBuffersEmitted = 0;
 
-    void fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuffer& buffer);
+    void fillBuffer(::NES::Runtime::MemoryLayouts::TestTupleBuffer& buffer);
 };
 
 using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;

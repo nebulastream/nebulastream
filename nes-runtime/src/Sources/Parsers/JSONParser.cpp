@@ -30,7 +30,7 @@ JSONParser::JSONParser(uint64_t numberOfSchemaFields,
 
 bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                               uint64_t tupleCount,
-                                              Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                              Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                               const SchemaPtr& schema,
                                               const Runtime::BufferManagerPtr& bufferManager) {
     NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount:  {}", tupleCount);

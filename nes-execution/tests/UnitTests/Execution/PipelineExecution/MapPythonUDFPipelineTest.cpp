@@ -25,7 +25,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
@@ -91,10 +91,10 @@ auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
 template<typename T>
 auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout) {
     auto buffer = bufferManager->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i][variableName].write((T) i);
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i][variableName].write((T) i);
+        testBuffer.setNumberOfTuples(i + 1);
     }
     return buffer;
 }
@@ -126,9 +126,9 @@ void checkBufferResult(std::string variableName, auto pipelineContext, auto memo
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        ASSERT_EQ(resultDynamicBuffer[i][variableName].read<T>(), i + 10);
+        ASSERT_EQ(resulttestBuffer[i][variableName].read<T>(), i + 10);
     }
 }
 
@@ -258,10 +258,10 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i][variableName].write((bool) true);
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i][variableName].write((bool) true);
+        testBuffer.setNumberOfTuples(i + 1);
     }
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def boolean_test(x):\n\tx = False\n\treturn x\n";
@@ -277,9 +277,9 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        ASSERT_EQ(resultDynamicBuffer[i][variableName].read<bool>(), false);
+        ASSERT_EQ(resulttestBuffer[i][variableName].read<bool>(), false);
     }
 }
 
@@ -295,15 +295,15 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
         std::string value = "X";
         auto varLengthBuffer = bm->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
         auto index = buffer.storeChildBuffer(varLengthBuffer);
-        dynamicBuffer[i]["stringVariable"].write(index);
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i]["stringVariable"].write(index);
+        testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -320,9 +320,9 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
+        auto index = resulttestBuffer[i]["stringVariable"].read<uint32_t>();
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         auto textValue = varLengthBuffer.getBuffer<TextValue>();
         auto size = textValue->length();
@@ -349,7 +349,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
         std::string value = "X";
         auto varLengthBuffer = bm->getBufferBlocking();
@@ -357,15 +357,15 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
         auto strIndex = buffer.storeChildBuffer(varLengthBuffer);
 
-        dynamicBuffer[i]["byteVariable"].write((int8_t) i);
-        dynamicBuffer[i]["shortVariable"].write((int16_t) i);
-        dynamicBuffer[i]["intVariable"].write((int32_t) i);
-        dynamicBuffer[i]["longVariable"].write((int64_t) i);
-        dynamicBuffer[i]["floatVariable"].write((float) i);
-        dynamicBuffer[i]["doubleVariable"].write((double) i);
-        dynamicBuffer[i]["booleanVariable"].write(true);
-        // dynamicBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i]["byteVariable"].write((int8_t) i);
+        testBuffer[i]["shortVariable"].write((int16_t) i);
+        testBuffer[i]["intVariable"].write((int32_t) i);
+        testBuffer[i]["longVariable"].write((int64_t) i);
+        testBuffer[i]["floatVariable"].write((float) i);
+        testBuffer[i]["doubleVariable"].write((double) i);
+        testBuffer[i]["booleanVariable"].write(true);
+        // testBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
+        testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -391,17 +391,17 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        EXPECT_EQ(resultDynamicBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["longVariable"].read<int64_t>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
-        EXPECT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
+        EXPECT_EQ(resulttestBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["intVariable"].read<int32_t>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["longVariable"].read<int64_t>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["floatVariable"].read<float>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["doubleVariable"].read<double>(), i + 10);
+        EXPECT_EQ(resulttestBuffer[i]["booleanVariable"].read<bool>(), false);
         // TODO #3980 enable this once string works
-        // auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
+        // auto index = resulttestBuffer[i]["stringVariable"].read<uint32_t>();
         // auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         // auto textValue = varLengthBuffer.getBuffer<TextValue>();
         // auto size = textValue->length();

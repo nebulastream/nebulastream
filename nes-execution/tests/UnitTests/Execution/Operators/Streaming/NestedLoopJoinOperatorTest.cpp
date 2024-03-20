@@ -30,11 +30,11 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Common.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <random>
 
 namespace NES::Runtime::Execution {

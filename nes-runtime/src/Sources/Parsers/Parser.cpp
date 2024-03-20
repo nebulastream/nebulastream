@@ -17,11 +17,11 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <cstring>
 #include <string>
 #include <utility>
@@ -32,7 +32,7 @@ Parser::Parser(std::vector<PhysicalTypePtr> physicalTypes) : physicalTypes(std::
 
 void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                                           uint64_t schemaFieldIndex,
-                                          Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                          Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                           const SchemaPtr& schema,
                                           uint64_t tupleCount,
                                           const Runtime::BufferManagerPtr& bufferManager) {

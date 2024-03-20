@@ -123,7 +123,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     return tupleBuffer.getBuffer();
 }
 
-bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
+bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) {
 
     const uint64_t tupleSize = schema->getSchemaSizeInBytes();
     const uint32_t tupleBufferCapacity = tupleBuffer.getCapacity();

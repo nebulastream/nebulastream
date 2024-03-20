@@ -15,10 +15,10 @@
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <fstream>
 
 namespace NES::Benchmark::DataGeneration {
@@ -35,23 +35,23 @@ std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBu
     auto ts = 0UL;
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++, ts++) {
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++, ts++) {
             auto campaign_id = rand() % 1000;
             auto event_type = currentRecord % 3;
-            dynamicBuffer[currentRecord]["user_id"].write<uint64_t>(1);
-            dynamicBuffer[currentRecord]["page_id"].write<uint64_t>(0);
-            dynamicBuffer[currentRecord]["campaign_id"].write<uint64_t>(campaign_id);
-            dynamicBuffer[currentRecord]["ad_type"].write<uint64_t>(0);
-            dynamicBuffer[currentRecord]["event_type"].write<uint64_t>(event_type);
-            dynamicBuffer[currentRecord]["current_ms"].write<uint64_t>(ts);
-            dynamicBuffer[currentRecord]["ip"].write<uint64_t>(0x01020304);
-            dynamicBuffer[currentRecord]["d1"].write<uint64_t>(1);
-            dynamicBuffer[currentRecord]["d2"].write<uint64_t>(1);
-            dynamicBuffer[currentRecord]["d3"].write<uint32_t>(1);
-            dynamicBuffer[currentRecord]["d4"].write<uint16_t>(1);
+            testBuffer[currentRecord]["user_id"].write<uint64_t>(1);
+            testBuffer[currentRecord]["page_id"].write<uint64_t>(0);
+            testBuffer[currentRecord]["campaign_id"].write<uint64_t>(campaign_id);
+            testBuffer[currentRecord]["ad_type"].write<uint64_t>(0);
+            testBuffer[currentRecord]["event_type"].write<uint64_t>(event_type);
+            testBuffer[currentRecord]["current_ms"].write<uint64_t>(ts);
+            testBuffer[currentRecord]["ip"].write<uint64_t>(0x01020304);
+            testBuffer[currentRecord]["d1"].write<uint64_t>(1);
+            testBuffer[currentRecord]["d2"].write<uint64_t>(1);
+            testBuffer[currentRecord]["d3"].write<uint32_t>(1);
+            testBuffer[currentRecord]["d4"].write<uint16_t>(1);
         }
-        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        testBuffer.setNumberOfTuples(testBuffer.getCapacity());
         createdBuffers.emplace_back(buffer);
     }
     NES_INFO("Created all buffers!");

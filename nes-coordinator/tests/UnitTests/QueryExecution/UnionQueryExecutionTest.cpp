@@ -39,7 +39,7 @@ class UnionQueryExecutionTest : public Testing::BaseUnitTest,
 
         // Setup default parameters.
         defaultSchema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
-        defaultDataGenerator = [](Runtime::MemoryLayouts::DynamicTupleBuffer& buffer, uint64_t numInputRecords) {
+        defaultDataGenerator = [](Runtime::MemoryLayouts::TestTupleBuffer& buffer, uint64_t numInputRecords) {
             for (size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx) {
                 buffer[recordIdx][0].write<int64_t>(recordIdx);
                 buffer[recordIdx][1].write<int64_t>(1);
@@ -64,7 +64,7 @@ class UnionQueryExecutionTest : public Testing::BaseUnitTest,
     void generateAndEmitInputBuffers(
         const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
         const std::vector<SchemaPtr>& sourceSchemas,
-        std::vector<std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&, uint64_t)>> inputDataGenerators,
+        std::vector<std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&, uint64_t)>> inputDataGenerators,
         uint64_t numInputTuples = 10) {
         // Make sure that each source schema has one corresponding input data generator.
         EXPECT_EQ(sourceSchemas.size(), inputDataGenerators.size());
@@ -83,7 +83,7 @@ class UnionQueryExecutionTest : public Testing::BaseUnitTest,
 
     SchemaPtr defaultSchema;
     std::shared_ptr<SourceDescriptor> defaultSource;
-    std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&, uint64_t numInputRecords)> defaultDataGenerator;
+    std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&, uint64_t numInputRecords)> defaultDataGenerator;
     std::shared_ptr<CollectTestSink<DefaultRecord>> defaultSink;
     std::shared_ptr<NES::TestUtils::TestSinkDescriptor> defaultTestSinkDescriptor;
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
