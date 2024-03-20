@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.79](https://github.com/nebulastream/nebulastream/tree/v0.6.79) (2024-03-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.78...v0.6.79)
+
+**Implemented enhancements:**
+
+- \[TASK\] OperatorPlacement-with-Multiple-Parents-Using-ILP [\#4421](https://github.com/nebulastream/nebulastream/issues/4421)
+
 ## [v0.6.78](https://github.com/nebulastream/nebulastream/tree/v0.6.78) (2024-03-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.77...v0.6.78)
