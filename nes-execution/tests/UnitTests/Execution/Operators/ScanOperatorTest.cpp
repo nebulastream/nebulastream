@@ -21,10 +21,10 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -58,17 +58,17 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer) {
     scanOperator.setChild(collector);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (auto i = 0_u64; i < dynamicBuffer.getCapacity(); i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i % 2_s64);
-        dynamicBuffer[i]["f2"].write(+1_s64);
-        dynamicBuffer.setNumberOfTuples(i + 1);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    for (auto i = 0_u64; i < testBuffer.getCapacity(); i++) {
+        testBuffer[i]["f1"].write((int64_t) i % 2_s64);
+        testBuffer[i]["f2"].write(+1_s64);
+        testBuffer.setNumberOfTuples(i + 1);
     }
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
     scanOperator.open(ctx, recordBuffer);
 
-    ASSERT_EQ(collector->records.size(), dynamicBuffer.getNumberOfTuples());
+    ASSERT_EQ(collector->records.size(), testBuffer.getNumberOfTuples());
     for (uint64_t i = 0; i < collector->records.size(); i++) {
         auto& record = collector->records[i];
         ASSERT_EQ(record.numberOfFields(), 2);
@@ -94,17 +94,17 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
     scanOperator.setChild(collector);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
-    for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i % 2);
-        dynamicBuffer[i]["f2"].write(+1_s64);
-        dynamicBuffer.setNumberOfTuples(i + 1);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
+    for (uint64_t i = 0; i < testBuffer.getCapacity(); i++) {
+        testBuffer[i]["f1"].write((int64_t) i % 2);
+        testBuffer[i]["f2"].write(+1_s64);
+        testBuffer.setNumberOfTuples(i + 1);
     }
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
     RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
     scanOperator.open(ctx, recordBuffer);
 
-    ASSERT_EQ(collector->records.size(), dynamicBuffer.getNumberOfTuples());
+    ASSERT_EQ(collector->records.size(), testBuffer.getNumberOfTuples());
     for (uint64_t i = 0; i < collector->records.size(); i++) {
         auto& record = collector->records[i];
         ASSERT_EQ(record.numberOfFields(), 2);

@@ -66,7 +66,7 @@ constexpr auto udfIncrement = 10;
 /**
  * This helper function fills a buffer with test data
  */
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < numberOfRecords; recordIndex++) {
         buf[recordIndex][0].write<int32_t>(recordIndex);
     }

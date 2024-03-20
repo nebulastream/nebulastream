@@ -38,13 +38,13 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <random>
@@ -89,16 +89,16 @@ std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(BufferManagerPtr bm, Sch
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt) {
         auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (int64_t i = 0; i < 100; ++i) {
-            dynamicBuffer[i]["f1"].write(i % 10_s64);
-            dynamicBuffer[i]["f2"].write(+1_s64);
-            dynamicBuffer.setNumberOfTuples(i + 1);
+            testBuffer[i]["f1"].write(i % 10_s64);
+            testBuffer[i]["f2"].write(+1_s64);
+            testBuffer.setNumberOfTuples(i + 1);
         }
 
         if (bufCnt == 1 || bufCnt == 3) {
-            for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); ++i) {
-                dynamicBuffer[i]["f1"].write(+10_s64);
+            for (uint64_t i = 0; i < testBuffer.getCapacity(); ++i) {
+                testBuffer[i]["f1"].write(+10_s64);
             }
         }
         buffer.setSequenceNumber(bufCnt + 1);
@@ -146,10 +146,10 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted) {
     // Checking the output
     ASSERT_EQ(pipelineContext.buffers.size(), 4);
     for (const auto& buf : pipelineContext.buffers) {
-        auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
-        for (uint64_t i = 0; i < resultDynamicBuffer.getNumberOfTuples(); i++) {
-            ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
-            ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+        auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
+        for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++) {
+            ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 5);
+            ASSERT_EQ(resulttestBuffer[i]["f2"].read<int64_t>(), 1);
         }
     }
 
@@ -169,11 +169,11 @@ std::vector<TupleBuffer> createDataFullWithConstantFieldValues(BufferManagerPtr 
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt) {
         auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
-        for (auto i = 0_u64; i < dynamicBuffer.getCapacity(); ++i) {
-            dynamicBuffer[i]["f1"].write(+10_s64);
-            dynamicBuffer[i]["f2"].write(+1_s64);
-            dynamicBuffer.setNumberOfTuples(i + 1);
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i) {
+            testBuffer[i]["f1"].write(+10_s64);
+            testBuffer[i]["f2"].write(+1_s64);
+            testBuffer.setNumberOfTuples(i + 1);
         }
         buffer.setSequenceNumber(bufCnt + 1);
         buffer.setChunkNumber(1);
@@ -229,11 +229,11 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
     };
     auto expectedSeqChunkLastChunkIt = expectedSeqChunkLastChunk.begin();
     for (const auto& buf : pipelineContext.buffers) {
-        auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutOutput, buf);
-        for (uint64_t i = 0; i < resultDynamicBuffer.getNumberOfTuples(); i++) {
-            ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 10);
-            ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
-            ASSERT_EQ(resultDynamicBuffer[i]["f3"].read<int64_t>(), 10 + 1);
+        auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayoutOutput, buf);
+        for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++) {
+            ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 10);
+            ASSERT_EQ(resulttestBuffer[i]["f2"].read<int64_t>(), 1);
+            ASSERT_EQ(resulttestBuffer[i]["f3"].read<int64_t>(), 10 + 1);
         }
         SequenceData resultTriplet = {buf.getSequenceNumber(), buf.getChunkNumber(), buf.isLastChunk()};
         ASSERT_EQ(resultTriplet, *expectedSeqChunkLastChunkIt);
@@ -364,13 +364,13 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
     auto ts = 0_u64;
     for (auto bufCnt = 0_u64; bufCnt < NUM_BUFFERS; ++bufCnt) {
         auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, inputSchema);
-        for (auto i = 0_u64; i < dynamicBuffer.getCapacity(); ++i) {
-            dynamicBuffer[i]["f1"].write(+10_s64);
-            dynamicBuffer[i]["f2"].write(+10_s64);
-            dynamicBuffer[i]["ts"].write(ts++);
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, inputSchema);
+        for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i) {
+            testBuffer[i]["f1"].write(+10_s64);
+            testBuffer[i]["f2"].write(+10_s64);
+            testBuffer[i]["ts"].write(ts++);
         }
-        buffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        buffer.setNumberOfTuples(testBuffer.getCapacity());
         buffer.setSequenceData({bufCnt + 1, 1, true});
         buffer.setOriginId(0);
         buffer.setWatermark(ts - 1);
@@ -402,10 +402,10 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
 
     // Comparing expected output
     for (const auto& buf : pipeline3Context.buffers) {
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buf, outputSchemaWindow);
-        for (auto i = 0_u64; i < dynamicBuffer.getNumberOfTuples(); ++i) {
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, outputSchemaWindow);
+        for (auto i = 0_u64; i < testBuffer.getNumberOfTuples(); ++i) {
             // As we count the number of tuple per window, the count should be the window size
-            EXPECT_EQ(windowSize, dynamicBuffer[i][aggregationResultFieldName1].read<int64_t>());
+            EXPECT_EQ(windowSize, testBuffer[i][aggregationResultFieldName1].read<int64_t>());
         }
     }
 }

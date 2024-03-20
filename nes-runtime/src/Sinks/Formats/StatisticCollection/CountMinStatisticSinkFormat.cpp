@@ -14,11 +14,11 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticSinkFormat.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <utility>
 
 namespace NES::Statistic {

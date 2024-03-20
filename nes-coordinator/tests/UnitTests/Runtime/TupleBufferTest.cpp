@@ -16,11 +16,11 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -94,9 +94,9 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
                             "+----------------------------------------------------+";
 
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(s, buf.getBufferSize());
-    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buf);
+    auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowLayout, buf);
 
-    std::string result = dynamicTupleBuffer.toString(s);
+    std::string result = testTupleBuffer.toString(s);
     NES_DEBUG("RES={}", result);
     NES_DEBUG("Reference size={} content=\n{}", reference.size(), reference);
     NES_DEBUG("Result size={} content=\n{}", result.size(), result);

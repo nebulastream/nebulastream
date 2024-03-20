@@ -255,9 +255,9 @@ class TestHarness {
 
     /**
      * @brief Returns the output for the previously run query. Support also data types with variable data size
-     * @return Vector of DynamicTupleBuffers
+     * @return Vector of TestTupleBuffers
      */
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> getOutput();
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> getOutput();
 
     /**
      * @brief Returns the output schema of the query

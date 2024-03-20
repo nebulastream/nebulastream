@@ -774,16 +774,16 @@ std::vector<Runtime::TupleBuffer> createExpectedBufferFromCSVString(std::string 
  */
 uint64_t countTuples(std::vector<Runtime::TupleBuffer>& buffers);
 
-uint64_t countTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& buffers);
+uint64_t countTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& buffers);
 
 /**
  * @brief Converts all of the tuple buffers to dynamic tuple buffers
  * @param buffers
  * @param schema
- * @return Vector of DynamicTupleBuffer
+ * @return Vector of TestTupleBuffer
  */
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> createDynamicBuffers(std::vector<Runtime::TupleBuffer>& buffers,
-                                                                             const SchemaPtr& schema);
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer> createTestTupleBuffers(std::vector<Runtime::TupleBuffer>& buffers,
+                                                                            const SchemaPtr& schema);
 
 /**
  * @brief Compares if leftBuffers contain the same tuples as rightBuffers
@@ -792,8 +792,8 @@ std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> createDynamicBuffers(std
  * @param orderSensitive: If set to true, the order is taken into account
  * @return True if the leftBuffers contain the same tuples in the rightBuffer
  */
-bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& expectedBuffers,
-                              std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& actualBuffers,
+bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& expectedBuffers,
+                              std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
                               bool orderSensitive = false);
 
 /**

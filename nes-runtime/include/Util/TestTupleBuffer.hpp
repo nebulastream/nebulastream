@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_
+#define NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_
 
 #include <Common/ExecutableType/NESType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -215,58 +215,59 @@ class DynamicTuple {
 };
 
 /**
- * @brief The DynamicTupleBuffers allows to read records and individual fields from an tuple buffer.
+ * @brief The TestTupleBuffers allows to read records and individual fields from an tuple buffer.
  * To this end, it assumes a specific data layout, i.e., RowLayout or ColumnLayout.
  * This allows for dynamic accesses to a tuple buffer in the sense that at compile-time a user has not to specify a specific memory layout.
  * Therefore, the memory layout can be a runtime option, whereby the code that operates on the tuple buffer stays the same.
- * Furthermore, the DynamicTupleBuffers trades-off performance for safety.
+ * Furthermore, the TestTupleBuffers trades-off performance for safety.
  * To this end, it checks field bounds and field types and throws BufferAccessException if the passed parameters would lead to invalid buffer accesses.
- * The DynamicTupleBuffers supports different access methods:
+ * The TestTupleBuffers supports different access methods:
  *
  *
  *    ```
- *    auto dBuffer = DynamicTupleBuffer(layout, buffer);
+ *    auto dBuffer = TestTupleBuffer(layout, buffer);
  *    auto value = dBuffer[tupleIndex][fieldIndex].read<uint_64>();
  *    ```
  *
  * #### Reading a specific field (F1) by name in a specific tuple:
  *    ```
- *    auto dBuffer = DynamicTupleBuffer(layout, buffer);
+ *    auto dBuffer = TestTupleBuffer(layout, buffer);
  *    auto value = dBuffer[tupleIndex]["F1"].read<uint_64>();
  *    ```
  *
  * #### Writing a specific field index in a specific tuple:
  *    ```
- *    auto dBuffer = DynamicTupleBuffer(layout, buffer);
+ *    auto dBuffer = TestTupleBuffer(layout, buffer);
  *    dBuffer[tupleIndex][fieldIndex].write<uint_64>(value);
  *    ```
  *
  * #### Iterating over all records in a tuple buffer:
  *    ```
- *    auto dBuffer = DynamicTupleBuffer(layout, buffer);
+ *    auto dBuffer = TestTupleBuffer(layout, buffer);
  *    for (auto tuple: dBuffer){
  *         auto value = tuple["F1"].read<uint_64>;
  *    }
  *    ```
  *
  * @caution This class is non-thread safe, i.e. multiple threads can manipulate the same tuple buffer at the same time.
+ * @caution Do NOT use this class in performance critical code, as it is designed for testing and not for performance.
  */
-class DynamicTupleBuffer {
+class TestTupleBuffer {
   public:
     /**
-     * @brief Constructor for DynamicTupleBuffer
+     * @brief Constructor for TestTupleBuffer
      * @param memoryLayout memory layout to calculate field offset
      * @param tupleBuffer buffer that we want to access
      */
-    explicit DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer);
+    explicit TestTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer);
 
     /**
-     * @brief Creates a DynamicTupleBuffer from the TupleBuffer and the schema
+     * @brief Creates a TestTupleBuffer from the TupleBuffer and the schema
      * @param buffer
      * @param schema
-     * @return DynamicTupleBuffer
+     * @return TestTupleBuffer
      */
-    static DynamicTupleBuffer createDynamicTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema);
+    static TestTupleBuffer createTestTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema);
 
     /**
     * @brief Gets the number of tuples a tuple buffer with this memory layout could occupy.
@@ -300,10 +301,10 @@ class DynamicTupleBuffer {
     TupleBuffer getBuffer();
 
     /**
-     * @brief Iterator to process the tuples in a DynamicTupleBuffer.
+     * @brief Iterator to process the tuples in a TestTupleBuffer.
      * Take into account that it is invalid to add tuples to the tuple buffer while iterating over it.
      *    ```
-     *    auto dBuffer = DynamicTupleBuffer(layout, buffer);
+     *    auto dBuffer = TestTupleBuffer(layout, buffer);
      *    for (auto tuple: dBuffer){
      *         auto value = tuple["F1"].read<uint_64>;
      *    }
@@ -318,16 +319,16 @@ class DynamicTupleBuffer {
       public:
         /**
          * @brief Constructor to create a new TupleIterator
-         * @param buffer the DynamicTupleBuffer that we want to process
+         * @param buffer the TestTupleBuffer that we want to process
          */
-        explicit TupleIterator(const DynamicTupleBuffer& buffer);
+        explicit TupleIterator(const TestTupleBuffer& buffer);
 
         /**
          * @brief Constructor to create a new RecordIterator
-         * @param buffer the DynamicTupleBuffer that we want to process
+         * @param buffer the TestTupleBuffer that we want to process
          * @param currentIndex the index of the current record
          */
-        explicit TupleIterator(const DynamicTupleBuffer& buffer, const uint64_t currentIndex);
+        explicit TupleIterator(const TestTupleBuffer& buffer, const uint64_t currentIndex);
 
         /**
          * @brief Copy Constructor
@@ -342,7 +343,7 @@ class DynamicTupleBuffer {
         reference operator*() const;
 
       private:
-        const DynamicTupleBuffer& buffer;
+        const TestTupleBuffer& buffer;
         uint64_t currentIndex;
     };
 
@@ -364,7 +365,7 @@ class DynamicTupleBuffer {
      * @param buffer dynamic tupleBuffer
      * @return result stream
      */
-    friend std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer);
+    friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
     /**
      * @brief Creates a string representation of the dynamic tuple buffer
@@ -374,7 +375,7 @@ class DynamicTupleBuffer {
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
-             Boundary checks are performed by the write function of the DynamicTupleBuffer.
+             Boundary checks are performed by the write function of the TestTupleBuffer.
      * @note Recursive templates have a limited depth. The recommended (C++ standard) depth is 1024.
      *       Thus, a record with more than 1024 fields might not be supported.
      * @param record: The record to be pushed to the buffer.
@@ -387,7 +388,7 @@ class DynamicTupleBuffer {
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.
-              Boundary checks are performed by the write function of the DynamicTupleBuffer.
+              Boundary checks are performed by the write function of the TestTupleBuffer.
      * @note  Recursive templates have a limited depth. The recommended (C++ standard) depth is 1024.
               Thus, a record with more than 1024 fields might not be supported.
      * @param record: The record to be pushed to the buffer.
@@ -401,7 +402,7 @@ class DynamicTupleBuffer {
 
     /**
      * @brief Push a record to the underlying tuple buffer at given recordIndex. Boundary checks are performed by the 
-                write function of the DynamicTupleBuffer.
+                write function of the TestTupleBuffer.
      * @note Recursive templates have a limited depth. The recommended (C++ standard) depth is 1024.
      *       Thus, a record with more than 1024 fields might not be supported.
      *
@@ -440,7 +441,7 @@ class DynamicTupleBuffer {
 
     /**
      * @brief Copy a record from the underlying tuple buffer to a tuple. Boundary checks are performed by the 
-                read function of the DynamicTupleBuffer.
+                read function of the TestTupleBuffer.
      * 
      * @param recordIndex: The index of the record to be copied.
      * @return std::tuple<Types...> The indexed record represented as a std:tuple.
@@ -505,4 +506,4 @@ class DynamicTupleBuffer {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
+#endif// NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_

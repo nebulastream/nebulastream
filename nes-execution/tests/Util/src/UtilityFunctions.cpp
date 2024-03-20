@@ -14,10 +14,10 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <filesystem>
 #include <fstream>
 #include <set>
@@ -110,13 +110,13 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
     auto lastTimeStamp = windowSize - 1;
     for (auto buf : buffers) {
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
+        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
 
-        for (auto curTuple = 0UL; curTuple < dynamicTupleBuffer.getNumberOfTuples(); ++curTuple) {
-            if (dynamicTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp
+        for (auto curTuple = 0UL; curTuple < testTupleBuffer.getNumberOfTuples(); ++curTuple) {
+            if (testTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp
                 || numberOfTuplesInBuffer >= memoryLayout->getCapacity()) {
 
-                if (dynamicTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp) {
+                if (testTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp) {
                     lastTimeStamp += windowSize;
                 }
 
@@ -158,7 +158,7 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
     for (auto bufRead : buffersToSort) {
         std::vector<size_t> indexAlreadyInNewBuffer;
         auto memLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        auto dynamicTupleBuf = Runtime::MemoryLayouts::DynamicTupleBuffer(memLayout, bufRead);
+        auto testTupleBuf = Runtime::MemoryLayouts::TestTupleBuffer(memLayout, bufRead);
 
         auto bufRet = bufferManager->getBufferBlocking();
 
@@ -171,8 +171,8 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
                     continue;
                 }
 
-                auto sortValueCur = dynamicTupleBuf[inner][sortFieldName].read<uint64_t>();
-                auto sortValueOld = dynamicTupleBuf[smallestIndex][sortFieldName].read<uint64_t>();
+                auto sortValueCur = testTupleBuf[inner][sortFieldName].read<uint64_t>();
+                auto sortValueOld = testTupleBuf[smallestIndex][sortFieldName].read<uint64_t>();
 
                 if (smallestIndex == bufRead.getNumberOfTuples() + 1) {
                     smallestIndex = inner;
@@ -256,17 +256,17 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     uint64_t watermarkTS = 0;
     do {
         std::string line = *it;
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
         auto values = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
 
         // iterate over fields of schema and cast string values to correct type
         for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
             auto field = physicalTypes[j];
             NES_TRACE("Current value is:  {}", values[j]);
-            writeFieldValueToTupleBuffer(values[j], j, dynamicBuffer, schema, tupleCount, bufferManager);
+            writeFieldValueToTupleBuffer(values[j], j, testBuffer, schema, tupleCount, bufferManager);
         }
         if (schema->contains(timestampFieldname)) {
-            watermarkTS = std::max(watermarkTS, dynamicBuffer[tupleCount][timestampFieldname].read<uint64_t>());
+            watermarkTS = std::max(watermarkTS, testBuffer[tupleCount][timestampFieldname].read<uint64_t>());
         }
         ++tupleCount;
 
@@ -299,7 +299,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 
 void writeFieldValueToTupleBuffer(std::string inputString,
                                   uint64_t schemaFieldIndex,
-                                  Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                  Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                   const SchemaPtr& schema,
                                   uint64_t tupleCount,
                                   const Runtime::BufferManagerPtr& bufferManager) {

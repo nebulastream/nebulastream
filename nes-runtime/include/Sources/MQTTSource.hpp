@@ -80,7 +80,7 @@ class MQTTSource : public DataSource {
      * @brief fill buffer tuple by tuple using the appropriate parser
      * @param tupleBuffer buffer to be filled
      */
-    bool fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
+    bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer);
 
     /**
      * @brief override the toString method for the mqtt source

@@ -22,12 +22,12 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -85,12 +85,12 @@ TEST_P(SortPipelineTest, SortPipelineTest) {
     pipeline->setRootOperator(sortOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = numberOfTuples; i > 0; i--) {
-        dynamicBuffer[i]["f1"].write((int32_t) i);
-        dynamicBuffer[i]["f2"].write((int32_t) i);
+        testBuffer[i]["f1"].write((int32_t) i);
+        testBuffer[i]["f2"].write((int32_t) i);
     }
-    dynamicBuffer.setNumberOfTuples(numberOfTuples);
+    testBuffer.setNumberOfTuples(numberOfTuples);
 
     auto executablePipeline = provider->create(pipeline, options);
 
@@ -103,10 +103,10 @@ TEST_P(SortPipelineTest, SortPipelineTest) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), memoryLayout->getCapacity());
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
-        ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int32_t>(), (int32_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int32_t>(), (int32_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f1"].read<int32_t>(), (int32_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f2"].read<int32_t>(), (int32_t) i);
     }
 }
 

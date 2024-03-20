@@ -82,10 +82,10 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(expectedTuples).getOutput();
 
-    // We require DynamicTupleBuffers, therefore we create them with the output schema.
+    // We require TestTupleBuffers, therefore we create them with the output schema.
     // This step can be only done after the query has been run.
     auto outputSchema = testHarness.getOutputSchema();
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
 
     // Comparing equality
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers, true));
@@ -140,10 +140,10 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(expectedTuples).getOutput();
 
-    // We require DynamicTupleBuffers, therefore we create them with the output schema.
+    // We require TestTupleBuffers, therefore we create them with the output schema.
     // This step can be only done after the query has been run.
     auto outputSchema = testHarness.getOutputSchema();
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
 
     // Comparing equality
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
@@ -191,10 +191,10 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(expectedTuples).getOutput();
 
-    // We require DynamicTupleBuffers, therefore we create them with the output schema.
+    // We require TestTupleBuffers, therefore we create them with the output schema.
     // This step can be only done after the query has been run.
     auto outputSchema = testHarness.getOutputSchema();
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
 
     // Comparing equality
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));

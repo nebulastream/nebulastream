@@ -16,9 +16,9 @@
 #include <BaseIntegrationTest.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/ZipfianGenerator.hpp>
 #include <random>
 #include <vector>
@@ -123,20 +123,20 @@ namespace NES::Benchmark::DataGeneration {
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
             std::mt19937 generator(GENERATOR_SEED_ZIPFIAN);
             ZipfianGenerator zipfianGenerator(minValue, maxValue, alpha);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
                 auto value = zipfianGenerator(generator);
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(value);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
 
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             expectedData.emplace_back(bufferRef);
         }
 

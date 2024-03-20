@@ -33,13 +33,13 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -129,24 +129,24 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+1_s64);// does not qualify
-    dynamicBuffer[0]["key"].write(0_u32);
-    dynamicBuffer[0]["f2"].write(+10_s64);
-    dynamicBuffer[1]["f1"].write(+2_s64);// qualifies
-    dynamicBuffer[1]["key"].write(0_u32);
-    dynamicBuffer[1]["f2"].write(+20_s64);
-    dynamicBuffer[2]["f1"].write(+3_s64);// qualifies
-    dynamicBuffer[2]["key"].write(0_u32);
-    dynamicBuffer[2]["f2"].write(+30_s64);
+    testBuffer[0]["f1"].write(+1_s64);// does not qualify
+    testBuffer[0]["key"].write(0_u32);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[1]["f1"].write(+2_s64);// qualifies
+    testBuffer[1]["key"].write(0_u32);
+    testBuffer[1]["f2"].write(+20_s64);
+    testBuffer[2]["f1"].write(+3_s64);// qualifies
+    testBuffer[2]["key"].write(0_u32);
+    testBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write(+1_s64);// does not qualify
-    dynamicBuffer[3]["key"].write(0_u32);
-    dynamicBuffer[3]["f2"].write(+40_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[3]["f1"].write(+1_s64);// does not qualify
+    testBuffer[3]["key"].write(0_u32);
+    testBuffer[3]["f2"].write(+40_s64);
+    testBuffer.setNumberOfTuples(4);
 
     auto executablePipeline = provider->create(pipeline, options);
 
@@ -163,8 +163,8 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto resultBuffer = pipelineContext.buffers[0];
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, resultBuffer);
-    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, resultBuffer);
+    EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
 }
 
 /**
@@ -230,39 +230,39 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+1_s64);// does not qualify
-    dynamicBuffer[0]["key"].write(0_u32);
-    dynamicBuffer[0]["f2"].write(+10_s64);
-    dynamicBuffer[1]["f1"].write(+2_s64);// qualifies
-    dynamicBuffer[1]["key"].write(0_u32);
-    dynamicBuffer[1]["f2"].write(+20_s64);
-    dynamicBuffer[2]["f1"].write(+3_s64);// qualifies
-    dynamicBuffer[2]["key"].write(0_u32);
-    dynamicBuffer[2]["f2"].write(+30_s64);
+    testBuffer[0]["f1"].write(+1_s64);// does not qualify
+    testBuffer[0]["key"].write(0_u32);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[1]["f1"].write(+2_s64);// qualifies
+    testBuffer[1]["key"].write(0_u32);
+    testBuffer[1]["f2"].write(+20_s64);
+    testBuffer[2]["f1"].write(+3_s64);// qualifies
+    testBuffer[2]["key"].write(0_u32);
+    testBuffer[2]["f2"].write(+30_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write(+1_s64);// does not qualify, closes the threshold window for key 0
-    dynamicBuffer[3]["key"].write(0_u32);
-    dynamicBuffer[3]["f2"].write(+40_s64);
+    testBuffer[3]["f1"].write(+1_s64);// does not qualify, closes the threshold window for key 0
+    testBuffer[3]["key"].write(0_u32);
+    testBuffer[3]["f2"].write(+40_s64);
 
-    dynamicBuffer[4]["f1"].write(+1_s64);// does not qualify
-    dynamicBuffer[4]["key"].write(1_u32);
-    dynamicBuffer[4]["f2"].write(+100_s64);
-    dynamicBuffer[5]["f1"].write(+2_s64);// qualifies
-    dynamicBuffer[5]["key"].write(1_u32);
-    dynamicBuffer[5]["f2"].write(+200_s64);
-    dynamicBuffer[6]["f1"].write(+3_s64);// qualifies
-    dynamicBuffer[6]["key"].write(1_u32);
-    dynamicBuffer[6]["f2"].write(+300_s64);
+    testBuffer[4]["f1"].write(+1_s64);// does not qualify
+    testBuffer[4]["key"].write(1_u32);
+    testBuffer[4]["f2"].write(+100_s64);
+    testBuffer[5]["f1"].write(+2_s64);// qualifies
+    testBuffer[5]["key"].write(1_u32);
+    testBuffer[5]["f2"].write(+200_s64);
+    testBuffer[6]["f1"].write(+3_s64);// qualifies
+    testBuffer[6]["key"].write(1_u32);
+    testBuffer[6]["f2"].write(+300_s64);
 
     // the last tuple closes the window
-    dynamicBuffer[7]["f1"].write(+1_s64);// does not qualify, closes the threshold window for key 1
-    dynamicBuffer[7]["key"].write(1_u32);
-    dynamicBuffer[7]["f2"].write(+400_s64);
-    dynamicBuffer.setNumberOfTuples(8);
+    testBuffer[7]["f1"].write(+1_s64);// does not qualify, closes the threshold window for key 1
+    testBuffer[7]["key"].write(1_u32);
+    testBuffer[7]["f2"].write(+400_s64);
+    testBuffer.setNumberOfTuples(8);
 
     auto executablePipeline = provider->create(pipeline, options);
 
@@ -279,11 +279,11 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     auto resultBuffer = pipelineContext.buffers[0];
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, resultBuffer);
-    EXPECT_EQ(resultDynamicBuffer[0][sumAggregationResultFieldName].read<int64_t>(), 50);
-    EXPECT_EQ(resultDynamicBuffer[0][maxAggregationResultFieldName].read<int64_t>(), 30);
-    EXPECT_EQ(resultDynamicBuffer[1][sumAggregationResultFieldName].read<int64_t>(), 500);
-    EXPECT_EQ(resultDynamicBuffer[1][maxAggregationResultFieldName].read<int64_t>(), 300);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, resultBuffer);
+    EXPECT_EQ(resulttestBuffer[0][sumAggregationResultFieldName].read<int64_t>(), 50);
+    EXPECT_EQ(resulttestBuffer[0][maxAggregationResultFieldName].read<int64_t>(), 30);
+    EXPECT_EQ(resulttestBuffer[1][sumAggregationResultFieldName].read<int64_t>(), 500);
+    EXPECT_EQ(resulttestBuffer[1][maxAggregationResultFieldName].read<int64_t>(), 300);
 }
 
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test

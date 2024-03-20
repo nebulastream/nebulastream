@@ -66,7 +66,7 @@ class KeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 30; recordIndex++) {
         buf[recordIndex][0].write<uint64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(recordIndex % 3);
@@ -76,7 +76,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.getBuffer().setSequenceData({1, 1, true});
 }
 
-void createExpectedBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+void createExpectedBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0, 10, 0, 4));
     buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0, 10, 1, 3));
     buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0, 10, 2, 3));
@@ -133,9 +133,9 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
 
     // Create expected buffer
     auto expectedBuffer = executionEngine->getBufferManager()->getBufferBlocking();
-    auto expectedDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(expectedBuffer, sinkSchema);
-    createExpectedBuffer(expectedDynamicBuffer);
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> expectedBuffers = {expectedDynamicBuffer};
+    auto expectedtestBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(expectedBuffer, sinkSchema);
+    createExpectedBuffer(expectedtestBuffer);
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> expectedBuffers = {expectedtestBuffer};
     auto resultBuffers = testSink->getResultBuffers();
 
     auto startTs = 0;

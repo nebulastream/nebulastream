@@ -28,8 +28,8 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Util {
@@ -143,7 +143,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
  */
 void writeFieldValueToTupleBuffer(std::string inputString,
                                   uint64_t schemaFieldIndex,
-                                  Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                  Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                   const SchemaPtr& schema,
                                   uint64_t tupleCount,
                                   const Runtime::BufferManagerPtr& bufferManager);

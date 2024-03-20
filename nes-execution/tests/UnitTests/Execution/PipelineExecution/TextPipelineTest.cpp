@@ -24,12 +24,12 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -88,10 +88,10 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++) {
-        dynamicBuffer[i].writeVarSized("f1", "test", bm.get());
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i].writeVarSized("f1", "test", bm.get());
+        testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -104,9 +104,9 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 100);
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (auto i = 0_u64; i < resultBuffer.getNumberOfTuples(); ++i) {
-        ASSERT_EQ(resultDynamicBuffer[i].readVarSized("f1"), "test");
+        ASSERT_EQ(resulttestBuffer[i].readVarSized("f1"), "test");
     }
 }
 

@@ -18,8 +18,8 @@
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 namespace NES::Runtime::MemoryLayouts {
 
@@ -28,7 +28,7 @@ class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest,
   public:
     BufferManagerPtr bufferManager;
     SchemaPtr schema;
-    std::unique_ptr<DynamicTupleBuffer> dynamicBuffer;
+    std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
 
     static void SetUpTestCase() {
@@ -49,32 +49,32 @@ class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest,
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
-            dynamicBuffer = std::make_unique<DynamicTupleBuffer>(layout, tupleBuffer);
+            testBuffer = std::make_unique<TestTupleBuffer>(layout, tupleBuffer);
         } else {
             ColumnLayoutPtr layout;
             ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
-            dynamicBuffer = std::make_unique<DynamicTupleBuffer>(layout, tupleBuffer);
+            testBuffer = std::make_unique<TestTupleBuffer>(layout, tupleBuffer);
         }
     }
 };
 
-TEST_P(DynamicMemoryLayoutTestParameterized, readWriteColumnarDynamicBufferTest) {
+TEST_P(DynamicMemoryLayoutTestParameterized, readWriteColumnartestBufferTest) {
     for (int i = 0; i < 10; i++) {
         auto testTuple = std::make_tuple((uint16_t) i, true, i * 2.0);
-        dynamicBuffer->pushRecordToBuffer(testTuple);
-        ASSERT_EQ((dynamicBuffer->readRecordFromBuffer<uint16_t, bool, double>(i)), testTuple);
+        testBuffer->pushRecordToBuffer(testTuple);
+        ASSERT_EQ((testBuffer->readRecordFromBuffer<uint16_t, bool, double>(i)), testTuple);
     }
 }
 
-TEST_P(DynamicMemoryLayoutTestParameterized, iterateDynamicBufferTest) {
+TEST_P(DynamicMemoryLayoutTestParameterized, iteratetestBufferTest) {
     for (int i = 0; i < 10; i++) {
-        dynamicBuffer->pushRecordToBuffer(std::make_tuple(42_u16, true, 42 * 2.0));
+        testBuffer->pushRecordToBuffer(std::make_tuple(42_u16, true, 42 * 2.0));
     }
 
-    for (auto tuple : *dynamicBuffer) {
+    for (auto tuple : *testBuffer) {
         ASSERT_EQ(tuple[0].read<uint16_t>(), 42);
         ASSERT_EQ(tuple["t2"].read<bool>(), true);
         ASSERT_EQ(tuple["t3"].read<double>(), 42 * 2.0);
@@ -83,7 +83,7 @@ TEST_P(DynamicMemoryLayoutTestParameterized, iterateDynamicBufferTest) {
 
 TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout) {
     for (uint32_t i = 0; i < 10; i++) {
-        dynamicBuffer->pushRecordToBuffer(std::tuple<uint16_t, bool, double>{i, true, i * 2.0});
+        testBuffer->pushRecordToBuffer(std::tuple<uint16_t, bool, double>{i, true, i * 2.0});
     }
 
     std::string expectedOutput = "+----------------------------------------------------+\n"
@@ -101,7 +101,7 @@ TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout) {
                                  "|9|1|18.000000|\n"
                                  "+----------------------------------------------------+";
 
-    EXPECT_EQ(dynamicBuffer->toString(schema), expectedOutput);
+    EXPECT_EQ(testBuffer->toString(schema), expectedOutput);
 }
 
 INSTANTIATE_TEST_CASE_P(TestInputs,

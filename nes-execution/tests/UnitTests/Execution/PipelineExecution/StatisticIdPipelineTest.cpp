@@ -37,12 +37,12 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <random>
@@ -105,11 +105,11 @@ class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPip
         std::vector<TupleBuffer> retBuffers;
         for (uint64_t bufCnt = 0; bufCnt < numberOfBuffers; ++bufCnt) {
             auto buffer = bm->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
-            for (auto i = 0_u64; i < dynamicBuffer.getCapacity(); ++i) {
-                dynamicBuffer[i]["f1"].write<int64_t>(i);
-                dynamicBuffer[i]["f2"].write(+1_s64);
-                dynamicBuffer.setNumberOfTuples(i + 1);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+            for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i) {
+                testBuffer[i]["f1"].write<int64_t>(i);
+                testBuffer[i]["f2"].write(+1_s64);
+                testBuffer.setNumberOfTuples(i + 1);
             }
             buffer.setSequenceNumber(bufCnt + 1);
             buffer.setChunkNumber(1);

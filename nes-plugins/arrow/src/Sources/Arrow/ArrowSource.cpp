@@ -17,12 +17,12 @@
 #include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Arrow/ArrowSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
@@ -111,7 +111,7 @@ std::string ArrowSource::toString() const {
     return ss.str();
 }
 
-void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+void ArrowSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     // make sure that we have a batch to read
     if (currentRecordBatch == nullptr) {
         readNextBatch();
@@ -303,7 +303,7 @@ void ArrowSource::readNextBatch() {
 // is(are) column-oriented. Instead of reconstructing each tuple due to high reconstruction cost, we instead retrieve
 // each column from the arrow RecordBatch and then write out the whole column in the tuple buffer.
 void ArrowSource::writeRecordBatchToTupleBuffer(uint64_t tupleCount,
-                                                Runtime::MemoryLayouts::DynamicTupleBuffer& buffer,
+                                                Runtime::MemoryLayouts::TestTupleBuffer& buffer,
                                                 std::shared_ptr<arrow::RecordBatch> recordBatch) {
     auto fields = schema->fields;
     uint64_t numberOfSchemaFields = schema->getSize();
@@ -319,7 +319,7 @@ void ArrowSource::writeRecordBatchToTupleBuffer(uint64_t tupleCount,
 
 void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                                                uint64_t schemaFieldIndex,
-                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                               Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                                const std::shared_ptr<arrow::Array> arrowArray) {
     if (arrowArray == nullptr) {
         NES_THROW_RUNTIME_ERROR("ArrowSource::writeArrowArrayToTupleBuffer: arrowArray is null.");

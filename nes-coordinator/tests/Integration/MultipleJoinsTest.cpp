@@ -80,7 +80,7 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
         const auto outputSchema = testHarness.getOutputSchema();
         auto tmpBuffers =
             TestUtils::createExpectedBufferFromCSVString(expectedOutputCSV, outputSchema, testHarness.getBufferManager());
-        auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+        auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
         EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
     }
 };

@@ -16,12 +16,13 @@
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <cstring>
+#include <iostream>
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
@@ -55,7 +56,7 @@ SchemaPtr CpuMetrics::getSchema(const std::string& prefix) { return Schema::crea
 
 void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
-    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+    auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     auto totalSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes();
     NES_ASSERT(totalSize <= buf.getBufferSize(),
@@ -82,7 +83,7 @@ void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) c
 
 void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
-    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+    auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     int cnt = 0;
     nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();

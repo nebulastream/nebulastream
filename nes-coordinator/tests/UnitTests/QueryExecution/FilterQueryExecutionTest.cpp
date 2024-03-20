@@ -53,7 +53,7 @@ class FilterQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test class."); }
 
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
             buf[recordIndex][0].write<int64_t>(recordIndex);
             buf[recordIndex][1].write<int64_t>(1);

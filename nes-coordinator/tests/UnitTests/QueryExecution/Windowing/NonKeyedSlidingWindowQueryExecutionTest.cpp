@@ -65,7 +65,7 @@ class NonKeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 30; recordIndex++) {
         buf[recordIndex][0].write<uint64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(1);

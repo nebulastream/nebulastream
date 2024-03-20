@@ -14,13 +14,20 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
+#include <vector>
 
 namespace NES {
 
 namespace Runtime::MemoryLayouts {
-class DynamicTupleBuffer;
+class TestTupleBuffer;
 }
+
+namespace Runtime {
+class BufferManager;
+using BufferManagerPtr = std::shared_ptr<BufferManager>;
+}// namespace Runtime
 
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
@@ -48,7 +55,7 @@ class Parser {
    */
     virtual bool writeInputTupleToTupleBuffer(const std::string& inputTuple,
                                               uint64_t tupleCount,
-                                              Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                              Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                               const SchemaPtr& schema,
                                               const Runtime::BufferManagerPtr& bufferManager) = 0;
 
@@ -64,7 +71,7 @@ class Parser {
    */
     void writeFieldValueToTupleBuffer(std::string value,
                                       uint64_t schemaFieldIndex,
-                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                      Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema,
                                       uint64_t tupleCount,
                                       const Runtime::BufferManagerPtr& bufferManager);

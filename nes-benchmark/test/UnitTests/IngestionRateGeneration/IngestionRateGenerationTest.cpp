@@ -19,10 +19,10 @@
 #include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <typeinfo>
 

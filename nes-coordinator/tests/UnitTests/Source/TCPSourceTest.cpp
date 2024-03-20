@@ -263,12 +263,12 @@ bytesUsedForSocketBufferSizeTransfer: 0
     uint32_t i = 0;
     while (socket_mock_data.index < total_number_of_bytes) {
         auto buffer = bufferManager->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(
             Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()),
             buffer);
-        std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(dynamicBuffer);
+        std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(testBuffer);
 
-        for (const auto& tuple : dynamicBuffer) {
+        for (const auto& tuple : testBuffer) {
             ASSERT_EQ(tuple["var"].read<uint32_t>(), i++);
         }
     }
@@ -355,12 +355,12 @@ bytesUsedForSocketBufferSizeTransfer: 0
     uint32_t i = 0;
     while (socket_mock_data.index < as_string.size()) {
         auto buffer = bufferManager->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(
             Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()),
             buffer);
-        std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(dynamicBuffer);
+        std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(testBuffer);
 
-        for (const auto& tuple : dynamicBuffer) {
+        for (const auto& tuple : testBuffer) {
             ASSERT_EQ(tuple["var"].read<uint32_t>(), i++);
         }
     }
@@ -447,12 +447,12 @@ bytesUsedForSocketBufferSizeTransfer: 8
     uint32_t i = 0;
     while (socket_mock_data.index < total_number_of_bytes) {
         auto buffer = bufferManager->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(
             Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()),
             buffer);
-        std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(dynamicBuffer);
+        std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(testBuffer);
 
-        for (const auto& tuple : dynamicBuffer) {
+        for (const auto& tuple : testBuffer) {
             ASSERT_EQ(tuple["var"].read<uint32_t>(), i++);
         }
     }

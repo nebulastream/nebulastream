@@ -14,8 +14,8 @@
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/LightSaber/SmartGridDataGenerator.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
@@ -42,8 +42,8 @@ std::vector<Runtime::TupleBuffer> SmartGridDataGenerator::createData(size_t numb
     uint64_t linecounter = 0;
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
             // check if we reached the end of the file and start from the beginning
             if (linecounter == lines.size()) {
                 linecounter = 0;
@@ -51,15 +51,15 @@ std::vector<Runtime::TupleBuffer> SmartGridDataGenerator::createData(size_t numb
 
             std::vector<std::string> words = lines[linecounter];
 
-            dynamicBuffer[currentRecord]["creationTS"].write<int64_t>(std::stol(words[0]));
-            dynamicBuffer[currentRecord]["value"].write<float>(std::stof(words[1]));
-            dynamicBuffer[currentRecord]["property"].write<int16_t>(std::stoi(words[2]));
-            dynamicBuffer[currentRecord]["plug"].write<int16_t>(std::stoi(words[3]));
-            dynamicBuffer[currentRecord]["household"].write<int16_t>(std::stoi(words[4]));
-            dynamicBuffer[currentRecord]["house"].write<int16_t>(std::stoi(words[5]));
+            testBuffer[currentRecord]["creationTS"].write<int64_t>(std::stol(words[0]));
+            testBuffer[currentRecord]["value"].write<float>(std::stof(words[1]));
+            testBuffer[currentRecord]["property"].write<int16_t>(std::stoi(words[2]));
+            testBuffer[currentRecord]["plug"].write<int16_t>(std::stoi(words[3]));
+            testBuffer[currentRecord]["household"].write<int16_t>(std::stoi(words[4]));
+            testBuffer[currentRecord]["house"].write<int16_t>(std::stoi(words[5]));
             linecounter++;
         }
-        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        testBuffer.setNumberOfTuples(testBuffer.getCapacity());
         buffers.emplace_back(buffer);
     }
     return buffers;

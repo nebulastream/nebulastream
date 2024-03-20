@@ -70,7 +70,7 @@ class TCPSource : public DataSource {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    bool fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
+    bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 
     /**
      * @brief search from the back (first inputted item) to the front for the given search token

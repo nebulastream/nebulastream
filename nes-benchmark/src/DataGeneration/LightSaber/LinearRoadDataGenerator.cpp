@@ -14,8 +14,8 @@
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/LightSaber/LinarRoadDataGenerator.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <fstream>
 #include <iterator>
 #include <utility>
@@ -36,8 +36,8 @@ std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(size_t num
 
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
             // check if we reached the end of the file and start from the beginning
             if (!std::getline(file, line)) {
                 file.seekg(0);
@@ -50,15 +50,15 @@ std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(size_t num
 
             std::istringstream iss(line);
             std::vector<std::string> words{std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
-            dynamicBuffer[currentRecord]["creationTS"].write<int64_t>(std::stol(words[0]));
-            dynamicBuffer[currentRecord]["vehicle"].write<int16_t>(std::stoi(words[1]));
-            dynamicBuffer[currentRecord]["speed"].write<float>(std::stof(words[2]));
-            dynamicBuffer[currentRecord]["highway"].write<int16_t>(std::stoi(words[3]));
-            dynamicBuffer[currentRecord]["lane"].write<int16_t>(std::stoi(words[4]));
-            dynamicBuffer[currentRecord]["direction"].write<int16_t>(std::stoi(words[5]));
-            dynamicBuffer[currentRecord]["position"].write<int16_t>(std::stoi(words[6]));
+            testBuffer[currentRecord]["creationTS"].write<int64_t>(std::stol(words[0]));
+            testBuffer[currentRecord]["vehicle"].write<int16_t>(std::stoi(words[1]));
+            testBuffer[currentRecord]["speed"].write<float>(std::stof(words[2]));
+            testBuffer[currentRecord]["highway"].write<int16_t>(std::stoi(words[3]));
+            testBuffer[currentRecord]["lane"].write<int16_t>(std::stoi(words[4]));
+            testBuffer[currentRecord]["direction"].write<int16_t>(std::stoi(words[5]));
+            testBuffer[currentRecord]["position"].write<int16_t>(std::stoi(words[6]));
         }
-        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        testBuffer.setNumberOfTuples(testBuffer.getCapacity());
         buffers.emplace_back(buffer);
     }
     return buffers;

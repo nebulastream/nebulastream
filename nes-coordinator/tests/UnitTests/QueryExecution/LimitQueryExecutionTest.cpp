@@ -48,7 +48,7 @@ class LimitQueryExecutionTest : public Testing::BaseUnitTest {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("LimitQueryExecutionTest: Tear down LimitQueryExecutionTest test class."); }
 
-    static void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, const uint64_t tuples) {
+    static void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf, const uint64_t tuples) {
         for (uint64_t recordIndex = 0; recordIndex < tuples; recordIndex++) {
             buf[recordIndex][0].write<int64_t>(recordIndex);
         }

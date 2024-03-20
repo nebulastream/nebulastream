@@ -26,7 +26,7 @@ namespace NES::Runtime::MemoryLayouts {
 /**
  * @brief The ColumnLayoutField enables assesses to a specific field in a columnar layout.
  * It overrides the operator[] for a more user friendly access of tuples for a predefined field.
- * As this required direct knowledge of a particular memory layout at compile-time, consider to use the DynamicTupleBuffer.
+ * As this required direct knowledge of a particular memory layout at compile-time, consider to use the TestTupleBuffer.
  * @tparam T the type of the field
  * @tparam boundaryChecks flag to identify if buffer bounds should be checked at runtime.
  * @caution This class is non-thread safe

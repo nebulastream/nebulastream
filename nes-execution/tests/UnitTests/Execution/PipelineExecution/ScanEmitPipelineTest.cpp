@@ -21,12 +21,12 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -91,22 +91,22 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
-        dynamicBuffer[i]["f1"].write((int8_t) i);
-        dynamicBuffer[i]["f2"].write((int16_t) i);
-        dynamicBuffer[i]["f3"].write((int32_t) i);
-        dynamicBuffer[i]["f4"].write((int64_t) i);
-        dynamicBuffer[i]["f5"].write((uint8_t) i);
-        dynamicBuffer[i]["f6"].write((uint16_t) i);
-        dynamicBuffer[i]["f7"].write((uint32_t) i);
-        dynamicBuffer[i]["f8"].write((uint64_t) i);
-        dynamicBuffer[i]["f9"].write((float) 1.1f);
-        dynamicBuffer[i]["f10"].write((double) 1.1);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    for (uint64_t i = 0; i < testBuffer.getCapacity(); i++) {
+        testBuffer[i]["f1"].write((int8_t) i);
+        testBuffer[i]["f2"].write((int16_t) i);
+        testBuffer[i]["f3"].write((int32_t) i);
+        testBuffer[i]["f4"].write((int64_t) i);
+        testBuffer[i]["f5"].write((uint8_t) i);
+        testBuffer[i]["f6"].write((uint16_t) i);
+        testBuffer[i]["f7"].write((uint32_t) i);
+        testBuffer[i]["f8"].write((uint64_t) i);
+        testBuffer[i]["f9"].write((float) 1.1f);
+        testBuffer[i]["f10"].write((double) 1.1);
         auto value = (bool) (i % 2);
-        dynamicBuffer[i]["f11"].write<bool>(value);
-        dynamicBuffer.setNumberOfTuples(i + 1);
-        dynamicBuffer.getBuffer().setSequenceNumber(1);
+        testBuffer[i]["f11"].write<bool>(value);
+        testBuffer.setNumberOfTuples(i + 1);
+        testBuffer.getBuffer().setSequenceNumber(1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -120,20 +120,20 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), memoryLayout->getCapacity());
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
-        ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int8_t>(), (int8_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int16_t>(), (int16_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f3"].read<int32_t>(), (int32_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f4"].read<int64_t>(), (int64_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f5"].read<uint8_t>(), (uint8_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f6"].read<uint16_t>(), (uint16_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f7"].read<uint32_t>(), (uint32_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f8"].read<uint64_t>(), (uint64_t) i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f9"].read<float>(), 1.1f);
-        ASSERT_EQ(resultDynamicBuffer[i]["f10"].read<double>(), 1.1);
+        ASSERT_EQ(resulttestBuffer[i]["f1"].read<int8_t>(), (int8_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f2"].read<int16_t>(), (int16_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f3"].read<int32_t>(), (int32_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f4"].read<int64_t>(), (int64_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f5"].read<uint8_t>(), (uint8_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f6"].read<uint16_t>(), (uint16_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f7"].read<uint32_t>(), (uint32_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f8"].read<uint64_t>(), (uint64_t) i);
+        ASSERT_EQ(resulttestBuffer[i]["f9"].read<float>(), 1.1f);
+        ASSERT_EQ(resulttestBuffer[i]["f10"].read<double>(), 1.1);
         auto value = (bool) (i % 2);
-        ASSERT_EQ(resultDynamicBuffer[i]["f11"].read<bool>(), value);
+        ASSERT_EQ(resulttestBuffer[i]["f11"].read<bool>(), value);
     }
 }
 

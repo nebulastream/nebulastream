@@ -97,7 +97,7 @@ class TestExecutionEngine {
     bool stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
                    Runtime::QueryTerminationType type = Runtime::QueryTerminationType::HardStop);
 
-    Runtime::MemoryLayouts::DynamicTupleBuffer getBuffer(const SchemaPtr& schema);
+    Runtime::MemoryLayouts::TestTupleBuffer getBuffer(const SchemaPtr& schema);
 
     bool stop();
 

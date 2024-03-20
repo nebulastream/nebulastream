@@ -22,13 +22,13 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -73,9 +73,9 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
     auto buffer = pipelineContext.buffers[0];
     EXPECT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
 
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowMemoryLayout, buffer);
     for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++) {
-        EXPECT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i);
+        EXPECT_EQ(testBuffer[i]["f1"].read<int64_t>(), i);
     }
 }
 
@@ -143,9 +143,9 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     auto buffer = pipelineContext.buffers[0];
     EXPECT_EQ(buffer.getNumberOfTuples(), columnMemoryLayout->getCapacity());
 
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++) {
-        EXPECT_EQ(dynamicBuffer[i]["f1"].read<int64_t>(), i);
+        EXPECT_EQ(testBuffer[i]["f1"].read<int64_t>(), i);
     }
 }
 

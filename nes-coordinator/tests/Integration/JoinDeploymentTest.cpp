@@ -14,11 +14,11 @@
 #include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gmock/gmock-matchers.h>
 
 namespace NES::Runtime::Execution {
@@ -85,7 +85,7 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         const auto outputSchema = testHarness.getOutputSchema();
         auto tmpBuffers =
             TestUtils::createExpectedBufferFromStream(expectedFileStream, outputSchema, testHarness.getBufferManager());
-        auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+        auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
         for (auto& buf : actualBuffers) {
             NES_INFO("Buf:\n{}", NES::Util::printTupleBufferAsCSV(buf.getBuffer(), joinParams.outputSchema));
         }

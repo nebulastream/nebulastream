@@ -307,12 +307,12 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     return *this;
 }
 
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestHarness::getOutput() {
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> receivedBuffers;
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestHarness::getOutput() {
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> receivedBuffers;
     const auto queryCatalog = nesCoordinator->getQueryCatalog();
     const auto schema = queryPlan->getSinkOperators()[0]->getOutputSchema();
     auto tupleBuffers = TestUtils::createExpectedBuffersFromCsv(filePath, schema, bufferManager, true);
-    return TestUtils::createDynamicBuffers(tupleBuffers, schema);
+    return TestUtils::createTestTupleBuffers(tupleBuffers, schema);
 }
 
 TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor) {

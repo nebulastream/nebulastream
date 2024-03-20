@@ -16,10 +16,10 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -52,7 +52,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest) {
 }
 
 /**
- * @brief Tests that the field offsets are are calculated correctly using a DynamicTupleBuffer.
+ * @brief Tests that the field offsets are are calculated correctly using a TestTupleBuffer.
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest) {
     SchemaPtr schema =
@@ -64,16 +64,16 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest) {
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
 
-    ASSERT_EQ(dynamicBuffer->getCapacity(), tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
-    ASSERT_EQ(dynamicBuffer->getNumberOfTuples(), 0u);
+    ASSERT_EQ(testBuffer->getCapacity(), tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+    ASSERT_EQ(testBuffer->getNumberOfTuples(), 0u);
     ASSERT_EQ(rowLayout->getFieldOffset(1, 2), schema->getSchemaSizeInBytes() * 1 + (1 + 2));
     ASSERT_EQ(rowLayout->getFieldOffset(4, 0), schema->getSchemaSizeInBytes() * 4 + 0);
 }
 
 /**
- * @brief Tests that we can write a single record to and read from a DynamicTupleBuffer correctly.
+ * @brief Tests that we can write a single record to and read from a TestTupleBuffer correctly.
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord) {
     SchemaPtr schema =
@@ -85,19 +85,19 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord) {
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
 
     std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(1, 2, 3);
-    dynamicBuffer->pushRecordToBuffer(writeRecord);
+    testBuffer->pushRecordToBuffer(writeRecord);
 
-    std::tuple<uint8_t, uint16_t, uint32_t> readRecord = dynamicBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(0);
+    std::tuple<uint8_t, uint16_t, uint32_t> readRecord = testBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(0);
 
     ASSERT_EQ(writeRecord, readRecord);
-    ASSERT_EQ(dynamicBuffer->getNumberOfTuples(), 1UL);
+    ASSERT_EQ(testBuffer->getNumberOfTuples(), 1UL);
 }
 
 /**
- * @brief Tests that we can write many records to and read from a DynamicTupleBuffer correctly.
+ * @brief Tests that we can write many records to and read from a TestTupleBuffer correctly.
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord) {
     SchemaPtr schema =
@@ -109,7 +109,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord) 
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
 
     size_t NUM_TUPLES = 230;//tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -117,19 +117,19 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord) 
     for (size_t i = 0; i < NUM_TUPLES; i++) {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
-        dynamicBuffer->pushRecordToBuffer(writeRecord);
+        testBuffer->pushRecordToBuffer(writeRecord);
     }
 
     for (size_t i = 0; i < NUM_TUPLES; i++) {
-        std::tuple<uint8_t, uint16_t, uint32_t> readRecord = dynamicBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(i);
+        std::tuple<uint8_t, uint16_t, uint32_t> readRecord = testBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(i);
         ASSERT_EQ(allTuples[i], readRecord);
     }
 
-    ASSERT_EQ(dynamicBuffer->getNumberOfTuples(), NUM_TUPLES);
+    ASSERT_EQ(testBuffer->getNumberOfTuples(), NUM_TUPLES);
 }
 
 /**
- * @brief Tests that we can access fields of a TupleBuffer that is used in a DynamicTupleBuffer correctly.
+ * @brief Tests that we can access fields of a TupleBuffer that is used in a TestTupleBuffer correctly.
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
     SchemaPtr schema =
@@ -141,7 +141,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -149,7 +149,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
     for (size_t i = 0; i < NUM_TUPLES; ++i) {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
-        dynamicBuffer->pushRecordToBuffer(writeRecord);
+        testBuffer->pushRecordToBuffer(writeRecord);
     }
 
     auto field0 = RowLayoutField<uint8_t, true>::create(0, rowLayout, tupleBuffer);
@@ -176,7 +176,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -184,7 +184,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
     for (size_t i = 0; i < NUM_TUPLES; ++i) {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
-        dynamicBuffer->pushRecordToBuffer(writeRecord);
+        testBuffer->pushRecordToBuffer(writeRecord);
     }
 
     auto field0 = RowLayoutField<uint8_t, true>::create(0, rowLayout, tupleBuffer);
@@ -245,7 +245,7 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout) {
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto dynamicBuffer = std::make_unique<Runtime::MemoryLayouts::DynamicTupleBuffer>(rowLayout, tupleBuffer);
+    auto testBuffer = std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -254,21 +254,21 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout) {
     for (; i < NUM_TUPLES; i++) {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
-        dynamicBuffer->pushRecordToBuffer(writeRecord);
+        testBuffer->pushRecordToBuffer(writeRecord);
     }
 
     for (; i < NUM_TUPLES + 1; i++) {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
-        ASSERT_THROW(dynamicBuffer->pushRecordToBuffer(writeRecord), NES::Exceptions::RuntimeException);
+        ASSERT_THROW(testBuffer->pushRecordToBuffer(writeRecord), NES::Exceptions::RuntimeException);
     }
 
     for (size_t i = 0; i < NUM_TUPLES; i++) {
-        std::tuple<uint8_t, uint16_t, uint32_t> readRecord = dynamicBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(i);
+        std::tuple<uint8_t, uint16_t, uint32_t> readRecord = testBuffer->readRecordFromBuffer<uint8_t, uint16_t, uint32_t>(i);
         ASSERT_EQ(allTuples[i], readRecord);
     }
 
-    ASSERT_EQ(dynamicBuffer->getNumberOfTuples(), NUM_TUPLES);
+    ASSERT_EQ(testBuffer->getNumberOfTuples(), NUM_TUPLES);
 }
 
 }// namespace NES::Runtime::MemoryLayouts

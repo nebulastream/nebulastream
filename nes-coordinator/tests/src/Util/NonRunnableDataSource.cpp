@@ -55,9 +55,9 @@ bool NonRunnableDataSource::stop(Runtime::QueryTerminationType termination) {
     return NES::DefaultSource::stop(termination);
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer NonRunnableDataSource::getBuffer() { return allocateBuffer(); }
+Runtime::MemoryLayouts::TestTupleBuffer NonRunnableDataSource::getBuffer() { return allocateBuffer(); }
 
-void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     auto buf = buffer.getBuffer();
     emitBuffer(buf);
 }

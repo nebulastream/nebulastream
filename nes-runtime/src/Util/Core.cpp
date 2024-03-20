@@ -138,12 +138,12 @@ std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::stri
     auto buffer = bufferManager->getBufferBlocking();
     do {
         std::string line = *it;
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicTupleBuffer, schema, bufferManager);
+        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferManager);
         ++tupleCount;
 
         // If we have read enough tuples from the csv file, then stop iterating over it
-        auto curTimeStamp = dynamicTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>();
+        auto curTimeStamp = testTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>();
         if (curTimeStamp >= lastTimeStamp) {
             break;
         }
