@@ -17,8 +17,8 @@
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Runtime/MemoryLayout/TestTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/TestTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
