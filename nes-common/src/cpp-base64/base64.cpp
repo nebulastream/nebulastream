@@ -34,10 +34,11 @@
  // Adapt include path
  // (NebulaStream, https://nebula.stream)
  //
+#include <algorithm>
 #include <cpp-base64/base64.h>
 #include <stdexcept>
 
- //
+//
  // Depending on the url parameter in base64_chars, one of
  // two sets of base64 characters needs to be chosen.
  // They differ in their last two characters.

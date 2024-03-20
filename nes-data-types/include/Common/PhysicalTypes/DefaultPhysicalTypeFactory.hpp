@@ -64,7 +64,7 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     static PhysicalTypePtr getPhysicalType(const CharPtr& charType);
 
     /**
-    * @brief Translates a fixed char data type into a corresponding physical type.
+    * @brief Translates a float data type into a corresponding physical type.
     * @param floatType
     * @return PhysicalTypePtr
     */
@@ -78,7 +78,7 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType);
 
     /**
-    * @brief Translates a array data type into a corresponding physical type.
+    * @brief Translates a text data type into a corresponding physical type.
     * @param arrayType
     * @return PhysicalTypePtr
     */
