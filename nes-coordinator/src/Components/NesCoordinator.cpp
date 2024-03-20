@@ -218,7 +218,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorHealthCheckService->startHealthCheck();
 
     // Start placement amendment handler
-
     auto amendmentThreadCount = coordinatorConfiguration->optimizer.placementAmendmentThreadCount.getValue();
     placementAmendmentHandler =
         std::make_shared<Optimizer::PlacementAmendmentHandler>(amendmentThreadCount, placementAmendmentQueue);

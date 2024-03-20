@@ -15,5 +15,6 @@
 add_source_files(nes-optimizer
         QueryPlacementAmendmentPhase.cpp
         PlacementAmendmentHandler.cpp
+        PlacementAmendmentInstance.cpp
 )
 

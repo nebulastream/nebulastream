@@ -19,37 +19,12 @@
 #include <future>
 #include <thread>
 
-namespace NES {
+namespace NES::Optimizer {
 
-class GlobalQueryPlan;
-using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
+class PlacementAmendmentInstance;
+using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
-class SharedQueryPlan;
-using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
-
-namespace Catalogs::Query {
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
-
-class Topology;
-using TopologyPtr = std::shared_ptr<Topology>;
-
-namespace Optimizer {
-
-class GlobalExecutionPlan;
-using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-
-class TypeInferencePhase;
-using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
-
-class PlacementAmemderInstance;
-using PlacementAmemderInstancePtr = std::shared_ptr<PlacementAmemderInstance>;
-
-class PlacementAmemderInstance;
-using PlacementAmemderInstancePtr = std::shared_ptr<PlacementAmemderInstance>;
-
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmemderInstancePtr, false>>;
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
 
 /**
  * @brief The placement amendment handler class is responsible for processing placement amendments of updated shared query plans.
@@ -82,47 +57,5 @@ class PlacementAmendmentHandler {
     std::vector<std::thread> amendmentRunners;
 };
 
-/**
- * @brief class representing the placement amender instance
- */
-class PlacementAmemderInstance {
-  public:
-    static PlacementAmemderInstancePtr create(SharedQueryPlanPtr sharedQueryPlan,
-                                              Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                              TopologyPtr topology,
-                                              TypeInferencePhasePtr typeInferencePhase,
-                                              Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                              Catalogs::Query::QueryCatalogPtr queryCatalog);
-
-    PlacementAmemderInstance(SharedQueryPlanPtr sharedQueryPlan,
-                             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                             TopologyPtr topology,
-                             TypeInferencePhasePtr typeInferencePhase,
-                             Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                             Catalogs::Query::QueryCatalogPtr queryCatalog);
-
-    /**
-     * @brief Get promise to check if the amender instance was processed
-     * @return
-     */
-    std::future<bool> getFuture();
-
-    /**
-     * @brief Perform the placement amendment
-     * @return true if success else false
-     */
-    void execute();
-
-  private:
-    SharedQueryPlanPtr sharedQueryPlan;
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    TopologyPtr topology;
-    TypeInferencePhasePtr typeInferencePhase;
-    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
-    std::promise<bool> completionPromise;
-};
-
-}// namespace Optimizer
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_PLACEMENTAMENDMENTHANDLER_HPP
