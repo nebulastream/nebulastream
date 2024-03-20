@@ -7,7 +7,7 @@ LogLevel: LOG_NONE
 # Sleep interval between each run
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
-NumOfRuns: 3
+NumOfRuns: 7
 
 RunConfig:
   - QueryPlacementStrategy: BottomUp
