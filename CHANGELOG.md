@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.81](https://github.com/nebulastream/nebulastream/tree/v0.6.81) (2024-03-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.80...v0.6.81)
+
+**Implemented enhancements:**
+
+- \[TASK\] Rename DynamicTupleBuffer to TestTupleBuffer [\#4670](https://github.com/nebulastream/nebulastream/issues/4670)
+
 ## [v0.6.80](https://github.com/nebulastream/nebulastream/tree/v0.6.80) (2024-03-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.79...v0.6.80)
