@@ -38,6 +38,7 @@
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveQueryEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/BenchmarkUtils.hpp>
@@ -331,10 +332,6 @@ int main(int argc, const char* argv[]) {
 
     NES::Logger::setupLogging("BenchmarkIncrementalPlacement.log", NES::LogLevel::LOG_NONE);
     std::cout << "Setup BenchmarkIncrementalPlacement test class." << std::endl;
-    std::stringstream benchmarkOutput;
-    benchmarkOutput << "PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,PlacementAmendmentMode,BatchSize,Run_"
-                       "Num,Query_Num,Start_Time,End_Time,Total_Run_Time"
-                    << std::endl;
 
     //Load all command line arguments
     std::map<std::string, std::string> commandLineParams;
@@ -430,6 +427,19 @@ int main(int argc, const char* argv[]) {
 
     std::cout << "Parsed all queries." << std::endl;
 
+    std::stringstream aggregatedBenchmarkOutput;
+    aggregatedBenchmarkOutput
+        << "PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,PlacementAmendmentMode,BatchSize,Run_"
+           "Num,Query_Num,Start_Time,End_Time,Total_Run_Time"
+        << std::endl;
+
+    std::stringstream detailedBenchmarkOutput;
+    detailedBenchmarkOutput
+        << "PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,PlacementAmendmentMode,BatchSize,"
+           "RunNum,QueryNum,BatchNum,batchEventTime,batchProcessingStartTime,batchAmendmentStartTime,batchProcessingEndTime,"
+           "batchFailureCount,batchAffectedSQPCount"
+        << std::endl;
+
     //Perform benchmark for each run configuration
     auto runConfig = configs["RunConfig"];
     for (auto entry = runConfig.Begin(); entry != runConfig.End(); entry++) {
@@ -483,6 +493,7 @@ int main(int argc, const char* argv[]) {
                 batchIncrement++;
             }
 
+            std::vector<std::tuple<uint64_t, uint64_t, RequestProcessor::ISQPRequestResponsePtr>> batchResponses;
             auto startTime =
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                     .count();
@@ -490,32 +501,52 @@ int main(int argc, const char* argv[]) {
             // Execute batches of ISQP events
             for (auto const& isqpBatch : isqpBatches) {
                 count++;
-                requestHandlerService->queueISQPRequest(isqpBatch);
+                auto requestEventTime =
+                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                        .count();
+                auto response = requestHandlerService->queueISQPRequest(isqpBatch);
+                batchResponses.emplace_back(
+                    std::tuple<uint64_t, uint64_t, RequestProcessor::ISQPRequestResponsePtr>(count, requestEventTime, response));
             }
             auto endTime =
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                     .count();
-            benchmarkOutput << placementStrategy << "," << std::to_string(incrementalPlacement) << ","
-                            << placementAmendmentThreadCount << "," << placementAmendmentMode << "," << batchSize << "," << run
-                            << "," << count << "," << startTime << "," << endTime << "," << (endTime - startTime) << std::endl;
+            aggregatedBenchmarkOutput << placementStrategy << "," << std::to_string(incrementalPlacement) << ","
+                                      << placementAmendmentThreadCount << "," << placementAmendmentMode << "," << batchSize << ","
+                                      << run << "," << count << "," << startTime << "," << endTime << "," << (endTime - startTime)
+                                      << std::endl;
+
+            for (const auto& batchResponse : batchResponses) {
+                uint64_t batchCount = std::get<0>(batchResponse);
+                uint64_t batchEventTime = std::get<1>(batchResponse);
+                RequestProcessor::ISQPRequestResponsePtr response = std::get<2>(batchResponse);
+                detailedBenchmarkOutput << placementStrategy << "," << std::to_string(incrementalPlacement) << ","
+                                        << placementAmendmentThreadCount << "," << placementAmendmentMode << "," << batchSize
+                                        << "," << run << "," << count << "," << batchCount << "," << batchEventTime << ","
+                                        << response->processingStartTime << "," << response->amendmentStartTime << ","
+                                        << response->processingEndTime << "," << response->numOfFailedPlacements << ","
+                                        << response->numOfSQPAffected << std::endl;
+            }
+
             std::cout << "Finished Run " << run << std::endl;
             nesCoordinator->stopCoordinator(true);
         }
 
-        std::cout << benchmarkOutput.str() << std::endl;
-        std::ofstream out("ISQP-Benchmark.csv", std::ios::trunc);
-        out << benchmarkOutput.str();
-        out.close();
+        std::cout << aggregatedBenchmarkOutput.str() << std::endl;
+        std::ofstream outAgg("ISQP-Aggregated-Benchmark.csv", std::ios::trunc);
+        outAgg << aggregatedBenchmarkOutput.str();
+        outAgg.close();
+
+        std::cout << detailedBenchmarkOutput.str() << std::endl;
+        std::ofstream outDetailed("ISQP-Detailed-Benchmark.csv", std::ios::trunc);
+        outDetailed << detailedBenchmarkOutput.str();
+        outDetailed.close();
         std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
         std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
         std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
     }
 
     //Print the benchmark output and same it to the CSV file for further processing
-    std::cout << benchmarkOutput.str();
-    std::ofstream out("ISQP-Benchmark.csv");
-    out << benchmarkOutput.str();
-    out.close();
     std::cout << "benchmark finish" << std::endl;
     return 0;
 }

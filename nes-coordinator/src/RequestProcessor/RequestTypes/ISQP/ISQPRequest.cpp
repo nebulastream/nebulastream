@@ -133,40 +133,40 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
 
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
-    auto amendmentStartTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    std::vector<std::future<bool>> completedAmendments;
-    for (const auto& sharedQueryPlan : sharedQueryPlans) {
-        const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
-                                                                                      globalExecutionPlan,
-                                                                                      topology,
-                                                                                      typeInferencePhase,
-                                                                                      coordinatorConfiguration,
-                                                                                      queryCatalog);
-        completedAmendments.emplace_back(amendmentInstance->getFuture());
-        placementAmendmentQueue->enqueue(amendmentInstance);
-    }
-
-    uint64_t numOfFailedPlacements=0;
-    // Wait for all amendment runners to finish processing
-    for (auto& completedAmendment : completedAmendments) {
-        if (!completedAmendment.get()) {
-            numOfFailedPlacements++;
+        auto amendmentStartTime =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::vector<std::future<bool>> completedAmendments;
+        for (const auto& sharedQueryPlan : sharedQueryPlans) {
+            const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
+                                                                                          globalExecutionPlan,
+                                                                                          topology,
+                                                                                          typeInferencePhase,
+                                                                                          coordinatorConfiguration,
+                                                                                          queryCatalog);
+            completedAmendments.emplace_back(amendmentInstance->getFuture());
+            placementAmendmentQueue->enqueue(amendmentInstance);
         }
-    }
 
-    auto processingEndTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    auto numOfSQPAffected = sharedQueryPlans.size();
-    responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
-                                                                amendmentStartTime,
-                                                                    processingEndTime,
-                                                                    numOfSQPAffected,
-                                                                    numOfFailedPlacements,
-                                                                    true));
+        uint64_t numOfFailedPlacements = 0;
+        // Wait for all amendment runners to finish processing
+        for (auto& completedAmendment : completedAmendments) {
+            if (!completedAmendment.get()) {
+                numOfFailedPlacements++;
+            }
+        }
+
+        auto processingEndTime =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto numOfSQPAffected = sharedQueryPlans.size();
+        responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
+                                                                        amendmentStartTime,
+                                                                        processingEndTime,
+                                                                        numOfSQPAffected,
+                                                                        numOfFailedPlacements,
+                                                                        true));
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
-        responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, true));
+        responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, -1, -1, -1, true));
         handleError(std::current_exception(), storageHandle);
     }
     return {};
