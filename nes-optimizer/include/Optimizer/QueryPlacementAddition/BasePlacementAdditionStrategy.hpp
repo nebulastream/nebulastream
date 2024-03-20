@@ -197,6 +197,8 @@ class BasePlacementAdditionStrategy {
     PlacementAmendmentMode placementAmendmentMode;
     std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
     std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
+    std::vector<WorkerId> workerNodeIdsInBFS;
+    std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
 
   private:
     /**
@@ -300,10 +302,9 @@ class BasePlacementAdditionStrategy {
     static constexpr auto PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(1000);
     static constexpr auto MAX_PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(120000);
     // Metadata
-    std::vector<WorkerId> workerNodeIdsInBFS;
+
     std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
-    std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
     std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
     std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToCopiedOperatorMap;
 };

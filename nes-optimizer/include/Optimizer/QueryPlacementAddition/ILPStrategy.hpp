@@ -97,9 +97,30 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     bool pinOperators(z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables);
 
     /**
+     * @brief is called from addConstraints and calling itself recursivly with parents of operator Node to identify their location on topologyPath
+     * @param logicalOperator the current logical operator
+     * @param topologyNodePath the selected sequence of topology node to add
+     * @param opt an instance of the Z3 optimize class
+     * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
+     * @param pinnedDownStreamOperators
+     * @param operatorDistanceMap a mapping between operators (represented by ids) to their next operator in the topology
+     * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
+     * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
+     */
+    void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
+                                 std::vector<TopologyNodeWLock>& topologyNodePath,
+                                 z3::optimize& opt,
+                                 std::map<std::string, z3::expr>& placementVariable,
+                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                 std::map<OperatorId, z3::expr>& operatorDistanceMap,
+                                 std::map<uint64_t, z3::expr>& nodeUtilizationMap,
+                                 std::map<uint64_t, double>& nodeMileageMap);
+
+    /**
     * @brief Populate the placement variables and adds constraints to the optimizer
     * @param opt an instance of the Z3 optimize class
-    * @param operatorNodePath the selected sequence of operator to add
+    * @param pinnedUpStreamOperators
+    * @param pinnedDownStreamOperators
     * @param topologyNodePath the selected sequence of topology node to add
     * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
     * @param operatorDistanceMap a mapping between operators (represented by ids) to their next operator in the topology
@@ -107,8 +128,9 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
     */
     void addConstraints(z3::optimize& opt,
-                        std::vector<NodePtr>& operatorNodePath,
-                        std::vector<TopologyNodePtr>& topologyNodePath,
+                        const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                        std::vector<TopologyNodeWLock>& topologyNodePath,
                         std::map<std::string, z3::expr>& placementVariable,
                         std::map<OperatorId, z3::expr>& operatorDistanceMap,
                         std::map<uint64_t, z3::expr>& nodeUtilizationMap,
@@ -116,10 +138,10 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
 
     /**
     * @brief computes heuristics for distance
-    * @param pinnedUpStreamOperators: pinned upstream operators
+    * @param pinnedDownStreamOperators: pinned downstream operators
     * @return a mapping of topology node (represented by string id) and their distance to the root node
     */
-    std::map<uint64_t, double> computeMileage(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators);
+    std::map<uint64_t, double> computeMileage(const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
     * @brief calculates the mileage property for a node
