@@ -33,6 +33,22 @@ class APrioriDataGenerator {
     virtual void wait() = 0;
     virtual std::span<const char> get_chunk(size_t chunkIndex) = 0;
 };
+class Adhoc : public APrioriDataGenerator {
+    std::string lastBuffer;
+    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_hr = std::chrono::high_resolution_clock::now();
+
+  public:
+    Adhoc(const Options& options) {}
+
+    void startGenerator(size_t numberOfBuffers) override{};
+    void wait() override {}
+    std::span<const char> get_chunk(size_t chunkIndex) override {
+        auto timestamp = (start + (std::chrono::high_resolution_clock::now() - start_hr)).time_since_epoch();
+        this->lastBuffer = fmt::format("{}\n", std::chrono::duration_cast<std::chrono::microseconds>(timestamp).count());
+        return {lastBuffer.begin(), lastBuffer.end()};
+    }
+};
 
 class DirectFileDataGenerator : public APrioriDataGenerator {
     boost::filesystem::path filename;
@@ -342,8 +358,10 @@ int main(int argc, char* argv[]) {
 
     if (options.dataSource == DATA_FILE && !hasFormatMismatch(options)) {
         dataGenerator = std::make_unique<DirectFileDataGenerator>(options.path);
-    } else {
+    } else if (options.dataSource == DATA_FILE) {
         dataGenerator = std::make_unique<NESAPrioriDataGenerator>(options);
+    } else {
+        dataGenerator = std::make_unique<Adhoc>(options);
     }
 
     dataGenerator->startGenerator(options.numberOfBuffers);
