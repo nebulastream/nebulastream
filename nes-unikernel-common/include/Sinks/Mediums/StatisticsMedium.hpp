@@ -28,6 +28,28 @@ struct Counter {
 };
 
 namespace NES {
+class LatencySink : public SinkMedium {
+    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_hr = std::chrono::high_resolution_clock::now();
+    std::chrono::milliseconds allowedDelay;
+
+  public:
+    LatencySink(SinkFormatPtr sinkFormat,
+                uint32_t numOfProducers,
+                QueryId queryId,
+                QuerySubPlanId querySubPlanId,
+                std::chrono::milliseconds allowedDelay)
+        : SinkMedium(std::move(sinkFormat), numOfProducers, queryId, querySubPlanId), allowedDelay(allowedDelay),
+          numberOfProducers(numOfProducers) {}
+    void setup() override;
+    void shutdown() override {}
+    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
+
+    std::string toString() const override { return "Latency Sink"; }
+    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::MONITORING_SINK; }
+    uint32_t numberOfProducers;
+};
+
 class StatisticsMedium : public SinkMedium {
   public:
     StatisticsMedium(SinkFormatPtr sinkFormat,
@@ -44,6 +66,23 @@ class StatisticsMedium : public SinkMedium {
 
     Counter counter;
 };
+
+inline void LatencySink::setup() {}
+inline bool LatencySink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
+    using namespace std::chrono_literals;
+    auto now = std::chrono::high_resolution_clock::now();
+    auto sysclock_now = start + (now - start_hr);
+    auto buffer_creation = std::chrono::time_point<std::chrono::system_clock>(
+        std::chrono::microseconds(*reinterpret_cast<uint64_t*>(inputBuffer.getBuffer())));
+
+    if (sysclock_now - buffer_creation > allowedDelay) {
+        NES_WARNING("Timeout for origin {}: {}ms",
+                    inputBuffer.getOriginId(),
+                    std::chrono::duration_cast<std::chrono::milliseconds>(sysclock_now - buffer_creation).count());
+    }
+
+    return true;
+}
 
 inline void StatisticsMedium::setup() {}
 
