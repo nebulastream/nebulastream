@@ -30,7 +30,9 @@ Options::Result Options::fromCLI(int argc, char** argv) {
         .help("Id of the source to use (currently index of the sink in the list of sinks)");
 
     bool print = false;
+    std::optional<uint64_t> latency;
     params.add_parameter(print, "-p").nargs(0);
+    params.add_parameter(latency, "-t").nargs(1);
     auto result = parser.parse_args(argc, argv);
     if (result.errors_were_shown()) {
         return "Arg parsing";
@@ -58,7 +60,8 @@ Options::Result Options::fromCLI(int argc, char** argv) {
                    sink.port,
                    upstreams,
                    schema,
-                   print};
+                   print,
+                   latency};
 }
 
 std::vector<std::pair<WorkerConfiguration, WorkerLinkConfiguration>>

@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
     boost::iostreams::stream os(NES_LOG_OS(NES::LogLevel::LOG_DEBUG));
 
     NES::DataSinkPtr statisticSink;
-    if (!options.print) {
+    if (!options.print && !options.latency) {
         NES_INFO("Using Throughput Sink");
         statisticSink =
             std::make_shared<NES::StatisticsMedium>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
@@ -73,6 +73,13 @@ int main(int argc, char* argv[]) {
                                                     options.subQueryId,
                                                     options.queryId,
                                                     2s);
+    } else if (options.latency) {
+        NES_INFO("Latency sink");
+        statisticSink = std::make_shared<NES::LatencySink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
+                                                           1,
+                                                           options.subQueryId,
+                                                           options.queryId,
+                                                           std::chrono::milliseconds(*options.latency));
     } else {
         NES_INFO("Using Printing Sink");
         statisticSink = std::make_shared<NES::PrintSink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
