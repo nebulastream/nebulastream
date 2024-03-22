@@ -24,6 +24,7 @@ struct Options {
     std::vector<std::pair<WorkerConfiguration, WorkerLinkConfiguration>> upstreams;
     NES::SchemaPtr outputSchema;
     bool print;
+    std::optional<uint64_t> latency;
 
     using Result = boost::outcome_v2::result<Options, std::string>;
     static Result fromCLI(int argc, char** argv);
