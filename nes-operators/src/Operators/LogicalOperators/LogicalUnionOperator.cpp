@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -28,7 +29,11 @@ bool LogicalUnionOperator::isIdentical(NodePtr const& rhs) const {
 
 std::string LogicalUnionOperator::toString() const {
     std::stringstream ss;
-    ss << "unionWith(" << id << ")";
+    if(properties.contains("PINNED_WORKER_ID")){
+        ss << "unionWith(" << id << " PINNED, STATE = "<<  magic_enum::enum_name(operatorState) <<" )";
+    }else{
+        ss << "unionWith(" << id << ")";
+    }
     return ss.str();
 }
 

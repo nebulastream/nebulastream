@@ -857,15 +857,19 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
-    auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
+    auto isqpRemoveLink13 = ISQPRemoveLinkEvent::create(nodeId1, nodeId3);
+    auto isqpAddLink23 = ISQPAddLinkEvent::create(nodeId2, nodeId3);
+    auto isqpAddLink24 = ISQPAddLinkEvent::create(nodeId2, nodeId4);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest1;
     isqpEventsForRequest1.emplace_back(addNodeEvent1);
     isqpEventsForRequest1.emplace_back(addNodeEvent2);
     isqpEventsForRequest1.emplace_back(addNodeEvent3);
     isqpEventsForRequest1.emplace_back(addNodeEvent4);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink13);
     isqpEventsForRequest1.emplace_back(isqpRemoveLink14);
-    isqpEventsForRequest1.emplace_back(isqpAddLink34);
+    isqpEventsForRequest1.emplace_back(isqpAddLink23);
+    isqpEventsForRequest1.emplace_back(isqpAddLink24);
 
     // Enable query merging
     coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
@@ -901,16 +905,25 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
 
     // Register physical and logical sources
-    std::string logicalSourceName = "test";
-    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
-    auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
-    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
-    sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
-    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
-    sourceCatalog->addPhysicalSource(logicalSourceName, sce);
+    auto schema =
+        TestSchemas::getSchemaTemplate("id_val_u32");
+    std::string logicalSourceName1 = "test1";
+    auto defaultSourceType1 = DefaultSourceType::create(logicalSourceName1, "pTest1");
+    auto physicalSource1 = PhysicalSource::create(defaultSourceType1);
+    auto logicalSource1 = LogicalSource::create(logicalSourceName1, schema);
+    sourceCatalog->addLogicalSource(logicalSource1->getLogicalSourceName(), logicalSource1->getSchema());
+    auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, nodeId4);
+    sourceCatalog->addPhysicalSource(logicalSourceName1, sce1);
+    std::string logicalSourceName2 = "test2";
+    auto defaultSourceType2 = DefaultSourceType::create(logicalSourceName2, "pTest2");
+    auto physicalSource2 = PhysicalSource::create(defaultSourceType2);
+    auto logicalSource2 = LogicalSource::create(logicalSourceName2, schema);
+    sourceCatalog->addLogicalSource(logicalSource2->getLogicalSourceName(), logicalSource2->getSchema());
+    auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2, logicalSource2, nodeId3);
+    sourceCatalog->addPhysicalSource(logicalSourceName2, sce2);
 
-    auto query1 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
+
+    auto query1 = Query::from(logicalSourceName1).unionWith(Query::from(logicalSourceName2)).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
@@ -931,7 +944,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     auto queryId1 = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response)->queryId;
     EXPECT_EQ(queryCatalog->getQueryState(queryId1), QueryState::RUNNING);
 
-    auto query2 = Query::from(logicalSourceName).sink(NullOutputSinkDescriptor::create());
+    auto query2 = Query::from(logicalSourceName1).unionWith(Query::from(logicalSourceName2)).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
 
