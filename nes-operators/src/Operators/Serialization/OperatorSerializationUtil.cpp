@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/LatencySinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -1290,8 +1291,17 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor();
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
+    } else if (sinkDescriptor.instanceOf<const LatencySinkDescriptor>()) {
+        // serialize latency sink descriptor
+        auto throughputSinkDescriptor = sinkDescriptor.as<const LatencySinkDescriptor>();
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableLatencySinkDescriptor");
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableLatencySinkDescriptor();
+        serializedSinkDescriptor.set_reportingthreshold(throughputSinkDescriptor->getReportingThreshhold());
+        sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+        sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else if (sinkDescriptor.instanceOf<const ThroughputSinkDescriptor>()) {
-        // serialize print sink descriptor
+        // serialize Throughput sink descriptor
         auto throughputSinkDescriptor = sinkDescriptor.as<const ThroughputSinkDescriptor>();
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
                   "SerializableOperator_SinkDetails_SerializableThroughputSinkDescriptor");
@@ -1452,6 +1462,12 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
         return PrintSinkDescriptor::create(deserializedNumberOfOrigins);
+    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableLatencySinkDescriptor>()) {
+        // de-serialize print sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as LatencySinkDescriptor");
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableLatencySinkDescriptor();
+        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
+        return LatencySinkDescriptor::create(serializedSinkDescriptor.reportingthreshold());
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableThroughputSinkDescriptor>()) {
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as ThroughputSinkDescriptor");

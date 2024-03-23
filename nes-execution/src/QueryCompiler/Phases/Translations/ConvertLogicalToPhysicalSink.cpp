@@ -16,14 +16,15 @@
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/LatencySinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/ThroughputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/ThroughputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
@@ -64,8 +65,16 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     pipelineQueryPlan->getQuerySubPlanId(),
                                     nodeEngine,
                                     numOfProducers);
-    }
-    if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
+    } else if (sinkDescriptor->instanceOf<LatencySinkDescriptor>()) {
+        NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
+        const auto throughputSinkDescriptor = sinkDescriptor->as<LatencySinkDescriptor>();
+        return createLatencySink(throughputSinkDescriptor->getReportingThreshhold(),
+                                 schema,
+                                 pipelineQueryPlan->getQueryId(),
+                                 pipelineQueryPlan->getQuerySubPlanId(),
+                                 nodeEngine,
+                                 numOfProducers);
+    } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink {}", schema->toString());
         return createNullOutputSink(pipelineQueryPlan->getQueryId(),

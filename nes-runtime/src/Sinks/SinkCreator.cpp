@@ -19,6 +19,7 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
+#include <Sinks/Mediums/LatencySink.hpp>
 #include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
@@ -164,6 +165,18 @@ DataSinkPtr createThroughputSink(const std::string& counterName,
                                             activeProducers,
                                             queryId,
                                             querySubPlanId);
+}
+
+DataSinkPtr createLatencySink(size_t reportingThreshhold,
+                              const SchemaPtr& schema,
+                              QueryId queryId,
+                              DecomposedQueryPlanId querySubPlanId,
+                              const Runtime::NodeEnginePtr& nodeEngine,
+                              uint32_t activeProducers) {
+
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+
+    return std::make_shared<LatencySink>(reportingThreshhold, format, nodeEngine, activeProducers, queryId, querySubPlanId);
 }
 
 DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,

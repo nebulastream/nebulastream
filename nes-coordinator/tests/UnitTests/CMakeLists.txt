@@ -178,6 +178,7 @@ add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)
 add_nes_unit_test(topology-node-relocation-request-tests "RequestProcessor/RequestTypes/TopologyNodeRelocationRequestTest.cpp" RequestProcessor/RequestTypes/TopologyNodeRelocationRequestTest.cpp)
 
 add_nes_unit_test(throughput-sink-tests "Sink/ThroughputSinkTest.cpp")
+add_nes_unit_test(latency-sink-tests "Sink/LatencySinkTest.cpp")
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)

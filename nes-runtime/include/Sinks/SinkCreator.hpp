@@ -178,6 +178,24 @@ DataSinkPtr createThroughputSink(const std::string& counterName,
                                  uint32_t activeProducers);
 
 /**
+ * @brief create a Latency test sink with a schema
+ * @param counterName name of the shared Latency counter
+ * @param reportingThreshhold number of tuples between Latency messages
+ * @param schema of sink
+ * @param queryId
+ * @param querySubPlanId
+ * @param nodeEngine
+ * @param activeProducers
+ * @return a data sink pointer
+ */
+DataSinkPtr createLatencySink(size_t reportingThreshhold,
+                              const SchemaPtr& schema,
+                              QueryId queryId,
+                              DecomposedQueryPlanId querySubPlanId,
+                              const Runtime::NodeEnginePtr& nodeEngine,
+                              uint32_t activeProducers);
+
+/**
  * @brief create a print test sink with a schema
  * @param schema of sink
  * @param bufferManager

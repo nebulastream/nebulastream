@@ -32,6 +32,7 @@
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LatencySinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/ThroughputSinkDescriptor.hpp>
@@ -471,6 +472,12 @@ TEST_F(QueryAPITest, Nexmark4) {
                           Attribute("bid$timestamp"));
 }
 
+TEST_F(QueryAPITest, LatencySink) {
+    auto query = Query::from("default_logical")
+                     .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .sink(LatencySinkDescriptor::create(100));
+}
 TEST_F(QueryAPITest, ThroughputSink) {
     auto query = Query::from("default_logical")
                      .window(ThresholdWindow::of(Attribute("f1") < 45, 5))
