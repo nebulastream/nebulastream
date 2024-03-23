@@ -59,8 +59,7 @@ int main(int argc, char* argv[]) {
     auto options = optionsResult.assume_value();
 
     auto partition_manager = std::make_shared<PartitionManager>();
-    auto buffer_manager = std::make_shared<BufferManager>();
-    buffer_manager->createFixedSizeBufferPool(128);
+    auto buffer_manager = std::make_shared<BufferManager>(8192, std::max(options.upstreams.size() * 10, 1024ul));
 
     boost::iostreams::stream os(NES_LOG_OS(NES::LogLevel::LOG_DEBUG));
 
@@ -69,21 +68,21 @@ int main(int argc, char* argv[]) {
         NES_INFO("Using Throughput Sink");
         statisticSink =
             std::make_shared<NES::StatisticsMedium>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
-                                                    1,
+                                                    options.upstreams.size(),
                                                     options.subQueryId,
                                                     options.queryId,
                                                     2s);
     } else if (options.latency) {
         NES_INFO("Latency sink");
         statisticSink = std::make_shared<NES::LatencySink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
-                                                           1,
+                                                           options.upstreams.size(),
                                                            options.subQueryId,
                                                            options.queryId,
                                                            std::chrono::milliseconds(*options.latency));
     } else {
         NES_INFO("Using Printing Sink");
         statisticSink = std::make_shared<NES::PrintSink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
-                                                         1,
+                                                         options.upstreams.size(),
                                                          options.subQueryId,
                                                          options.queryId,
                                                          os);
@@ -106,7 +105,7 @@ int main(int argc, char* argv[]) {
                                                                     manager,
                                                                     partition,
                                                                     location,
-                                                                    1000,
+                                                                    10,
                                                                     200ms,
                                                                     20,
                                                                     pipelines);
@@ -115,5 +114,7 @@ int main(int argc, char* argv[]) {
         source->start();
     }
 
-    sleep(2000);
+    NES_INFO("Setup Done");
+
+    sleep(200000);
 }
