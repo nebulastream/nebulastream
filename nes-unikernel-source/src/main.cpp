@@ -187,7 +187,8 @@ class NESAPrioriDataGenerator : public APrioriDataGenerator {
 class TcpServer {
   public:
     TcpServer(boost::asio::io_service& ioService, const Options& option, std::unique_ptr<APrioriDataGenerator> generator)
-        : acceptor(ioService,
+        : service(ioService),
+          acceptor(ioService,
                    boost::asio::ip::tcp::endpoint(boost::asio::ip::address_v4::from_string(option.hostIp), option.port)),
           delay(option.delayInMS), dataGenerator(std::move(generator)), print(option.print) {
         NES_INFO("TCP Server listening on {}:{}", option.hostIp, option.port)
@@ -230,15 +231,26 @@ class TcpServer {
             [this, socket, chunk_index](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
                 if (!error) {
                     if (delay > 0ms) {
-                        std::this_thread::sleep_for(delay);
+                        auto timer =
+                            std::make_unique<boost::asio::deadline_timer>(service,
+                                                                          boost::posix_time::milliseconds(delay.count()));
+                        timer->async_wait(
+                            [this, socket, chunk_index, timer = std::move(timer)](const boost::system::error_code& ec) mutable {
+                                if (ec.failed()) {
+                                    NES_ERROR("Wait failed: {}", ec.message());
+                                }
+                                startSend(socket, chunk_index + 1);// Continue sending random tuples
+                            });
+                    } else {
+                        startSend(socket, chunk_index + 1);// Continue sending random tuples
                     }
-                    startSend(socket, chunk_index + 1);// Continue sending random tuples
                 } else {
                     socket->close();
                 }
             });
     }
 
+    boost::asio::io_service& service;
     boost::asio::ip::tcp::acceptor acceptor;
     std::chrono::milliseconds delay;
     std::unique_ptr<APrioriDataGenerator> dataGenerator;
