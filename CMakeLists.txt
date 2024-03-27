@@ -58,6 +58,9 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(NES_USE_KAFKA "Build with Kafka support" OFF)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
 
+#toggle GPU runtime and test
+option(NES_USE_GPU "Build with GPU acceleration" OFF)
+
 # Plugins
 option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
 option(NES_BUILD_PLUGIN_TENSORFLOW "Build Tensorflow Plugin support" OFF)
@@ -435,6 +438,7 @@ if (NES_USE_GPU)
     endif ()
     set(CMAKE_CUDA_STANDARD 17)
     set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
+    set(LIBRARIES ${LIBRARIES} ${LIBRARIES_CUDA})
     message("CUDA dependencies OK")
 endif (NES_USE_GPU)
 
@@ -659,10 +663,23 @@ endif ()
 
 
 # Custom test commands --------------------------------------------------------
+# Define test suffixes for filtering
+set(GPU_TEST_SUFFIX "__GPU$$")
+set(ALL_SUFFIXES "${GPU_TEST_SUFFIX}") # use pipe (|) to add more suffixes, e.g., ${GPU_TEST_SUFFIX}|${DPU_TEST_SUFFIX}"
+
+# The test_default target runs tests without any special suffix
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
 set(NES_TEST_REPEAT_UNTIL_FAIL 3)
 set(NES_TEST_TIMEOUT 300)
-add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E "${ALL_SUFFIXES}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+
+# The test_gpu target runs tests with ${GPU_TEST_SUFFIX}
+if (NES_USE_GPU)
+    message(STATUS "Adding test_gpu target with parallelism=${NES_TEST_PARALLELISM}")
+    set(NES_TEST_REPEAT_UNTIL_FAIL 3)
+    set(NES_TEST_TIMEOUT 300)
+    add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R "${GPU_TEST_SUFFIX}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+endif ()
 
 message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
 install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)

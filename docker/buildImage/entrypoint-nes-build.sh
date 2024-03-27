@@ -27,7 +27,12 @@ if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${Requi
 if [ -z "${NesTestParallelism}" ]; then NesTestParallelism="1"; else NesTestParallelism=${NesTestParallelism}; fi
 if [ -z "${NesBuildParallelism}" ]; then NesBuildParallelism="8"; else NesBuildParallelism=${NesBuildParallelism}; fi
 echo "Required Build Failed=$RequireBuild"
-if [ $# -eq 0 ]; then
+if [ $# -eq 1 ]; then
+  EXTRA_CMAKE_FLAG=""
+  # Check the test target
+    if [ "$1" = "gpu" ]; then
+       EXTRA_CMAKE_FLAG="-DNES_USE_GPU=1 -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc"
+    fi
   # Build NES
   python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
   # We use ccache to reuse intermediate build files across ci runs.
@@ -35,7 +40,7 @@ if [ $# -eq 0 ]; then
   ccache --set-config=cache_dir=/cache_dir/
   ccache -M 10G
   ccache -s
-  cmake --fresh -B /build_dir -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_CCACHE=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_KAFKA=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_USE_S2=1 -DNES_USE_OPENCL=1 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSORFLOW=1 -DNES_BUILD_PLUGIN_ARROW=1 /nebulastream/
+  cmake --fresh -B /build_dir -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_CCACHE=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_KAFKA=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_USE_S2=1 -DNES_USE_OPENCL=1 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSORFLOW=1 -DNES_BUILD_PLUGIN_ARROW=1 ${EXTRA_CMAKE_FLAG} /nebulastream/
   cmake --build /build_dir -j$NesBuildParallelism
   # Check if build was successful
   errorCode=$?

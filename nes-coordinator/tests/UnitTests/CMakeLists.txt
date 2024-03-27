@@ -25,9 +25,7 @@ add_nes_unit_test(data-type-factory-tests "QueryCompiler/DataTypeFactoryTests.cp
 add_nes_unit_test(pipelining-phase-tests "QueryCompiler/PipeliningPhaseTest.cpp")
 
 ### NES Coordinator Test
-add_executable(nes-coordinator-test "Components/NesCoordinatorTest.cpp")
-target_link_libraries(nes-coordinator-test nes-coordinator-test-util)
-gtest_discover_tests(nes-coordinator-test DISCOVERY_TIMEOUT 30)
+add_nes_unit_test(nes-coordinator-test "Components/NesCoordinatorTest.cpp")
 
 # ResourcesReaderTest
 add_nes_unit_test(resources-reader-test "Monitoring/ResourcesReaderTest.cpp")
@@ -161,9 +159,7 @@ add_nes_unit_test(source-catalog-service-tests "Services/SourceCatalogServiceTes
 add_nes_unit_test(topology-manager-service-tests "Services/TopologyManagerServiceTest.cpp")
 
 ### Pattern Query Plan Tests ###
-add_executable(pattern-query-plan-tests "Services/PatternParsingServiceTest.cpp")
-target_link_libraries(pattern-query-plan-tests nes-coordinator-test-util)
-gtest_discover_tests(pattern-query-plan-tests DISCOVERY_TIMEOUT 30)
+add_nes_unit_test(pattern-query-plan-tests "Services/PatternParsingServiceTest.cpp")
 
 ### Lineage Manager Test ###
 add_nes_unit_test(lineage-manager-tests "Runtime/LineageManagerTest.cpp")
