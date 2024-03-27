@@ -24,13 +24,21 @@ fi
 # This is important to check the log to identify test errors on new platforms.
 if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireTest}; fi
 echo "Required Test Failed=$RequireTest"
-if [ $# -eq 0 ]; then
+if [ $# -eq 1 ]; then
   # If build was successful we execute the tests
   # timeout after 90 minutes
   # We don't want to rely on the github-action timeout, because
   # this would fail the job in any case.
   cd /build_dir
-  timeout 90m make test_debug
+  # Select which test to run based in the argument of this entrypoint
+  if [ "$1" = "gpu" ]; then
+    timeout 90m make test_gpu
+  elif [ "$1" = "default" ]; then
+    timeout 90m make test_default
+  else
+    echo "Invalid argument. Known argument: 'gpu' to build test_gpu or 'default' to build test_default."
+    exit 1
+  fi
   errorCode=$?
   if [ $errorCode -ne 0 ]; then
     rm -rf /nebulastream/build

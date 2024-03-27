@@ -83,9 +83,18 @@ endif ()
 
 
 if (NES_USE_GPU)
-    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_CUDA})
-endif ()
+    find_package(CUDAToolkit REQUIRED)
 
+    enable_language(CUDA)
+    if (NOT ${CUDAToolkit_FOUND})
+        message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
+    endif ()
+    set(CMAKE_CUDA_STANDARD 17)
+    set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
+    message("CUDA dependencies OK")
+
+    target_link_libraries(nes-runtime PRIVATE CUDA::cudart CUDA::nvrtc)
+endif (NES_USE_GPU)
 
 if (NES_USE_OPENCL)
     find_package(OpenCL REQUIRED)

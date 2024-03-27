@@ -479,7 +479,7 @@ inline void print_with_line_numbers(std::string const& source) {
 }
 
 inline void print_compile_log(std::string program_name, std::string const& log) {
-    NES_DEBUG("---------------------------------------------------");
+    std::cout << "---------------------------------------------------";
     std::cout << "--- JIT compile log for " << program_name << " ---" << std::endl;
     std::cout << "---------------------------------------------------" << std::endl;
     std::cout << log << std::endl;

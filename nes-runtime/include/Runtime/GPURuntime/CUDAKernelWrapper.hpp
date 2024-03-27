@@ -19,6 +19,7 @@
 #include <cuda_runtime.h>
 #include <utility>
 
+namespace NES::Runtime::CUDAKernelWrapper {
 struct KernelDescriptor {
     std::string name;
     dim3 grid;
@@ -72,7 +73,7 @@ class CUDAKernelWrapper {
                  const KernelDescriptor& kernel,
                  Args&&... args) {
         if (gpuBufferSize < numberOfInputTuples * sizeof(InputRecord)) {
-            NES_ERROR("Tuples to process exceed the allocated GPU buffer.");
+            std::cout << "Tuples to process exceed the allocated GPU buffer." << std::endl;
             throw std::runtime_error("Tuples to process exceed the allocated GPU buffer.");
         }
 
@@ -113,5 +114,5 @@ class CUDAKernelWrapper {
     std::shared_ptr<jitify::Program> kernelProgramPtr;
     uint64_t gpuBufferSize;
 };
-
+} // namespace NES::Runtime::CUDAKernelWrapper
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
