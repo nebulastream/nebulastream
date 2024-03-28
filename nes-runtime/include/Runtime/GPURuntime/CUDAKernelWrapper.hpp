@@ -114,5 +114,5 @@ class CUDAKernelWrapper {
     std::shared_ptr<jitify::Program> kernelProgramPtr;
     uint64_t gpuBufferSize;
 };
-} // namespace NES::Runtime::CUDAKernelWrapper
+}// namespace NES::Runtime::CUDAKernelWrapper
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
