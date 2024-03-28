@@ -4249,4 +4249,4 @@ inline KernelLauncher KernelInstantiation::configure_1d_max_occupancy(int max_bl
 #pragma pop_macro("min")
 #pragma pop_macro("strtok_r")
 #endif
-#endif // NES_COORDINATOR_INCLUDE_UTIL_JITIFY_JITIFY_HPP_
+#endif// NES_COORDINATOR_INCLUDE_UTIL_JITIFY_JITIFY_HPP_
