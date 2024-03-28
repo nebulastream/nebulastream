@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.6.82](https://github.com/nebulastream/nebulastream/tree/v0.6.82) (2024-03-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.81...v0.6.82)
+
+**Implemented enhancements:**
+
+- \[TASK\] fix test in QueryDeploymentTest [\#4742](https://github.com/nebulastream/nebulastream/issues/4742)
+- \[TASK\] fix test in DeepHierarchyTopologyTest [\#4741](https://github.com/nebulastream/nebulastream/issues/4741)
+- \[TASK\] fix test in WindowDeploymentTest [\#4737](https://github.com/nebulastream/nebulastream/issues/4737)
+
+#### Build Management
+
+- \[Feature\] Enable CI to run tests with GPUs [\#3139](https://github.com/nebulastream/nebulastream/issues/3139)
+
 ## [v0.6.81](https://github.com/nebulastream/nebulastream/tree/v0.6.81) (2024-03-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.80...v0.6.81)
