@@ -67,6 +67,15 @@ class GlobalExecutionPlan {
     bool addDecomposedQueryPlan(const ExecutionNodeId& executionNodeId, DecomposedQueryPlanPtr decomposedQueryPlan);
 
     /**
+     * @brief Update existing decomposed query plans belonging to a shared query plan on the given execution node.
+     * @param executionNodeId: the id of the execution node
+     * @param decomposedQueryPlans: the vector of decomposed query plans
+     * @return true if success else false
+     */
+    bool updateDecomposedQueryPlans(const ExecutionNodeId& executionNodeId,
+                                    std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans);
+
+    /**
      * @brief Update the decomposed query plan state to the new query state.
      * Note: the operation is successful only if the given decomposed plan version matches the stored decomposed query
      * plan version.

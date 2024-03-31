@@ -178,10 +178,9 @@ class BasePlacementAdditionStrategy {
      * @brief Perform locking of all topology nodes selected by the path selection algorithm.
      * We use "back-off and retry" mechanism to lock topology nodes following a strict breadth-first order.
      * This allows us to prevent deadlocks and starvation situation.
-     * @param sourceTopologyNodes: the topology nodes hosting the pinned upstream operators
      * @return true if successful else false
      */
-    bool lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes);
+    bool lockTopologyNodesInSelectedPath();
 
     /**
      * @brief Perform unlocking of all topology nodes on which the lock was acquired.

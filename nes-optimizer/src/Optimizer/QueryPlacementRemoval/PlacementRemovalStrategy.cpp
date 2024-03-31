@@ -161,11 +161,10 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
         }
 
         // 10. If the operator is one of the downstream pinned operator then continue
-        auto found = std::find_if(downStreamPinnedOperators.begin(),
-                                  downStreamPinnedOperators.end(),
-                                  [&](LogicalOperatorPtr operatorPin) {
-                                      return operatorPin->getId() == operatorToProcess->getId();
-                                  });
+        auto found =
+            std::find_if(downStreamPinnedOperators.begin(), downStreamPinnedOperators.end(), [&](LogicalOperatorPtr operatorPin) {
+                return operatorPin->getId() == operatorToProcess->getId();
+            });
         if (found != downStreamPinnedOperators.end()) {
             continue;
         }
@@ -216,17 +215,17 @@ bool PlacementRemovalStrategy::pessimisticPathSelection() {
 
     bool success = false;
     uint8_t retryCount = 0;
-    std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
+    //    std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
     // 1. Perform path selection and if failure than use the exponential back-off and retry strategy
-    while (!success && retryCount < MAX_PATH_SELECTION_RETRIES) {
+    while (!success) {
         NES_INFO("Pessimistically locking selected path using retry {} of {}.", retryCount, MAX_PATH_SELECTION_RETRIES);
         success = true;
         // 2. Perform path selection and if failure than use the exponential back-off and retry strategy
         for (const auto& workerId : workerIdsInBFS) {
-            // 3. Try to acquire the lock
+            // 3. Try to acquire the lock2688422
             TopologyNodeWLock lock = topology->lockTopologyNode(workerId);
             if (!lock) {
-                NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", workerId);
+                //                NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", workerId);
                 // 4. Release all the acquired locks as part of back-off and retry strategy.
                 unlockTopologyNodesInSelectedPath();
                 success = false;
@@ -236,14 +235,14 @@ bool PlacementRemovalStrategy::pessimisticPathSelection() {
         }
 
         // 5. If unable to lock the topology nodes then wait for other processes to release locks on the topology node
-        if (!success) {
-            NES_WARNING("Unable to lock topology nodes in the path. Waiting for the process to release locks and retry "
-                        "path selection.");
-            std::this_thread::sleep_for(backOffTime);
-            retryCount++;
-            backOffTime *= 2;
-            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
-        }
+        //        if (!success) {
+        //            NES_WARNING("Unable to lock topology nodes in the path. Waiting for the process to release locks and retry "
+        //                        "path selection.");
+        //            std::this_thread::sleep_for(backOffTime);
+        ////            retryCount++;
+        ////            backOffTime *= 2;
+        ////            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
+        //        }
     }
     NES_INFO("Successfully locked selected path using pessimistic strategy.");
     return success;
@@ -366,6 +365,7 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
 std::map<DecomposedQueryPlanId, DeploymentContextPtr>
 PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion) {
 
+    //    NES_ERROR("Start removal {}", sharedQueryId);
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
     NES_INFO("Releasing locks for all locked topology nodes {}.", sharedQueryId);
     for (const auto& workerId : workerIdsInBFS) {
@@ -380,7 +380,7 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
         if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
             //1.1. wait till lock is acquired
             while (!(lockedTopologyNode = topology->lockTopologyNode(workerId))) {
-                std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
+                //                std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
             };
         } else {
             lockedTopologyNode = lockedTopologyNodeMap[workerId];
@@ -392,6 +392,8 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
             auto releasedSlots = workerIdToReleasedSlotMap[workerId];
             auto totalResources = lockedTopologyNode->operator*()->getTotalResources();
             auto occupiedResources = lockedTopologyNode->operator*()->getOccupiedResources();
+            const std::string& ipAddress = lockedTopologyNode->operator*()->getIpAddress();
+            uint32_t grpcPort = lockedTopologyNode->operator*()->getGrpcPort();
             bool nodeValidationPassed = (releasedSlots <= occupiedResources && releasedSlots <= totalResources);
             if (!nodeValidationPassed) {
                 NES_ERROR("Unable to release resources on the topology node {} to successfully remove operators.", workerId);
@@ -400,10 +402,11 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
 
             // Lock the execution node.
             // Wait till lock acquired on the execution node.
-            ExecutionNodeWLock executionNode;
-            while (!(executionNode = globalExecutionPlan->getLockedExecutionNode(workerId))) {
-                std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
-            }
+            //            ExecutionNodeWLock executionNode;
+            //            NES_ERROR("Lock from removal strategy for execution node {}", workerId);
+            //            while (!(executionNode = globalExecutionPlan->getLockedExecutionNode(workerId))) {
+            ////                std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
+            //            }
 
             // 3. Step2:: Perform validation by checking if the currently placed query sub plan has the same version as
             // the updated query sub plan or not
@@ -411,7 +414,8 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
             for (const auto& updatedDecomposedQueryPlan : updatedDecomposedQueryPlans) {
                 auto decomposedQueryPlanId = updatedDecomposedQueryPlan->getDecomposedQueryPlanId();
                 auto actualQuerySubPlan =
-                    executionNode->operator*()->getDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
+                    globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryPlanId);
+                //                executionNode->operator*()->getDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
 
                 // 4. Check is the updated and actual query sub plan has the same version number
                 if (actualQuerySubPlan->getVersion() != updatedDecomposedQueryPlan->getVersion()) {
@@ -428,7 +432,11 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
 
             // 6. Save Update query sub plans and release the occupied resources
             lockedTopologyNode->operator*()->releaseSlots(releasedSlots);
-            executionNode->operator*()->updateDecomposedQueryPlans(sharedQueryId, updatedDecomposedQueryPlans);
+            globalExecutionPlan->updateDecomposedQueryPlans(workerId, updatedDecomposedQueryPlans);
+            // 9. Release lock on the topology node
+            if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
+                lockedTopologyNode->unlock();
+            }
 
             // 7. Update the status of all operators
             auto updatedOperatorIds = workerIdToOperatorIdMap[workerId];
@@ -455,22 +463,16 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
             }
 
             // 8. compute deployment context
-            const std::string& ipAddress = lockedTopologyNode->operator*()->getIpAddress();
-            uint32_t grpcPort = lockedTopologyNode->operator*()->getGrpcPort();
             for (const auto& decomposedQueryPlan : updatedDecomposedQueryPlans) {
                 deploymentContexts[decomposedQueryPlan->getDecomposedQueryPlanId()] =
                     DeploymentContext::create(ipAddress, grpcPort, decomposedQueryPlan->copy());
-            }
-
-            // 9. Release lock on the topology node
-            if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
-                lockedTopologyNode->unlock();
             }
         } catch (std::exception& ex) {
             NES_ERROR("Exception occurred during pinned operator removal {}.", ex.what());
             throw ex;
         }
     }
+    //    NES_ERROR("Stopped removal {}", sharedQueryId);
     return deploymentContexts;
 }
 

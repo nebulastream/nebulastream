@@ -252,7 +252,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::PROCESSED);
     }
 
-    NES_DEBUG("QueryPlacementAmendmentPhase: Update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
+    NES_INFO("QueryPlacementAmendmentPhase: Update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
     std::set<DeploymentContextPtr> computedDeploymentContexts;
     for (const auto& [decomposedQueryPlanId, deploymentContext] : deploymentContexts) {
         computedDeploymentContexts.emplace(deploymentContext);

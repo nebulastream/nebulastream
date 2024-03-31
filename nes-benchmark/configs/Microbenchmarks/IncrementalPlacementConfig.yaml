@@ -3,19 +3,19 @@
 #QuerySetLocation: '/home/ankit/dima/nes-2/nes-benchmark/src/MicroBenchmarks/ISQPBenchmark/QuerySet/'
 QuerySetLocation: '/data-ssd/ankit/ISQP-Exp/tmp/tmp.tqJypTtBkM/nes-benchmark/src/MicroBenchmarks/ISQPBenchmark/QuerySet/'
 # LOG level
-LogLevel: LOG_ERROR
+LogLevel: LOG_NONE
 # Sleep interval between each run
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
-NumOfRuns: 7
+NumOfRuns: 2
 
 RunConfig:
-  - QueryPlacementStrategy: BottomUp
-    IncrementalPlacement: false
-    PlacementAmendmentThreadCount: 1
-    PlacementAmendmentMode: PESSIMISTIC
-    BatchSize: 8
-    ConfNum: 1
+#  - QueryPlacementStrategy: BottomUp
+#    IncrementalPlacement: false
+#    PlacementAmendmentThreadCount: 1
+#    PlacementAmendmentMode: PESSIMISTIC
+#    BatchSize: 8
+#    ConfNum: 1
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
 #    PlacementAmendmentThreadCount: 2
@@ -46,12 +46,12 @@ RunConfig:
 #    PlacementAmendmentMode: PESSIMISTIC
 #    BatchSize: 8
 #    ConfNum: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 7
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 4
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 7
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
 #    PlacementAmendmentThreadCount: 8
@@ -70,12 +70,12 @@ RunConfig:
 #    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 8
 #    ConfNum: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    ConfNum: 11
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 4
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 8
+    ConfNum: 11
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
 #    PlacementAmendmentThreadCount: 8

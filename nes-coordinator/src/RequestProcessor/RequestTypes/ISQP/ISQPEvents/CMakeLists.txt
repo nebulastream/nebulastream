@@ -13,6 +13,7 @@
 
 add_source_files(nes-coordinator
         ISQPAddLinkEvent.cpp
+        ISQPAddLinkPropertyEvent.cpp
         ISQPAddNodeEvent.cpp
         ISQPAddQueryEvent.cpp
         ISQPEvent.cpp

@@ -13,6 +13,7 @@
 */
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/SourceCode.hpp>
+#include <chrono>
 #include <cstdio>
 #include <ctime>
 #include <fstream>
@@ -52,8 +53,11 @@ std::shared_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<S
     std::mt19937 rng(dev());
     std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000000);
 
+    long long microseconds =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+            .count();
     std::stringstream requestName;
-    requestName << identifier << "_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
+    requestName << identifier << "_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng) << "_" << microseconds;
 
     return std::make_shared<CompilationRequest>(std::move(sourceCode),
                                                 requestName.str(),

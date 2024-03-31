@@ -34,6 +34,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkPropertyEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddNodeEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
@@ -226,6 +227,31 @@ void setupTopology(uint16_t rootNodes,
         }
     }
     requestHandlerService->queueISQPRequest(linkAddEvents);
+
+    // Add link properties between leaf and intermediate nodes
+    std::vector<RequestProcessor::ISQPEventPtr> addLinkPropertyEvents;
+    for (const auto& rootWorkerId : rootWorkerIds) {
+        for (const auto& leafWorkerId : leafWorkerIds) {
+            auto addLinkPropertyEvent = RequestProcessor::ISQPAddLinkPropertyEvent::create(rootWorkerId, leafWorkerId, 1, 1);
+            addLinkPropertyEvents.emplace_back(addLinkPropertyEvent);
+        }
+    }
+
+    leafNodeCounter = 0;
+    for (const auto& intermediateWorkerId : intermediateWorkerIds) {
+        uint16_t connectivityCounter = 1;
+        for (; leafNodeCounter < leafWorkerIds.size(); leafNodeCounter++) {
+            auto addLinkPropertyEvent =
+                RequestProcessor::ISQPAddLinkPropertyEvent::create(intermediateWorkerId, leafWorkerIds[leafNodeCounter], 1, 1);
+            addLinkPropertyEvents.emplace_back(addLinkPropertyEvent);
+            connectivityCounter++;
+            if (connectivityCounter > leafWorkerIds.size() / intermediateWorkerIds.size()) {
+                leafNodeCounter++;
+                break;
+            }
+        }
+    }
+    requestHandlerService->queueISQPRequest(addLinkPropertyEvents);
 
     topology->print();
 
@@ -548,7 +574,7 @@ int main(int argc, const char* argv[]) {
             outAgg << aggregatedBenchmarkOutput.str();
             outAgg.close();
 
-            std::cout << detailedBenchmarkOutput.str() << std::endl;
+            //std::cout << detailedBenchmarkOutput.str() << std::endl;
             std::ofstream outDetailed("ISQP-Detailed-Benchmark_" + fileName + ".csv", std::ios::trunc);
             outDetailed << detailedBenchmarkOutput.str();
             outDetailed.close();
@@ -560,8 +586,8 @@ int main(int argc, const char* argv[]) {
                       << std::endl;
         }
         // rename filename
-        std::cout << "Renaming File: " << file.path().relative_path().string() << std::endl;
-        std::filesystem::rename(file.path(), "/" + file.path().relative_path().string() + "_done");
+        //        std::cout << "Renaming File: " << file.path().relative_path().string() << std::endl;
+        //        std::filesystem::rename(file.path(), "/" + file.path().relative_path().string() + "_done");
     }
     //Print the benchmark output and same it to the CSV file for further processing
     std::cout << "benchmark finish" << std::endl;

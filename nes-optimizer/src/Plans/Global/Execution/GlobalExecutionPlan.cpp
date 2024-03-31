@@ -68,9 +68,8 @@ bool GlobalExecutionPlan::registerExecutionNode(const TopologyNodeWLock& lockedT
 bool GlobalExecutionPlan::addDecomposedQueryPlan(const ExecutionNodeId& executionNodeId,
                                                  DecomposedQueryPlanPtr decomposedQueryPlan) {
 
-    SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     NES_DEBUG("Adding decomposed query plan to the execution node with id  {}", executionNodeId);
-
+    SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     if (idToExecutionNodeMap.contains(executionNodeId)) {
         auto lockedExecutionNode = idToExecutionNodeMap.at(executionNodeId).wlock();
         if ((*lockedExecutionNode)->registerDecomposedQueryPlan(decomposedQueryPlan)) {
@@ -83,6 +82,20 @@ bool GlobalExecutionPlan::addDecomposedQueryPlan(const ExecutionNodeId& executio
             }
             return true;
         }
+    }
+    return false;
+}
+
+bool GlobalExecutionPlan::updateDecomposedQueryPlans(const ExecutionNodeId& executionNodeId,
+                                                     std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans) {
+
+    NES_DEBUG("Adding decomposed query plans to the execution node with id  {}", executionNodeId);
+    if (idToExecutionNodeMap.contains(executionNodeId)) {
+        auto lockedExecutionNode = idToExecutionNodeMap.at(executionNodeId).wlock();
+        for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
+            (*lockedExecutionNode)->registerDecomposedQueryPlan(decomposedQueryPlan);
+        }
+        return true;
     }
     return false;
 }
@@ -160,14 +173,16 @@ std::vector<DecomposedQueryPlanPtr> GlobalExecutionPlan::getCopyOfAllDecomposedQ
 }
 
 ExecutionNodeWLock GlobalExecutionPlan::getLockedExecutionNode(ExecutionNodeId executionNodeId) {
-
+    NES_ERROR("Lock the execution node with id  {}", executionNodeId);
     if (idToExecutionNodeMap.contains(executionNodeId)) {
-        NES_DEBUG("Returning execution node with id  {}", executionNodeId);
         auto lockedExecutionNode = idToExecutionNodeMap.at(executionNodeId).tryWLock();
         //Try to acquire a write lock on the topology node
         if (lockedExecutionNode) {
+            NES_ERROR("Locked execution node with id  {}", executionNodeId);
             return std::make_shared<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>(std::move(lockedExecutionNode));
         }
+        NES_ERROR("Unable to lock execution node {}", executionNodeId);
+        return nullptr;
     }
     NES_ERROR("Execution node doesn't exists with the id {}", executionNodeId);
     return nullptr;
@@ -233,11 +248,11 @@ bool GlobalExecutionPlan::removeAllDecomposedQueryPlans(SharedQueryId sharedQuer
             return false;
         }
 
-        if ((*lockedExecutionNode)->getAllQuerySubPlans().empty()) {
-            //Release all locks before node removal
-            lockedExecutionNode.unlock();
-            removeExecutionNode(executionNodeId);
-        }
+        //        if ((*lockedExecutionNode)->getAllQuerySubPlans().empty()) {
+        //            //Release all locks before node removal
+        //            lockedExecutionNode.unlock();
+        //            removeExecutionNode(executionNodeId);
+        //        }
     }
     sharedQueryIdToExecutionNodeIdMap.erase(sharedQueryId);
     NES_DEBUG("Removed all Execution nodes for the shared query with id {}", sharedQueryId);
@@ -282,11 +297,11 @@ bool GlobalExecutionPlan::removeDecomposedQueryPlan(NES::ExecutionNodeId executi
             }
         }
 
-        if ((*lockedExecutionNode)->getAllQuerySubPlans().empty()) {
-            //Release all locks before node removal
-            lockedExecutionNode.unlock();
-            removeExecutionNode(executionNodeId);
-        }
+        //        if ((*lockedExecutionNode)->getAllQuerySubPlans().empty()) {
+        //            //Release all locks before node removal
+        //            lockedExecutionNode.unlock();
+        //            removeExecutionNode(executionNodeId);
+        //        }
         NES_DEBUG("Removed decomposed query plan {} for shared query {}", decomposedQueryPlanVersion, sharedQueryId);
         return true;
     }

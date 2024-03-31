@@ -195,9 +195,16 @@ class Topology {
     /**
      * @brief acquire the lock on the topology node
      * @param workerId : the id of the topology node
-     * @return true if successfully acquired the lock else false
+     * @return locked topology node
      */
     TopologyNodeWLock lockTopologyNode(WorkerId workerId);
+
+    /**
+     * @brief acquire the lock on the topology node
+     * @param workerIds : the id of the topology nodes
+     * @return vector of locked topology nodes
+     */
+    std::vector<TopologyNodeWLock> lockTopologyNodes(std::vector<WorkerId> workerIds);
 
     /**
      * @brief Increase the amount of resources on the node with the id

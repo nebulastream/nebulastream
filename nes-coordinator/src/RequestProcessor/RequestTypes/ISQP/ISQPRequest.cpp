@@ -33,6 +33,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkPropertyEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddNodeEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
@@ -85,6 +86,13 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 auto addLinkEvent = event->as<ISQPAddLinkEvent>();
                 topology->addTopologyNodeAsChild(addLinkEvent->getParentNodeId(), addLinkEvent->getChildNodeId());
                 event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
+            } else if (event->instanceOf<ISQPAddLinkPropertyEvent>()) {
+                auto addLinkPropertyEvent = event->as<ISQPAddLinkPropertyEvent>();
+                topology->addLinkProperty(addLinkPropertyEvent->getParentNodeId(),
+                                          addLinkPropertyEvent->getChildNodeId(),
+                                          addLinkPropertyEvent->getBandwidth(),
+                                          addLinkPropertyEvent->getLatency());
+                event->response.set_value(std::make_shared<ISQPAddLinkPropertyResponse>(true));
             } else if (event->instanceOf<ISQPAddNodeEvent>()) {
                 auto addNodeEvent = event->as<ISQPAddNodeEvent>();
                 WorkerId workerId;
@@ -130,9 +138,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
 
         // Fetch affected SQPs and call in parallel operator placement amendment phase
         auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-
         auto amendmentStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<std::future<bool>> completedAmendments;
@@ -154,7 +160,6 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 numOfFailedPlacements++;
             }
         }
-
         auto processingEndTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         auto numOfSQPAffected = sharedQueryPlans.size();
@@ -290,6 +295,8 @@ void ISQPRequest::handleRemoveNodeRequest(NES::RequestProcessor::ISQPRemoveNodeE
                     //perform re-operator placement on the query plan
                     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
                 }
+                upstreamExecutionNode->unlock();
+                downstreamExecutionNode->unlock();
             }
         }
     }

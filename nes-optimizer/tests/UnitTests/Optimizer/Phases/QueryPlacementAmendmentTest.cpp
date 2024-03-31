@@ -2541,9 +2541,12 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
             std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans =
                 executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
             for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
+                if(decomposedQueryPlan->getState() == QueryState::MARKED_FOR_MIGRATION){
+                    continue;
+                }
                 auto ops = decomposedQueryPlan->getRootOperators();
                 if (executionNode->operator*()->getId() == 1) {
-                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                     ASSERT_EQ(ops[0]->getChildren().size(), 1);
@@ -2556,7 +2559,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                ->getNesPartition();
                 } else if (executionNode->operator*()->getId() == 2
                            && decomposedQueryPlan->getDecomposedQueryPlanId() == subPlanIdToRemoveInNextIteration) {
-                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 } else if (executionNode->operator*()->getId() == 2
                            && decomposedQueryPlan->getDecomposedQueryPlanId() != subPlanIdToRemoveInNextIteration) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
@@ -2577,7 +2580,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                ->as<Network::NetworkSourceDescriptor>()
                                                                ->getNesPartition();
                 } else if (executionNode->operator*()->getId() == 3) {
-                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     auto sink = ops[0];
                     sinkPartitionNode2afterReplacement = sink->as<SinkLogicalOperator>()
@@ -2660,6 +2663,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);

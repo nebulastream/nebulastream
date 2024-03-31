@@ -239,9 +239,7 @@ TopologyNodePtr Topology::getCopyOfTopologyNodeWithId(WorkerId workerId) const {
     return nullptr;
 }
 
-bool Topology::nodeWithWorkerIdExists(WorkerId workerId) {
-    return workerIdToTopologyNode.contains(workerId);
-}
+bool Topology::nodeWithWorkerIdExists(WorkerId workerId) { return workerIdToTopologyNode.contains(workerId); }
 
 bool Topology::setForMaintenance(WorkerId workerId, bool state) {
 
@@ -342,6 +340,7 @@ TopologyNodeWLock Topology::lockTopologyNode(WorkerId workerId) {
         //Try to acquire a write lock on the topology node
         auto wLock = workerIdToTopologyNode.at(workerId).tryWLock();
         if (wLock) {
+            NES_DEBUG("Got the lock on the topology node {}", workerId);
             return std::make_shared<folly::Synchronized<TopologyNodePtr>::WLockedPtr>(std::move(wLock));
         }
         NES_WARNING("Unable to acquire lock on topology node with id {}", workerId);
@@ -349,6 +348,28 @@ TopologyNodeWLock Topology::lockTopologyNode(WorkerId workerId) {
     }
     NES_WARNING("Unable to locate topology node with id {}", workerId);
     return nullptr;
+}
+
+std::vector<TopologyNodeWLock> Topology::lockTopologyNodes(std::vector<WorkerId> workerIds) {
+
+    std::vector<TopologyNodeWLock> lockedTopologyNodes;
+    for (const auto& workerId : workerIds) {
+        if (workerIdToTopologyNode.contains(workerId)) {
+            //Try to acquire a write lock on the topology node
+            auto wLock = workerIdToTopologyNode.at(workerId).tryWLock();
+            if (!wLock) {
+                NES_WARNING("Unable to acquire lock on topology node with id {}", workerId);
+                return {};
+            }
+            NES_DEBUG("Got the lock on the topology node {}", workerId);
+            lockedTopologyNodes.emplace_back(
+                std::make_shared<folly::Synchronized<TopologyNodePtr>::WLockedPtr>(std::move(wLock)));
+        } else {
+            NES_WARNING("Unable to locate topology node with id {}", workerId);
+            return {};
+        }
+    }
+    return lockedTopologyNodes;
 }
 
 std::vector<WorkerId> Topology::getAllRegisteredNodeIds() const {
