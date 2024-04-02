@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 namespace NES {
@@ -86,7 +87,7 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
@@ -127,7 +128,7 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
@@ -164,7 +165,7 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 

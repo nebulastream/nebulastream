@@ -49,6 +49,7 @@
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <API/TestSchemas.hpp>
 
 namespace NES {
 
@@ -75,7 +76,7 @@ class QueryAPITest : public Testing::BaseUnitTest {
 
 TEST_F(QueryAPITest, testQueryFilter) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -96,7 +97,7 @@ TEST_F(QueryAPITest, testQueryFilter) {
 
 TEST_F(QueryAPITest, testQueryProjection) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("id");
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -117,7 +118,7 @@ TEST_F(QueryAPITest, testQueryProjection) {
 
 TEST_F(QueryAPITest, testQueryTumblingWindow) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -142,7 +143,7 @@ TEST_F(QueryAPITest, testQueryTumblingWindow) {
 
 TEST_F(QueryAPITest, testQuerySlidingWindow) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -170,7 +171,7 @@ TEST_F(QueryAPITest, testQuerySlidingWindow) {
  */
 TEST_F(QueryAPITest, testQueryMerge) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -192,7 +193,7 @@ TEST_F(QueryAPITest, testQueryMerge) {
  */
 TEST_F(QueryAPITest, testQueryJoin) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -257,7 +258,7 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addPhysicalSource("default_logical", sce);
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     // create a query with "as" in the aggregation
     auto query =
@@ -285,7 +286,7 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
  */
 TEST_F(QueryAPITest, ThresholdWindowQueryTest) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -335,7 +336,7 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTest) {
  */
 TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -385,7 +386,7 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport) {
  */
 TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
 
-    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();

@@ -35,6 +35,7 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -576,10 +577,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 

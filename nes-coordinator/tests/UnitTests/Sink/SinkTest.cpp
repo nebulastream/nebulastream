@@ -43,6 +43,7 @@
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Storage/AllEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -70,8 +71,7 @@ class SinkTest : public Testing::BaseIntegrationTest {
     /* Called before a single test. */
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
-        test_schema =
-            Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
+        test_schema = TestSchemas::getSchemaTemplate("key_val_u32");
         write_result = false;
         path_to_csv_file = getTestResourceFolder() / "sink.csv";
         path_to_bin_file = getTestResourceFolder() / "sink.bin";

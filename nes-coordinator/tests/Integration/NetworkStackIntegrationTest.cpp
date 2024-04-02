@@ -57,6 +57,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <utility>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -240,7 +241,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
 
     static constexpr int numSendingThreads = 4;
     auto sendingThreads = std::vector<std::thread>();
-    auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
+    auto schema = TestSchemas::getSchemaTemplate("id_u64");
 
     NodeLocation nodeLocationSource{0, "127.0.0.1", *dataPort1};
     NodeLocation nodeLocationSink{0, "127.0.0.1", *dataPort2};
@@ -456,10 +457,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
 
     auto numQueries = 10;
     auto numThreads = 8;
-    SchemaPtr schema = Schema::create()
-                           ->addField("test$id", DataTypeFactory::createInt64())
-                           ->addField("test$one", DataTypeFactory::createInt64())
-                           ->addField("test$value", DataTypeFactory::createInt64());
+    SchemaPtr schema = TestSchemas::getSchemaTemplate("id_one_val_64")->updateSourceName("test");
 
     std::vector<PhysicalSourceTypePtr> physicalSourceTypes;
     for (auto i = 0; i < numQueries; ++i) {
@@ -737,10 +735,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
     NodeLocation nodeLocationSender{0, "127.0.0.1", *dataPort1};
     NodeLocation nodeLocationReceiver{0, "127.0.0.1", *dataPort2};
     NesPartition nesPartition{1, 22, 33, 44};
-    SchemaPtr schema = Schema::create()
-                           ->addField("test$id", DataTypeFactory::createInt64())
-                           ->addField("test$one", DataTypeFactory::createInt64())
-                           ->addField("test$value", DataTypeFactory::createInt64());
+    SchemaPtr schema = TestSchemas::getSchemaTemplate("id_one_val_64")->updateSourceName("test");
     auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
 
     auto defaultSourceType = DefaultSourceType::create("default_logical", "default");

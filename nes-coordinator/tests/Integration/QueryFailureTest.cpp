@@ -28,6 +28,7 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -50,7 +51,8 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u64");
+
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
@@ -95,7 +97,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u64");
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 

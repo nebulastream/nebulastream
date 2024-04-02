@@ -15,6 +15,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
+#include <API/TestSchemas.hpp>
 
 namespace NES {
 
@@ -44,7 +45,7 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
         sourceDiamond = TestUtils::createSourceTypeCSV({"diamond", "diamond_physical", "window.csv", 1, 28, 1});
 
         // Setup schemas.
-        schemaCarTruck = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        schemaCarTruck = TestSchemas::getSchemaTemplate("id_val_u64");
         schemaRubyDiamond = Schema::create()
                                 ->addField(createField("value", BasicType::UINT32))
                                 ->addField(createField("id", BasicType::UINT32))

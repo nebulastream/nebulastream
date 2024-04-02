@@ -29,6 +29,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -159,16 +160,13 @@ class DataGenerator {
 };
 
 TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")));
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")));
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -192,16 +190,13 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength) {
 }
 
 TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")));
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")));
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -225,16 +220,13 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
 }
 
 TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")));
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
@@ -257,10 +249,7 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
 }
 
 TEST_F(KeyedSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -301,10 +290,7 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
 }
 
 TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -340,17 +326,15 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
 }
 
 TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("key1", DataTypeFactory::createUInt64())
+    auto testSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")
                           ->addField("key2", DataTypeFactory::createUInt64())
-                          ->addField("key3", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+                          ->addField("key3", DataTypeFactory::createUInt64());
+
 
     ASSERT_EQ(sizeof(InputValueMultiKeys), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
-                     .byKey(Attribute("key1"), Attribute("key2"), Attribute("key3"))
+                     .byKey(Attribute("key"), Attribute("key2"), Attribute("key3"))
                      .apply(Sum(Attribute("value")));
     auto dg = DataGeneratorMultiKey("window", "window1", 1, 102);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -363,7 +347,7 @@ TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
     // Expected output
     std::stringstream expectedOutput;
     for (uint64_t k = 0; k < 102; k++) {
-        expectedOutput << "0, 1000, " << k << ", " << k << ", " << k << ", 1\n";
+        expectedOutput << "0, 1000, 1, " << k << ", " << k << ", " << k << "\n";
     }
 
     // Run the query and get the actual dynamic buffers

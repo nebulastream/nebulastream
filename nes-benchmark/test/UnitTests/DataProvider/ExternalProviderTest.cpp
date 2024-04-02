@@ -21,6 +21,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
+#include <API/TestSchemas.hpp>
 
 namespace NES::Benchmark::DataProvision {
     class ExternalProviderTest : public Testing::BaseIntegrationTest {
@@ -72,11 +73,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField(createField("id", BasicType::UINT64))
-                                 ->addField(createField("value", BasicType::UINT64))
-                                 ->addField(createField("payload", BasicType::UINT64))
-                                 ->addField(createField("timestamp", BasicType::UINT64));
+        auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -121,11 +118,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField(createField("id", BasicType::UINT64))
-                                 ->addField(createField("value", BasicType::UINT64))
-                                 ->addField(createField("payload", BasicType::UINT64))
-                                 ->addField(createField("timestamp", BasicType::UINT64));
+        auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -235,11 +228,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField(createField("id", BasicType::UINT64))
-                                 ->addField(createField("value", BasicType::UINT64))
-                                 ->addField(createField("payload", BasicType::UINT64))
-                                 ->addField(createField("timestamp", BasicType::UINT64));
+        auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -335,11 +324,7 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField(createField("id", BasicType::UINT64))
-                                 ->addField(createField("value", BasicType::UINT64))
-                                 ->addField(createField("payload", BasicType::UINT64))
-                                 ->addField(createField("timestamp", BasicType::UINT64));
+        auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
