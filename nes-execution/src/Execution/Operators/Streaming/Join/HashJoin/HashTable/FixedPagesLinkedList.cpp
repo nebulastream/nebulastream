@@ -13,8 +13,8 @@
 */
 
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <thread>
 
 namespace NES::Runtime::Execution::Operators {
 
