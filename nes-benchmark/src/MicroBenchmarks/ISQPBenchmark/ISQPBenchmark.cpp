@@ -462,14 +462,15 @@ int main(int argc, const char* argv[]) {
         std::cout << "Parsed all queries." << std::endl;
 
         std::stringstream aggregatedBenchmarkOutput;
-        aggregatedBenchmarkOutput
-            << "ConfigNum,PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,PlacementAmendmentMode,BatchSize,Run_"
-               "Num,Query_Num,Start_Time,End_Time,Total_Run_Time"
-            << std::endl;
+        aggregatedBenchmarkOutput << "File_Name,ConfigNum,PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,"
+                                     "PlacementAmendmentMode,BatchSize,Run_"
+                                     "Num,Batch_Num,Start_Time,End_Time,Total_Run_Time"
+                                  << std::endl;
 
         std::stringstream detailedBenchmarkOutput;
         detailedBenchmarkOutput
-            << "ConfigNum,PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,PlacementAmendmentMode,BatchSize,"
+            << "File_Name,ConfigNum,PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,PlacementAmendmentMode,"
+               "BatchSize,"
                "RunNum,QueryNum,BatchNum,batchEventTime,batchProcessingStartTime,batchAmendmentStartTime,batchProcessingEndTime,"
                "batchFailureCount,batchAffectedSQPCount"
             << std::endl;
@@ -510,11 +511,23 @@ int main(int argc, const char* argv[]) {
 
                 auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 
+                // Setup system with initially running query plans
+                uint64_t initiallyRunningQueries = 1024;
+                std::vector<RequestProcessor::ISQPEventPtr> initialISQPEvents;
+                uint64_t currentIndex;
+                for (currentIndex = 0; currentIndex < initiallyRunningQueries; currentIndex++) {
+                    auto queryPlan = queryObjects[currentIndex];
+                    initialISQPEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
+                }
+                std::cout << "_______________________________Placing initial queries" << std::endl;
+                requestHandlerService->queueISQPRequest(initialISQPEvents);
+                std::cout << "*******************************Initial queries placed" << std::endl;
+
                 // Compute batches of ISQP events
                 std::vector<std::vector<RequestProcessor::ISQPEventPtr>> isqpBatches;
                 std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
                 uint16_t batchIncrement = 1;
-                for (uint64_t i = 0; i < numOfQueries; i++) {
+                for (uint64_t i = currentIndex; i < numOfQueries; i++) {
                     auto queryPlan = queryObjects[i];
                     if (batchIncrement == 1) {
                         isqpEvents.clear();
@@ -548,22 +561,25 @@ int main(int argc, const char* argv[]) {
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                aggregatedBenchmarkOutput << configNum << "," << placementStrategy << "," << std::to_string(incrementalPlacement)
-                                          << "," << placementAmendmentThreadCount << "," << placementAmendmentMode << ","
-                                          << batchSize << "," << run << "," << count << "," << startTime << "," << endTime << ","
-                                          << (endTime - startTime) << std::endl;
+                aggregatedBenchmarkOutput << fileName << "," << configNum << "," << placementStrategy << ","
+                                          << std::to_string(incrementalPlacement) << "," << placementAmendmentThreadCount << ","
+                                          << placementAmendmentMode << "," << batchSize << "," << run << "," << count << ","
+                                          << startTime << "," << endTime << "," << (endTime - startTime) << std::endl;
 
                 for (const auto& batchResponse : batchResponses) {
                     uint64_t batchCount = std::get<0>(batchResponse);
                     uint64_t batchEventTime = std::get<1>(batchResponse);
                     RequestProcessor::ISQPRequestResponsePtr response = std::get<2>(batchResponse);
-                    detailedBenchmarkOutput << configNum << "," << placementStrategy << ","
+                    detailedBenchmarkOutput << fileName << "," << configNum << "," << placementStrategy << ","
                                             << std::to_string(incrementalPlacement) << "," << placementAmendmentThreadCount << ","
                                             << placementAmendmentMode << "," << batchSize << "," << run << "," << count << ","
                                             << batchCount << "," << batchEventTime << "," << response->processingStartTime << ","
                                             << response->amendmentStartTime << "," << response->processingEndTime << ","
                                             << response->numOfFailedPlacements << "," << response->numOfSQPAffected << std::endl;
                 }
+
+                //                std::cout << globalExecutionPlan->getAsString();
+                std::cout << "Total SQPs " << nesCoordinator->getGlobalQueryPlan()->getAllSharedQueryPlans().size();
 
                 std::cout << "Finished Run " << run << std::endl;
                 nesCoordinator->stopCoordinator(true);
@@ -586,8 +602,8 @@ int main(int argc, const char* argv[]) {
                       << std::endl;
         }
         // rename filename
-        //        std::cout << "Renaming File: " << file.path().relative_path().string() << std::endl;
-        //        std::filesystem::rename(file.path(), "/" + file.path().relative_path().string() + "_done");
+        std::cout << "Renaming File: " << file.path().relative_path().string() << std::endl;
+        std::filesystem::rename(file.path(), "/" + file.path().relative_path().string() + "_done");
     }
     //Print the benchmark output and same it to the CSV file for further processing
     std::cout << "benchmark finish" << std::endl;

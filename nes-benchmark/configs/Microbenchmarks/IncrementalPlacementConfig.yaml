@@ -7,7 +7,7 @@ LogLevel: LOG_NONE
 # Sleep interval between each run
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
-NumOfRuns: 2
+NumOfRuns: 5
 
 RunConfig:
 #  - QueryPlacementStrategy: BottomUp
@@ -52,125 +52,126 @@ RunConfig:
     PlacementAmendmentMode: PESSIMISTIC
     BatchSize: 8
     ConfNum: 7
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    ConfNum: 9
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    ConfNum: 10
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 8
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 1
+    ConfNum: 9
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 2
+    ConfNum: 10
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 4
+    ConfNum: 11
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 12
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 1
+    ConfNum: 13
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 2
+    ConfNum: 14
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 4
+    ConfNum: 15
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 16
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 1
+    ConfNum: 17
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 2
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 2
+    ConfNum: 18
   - QueryPlacementStrategy: BottomUp
     IncrementalPlacement: false
     PlacementAmendmentThreadCount: 4
-    PlacementAmendmentMode: OPTIMISTIC
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 4
+    ConfNum: 19
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
     BatchSize: 8
-    ConfNum: 11
+    ConfNum: 20
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 1
+    ConfNum: 21
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 2
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 2
+    ConfNum: 22
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 4
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 4
+    ConfNum: 23
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 24
+
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    ConfNum: 12
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
 #    PlacementAmendmentThreadCount: 1
 #    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 8
-#    ConfNum: 13
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    ConfNum: 14
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    ConfNum: 15
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#    ConfNum: 16
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 1
-#    ConfNum: 17
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#    ConfNum: 18
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#    ConfNum: 19
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 20
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 1
-#    ConfNum: 21
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#    ConfNum: 22
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#    ConfNum: 23
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 24
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 1
 #    ConfNum: 25
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentThreadCount: 2
 #    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
+#    BatchSize: 8
 #    ConfNum: 26
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentThreadCount: 4
 #    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
+#    BatchSize: 8
 #    ConfNum: 27
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
@@ -180,21 +181,21 @@ RunConfig:
 #    ConfNum: 28
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentThreadCount: 1
 #    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 1
+#    BatchSize: 8
 #    ConfNum: 29
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentThreadCount: 2
 #    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
+#    BatchSize: 8
 #    ConfNum: 30
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentThreadCount: 4
 #    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
+#    BatchSize: 8
 #    ConfNum: 31
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
@@ -204,50 +205,50 @@ RunConfig:
 #    ConfNum: 32
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
+#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 1
 #    ConfNum: 33
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
+#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 2
 #    ConfNum: 34
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
+#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 4
 #    ConfNum: 35
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: false
 #    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
+#    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 8
 #    ConfNum: 36
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
+#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 1
 #    ConfNum: 37
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
+#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 2
 #    ConfNum: 38
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
+#    PlacementAmendmentThreadCount: 8
+#    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 4
 #    ConfNum: 39
 #  - QueryPlacementStrategy: BottomUp
 #    IncrementalPlacement: true
 #    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
+#    PlacementAmendmentMode: OPTIMISTIC
 #    BatchSize: 8
 #    ConfNum: 40
 #  - QueryPlacementStrategy: BottomUp
@@ -299,1224 +300,3 @@ RunConfig:
 #    BatchSize: 8
 #    ConfNum: 48
 
-
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 1
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 1
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 1
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 1
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 1
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 6
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 6
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 8
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 10
-#  - QueryPlacementStrategy: TopDown
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 10
-#    PlacementAmendmentMode: OPTIMISTIC
-#    BatchSize: 10

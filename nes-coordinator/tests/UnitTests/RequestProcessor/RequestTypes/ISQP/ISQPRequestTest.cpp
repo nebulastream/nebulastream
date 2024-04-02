@@ -63,7 +63,7 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
-    Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::ILP;
+    Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::BottomUp;
     uint8_t ZERO_RETRIES = 0;
     std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
     TopologyPtr topology;
@@ -229,7 +229,9 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
+    auto isqpRemoveLink13 = ISQPRemoveLinkEvent::create(nodeId1, nodeId3);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
+    auto isqpAddLink23 = ISQPAddLinkEvent::create(nodeId2, nodeId3);
     auto isqpAddLinkProperty34 = ISQPAddLinkPropertyEvent::create(nodeId3, nodeId4, 1, 1);
     auto isqpAddLinkProperty23 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId3, 1, 1);
     auto isqpAddLinkProperty12 = ISQPAddLinkPropertyEvent::create(nodeId1, nodeId2, 1, 1);
@@ -240,7 +242,9 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
     isqpEventsForRequest1.emplace_back(addNodeEvent3);
     isqpEventsForRequest1.emplace_back(addNodeEvent4);
     isqpEventsForRequest1.emplace_back(isqpRemoveLink14);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink13);
     isqpEventsForRequest1.emplace_back(isqpAddLink34);
+    isqpEventsForRequest1.emplace_back(isqpAddLink23);
     isqpEventsForRequest1.emplace_back(isqpAddLinkProperty34);
     isqpEventsForRequest1.emplace_back(isqpAddLinkProperty23);
     isqpEventsForRequest1.emplace_back(isqpAddLinkProperty12);
@@ -327,7 +331,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
+    auto isqpRemoveLink13 = ISQPRemoveLinkEvent::create(nodeId1, nodeId3);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
+    auto isqpAddLink23 = ISQPAddLinkEvent::create(nodeId2, nodeId3);
+    auto isqpAddLinkProperty34 = ISQPAddLinkPropertyEvent::create(nodeId3, nodeId4, 1, 1);
+    auto isqpAddLinkProperty23 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId3, 1, 1);
+    auto isqpAddLinkProperty12 = ISQPAddLinkPropertyEvent::create(nodeId1, nodeId2, 1, 1);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest1;
     isqpEventsForRequest1.emplace_back(addNodeEvent1);
@@ -335,7 +344,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     isqpEventsForRequest1.emplace_back(addNodeEvent3);
     isqpEventsForRequest1.emplace_back(addNodeEvent4);
     isqpEventsForRequest1.emplace_back(isqpRemoveLink14);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink13);
     isqpEventsForRequest1.emplace_back(isqpAddLink34);
+    isqpEventsForRequest1.emplace_back(isqpAddLink23);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty34);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty23);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty12);
 
     // Enable query merging
     coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
@@ -430,7 +444,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
+    auto isqpRemoveLink13 = ISQPRemoveLinkEvent::create(nodeId1, nodeId3);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
+    auto isqpAddLink23 = ISQPAddLinkEvent::create(nodeId2, nodeId3);
+    auto isqpAddLinkProperty34 = ISQPAddLinkPropertyEvent::create(nodeId3, nodeId4, 1, 1);
+    auto isqpAddLinkProperty23 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId3, 1, 1);
+    auto isqpAddLinkProperty12 = ISQPAddLinkPropertyEvent::create(nodeId1, nodeId2, 1, 1);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest1;
     isqpEventsForRequest1.emplace_back(addNodeEvent1);
@@ -438,7 +457,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     isqpEventsForRequest1.emplace_back(addNodeEvent3);
     isqpEventsForRequest1.emplace_back(addNodeEvent4);
     isqpEventsForRequest1.emplace_back(isqpRemoveLink14);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink13);
     isqpEventsForRequest1.emplace_back(isqpAddLink34);
+    isqpEventsForRequest1.emplace_back(isqpAddLink23);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty34);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty23);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty12);
 
     // Enable query merging
     coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
@@ -534,7 +558,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 3, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
+    auto isqpRemoveLink13 = ISQPRemoveLinkEvent::create(nodeId1, nodeId3);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
+    auto isqpAddLink23 = ISQPAddLinkEvent::create(nodeId2, nodeId3);
+    auto isqpAddLinkProperty34 = ISQPAddLinkPropertyEvent::create(nodeId3, nodeId4, 1, 1);
+    auto isqpAddLinkProperty23 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId3, 1, 1);
+    auto isqpAddLinkProperty12 = ISQPAddLinkPropertyEvent::create(nodeId1, nodeId2, 1, 1);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest1;
     isqpEventsForRequest1.emplace_back(addNodeEvent1);
@@ -542,7 +571,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     isqpEventsForRequest1.emplace_back(addNodeEvent3);
     isqpEventsForRequest1.emplace_back(addNodeEvent4);
     isqpEventsForRequest1.emplace_back(isqpRemoveLink14);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink13);
     isqpEventsForRequest1.emplace_back(isqpAddLink34);
+    isqpEventsForRequest1.emplace_back(isqpAddLink23);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty34);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty23);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty12);
 
     // Disable query merging
     coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::DefaultQueryMergerRule;

@@ -55,8 +55,7 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                          const z3::ContextPtr& z3Context,
                          PlacementAmendmentMode placementAmendmentMode)
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
-      z3Context(z3Context) {
-}
+      z3Context(z3Context) {}
 
 PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
@@ -128,12 +127,6 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
                     }
                 }
             }
-
-            //2.2 Find path between pinned upstream and downstream topology node
-            auto upstreamPinnedNodeId = std::any_cast<WorkerId>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
-
-            auto downstreamPinnedNodeId =
-                std::any_cast<WorkerId>(operatorPath.back()->as_if<LogicalOperator>()->getProperty(PINNED_WORKER_ID));
 
             auto topologyLockedPath = std::vector<TopologyNodeWLock>();
             for (auto workerId : workerNodeIdsInBFS) {
@@ -209,7 +202,11 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
         auto weightNetwork = z3Context->real_val(std::to_string(this->networkCostWeight).c_str());
 
         NES_DEBUG("Values of weightNetwork, costNet, weightOverUtilization,  overUtilizationCost:");
-        NES_DEBUG("WeightNetwork: {} \n costNet: {} \n weightOverUtilization: {} \n overUtilizationCost:{}", weightNetwork.to_string(), costNet.to_string(), weightOverUtilization.to_string(), overUtilizationCost.to_string());
+        NES_DEBUG("WeightNetwork: {} \n costNet: {} \n weightOverUtilization: {} \n overUtilizationCost:{}",
+                  weightNetwork.to_string(),
+                  costNet.to_string(),
+                  weightOverUtilization.to_string(),
+                  overUtilizationCost.to_string());
 
         // 5. Optimize ILP problem and print solution.
         opt.minimize(weightNetwork * costNet
@@ -308,24 +305,37 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
 
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         auto pID = pinnedUpStreamOperator->getId();
-        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
-
         //if operator is already placed we move to its downstream operators
         if (pinnedUpStreamOperator->getOperatorState() == OperatorState::PLACED) {
-            NES_DEBUG("Skip: Operator {} is already placed and thus skipping placement of it. Continuing with placing its downstream operators", pID);
+            NES_DEBUG("Skip: Operator {} is already placed and thus skipping placement of it. Continuing with placing its "
+                      "downstream operators",
+                      pID);
 
             //Place all its downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
-                if (!(downStreamNode->as<LogicalOperator>()->getOperatorState() == OperatorState::PLACED)){
-                    identifyPinningLocation(downStreamNode->as<LogicalOperator>(), topologyNodePath, opt, placementVariables, pinnedDownStreamOperators, operatorDistanceMap, nodeUtilizationMap, nodeMileageMap);
-                }
-                else{
-                    NES_DEBUG("Skipping downstream operator with id {} because it is already placed.", downStreamNode->as<LogicalOperator>()->getId());
+                if (!(downStreamNode->as<LogicalOperator>()->getOperatorState() == OperatorState::PLACED)) {
+                    identifyPinningLocation(downStreamNode->as<LogicalOperator>(),
+                                            topologyNodePath,
+                                            opt,
+                                            placementVariables,
+                                            pinnedDownStreamOperators,
+                                            operatorDistanceMap,
+                                            nodeUtilizationMap,
+                                            nodeMileageMap);
+                } else {
+                    NES_DEBUG("Skipping downstream operator with id {} because it is already placed.",
+                              downStreamNode->as<LogicalOperator>()->getId());
                 }
             }
-        }
-        else {
-            identifyPinningLocation(pinnedUpStreamOperator, topologyNodePath, opt, placementVariables, pinnedDownStreamOperators, operatorDistanceMap, nodeUtilizationMap, nodeMileageMap);
+        } else {
+            identifyPinningLocation(pinnedUpStreamOperator,
+                                    topologyNodePath,
+                                    opt,
+                                    placementVariables,
+                                    pinnedDownStreamOperators,
+                                    operatorDistanceMap,
+                                    nodeUtilizationMap,
+                                    nodeMileageMap);
         }
     }
 }
@@ -337,7 +347,7 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
                                           const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                           std::map<OperatorId, z3::expr>& operatorDistanceMap,
                                           std::map<uint64_t, z3::expr>& nodeUtilizationMap,
-                                          std::map<uint64_t, double>& nodeMileageMap){
+                                          std::map<uint64_t, double>& nodeMileageMap) {
     auto operatorNode = currentOperatorNode->as<LogicalOperator>();
     OperatorId operatorID = operatorNode->getId();
     NES_DEBUG("Handling operatorNode {} with id: {}", operatorNode->toString(), operatorID);
@@ -375,21 +385,23 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
         //create placement variable and constraint to {0,1}
         std::string variableID = std::to_string(operatorID) + this->KEY_SEPARATOR + std::to_string(topologyID);
         auto P_IJ = this->z3Context->int_const(variableID.c_str());
-        if (operatorNode->getOperatorState() == OperatorState::PLACED){
+        if (operatorNode->getOperatorState() == OperatorState::PLACED) {
             break;
         }
-        if ((operatorNode->instanceOf<SinkLogicalOperator>() && j == topologyNodePath.size() - 1) || (operatorNode->instanceOf<SourceLogicalOperator>() && j == 0)) {
+        if ((operatorNode->instanceOf<SinkLogicalOperator>() && j == topologyNodePath.size() - 1)
+            || (operatorNode->instanceOf<SourceLogicalOperator>() && j == 0)) {
             NES_DEBUG("Handling a source or a sink on right topology node");
-            opt.add(P_IJ == 1); //placement of all sources and final sinks is fixed
+            opt.add(P_IJ == 1);//placement of all sources and final sinks is fixed
 
-        } else if ((operatorNode->instanceOf<SinkLogicalOperator>() && j != topologyNodePath.size() - 1) || (operatorNode->instanceOf<SourceLogicalOperator>() && j != 0)) {
+        } else if ((operatorNode->instanceOf<SinkLogicalOperator>() && j != topologyNodePath.size() - 1)
+                   || (operatorNode->instanceOf<SourceLogicalOperator>() && j != 0)) {
             NES_DEBUG("Handling a source or a sink on wrong topology node");
-            opt.add(P_IJ == 0); //source or sink on wrong topologyNode mustn't be placed
+            opt.add(P_IJ == 0);//source or sink on wrong topologyNode mustn't be placed
         } else {
             NES_DEBUG("Handling any other operator than source/sink");
 
             // Initialize P_IJ_stored
-            int sizeOfPIJ_stored_out = operatorNode->getChildren().size() + 1; //all children + operatorNode itself
+            int sizeOfPIJ_stored_out = operatorNode->getChildren().size() + 1;//all children + operatorNode itself
             int sizeOfPIJ_stored_in = j + 1;
             std::vector<std::vector<z3::expr>> P_IJ_stored(sizeOfPIJ_stored_out,
                                                            std::vector<z3::expr>(sizeOfPIJ_stored_in, P_IJ));
@@ -412,7 +424,8 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
                     z3::expr checkTopologyNodes = (P_IJ_child == 1);
 
                     // Iterating over all positions of topologyNodePath up to the current one
-                    for (uint64_t n = 0; n < j; ++n) {// n < j here and n == j in initialising checkTopologyNodes means we actually check n <= j
+                    for (uint64_t n = 0; n < j;
+                         ++n) {// n < j here and n == j in initialising checkTopologyNodes means we actually check n <= j
                         auto variableID_loop = std::to_string(childID) + this->KEY_SEPARATOR
                             + std::to_string((*topologyNodePath[n])->operator->()->as<TopologyNode>()->getId());
                         auto P_IJ_nodes = this->z3Context->int_const(variableID_loop.c_str());
@@ -458,7 +471,7 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
         double M = nodeMileageMap[topologyID];
         D_i = D_i + z3Context->real_val(std::to_string(M).c_str()) * P_IJ;
 
-    } //end of iteration through topologyNodes
+    }//end of iteration through topologyNodes
 
     operatorDistanceMap.insert(std::make_pair(operatorID, D_i));
     std::stringstream v;
@@ -471,9 +484,16 @@ void ILPStrategy::identifyPinningLocation(const LogicalOperatorPtr& currentOpera
     // recursive call for all parents
     for (auto parent : currentOperatorNode->getParents()) {
         NES_DEBUG("parent for {} is {}", operatorID, parent->as<LogicalOperator>()->getId());
-        if (!(currentOperatorNode->getOperatorState() == OperatorState::PLACED)){
-            identifyPinningLocation(parent->as<LogicalOperator>(), topologyNodePath, opt, placementVariable, pinnedDownStreamOperators, operatorDistanceMap, nodeUtilizationMap, nodeMileageMap);
-        }  else {
+        if (!(currentOperatorNode->getOperatorState() == OperatorState::PLACED)) {
+            identifyPinningLocation(parent->as<LogicalOperator>(),
+                                    topologyNodePath,
+                                    opt,
+                                    placementVariable,
+                                    pinnedDownStreamOperators,
+                                    operatorDistanceMap,
+                                    nodeUtilizationMap,
+                                    nodeMileageMap);
+        } else {
             NES_DEBUG("Skipping operator with id {} because it's already placed.", parent->as<LogicalOperator>()->getId());
         }
     }

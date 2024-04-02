@@ -52,9 +52,9 @@ PlacementRemovalStrategy::PlacementRemovalStrategy(const GlobalExecutionPlanPtr&
 
 PlacementRemovalStrategy::~PlacementRemovalStrategy() {
     NES_INFO("Called ~PlacementRemovalStrategy()");
-    if (placementAmendmentMode == PlacementAmendmentMode::PESSIMISTIC) {
+//    if (placementAmendmentMode == PlacementAmendmentMode::PESSIMISTIC) {
         unlockTopologyNodesInSelectedPath();
-    }
+//    }
 }
 
 std::map<DecomposedQueryPlanId, DeploymentContextPtr>
@@ -200,32 +200,26 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
 
     // 13. try to lock all selected topology nodes
     if (!workerIdsInBFS.empty() && placementAmendmentMode == PlacementAmendmentMode::PESSIMISTIC) {
-        // 14. Raise exception if unable to Lock all identified worker ids before processing if the mode is pessimistic
-        if (!pessimisticPathSelection()) {
-            throw Exceptions::RuntimeException("Unable to find topology nodes or lock the identified topology nodes.");
-        }
+        // 14. Lock all identified worker ids before processing if the mode is pessimistic
+        pessimisticPathSelection();
     }
 
     NES_INFO("Successfully selected path for placement removal");
 }
 
-bool PlacementRemovalStrategy::pessimisticPathSelection() {
-
+void PlacementRemovalStrategy::pessimisticPathSelection() {
     NES_INFO("Pessimistically locking the selecting path for placement removal.");
-
     bool success = false;
-    uint8_t retryCount = 0;
-    //    std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
     // 1. Perform path selection and if failure than use the exponential back-off and retry strategy
     while (!success) {
-        NES_INFO("Pessimistically locking selected path using retry {} of {}.", retryCount, MAX_PATH_SELECTION_RETRIES);
+        NES_INFO("Pessimistically locking selected path.");
         success = true;
         // 2. Perform path selection and if failure than use the exponential back-off and retry strategy
         for (const auto& workerId : workerIdsInBFS) {
             // 3. Try to acquire the lock2688422
             TopologyNodeWLock lock = topology->lockTopologyNode(workerId);
             if (!lock) {
-                //                NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", workerId);
+//                NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", workerId);
                 // 4. Release all the acquired locks as part of back-off and retry strategy.
                 unlockTopologyNodesInSelectedPath();
                 success = false;
@@ -233,19 +227,8 @@ bool PlacementRemovalStrategy::pessimisticPathSelection() {
             }
             lockedTopologyNodeMap[workerId] = std::move(lock);
         }
-
-        // 5. If unable to lock the topology nodes then wait for other processes to release locks on the topology node
-        //        if (!success) {
-        //            NES_WARNING("Unable to lock topology nodes in the path. Waiting for the process to release locks and retry "
-        //                        "path selection.");
-        //            std::this_thread::sleep_for(backOffTime);
-        ////            retryCount++;
-        ////            backOffTime *= 2;
-        ////            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
-        //        }
     }
     NES_INFO("Successfully locked selected path using pessimistic strategy.");
-    return success;
 }
 
 bool PlacementRemovalStrategy::unlockTopologyNodesInSelectedPath() {
@@ -365,7 +348,19 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
 std::map<DecomposedQueryPlanId, DeploymentContextPtr>
 PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion) {
 
-    //    NES_ERROR("Start removal {}", sharedQueryId);
+    std::vector<WorkerId> nodesToLock{workerIdsInBFS.begin(), workerIdsInBFS.end()};
+
+    if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
+        std::vector<TopologyNodeWLock> lockedTopologyNodes;
+        while ((lockedTopologyNodes = topology->lockTopologyNodes(nodesToLock)).empty()) {
+        }
+
+        for (const auto& lockedTopologyNode : lockedTopologyNodes) {
+            const auto& workerId = lockedTopologyNode->operator*()->getId();
+            lockedTopologyNodeMap[workerId] = std::move(lockedTopologyNode);
+        }
+    }
+
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
     NES_INFO("Releasing locks for all locked topology nodes {}.", sharedQueryId);
     for (const auto& workerId : workerIdsInBFS) {
@@ -377,14 +372,13 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
 
         TopologyNodeWLock lockedTopologyNode;
         // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
-        if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
-            //1.1. wait till lock is acquired
-            while (!(lockedTopologyNode = topology->lockTopologyNode(workerId))) {
-                //                std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
-            };
-        } else {
+//        if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
+//            //1.1. Spin till the lock gets acquired
+//            while (!(lockedTopologyNode = topology->lockTopologyNode(workerId))) {
+//            };
+//        } else {
             lockedTopologyNode = lockedTopologyNodeMap[workerId];
-        }
+//        }
 
         try {
             // 2. Step1:: Perform validation by checking if we can release the resources the operator placement algorithm reserved
@@ -400,14 +394,6 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
                 return deploymentContexts;
             }
 
-            // Lock the execution node.
-            // Wait till lock acquired on the execution node.
-            //            ExecutionNodeWLock executionNode;
-            //            NES_ERROR("Lock from removal strategy for execution node {}", workerId);
-            //            while (!(executionNode = globalExecutionPlan->getLockedExecutionNode(workerId))) {
-            ////                std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
-            //            }
-
             // 3. Step2:: Perform validation by checking if the currently placed query sub plan has the same version as
             // the updated query sub plan or not
             auto updatedDecomposedQueryPlans = workerIdToUpdatedDecomposedQueryPlans[workerId];
@@ -415,7 +401,6 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
                 auto decomposedQueryPlanId = updatedDecomposedQueryPlan->getDecomposedQueryPlanId();
                 auto actualQuerySubPlan =
                     globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryPlanId);
-                //                executionNode->operator*()->getDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
 
                 // 4. Check is the updated and actual query sub plan has the same version number
                 if (actualQuerySubPlan->getVersion() != updatedDecomposedQueryPlan->getVersion()) {
@@ -434,9 +419,9 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
             lockedTopologyNode->operator*()->releaseSlots(releasedSlots);
             globalExecutionPlan->updateDecomposedQueryPlans(workerId, updatedDecomposedQueryPlans);
             // 9. Release lock on the topology node
-            if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
-                lockedTopologyNode->unlock();
-            }
+//            if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
+//                lockedTopologyNode->unlock();
+//            }
 
             // 7. Update the status of all operators
             auto updatedOperatorIds = workerIdToOperatorIdMap[workerId];
@@ -472,7 +457,6 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Deco
             throw ex;
         }
     }
-    //    NES_ERROR("Stopped removal {}", sharedQueryId);
     return deploymentContexts;
 }
 
