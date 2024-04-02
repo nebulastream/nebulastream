@@ -23,6 +23,7 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -54,8 +55,8 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
+
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -114,8 +115,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -175,8 +175,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     auto query = Query::from("test");
@@ -235,8 +234,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -301,8 +299,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -459,10 +456,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
         uint64_t ts;
     };
 
-    auto testSchema = Schema::create()
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("ts", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -538,10 +532,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
         uint64_t ts;
     };
 
-    auto testSchema = Schema::create()
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("ts", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -627,7 +618,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     };
 
     auto testSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt64())->addField("value", DataTypeFactory::createUInt64());
+        TestSchemas::getSchemaTemplate("id_val_u64");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -691,15 +682,13 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
     struct Test {
-        uint64_t value;
         uint64_t id;
+        uint64_t value;
         uint64_t timestamp;
     };
 
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -713,16 +702,16 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     }
 
     auto query = Query::from("window")
-                     .filter(Attribute("id") < 15)
+                     .filter(Attribute("value") < 15)
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")))
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")))
                      .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")))
-                     .filter(Attribute("id") < 10)
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")))
+                     .filter(Attribute("value") < 10)
                      .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)))
-                     .apply(Sum(Attribute("value")));
+                     .apply(Sum(Attribute("id")));
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -758,21 +747,19 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
 TEST_F(DeepHierarchyTopologyTest, testMapAndAggregationQuery) {
     struct Test {
-        uint64_t value;
         uint64_t id;
+        uint64_t value;
         uint64_t timestamp;
     };
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("ts", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     constexpr auto NUM_BUFFERS = 5;
     constexpr auto windowSize = 10;
     auto query = Query::from("window")
-                     .map(Attribute("newField") = Attribute("value") + Attribute("id"))
-                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(windowSize)))
+                     .map(Attribute("newField") = Attribute("id") + Attribute("value"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize)))
                      .apply(Sum(Attribute("newField")));
 
     auto workerConfigEdgeNode = WorkerConfiguration::create();
@@ -788,7 +775,7 @@ TEST_F(DeepHierarchyTopologyTest, testMapAndAggregationQuery) {
              workerConfigEdgeNode->bufferSizeInBytes.getValue(),
              bufferCapacity);
     for (auto i = 0_u64; i < NUM_BUFFERS * bufferCapacity; ++i) {
-        testHarness.pushElement<Test>({i, 1, i}, 3);
+        testHarness.pushElement<Test>({1, i, i}, 3);
     }
     testHarness.validate().setupTopology();
 

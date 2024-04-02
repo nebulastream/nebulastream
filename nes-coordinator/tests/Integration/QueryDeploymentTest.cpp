@@ -20,6 +20,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -53,7 +54,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         }
     };
 
-    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32);
+    auto testSchema =TestSchemas::getSchemaTemplate("id_val_u32");
     ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
 
     auto query = Query::from("truck").unionWith(Query::from("car"));
@@ -104,7 +105,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         }
     };
 
-    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
 
@@ -144,8 +145,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
     auto workerConfig = WorkerConfiguration::create();
@@ -187,8 +187,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -229,8 +228,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -641,7 +639,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     };
 
     auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+        TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -699,7 +697,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     };
 
     auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+        TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -742,10 +740,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -801,10 +796,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -859,10 +851,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -914,7 +903,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     };
 
     auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+        TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -1107,10 +1096,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1159,10 +1145,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
         requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
+    string expectedContent1 = "stream1$id:INTEGER(64 bits),stream1$value:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
-    string expectedContent2 = "stream2$value:INTEGER(64 bits),stream2$id:INTEGER(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
+    string expectedContent2 = "stream2$id:INTEGER(64 bits),stream2$value:INTEGER(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath1));
@@ -1196,10 +1182,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1252,10 +1235,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
-    string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
+    string expectedContent1 = "stream1$id:INTEGER(64 bits),stream1$value:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
-    string expectedContent2 = "stream2$value:INTEGER(64 bits),stream2$id:INTEGER(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
+    string expectedContent2 = "stream2$id:INTEGER(64 bits),stream2$value:INTEGER(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
     NES_INFO("QueryDeploymentTest: Remove query");
@@ -1379,15 +1362,12 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     struct Test {
-        uint64_t value;
         uint64_t id;
+        uint64_t value;
         uint64_t timestamp;
     };
 
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -1404,8 +1384,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     csvSourceType2->setSkipHeader(false);
     auto query = Query::from("window")
                      .joinWith(Query::from("window2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -1447,10 +1427,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1540,10 +1517,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
         uint64_t timestamp;
     };
 
-    auto windowSchema = Schema::create()
-                            ->addField("value", DataTypeFactory::createUInt64())
-                            ->addField("id", DataTypeFactory::createUInt64())
-                            ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
 
@@ -1666,11 +1640,7 @@ TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt64())
-                         ->addField("value", DataTypeFactory::createUInt64())
-                         ->addField("value2", DataTypeFactory::createUInt64())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 

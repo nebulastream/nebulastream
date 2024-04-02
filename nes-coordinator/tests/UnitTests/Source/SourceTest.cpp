@@ -55,6 +55,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <API/TestSchemas.hpp>
 
 namespace NES {
 
@@ -1844,10 +1845,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
-                     ->addField(createField("id", BasicType::UINT64))
-                     ->addField(createField("value", BasicType::UINT64))
-                     ->addField(createField("timestamp", BasicType::UINT64));
+    auto input =TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
     NES_DEBUG("E2EBase: Start worker 1");

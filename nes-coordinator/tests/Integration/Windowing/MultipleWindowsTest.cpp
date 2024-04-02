@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -40,6 +41,7 @@ class MultipleWindowsTest : public Testing::BaseIntegrationTest {
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
+    //TODO use testSchemas with Issue#4746
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     auto workerConfig = WorkerConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -115,6 +117,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
+    //TODO use testSchemas with Issue#4746
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -210,6 +213,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
+    //TODO use testSchemas with Issue#4746
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -296,6 +300,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
+    //TODO use testSchemas with Issue#4746
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -394,6 +399,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
+    //TODO use testSchemas with Issue#4746
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -477,6 +483,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
+    //TODO use testSchemas with Issue#4746
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -579,6 +586,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
  * @brief Test all three windows in a row
  */
 TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
+    //TODO use testSchemas with Issue#4746
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;

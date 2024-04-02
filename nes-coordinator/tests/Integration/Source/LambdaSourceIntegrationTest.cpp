@@ -26,6 +26,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestUtils.hpp>
+#include <API/TestSchemas.hpp>
 
 using std::string;
 namespace NES {
@@ -47,10 +48,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
 
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
-                     ->addField(createField("id", BasicType::UINT64))
-                     ->addField(createField("value", BasicType::UINT64))
-                     ->addField(createField("timestamp", BasicType::UINT64));
+    auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
@@ -137,10 +135,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
-                     ->addField(createField("id", BasicType::UINT64))
-                     ->addField(createField("value", BasicType::UINT64))
-                     ->addField(createField("timestamp", BasicType::UINT64));
+    auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
@@ -234,10 +229,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
 
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
-                     ->addField(createField("id", BasicType::UINT64))
-                     ->addField(createField("value", BasicType::UINT64))
-                     ->addField(createField("timestamp", BasicType::UINT64));
+    auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input", input);
 
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();

@@ -21,6 +21,7 @@
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <gmock/gmock-matchers.h>
+#include <API/TestSchemas.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -257,6 +258,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestCsvFiles) {
 * Test deploying join with same data and same schema
  * */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
+    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -277,16 +279,16 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
     };
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("value", BasicType::UINT64)
-                                ->addField("id", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-                                ->updateSourceName(*srcName);
+                ->addField("value", BasicType::UINT64)
+                ->addField("id", BasicType::UINT64)
+                ->addField("timestamp", BasicType::UINT64)
+                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("value", BasicType::UINT64)
-                                 ->addField("id", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64)
-                                 ->updateSourceName(*srcName);
+            ->addField("value", BasicType::UINT64)
+            ->addField("id", BasicType::UINT64)
+            ->addField("timestamp", BasicType::UINT64)
+            ->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
@@ -302,6 +304,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
  * Test deploying join with same data but different names in the schema
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
+    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -346,6 +349,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSchemaNamesButSameInpu
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) {
+    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -390,6 +394,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceTumblingWindow) 
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
+    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -432,6 +437,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
+    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -474,6 +480,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
 }
 
 TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
+    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -518,6 +525,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
  * Test deploying join with different sources
  */
 TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
+    //TODO use testSchemas with Issue#4738
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -623,20 +631,11 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows)
                 && test2$count == rhs.test2$count;
         }
     };
+    const auto leftSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64")
+            ->updateSourceName(*srcName);
 
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("key", DataTypeFactory::createUInt64())
-                                ->addField("value", DataTypeFactory::createUInt64())
-                                ->addField("value2", DataTypeFactory::createUInt64())
-                                ->addField("timestamp", DataTypeFactory::createUInt64())
-                                ->updateSourceName(*srcName);
-
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("key", DataTypeFactory::createUInt64())
-                                 ->addField("value", DataTypeFactory::createUInt64())
-                                 ->addField("value2", DataTypeFactory::createUInt64())
-                                 ->addField("timestamp", DataTypeFactory::createUInt64())
-                                 ->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64")
+            ->updateSourceName(*srcName);
 
     const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1test2$start", BasicType::INT64)

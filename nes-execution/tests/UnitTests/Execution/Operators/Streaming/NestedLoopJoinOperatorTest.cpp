@@ -36,6 +36,7 @@
 #include <Util/Common.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <random>
+#include <API/TestSchemas.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -103,15 +104,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         BaseUnitTest::SetUp();
         NES_INFO("Setup NestedLoopJoinOperatorTest test case.");
 
-        leftSchema = Schema::create()
-                         ->addField("id", BasicType::UINT64)
-                         ->addField("value_left", BasicType::UINT64)
-                         ->addField("ts", BasicType::UINT64)
-                         ->updateSourceName("test1");
-        rightSchema = Schema::create()
-                          ->addField("test2$id", BasicType::UINT64)
-                          ->addField("test2$value_right", BasicType::UINT64)
-                          ->addField("test2$ts", BasicType::UINT64)
+        leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+        rightSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")
                           ->updateSourceName("test2");
 
         joinFieldNameLeft = leftSchema->get(1)->getName();

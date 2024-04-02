@@ -21,6 +21,7 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include <API/TestSchemas.hpp>
 
 namespace NES {
 
@@ -46,10 +47,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -91,10 +89,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -144,15 +139,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
-    auto truckSchema = Schema::create()
-                           ->addField("key", DataTypeFactory::createUInt32())
-                           ->addField("value", DataTypeFactory::createUInt32())
-                           ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto truckSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
@@ -198,10 +187,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -277,7 +263,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     struct Window1 {
-        uint64_t id1;
+        uint64_t id;
         uint64_t timestamp;
     };
 
@@ -286,20 +272,16 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
         uint64_t timestamp;
     };
 
-    auto window1Schema = Schema::create()
-                             ->addField("id1", DataTypeFactory::createUInt64())
-                             ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto window1Schema = TestSchemas::getSchemaTemplate("id_time_u64");
 
-    auto window2Schema = Schema::create()
-                             ->addField("id2", DataTypeFactory::createUInt64())
-                             ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto window2Schema = TestSchemas::getSchemaTemplate("id2_time_u64");
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
     auto queryWithJoinOperator = Query::from("window1")
                                      .joinWith(Query::from("window2"))
-                                     .where(Attribute("id1"))
+                                     .where(Attribute("id"))
                                      .equalsTo(Attribute("id2"))
                                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -356,10 +338,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -400,10 +379,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -469,10 +445,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -521,10 +494,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -622,15 +592,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
         uint64_t weight;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
-    auto truckSchema = Schema::create()
-                           ->addField("key", DataTypeFactory::createUInt32())
-                           ->addField("value", DataTypeFactory::createUInt32())
-                           ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto truckSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
 
     auto queryWithFilterOperator = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())

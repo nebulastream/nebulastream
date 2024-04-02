@@ -22,6 +22,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
+#include <API/TestSchemas.hpp>
 
 using namespace std;
 namespace NES {
@@ -47,8 +48,8 @@ class KeyedTumblingWindowTests : public Testing::BaseIntegrationTest, public ::t
 };
 
 struct InputValue {
-    uint64_t value;
     uint64_t id;
+    uint64_t value;
     uint64_t timestamp;
 };
 
@@ -150,15 +151,12 @@ class DataGenerator {
 };
 
 TEST_F(KeyedTumblingWindowTests, testSimpleWindowEventTime) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")));
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")));
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create("window", "window1");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -194,10 +192,7 @@ TEST_F(KeyedTumblingWindowTests, testSimpleWindowEventTime) {
 }
 
 TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowSingleBuffer) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -227,10 +222,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowSingleBuffer) {
 }
 
 TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowMultiBuffer) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -259,10 +251,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowMultiBuffer) {
 }
 
 TEST_F(KeyedTumblingWindowTests, testMultipleTumblingWindowMultiBuffer) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -306,10 +295,7 @@ TEST_F(KeyedTumblingWindowTests, testMultipleTumblingWindowMultiBuffer) {
 }
 
 TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -344,10 +330,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys
 }
 
 TEST_F(KeyedTumblingWindowTests, testTumblingWindowCount) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -392,10 +375,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowCount) {
 }
 
 TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -449,10 +429,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt64())
-                         ->addField("value", DataTypeFactory::createUInt64())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u64");
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
@@ -483,10 +460,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
 }
 
 TEST_F(KeyedTumblingWindowTests, testTumblingWindowMax) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -531,10 +505,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMax) {
 }
 
 TEST_F(KeyedTumblingWindowTests, testTumblingWindowAVG) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
@@ -617,10 +588,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleMultiKeyTumblingWindow) {
 }
 
 TEST_F(KeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
