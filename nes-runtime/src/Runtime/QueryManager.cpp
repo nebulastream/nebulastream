@@ -36,6 +36,7 @@
 #include <memory>
 #include <stack>
 #include <utility>
+#include <thread>
 namespace NES::Runtime {
 
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
