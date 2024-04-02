@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -57,7 +58,6 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <utility>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 

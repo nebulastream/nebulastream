@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseUnitTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
@@ -53,7 +54,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
-#include <API/TestSchemas.hpp>
 
 namespace NES::RequestProcessor {
 
@@ -246,7 +246,8 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
@@ -326,7 +327,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
@@ -415,7 +417,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
@@ -506,7 +509,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
@@ -599,7 +603,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
@@ -694,7 +699,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
@@ -794,7 +800,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
@@ -894,7 +901,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
@@ -1000,7 +1008,8 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueries) {
     std::string logicalSourceName = "test";
     auto defaultSourceType = DefaultSourceType::create(logicalSourceName, "pTest1");
     auto physicalSource = PhysicalSource::create(defaultSourceType);
-    auto schema =TestSchemas::getSchemaTemplate("id_val_u32"); auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u32");
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);

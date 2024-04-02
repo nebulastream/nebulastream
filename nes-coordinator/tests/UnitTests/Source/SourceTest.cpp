@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -55,7 +56,6 @@
 #include <iostream>
 #include <limits>
 #include <string>
-#include <API/TestSchemas.hpp>
 
 namespace NES {
 
@@ -1845,7 +1845,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    auto input =TestSchemas::getSchemaTemplate("id_val_time_u64");
+    auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
     NES_DEBUG("E2EBase: Start worker 1");

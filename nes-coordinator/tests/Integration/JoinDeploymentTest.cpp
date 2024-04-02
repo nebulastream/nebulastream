@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
@@ -20,7 +21,6 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gmock/gmock-matchers.h>
-#include <API/TestSchemas.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -119,16 +119,16 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {//TODO use testSchemas with Issue#4740
     //TODO use testSchemas with Issue#4740
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("value1", BasicType::UINT64)
-            ->addField("id1", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test1");
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("value2", BasicType::UINT64)
-            ->addField("id2", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test2");
+                                 ->addField("value2", BasicType::UINT64)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
     auto query = Query::from("test1")
@@ -143,19 +143,20 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
 /**
  * Test deploying join with different sources
  */
-TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow)  {//TODO use testSchemas with Issue#4740
+TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {//TODO use testSchemas with Issue#4740
     //TODO use testSchemas with Issue#4740
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("value1", BasicType::UINT64)
-            ->addField("id1", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test1");
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("value2", BasicType::UINT64)
-            ->addField("id2", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test2");TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+                                 ->addField("value2", BasicType::UINT64)
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink2.csv");
     auto query = Query::from("test1")
                      .joinWith(Query::from("test2"))
@@ -169,18 +170,18 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow)  {//TODO u
 /**
  * Test deploying join with different sources
  */
-TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow)  {//TODO use testSchemas with Issue#4740
+TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {//TODO use testSchemas with Issue#4740
     //TODO use testSchemas with Issue#4740
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("value1", BasicType::UINT64)
-            ->addField("id1", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test1");
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("id2", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test2");
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink3.csv");
     auto query = Query::from("test1")
@@ -216,15 +217,15 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
 TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {//TODO use testSchemas with Issue#4740
     //TODO use testSchemas with Issue#4740
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("value1", BasicType::UINT64)
-            ->addField("id1", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test1");
+                                ->addField("value1", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("id2", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test2");
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window3.csv", "window_sink6.csv");
     const auto windowSize = 1000UL;
@@ -273,15 +274,15 @@ TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
 TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {//TODO use testSchemas with Issue#4740
     //TODO use testSchemas with Issue#4740
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("value", BasicType::UINT64)
-            ->addField("id1", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test1");
+                                ->addField("value", BasicType::UINT64)
+                                ->addField("id1", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("id2", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName("test2");
+                                 ->addField("id2", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName("test2");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     TestUtils::CsvFileParams csvFileParams("window8.csv", "window9.csv", "window_sink8.csv");
     auto query = Query::from("test1")

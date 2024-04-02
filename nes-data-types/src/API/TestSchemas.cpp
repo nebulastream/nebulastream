@@ -12,104 +12,67 @@
     limitations under the License.
 */
 
-#include <API/TestSchemas.hpp>
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
 
 namespace NES {
-    SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name) {
-        auto it = testSchemaCatalog.find(name);
-        if (it != testSchemaCatalog.end()) {
-            SchemaPtr newSchema = std::make_shared<Schema>();
-            // Use copyFields() to create a deep copy of the fields
-            newSchema->copyFields(it->second);
-            return newSchema;
-        } else {
-            throw std::runtime_error("Schema not found");
-        }
-    }    
-
-    std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog = {
-            {"id_u64",Schema::create()->addField("id", BasicType::UINT64)
-            },
-            {"id_time_u64",
-                        Schema::create()
-                             ->addField("id", BasicType::UINT64)
-                             ->addField("timestamp", BasicType::UINT64)
-                             },
-            {"id2_time_u64",
-                    Schema::create()
-                            ->addField("id2", BasicType::UINT64)
-                            ->addField("timestamp", BasicType::UINT64)
-            },
-            {"id_val_64",
-                    Schema::create()
-                            ->addField("id", BasicType::INT64)
-                            ->addField("value", BasicType::INT64)
-            },
-            {"id_val_u64",
-                        Schema::create()
-                                ->addField("id", BasicType::UINT64)
-                                ->addField("value", BasicType::UINT64)
-            },
-            {"id_val_u32",
-                        Schema::create()
-                                ->addField("id", BasicType::UINT32)
-                                ->addField("value", BasicType::UINT32)
-            },
-            {"id_val_time_u64",
-                    Schema::create()
-                                ->addField("id", BasicType::UINT64)
-                                ->addField("value", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-            },
-            {"id2_val2_time_u64",
-                    Schema::create()
-                            ->addField("id2", BasicType::UINT64)
-                            ->addField("value2", BasicType::UINT64)
-                            ->addField("timestamp", BasicType::UINT64)
-            },
-            {"id_val_time_u32",
-                    Schema::create()
-                            ->addField("id", BasicType::UINT32)
-                            ->addField("value", BasicType::UINT32)
-                            ->addField("timestamp", BasicType::UINT64)
-            },
-            {"id_one_val_64",
-                    Schema::create()
-                            ->addField("id", BasicType::INT64)
-                            ->addField("one", BasicType::INT64)
-                            ->addField("value", BasicType::INT64)
-            },
-            //TODO remove if necessary with Issue#4735
-            {"key_val_u32",
-                    Schema::create()
-                            ->addField("key", BasicType::UINT32)
-                            ->addField("value", BasicType::UINT32)
-            },
-            {"key_val_time_u32",
-                        Schema::create()
-                                ->addField("key", BasicType::UINT32)
-                                ->addField("value", BasicType::UINT32)
-                                ->addField("timestamp", BasicType::UINT64)
-            },
-            {"key_val_time_u64",
-                        Schema::create()
-                                ->addField("key", BasicType::UINT64)
-                                ->addField("value", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64)
-            },
-            {"key_2val_time_u64",
-                    Schema::create()
-                            ->addField("key", BasicType::UINT64)
-                            ->addField("value", BasicType::UINT64)
-                            ->addField("value2", BasicType::UINT64)
-                            ->addField("timestamp", BasicType::UINT64)
-            },
-            {"key_val_time_64",
-                    Schema::create()
-                            ->addField("key", BasicType::INT64)
-                            ->addField("value", BasicType::INT64)
-                            ->addField("timestamp", BasicType::UINT64)
-            }
-    };
+SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name) {
+    auto it = testSchemaCatalog.find(name);
+    if (it != testSchemaCatalog.end()) {
+        SchemaPtr newSchema = std::make_shared<Schema>();
+        // Use copyFields() to create a deep copy of the fields
+        newSchema->copyFields(it->second);
+        return newSchema;
+    } else {
+        throw std::runtime_error("Schema not found");
+    }
 }
+
+std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog = {
+    {"id_u64", Schema::create()->addField("id", BasicType::UINT64)},
+    {"id_time_u64", Schema::create()->addField("id", BasicType::UINT64)->addField("timestamp", BasicType::UINT64)},
+    {"id2_time_u64", Schema::create()->addField("id2", BasicType::UINT64)->addField("timestamp", BasicType::UINT64)},
+    {"id_val_64", Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64)},
+    {"id_val_u64", Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)},
+    {"id_val_u32", Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32)},
+    {"id_val_time_u64",
+     Schema::create()
+         ->addField("id", BasicType::UINT64)
+         ->addField("value", BasicType::UINT64)
+         ->addField("timestamp", BasicType::UINT64)},
+    {"id2_val2_time_u64",
+     Schema::create()
+         ->addField("id2", BasicType::UINT64)
+         ->addField("value2", BasicType::UINT64)
+         ->addField("timestamp", BasicType::UINT64)},
+    {"id_val_time_u32",
+     Schema::create()
+         ->addField("id", BasicType::UINT32)
+         ->addField("value", BasicType::UINT32)
+         ->addField("timestamp", BasicType::UINT64)},
+    {"id_one_val_64",
+     Schema::create()->addField("id", BasicType::INT64)->addField("one", BasicType::INT64)->addField("value", BasicType::INT64)},
+    //TODO remove if necessary with Issue#4735
+    {"key_val_u32", Schema::create()->addField("key", BasicType::UINT32)->addField("value", BasicType::UINT32)},
+    {"key_val_time_u32",
+     Schema::create()
+         ->addField("key", BasicType::UINT32)
+         ->addField("value", BasicType::UINT32)
+         ->addField("timestamp", BasicType::UINT64)},
+    {"key_val_time_u64",
+     Schema::create()
+         ->addField("key", BasicType::UINT64)
+         ->addField("value", BasicType::UINT64)
+         ->addField("timestamp", BasicType::UINT64)},
+    {"key_2val_time_u64",
+     Schema::create()
+         ->addField("key", BasicType::UINT64)
+         ->addField("value", BasicType::UINT64)
+         ->addField("value2", BasicType::UINT64)
+         ->addField("timestamp", BasicType::UINT64)},
+    {"key_val_time_64",
+     Schema::create()
+         ->addField("key", BasicType::INT64)
+         ->addField("value", BasicType::INT64)
+         ->addField("timestamp", BasicType::UINT64)}};
+}// namespace NES

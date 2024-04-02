@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -28,7 +29,6 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 

@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
@@ -25,7 +26,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -570,8 +570,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
         uint64_t timestamp;
         double value1;
     };
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")
-            ->addField("value1", BasicType::FLOAT64);
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")->addField("value1", BasicType::FLOAT64);
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -585,9 +584,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-    testHarness.pushElement<Car>({1, 2,  1000, 2}, 2);
-    testHarness.pushElement<Car>({1, 4,  1500, 4}, 2);
-    testHarness.pushElement<Car>({1, 5,  2000, 5}, 2);
+    testHarness.pushElement<Car>({1, 2, 1000, 2}, 2);
+    testHarness.pushElement<Car>({1, 4, 1500, 4}, 2);
+    testHarness.pushElement<Car>({1, 5, 2000, 5}, 2);
     testHarness.validate().setupTopology();
 
     // Expected output
@@ -844,9 +843,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregatio
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")
-                         ->addField("value2", DataTypeFactory::createDouble());
-
+    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")->addField("value2", DataTypeFactory::createDouble());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 

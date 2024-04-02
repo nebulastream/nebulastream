@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -20,7 +21,6 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -54,7 +54,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         }
     };
 
-    auto testSchema =TestSchemas::getSchemaTemplate("id_val_u32");
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
 
     auto query = Query::from("truck").unionWith(Query::from("car"));
@@ -638,8 +638,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        TestSchemas::getSchemaTemplate("id_val_u32");
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -696,8 +695,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        TestSchemas::getSchemaTemplate("id_val_u32");
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -902,8 +900,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        TestSchemas::getSchemaTemplate("id_val_u32");
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 

@@ -20,6 +20,7 @@
 #pragma clang diagnostic pop
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -35,7 +36,6 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 

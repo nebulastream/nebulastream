@@ -15,20 +15,18 @@
 #ifndef NES_TESTSCHEMAS_HPP
 #define NES_TESTSCHEMAS_HPP
 
-#include <unordered_map>
 #include <API/Schema.hpp>
 #include <stdexcept>
+#include <unordered_map>
 
 namespace NES {
-    class TestSchemas {
-    public:
-        static SchemaPtr getSchemaTemplate(const std::string& name);
-        
-    private:
-        static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
-    };
-}
+class TestSchemas {
+  public:
+    static SchemaPtr getSchemaTemplate(const std::string& name);
 
+  private:
+    static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
+};
+}// namespace NES
 
-
-#endif //NES_TESTSCHEMAS_HPP
+#endif//NES_TESTSCHEMAS_HPP

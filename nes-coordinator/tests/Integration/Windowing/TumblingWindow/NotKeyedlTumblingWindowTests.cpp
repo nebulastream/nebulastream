@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -23,7 +24,6 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
 #include <utility>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 

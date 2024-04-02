@@ -15,6 +15,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
+#include <API/TestSchemas.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -25,7 +26,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 
