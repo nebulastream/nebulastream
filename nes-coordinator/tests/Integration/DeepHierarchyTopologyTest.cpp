@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
@@ -23,7 +24,6 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -56,7 +56,6 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     };
 
     auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
-
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -617,8 +616,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
         uint64_t value;
     };
 
-    auto testSchema =
-        TestSchemas::getSchemaTemplate("id_val_u64");
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -688,7 +686,6 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     };
 
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 

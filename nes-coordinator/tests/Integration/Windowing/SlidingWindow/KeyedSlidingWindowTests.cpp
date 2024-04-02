@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -29,7 +30,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 
@@ -329,7 +329,6 @@ TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
     auto testSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")
                           ->addField("key2", DataTypeFactory::createUInt64())
                           ->addField("key3", DataTypeFactory::createUInt64());
-
 
     ASSERT_EQ(sizeof(InputValueMultiKeys), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")

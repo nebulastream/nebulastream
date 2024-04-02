@@ -35,6 +35,7 @@
 #include <gtest/gtest.h>
 #include <ostream>
 
+#include <API/TestSchemas.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
@@ -43,7 +44,6 @@
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Storage/AllEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 

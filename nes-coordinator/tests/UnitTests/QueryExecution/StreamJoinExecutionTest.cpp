@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
@@ -21,7 +22,6 @@
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <gmock/gmock-matchers.h>
-#include <API/TestSchemas.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -279,16 +279,16 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithSameSchemaTumblingWindow) {
     };
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                ->addField("value", BasicType::UINT64)
-                ->addField("id", BasicType::UINT64)
-                ->addField("timestamp", BasicType::UINT64)
-                ->updateSourceName(*srcName);
+                                ->addField("value", BasicType::UINT64)
+                                ->addField("id", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64)
+                                ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("value", BasicType::UINT64)
-            ->addField("id", BasicType::UINT64)
-            ->addField("timestamp", BasicType::UINT64)
-            ->updateSourceName(*srcName);
+                                 ->addField("value", BasicType::UINT64)
+                                 ->addField("id", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64)
+                                 ->updateSourceName(*srcName);
 
     const auto windowSize = Milliseconds(1000);
     const auto timestampFieldName = "timestamp";
@@ -631,11 +631,9 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows)
                 && test2$count == rhs.test2$count;
         }
     };
-    const auto leftSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64")
-            ->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64")->updateSourceName(*srcName);
 
-    const auto rightSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64")
-            ->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64")->updateSourceName(*srcName);
 
     const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1test2$start", BasicType::INT64)

@@ -14,6 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,7 +24,6 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <iostream>
 #include <utility>
-#include <API/TestSchemas.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;

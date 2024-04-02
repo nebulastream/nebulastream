@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -49,7 +50,6 @@
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <API/TestSchemas.hpp>
 
 namespace NES {
 

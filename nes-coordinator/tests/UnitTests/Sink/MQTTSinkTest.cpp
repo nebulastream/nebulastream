@@ -13,6 +13,7 @@
 */
 #ifdef ENABLE_MQTT_BUILD
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Network/NetworkChannel.hpp>
@@ -33,7 +34,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <random>
-#include <API/TestSchemas.hpp>
 
 using namespace NES;
 /**

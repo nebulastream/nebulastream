@@ -21,6 +21,7 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -29,7 +30,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <API/TestSchemas.hpp>
 
 using namespace NES;
 

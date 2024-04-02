@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <API/TestSchemas.hpp>
 
 namespace NES {
 

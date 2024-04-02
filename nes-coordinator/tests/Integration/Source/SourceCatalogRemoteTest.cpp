@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -25,7 +26,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
-#include <API/TestSchemas.hpp>
 
 using namespace std;
 namespace NES {

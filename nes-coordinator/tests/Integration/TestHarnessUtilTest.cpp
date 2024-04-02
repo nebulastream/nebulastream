@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -21,7 +22,6 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
-#include <API/TestSchemas.hpp>
 
 namespace NES {
 
