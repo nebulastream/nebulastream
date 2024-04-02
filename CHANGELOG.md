@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.83](https://github.com/nebulastream/nebulastream/tree/v0.6.83) (2024-04-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.82...v0.6.83)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create a SchemaCatalog [\#4677](https://github.com/nebulastream/nebulastream/issues/4677)
+
 ## [v0.6.82](https://github.com/nebulastream/nebulastream/tree/v0.6.82) (2024-03-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.81...v0.6.82)
