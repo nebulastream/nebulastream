@@ -235,11 +235,7 @@ jobs:
             # Running the script in the docker container, as otherwise, we will have permission issues
             docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
             docker rm ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
-            
-            # Remove the image and all containers based on this image
-            echo "Cleaning up docker image $docker_image_name"
-            docker ps -a | grep "docker_image_name" | awk '{print $1}' | xargs -r docker rm -f
-            docker rmi "$docker_image_name"
+            echo "Cleanup done!"
           else
             echo "We will not perform any cleanup!"
           fi
