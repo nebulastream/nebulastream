@@ -22,7 +22,6 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Runtime/BufferManager.hpp>

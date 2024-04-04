@@ -16,7 +16,6 @@
 #include <Execution/Expressions/Functions/FactorialExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-#include <stdio.h>
 namespace NES::Runtime::Execution::Expressions {
 
 FactorialExpression::FactorialExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)

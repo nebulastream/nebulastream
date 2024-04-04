@@ -97,8 +97,8 @@ class TPCH_Query5 {
         customerPipeline->setRootOperator(customersScanOperator);
         std::vector<Runtime::Execution::OperatorHandlerPtr> customerJoinHandler = {
             std::make_shared<Operators::BatchJoinHandler>()};
-        auto customerPipelineContex = std::make_shared<MockedPipelineExecutionContext>(customerJoinHandler);
-        plan.appendPipeline(customerPipeline, customerPipelineContex);
+        auto customerPipelineContext = std::make_shared<MockedPipelineExecutionContext>(customerJoinHandler);
+        plan.appendPipeline(customerPipeline, customerPipelineContext);
         return customerJoinHandler[0];
     }
 

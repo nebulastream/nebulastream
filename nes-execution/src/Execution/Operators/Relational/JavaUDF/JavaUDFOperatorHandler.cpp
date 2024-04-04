@@ -76,14 +76,10 @@ const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string& ja
 
 const std::string& JavaUDFOperatorHandler::getClassName() const { return className; }
 
-const std::string& JavaUDFOperatorHandler::getClassJNIName() const { return classJNIName; }
-
 const std::string& JavaUDFOperatorHandler::getMethodName() const { return methodName; }
 const std::string& JavaUDFOperatorHandler::getInputClassName() const { return inputClassName; }
 
 const std::string& JavaUDFOperatorHandler::getInputClassJNIName() const { return inputClassJNIName; }
-
-const std::string& JavaUDFOperatorHandler::getOutputClassName() const { return outputClassName; }
 
 const std::string& JavaUDFOperatorHandler::getOutputClassJNIName() const { return outputClassJNIName; }
 

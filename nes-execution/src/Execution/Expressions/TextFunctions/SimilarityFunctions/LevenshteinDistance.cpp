@@ -15,7 +15,6 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <regex>
 #include <string>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -45,10 +44,10 @@ uint64_t textLevenshtein(const TextValue* leftText, const TextValue* rightText) 
     }
     matrix[0][1] = 1;
 
-    int32_t subCost = 0;
+    int32_t subCost;
     for (uint64_t j = 1; j <= rightText->length(); j++) {
         for (uint64_t i = 1; i <= lengthLeft; i++) {
-            /*+ subCost signifies wether substitution amounts to doing nothing (no increased distance) */
+            /*+ subCost signifies whether substitution amounts to doing nothing (no increased distance) */
             if (leftText->c_str()[i - 1] == rightText->c_str()[j - 1]) {
                 subCost = 0;
             } else {

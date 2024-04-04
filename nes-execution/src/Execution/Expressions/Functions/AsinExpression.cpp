@@ -43,7 +43,5 @@ Value<> AsinExpression::execute(NES::Nautilus::Record& record) const {
             "This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
-
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AsinExpression>> asinFunction("asin");
-
 }// namespace NES::Runtime::Execution::Expressions

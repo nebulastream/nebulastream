@@ -59,8 +59,6 @@ class KeyedSlice {
      */
     inline std::unique_ptr<Nautilus::Interface::ChainedHashMap>& getState() { return state; }
 
-    friend std::ostream& operator<<(std::ostream& os, const KeyedSlice& slice);
-
     ~KeyedSlice();
 
   private:

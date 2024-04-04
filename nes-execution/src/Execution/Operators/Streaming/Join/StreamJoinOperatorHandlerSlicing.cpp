@@ -13,7 +13,6 @@
 */
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerSlicing.hpp>
-#include <map>
 
 namespace NES::Runtime::Execution::Operators {
 

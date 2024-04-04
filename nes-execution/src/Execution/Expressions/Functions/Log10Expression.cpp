@@ -61,5 +61,4 @@ Value<> Log10Expression::execute(NES::Nautilus::Record& record) const {
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log10Expression>> log10Expression("log10");
-
 }// namespace NES::Runtime::Execution::Expressions

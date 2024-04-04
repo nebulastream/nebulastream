@@ -71,14 +71,6 @@ class HJSlice : public StreamSlice {
     uint64_t getNumberOfTuplesRight() override;
 
     /**
-     * @brief Returns the number of tuples in this window
-     * @param joinBuildSide
-     * @param workerIdx
-     * @return uint64_t
-     */
-    uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx);
-
-    /**
      * @brief Creates a string representation of this window
      * @return String
      */
@@ -104,6 +96,14 @@ class HJSlice : public StreamSlice {
      */
     void mergeLocalToGlobalHashTable();
 
+    /**
+     * @brief Returns the number of tuples in this window
+     * @param joinBuildSide
+     * @param workerIdx
+     * @return uint64_t
+     */
+    uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx);
+
   protected:
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;
@@ -113,6 +113,7 @@ class HJSlice : public StreamSlice {
     std::atomic<bool> alreadyMergedLocalToGlobalHashTable;
     std::mutex mutexMergeLocalToGlobalHashTable;
     QueryCompilation::StreamJoinStrategy joinStrategy;
+
 };
 }// namespace NES::Runtime::Execution
 

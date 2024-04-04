@@ -15,7 +15,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>

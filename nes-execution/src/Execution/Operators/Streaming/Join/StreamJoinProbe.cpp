@@ -14,7 +14,6 @@
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>

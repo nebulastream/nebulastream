@@ -13,8 +13,6 @@
 */
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>

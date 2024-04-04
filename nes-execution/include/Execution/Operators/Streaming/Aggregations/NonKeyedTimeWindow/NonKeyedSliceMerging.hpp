@@ -46,14 +46,6 @@ class NonKeyedSliceMerging : public Operator {
      * @return reference to the newly created slice
      */
     Value<MemRef> combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask) const;
-    /**
-     * @brief Function to emit a window to the downstream operator.
-     * @param ctx execution context
-     * @param windowStart start of the window
-     * @param windowEnd end of the window
-     */
-    void
-    emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<>& sequenceNumber, Value<MemRef>&) const;
 
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;

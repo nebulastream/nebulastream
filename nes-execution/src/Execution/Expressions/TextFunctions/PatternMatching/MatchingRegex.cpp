@@ -33,14 +33,14 @@ MatchingRegex::MatchingRegex(const NES::Runtime::Execution::Expressions::Express
 * @param caseSensitive Boolean to indicate case sensitive pattern matching
 * @return Boolean if txt merely contains the pattern
 */
-bool regexMatch(TextValue* txt, TextValue* regex, const Boolean& caseSensetive) {
+bool regexMatch(TextValue* txt, TextValue* regex, const Boolean& caseSensitive) {
     std::string target = std::string(txt->str(), txt->length());
     NES_DEBUG("Received the following source string {}", target);
     std::string strPattern = std::string(regex->str(), regex->length());
     NES_DEBUG("Received the following source string {}", strPattern);
     // LIKE and GLOB adoption requires syntax conversion functions
-    // would make regex case in sensitive for ILIKE
-    if (caseSensetive) {
+    // would make regex case in sensitive for LIKE
+    if (caseSensitive) {
         std::regex regexPattern(strPattern, std::regex::icase);
         return std::regex_match(target, regexPattern);
     } else {

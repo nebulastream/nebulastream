@@ -55,7 +55,7 @@ uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
     //Insert was not successful so exactly one thread have to add a page
     bool expected = false;
     if (insertInProgress.compare_exchange_strong(expected, true, std::memory_order::release, std::memory_order::relaxed)) {
-        // check if in the meantime somebody else already insert a page if so return
+        // check if in the meantime somebody else already inserts a page. if so, return
         if (pos != oldPos) {
             insertInProgress = false;
             return nullptr;

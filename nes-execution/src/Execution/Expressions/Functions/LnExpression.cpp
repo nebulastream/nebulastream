@@ -60,7 +60,5 @@ Value<> LnExpression::execute(NES::Nautilus::Record& record) const {
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LnExpression>> lnFunction("ln");
-
 }// namespace NES::Runtime::Execution::Expressions

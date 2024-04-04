@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
@@ -34,8 +33,6 @@
 #include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Project.hpp>
-#include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
-#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
@@ -73,7 +70,6 @@
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>

@@ -70,8 +70,6 @@ class FixedPagesLinkedList {
     std::string getStatistics();
 
   private:
-    uint8_t* insertOnParticularPage(size_t position);
-
     std::atomic<uint64_t> pos;
     FixedPagesAllocator& fixedPagesAllocator;
     std::vector<Nautilus::Interface::FixedPagePtr> pages;

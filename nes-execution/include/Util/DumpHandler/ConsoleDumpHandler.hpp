@@ -45,11 +45,6 @@ class ConsoleDumpHandler {
     void dump(NodePtr node);
 
     /**
-    * Dump the specific node and its children with details in multiple lines.
-    */
-    void multilineDump(NodePtr const& node);
-
-    /**
      * @brief Dump a pipeline query plan with a specific context and scope.
      * @param context the context
      * @param scope the scope

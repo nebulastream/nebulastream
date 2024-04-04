@@ -42,7 +42,7 @@ flowchart LR
 ```
 
 In the case of sliding windows, each slice is part of multiple windows.
-Thus, we have to maintain it in an global data structure (in the AppendToSliceStore) till all windows that cover this slice are triggered.
+Thus, we have to maintain it in a global data structure (in the AppendToSliceStore) till all windows that cover this slice are triggered.
 If we can trigger a specific window, we select all slices and emit a *SliceMergeTask*. 
 This is again processed by the *SliceMerging* operator, which in this case combines all slices for the window.
 Finally, we emit the window with the WindowEmit operator.

@@ -11,17 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 
 namespace NES::Runtime::Execution {
 

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Nautilus/Interface/Record.hpp>
 

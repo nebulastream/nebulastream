@@ -65,7 +65,6 @@ void BatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the hash map
     auto state = Nautilus::FunctionCall("getProbeHashMapProxy", getProbeHashMapProxy, globalOperatorHandler);
-    auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
     auto chainedHM = Interface::ChainedHashMapRef(state, keyDataTypes, keySize, valueSize);
     // 3. store the reference to the hash map in the local operator state.
     auto globalHashMap = std::make_unique<LocalJoinProbeState>(chainedHM);

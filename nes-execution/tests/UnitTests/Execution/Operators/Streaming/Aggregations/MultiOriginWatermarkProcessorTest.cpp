@@ -76,7 +76,7 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterTest) {
             for (auto i = 0_u64; i < updates; i++) {
                 auto currentWatermark = watermarkBarriers[globalUpdateCounter++];
                 auto oldWatermark = watermarkManager->getCurrentWatermark();
-                // check if the watermark manager dose not return a watermark higher then the current one
+                // check if the watermark manager does not return a watermark higher than the current one
                 ASSERT_LT(oldWatermark, std::get<0>(currentWatermark));
                 watermarkManager->updateWatermark(std::get<0>(currentWatermark),
                                                   std::get<1>(currentWatermark),

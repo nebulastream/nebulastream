@@ -32,11 +32,9 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <string>
 
 namespace NES::Runtime::Execution {

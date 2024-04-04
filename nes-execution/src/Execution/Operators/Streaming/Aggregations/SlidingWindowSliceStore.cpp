@@ -16,8 +16,6 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
-#include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <set>
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
@@ -29,7 +27,6 @@ SlidingWindowSliceStore<SliceType>::SlidingWindowSliceStore(uint64_t windowSize,
 template<class SliceType>
 void SlidingWindowSliceStore<SliceType>::insertSlice(SlidingWindowSliceStore::SliceTypePtr slice) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    auto sliceEnd = slice->getEnd();
     auto sliceStart = slice->getStart();
     auto sliceIter = slices.rbegin();
     // reverse iterate from the end of the slice store to the front as long as the slice.start > currentSlice.start

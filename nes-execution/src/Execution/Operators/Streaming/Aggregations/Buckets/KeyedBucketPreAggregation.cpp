@@ -16,7 +16,6 @@
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -77,12 +76,7 @@ class LocalKeyedBucketStoreState : public Operators::OperatorState {
                                         uint64_t valueSize,
                                         const Value<MemRef>& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
-
-    auto findSliceStateByTs(Value<UInt64>& timestampValue) {
-        Value<MemRef> htPtr =
-            Nautilus::FunctionCall("findKeyedBucketsByTs", findKeyedBucketsByTs, sliceStoreState, timestampValue);
-        return Interface::ChainedHashMapRef(htPtr, keyDataTypes, keySize, valueSize);
-    }
+    
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const uint64_t keySize;
     const uint64_t valueSize;

@@ -27,7 +27,6 @@
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -37,7 +36,6 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <string>
 
 namespace NES::Runtime::Execution {
