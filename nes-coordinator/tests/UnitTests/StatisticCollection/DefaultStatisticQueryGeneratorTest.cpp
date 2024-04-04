@@ -256,7 +256,6 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     // Adding here the field for the buffer rate field
     inputSchema = inputSchema->addField(BUFFER_RATE_FIELD_NAME, BasicType::UINT64);
 
-
     // Adding here the specific descriptor fields
     outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)

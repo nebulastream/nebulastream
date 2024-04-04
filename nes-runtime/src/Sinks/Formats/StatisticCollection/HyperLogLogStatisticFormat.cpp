@@ -13,11 +13,11 @@
 */
 
 #include <API/Schema.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <sstream>
@@ -64,9 +64,9 @@ HyperLogLogStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffe
         const auto width = *reinterpret_cast<uint64_t*>(buffer.getBuffer() + widthFieldOffset.value());
         const auto estimate = *reinterpret_cast<double*>(buffer.getBuffer() + estimateFieldOffset.value());
 
-
         // Reading the HyperLogLogData that is stored as a string
-        const auto hyperLogLogDataChildIdx = *reinterpret_cast<uint32_t*>(buffer.getBuffer() + hyperLogLogDataFieldOffset.value());
+        const auto hyperLogLogDataChildIdx =
+            *reinterpret_cast<uint32_t*>(buffer.getBuffer() + hyperLogLogDataFieldOffset.value());
         const auto hyperLogLogDataString = Runtime::MemoryLayouts::readVarSizedData(buffer, hyperLogLogDataChildIdx);
 
         // Creating now a HyperLogLogStatistic from this
@@ -78,7 +78,6 @@ HyperLogLogStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffe
                                                         estimate);
         createdStatisticsWithTheirHash.emplace_back(hash, hyperLogLog);
     }
-
 
     return createdStatisticsWithTheirHash;
 }
@@ -99,7 +98,6 @@ std::string HyperLogLogStatisticFormat::toString() const {
 std::vector<Runtime::TupleBuffer>
 HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
                                                        Runtime::BufferManager& bufferManager) {
-
 
     std::vector<Runtime::TupleBuffer> createdTupleBuffers;
     uint64_t insertedStatistics = 0;
@@ -127,7 +125,7 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
 
         // 3. Getting all values from the statistic
         NES_ASSERT2_FMT(statistic->instanceOf<HyperLogLogStatistic>(),
-            "HyperLogLogStatisticFormat knows only how to write HyperLogLogStatistic!");
+                        "HyperLogLogStatisticFormat knows only how to write HyperLogLogStatistic!");
         const auto hyperLogLogStatistic = statistic->as<HyperLogLogStatistic>();
         const auto startTs = hyperLogLogStatistic->getStartTs();
         const auto endTs = hyperLogLogStatistic->getEndTs();
@@ -136,7 +134,6 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
         const auto width = hyperLogLogStatistic->getWidth();
         const auto estimate = hyperLogLogStatistic->getEstimate();
         const auto data = hyperLogLogStatistic->getHyperLogLogDataAsString();
-
 
         // 4. We choose to hardcode here the values. If we would to do it dynamically during the runtime, we would have to
         // do a lot of branches, as we do not have here the tracing from Nautilus.

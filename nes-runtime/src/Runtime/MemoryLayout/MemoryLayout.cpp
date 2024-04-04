@@ -17,9 +17,9 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <cstring>
 #include <memory>
 

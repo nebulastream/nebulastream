@@ -32,11 +32,10 @@ class CountMinStatisticFormat : public AbstractStatisticFormat {
 
     ~CountMinStatisticFormat() override;
     std::vector<Runtime::TupleBuffer> writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
-                                                                Runtime::BufferManager& bufferManager) override;
+                                                                 Runtime::BufferManager& bufferManager) override;
 
   private:
-    CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+    CountMinStatisticFormat(const std::string& qualifierNameWithSeparator, Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     const std::string widthFieldName;
     const std::string depthFieldName;

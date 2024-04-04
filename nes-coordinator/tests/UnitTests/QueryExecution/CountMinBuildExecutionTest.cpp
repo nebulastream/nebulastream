@@ -26,9 +26,8 @@ namespace NES::Runtime::Execution {
 using namespace std::chrono_literals;
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-
 class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
-                                   public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, uint64_t>>{
+                                   public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t, uint64_t>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
@@ -56,15 +55,18 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
         sketchWidth = std::get<1>(CountMinBuildExecutionTest::GetParam());
         sketchDepth = std::get<2>(CountMinBuildExecutionTest::GetParam());
 
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode,
-                                                                         numWorkerThreads);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode, numWorkerThreads);
 
-        inputSchema = Schema::create()->addField(fieldToBuildCountMinOver, BasicType::UINT64)->addField(timestampFieldName, BasicType::UINT64)
+        inputSchema = Schema::create()
+                          ->addField(fieldToBuildCountMinOver, BasicType::UINT64)
+                          ->addField(timestampFieldName, BasicType::UINT64)
                           ->updateSourceName("test");
-        fieldToBuildCountMinOver = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldToBuildCountMinOver;
+        fieldToBuildCountMinOver =
+            inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldToBuildCountMinOver;
         timestampFieldName = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + timestampFieldName;
 
-        outputSchema = Schema::create()->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+        outputSchema = Schema::create()
+                           ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                            ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
@@ -74,8 +76,9 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                            ->updateSourceName("test");
         testStatisticStore = Statistic::DefaultStatisticStore::create();
-        statisticFormat = Statistic::CountMinStatisticFormat::create(Runtime::MemoryLayouts::RowLayout::create(outputSchema, executionEngine->getBufferManager()->getBufferSize()));
-        metricHash = 42; // Just some arbitrary number
+        statisticFormat = Statistic::CountMinStatisticFormat::create(
+            Runtime::MemoryLayouts::RowLayout::create(outputSchema, executionEngine->getBufferManager()->getBufferSize()));
+        metricHash = 42;// Just some arbitrary number
     }
 
     /* Will be called before a test is executed. */
@@ -98,14 +101,15 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
     void runQueryAndCheckCorrectness(SourceDescriptorPtr testSourceDescriptor,
                                      SinkDescriptorPtr testSinkDescriptor,
                                      Statistic::WindowStatisticDescriptorPtr countMinDescriptor,
-                                     uint64_t windowSize, uint64_t windowSlide,
+                                     uint64_t windowSize,
+                                     uint64_t windowSlide,
                                      std::vector<TupleBuffer> allInputBuffers) {
 
         // Creating the query
-        auto window = SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
-        auto query = TestQuery::from(testSourceDescriptor)
-                         .buildStatistic(window, countMinDescriptor, metricHash)
-                         .sink(testSinkDescriptor);
+        auto window =
+            SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
+        auto query =
+            TestQuery::from(testSourceDescriptor).buildStatistic(window, countMinDescriptor, metricHash).sink(testSinkDescriptor);
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
@@ -122,8 +126,16 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
 
             // Now creating the expected count min sketches in testStatisticStore
             auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
-            Util::updateTestCountMinStatistic(dynamicBuffer, testStatisticStore, metricHash, numberOfBitsInKey, windowSize, windowSlide, sketchWidth, sketchDepth,
-                                              fieldToBuildCountMinOver, timestampFieldName);
+            Util::updateTestCountMinStatistic(dynamicBuffer,
+                                              testStatisticStore,
+                                              metricHash,
+                                              numberOfBitsInKey,
+                                              windowSize,
+                                              windowSlide,
+                                              sketchWidth,
+                                              sketchDepth,
+                                              fieldToBuildCountMinOver,
+                                              timestampFieldName);
         }
 
         // Giving the execution engine time to process the tuples, so that we do not just test our terminate() implementation
@@ -135,19 +147,19 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
         const auto nodeEngine = executionEngine->getNodeEngine();
         const auto nodeEngineStatisticStore = nodeEngine->getStatisticStore();
 
-        while(nodeEngineStatisticStore->getAllStatistics().size() != testStatisticStore->getAllStatistics().size()) {
+        while (nodeEngineStatisticStore->getAllStatistics().size() != testStatisticStore->getAllStatistics().size()) {
             NES_DEBUG("Waiting till all statistics have been built. Currently {} and expecting {}...",
                       nodeEngineStatisticStore->getAllStatistics().size(),
                       testStatisticStore->getAllStatistics().size());
             std::this_thread::sleep_for(100ms);
         }
 
-
         // Checking the correctness
         NES_DEBUG("Built all statistics. Now checking for correctness...");
         for (auto& [statisticHash, countMinStatistic] : nodeEngineStatisticStore->getAllStatistics()) {
             NES_DEBUG("Searching for statisticHash = {} countMinStatistic = {}", statisticHash, countMinStatistic->toString());
-            auto expectedStatistics = testStatisticStore->getStatistics(statisticHash, countMinStatistic->getStartTs(), countMinStatistic->getEndTs());
+            auto expectedStatistics =
+                testStatisticStore->getStatistics(statisticHash, countMinStatistic->getStartTs(), countMinStatistic->getEndTs());
             EXPECT_EQ(expectedStatistics.size(), 1);
             NES_DEBUG("Found for statisticHash = {} expectedStatistics = {}", statisticHash, expectedStatistics[0]->toString());
             EXPECT_TRUE(expectedStatistics[0]->equal(*countMinStatistic));
@@ -162,7 +174,11 @@ TEST_P(CountMinBuildExecutionTest, singleInputTuple) {
     using namespace Statistic;
     constexpr auto windowSize = 10;
     constexpr auto numberOfTuples = 1;
-    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *executionEngine->getBufferManager(), inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildCountMinOver,
+                                                                   timestampFieldName);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::COUNT_MIN);
@@ -170,7 +186,12 @@ TEST_P(CountMinBuildExecutionTest, singleInputTuple) {
 
     // Creating the count min descriptor and running the query
     auto countMinDescriptor = CountMinDescriptor::create(Over(fieldToBuildCountMinOver), sketchWidth, sketchDepth);
-    runQueryAndCheckCorrectness(testSourceDescriptor, testSinkDescriptor, countMinDescriptor, windowSize, windowSize, allInputBuffers);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                countMinDescriptor,
+                                windowSize,
+                                windowSize,
+                                allInputBuffers);
 }
 
 /**
@@ -180,7 +201,11 @@ TEST_P(CountMinBuildExecutionTest, multipleInputBuffers) {
     using namespace Statistic;
     constexpr auto windowSize = 1000;
     constexpr auto numberOfTuples = 1'000;
-    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *executionEngine->getBufferManager(), inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildCountMinOver,
+                                                                   timestampFieldName);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::COUNT_MIN);
@@ -188,7 +213,12 @@ TEST_P(CountMinBuildExecutionTest, multipleInputBuffers) {
 
     // Creating the count min descriptor and running the query
     auto countMinDescriptor = CountMinDescriptor::create(Over(fieldToBuildCountMinOver), sketchWidth, sketchDepth);
-    runQueryAndCheckCorrectness(testSourceDescriptor, testSinkDescriptor, countMinDescriptor, windowSize, windowSize, allInputBuffers);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                countMinDescriptor,
+                                windowSize,
+                                windowSize,
+                                allInputBuffers);
 }
 
 /**
@@ -200,7 +230,11 @@ TEST_P(CountMinBuildExecutionTest, multipleInputBuffersSlidingWindow) {
     constexpr auto windowSize = 1000;
     constexpr auto windowSlide = 500;
     constexpr auto numberOfTuples = 1'000;
-    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *executionEngine->getBufferManager(), inputSchema, fieldToBuildCountMinOver, timestampFieldName);
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildCountMinOver,
+                                                                   timestampFieldName);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::COUNT_MIN);
@@ -208,21 +242,25 @@ TEST_P(CountMinBuildExecutionTest, multipleInputBuffersSlidingWindow) {
 
     // Creating the count min descriptor and running the query
     auto countMinDescriptor = CountMinDescriptor::create(Over(fieldToBuildCountMinOver), sketchWidth, sketchDepth);
-    runQueryAndCheckCorrectness(testSourceDescriptor, testSinkDescriptor, countMinDescriptor, windowSize, windowSlide, allInputBuffers);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                countMinDescriptor,
+                                windowSize,
+                                windowSlide,
+                                allInputBuffers);
 }
 
 INSTANTIATE_TEST_CASE_P(testCountMin,
                         CountMinBuildExecutionTest,
-                        ::testing::Combine(::testing::Values(1, 4, 8), // numWorkerThread
-                                           ::testing::Values(1, 100, 4000), // sketchWidth
-                                           ::testing::Values(1, 5, 10) // sketchDepth
+                        ::testing::Combine(::testing::Values(1, 4, 8),     // numWorkerThread
+                                           ::testing::Values(1, 100, 4000),// sketchWidth
+                                           ::testing::Values(1, 5, 10)     // sketchDepth
                                            ),
                         [](const testing::TestParamInfo<CountMinBuildExecutionTest::ParamType>& info) {
                             const auto numWorkerThread = std::get<0>(info.param);
                             const auto sketchWidth = std::get<1>(info.param);
                             const auto sketchDepth = std::get<2>(info.param);
-                            return std::to_string(numWorkerThread) + "Threads_" +
-                                std::to_string(sketchWidth) + "Width_" +
-                                std::to_string(sketchDepth) + "Depth_";
+                            return std::to_string(numWorkerThread) + "Threads_" + std::to_string(sketchWidth) + "Width_"
+                                + std::to_string(sketchDepth) + "Depth_";
                         });
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution

@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -32,7 +32,7 @@ AbstractStatisticFormatPtr CountMinStatisticFormat::create(Runtime::MemoryLayout
 }
 
 CountMinStatisticFormat::CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                                         Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout)
+                                                 Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout)
     : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout)),
       widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
       depthFieldName(qualifierNameWithSeparator + DEPTH_FIELD_NAME),
@@ -93,9 +93,8 @@ std::vector<HashStatisticPair> CountMinStatisticFormat::readStatisticsFromBuffer
 }
 
 std::vector<Runtime::TupleBuffer>
-CountMinStatisticFormat::writeStatisticsIntoBuffers(
-    const std::vector<HashStatisticPair>& statisticsPlusHashes,
-    Runtime::BufferManager& bufferManager) {
+CountMinStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
+                                                    Runtime::BufferManager& bufferManager) {
 
     std::vector<Runtime::TupleBuffer> createdTupleBuffers;
     uint64_t insertedStatistics = 0;
@@ -123,7 +122,8 @@ CountMinStatisticFormat::writeStatisticsIntoBuffers(
         }
 
         // 3. Getting all values from the statistic
-        NES_ASSERT2_FMT(statistic->instanceOf<CountMinStatistic>(), "CountMinStatisticSinkFormat knows only how to write CountMinStatistics!");
+        NES_ASSERT2_FMT(statistic->instanceOf<CountMinStatistic>(),
+                        "CountMinStatisticSinkFormat knows only how to write CountMinStatistics!");
         const auto countMinStatistic = statistic->as<CountMinStatistic>();
         const auto startTs = countMinStatistic->getStartTs();
         const auto endTs = countMinStatistic->getEndTs();
@@ -133,7 +133,6 @@ CountMinStatisticFormat::writeStatisticsIntoBuffers(
         const auto depth = countMinStatistic->getDepth();
         const auto numberOfBitsInKey = countMinStatistic->getNumberOfBitsInKeyOffset();
         const auto data = countMinStatistic->getCountMinDataAsString();
-
 
         // 4. We choose to hardcode here the values. If we would to do it dynamically during the runtime, we would have to
         // do a lot of branches, as we do not have here the tracing from Nautilus.
