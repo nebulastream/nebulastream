@@ -42,7 +42,6 @@ std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic
                     auto logicalSource = catalogHandle->getLogicalSourceAsJson(sourceName.value());
                     if (logicalSource.empty()) {
                         NES_ERROR("Failed to get logical source: {}", sourceName.value());
-                        //todo: set more verbose exception on promise
                         throw Exceptions::RuntimeException("Required source does not exist " + sourceName.value());
                         break;
                     }
@@ -54,6 +53,7 @@ std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic
                     auto logicalSources = catalogHandle->getAllLogicalSourcesAsJson();
                     NES_DEBUG("Got all logical sources: {}", logicalSources);
                     responsePromise.set_value(std::make_shared<GetSourceInformationResponse>(logicalSources));
+                    break;
                 }
             }
             case SourceType::PHYSICAL_SOURCE: {

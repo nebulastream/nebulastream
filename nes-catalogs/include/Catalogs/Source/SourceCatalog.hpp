@@ -126,8 +126,23 @@ class SourceCatalog {
      * @return map of logical source name to schema as string
      */
     std::map<std::string, std::string> getAllLogicalSourceAsString();
+
+    /**
+     * @brief Get a json containing all logical sources with their schema as string
+     * @return json containing logical source name to schema as string
+     */
     nlohmann::json getAllLogicalSourcesAsJson();
+
+    /**
+     * @brief Get a json containing all physical sources belonging to a physical source
+     * @return json containing the physical sources
+     */
     nlohmann::json getPhysicalSourcesAsJson(std::string logicalSourceName);
+
+    /**
+     * @brief Get a json containing the schema of a logical source
+     * @return json containing the schema of the source
+     */
     nlohmann::json getLogicalSourceAsJson(std::string logicalSourceName);
 
     /**
@@ -151,6 +166,13 @@ class SourceCatalog {
      */
     bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
+    /**
+     * @brief method to register a physical source
+     * @param logicalSourceName: logical source name
+     * @param physicalSourceName: physical source name
+     * @param topologyNodeId : the topology node id
+     * @return bool indicating success
+     */
     bool
     registerPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
 
@@ -174,4 +196,4 @@ class SourceCatalog {
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs::Source
 }// namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

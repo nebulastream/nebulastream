@@ -21,18 +21,42 @@ struct GetSourceInformationResponse : public AbstractRequestResponse {
 class GetSourceInformationRequest;
 using GetSourceInformationRequestPtr = std::shared_ptr<GetSourceInformationRequest>;
 
+/**
+ * @brief A request to get information about logical or physical sources in json format
+ */
 class GetSourceInformationRequest : public NES::RequestProcessor::AbstractUniRequest {
 public:
+    /**
+     * @brief creates a request to get all logical sources
+     */
   static GetSourceInformationRequestPtr create(uint8_t maxRetries);
+
+    /**
+     * @brief creates a request to get a specific logical source or all physical sources for a logical source
+     * @param sourceType: the type of source information to get (logical of physical)
+     * @param sourceName: the name of the source to get information for
+     * @param maxRetries: the maximum number of retries to attempt
+     */
   static GetSourceInformationRequestPtr create(SourceType sourceType, std::string sourceName, uint8_t maxRetries);
     /**
-     * @brief constructor to get all sources
-     * @param sourceInformationType type of source information to get
-     **/
+     * @brief constructor that creates a request to get all logical sources
+     */
     GetSourceInformationRequest(uint8_t maxRetries);
 
-    GetSourceInformationRequest(SourceType sourceInformationType, std::string sourceName, uint8_t maxRetries);
+    /**
+     * @brief constructor for  a request to get a specific logical source or all physical sources for a logical source
+     * @param sourceType: the type of source information to get (logical of physical)
+     * @param sourceName: the name of the source to get information for
+     * @param maxRetries: the maximum number of retries to attempt
+     */
+    GetSourceInformationRequest(SourceType sourceType, std::string sourceName, uint8_t maxRetries);
 
+    /**
+     * @brief Executes the request logic.
+     * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
+     * request
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
+     */
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
 
     /**

@@ -63,7 +63,7 @@ bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("SourceCatalog: search for logical source in removeLogicalSource() {}", logicalSourceName);
 
-    //if log source does not exists
+    //if log source does not exist
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
         NES_ERROR("SourceCatalog: logical source {} already exists", logicalSourceName);
         return false;
@@ -85,7 +85,7 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
 
     // check if logical source exists
     if (!containsLogicalSource(logicalSourceName)) {
-        NES_ERROR("SourceCatalog: logical source {} does not exists when inserting physical source {} ",
+        NES_ERROR("SourceCatalog: logical source {} does not exist when inserting physical source {} ",
                   logicalSourceName,
                   sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
         return false;
@@ -136,7 +136,7 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
 
     // check if logical source exists
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
-        NES_ERROR("SourceCatalog: logical source {} does not exists when trying to remove physical source with hashId {}",
+        NES_ERROR("SourceCatalog: logical source {} does not exist when trying to remove physical source with hashId {}",
                   logicalSourceName,
                   topologyNodeId);
         return false;
@@ -185,7 +185,7 @@ SchemaPtr SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSou
 LogicalSourcePtr SourceCatalog::getLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
     if (!containsLogicalSource(logicalSourceName)) {
-        NES_ERROR("SourceCatalog::getLogicalSource: source does not exists {}", logicalSourceName);
+        NES_ERROR("SourceCatalog::getLogicalSource: source does not exist {}", logicalSourceName);
         return nullptr;
     }
     return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
@@ -196,8 +196,8 @@ LogicalSourcePtr SourceCatalog::getLogicalSourceOrThrowException(const std::stri
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) != logicalSourceNameToSchemaMapping.end()) {
         return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
     }
-    NES_ERROR("SourceCatalog::getLogicalSourceOrThrowException: source does not exists {}", logicalSourceName);
-    throw Exceptions::RuntimeException("Required source does not exists " + logicalSourceName);
+    NES_ERROR("SourceCatalog::getLogicalSourceOrThrowException: source does not exist {}", logicalSourceName);
+    throw Exceptions::RuntimeException("Required source does not exist " + logicalSourceName);
 }
 
 bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName) {
@@ -304,7 +304,6 @@ nlohmann::json SourceCatalog::getLogicalSourceAsJson(std::string logicalSourceNa
     auto serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     nlohmann::json json;
     json["schema"] = serializableSchema->SerializeAsString();
-    // return serializableSchema->SerializeAsString();
     return json;
 }
 

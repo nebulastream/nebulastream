@@ -35,9 +35,6 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
-class SourceCatalogService;
-using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
-
 class CoordinatorHealthCheckService;
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
 

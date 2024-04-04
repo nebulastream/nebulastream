@@ -21,84 +21,76 @@
 
 namespace NES::RequestProcessor {
 
-UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(SourceActionVector physicalSourceDefinitions, uint8_t maxRetries)
-    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), sourceDefinitions(physicalSourceDefinitions) {}
-
-UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(std::vector<PhysicalSourceAddition> physicalSourceDefinitions,
-                                                       uint8_t maxRetries)
-    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), sourceDefinitions(physicalSourceDefinitions) {}
-
-UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(std::vector<PhysicalSourceRemoval> physicalSourceDefinitions,
-                                                       uint8_t maxRetries)
-    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), sourceDefinitions(physicalSourceDefinitions) {}
-
-UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(std::vector<LogicalSourceAddition> logicalSourceDefinitions,
-                                                       uint8_t maxRetries)
-    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), sourceDefinitions(logicalSourceDefinitions) {}
-
-UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(std::vector<LogicalSourceRemoval> logicalSourceDefinitions,
-                                                       uint8_t maxRetries)
-    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), sourceDefinitions(logicalSourceDefinitions) {}
+UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(SourceActionVector sourceActions, uint8_t maxRetries)
+    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), sourceActions(sourceActions) {}
 
 std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     auto catalogHandle = storageHandle->getSourceCatalogHandle(requestId);
     //check if source definitions are logical or physical
-    //todo: error handling
-    if (std::holds_alternative<std::vector<PhysicalSourceAddition>>(sourceDefinitions)) {
-        auto physicalSourceDefinitions = std::get<std::vector<PhysicalSourceAddition>>(sourceDefinitions);
-        for (const auto& physicalSourceDefinition : physicalSourceDefinitions) {
-            //register physical source
-            if (!catalogHandle->registerPhysicalSource(physicalSourceDefinition.physicalSourceName,
-                                                       physicalSourceDefinition.logicalSourceName,
-                                                       physicalSourceDefinition.workerId)) {
-                NES_ERROR("Failed to register physical source: {} for logical source: {}",
-                          physicalSourceDefinition.physicalSourceName,
-                          physicalSourceDefinition.logicalSourceName);
+    try {
+        if (std::holds_alternative<std::vector<PhysicalSourceAddition>>(sourceActions)) {
+            auto physicalSourceDefinitions = std::get<std::vector<PhysicalSourceAddition>>(sourceActions);
+            for (const auto& physicalSourceDefinition : physicalSourceDefinitions) {
+                //register physical source
+                if (!catalogHandle->registerPhysicalSource(physicalSourceDefinition.physicalSourceName,
+                                                           physicalSourceDefinition.logicalSourceName,
+                                                           physicalSourceDefinition.workerId)) {
+                    NES_ERROR("Failed to register physical source: {} for logical source: {}",
+                              physicalSourceDefinition.physicalSourceName,
+                              physicalSourceDefinition.logicalSourceName);
+                }
+                break;
             }
-            break;
-        }
-    } else if (std::holds_alternative<std::vector<PhysicalSourceRemoval>>(sourceDefinitions)) {
-        auto physicalSourceDefinitions = std::get<std::vector<PhysicalSourceRemoval>>(sourceDefinitions);
-        for (const auto& physicalSourceDefinition : physicalSourceDefinitions) {
-            //unregister physical source
-            if (!catalogHandle->removePhysicalSource(physicalSourceDefinition.physicalSourceName,
-                                                     physicalSourceDefinition.logicalSourceName,
-                                                     physicalSourceDefinition.workeId)) {
-                NES_ERROR("Failed to unregister physical source: {} for logical source: {}",
-                          physicalSourceDefinition.physicalSourceName,
-                          physicalSourceDefinition.logicalSourceName);
+        } else if (std::holds_alternative<std::vector<PhysicalSourceRemoval>>(sourceActions)) {
+            auto physicalSourceDefinitions = std::get<std::vector<PhysicalSourceRemoval>>(sourceActions);
+            for (const auto& physicalSourceDefinition : physicalSourceDefinitions) {
+                //unregister physical source
+                if (!catalogHandle->removePhysicalSource(physicalSourceDefinition.physicalSourceName,
+                                                         physicalSourceDefinition.logicalSourceName,
+                                                         physicalSourceDefinition.workeId)) {
+                    NES_ERROR("Failed to unregister physical source: {} for logical source: {}",
+                              physicalSourceDefinition.physicalSourceName,
+                              physicalSourceDefinition.logicalSourceName);
+                }
+            }
+        } else if (std::holds_alternative<std::vector<LogicalSourceAddition>>(sourceActions)) {
+            auto logicalSourceDefinitions = std::get<std::vector<LogicalSourceAddition>>(sourceActions);
+            for (const auto& logicalSourceDefinition : logicalSourceDefinitions) {
+                //register logical source
+                if (!catalogHandle->addLogicalSource(logicalSourceDefinition.logicalSourceName, logicalSourceDefinition.schema)) {
+                    NES_ERROR("Failed to register logical source: {}", logicalSourceDefinition.logicalSourceName);
+                }
+            }
+        } else if (std::holds_alternative<std::vector<LogicalSourceRemoval>>(sourceActions)) {
+            auto logicalSourceDefinitions = std::get<std::vector<LogicalSourceRemoval>>(sourceActions);
+            for (const auto& logicalSourceDefinition : logicalSourceDefinitions) {
+                //unregister logical source
+                if (!catalogHandle->removeLogicalSource(logicalSourceDefinition.logicalSourceName)) {
+                    NES_ERROR("Failed to unregister logical source: {}", logicalSourceDefinition.logicalSourceName);
+                }
+            }
+        } else if (std::holds_alternative<std::vector<LogicalSourceUpdate>>(sourceActions)) {
+            auto logicalSourceDefinitions = std::get<std::vector<LogicalSourceUpdate>>(sourceActions);
+            for (const auto& logicalSourceDefinition : logicalSourceDefinitions) {
+                //unregister logical source
+                if (!catalogHandle->updateLogicalSource(logicalSourceDefinition.logicalSourceName,
+                                                        logicalSourceDefinition.schema)) {
+                    NES_ERROR("Failed to unregister logical source: {}", logicalSourceDefinition.logicalSourceName);
+                }
             }
         }
-    } else if (std::holds_alternative<std::vector<LogicalSourceAddition>>(sourceDefinitions)) {
-        auto logicalSourceDefinitions = std::get<std::vector<LogicalSourceAddition>>(sourceDefinitions);
-        for (const auto& logicalSourceDefinition : logicalSourceDefinitions) {
-            //register logical source
-            if (!catalogHandle->addLogicalSource(logicalSourceDefinition.logicalSourceName, logicalSourceDefinition.schema)) {
-                NES_ERROR("Failed to register logical source: {}", logicalSourceDefinition.logicalSourceName);
-            }
-        }
-    } else if (std::holds_alternative<std::vector<LogicalSourceRemoval>>(sourceDefinitions)) {
-        auto logicalSourceDefinitions = std::get<std::vector<LogicalSourceRemoval>>(sourceDefinitions);
-        for (const auto& logicalSourceDefinition : logicalSourceDefinitions) {
-            //unregister logical source
-            if (!catalogHandle->removeLogicalSource(logicalSourceDefinition.logicalSourceName)) {
-                NES_ERROR("Failed to unregister logical source: {}", logicalSourceDefinition.logicalSourceName);
-            }
-        }
-    } else if (std::holds_alternative<std::vector<LogicalSourceUpdate>>(sourceDefinitions)) {
-        auto logicalSourceDefinitions = std::get<std::vector<LogicalSourceUpdate>>(sourceDefinitions);
-        for (const auto& logicalSourceDefinition : logicalSourceDefinitions) {
-            //unregister logical source
-            if (!catalogHandle->updateLogicalSource(logicalSourceDefinition.logicalSourceName, logicalSourceDefinition.schema)) {
-                NES_ERROR("Failed to unregister logical source: {}", logicalSourceDefinition.logicalSourceName);
-            }
-        }
+        responsePromise.set_value(std::make_shared<UpdateSourceCatalogResponse>(true));
+    } catch (std::exception& e) {
+        NES_ERROR("Failed to get source information: {}", e.what());
+        responsePromise.set_exception(std::make_exception_ptr(e));
     }
-    responsePromise.set_value(std::make_shared<UpdateSourceCatalogResponse>(true));
     return {};
 }
+
 std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) { return {}; }
+
 void UpdateSourceCatalogRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
+
 void UpdateSourceCatalogRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 
 UpdateSourceCatalogRequestPtr UpdateSourceCatalogRequest::create(SourceActionVector sourceActions, uint8_t maxRetries) {

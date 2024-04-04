@@ -51,6 +51,7 @@ struct LogicalSourceAddition {
     std::string logicalSourceName;
     SchemaPtr schema;
 };
+//struct containing the definition of a logical source to update
 struct LogicalSourceUpdate {
     std::string logicalSourceName;
     SchemaPtr schema;
@@ -61,30 +62,38 @@ struct LogicalSourceRemoval {
 };
 
 using SourceActionVector = std::variant<std::vector<PhysicalSourceAddition>,
-                 std::vector<PhysicalSourceRemoval>,
-                 std::vector<LogicalSourceAddition>,
-                 std::vector<LogicalSourceUpdate>,
-                 std::vector<LogicalSourceRemoval>>;
+                                        std::vector<PhysicalSourceRemoval>,
+                                        std::vector<LogicalSourceAddition>,
+                                        std::vector<LogicalSourceUpdate>,
+                                        std::vector<LogicalSourceRemoval>>;
 
+/**
+ * @brief This request allows modifying the source catalog by adding, updating or removing logical and physical sources
+ */
 class UpdateSourceCatalogRequest : public AbstractUniRequest {
   public:
-    static UpdateSourceCatalogRequestPtr
-    create(SourceActionVector logicalSourceDefinitions, uint8_t maxRetries);
+    /**
+     * @brief creates a new request
+     * @param sourceActions A vector containing information about the sources to modify and the action to be performed
+     * @param maxRetries the maximum number of retries to attempt
+     * @return a pointer to the created request
+     */
+    static UpdateSourceCatalogRequestPtr create(SourceActionVector sourceActions, uint8_t maxRetries);
 
-    //todo: remove unneccesary constructors
-    UpdateSourceCatalogRequest(SourceActionVector physicalSourceDefinitions,
-                               uint8_t maxRetries);
+    /**
+     * @brief constructor
+     * @param sourceActions A vector containing information about the sources to modify and the action to be performed
+     * @param maxRetries the maximum number of retries to attempt
+     * @return a pointer to the created request
+     */
+    UpdateSourceCatalogRequest(SourceActionVector sourceActions, uint8_t maxRetries);
 
-    UpdateSourceCatalogRequest(std::vector<PhysicalSourceAddition> physicalSourceDefinitions,
-                               uint8_t maxRetries);
-
-    UpdateSourceCatalogRequest(std::vector<PhysicalSourceRemoval> physicalSourceDefinitions,
-                               uint8_t maxRetries);
-
-    UpdateSourceCatalogRequest(std::vector<LogicalSourceAddition> logicalSourceDefinitions, uint8_t maxRetries);
-
-    UpdateSourceCatalogRequest(std::vector<LogicalSourceRemoval> logicalSourceDefinitions, uint8_t maxRetries);
-
+    /**
+     * @brief Executes the request logic.
+     * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
+     * request
+     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
+     */
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
 
     /**
@@ -118,8 +127,7 @@ class UpdateSourceCatalogRequest : public AbstractUniRequest {
 
   private:
     //vector holding the definitions of the sources to be modified
-    SourceActionVector
-        sourceDefinitions;
+    SourceActionVector sourceActions;
 };
 }// namespace RequestProcessor
 }// namespace NES

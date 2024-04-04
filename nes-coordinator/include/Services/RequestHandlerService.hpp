@@ -17,9 +17,8 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
-//todo: move enum decalration somewhere else?
 #include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 #include <future>
 #include <nlohmann/json.hpp>
 
@@ -155,26 +154,84 @@ class RequestHandlerService {
      */
     bool queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
 
+    /**
+      * @brief register a new physical source
+      * @param physicalSourceName the name of the physical source to register
+      * @param logicalSourceName the name of the logical source to which the physical source belongs
+      * @param workerId the id of the worker hosting the physical source
+      * @return true on success
+      */
     bool queueRegisterPhysicalSourceRequest(const std::string& physicalSourceName,
                                             const std::string& logicalSourceName,
-                                            WorkerId topologyNodeId) const;
+                                            WorkerId workerId) const;
 
+    /**
+      * @brief register multiple new physical sources
+      * @param additions a vector of physical source additions
+      * @return true on success
+      */
+    bool queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceAddition> additions) const;
+
+    /**
+      * @brief register a new logical source
+      * @param logicalSourceName the name of the logical source
+      * @param schema the schema of the logical source
+      * @return true on success
+      */
     bool queueRegisterLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const;
 
+    /**
+      * @brief unregister an existing physical source
+      * @param physicalSourceName the name of the physical source to unregister
+      * @param logicalSourceName the name of the logical source to which the physical source belongs
+      * @param workerId the id of the worker hosting the physical source
+      * @return true on success
+      */
     bool queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
                                               const std::string& logicalSourceName,
-                                              WorkerId topologyNodeId) const;
+                                              WorkerId workerId) const;
 
+    /**
+      * @brief unregister an existing logical source
+      * @param logicalSourceName the name of the logical source
+      * @return true on success
+      */
     bool queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const;
+
+    /**
+      * @brief update an existing logical source
+      * @param logicalSourceName the name of the logical source
+      * @param schema the new schema of the logical source
+      * @return true on success
+      */
     bool queueUpdateLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const;
 
+    /**
+     * @brief get all logical sources
+     * @return json object containing all logical sources
+     */
     nlohmann::json queueGetAllLogicalSourcesRequest() const;
 
+    /**
+     * @brief get all physical sources belonging to a logical source
+     * @return json object containing the sources
+     */
     nlohmann::json queueGetPhysicalSourcesRequest(std::string logicelSourceName) const;
+
+    /**
+     * @brief get the schema of a logical source
+     * @return json object containing the schema
+     */
     nlohmann::json queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const;
 
   private:
+    /**
+     * @brief helper function to create a request to modify the query catalog
+     * @param sourceActions a vector containing the modifications to make to the catalog
+     * @return true on successfull execution of the request
+     */
     bool modifySources(RequestProcessor::SourceActionVector sourceActions) const;
+
     /**
      * Assign unique operator ids to the incoming query plan from a client.
      * @param queryPlan : query plan to process

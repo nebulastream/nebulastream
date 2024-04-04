@@ -139,7 +139,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator: Register Logical sources");
     for (const auto& logicalSourceType : coordinatorConfiguration->logicalSourceTypes.getValues()) {
         auto schema = Schema::createFromSchemaType(logicalSourceType.getValue()->getSchemaType());
-        //sourceCatalog->addLogicalSource(logicalSourceType.getValue()->getLogicalSourceName(), schema);
         NES_ASSERT(requestHandlerService->queueRegisterLogicalSourceRequest(logicalSourceType.getValue()->getLogicalSourceName(),
                                                                             schema),
                    "Could not create logical source");

@@ -30,6 +30,7 @@
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/TopologyLinkInformation.hpp>
+#include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
 #include <utility>
 
 using namespace NES;
@@ -172,16 +173,16 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
+    std::vector<RequestProcessor::PhysicalSourceAddition> additions;
     for (const auto& physicalSourceDefinition : request->physicalsourcetypes()) {
-        bool success = requestHandlerService->queueRegisterPhysicalSourceRequest(physicalSourceDefinition.physicalsourcename(),
-                                                                                 physicalSourceDefinition.logicalsourcename(),
-                                                                                 request->workerid());
+        additions.emplace_back(physicalSourceDefinition.physicalsourcename(), physicalSourceDefinition.logicalsourcename(), request->workerid());
+    }
+        bool success = requestHandlerService->queueRegisterPhysicalSourceRequest(additions);
         if (!success) {
             NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource failed");
             reply->set_success(false);
             return Status::CANCELLED;
         }
-    }
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource Succeed");
     reply->set_success(true);
     return Status::OK;
@@ -229,7 +230,6 @@ Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
                                                      UnregisterLogicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request ={}", request->DebugString());
 
-    // bool success = sourceCatalogService->unregisterLogicalSource(request->logicalsourcename());
     auto success = requestHandlerService->queueUnregisterLogicalSourceRequest(request->logicalsourcename());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalSource success");

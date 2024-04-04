@@ -136,7 +136,6 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                       logicalSourceName,
                       schemaString);
             auto schema = queryParsingService->createSchemaFromCode(schemaString);
-            // bool added = sourceCatalog->addLogicalSource(logicalSourceName, schema);
             bool added = requestHandlerService->queueRegisterLogicalSourceRequest(logicalSourceName, schema);
             NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ? {}", added);
             //Prepare the response
@@ -177,7 +176,6 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             auto sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
-            // bool added = sourceCatalog->addLogicalSource(sourceName, deserializedSchema);
             bool added = requestHandlerService->queueRegisterLogicalSourceRequest(sourceName, deserializedSchema);
             NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ? {}", added);
 
@@ -224,7 +222,6 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                       sourceName,
                       schemaString);
             auto schema = queryParsingService->createSchemaFromCode(schemaString);
-            //bool updated = sourceCatalog->updateLogicalSource(sourceName, schema);
             auto updated = requestHandlerService->queueUpdateLogicalSourceRequest(sourceName, schema);
             NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ? {}", updated);
             // Prepare the response
@@ -270,7 +267,6 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             auto sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
-            // bool updated = sourceCatalog->updateLogicalSource(sourceName, deserializedSchema);
             auto updated = requestHandlerService->queueUpdateLogicalSourceRequest(sourceName, deserializedSchema);
 
             if (updated) {
@@ -296,7 +292,6 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("DELETE", "/deleteLogicalSource", deleteLogicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
         NES_DEBUG("SourceCatalogController: deleteLogicalSource: REST received request to delete the given Logical Source.");
         try {
-            // bool deleted = sourceCatalogService->unregisterLogicalSource(logicalSourceName);
             auto deleted = requestHandlerService->queueUnregisterLogicalSourceRequest(logicalSourceName);
             NES_DEBUG("SourceCatalogController: deleteLogicalSource: Successfully deleted the given logical Source: {}", deleted);
             // Prepare the response

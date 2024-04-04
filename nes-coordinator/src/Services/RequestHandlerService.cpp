@@ -144,10 +144,14 @@ bool RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor:
 
 bool RequestHandlerService::queueRegisterPhysicalSourceRequest(const std::string& physicalSourceName,
                                                                const std::string& logicalSourceName,
-                                                               WorkerId topologyNodeId) const {
+                                                               WorkerId workerId) const {
     std::vector<RequestProcessor::PhysicalSourceAddition> physicalSourceDefinitions;
-    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName, topologyNodeId);
+    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName, workerId);
     return modifySources(physicalSourceDefinitions);
+}
+bool RequestHandlerService::queueRegisterPhysicalSourceRequest(
+    std::vector<RequestProcessor::PhysicalSourceAddition> additions) const {
+    return modifySources(additions);
 }
 
 bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string& logicalSourceName,
@@ -159,9 +163,9 @@ bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string&
 
 bool RequestHandlerService::queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
                                                                const std::string& logicalSourceName,
-                                                               WorkerId topologyNodeId) const {
+                                                               WorkerId workerId) const {
     std::vector<RequestProcessor::PhysicalSourceRemoval> physicalSourceDefinitions;
-    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName, topologyNodeId);
+    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName, workerId);
     return modifySources(physicalSourceDefinitions);
 }
 
