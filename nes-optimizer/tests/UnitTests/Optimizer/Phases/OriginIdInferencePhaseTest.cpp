@@ -38,7 +38,6 @@
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -67,7 +66,6 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
         auto optimizerConfiguration = OptimizerConfiguration();
-        optimizerConfiguration.performDistributedWindowOptimization = false;
         topologySpecificQueryRewritePhase =
             Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(), sourceCatalog, optimizerConfiguration);
     }
@@ -84,13 +82,11 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         LogicalSourcePtr logicalSourceA = sourceCatalog->getLogicalSource("A");
 
         PhysicalSourcePtr physicalSourceA1 = PhysicalSource::create(DefaultSourceType::create("A", "A1"));
-        auto sceA1 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceA1, logicalSourceA, physicalNode->getId());
+        auto sceA1 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceA1, logicalSourceA, physicalNode->getId());
         sourceCatalog->addPhysicalSource("A", sceA1);
 
         PhysicalSourcePtr physicalSourceA2 = PhysicalSource::create(DefaultSourceType::create("A", "A2"));
-        auto sceA2 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceA2, logicalSourceA, physicalNode->getId());
+        auto sceA2 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceA2, logicalSourceA, physicalNode->getId());
         sourceCatalog->addPhysicalSource("A", sceA2);
 
         auto schemaB = Schema::create()->addField("id", BasicType::INT32)->addField("value", BasicType::UINT32);
@@ -98,8 +94,7 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         LogicalSourcePtr logicalSourceB = sourceCatalog->getLogicalSource("B");
 
         PhysicalSourcePtr physicalSourceB1 = PhysicalSource::create(DefaultSourceType::create("B", "B1"));
-        auto sceB1 =
-            Catalogs::Source::SourceCatalogEntry::create(physicalSourceB1, logicalSourceB, physicalNode->getId());
+        auto sceB1 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceB1, logicalSourceB, physicalNode->getId());
         sourceCatalog->addPhysicalSource("B", sceB1);
     }
 };

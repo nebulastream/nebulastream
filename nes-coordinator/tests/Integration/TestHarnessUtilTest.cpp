@@ -191,11 +191,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
-        config->optimizer.distributedWindowChildThreshold.setValue(10);
-        config->optimizer.distributedWindowCombinerThreshold.setValue(1000);
-    };
-
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                                        .byKey(Attribute("key"))
@@ -232,7 +227,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
                                   .pushElement<Car>({1, 4, 4000}, 3)
                                   .pushElement<Car>({1, 5, 5000}, 3)
                                   .validate()
-                                  .setupTopology(crdFunctor);
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 

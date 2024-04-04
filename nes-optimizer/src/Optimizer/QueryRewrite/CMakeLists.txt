@@ -15,7 +15,6 @@ add_source_files(nes-optimizer
         AttributeSortRule.cpp
         BinaryOperatorSortRule.cpp
         DistributedMatrixJoinRule.cpp
-        DistributedWindowRule.cpp
         FilterMergeRule.cpp
         FilterPushDownRule.cpp
         FilterSplitUpRule.cpp

@@ -78,6 +78,7 @@ const std::string JOIN_STRATEGY = "joinStrategy";
 //Optimizer Configurations
 const std::string PLACEMENT_AMENDMENT_MODE_CONFIG = "placementAmendmentMode";
 const std::string PLACEMENT_AMENDMENT_THREAD_COUNT = "placementAmendmentThreadCount";
+const std::string DISTRIBUTED_JOIN_OPTIMIZATION_MODE_CONFIG = "distributedJoinOptimizationMode";
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
 const std::string ENABLE_INCREMENTAL_PLACEMENT = "enableIncrementalPlacement";
@@ -85,9 +86,6 @@ const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
 const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
 const std::string ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK = "allowExhaustiveContainmentCheck";
 const std::string PERFORM_ADVANCE_SEMANTIC_VALIDATION = "advanceSemanticValidation";
-const std::string PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION = "performDistributedWindowOptimization";
-const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributedWindowChildThreshold";
-const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distributedWindowCombinerThreshold";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
 //Elegant Configurations

@@ -41,8 +41,6 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->rpcPort = rpcPortSingleRun;
     coordinatorConf->restPort = restPortSingleRun;
     coordinatorConf->enableMonitoring = false;
-    coordinatorConf->optimizer.distributedWindowChildThreshold = 100;
-    coordinatorConf->optimizer.distributedWindowCombinerThreshold = 100;
 
     // Worker configuration
     coordinatorConf->worker.numWorkerThreads = configPerRun.numberOfWorkerThreads->getValue();

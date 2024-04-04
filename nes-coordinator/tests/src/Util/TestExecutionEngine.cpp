@@ -46,10 +46,6 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpM
 
     // enable distributed window optimization
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
-    optimizerConfiguration.performDistributedWindowOptimization = true;
-    optimizerConfiguration.distributedWindowChildThreshold = 2;
-    optimizerConfiguration.distributedWindowCombinerThreshold = 4;
-    distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
     originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
 
     // Initialize the typeInferencePhase with a dummy SourceCatalog & UDFCatalog

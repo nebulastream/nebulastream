@@ -15,7 +15,6 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributedMatrixJoinRule.hpp>
-#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <utility>
 
@@ -40,7 +39,7 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(
 
 QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     queryPlan = logicalSourceExpansionRule->apply(queryPlan);
-    if (optimizerConfiguration.performDistributedWindowOptimization) {
+    if (optimizerConfiguration.joinOptimizationMode == DistributedJoinOptimizationMode::MATRIX) {
         auto matrixJoinRule = DistributedMatrixJoinRule::create(optimizerConfiguration, topology);
         queryPlan = matrixJoinRule->apply(queryPlan);
     }

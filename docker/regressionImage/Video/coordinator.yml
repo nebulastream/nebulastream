@@ -2,8 +2,6 @@
 ### General configuration
 ###
 logLevel: LOG_DEBUG
-optimizer:
-        distributedWindowChildThreshold: 3
 
 ###
 ### Network configuration

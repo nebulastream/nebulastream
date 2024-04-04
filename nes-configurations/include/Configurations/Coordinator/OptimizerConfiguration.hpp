@@ -16,6 +16,7 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Enums/DistributedJoinOptimizationMode.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Configurations/Enums/QueryMergerRule.hpp>
@@ -87,29 +88,6 @@ class OptimizerConfiguration : public BaseConfiguration {
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
 
     /**
-     * @brief Indicates if the distributed window optimization rule should be enabled.
-     * This optimization, will enable the distribution of window aggregation across multiple nodes.
-     * To this end, the optimizer will create pre-aggregation operators that are located close to the data source.
-     */
-    BoolOption performDistributedWindowOptimization = {PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION,
-                                                       false,
-                                                       "Enables the distribution of window aggregations."};
-
-    /**
-     * @brief Indicated the number of child operators from, which a window operator is distributed.
-     */
-    IntOption distributedWindowChildThreshold = {DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD,
-                                                 2,
-                                                 "Threshold for the distribution of window aggregations."};
-
-    /**
-     * @brief Indicated the number of child nodes from which on we will introduce combine operator between the pre-aggregation operator and the final aggregation.
-     */
-    IntOption distributedWindowCombinerThreshold = {DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD,
-                                                    4,
-                                                    "Threshold for the insertion of pre-aggregation operators."};
-
-    /**
      * @brief Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping.
      * @warning This option is set to false by default as currently not all operators are supported by Z3 based signature generator.
      * Because of this, in some cases, enabling this check may result in a crash or incorrect behavior.
@@ -120,13 +98,12 @@ class OptimizerConfiguration : public BaseConfiguration {
         "Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping. (Default: false)"};
 
     /**
-     * @brief Enable for distributed windows the NEMO placement where aggregation happens based on the params
-     * distributedWindowChildThreshold and distributedWindowCombinerThreshold.
+     * @brief Enable the NEMO placement
      */
     BoolOption enableNemoPlacement = {
         ENABLE_NEMO_PLACEMENT,
         false,
-        "Enables NEMO distributed window rule to use central windows instead of the distributed windows. (Default: false)"};
+        "Enables NEMO placement. (Default: false)"};
 
     /**
      * @brief Indicates the amender mode for performing placement amendment.
@@ -150,17 +127,25 @@ class OptimizerConfiguration : public BaseConfiguration {
                                              false,
                                              "Enable reconfiguration of running query plans. (Default: false)"};
 
+    /**
+     * @brief Indicates the optimization mode for distributed joins.
+     * NONE -> Perform join at the sink
+     * MATRIX -> Use the distributed matrix based partitioning join.
+     * NEMO -> Perform partial joins and push them down closer to the sources.
+     */
+    EnumOption<Optimizer::DistributedJoinOptimizationMode> joinOptimizationMode = {
+        DISTRIBUTED_JOIN_OPTIMIZATION_MODE_CONFIG,
+        Optimizer::DistributedJoinOptimizationMode::NONE,
+        "selects the distributed join optimization mode [NONE|MATRIX|NEMO]"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&queryMergerRule,
                 &memoryLayoutPolicy,
                 &performOnlySourceOperatorExpansion,
-                &performDistributedWindowOptimization,
-                &distributedWindowChildThreshold,
-                &distributedWindowCombinerThreshold,
-                &performOnlySourceOperatorExpansion,
                 &performAdvanceSemanticValidation,
                 &enableNemoPlacement,
+                &joinOptimizationMode,
                 &allowExhaustiveContainmentCheck,
                 &placementAmendmentMode,
                 &placementAmendmentThreadCount,

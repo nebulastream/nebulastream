@@ -11,23 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
@@ -35,8 +32,8 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -46,9 +43,8 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -58,16 +54,21 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/Serialization/ExpressionSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <fstream>
@@ -78,7 +79,6 @@
 #ifdef ENABLE_MQTT_BUILD
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <fstream>
 #endif
@@ -439,8 +439,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
 }
 
-LogicalUnaryOperatorPtr
-OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
+LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
     return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, getNextOperatorId());
 }
@@ -581,7 +580,6 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         }
     }
 
-
     Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_TumblingWindow>()) {
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
@@ -633,13 +631,9 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         keyAccessExpression.emplace_back(
             ExpressionSerializationUtil::deserializeExpression(key)->as<FieldAccessExpressionNode>());
     }
-    auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessExpression,
-                                                                aggregation,
-                                                                window,
-                                                                allowedLateness);
+    auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessExpression, aggregation, window, allowedLateness);
     windowDef->setOriginId(windowDetails.origin());
     return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId);
-
 }
 
 void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator& joinOperator,
@@ -698,7 +692,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
 }
 
 LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails,
-                                                                              OperatorId operatorId) {
+                                                                          OperatorId operatorId) {
     auto serializedWindowType = joinDetails.windowtype();
     auto serializedJoinType = joinDetails.jointype();
     // check which jointype is set
@@ -803,8 +797,8 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
                                                                                  probeKeyAccessExpression,
                                                                                  joinDetails.numberofinputedgesprobe(),
                                                                                  joinDetails.numberofinputedgesbuild());
-    auto retValue = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)
-                        ->as<Experimental::LogicalBatchJoinOperator>();
+    auto retValue =
+        LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)->as<Experimental::LogicalBatchJoinOperator>();
     return retValue;
 }
 
@@ -1173,7 +1167,9 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
                                                             nesPartition,
                                                             nodeLocation,
                                                             waitTime,
-                                                            networkSerializedSourceDescriptor.retrytimes(), networkSerializedSourceDescriptor.version(), networkSerializedSourceDescriptor.uniqueid());
+                                                            networkSerializedSourceDescriptor.retrytimes(),
+                                                            networkSerializedSourceDescriptor.version(),
+                                                            networkSerializedSourceDescriptor.uniqueid());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
         // de-serialize default source descriptor
@@ -1399,7 +1395,9 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
     } else if (sinkDescriptor.instanceOf<Statistic::StatisticSinkDescriptor>()) {
         auto statisticSinkDescriptor = sinkDescriptor.as<const Statistic::StatisticSinkDescriptor>();
         SerializableOperator_SinkDetails_StatisticSinkDescriptor sinkDescriptorMessage;
-        sinkDescriptorMessage.set_sinkformattype((SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticSinkFormatType) statisticSinkDescriptor->getSinkFormatType());
+        sinkDescriptorMessage.set_sinkformattype(
+            (SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticSinkFormatType)
+                statisticSinkDescriptor->getSinkFormatType());
         sinkDetails.mutable_sinkdescriptor()->PackFrom(sinkDescriptorMessage);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else {
@@ -1518,8 +1516,9 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_StatisticSinkDescriptor>()) {
         SerializableOperator_SinkDetails_StatisticSinkDescriptor serializedSinkDescriptor;
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        return Statistic::StatisticSinkDescriptor::create((Statistic::StatisticSinkFormatType) serializedSinkDescriptor.sinkformattype(),
-                                                          deserializedNumberOfOrigins);
+        return Statistic::StatisticSinkDescriptor::create(
+            (Statistic::StatisticSinkFormatType) serializedSinkDescriptor.sinkformattype(),
+            deserializedNumberOfOrigins);
 
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type {}", sinkDetails.DebugString());
@@ -1619,13 +1618,12 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
     }
 }
 
-void OperatorSerializationUtil::serializeInputSchema(const OperatorPtr& operatorNode,
-                                                     SerializableOperator& serializedOperator) {
+void OperatorSerializationUtil::serializeInputSchema(const OperatorPtr& operatorNode, SerializableOperator& serializedOperator) {
 
     NES_TRACE("OperatorSerializationUtil:: serialize input schema");
-        if (!operatorNode->instanceOf<BinaryOperator>()) {
-            SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperator>()->getInputSchema(),
-                                                     serializedOperator.mutable_inputschema());
+    if (!operatorNode->instanceOf<BinaryOperator>()) {
+        SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperator>()->getInputSchema(),
+                                                 serializedOperator.mutable_inputschema());
     } else {
         auto binaryOperator = operatorNode->as<BinaryOperator>();
         SchemaSerializationUtil::serializeSchema(binaryOperator->getLeftInputSchema(),
@@ -1640,13 +1638,11 @@ void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorPtr operat
     // de-serialize operator input schema
     if (!operatorNode->instanceOf<BinaryOperator>()) {
         operatorNode->as<UnaryOperator>()->setInputSchema(
-                SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
     } else {
         auto binaryOperator = operatorNode->as<BinaryOperator>();
-        binaryOperator->setLeftInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
-        binaryOperator->setRightInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
+        binaryOperator->setLeftInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
+        binaryOperator->setRightInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
     }
 }
 
@@ -1786,11 +1782,9 @@ void OperatorSerializationUtil::serializeStatisticWindowOperator(
                                                        *statisticWindowDescriptorMessage.mutable_sendingpolicy());
     StatisticSerializationUtil::serializeTriggerCondition(*statisticWindowDescriptor->getTriggerCondition(),
                                                           *statisticWindowDescriptorMessage.mutable_triggercondition());
-    StatisticSerializationUtil::serializeDescriptorDetails(*statisticWindowDescriptor,
-                                                           statisticWindowDescriptorMessage);
+    StatisticSerializationUtil::serializeDescriptorDetails(*statisticWindowDescriptor, statisticWindowDescriptorMessage);
     statisticWindowDescriptorMessage.set_width(statisticWindowDescriptor->getWidth());
     statisticWindowDetails.mutable_statisticwindowdescriptor()->CopyFrom(statisticWindowDescriptorMessage);
-
 
     // 3. Serializing the metric hash and then packing everything into serializedOperator
     statisticWindowDetails.set_metrichash(statisticWindowOperator.getMetricHash());
@@ -1799,7 +1793,6 @@ void OperatorSerializationUtil::serializeStatisticWindowOperator(
 
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeStatisticWindowOperator(
     const SerializableOperator_StatisticWindowDetails& statisticWindowDetails) {
-
 
     // 1. Deserializing the window type
     auto serializedWindowType = statisticWindowDetails.windowtype();
@@ -1841,11 +1834,10 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeStatisticWindowOpe
     }
 
     // 2. Deserializing the statistic descriptor, the metric hash, and then creating the operator
-    auto statisticDescriptor = StatisticSerializationUtil::deserializeDescriptor(statisticWindowDetails.statisticwindowdescriptor());
+    auto statisticDescriptor =
+        StatisticSerializationUtil::deserializeDescriptor(statisticWindowDetails.statisticwindowdescriptor());
     auto metricHash = statisticWindowDetails.metrichash();
-    auto statisticWindowOperator = LogicalOperatorFactory::createStatisticBuildOperator(window,
-                                                                                        statisticDescriptor,
-                                                                                        metricHash);
+    auto statisticWindowOperator = LogicalOperatorFactory::createStatisticBuildOperator(window, statisticDescriptor, metricHash);
 
     return statisticWindowOperator;
 }

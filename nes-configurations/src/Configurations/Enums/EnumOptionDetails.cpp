@@ -13,6 +13,7 @@
 */
 
 #include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Configurations/Enums/DistributedJoinOptimizationMode.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/EnumOptionDetails.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
@@ -43,5 +44,6 @@ template class EnumOption<NES::Optimizer::QueryMergerRule>;
 template class EnumOption<NES::LogLevel>;
 template class EnumOption<NES::Optimizer::MemoryLayoutPolicy>;
 template class EnumOption<NES::Optimizer::PlacementAmendmentMode>;
+template class EnumOption<NES::Optimizer::DistributedJoinOptimizationMode>;
 
 }// namespace NES::Configurations
