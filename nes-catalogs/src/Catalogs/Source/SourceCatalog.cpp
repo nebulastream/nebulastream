@@ -19,7 +19,11 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <SerializableSchema.pb.h>
 #include <Util/Logger/Logger.hpp>
+#include <nlohmann/adl_serializer.hpp>
+#include <nlohmann/json.hpp>
 #include <utility>
 
 namespace NES::Catalogs::Source {
@@ -180,6 +184,10 @@ SchemaPtr SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSou
 
 LogicalSourcePtr SourceCatalog::getLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
+    if (!containsLogicalSource(logicalSourceName)) {
+        NES_ERROR("SourceCatalog::getLogicalSource: source does not exists {}", logicalSourceName);
+        return nullptr;
+    }
     return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
 }
 
@@ -267,6 +275,39 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString() 
     return allLogicalSourceAsString;
 }
 
+nlohmann::json SourceCatalog::getAllLogicalSourcesAsJson() {
+    nlohmann::json logicalSources;
+    const auto& allLogicalSourceAsString = getAllLogicalSourceAsString();
+    for (auto const& [key, val] : allLogicalSourceAsString) {
+        nlohmann::json entry;
+        entry[key] = val;
+        logicalSources.push_back(entry);
+    }
+    return logicalSources;
+}
+
+nlohmann::json SourceCatalog::getPhysicalSourcesAsJson(std::string logicalSourceName) {
+    const std::vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSource =
+        getPhysicalSources(logicalSourceName);
+
+    nlohmann::json result;
+    nlohmann::json::array_t allSource = {};
+    for (auto const& physicalSource : std::as_const(allPhysicalSource)) {
+        allSource.push_back(physicalSource->toString());
+    }
+    result["Physical Sources"] = allSource;
+    return result;
+}
+
+nlohmann::json SourceCatalog::getLogicalSourceAsJson(std::string logicalSourceName) {
+    auto schema = getLogicalSourceOrThrowException(logicalSourceName)->getSchema();
+    auto serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
+    nlohmann::json json;
+    json["schema"] = serializableSchema->SerializeAsString();
+    // return serializableSchema->SerializeAsString();
+    return json;
+}
+
 bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema) {
     std::unique_lock lock(catalogMutex);
     //check if source already exist
@@ -281,10 +322,9 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Sc
     return true;
 }
 
-
 bool SourceCatalog::registerPhysicalSource(const std::string& physicalSourceName,
-                                                  const std::string& logicalSourceName,
-                                                  WorkerId topologyNodeId) {
+                                           const std::string& logicalSourceName,
+                                           WorkerId topologyNodeId) {
 
     std::unique_lock lock(catalogMutex);
 

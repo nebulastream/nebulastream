@@ -20,6 +20,7 @@
 #include <deque>
 #include <map>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
 
@@ -125,6 +126,9 @@ class SourceCatalog {
      * @return map of logical source name to schema as string
      */
     std::map<std::string, std::string> getAllLogicalSourceAsString();
+    nlohmann::json getAllLogicalSourcesAsJson();
+    nlohmann::json getPhysicalSourcesAsJson(std::string logicalSourceName);
+    nlohmann::json getLogicalSourceAsJson(std::string logicalSourceName);
 
     /**
      * @brief method to return the physical source and the associated schemas

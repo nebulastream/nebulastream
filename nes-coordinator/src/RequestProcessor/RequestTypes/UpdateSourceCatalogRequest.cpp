@@ -43,6 +43,7 @@ UpdateSourceCatalogRequest::UpdateSourceCatalogRequest(std::vector<LogicalSource
 std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     auto catalogHandle = storageHandle->getSourceCatalogHandle(requestId);
     //check if source definitions are logical or physical
+    //todo: error handling
     if (std::holds_alternative<std::vector<PhysicalSourceAddition>>(sourceDefinitions)) {
         auto physicalSourceDefinitions = std::get<std::vector<PhysicalSourceAddition>>(sourceDefinitions);
         for (const auto& physicalSourceDefinition : physicalSourceDefinitions) {
@@ -84,32 +85,21 @@ std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(
                 NES_ERROR("Failed to unregister logical source: {}", logicalSourceDefinition.logicalSourceName);
             }
         }
+    } else if (std::holds_alternative<std::vector<LogicalSourceUpdate>>(sourceDefinitions)) {
+        auto logicalSourceDefinitions = std::get<std::vector<LogicalSourceUpdate>>(sourceDefinitions);
+        for (const auto& logicalSourceDefinition : logicalSourceDefinitions) {
+            //unregister logical source
+            if (!catalogHandle->updateLogicalSource(logicalSourceDefinition.logicalSourceName, logicalSourceDefinition.schema)) {
+                NES_ERROR("Failed to unregister logical source: {}", logicalSourceDefinition.logicalSourceName);
+            }
+        }
     }
+    responsePromise.set_value(std::make_shared<UpdateSourceCatalogResponse>(true));
     return {};
 }
 std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) { return {}; }
 void UpdateSourceCatalogRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 void UpdateSourceCatalogRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
-
-UpdateSourceCatalogRequestPtr UpdateSourceCatalogRequest::create(std::vector<PhysicalSourceAddition> physicalSourceDefinitions,
-                                                                 uint8_t maxRetries) {
-    return std::make_shared<UpdateSourceCatalogRequest>(physicalSourceDefinitions, maxRetries);
-}
-
-UpdateSourceCatalogRequestPtr UpdateSourceCatalogRequest::create(std::vector<PhysicalSourceRemoval> physicalSourceDefinitions,
-                                                                 uint8_t maxRetries) {
-    return std::make_shared<UpdateSourceCatalogRequest>(physicalSourceDefinitions, maxRetries);
-}
-
-UpdateSourceCatalogRequestPtr UpdateSourceCatalogRequest::create(std::vector<LogicalSourceAddition> physicalSourceDefinitions,
-                                                                 uint8_t maxRetries) {
-    return std::make_shared<UpdateSourceCatalogRequest>(physicalSourceDefinitions, maxRetries);
-}
-
-UpdateSourceCatalogRequestPtr UpdateSourceCatalogRequest::create(std::vector<LogicalSourceRemoval> physicalSourceDefinitions,
-                                                                 uint8_t maxRetries) {
-    return std::make_shared<UpdateSourceCatalogRequest>(physicalSourceDefinitions, maxRetries);
-}
 
 UpdateSourceCatalogRequestPtr UpdateSourceCatalogRequest::create(SourceActionVector sourceActions, uint8_t maxRetries) {
     return std::make_shared<UpdateSourceCatalogRequest>(sourceActions, maxRetries);

@@ -63,14 +63,12 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @brief Create coordinator RPC server
      * @param requestHandlerService: the instance of Query Service
      * @param topology : the instance of the topology
-     * @param sourceCatalogService : the instance of the steam catalog service
      * @param queryCatalog : the instance of query catalog
      * @param monitoringService : the instance of monitoring service
      * @param coordinatorHealthCheckService : coordinator health check service
      */
     explicit CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
                                   TopologyPtr topology,
-                                  SourceCatalogServicePtr sourceCatalogService,
                                   Catalogs::Query::QueryCatalogPtr queryCatalog,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   QueryParsingServicePtr queryParsingService,
@@ -264,7 +262,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   private:
     RequestHandlerServicePtr requestHandlerService;
     TopologyPtr topology;
-    SourceCatalogServicePtr sourceCatalogService;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Monitoring::MonitoringManagerPtr monitoringManager;
     QueryParsingServicePtr queryParsingService;

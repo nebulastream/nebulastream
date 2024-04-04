@@ -66,14 +66,13 @@ void deserializeOpenCLDeviceInfo(std::any& property,
 
 CoordinatorRPCServer::CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
                                            TopologyPtr topology,
-                                           SourceCatalogServicePtr sourceCatalogService,
                                            Catalogs::Query::QueryCatalogPtr queryCatalog,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            QueryParsingServicePtr queryParsingService,
                                            CoordinatorHealthCheckServicePtr coordinatorHealthCheckService)
     : requestHandlerService(std::move(requestHandlerService)), topology(std::move(topology)),
-      sourceCatalogService(std::move(sourceCatalogService)), queryCatalog(std::move(queryCatalog)),
-      monitoringManager(std::move(monitoringManager)), queryParsingService(std::move(queryParsingService)),
+      queryCatalog(std::move(queryCatalog)), monitoringManager(std::move(monitoringManager)),
+      queryParsingService(std::move(queryParsingService)),
       coordinatorHealthCheckService(std::move(coordinatorHealthCheckService)){};
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
@@ -175,8 +174,8 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
     for (const auto& physicalSourceDefinition : request->physicalsourcetypes()) {
         bool success = requestHandlerService->queueRegisterPhysicalSourceRequest(physicalSourceDefinition.physicalsourcename(),
-                                                                    physicalSourceDefinition.logicalsourcename(),
-                                                                    request->workerid());
+                                                                                 physicalSourceDefinition.logicalsourcename(),
+                                                                                 request->workerid());
         if (!success) {
             NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource failed");
             reply->set_success(false);
@@ -194,8 +193,8 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource: request ={}", request->DebugString());
 
     bool success = requestHandlerService->queueUnregisterPhysicalSourceRequest(request->physicalsourcename(),
-                                                                  request->logicalsourcename(),
-                                                                  request->workerid());
+                                                                               request->logicalsourcename(),
+                                                                               request->workerid());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource success");
@@ -230,7 +229,8 @@ Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
                                                      UnregisterLogicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request ={}", request->DebugString());
 
-    bool success = sourceCatalogService->unregisterLogicalSource(request->logicalsourcename());
+    // bool success = sourceCatalogService->unregisterLogicalSource(request->logicalsourcename());
+    auto success = requestHandlerService->queueUnregisterLogicalSourceRequest(request->logicalsourcename());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalSource success");
         reply->set_success(true);

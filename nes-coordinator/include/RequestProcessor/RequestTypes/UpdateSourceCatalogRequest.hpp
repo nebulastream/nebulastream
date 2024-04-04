@@ -51,6 +51,10 @@ struct LogicalSourceAddition {
     std::string logicalSourceName;
     SchemaPtr schema;
 };
+struct LogicalSourceUpdate {
+    std::string logicalSourceName;
+    SchemaPtr schema;
+};
 //struct containing the definition of a logical source to remove
 struct LogicalSourceRemoval {
     std::string logicalSourceName;
@@ -59,28 +63,15 @@ struct LogicalSourceRemoval {
 using SourceActionVector = std::variant<std::vector<PhysicalSourceAddition>,
                  std::vector<PhysicalSourceRemoval>,
                  std::vector<LogicalSourceAddition>,
+                 std::vector<LogicalSourceUpdate>,
                  std::vector<LogicalSourceRemoval>>;
 
 class UpdateSourceCatalogRequest : public AbstractUniRequest {
   public:
-    /**
-     * @brief create a new instance of the request
-     **/
-    static UpdateSourceCatalogRequestPtr
-    create(std::vector<PhysicalSourceAddition> physicalSourceDefinitions, uint8_t maxRetries);
-
-    static UpdateSourceCatalogRequestPtr
-    create(std::vector<PhysicalSourceRemoval> physicalSourceDefinitions, uint8_t maxRetries);
-
-    static UpdateSourceCatalogRequestPtr
-    create(std::vector<LogicalSourceAddition> logicalSourceDefinitions, uint8_t maxRetries);
-
-    static UpdateSourceCatalogRequestPtr
-    create(std::vector<LogicalSourceRemoval> logicalSourceDefinitions, uint8_t maxRetries);
-
     static UpdateSourceCatalogRequestPtr
     create(SourceActionVector logicalSourceDefinitions, uint8_t maxRetries);
 
+    //todo: remove unneccesary constructors
     UpdateSourceCatalogRequest(SourceActionVector physicalSourceDefinitions,
                                uint8_t maxRetries);
 

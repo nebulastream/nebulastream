@@ -52,7 +52,6 @@ std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
 
 TopologyPtr topology;
-SourceCatalogServicePtr sourceCatalogService;
 Catalogs::Source::SourceCatalogPtr sourceCatalog;
 Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
@@ -76,7 +75,6 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
 
     //Create source catalog service
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()

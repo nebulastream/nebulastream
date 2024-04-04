@@ -83,9 +83,6 @@ class RequestHandlerService {
   public:
     explicit RequestHandlerService(Configurations::OptimizerConfiguration optimizerConfiguration,
                                    const QueryParsingServicePtr& queryParsingService,
-                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                   const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                    const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                                    const z3::ContextPtr& z3Context);
 
@@ -167,7 +164,14 @@ class RequestHandlerService {
     bool queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
                                               const std::string& logicalSourceName,
                                               WorkerId topologyNodeId) const;
+
     bool queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const;
+    bool queueUpdateLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const;
+
+    nlohmann::json queueGetAllLogicalSourcesRequest() const;
+
+    nlohmann::json queueGetPhysicalSourcesRequest(std::string logicelSourceName) const;
+    nlohmann::json queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const;
 
   private:
     bool modifySources(RequestProcessor::SourceActionVector sourceActions) const;
@@ -179,9 +183,6 @@ class RequestHandlerService {
 
     Configurations::OptimizerConfiguration optimizerConfiguration;
     QueryParsingServicePtr queryParsingService;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
-    Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
-    Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     NES::RequestProcessor::AsyncRequestProcessorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
 };

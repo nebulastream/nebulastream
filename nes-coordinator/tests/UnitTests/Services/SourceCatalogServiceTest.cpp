@@ -15,7 +15,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -70,7 +69,6 @@ class SourceCatalogServiceTest : public Testing::BaseIntegrationTest {
 TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     std::string logicalSourceName = "testStream";
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
@@ -82,11 +80,11 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
     EXPECT_TRUE(!successRegisterExistingLogicalSource);
 
     //test unregister not existing node
-    bool successUnregisterNotExistingLogicalSource = sourceCatalogService->unregisterLogicalSource("asdasd");
+    bool successUnregisterNotExistingLogicalSource = sourceCatalog->removeLogicalSource("asdasd");
     EXPECT_TRUE(!successUnregisterNotExistingLogicalSource);
 
     //test unregister existing node
-    bool successUnregisterExistingLogicalSource = sourceCatalogService->unregisterLogicalSource(logicalSourceName);
+    bool successUnregisterExistingLogicalSource = sourceCatalog->removeLogicalSource(logicalSourceName);
     EXPECT_TRUE(successUnregisterExistingLogicalSource);
 }
 
@@ -94,7 +92,6 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyPtr topology = Topology::create();
-    SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     std::string physicalSourceName = "testStream";
 

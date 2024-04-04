@@ -28,6 +28,7 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/GetSourceInformationRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
@@ -42,18 +43,11 @@ namespace NES {
 
 RequestHandlerService::RequestHandlerService(Configurations::OptimizerConfiguration optimizerConfiguration,
                                              const QueryParsingServicePtr& queryParsingService,
-                                             const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                             const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                             const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                              const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                                              const z3::ContextPtr& z3Context)
-    : optimizerConfiguration(optimizerConfiguration), queryParsingService(queryParsingService), queryCatalog(queryCatalog),
+    : optimizerConfiguration(optimizerConfiguration), queryParsingService(queryParsingService),
       asyncRequestExecutor(asyncRequestExecutor), z3Context(z3Context) {
     NES_DEBUG("RequestHandlerService()");
-    syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(this->queryParsingService);
-    semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog,
-                                                                         udfCatalog,
-                                                                         optimizerConfiguration.performAdvanceSemanticValidation);
 }
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
@@ -175,6 +169,37 @@ bool RequestHandlerService::queueUnregisterLogicalSourceRequest(const std::strin
     std::vector<RequestProcessor::LogicalSourceRemoval> physicalSourceDefinitions;
     physicalSourceDefinitions.emplace_back(logicalSourceName);
     return modifySources(physicalSourceDefinitions);
+}
+
+bool RequestHandlerService::queueUpdateLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
+    std::vector<RequestProcessor::LogicalSourceUpdate> physicalSourceDefinitions;
+    physicalSourceDefinitions.emplace_back(logicalSourceName, schema);
+    return modifySources(physicalSourceDefinitions);
+}
+
+nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
+    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(request);
+    auto future = request->getFuture();
+    auto response = future.get();
+    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->json;
+}
+
+nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string logicelSourceName) const {
+    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::SourceType::PHYSICAL_SOURCE, logicelSourceName, RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(request);
+    auto future = request->getFuture();
+    auto response = future.get();
+    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->json;
+}
+
+nlohmann::json RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const {
+    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::SourceType::LOGICAL_SOURCE, logicelSourceName, RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(request);
+    auto future = request->getFuture();
+    auto response = future.get();
+    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->json;
+
 }
 
 bool RequestHandlerService::modifySources(RequestProcessor::SourceActionVector sourceActionVector) const {
