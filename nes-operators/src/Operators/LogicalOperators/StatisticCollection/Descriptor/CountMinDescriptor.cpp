@@ -40,6 +40,7 @@ uint64_t CountMinDescriptor::getDepth() const { return depth; }
 void CountMinDescriptor::addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
     outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, BasicType::UINT64);
     outputSchema.addField(qualifierNameWithSeparator + DEPTH_FIELD_NAME, BasicType::UINT64);
+    outputSchema.addField(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY, BasicType::UINT64);
     outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
 }
 CountMinDescriptor::~CountMinDescriptor() = default;

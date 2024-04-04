@@ -22,8 +22,8 @@ namespace NES::Statistic {
 class AbstractStatisticStore;
 using AbstractStatisticStorePtr = std::shared_ptr<AbstractStatisticStore>;
 
-class AbstractStatisticSinkFormat;
-using AbstractStatisticSinkFormatPtr = std::shared_ptr<AbstractStatisticSinkFormat>;
+class AbstractStatisticFormat;
+using AbstractStatisticFormatPtr = std::shared_ptr<AbstractStatisticFormat>;
 
 /**
  * @brief Physical sink that receives a tuple buffer, extracts statistics, and writes these statistics
@@ -38,7 +38,7 @@ class StatisticSink : public SinkMedium {
                   DecomposedQueryPlanId decomposedQueryPlanId,
                   uint64_t numberOfOrigins,
                   AbstractStatisticStorePtr statisticStore,
-                  AbstractStatisticSinkFormatPtr statisticSinkFormat);
+                  AbstractStatisticFormatPtr statisticSinkFormat);
 
     void setup() override;
     void shutdown() override;
@@ -48,7 +48,7 @@ class StatisticSink : public SinkMedium {
 
   private:
     AbstractStatisticStorePtr statisticStore;
-    AbstractStatisticSinkFormatPtr statisticSinkFormat;
+    AbstractStatisticFormatPtr statisticSinkFormat;
 };
 
 }// namespace NES::Statistic

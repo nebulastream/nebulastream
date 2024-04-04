@@ -66,12 +66,15 @@ bool DefaultStatisticStore::deleteStatistics(const StatisticHash& statisticHash,
     return foundAnyStatistic;
 }
 
-std::vector<StatisticPtr> DefaultStatisticStore::getAllStatistics() {
+std::vector<HashStatisticPair> DefaultStatisticStore::getAllStatistics() {
     auto lockedKeyToStatisticMap = keyToStatistics.wlock();
-    std::vector<StatisticPtr> returnStatisticsVector;
+    std::vector<HashStatisticPair> returnStatisticsVector;
 
     for (const auto& [statisticHash, statisticVec] : *lockedKeyToStatisticMap) {
-        std::copy(statisticVec.begin(), statisticVec.end(), std::back_inserter(returnStatisticsVector));
+        std::transform(statisticVec.begin(), statisticVec.end(), std::back_inserter(returnStatisticsVector),
+                       [statisticHash](const StatisticPtr statistic) {
+                           return std::make_pair(statisticHash, statistic);
+                       });
     }
     return returnStatisticsVector;
 }

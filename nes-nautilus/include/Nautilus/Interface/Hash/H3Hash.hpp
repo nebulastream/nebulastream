@@ -27,8 +27,6 @@ namespace NES::Nautilus::Interface {
  */
 class H3Hash : public HashFunction {
   public:
-    static constexpr auto H3_SEED = 42;
-
     H3Hash(uint64_t numberOfKeyBits);
 
     /**

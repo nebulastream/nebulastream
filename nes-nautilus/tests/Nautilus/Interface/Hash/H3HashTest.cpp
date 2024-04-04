@@ -17,6 +17,7 @@
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Common.hpp>
 #include <array>
 #include <vector>
 
@@ -37,7 +38,7 @@ class H3HashTest : public Testing::BaseUnitTest {
         BaseUnitTest::SetUp();
 
         std::random_device rd;
-        std::mt19937 gen(H3Hash::H3_SEED);
+        std::mt19937 gen(H3_SEED);
         std::uniform_int_distribution<uint64_t> distribution;
         auto numberOfBitsInKey = sizeof(uint64_t) * 8;
 

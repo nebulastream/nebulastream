@@ -20,6 +20,7 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
 #include <gmock/gmock-matchers.h>
 
 namespace NES::Runtime::Execution {

@@ -37,6 +37,7 @@ HyperLogLogDescriptor::HyperLogLogDescriptor(const FieldAccessExpressionNodePtr&
 
 void HyperLogLogDescriptor::addDescriptorFields(Schema& outputSchema, const std::string& qualifierNameWithSeparator) {
     outputSchema.addField(qualifierNameWithSeparator + WIDTH_FIELD_NAME, BasicType::UINT64);
+    outputSchema.addField(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME, BasicType::FLOAT64);
     outputSchema.addField(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
 }
 

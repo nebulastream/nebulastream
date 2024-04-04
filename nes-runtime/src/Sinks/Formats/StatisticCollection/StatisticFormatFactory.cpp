@@ -14,13 +14,14 @@
 
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Sinks/Formats/StatisticCollection/CountMinStatisticSinkFormat.hpp>
-#include <Sinks/Formats/StatisticCollection/StatisticSinkFormatFactory.hpp>
+#include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {
-AbstractStatisticSinkFormatPtr
-StatisticSinkFormatFactory::createFromSchema(SchemaPtr schema, uint64_t bufferSize, StatisticSinkFormatType type) {
+AbstractStatisticFormatPtr
+StatisticFormatFactory::createFromSchema(SchemaPtr schema, uint64_t bufferSize, StatisticSinkFormatType type) {
     // 1. We decide what memoryLayout we should use
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
     switch (schema->getLayoutType()) {
@@ -38,13 +39,18 @@ StatisticSinkFormatFactory::createFromSchema(SchemaPtr schema, uint64_t bufferSi
     // 2. We decide what format to build and return the format
     switch (type) {
         case StatisticSinkFormatType::COUNT_MIN: return createCountMinFormat(memoryLayout);
-        case StatisticSinkFormatType::HLL: NES_NOT_IMPLEMENTED();
+        case StatisticSinkFormatType::HLL: return createHyperLogLogFormat(memoryLayout);
     }
 }
 
-AbstractStatisticSinkFormatPtr
-StatisticSinkFormatFactory::createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout) {
-    return CountMinStatisticSinkFormat::create(memoryLayout);
+AbstractStatisticFormatPtr
+StatisticFormatFactory::createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout) {
+    return CountMinStatisticFormat::create(memoryLayout);
+}
+
+AbstractStatisticFormatPtr
+StatisticFormatFactory::createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout) {
+    return HyperLogLogStatisticFormat::create(memoryLayout);
 }
 
 }// namespace NES::Statistic

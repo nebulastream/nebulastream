@@ -164,6 +164,8 @@ namespace PhysicalOperators {
 class PhysicalOperator;
 using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 
+class PhysicalCountMinBuildOperator;
+class PhysicalHyperLogLogBuildOperator;
 }// namespace PhysicalOperators
 
 }// namespace QueryCompilation

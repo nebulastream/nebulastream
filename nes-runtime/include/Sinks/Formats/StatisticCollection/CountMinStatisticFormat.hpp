@@ -12,35 +12,38 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_COUNTMINSTATISTICSINKFORMAT_HPP_
-#define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_COUNTMINSTATISTICSINKFORMAT_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_COUNTMINSTATISTICFORMAT_HPP_
+#define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_COUNTMINSTATISTICFORMAT_HPP_
 
-#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
 
 namespace NES::Statistic {
 
 /**
  * @brief StatisticSinkFormat that creates/builds CountMin-Sketches from a tuple buffer
  */
-class CountMinStatisticSinkFormat : public AbstractStatisticSinkFormat {
+class CountMinStatisticFormat : public AbstractStatisticFormat {
   public:
-    static AbstractStatisticSinkFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+    static AbstractStatisticFormatPtr create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     std::vector<std::pair<StatisticHash, StatisticPtr>> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) override;
 
     [[nodiscard]] std::string toString() const override;
 
-    ~CountMinStatisticSinkFormat() override;
+    ~CountMinStatisticFormat() override;
+    std::vector<Runtime::TupleBuffer> writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
+                                                                Runtime::BufferManager& bufferManager) override;
 
   private:
-    CountMinStatisticSinkFormat(const std::string& qualifierNameWithSeparator,
+    CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
                                 Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     const std::string widthFieldName;
     const std::string depthFieldName;
+    const std::string numberOfBitsInKeyFieldName;
     const std::string countMinDataFieldName;
 };
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_COUNTMINSTATISTICSINKFORMAT_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_COUNTMINSTATISTICFORMAT_HPP_

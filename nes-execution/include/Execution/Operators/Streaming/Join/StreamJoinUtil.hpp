@@ -100,27 +100,6 @@ class WindowSliceIdKey {
 };
 
 /**
- * @brief Stores the meta date for a RecordBuffer
- */
-struct BufferMetaData {
-  public:
-    BufferMetaData(const uint64_t watermarkTs, const SequenceData seqNumber, const OriginId originId)
-        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId) {}
-
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << "waterMarkTs: " << watermarkTs << ","
-            << "seqNumber: " << seqNumber << ","
-            << "originId: " << originId;
-        return oss.str();
-    }
-
-    const uint64_t watermarkTs;
-    const SequenceData seqNumber;
-    const OriginId originId;
-};
-
-/**
  * @brief This stores the left, right and output schema for a binary join
  */
 struct JoinSchema {

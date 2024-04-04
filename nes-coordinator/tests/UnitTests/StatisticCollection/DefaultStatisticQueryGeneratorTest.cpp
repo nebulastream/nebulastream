@@ -16,6 +16,7 @@
 #include <BaseUnitTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
@@ -114,6 +115,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     // Adding here the specific descriptor fields
     outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 512;
@@ -139,7 +141,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     auto hyperLoglogDescriptor = descriptor->as<HyperLogLogDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(Over("f1")));
+    const auto expectedField = Over("car$f1");
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
+    EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(expectedField));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyASAP>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(hyperLoglogDescriptor->getWidth(), EXPECTED_WIDTH);
@@ -156,6 +160,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
                                     ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 55;
@@ -182,7 +187,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(countMinDescriptor->getField()->equal(Over("f1")));
+    const auto expectedField = Over("car$f1");
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
+    EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyLazy>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
@@ -196,10 +203,14 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     using namespace NES::Statistic;
     using namespace Windowing;
 
+    // Adding here the field for the ingestion rate field
+    inputSchema = inputSchema->addField(INGESTION_RATE_FIELD_NAME, BasicType::UINT64);
+
     // Adding here the specific descriptor fields
     outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
                                     ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 55;
@@ -226,7 +237,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(countMinDescriptor->getField()->equal(Over(INGESTION_RATE_FIELD_NAME)));
+    const auto expectedField = Over("car$" + INGESTION_RATE_FIELD_NAME);
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::UINT64));
+    EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyLazy>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
@@ -240,10 +253,15 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     using namespace NES::Statistic;
     using namespace Windowing;
 
+    // Adding here the field for the buffer rate field
+    inputSchema = inputSchema->addField(BUFFER_RATE_FIELD_NAME, BasicType::UINT64);
+
+
     // Adding here the specific descriptor fields
     outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
                                     ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 55;
@@ -270,7 +288,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(countMinDescriptor->getField()->equal(Over(BUFFER_RATE_FIELD_NAME)));
+    const auto expectedField = Over("car$" + BUFFER_RATE_FIELD_NAME);
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::UINT64));
+    EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyAdaptive>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
@@ -288,6 +308,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
                                     ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 55;
@@ -314,7 +335,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     auto countMinDescriptor = descriptor->as<CountMinDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(countMinDescriptor->getField()->equal(Over("f1")));
+    const auto expectedField = Over("car$f1");
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
+    EXPECT_TRUE(countMinDescriptor->getField()->equal(expectedField));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyLazy>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(countMinDescriptor->getWidth(), EXPECTED_WIDTH);
@@ -345,6 +368,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
     // Adding here the specific descriptor fields
     outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("car");
 
     constexpr auto EXPECTED_WIDTH = 512;
@@ -370,7 +394,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
     auto hyperLoglogDescriptor = descriptor->as<HyperLogLogDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(Over("f1")));
+    const auto expectedField = Over("car$f1");
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
+    EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(expectedField));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyASAP>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(hyperLoglogDescriptor->getWidth(), EXPECTED_WIDTH);
@@ -414,6 +440,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     // Adding here the specific descriptor fields
     outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
+                                    ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("cartruck");
 
     constexpr auto EXPECTED_WIDTH = 512;
@@ -439,7 +466,9 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     auto hyperLoglogDescriptor = descriptor->as<HyperLogLogDescriptor>();
     auto operatorSendingPolicy = descriptor->getSendingPolicy();
     auto operatorTriggerCondition = descriptor->getTriggerCondition();
-    EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(Over("f1")));
+    const auto expectedField = Over("car$f1");
+    expectedField->setStamp(DataTypeFactory::createType(BasicType::INT64));
+    EXPECT_TRUE(hyperLoglogDescriptor->getField()->equal(expectedField));
     EXPECT_TRUE(std::dynamic_pointer_cast<SendingPolicyASAP>(operatorSendingPolicy));
     EXPECT_TRUE(operatorTriggerCondition->instanceOf<NeverTrigger>());
     EXPECT_EQ(hyperLoglogDescriptor->getWidth(), EXPECTED_WIDTH);

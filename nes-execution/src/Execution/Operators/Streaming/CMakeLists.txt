@@ -12,6 +12,7 @@
 
 add_subdirectory(Aggregations)
 add_subdirectory(Join)
+add_subdirectory(StatisticCollection)
 
 add_source_files(nes-execution
         MultiOriginWatermarkProcessor.cpp

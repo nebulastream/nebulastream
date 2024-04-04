@@ -232,6 +232,31 @@ class LowerPhysicalToNautilusOperators {
                       uint64_t windowSize,
                       uint64_t windowSlide);
 
+    /**
+     * @brief Lowers a physicalCountMinBuild to a CountMinBuild
+     * @param physicalCountMinBuild
+     * @param operatorHandlers
+     * @param bufferSize
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerCountMinBuildOperator(const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
+                               std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                               uint64_t bufferSize);
+
+    /**
+     * @brief Lowers a physicalHyperLogLogBuild to a HyperLogLogBuild
+     * @param physicalHLLBuildOperator
+     * @param operatorHandlers
+     * @param bufferSize
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerHyperLogLogBuildOperator(const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
+                                                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                                                                    uint64_t bufferSize);
+
+
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };

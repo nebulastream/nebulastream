@@ -12,8 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        AbstractStatisticSinkFormat.cpp
-        StatisticSinkFormatFactory.cpp
-        CountMinStatisticSinkFormat.cpp
-        HyperLogLogStatisticSinkFormat.cpp
+        AbstractStatisticFormat.cpp
+        StatisticFormatFactory.cpp
+        CountMinStatisticFormat.cpp
+        HyperLogLogStatisticFormat.cpp
 )

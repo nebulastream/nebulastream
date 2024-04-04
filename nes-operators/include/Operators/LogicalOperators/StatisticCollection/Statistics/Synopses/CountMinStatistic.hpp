@@ -40,11 +40,39 @@ class CountMinStatistic : public SynopsesStatistic {
                                uint64_t observedTuples,
                                uint64_t width,
                                uint64_t depth,
+                               uint64_t numberOfBitsInKey,
                                const std::string_view countMinDataString);
+
+    /**
+     * @brief Creates a CountMin for the given startTs, endTs, width, and depth. The #observedTuples and all counters are set to 0
+     * @param startTs
+     * @param endTs
+     * @param width
+     * @param depth
+     * @return StatisticPtr
+     */
+    static StatisticPtr createInit(const Windowing::TimeMeasure& startTs,
+                                   const Windowing::TimeMeasure& endTs,
+                                   uint64_t width,
+                                   uint64_t depth,
+                                   uint64_t numberOfBitsInKey);
 
     StatisticValue<> getStatisticValue(const ProbeExpression& probeExpression) const override;
     bool equal(const Statistic& other) const override;
     std::string toString() const override;
+    void merge(const SynopsesStatistic& other) override;
+
+    /**
+     * @brief Increments the counter at the position of <row, col>
+     * @param row
+     * @param col
+     */
+    void update(uint64_t row, uint64_t col);
+
+    uint64_t getWidth() const;
+    uint64_t getDepth() const;
+    uint64_t getNumberOfBitsInKeyOffset() const;
+    std::string getCountMinDataAsString() const;
 
   private:
     CountMinStatistic(const Windowing::TimeMeasure& startTs,
@@ -52,11 +80,13 @@ class CountMinStatistic : public SynopsesStatistic {
                       uint64_t observedTuples,
                       uint64_t width,
                       uint64_t depth,
+                      uint64_t numberOfBitsInKey,
                       const std::vector<uint64_t>& countMinData);
 
 
     uint64_t width;
     uint64_t depth;
+    uint64_t numberOfBitsInKey;
     std::vector<uint64_t> countMinData;
 };
 

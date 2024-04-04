@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
 #include <Sinks/Mediums/StatisticSink.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <utility>
@@ -58,7 +58,7 @@ StatisticSink::StatisticSink(const SinkFormatPtr& sinkFormat,
                              DecomposedQueryPlanId decomposedQueryPlanId,
                              uint64_t numberOfOrigins,
                              AbstractStatisticStorePtr statisticStore,
-                             AbstractStatisticSinkFormatPtr statisticSinkFormat)
+                             AbstractStatisticFormatPtr statisticSinkFormat)
     : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
       statisticStore(std::move(statisticStore)), statisticSinkFormat(std::move(statisticSinkFormat)) {}
 }// namespace NES::Statistic

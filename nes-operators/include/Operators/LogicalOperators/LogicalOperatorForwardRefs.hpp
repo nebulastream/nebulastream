@@ -120,6 +120,11 @@ using OperatorPtr = std::shared_ptr<Operator>;
 class BroadcastLogicalOperator;
 using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
 
+namespace Statistic {
+class LogicalStatisticWindowOperator;
+using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
+} // namespace Statistic
+
 }// namespace NES
 
 #endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
