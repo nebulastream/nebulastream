@@ -17,17 +17,17 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
-    SchemaPtr TestSchemas::getSchemaTemplate(const std::string &name) {
-        auto it = testSchemaCatalog.find(name);
-        if (it != testSchemaCatalog.end()) {
-            SchemaPtr newSchema = std::make_shared<Schema>();
-            // Use copyFields() to create a deep copy of the fields
-            newSchema->copyFields(it->second);
-            return newSchema;
-        } else {
-            NES_THROW_RUNTIME_ERROR("Schema not found");
-        }
+SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name) {
+    auto it = testSchemaCatalog.find(name);
+    if (it != testSchemaCatalog.end()) {
+        SchemaPtr newSchema = std::make_shared<Schema>();
+        // Use copyFields() to create a deep copy of the fields
+        newSchema->copyFields(it->second);
+        return newSchema;
+    } else {
+        NES_THROW_RUNTIME_ERROR("Schema not found");
     }
+}
 
 std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog = {
     {"id_u64", Schema::create()->addField("id", BasicType::UINT64)},
