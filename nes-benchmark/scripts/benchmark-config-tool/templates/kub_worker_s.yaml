@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nes-worker-source
+  labels:
+    app: worker
+spec:
+  replicas: {{worker.n_worker_sources}}
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: nes-ft
+        image: {{coordinator.image}}
+        env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        ports:
+        - containerPort: {{ ports.dataWL }}
+        - containerPort: {{ ports.dataW }}
+        - containerPort: {{ ports.rpcW }}
+        - containerPort: {{ ports.rpc }}
+        - containerPort: {{ ports.rpcWL }}
+        - containerPort: {{ ports.data }}
+        command: ["nesWorker", "--physicalSources.type={{worker_sources.physicalSources.type}}", "--physicalSources.rowLayout={{worker_sources.physicalSources.rowLayout}}", "--physicalSources.physicalSourceName={{worker_sources.physicalSources.physicalSourceName}}", "--physicalSources.logicalSourceName={{worker_sources.physicalSources.logicalSourceName}}", "--physicalSources.numberOfBuffersToProduce={{worker_sources.physicalSources.numberOfBuffersToProduce}}","--localWorkerIp=$(MY_POD_IP)", "--coordinatorIp=coordinator-service", "--coordinatorPort={{ ports.rpc }}", "--rpcPort={{ ports.rpcW }}", "--dataPort={{ ports.dataW }}", "--logLevel={{worker_sources.logLevel}}", "--numberOfBuffersInGlobalBufferManager={{worker_sources.numberOfBuffersInGlobalBufferManager}}", "--numberOfBuffersInSourceLocalBufferPool={{worker_sources.numberOfBuffersInSourceLocalBufferPool}}", "--bufferSizeInBytes={{worker_sources.bufferSizeInBytes}}", "--numWorkerThreads={{worker_sources.numWorkerThreads}}", "numberOfBuffersPerWorker={{worker_sources.numberOfBuffersPerWorker}}"]

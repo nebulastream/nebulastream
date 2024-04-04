@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nes-coordinator
+  labels:
+    app: coordinator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coordinator
+  template:
+    metadata:
+      labels:
+        app: coordinator
+    spec:
+      containers:
+      - name: nes-ft
+        {% if coordinator.image %}
+        image: {{ coordinator.image }}
+        {% endif %}
+        env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        ports:
+        - containerPort: {{ ports.rpc }}
+        - containerPort: {{ ports.data }}
+        - containerPort: {{ ports.rest }}
+        - containerPort: {{ ports.dataWL }}
+        - containerPort: {{ ports.rpcWL }}
+        - containerPort: {{ ports.dataW }}
+        - containerPort: {{ ports.rpcW }}
+        command: ["nesCoordinator", "--coordinatorIp=$(MY_POD_IP)", "--restIp=0.0.0.0", "--rpcPort={{ ports.rpc }}", "--logLevel=LOG_DEBUG", "--worker.localWorkerIp=$(MY_POD_IP)", "--worker.coordinatorPort={{ ports.rpc }}", "--worker.dataPort={{ ports.data }}"]
+        #command: ["nesCoordinator", "--coordinatorIp=$(MY_POD_IP)", "--restIp=0.0.0.0", "--rpcPort=10000", "--dataPort=10001", "--logLevel=LOG_WARNING", "--worker.localWorkerIp=$(MY_POD_IP)", "--worker.coordinatorPort=10000", "--worker.dataPort=10001", "--numberOfBuffersPerEpoch=900", "--numberOfBuffersInGlobalBufferManager=8192", "--numberOfBuffersInSourceLocalBufferPool=1024", "--bufferSizeInBytes=131072", "numWorkerThreads=4"]

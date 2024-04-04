@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nes-worker
+  labels:
+    app: worker
+spec:
+  replicas: {{worker.n_worker}}
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: nes-ft
+        image: {{coordinator.image}}
+        env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        ports:
+        - containerPort: {{ ports.dataWL }}
+        - containerPort: {{ ports.dataW }}
+        - containerPort: {{ ports.rpcW }}
+        - containerPort: {{ ports.rpc }}
+        - containerPort: {{ ports.rpcWL }}
+        - containerPort: {{ ports.data }}
+      logLevel: "LOG_ERROR" 
+      command: ["nesWorker", "--localWorkerIp=$(MY_POD_IP)", "--coordinatorIp=coordinator-service", "--coordinatorPort={{ ports.rpc }}", "--rpcPort={{ ports.rpcW }}", "--dataPort={{ ports.rpcW }}", "--logLevel={{ worker.logLevel }}", "--numberOfBuffersInGlobalBufferManager={{worker.numberOfBuffersInGlobalBufferManager}}", "--numberOfBuffersInSourceLocalBufferPool={{ worker.numberOfBuffersInSourceLocalBufferPool }}", "--bufferSizeInBytes={{ worker.bufferSizeInBytes }}", "--numWorkerThreads={{ worker.numWorkerThreads }}", "numberOfBuffersPerWorker={{ worker.numberOfBuffersPerWorker }}"]

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: coordinator-service
+spec:
+  selector:
+    app: coordinator
+  ports:
+    - protocol: TCP
+      name: data
+      port: {{ ports.data }}
+    - protocol: TCP
+      name: data-wl
+      port: {{ ports.dataWL }}
+    - protocol: TCP
+      name: data-w
+      port: {{ ports.dataW }}
+    - protocol: TCP
+      name: rest
+      port: {{ ports.rest }}
+    - protocol: TCP
+      name: rpc
+      port: {{ ports.rpc }}
+    - protocol: TCP
+      name: rpc-wl
+      port: {{ ports.rpcWL }}
+    - protocol: TCP
+      name: rpc-w
+      port: {{ ports.rpcW }}
