@@ -71,7 +71,7 @@ class SinkTest : public Testing::BaseIntegrationTest {
     /* Called before a single test. */
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
-        test_schema = TestSchemas::getSchemaTemplate("key_val_u32");
+        test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
         write_result = false;
         path_to_csv_file = getTestResourceFolder() / "sink.csv";
         path_to_bin_file = getTestResourceFolder() / "sink.bin";

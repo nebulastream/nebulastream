@@ -42,16 +42,16 @@ class TestHarnessUtilTest : public Testing::BaseIntegrationTest {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
                                   .addLogicalSource("car", carSchema)
@@ -84,16 +84,16 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")//2
@@ -128,20 +128,20 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
     struct Truck {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
-    auto truckSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto truckSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
@@ -182,18 +182,18 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Sum(Attribute("value")));
     TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -328,16 +328,16 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key"));
+    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("id"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -369,16 +369,16 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key"));
+    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("id"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
 
@@ -435,12 +435,12 @@ TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -455,7 +455,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 4);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 4);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
@@ -484,12 +484,12 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -504,7 +504,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 4);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 4);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
@@ -540,12 +540,12 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
 
     EXPECT_THROW(
         TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(),
@@ -557,12 +557,12 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
@@ -574,22 +574,22 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
     struct Truck {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
         uint64_t length;
         uint64_t weight;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
-    auto truckSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto truckSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     auto queryWithFilterOperator = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())

@@ -429,11 +429,11 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u64");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Min(Attribute("value")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("car", carSchema)
