@@ -36,7 +36,7 @@ class AbstractStatisticFormat {
   public:
     explicit AbstractStatisticFormat(const Schema& schema, const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
     explicit AbstractStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                         Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+                                     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     /**
      * @brief Reads the statistics from the buffer
@@ -53,7 +53,7 @@ class AbstractStatisticFormat {
      */
     virtual std::vector<Runtime::TupleBuffer>
     writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
-                                                                        Runtime::BufferManager& bufferManager) = 0;
+                               Runtime::BufferManager& bufferManager) = 0;
 
     [[nodiscard]] virtual std::string toString() const = 0;
 

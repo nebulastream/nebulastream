@@ -117,7 +117,8 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
 
             // We simulate a filling of count min by randomly updating the sketch
             const auto numberOfTuplesToInsert = rand() % 100 + 100;
-            auto countMin = Statistic::CountMinStatistic::createInit(startTs, endTs, width, depth, numberOfBitsInKey)->as<Statistic::CountMinStatistic>();
+            auto countMin = Statistic::CountMinStatistic::createInit(startTs, endTs, width, depth, numberOfBitsInKey)
+                                ->as<Statistic::CountMinStatistic>();
             for (auto i = 0; i < numberOfTuplesToInsert; ++i) {
                 for (auto row = 0_u64; row < depth; ++row) {
                     auto rndCol = rand() % width;
@@ -162,8 +163,8 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
      */
     static std::pair<std::vector<Runtime::TupleBuffer>, std::vector<Statistic::StatisticPtr>>
     createRandomHyperLogLogSketches(uint64_t numberOfSketches,
-                                         const SchemaPtr& schema,
-                                         const Runtime::BufferManagerPtr& bufferManager) {
+                                    const SchemaPtr& schema,
+                                    const Runtime::BufferManagerPtr& bufferManager) {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         std::vector<Statistic::StatisticPtr> expectedStatistics;
         constexpr auto windowSize = 10;
@@ -189,7 +190,8 @@ class StatisticSinkTest : public Testing::BaseIntegrationTest, public ::testing:
 
             // We simulate a filling of count min by randomly updating the sketch
             const auto numberOfTuplesToInsert = rand() % 100 + 100;
-            auto hyperLogLog = Statistic::HyperLogLogStatistic::createInit(startTs, endTs, width)->as<Statistic::HyperLogLogStatistic>();
+            auto hyperLogLog =
+                Statistic::HyperLogLogStatistic::createInit(startTs, endTs, width)->as<Statistic::HyperLogLogStatistic>();
             for (auto i = 0; i < numberOfTuplesToInsert; ++i) {
                 auto hash = rand();
                 hyperLogLog->update(hash);

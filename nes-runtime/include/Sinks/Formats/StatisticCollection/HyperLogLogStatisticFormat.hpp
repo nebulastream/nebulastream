@@ -33,15 +33,16 @@ class HyperLogLogStatisticFormat : public AbstractStatisticFormat {
     std::vector<std::pair<StatisticHash, StatisticPtr>> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) override;
     [[nodiscard]] std::string toString() const override;
     std::vector<Runtime::TupleBuffer> writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
-                                                                Runtime::BufferManager& bufferManager) override;
+                                                                 Runtime::BufferManager& bufferManager) override;
     ~HyperLogLogStatisticFormat() override;
-    private:
-        HyperLogLogStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
-        const std::string widthFieldName;
-        const std::string estimateFieldName;
-        const std::string hyperLogLogDataFieldName;
+  private:
+    HyperLogLogStatisticFormat(const std::string& qualifierNameWithSeparator,
+                               Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+
+    const std::string widthFieldName;
+    const std::string estimateFieldName;
+    const std::string hyperLogLogDataFieldName;
 };
 
 }// namespace NES::Statistic

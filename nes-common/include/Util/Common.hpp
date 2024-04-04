@@ -15,8 +15,8 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #include <Identifiers.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <functional>
 #include <memory>
 #include <sstream>
@@ -26,7 +26,7 @@
 namespace NES {
 static constexpr auto H3_SEED = 42;
 static constexpr auto NUMBER_OF_BITS_IN_HASH_VALUE = 64;
-}
+}// namespace NES
 
 namespace NES::QueryCompilation {
 enum class StreamJoinStrategy : uint8_t {
@@ -65,7 +65,7 @@ struct BufferMetaData {
     const SequenceData seqNumber;
     const OriginId originId;
 };
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution
 
 namespace NES::Util {
 namespace detail {

@@ -26,9 +26,8 @@ namespace NES::Runtime::Execution {
 using namespace std::chrono_literals;
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-
 class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
-                                      public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t>>{
+                                      public ::testing::WithParamInterface<std::tuple<uint64_t, uint64_t>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
@@ -40,7 +39,6 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
     Statistic::AbstractStatisticFormatPtr statisticFormat;
     Statistic::MetricHash metricHash;
     Statistic::AbstractStatisticStorePtr testStatisticStore;
-
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HyperLogLogBuildExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -54,17 +52,18 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
         const auto numWorkerThreads = std::get<0>(HyperLogLogBuildExecutionTest::GetParam());
         sketchWidth = std::get<1>(HyperLogLogBuildExecutionTest::GetParam());
 
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode,
-                                                                         numWorkerThreads);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode, numWorkerThreads);
 
         inputSchema = Schema::create()
                           ->addField(fieldToBuildHyperLogLogOver, BasicType::UINT64)
                           ->addField(timestampFieldName, BasicType::UINT64)
                           ->updateSourceName("test");
-        fieldToBuildHyperLogLogOver = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldToBuildHyperLogLogOver;
+        fieldToBuildHyperLogLogOver =
+            inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldToBuildHyperLogLogOver;
         timestampFieldName = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + timestampFieldName;
 
-        outputSchema = Schema::create()->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
+        outputSchema = Schema::create()
+                           ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                            ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::STATISTIC_TYPE_FIELD_NAME, BasicType::UINT64)
@@ -74,8 +73,9 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
                            ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
                            ->updateSourceName("test");
         testStatisticStore = Statistic::DefaultStatisticStore::create();
-        statisticFormat = Statistic::HyperLogLogStatisticFormat::create(Runtime::MemoryLayouts::RowLayout::create(outputSchema, executionEngine->getBufferManager()->getBufferSize()));
-        metricHash = 42; // Just some arbitrary number
+        statisticFormat = Statistic::HyperLogLogStatisticFormat::create(
+            Runtime::MemoryLayouts::RowLayout::create(outputSchema, executionEngine->getBufferManager()->getBufferSize()));
+        metricHash = 42;// Just some arbitrary number
     }
 
     /* Will be called before a test is executed. */
@@ -98,11 +98,13 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
     void runQueryAndCheckCorrectness(SourceDescriptorPtr testSourceDescriptor,
                                      SinkDescriptorPtr testSinkDescriptor,
                                      Statistic::WindowStatisticDescriptorPtr hyperLogLogDescriptor,
-                                     uint64_t windowSize, uint64_t windowSlide,
+                                     uint64_t windowSize,
+                                     uint64_t windowSlide,
                                      std::vector<TupleBuffer> allInputBuffers) {
 
         // Creating the query
-        auto window = SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
+        auto window =
+            SlidingWindow::of(EventTime(Attribute(timestampFieldName)), Milliseconds(windowSize), Milliseconds(windowSlide));
         auto query = TestQuery::from(testSourceDescriptor)
                          .buildStatistic(window, hyperLogLogDescriptor, metricHash)
                          .sink(testSinkDescriptor);
@@ -122,9 +124,14 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
 
             // Now creating the expected hyperloglog sketches in testStatisticStore
             auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, inputSchema);
-            Util::updateTestHyperLogLogStatistic(dynamicBuffer, testStatisticStore, metricHash, windowSize, windowSlide,
+            Util::updateTestHyperLogLogStatistic(dynamicBuffer,
+                                                 testStatisticStore,
+                                                 metricHash,
+                                                 windowSize,
+                                                 windowSlide,
                                                  sketchWidth,
-                                                 fieldToBuildHyperLogLogOver, timestampFieldName);
+                                                 fieldToBuildHyperLogLogOver,
+                                                 timestampFieldName);
         }
 
         // Giving the execution engine time to process the tuples, so that we do not just test our terminate() implementation
@@ -136,18 +143,19 @@ class HyperLogLogBuildExecutionTest : public Testing::BaseUnitTest,
         const auto nodeEngine = executionEngine->getNodeEngine();
         const auto nodeEngineStatisticStore = nodeEngine->getStatisticStore();
 
-        while(nodeEngineStatisticStore->getAllStatistics().size() != testStatisticStore->getAllStatistics().size()) {
+        while (nodeEngineStatisticStore->getAllStatistics().size() != testStatisticStore->getAllStatistics().size()) {
             NES_DEBUG("Waiting till all statistics have been built. Currently {} and expecting {}...",
                       nodeEngineStatisticStore->getAllStatistics().size(),
                       testStatisticStore->getAllStatistics().size());
             std::this_thread::sleep_for(100ms);
         }
 
-
         // Checking the correctness
         NES_DEBUG("Built all statistics. Now checking for correctness...");
         for (auto& [statisticHash, hyperLogLogStatistic] : nodeEngineStatisticStore->getAllStatistics()) {
-            NES_DEBUG("Searching for statisticHash = {} hyperLogLogStatistic = {}", statisticHash, hyperLogLogStatistic->toString());
+            NES_DEBUG("Searching for statisticHash = {} hyperLogLogStatistic = {}",
+                      statisticHash,
+                      hyperLogLogStatistic->toString());
             auto expectedStatistics = testStatisticStore->getStatistics(statisticHash,
                                                                         hyperLogLogStatistic->getStartTs(),
                                                                         hyperLogLogStatistic->getEndTs());
@@ -165,17 +173,24 @@ TEST_P(HyperLogLogBuildExecutionTest, singleInputTuple) {
     using namespace Statistic;
     constexpr auto windowSize = 10;
     constexpr auto numberOfTuples = 1;
-    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *executionEngine->getBufferManager(), inputSchema,
-                                                                   fieldToBuildHyperLogLogOver, timestampFieldName);
-    
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildHyperLogLogOver,
+                                                                   timestampFieldName);
+
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::HLL);
     const auto testSourceDescriptor = executionEngine->createDataSource(inputSchema);
 
     // Creating the hyperloglog descriptor and running the query
     auto hyperLogLogDescriptor = HyperLogLogDescriptor::create(Over(fieldToBuildHyperLogLogOver), sketchWidth);
-    runQueryAndCheckCorrectness(testSourceDescriptor, testSinkDescriptor,
-                                hyperLogLogDescriptor, windowSize, windowSize, allInputBuffers);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                hyperLogLogDescriptor,
+                                windowSize,
+                                windowSize,
+                                allInputBuffers);
 }
 
 /**
@@ -185,8 +200,11 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffers) {
     using namespace Statistic;
     constexpr auto windowSize = 1000;
     constexpr auto numberOfTuples = 1'000;
-    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *executionEngine->getBufferManager(), inputSchema,
-                                                                   fieldToBuildHyperLogLogOver, timestampFieldName);
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildHyperLogLogOver,
+                                                                   timestampFieldName);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::HLL);
@@ -194,8 +212,12 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffers) {
 
     // Creating the hyperloglog descriptor and running the query
     auto hyperLogLogDescriptor = HyperLogLogDescriptor::create(Over(fieldToBuildHyperLogLogOver), sketchWidth);
-    runQueryAndCheckCorrectness(testSourceDescriptor, testSinkDescriptor,
-                                hyperLogLogDescriptor, windowSize, windowSize, allInputBuffers);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                hyperLogLogDescriptor,
+                                windowSize,
+                                windowSize,
+                                allInputBuffers);
 }
 
 /**
@@ -207,8 +229,11 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffersSlidingWindow) {
     constexpr auto windowSize = 1000;
     constexpr auto windowSlide = 500;
     constexpr auto numberOfTuples = 1'000;
-    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples, *executionEngine->getBufferManager(), inputSchema,
-                                                                   fieldToBuildHyperLogLogOver, timestampFieldName);
+    auto allInputBuffers = Util::createDataForOneFieldAndTimeStamp(numberOfTuples,
+                                                                   *executionEngine->getBufferManager(),
+                                                                   inputSchema,
+                                                                   fieldToBuildHyperLogLogOver,
+                                                                   timestampFieldName);
 
     // Creating the sink and the sources
     const auto testSinkDescriptor = StatisticSinkDescriptor::create(StatisticSinkFormatType::HLL);
@@ -216,21 +241,23 @@ TEST_P(HyperLogLogBuildExecutionTest, multipleInputBuffersSlidingWindow) {
 
     // Creating the hyperloglog descriptor and running the query
     auto hyperLogLogDescriptor = HyperLogLogDescriptor::create(Over(fieldToBuildHyperLogLogOver), sketchWidth);
-    runQueryAndCheckCorrectness(testSourceDescriptor, testSinkDescriptor,
-                                hyperLogLogDescriptor, windowSize, windowSlide, allInputBuffers);
+    runQueryAndCheckCorrectness(testSourceDescriptor,
+                                testSinkDescriptor,
+                                hyperLogLogDescriptor,
+                                windowSize,
+                                windowSlide,
+                                allInputBuffers);
 }
 
 INSTANTIATE_TEST_CASE_P(testHyperLogLog,
                         HyperLogLogBuildExecutionTest,
-                        ::testing::Combine(::testing::Values(1, 4, 8),               // numWorkerThread
-                                           ::testing::Values(4, 5, 6, 8, 10, 15, 20) // sketchWidth
+                        ::testing::Combine(::testing::Values(1, 4, 8),              // numWorkerThread
+                                           ::testing::Values(4, 5, 6, 8, 10, 15, 20)// sketchWidth
                                            ),
                         [](const testing::TestParamInfo<HyperLogLogBuildExecutionTest::ParamType>& info) {
                             const auto numWorkerThread = std::get<0>(info.param);
                             const auto sketchWidth = std::get<1>(info.param);
-                            return std::to_string(numWorkerThread) + "Threads_" +
-                                std::to_string(sketchWidth) + "Width";
+                            return std::to_string(numWorkerThread) + "Threads_" + std::to_string(sketchWidth) + "Width";
                         });
 
-
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution

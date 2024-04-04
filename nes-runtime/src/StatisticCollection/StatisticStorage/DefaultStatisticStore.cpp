@@ -71,7 +71,9 @@ std::vector<HashStatisticPair> DefaultStatisticStore::getAllStatistics() {
     std::vector<HashStatisticPair> returnStatisticsVector;
 
     for (const auto& [statisticHash, statisticVec] : *lockedKeyToStatisticMap) {
-        std::transform(statisticVec.begin(), statisticVec.end(), std::back_inserter(returnStatisticsVector),
+        std::transform(statisticVec.begin(),
+                       statisticVec.end(),
+                       std::back_inserter(returnStatisticsVector),
                        [statisticHash](const StatisticPtr statistic) {
                            return std::make_pair(statisticHash, statistic);
                        });

@@ -16,11 +16,11 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <TestUtils/UtilityFunctions.hpp>
 #include <gmock/gmock-matchers.h>
 
 namespace NES::Runtime::Execution {
