@@ -26,6 +26,8 @@ add_nes_execution_test(execution-map-pythonudf-pipeline-test "MapPythonUDFPipeli
 add_nes_execution_test(execution-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
 add_nes_execution_test(execution-batch-join-pipeline-test "BatchJoinPipelineTest.cpp")
 add_nes_execution_test(execution-limit-pipeline-test "LimitPipelineTest.cpp")
+add_nes_execution_test(count-min-pipeline-test "CountMinPipelineTest.cpp")
+add_nes_execution_test(hyper-log-log-pipeline-test "HyperLogLogPipelineTest.cpp")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_nes_execution_test(execution-javamapudf-pipeline-test "MapJavaUDFPipelineTest.cpp")

@@ -23,6 +23,10 @@ namespace NES::Statistic {
 class AbstractStatisticStore;
 using AbstractStatisticStorePtr = std::shared_ptr<AbstractStatisticStore>;
 
+class Statistic;
+using StatisticPtr = std::shared_ptr<Statistic>;
+using HashStatisticPair = std::pair<StatisticHash, StatisticPtr>;
+
 /**
  * @brief An interface for any statistic store
  */
@@ -41,9 +45,9 @@ class AbstractStatisticStore {
 
     /**
      * @brief Returns all statistics currently in this store
-     * @return Vector of StatisticPtr
+     * @return Vector of HashStatisticPair
      */
-    virtual std::vector<StatisticPtr> getAllStatistics() = 0;
+    virtual std::vector<HashStatisticPair> getAllStatistics() = 0;
 
     /**
      * @brief Inserts statistic with the statisticHash into a StatisticStore.

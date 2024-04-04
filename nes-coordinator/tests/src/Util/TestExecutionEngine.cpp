@@ -53,6 +53,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpM
     // We inject an invalid query parsing service as it is not used in the tests.
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
 }
 
 std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr& outputSchema, uint32_t expectedTuples) {
@@ -88,6 +89,7 @@ TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan) {
     // pre submission optimization
     decomposedQueryPlan = typeInferencePhase->execute(decomposedQueryPlan);
     decomposedQueryPlan = originIdInferencePhase->execute(decomposedQueryPlan);
+    decomposedQueryPlan = statisticIdInferencePhase->execute(decomposedQueryPlan);
     NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan), "query plan could not be started.");
     NES_ASSERT(nodeEngine->startQuery(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId()),
                "query plan could not be started.");
@@ -120,5 +122,7 @@ Runtime::MemoryLayouts::TestTupleBuffer TestExecutionEngine::getBuffer(const Sch
 bool TestExecutionEngine::stop() { return nodeEngine->stop(); }
 
 Runtime::BufferManagerPtr TestExecutionEngine::getBufferManager() const { return nodeEngine->getBufferManager(); }
+
+Runtime::NodeEnginePtr TestExecutionEngine::getNodeEngine() const { return nodeEngine; }
 
 }// namespace NES::Testing

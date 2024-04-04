@@ -37,7 +37,9 @@ static const std::string STATISTIC_TYPE_FIELD_NAME = "STATISTIC_TYPE_FIELD_NAME"
 
 /** Names for the fields of the synopsis */
 static const std::string WIDTH_FIELD_NAME = "WIDTH_FIELD_NAME";
+static const std::string ESTIMATE_FIELD_NAME = "ESTIMATE_FIELD_NAME";
 static const std::string DEPTH_FIELD_NAME = "DEPTH_FIELD_NAME";
+static const std::string NUMBER_OF_BITS_IN_KEY = "NUMBER_OF_BITS_IN_KEY";
 }// namespace NES::Statistic
 
 #endif//NES_NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_

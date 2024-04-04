@@ -14,23 +14,23 @@
 
 #include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
 #include <utility>
 
 namespace NES::Statistic {
 
-AbstractStatisticSinkFormat::AbstractStatisticSinkFormat(const Schema& schema,
-                                                         const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout)
-    : AbstractStatisticSinkFormat(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator(), memoryLayout) {}
+AbstractStatisticFormat::AbstractStatisticFormat(const Schema& schema,
+                                                 const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout)
+    : AbstractStatisticFormat(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator(), memoryLayout) {}
 
-AbstractStatisticSinkFormat::AbstractStatisticSinkFormat(const std::string& qualifierNameWithSeparator,
-                                                         Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout)
+AbstractStatisticFormat::AbstractStatisticFormat(const std::string& qualifierNameWithSeparator,
+                                                 Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout)
     : memoryLayout(std::move(memoryLayout)), startTsFieldName(qualifierNameWithSeparator + BASE_FIELD_NAME_START),
       endTsFieldName(qualifierNameWithSeparator + BASE_FIELD_NAME_END),
       statisticHashFieldName(qualifierNameWithSeparator + STATISTIC_HASH_FIELD_NAME),
       statisticTypeFieldName(qualifierNameWithSeparator + STATISTIC_TYPE_FIELD_NAME),
       observedTuplesFieldName(qualifierNameWithSeparator + OBSERVED_TUPLES_FIELD_NAME) {}
 
-AbstractStatisticSinkFormat::~AbstractStatisticSinkFormat() = default;
+AbstractStatisticFormat::~AbstractStatisticFormat() = default;
 
 }// namespace NES::Statistic

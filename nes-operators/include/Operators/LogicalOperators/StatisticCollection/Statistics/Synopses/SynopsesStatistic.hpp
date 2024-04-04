@@ -24,6 +24,13 @@ namespace NES::Statistic {
  * For now, it is purely a placeholder
  */
 class SynopsesStatistic : public Statistic {
+  public:
+    /**
+     * @brief Merges this Synopsis with other. The actual implementation heavily depends on the underlying synopsis
+     * @param other
+     */
+    virtual void merge(const SynopsesStatistic& other) = 0;
+
   protected:
     SynopsesStatistic(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t observedTuples);
 };

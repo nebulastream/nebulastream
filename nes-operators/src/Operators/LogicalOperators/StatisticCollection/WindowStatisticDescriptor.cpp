@@ -19,6 +19,10 @@ namespace NES::Statistic {
 
 SendingPolicyPtr WindowStatisticDescriptor::getSendingPolicy() const { return sendingPolicy; }
 
+void WindowStatisticDescriptor::inferStamps(const SchemaPtr& inputSchema) {
+    field->inferStamp(inputSchema);
+}
+
 void WindowStatisticDescriptor::setSendingPolicy(const SendingPolicyPtr& sendingPolicy) {
     WindowStatisticDescriptor::sendingPolicy = sendingPolicy;
 }

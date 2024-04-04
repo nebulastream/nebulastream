@@ -30,6 +30,7 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -102,10 +103,13 @@ class TestExecutionEngine {
 
     Runtime::BufferManagerPtr getBufferManager() const;
 
+    Runtime::NodeEnginePtr getNodeEngine() const;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
+    Optimizer::StatisticIdInferencePhasePtr statisticIdInferencePhase;
 };
 
 }// namespace NES::Testing

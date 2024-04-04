@@ -26,6 +26,23 @@ using FIELD_SIZE = uint64_t;
 class MemoryLayoutTupleBuffer;
 
 /**
+ * @brief Reads the variable sized data from the child buffer at the provided index
+ * @param buffer
+ * @param childBufferIdx
+ * @return Variable sized data as a string
+ */
+std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx);
+
+/**
+ * @brief Writes the variable sized data to the buffer
+ * @param buffer
+ * @param value
+ * @param bufferManager
+ * @return Index of the child buffer
+ */
+std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, BufferManager& bufferManager);
+
+/**
  * @brief A MemoryLayout defines a strategy in which a specific schema / a individual tuple is mapped to a tuple buffer.
  * To this end, it requires the definition of an schema and a specific buffer size.
  * Currently. we support a RowLayout and a ColumnLayout.

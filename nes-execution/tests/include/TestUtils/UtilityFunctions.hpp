@@ -30,9 +30,62 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Util {
+
+/**
+ * @brief Creates data for the schema <UINT64,UINT64>. The fieldToBuildCountMinOver is rnd() while timestampField gets monotonic
+ * increasing timestamps
+ * @param numberOfTuples
+ * @param bufferManager
+ * @param schema
+ * @param fieldToBuildCountMinOver
+ * @param timestampFieldName
+ * @return Vector of TupleBuffers
+ */
+std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples, BufferManager& bufferManager,
+                                                           SchemaPtr schema,
+                                                           const std::string& fieldToBuildCountMinOver,
+                                                           const std::string& timestampFieldName);
+
+/**
+ * @brief Creates a CountMinSketch (if none exists) in the statisticStore and updates the counter at <row,col>
+ * @param testTupleBuffer
+ * @param statisticStore
+ * @param metricHash
+ * @param numberOfBitsInKey
+ * @param windowSize
+ * @param windowSlide
+ * @param width
+ * @param depth
+ * @param fieldToBuildCountMinOver
+ * @param timestampFieldName
+ */
+void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::AbstractStatisticStorePtr statisticStore,
+                                 Statistic::MetricHash metricHash, uint64_t numberOfBitsInKey,
+                                 uint64_t windowSize, uint64_t windowSlide, uint64_t width, uint64_t depth,
+                                 const std::string& fieldToBuildCountMinOver,
+                                 const std::string& timestampFieldName);
+
+/**
+ * @brief Creates a HyperLogLogSketch (if none exists) in the statisticStore and updates the sketch
+ * @param testTupleBuffer
+ * @param statisticStore
+ * @param metricHash
+ * @param windowSize
+ * @param windowSlide
+ * @param width
+ * @param fieldToBuildCountMinOver
+ * @param timestampFieldName
+ */
+void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::AbstractStatisticStorePtr statisticStore,
+                                    Statistic::MetricHash metricHash, uint64_t windowSize, uint64_t windowSlide,
+                                    uint64_t width, const std::string& fieldToBuildCountMinOver,
+                                    const std::string& timestampFieldName);
+
 /**
  * @brief Creates a TupleBuffer from recordPtr
  * @param recordPtr

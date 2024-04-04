@@ -93,6 +93,14 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 std::string toCSVString(const SchemaPtr& schema);
 
 /**
+ * @brief Creates a memory layout from the schema and the buffer Size
+ * @param schema
+ * @param bufferSize
+ * @return MemoryLayoutPtr
+ */
+Runtime::MemoryLayouts::MemoryLayoutPtr createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
+
+/**
  *
  * @param queryPlan queryIdAndCatalogEntryMapping to which the properties are assigned
  * @param properties properties to assign

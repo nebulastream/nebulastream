@@ -14,15 +14,148 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/CountMinStatistic.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Synopses/HyperLogLogStatistic.hpp>
+#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
+#include <Nautilus/Interface/Hash/H3Hash.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Util/StdInt.hpp>
 #include <Util/Common.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <filesystem>
 #include <fstream>
+#include <random>
 #include <set>
 
 namespace NES::Runtime::Execution::Util {
+
+std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples, BufferManager& bufferManager,
+                                                           SchemaPtr schema,
+                                                           const std::string& fieldToBuildCountMinOver,
+                                                           const std::string& timestampFieldName) {
+    auto buffer = bufferManager.getBufferBlocking();
+    std::vector<TupleBuffer> inputBuffers;
+
+    SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
+    StatisticId statisticId = 1;
+    ChunkNumber chunkNumber = 1; // As we do not split a sequence number over multiple buffers here
+    OriginId originId = 0; // As we only have one origin in all tests
+
+    for (auto i = 0; i < numberOfTuples; ++i) {
+        auto dynamicBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        auto curTuplePos = dynamicBuffer.getNumberOfTuples();
+        dynamicBuffer[curTuplePos][fieldToBuildCountMinOver].write<uint64_t>(rand());
+        dynamicBuffer[curTuplePos][timestampFieldName].write<uint64_t>(i);
+        dynamicBuffer.setNumberOfTuples(curTuplePos + 1);
+
+        if (dynamicBuffer.getNumberOfTuples() >= dynamicBuffer.getCapacity()) {
+            buffer.setStatisticId(statisticId);
+            buffer.setSequenceData({++sequenceNumber, chunkNumber, true});
+            buffer.setOriginId(originId);
+            inputBuffers.emplace_back(buffer);
+            buffer = bufferManager.getBufferBlocking();
+        }
+    }
+
+    if (buffer.getNumberOfTuples() > 0) {
+        buffer.setStatisticId(statisticId);
+        buffer.setSequenceData({++sequenceNumber, chunkNumber, true});
+        buffer.setOriginId(originId);
+        inputBuffers.emplace_back(buffer);
+    }
+
+    return inputBuffers;
+}
+
+void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer, Statistic::AbstractStatisticStorePtr statisticStore,
+                                            Statistic::MetricHash metricHash, uint64_t numberOfBitsInKey,
+                                            uint64_t windowSize, uint64_t windowSlide, uint64_t width, uint64_t depth,
+                                 const std::string& fieldToBuildCountMinOver,
+                                 const std::string& timestampFieldName) {
+
+    // 1. Creating h3Seeds nad H3Hash function
+    constexpr auto numberOfBitsInHashValue = NUMBER_OF_BITS_IN_HASH_VALUE;
+    std::vector<uint64_t> h3Seeds;
+    std::random_device rd;
+    std::mt19937 gen(H3_SEED);
+    std::uniform_int_distribution<uint64_t> distribution;
+    for (auto row = 0UL; row < depth; ++row) {
+        for (auto keyBit = 0UL; keyBit < numberOfBitsInKey; ++keyBit) {
+            h3Seeds.emplace_back(distribution(gen));
+        }
+    }
+    std::unique_ptr<Nautilus::Interface::HashFunction> h3Hash = std::make_unique<Nautilus::Interface::H3Hash>(numberOfBitsInKey);
+
+    // 2. For each tuple in the buffer, we get the corresponding count min statistic and then update it accordingly
+    auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
+    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
+    for (auto tuple : testTupleBuffer){
+        auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+        auto ts = tuple[timestampFieldName].read<uint64_t>();
+        auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
+        auto endTs = Windowing::TimeMeasure(sliceAssigner.getSliceEndTs(ts));
+
+        auto allCountMinStatistics = statisticStore->getStatistics(statisticHash, startTs, endTs);
+        Statistic::StatisticPtr countMinStatistic;
+        if (allCountMinStatistics.empty()) {
+            countMinStatistic = Statistic::CountMinStatistic::createInit(startTs, endTs, width, depth, numberOfBitsInKey);
+            statisticStore->insertStatistic(statisticHash, countMinStatistic);
+            NES_DEBUG("Created and inserted new countMinStatistic = {} for statisticHash = {}", countMinStatistic->toString(), statisticHash);
+        } else {
+            countMinStatistic = allCountMinStatistics[0];
+        }
+
+        for (auto row = 0_u64; row < depth; ++row) {
+            int8_t* h3SeedsStart = (int8_t*) h3Seeds.data();
+            auto h3SeedsOffSet = row * ((numberOfBitsInKey * numberOfBitsInHashValue) / 8);
+            Nautilus::Value<Nautilus::MemRef> h3SeedMemRef(h3SeedsStart + h3SeedsOffSet);
+            Nautilus::Value<Nautilus::UInt64> valKey(tuple[fieldToBuildCountMinOver].read<uint64_t>());
+            auto calcHash = h3Hash->calculateWithState(valKey, h3SeedMemRef).getValue().getValue();
+            auto col = calcHash % width;
+            countMinStatistic->as<Statistic::CountMinStatistic>()->update(row, col);
+        }
+    }
+}
+
+void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+                                    Statistic::AbstractStatisticStorePtr statisticStore,
+                                    Statistic::MetricHash metricHash,
+                                    uint64_t windowSize,
+                                    uint64_t windowSlide,
+                                    uint64_t width,
+                                    const std::string& fieldToBuildCountMinOver,
+                                    const std::string& timestampFieldName) {
+
+
+    // For each tuple in the buffer, we get the corresponding hyperloglog statistic and then update it accordingly
+    std::unique_ptr<Nautilus::Interface::HashFunction> murmurHash = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
+    auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
+    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
+    for (auto tuple : testTupleBuffer){
+        auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
+        auto ts = tuple[timestampFieldName].read<uint64_t>();
+        auto startTs = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(ts));
+        auto endTs = Windowing::TimeMeasure(sliceAssigner.getSliceEndTs(ts));
+
+        auto allHyperLogLogStatistics = statisticStore->getStatistics(statisticHash, startTs, endTs);
+        Statistic::StatisticPtr hllStatistic;
+        if (allHyperLogLogStatistics.empty()) {
+            hllStatistic = Statistic::HyperLogLogStatistic::createInit(startTs, endTs, width);
+            statisticStore->insertStatistic(statisticHash, hllStatistic);
+            NES_DEBUG("Created and inserted new hllStatistic = {} for statisticHash = {}",
+                      hllStatistic->toString(), statisticHash);
+        } else {
+            hllStatistic = allHyperLogLogStatistics[0];
+        }
+
+        Nautilus::Value<Nautilus::UInt64> valKey(tuple[fieldToBuildCountMinOver].read<uint64_t>());
+        auto hash = murmurHash->calculate(valKey);
+        hllStatistic->as<Statistic::HyperLogLogStatistic>()->update(hash->getValue());
+    }
+}
+
 Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, BufferManagerPtr bufferManager) {
     auto buffer = bufferManager->getBufferBlocking();
     uint8_t* bufferPtr = buffer.getBuffer();

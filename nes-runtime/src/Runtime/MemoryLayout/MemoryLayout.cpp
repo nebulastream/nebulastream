@@ -18,8 +18,32 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <cstring>
+#include <memory>
 
 namespace NES::Runtime::MemoryLayouts {
+
+std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx) {
+    auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
+    auto stringSize = *childBuffer.getBuffer<uint32_t>();
+    std::string varSizedData(stringSize, '\0');
+    std::memcpy(varSizedData.data(), childBuffer.getBuffer<char>() + sizeof(uint32_t), stringSize);
+    return varSizedData;
+}
+
+std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, BufferManager& bufferManager) {
+    const auto valueLength = value.length();
+    auto childBuffer = bufferManager.getUnpooledBuffer(valueLength + sizeof(uint32_t));
+    if (childBuffer.has_value()) {
+        auto& childBufferVal = childBuffer.value();
+        *childBufferVal.getBuffer<uint32_t>() = valueLength;
+        std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.data(), valueLength);
+        return buffer.storeChildBuffer(childBufferVal);
+    }
+    return {};
+}
 
 uint64_t MemoryLayout::getTupleSize() const { return recordSize; }
 

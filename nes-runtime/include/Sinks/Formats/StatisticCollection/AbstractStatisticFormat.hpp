@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICSINKFORMAT_HPP_
-#define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICSINKFORMAT_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
+#define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <StatisticCollection/StatisticKey.hpp>
 #include <memory>
@@ -25,17 +25,17 @@ class Statistic;
 using StatisticPtr = std::shared_ptr<Statistic>;
 using HashStatisticPair = std::pair<StatisticHash, StatisticPtr>;
 
-class AbstractStatisticSinkFormat;
-using AbstractStatisticSinkFormatPtr = std::shared_ptr<AbstractStatisticSinkFormat>;
+class AbstractStatisticFormat;
+using AbstractStatisticFormatPtr = std::shared_ptr<AbstractStatisticFormat>;
 
 /**
  * @brief An interface for parsing (reading and creating) statistics from a TupleBuffer. The idea is that this format
  * is called in the StatisticSink and returns multiple statistics that are then inserted into a StatisticStorage
  */
-class AbstractStatisticSinkFormat {
+class AbstractStatisticFormat {
   public:
-    explicit AbstractStatisticSinkFormat(const Schema& schema, const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
-    explicit AbstractStatisticSinkFormat(const std::string& qualifierNameWithSeparator,
+    explicit AbstractStatisticFormat(const Schema& schema, const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
+    explicit AbstractStatisticFormat(const std::string& qualifierNameWithSeparator,
                                          Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     /**
@@ -45,9 +45,19 @@ class AbstractStatisticSinkFormat {
      */
     virtual std::vector<HashStatisticPair> readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) = 0;
 
-    virtual std::string toString() const = 0;
+    /**
+     * @brief Writes the statistics to the buffer
+     * @param statisticsPlusHashes
+     * @param bufferManager
+     * @return Vector of tuple buffers containing the sketches
+     */
+    virtual std::vector<Runtime::TupleBuffer>
+    writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
+                                                                        Runtime::BufferManager& bufferManager) = 0;
 
-    virtual ~AbstractStatisticSinkFormat();
+    [[nodiscard]] virtual std::string toString() const = 0;
+
+    virtual ~AbstractStatisticFormat();
 
   protected:
     const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
@@ -59,4 +69,4 @@ class AbstractStatisticSinkFormat {
 };
 }// namespace NES::Statistic
 
-#endif//NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICSINKFORMAT_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_ABSTRACTSTATISTICFORMAT_HPP_

@@ -36,14 +36,6 @@ class MemoryLayoutTupleBuffer;
 using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
 
 /**
- * @brief Reads the variable sized data from the child buffer at the provided index
- * @param buffer
- * @param childBufferIdx
- * @return Variable sized data as a string
- */
-std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx);
-
-/**
  * @brief The DynamicField allows to read and write a field at a
  * specific address and a specific data type.
  * For all field accesses we check that the template type is the same as the selected physical field type.

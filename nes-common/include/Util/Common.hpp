@@ -16,11 +16,17 @@
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #include <Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <functional>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
+
+namespace NES {
+static constexpr auto H3_SEED = 42;
+static constexpr auto NUMBER_OF_BITS_IN_HASH_VALUE = 64;
+}
 
 namespace NES::QueryCompilation {
 enum class StreamJoinStrategy : uint8_t {
@@ -37,6 +43,29 @@ constexpr Out to_underlying(E e) noexcept {
 }
 
 }// namespace NES::QueryCompilation
+
+namespace NES::Runtime::Execution {
+/**
+ * @brief Stores the meta date for a RecordBuffer
+ */
+struct BufferMetaData {
+  public:
+    BufferMetaData(const uint64_t watermarkTs, const SequenceData seqNumber, const OriginId originId)
+        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId) {}
+
+    std::string toString() const {
+        std::ostringstream oss;
+        oss << "waterMarkTs: " << watermarkTs << ","
+            << "seqNumber: " << seqNumber << ","
+            << "originId: " << originId;
+        return oss.str();
+    }
+
+    const uint64_t watermarkTs;
+    const SequenceData seqNumber;
+    const OriginId originId;
+};
+} // namespace NES::Runtime::Execution
 
 namespace NES::Util {
 namespace detail {

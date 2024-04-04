@@ -12,18 +12,20 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_HYPERLOGLOGSTATISTICSINKFORMAT_HPP_
-#define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_HYPERLOGLOGSTATISTICSINKFORMAT_HPP_
-
-#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
+#ifndef NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_STATISTICS_STATISTICUTIL_HPP_
+#define NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_STATISTICS_STATISTICUTIL_HPP_
+#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::Statistic {
 
 /**
-* @brief StatisticSinkFormat that creates/builds HyperLogLog-Sketches from a tuple buffer. Will be done in issue #4690
+ * @brief This class contains static utility methods for the statistics
  */
-class HyperLogLogStatisticSinkFormat : public AbstractStatisticSinkFormat {};
+class StatisticUtil {
+  public:
+    static uint64_t getHashValue(BasicValue& value, uint64_t row, uint64_t numberOfBitsInKey);
+};
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_HYPERLOGLOGSTATISTICSINKFORMAT_HPP_
+#endif//NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_STATISTICS_STATISTICUTIL_HPP_

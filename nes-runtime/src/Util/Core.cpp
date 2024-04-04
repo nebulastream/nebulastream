@@ -16,6 +16,8 @@
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -84,6 +86,13 @@ std::string Util::toCSVString(const SchemaPtr& schema) {
     ss.seekp(-1, std::ios_base::end);
     ss << std::endl;
     return ss.str();
+}
+
+Runtime::MemoryLayouts::MemoryLayoutPtr Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize) {
+    switch (schema->getLayoutType()) {
+        case Schema::MemoryLayoutType::ROW_LAYOUT: return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+    }
 }
 
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,

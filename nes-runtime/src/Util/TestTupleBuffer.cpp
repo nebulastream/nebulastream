@@ -40,7 +40,7 @@ DynamicField DynamicTuple::operator[](std::size_t fieldIndex) const {
 DynamicField DynamicTuple::operator[](std::string fieldName) const {
     auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value()) {
-        throw BufferAccessException("field name " + fieldName + " dose not exist in layout");
+        throw BufferAccessException("field name " + fieldName + " does not exist in layout");
     }
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
@@ -56,7 +56,7 @@ void DynamicTuple::writeVarSized(std::variant<const uint64_t, const std::string>
     if (childBuffer.has_value()) {
         auto& childBufferVal = childBuffer.value();
         *childBufferVal.getBuffer<uint32_t>() = valueLength;
-        std::strncpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
+        std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
         auto index = buffer.storeChildBuffer(childBufferVal);
         std::visit(
             [this, index](const auto& key) {
@@ -95,12 +95,6 @@ std::string DynamicTuple::toString(const SchemaPtr& schema) {
         ss << currentField.toString() << "|";
     }
     return ss.str();
-}
-
-std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx) {
-    auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
-    auto stringSize = *childBuffer.getBuffer<uint32_t>();
-    return std::string(static_cast<const char*>(childBuffer.getBuffer<char>() + sizeof(uint32_t)), stringSize);
 }
 
 bool DynamicTuple::operator!=(const DynamicTuple& other) const { return !(*this == other); }

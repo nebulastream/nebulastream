@@ -180,6 +180,12 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
+     * @brief Lowers a statistic build operator
+     * @param logicalStatisticWindowOperator
+     */
+    void lowerStatisticBuildOperator(Statistic::LogicalStatisticWindowOperator& logicalStatisticWindowOperator);
+
+    /**
      * @brief Get a join build input generator
      * @param joinOperator join operator
      * @param schema the operator schema

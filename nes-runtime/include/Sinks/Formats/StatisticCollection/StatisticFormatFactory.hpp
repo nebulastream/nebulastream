@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_STATISTICSINKFORMATFACTORY_HPP_
-#define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_STATISTICSINKFORMATFACTORY_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_STATISTICFORMATFACTORY_HPP_
+#define NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_STATISTICFORMATFACTORY_HPP_
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
-#include <Sinks/Formats/StatisticCollection/AbstractStatisticSinkFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
 namespace NES::Statistic {
 
 /**
  * @brief Factory for creating StatisticSinkFormat
  */
-class StatisticSinkFormatFactory {
+class StatisticFormatFactory {
   public:
     /**
      * @brief Creates the corresponding StatisticSinkFormat for the type.
@@ -32,7 +32,7 @@ class StatisticSinkFormatFactory {
      * @param type
      * @return AbstractStatisticSinkFormatPtr
      */
-    static AbstractStatisticSinkFormatPtr createFromSchema(SchemaPtr schema, uint64_t bufferSize, StatisticSinkFormatType type);
+    static AbstractStatisticFormatPtr createFromSchema(SchemaPtr schema, uint64_t bufferSize, StatisticSinkFormatType type);
 
   private:
     /**
@@ -40,9 +40,16 @@ class StatisticSinkFormatFactory {
      * @param memoryLayout
      * @return AbstractStatisticSinkFormatPtr
      */
-    static AbstractStatisticSinkFormatPtr createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
+    static AbstractStatisticFormatPtr createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
+
+    /**
+     * @brief Creates a HyperLogLogStatisticSinkFormat for this memoryLayout
+     * @param memoryLayout
+     * @return AbstractStatisticSinkFormatPtr
+     */
+    static AbstractStatisticFormatPtr createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
 };
 
 }// namespace NES::Statistic
 
-#endif//NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_STATISTICSINKFORMATFACTORY_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_STATISTICFORMATFACTORY_HPP_

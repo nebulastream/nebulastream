@@ -31,6 +31,12 @@ bool LogicalStatisticWindowOperator::inferSchema() {
     if (!LogicalUnaryOperator::inferSchema()) {
         return false;
     }
+
+    // Inferring the stamp for the windowType and the fieldToTrackStatisticsOver that is part of the descriptor
+    windowType->inferStamp(inputSchema);
+    windowStatisticDescriptor->inferStamps(inputSchema);
+
+    // Creating output schema
     const auto qualifierNameWithSeparator = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     outputSchema->clear();
     outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_START, BasicType::UINT64);
@@ -79,6 +85,7 @@ OperatorPtr LogicalStatisticWindowOperator::copy() {
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
+    copy->setInputOriginIds(inputOriginIds);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }

@@ -12,7 +12,6 @@
 # limitations under the License.
 
 include(ExternalProject)
-add_subdirectory(Util)
 include(GoogleTest)
 
 # Copy Test Data
@@ -37,4 +36,5 @@ function(add_nes_execution_test)
     target_link_libraries(${TARGET_NAME} nes-execution-test-util nes-operators-test-util)
 endfunction()
 
+add_subdirectory(Util)
 add_subdirectory(UnitTests)

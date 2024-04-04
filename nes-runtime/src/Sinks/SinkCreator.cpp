@@ -19,7 +19,7 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
-#include <Sinks/Formats/StatisticCollection/StatisticSinkFormatFactory.hpp>
+#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MonitoringSink.hpp>
@@ -219,9 +219,9 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
 
     // We create the correct StatisticSinkFormat and then pass everything to the StatisticSink
     auto statisticSinkFormat =
-        Statistic::StatisticSinkFormatFactory::createFromSchema(schema,
-                                                                nodeEngine->getBufferManager()->getBufferSize(),
-                                                                sinkFormatType);
+        Statistic::StatisticFormatFactory::createFromSchema(schema,
+                                                            nodeEngine->getBufferManager()->getBufferSize(),
+                                                            sinkFormatType);
     return std::make_shared<Statistic::StatisticSink>(sinkFormat,
                                                       nodeEngine,
                                                       numOfProducers,
