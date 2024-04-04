@@ -46,6 +46,5 @@ Value<> AbsExpression::execute(NES::Nautilus::Record& record) const {
             "This expression is only defined on a numeric input argument that is ether Float or Double.");
     }
 }
-
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AbsExpression>> absFunction("abs");
 }// namespace NES::Runtime::Execution::Expressions

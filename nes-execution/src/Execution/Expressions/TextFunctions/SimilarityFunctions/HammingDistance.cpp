@@ -15,7 +15,6 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <regex>
 #include <string>
 
 namespace NES::Runtime::Execution::Expressions {

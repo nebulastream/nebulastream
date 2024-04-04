@@ -71,8 +71,8 @@ extern "C" void unlockKeyedThresholdWindowHandler(void* state, uint32_t aggKey) 
     handler->keyedAggregationStates.at(aggKey).mutex.unlock();
 }
 
-extern "C" void createStateIfNotExist(void* hanlderMemref, uint32_t aggKey) {
-    auto handler = (KeyedThresholdWindowOperatorHandler*) hanlderMemref;
+extern "C" void createStateIfNotExist(void* handlerMemref, uint32_t aggKey) {
+    auto handler = (KeyedThresholdWindowOperatorHandler*) handlerMemref;
     NES_TRACE("Called createStateIfNotExist");
     // Create a key if not exist
     if (handler->keyedAggregationStates.find(aggKey) == handler->keyedAggregationStates.end()) {

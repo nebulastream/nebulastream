@@ -61,7 +61,6 @@ void RowMemoryProvider::write(Nautilus::Value<NES::Nautilus::UInt64>& recordInde
     auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     auto schema = rowMemoryLayoutPtr->getSchema();
     for (uint64_t i = 0; i < fieldSizes.size(); i++) {
-        auto fieldOffset = rowMemoryLayoutPtr->getFieldOffSets()[i];
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
         auto value = rec.read(schema->fields[i]->getName());
         store(rowMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress, value);

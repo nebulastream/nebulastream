@@ -136,7 +136,7 @@ std::string OperatorPipeline::toString() const {
                                              return result.empty() ? succPipelineId : result + ", " + succPipelineId;
                                          });
 
-    auto predeccesorsStr =
+    auto predecessorsStr =
         std::accumulate(predecessorPipelines.begin(),
                         predecessorPipelines.end(),
                         std::string(),
@@ -147,8 +147,8 @@ std::string OperatorPipeline::toString() const {
 
     std::ostringstream oss;
     oss << "- Id: " << id << ", Type: " << magic_enum::enum_name(pipelineType) << ", Successors: " << successorsStr
-        << ", Predecessors: " << predeccesorsStr << std::endl
-        << "- Queryplan: " << decomposedQueryPlan->toString();
+        << ", Predecessors: " << predecessorsStr << std::endl
+        << "- QueryPlan: " << decomposedQueryPlan->toString();
 
     return oss.str();
 }

@@ -24,7 +24,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -45,9 +44,9 @@ auto constexpr DEFAULT_OP_HANDLER_IDX = 0;
 auto constexpr DEFAULT_LEFT_PAGE_SIZE = 1024;
 auto constexpr DEFAULT_RIGHT_PAGE_SIZE = 256;
 
-class NLJBuildPiplineExecutionContext : public PipelineExecutionContext {
+class NLJBuildPipelineExecutionContext : public PipelineExecutionContext {
   public:
-    NLJBuildPiplineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
+    NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
@@ -60,10 +59,10 @@ class NLJBuildPiplineExecutionContext : public PipelineExecutionContext {
             {nljOperatorHandler}) {}
 };
 
-class NLJProbePiplineExecutionContext : public PipelineExecutionContext {
+class NLJProbePipelineExecutionContext : public PipelineExecutionContext {
   public:
     std::vector<TupleBuffer> emittedBuffers;
-    NLJProbePiplineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
+    NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
@@ -284,7 +283,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        NLJBuildPiplineExecutionContext pipelineContext(nljOperatorHandler, bm);
+        NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
         auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                  Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
@@ -399,7 +398,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                                               QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                                               QueryCompilation::WindowingStrategy::SLICING);
 
-        NLJProbePiplineExecutionContext pipelineContext(nljOperatorHandler, bm);
+        NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, 100);
         auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                  Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));

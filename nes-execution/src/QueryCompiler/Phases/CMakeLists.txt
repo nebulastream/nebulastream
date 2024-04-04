@@ -13,7 +13,6 @@
 
 add_source_files(nes-execution
         AddScanAndEmitPhase.cpp
-        PhaseFactory.cpp
         DefaultPhaseFactory.cpp
         BufferOptimizationPhase.cpp
         NautilusCompilationPhase.cpp

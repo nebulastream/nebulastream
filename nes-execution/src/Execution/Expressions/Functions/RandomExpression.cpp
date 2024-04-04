@@ -17,7 +17,6 @@
 #include <Execution/Expressions/Functions/RandomExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cstdlib>
-#include <iostream>
 #include <utility>
 namespace NES::Runtime::Execution::Expressions {
 

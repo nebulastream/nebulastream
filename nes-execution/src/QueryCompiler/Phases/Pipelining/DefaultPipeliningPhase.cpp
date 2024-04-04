@@ -117,7 +117,7 @@ void DefaultPipeliningPhase::processFusibleOperator(const PipelineQueryPlanPtr& 
                                                     std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                                     const OperatorPipelinePtr& currentPipeline,
                                                     const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
-    // for operator we can fuse, we just append them to the current pipelie.
+    // for operator we can fuse, we just append them to the current pipeline.
     currentPipeline->prependOperator(currentOperator->copy());
     for (const auto& node : currentOperator->getChildren()) {
         process(pipelinePlan, pipelineOperatorMap, currentPipeline, node->as<PhysicalOperators::PhysicalOperator>());

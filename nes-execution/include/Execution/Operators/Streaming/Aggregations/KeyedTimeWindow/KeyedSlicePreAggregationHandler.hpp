@@ -25,7 +25,6 @@
 namespace NES::Runtime::Execution::Operators {
 
 class MultiOriginWatermarkProcessor;
-class KeyedSliceStaging;
 class KeyedThreadLocalSliceStore;
 class State;
 /**

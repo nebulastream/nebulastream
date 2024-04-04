@@ -13,7 +13,6 @@
 
 add_source_files(nes-execution
         OperatorAtATimePolicy.cpp
-        OperatorFusionPolicy.cpp
         FuseNonPipelineBreakerPolicy.cpp
         DefaultPipeliningPhase.cpp
 )

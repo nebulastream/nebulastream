@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
@@ -21,7 +19,6 @@
 #include <Util/JNI/JNI.hpp>
 #include <Util/JNI/JNIUtils.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <jni.h>

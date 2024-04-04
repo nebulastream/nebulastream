@@ -14,7 +14,6 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>

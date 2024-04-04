@@ -18,7 +18,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
-#include <memory>
 
 namespace NES::Runtime::Execution::Expressions {
 

@@ -150,13 +150,13 @@ class QueryCompilerOptions {
      * @brief Sets the strategy for the stream join
      * @param strategy
      */
-    void setStreamJoinStratgy(QueryCompilation::StreamJoinStrategy strategy);
+    void setStreamJoinStrategy(QueryCompilation::StreamJoinStrategy strategy);
 
     /**
      * @brief gets the stream join strategy.
      * @return
      */
-    [[nodiscard]] QueryCompilation::StreamJoinStrategy getStreamJoinStratgy() const;
+    [[nodiscard]] QueryCompilation::StreamJoinStrategy getStreamJoinStrategy() const;
 
     /**
      * @brief Return hash join options

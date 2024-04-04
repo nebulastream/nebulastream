@@ -154,11 +154,6 @@ class LowerPhysicalToNautilusOperators {
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerNonKeyedSlidingWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                           const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
-
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,

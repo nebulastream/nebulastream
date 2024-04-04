@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>

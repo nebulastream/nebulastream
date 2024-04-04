@@ -98,22 +98,10 @@ class BucketStore {
     }
 
     /**
-     * @brief Returns the last watermark.
-     * @return uint64_t
-     */
-    uint64_t getLastWatermark() { return lastWatermarkTs; }
-
-    /**
      * @brief Sets the last watermark
      * @param watermarkTs
      */
     void setLastWatermark(uint64_t watermarkTs) { this->lastWatermarkTs = watermarkTs; }
-
-    /**
-     * @brief Returns the number of currently stored slices
-     * @return uint64_t
-     */
-    uint64_t getNumberOfSlices() { return buckets->size(); }
 
     /**
      * @brief Gets an unprotected reference to all slices

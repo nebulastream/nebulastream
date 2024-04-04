@@ -20,7 +20,6 @@ namespace NES::Runtime::Execution::Operators {
 class State;
 class KeyedSlice;
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
-class KeyedSliceStaging;
 
 /**
  * @brief The GlobalSliceMergingHandler merges thread local pre-aggregated slices for global

@@ -49,8 +49,6 @@
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -349,7 +347,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
         getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
     const auto rightInputOperator =
         getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    const auto joinStrategy = options->getStreamJoinStratgy();
+    const auto joinStrategy = options->getStreamJoinStrategy();
 
     const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(joinFieldNameLeft,
@@ -383,7 +381,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                                                                           buildSideType,
                                                                           timeStampField,
                                                                           joinFieldName,
-                                                                          options->getStreamJoinStratgy(),
+                                                                          options->getStreamJoinStrategy(),
                                                                           options->getWindowingStrategy());
     };
 
@@ -406,7 +404,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                                                                    joinOperator->getWindowEndFieldName(),
                                                                    joinOperator->getWindowKeyFieldName(),
                                                                    joinOperatorHandler,
-                                                                   options->getStreamJoinStratgy(),
+                                                                   options->getStreamJoinStrategy(),
                                                                    options->getWindowingStrategy());
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
