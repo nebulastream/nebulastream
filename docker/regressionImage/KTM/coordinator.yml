@@ -2,9 +2,6 @@
 ### General configuration
 ###
 logLevel: LOG_DEBUG
-optimizer:
-        distributedWindowChildThreshold: 100
-        distributedWindowCombinerThreshold: 100
 
 ###
 ### Network configuration
@@ -17,51 +14,51 @@ restPort: 8081
 ### Logical source configuration
 ###
 logicalSources:
-        - logicalSourceName: "can_bus"
-          fields:
-                  - name: Time
-                    type: INT64
-                  - name: Dist
-                    type: INT32
-                  - name: ABS_Front_Wheel_Press
-                    type: FLOAT32
-                  - name: ABS_Rear_Wheel_Press
-                    type: FLOAT32
-                  - name: ABS_Front_Wheel_Speed
-                    type: FLOAT32
-                  - name: ABS_Rear_Wheel_Speed
-                    type: FLOAT32
-                  - name: V_GPS
-                    type: FLOAT32
-                  - name: MMDD
-                    type: FLOAT32
-                  - name: HHMM
-                    type: FLOAT32
-                  - name: LAS_Ax1
-                    type: FLOAT32
-                  - name: LAS_Ay1
-                    type: FLOAT32
-                  - name: LAS_Az_Vertical_Acc
-                    type: FLOAT32
-                  - name: ABS_Lean_Angle
-                    type: FLOAT32
-                  - name: ABS_Pitch_Info
-                    type: FLOAT32
-                  - name: ECU_Gear_Position
-                    type: INT32
-                  - name: ECU_Accel_Position
-                    type: INT32
-                  - name: ECU_Engine_Rpm
-                    type: INT32
-                  - name: ECU_Water_Temperature
-                    type: FLOAT32
-                  - name: ECU_Oil_Temp_Sensor_Data
-                    type: FLOAT32
-                  - name: ECU_Side_StanD
-                    type: INT32
-                  - name: Longitude
-                    type: FLOAT32
-                  - name: Latitude
-                    type: FLOAT32
-                  - name: Altitude
-                    type: FLOAT32
+  - logicalSourceName: "can_bus"
+    fields:
+      - name: Time
+        type: INT64
+      - name: Dist
+        type: INT32
+      - name: ABS_Front_Wheel_Press
+        type: FLOAT32
+      - name: ABS_Rear_Wheel_Press
+        type: FLOAT32
+      - name: ABS_Front_Wheel_Speed
+        type: FLOAT32
+      - name: ABS_Rear_Wheel_Speed
+        type: FLOAT32
+      - name: V_GPS
+        type: FLOAT32
+      - name: MMDD
+        type: FLOAT32
+      - name: HHMM
+        type: FLOAT32
+      - name: LAS_Ax1
+        type: FLOAT32
+      - name: LAS_Ay1
+        type: FLOAT32
+      - name: LAS_Az_Vertical_Acc
+        type: FLOAT32
+      - name: ABS_Lean_Angle
+        type: FLOAT32
+      - name: ABS_Pitch_Info
+        type: FLOAT32
+      - name: ECU_Gear_Position
+        type: INT32
+      - name: ECU_Accel_Position
+        type: INT32
+      - name: ECU_Engine_Rpm
+        type: INT32
+      - name: ECU_Water_Temperature
+        type: FLOAT32
+      - name: ECU_Oil_Temp_Sensor_Data
+        type: FLOAT32
+      - name: ECU_Side_StanD
+        type: INT32
+      - name: Longitude
+        type: FLOAT32
+      - name: Latitude
+        type: FLOAT32
+      - name: Altitude
+        type: FLOAT32

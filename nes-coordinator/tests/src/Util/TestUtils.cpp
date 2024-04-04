@@ -121,20 +121,7 @@ namespace TestUtils {
     return "--monitoringWaitTime=" + std::to_string(monitoringWaitTime);
 }
 
-// 2884: Fix configuration to disable distributed window rule
-[[nodiscard]] std::string disableDistributedWindowingOptimization() {
-    return "--optimizer.performDistributedWindowOptimization=false";
-}
-
 [[nodiscard]] std::string enableNemoPlacement() { return "--optimizer.enableNemoPlacement=true"; }
-
-[[nodiscard]] std::string setDistributedWindowChildThreshold(uint64_t val) {
-    return "--optimizer.distributedWindowChildThreshold=" + std::to_string(val);
-}
-
-[[nodiscard]] std::string setDistributedWindowCombinerThreshold(uint64_t val) {
-    return "--optimizer.distributedWindowCombinerThreshold=" + std::to_string(val);
-}
 
 [[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
     return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"SLICING"}, prefix);

@@ -30,7 +30,6 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -105,7 +104,6 @@ class TestExecutionEngine {
 
   private:
     Runtime::NodeEnginePtr nodeEngine;
-    Optimizer::DistributeWindowRulePtr distributeWindowRule;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
 };
