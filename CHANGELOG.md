@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.86](https://github.com/nebulastream/nebulastream/tree/v0.6.86) (2024-04-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.85...v0.6.86)
+
+**Implemented enhancements:**
+
+- \[TASK\] Choose key or id in TestSchemas [\#4735](https://github.com/nebulastream/nebulastream/issues/4735)
+
 ## [v0.6.85](https://github.com/nebulastream/nebulastream/tree/v0.6.85) (2024-04-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.84...v0.6.85)
