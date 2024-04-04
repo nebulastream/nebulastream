@@ -631,29 +631,29 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows)
                 && test2$count == rhs.test2$count;
         }
     };
-    const auto leftSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64")->updateSourceName(*srcName);
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_2val_time_u64")->updateSourceName(*srcName);
 
-    const auto rightSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64")->updateSourceName(*srcName);
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id_2val_time_u64")->updateSourceName(*srcName);
 
     const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1test2$start", BasicType::INT64)
                                 ->addField("test1test2$end", BasicType::INT64)
                                 ->addField("test1test2$key", BasicType::INT64)
 
-                                ->addField("test1$key", BasicType::INT64)
+                                ->addField("test1$id", BasicType::INT64)
                                 ->addField("test1$value", BasicType::INT64)
                                 ->addField("test1$value2", BasicType::INT64)
                                 ->addField("test1$timestamp", BasicType::INT64)
 
                                 ->addField("test2$timestamp", BasicType::INT64)
                                 ->addField("test2$end", BasicType::INT64)
-                                ->addField("test2$key", BasicType::INT64)
+                                ->addField("test2$id", BasicType::INT64)
                                 ->addField("test2$count", BasicType::UINT64);
 
     TestUtils::CsvFileParams csvFileParams("stream_join_left_withCountSlidingWindow.csv",
                                            "stream_join_left_withCountSlidingWindow.csv",
                                            "stream_join_left_withCountSlidingWindow_result.csv");
-    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "key", "key");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id", "id");
 
     // Getting the expected output tuples
     auto bufferManager = executionEngine->getBufferManager();
@@ -672,11 +672,11 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows)
         TestQuery::from(testSourceDescriptorLeft)
             .joinWith(TestQuery::from(testSourceDescriptorRight)
                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-                          .byKey(Attribute("key"))
+                          .byKey(Attribute("id"))
                           .apply(Count())
-                          .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("key"), Attribute("count")))
-            .where(Attribute("key"))
-            .equalsTo(Attribute("key"))
+                          .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("id"), Attribute("count")))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
             .sink(testSinkDescriptor);
 

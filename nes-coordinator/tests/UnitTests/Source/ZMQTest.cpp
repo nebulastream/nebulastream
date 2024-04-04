@@ -63,7 +63,7 @@ class ZMQTest : public Testing::BaseIntegrationTest {
         test_data_size = test_data.size() * sizeof(uint32_t);
         tupleCnt = 8;
         //    testDataSize = 4096;
-        test_schema = TestSchemas::getSchemaTemplate("key_val_u32");
+        test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
     }
 
     /* Will be called before a test is executed. */
@@ -91,7 +91,7 @@ class ZMQTest : public Testing::BaseIntegrationTest {
 /* - ZeroMQ Data Source ---------------------------------------------------- */
 TEST_F(ZMQTest, testZmqSourceReceiveData) {
     // Create ZeroMQ Data Source.
-    auto test_schema = TestSchemas::getSchemaTemplate("key_val_u32");
+    auto test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
     auto zmq_source = createZmqSource(test_schema,
                                       nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),

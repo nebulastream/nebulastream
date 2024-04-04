@@ -326,14 +326,14 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
 }
 
 TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
-    auto testSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")
-                          ->addField("key2", DataTypeFactory::createUInt64())
-                          ->addField("key3", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")
+                          ->addField("id2", DataTypeFactory::createUInt64())
+                          ->addField("id3", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValueMultiKeys), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
-                     .byKey(Attribute("key"), Attribute("key2"), Attribute("key3"))
+                     .byKey(Attribute("id"), Attribute("id2"), Attribute("id3"))
                      .apply(Sum(Attribute("value")));
     auto dg = DataGeneratorMultiKey("window", "window1", 1, 102);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())

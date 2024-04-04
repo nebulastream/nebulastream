@@ -1631,13 +1631,13 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
  */
 TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
     struct Car {
-        uint64_t key;
+        uint64_t id;
         uint64_t value;
         uint64_t value2;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_2val_time_u64");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1645,11 +1645,11 @@ TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
         Query::from("car1")
             .joinWith(Query::from("car2")
                           .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-                          .byKey(Attribute("key"))
+                          .byKey(Attribute("id"))
                           .apply(Count())
-                          .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("key"), Attribute("count")))
-            .where(Attribute("key"))
-            .equalsTo(Attribute("key"))
+                          .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("id"), Attribute("count")))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)));
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())

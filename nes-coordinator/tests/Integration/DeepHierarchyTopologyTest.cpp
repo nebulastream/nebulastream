@@ -51,11 +51,11 @@ class DeepHierarchyTopologyTest : public Testing::BaseIntegrationTest {
  */
 TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -110,11 +110,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -170,11 +170,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
  */
 TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     auto query = Query::from("test");
@@ -229,11 +229,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -294,11 +294,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 

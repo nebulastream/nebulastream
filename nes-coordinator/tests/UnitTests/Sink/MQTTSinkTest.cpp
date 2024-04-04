@@ -78,7 +78,7 @@ class MQTTSinkTest : public Testing::BaseIntegrationTest {
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
-        testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
+        testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     }
 
     /* Will be called before a test is executed. */
@@ -290,7 +290,7 @@ TEST_F(MQTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
     uint64_t msgDelay = 500;
     MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = false;
-    auto testSchema = TestSchemas::getSchemaTemplate("key_val_u32");
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     auto mqttSink = createMQTTSink(testSchema,
                                    0,
                                    0,

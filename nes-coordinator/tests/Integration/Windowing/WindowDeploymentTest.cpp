@@ -570,13 +570,13 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
         uint64_t timestamp;
         double value1;
     };
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")->addField("value1", BasicType::FLOAT64);
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("value1", BasicType::FLOAT64);
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Avg(Attribute("value1")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -608,18 +608,18 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Max(Attribute("value")));
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -652,18 +652,18 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues) {
     struct Car {
-        int32_t key;
+        int32_t id;
         int32_t value;
         int64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Max(Attribute("value")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("car", carSchema)
@@ -792,19 +792,19 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
     struct Car {
-        uint64_t key;
+        uint64_t id;
         uint64_t value;
         uint64_t value2;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_2val_time_u64");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Count());
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -843,13 +843,13 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregatio
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u64")->addField("value2", DataTypeFactory::createDouble());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("value2", DataTypeFactory::createDouble());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Median(Attribute("value2")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -881,19 +881,19 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregatio
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
     struct Car {
-        uint64_t key;
+        uint64_t id;
         uint64_t value;
         uint64_t value2;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_2val_time_u64");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_2val_time_u64");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Count()->as(Attribute("Frequency")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 

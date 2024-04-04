@@ -572,12 +572,12 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     uint64_t numBufferToProduce = 1000;
 
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = TestSchemas::getSchemaTemplate("key_val_time_u32");
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
