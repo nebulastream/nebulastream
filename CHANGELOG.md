@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.6.87](https://github.com/nebulastream/nebulastream/tree/v0.6.87) (2024-04-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.86...v0.6.87)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create script for creating a local docker image from sources [\#4747](https://github.com/nebulastream/nebulastream/issues/4747)
+- \[FEATURE\] Simplified Benchmark Configuration and Execution Tool [\#4635](https://github.com/nebulastream/nebulastream/issues/4635)
+- \[TASK\] Code quality improvement for nes-execution [\#4498](https://github.com/nebulastream/nebulastream/issues/4498)
+- \[TASK\] Write BloomFilter handler for FixedPages in Nautilus [\#4176](https://github.com/nebulastream/nebulastream/issues/4176)
+
 ## [v0.6.86](https://github.com/nebulastream/nebulastream/tree/v0.6.86) (2024-04-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.85...v0.6.86)
