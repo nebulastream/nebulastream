@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.6.85](https://github.com/nebulastream/nebulastream/tree/v0.6.85) (2024-04-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.84...v0.6.85)
+
+**Implemented enhancements:**
+
+- \[TASK\]  StatisticBuildOperator for CountMin [\#4705](https://github.com/nebulastream/nebulastream/issues/4705)
+- \[TASK\] HyperLogLogStatistic and HyperLogLogSinkFormat [\#4690](https://github.com/nebulastream/nebulastream/issues/4690)
+- \[TASK\] CountMin getStatisticValue [\#4689](https://github.com/nebulastream/nebulastream/issues/4689)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Code Coverage CEP [\#3532](https://github.com/nebulastream/nebulastream/issues/3532)
+
 ## [v0.6.84](https://github.com/nebulastream/nebulastream/tree/v0.6.84) (2024-04-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.83...v0.6.84)
