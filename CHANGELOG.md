@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.6.84](https://github.com/nebulastream/nebulastream/tree/v0.6.84) (2024-04-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.83...v0.6.84)
+
+**Implemented enhancements:**
+
+- \[TASK\] Extend optimizer configuration with option for distributed join optimization [\#4513](https://github.com/nebulastream/nebulastream/issues/4513)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Cleanup docker images fails [\#4752](https://github.com/nebulastream/nebulastream/issues/4752)
+- \[BUG\] Change OR-operator test to use TestHarnes [\#4195](https://github.com/nebulastream/nebulastream/issues/4195)
+
+#### Complex Event Processing
+
+- Clean up CEP Test classes after refactory \# [\#2593](https://github.com/nebulastream/nebulastream/issues/2593)
+- Enable Multi-And-Queries [\#2303](https://github.com/nebulastream/nebulastream/issues/2303)
+- CEP Window Operator - valid tuple in window  [\#1027](https://github.com/nebulastream/nebulastream/issues/1027)
+
 ## [v0.6.83](https://github.com/nebulastream/nebulastream/tree/v0.6.83) (2024-04-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.82...v0.6.83)
