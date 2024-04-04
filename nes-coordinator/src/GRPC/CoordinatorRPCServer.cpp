@@ -175,7 +175,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
     std::vector<RequestProcessor::PhysicalSourceAddition> additions;
     for (const auto& physicalSourceDefinition : request->physicalsourcetypes()) {
-        additions.emplace_back(physicalSourceDefinition.physicalsourcename(), physicalSourceDefinition.logicalsourcename(), request->workerid());
+        additions.emplace_back(physicalSourceDefinition.logicalsourcename(), physicalSourceDefinition.physicalsourcename(), request->workerid());
     }
         bool success = requestHandlerService->queueRegisterPhysicalSourceRequest(additions);
         if (!success) {

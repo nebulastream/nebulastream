@@ -38,19 +38,23 @@ std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(
                     NES_ERROR("Failed to register physical source: {} for logical source: {}",
                               physicalSourceDefinition.physicalSourceName,
                               physicalSourceDefinition.logicalSourceName);
+                    //todo #4768 throw exception and handle error
+                    responsePromise.set_value(std::make_shared<UpdateSourceCatalogResponse>(false));
+                    return {};
                 }
-                break;
             }
         } else if (std::holds_alternative<std::vector<PhysicalSourceRemoval>>(sourceActions)) {
             auto physicalSourceDefinitions = std::get<std::vector<PhysicalSourceRemoval>>(sourceActions);
             for (const auto& physicalSourceDefinition : physicalSourceDefinitions) {
                 //unregister physical source
-                if (!catalogHandle->removePhysicalSource(physicalSourceDefinition.physicalSourceName,
-                                                         physicalSourceDefinition.logicalSourceName,
+                if (!catalogHandle->removePhysicalSource(physicalSourceDefinition.logicalSourceName,
+                                                         physicalSourceDefinition.physicalSourceName,
                                                          physicalSourceDefinition.workeId)) {
                     NES_ERROR("Failed to unregister physical source: {} for logical source: {}",
                               physicalSourceDefinition.physicalSourceName,
                               physicalSourceDefinition.logicalSourceName);
+                    responsePromise.set_value(std::make_shared<UpdateSourceCatalogResponse>(false));
+                    return {};
                 }
             }
         } else if (std::holds_alternative<std::vector<LogicalSourceAddition>>(sourceActions)) {
@@ -59,6 +63,8 @@ std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(
                 //register logical source
                 if (!catalogHandle->addLogicalSource(logicalSourceDefinition.logicalSourceName, logicalSourceDefinition.schema)) {
                     NES_ERROR("Failed to register logical source: {}", logicalSourceDefinition.logicalSourceName);
+                    responsePromise.set_value(std::make_shared<UpdateSourceCatalogResponse>(false));
+                    return {};
                 }
             }
         } else if (std::holds_alternative<std::vector<LogicalSourceRemoval>>(sourceActions)) {
@@ -67,6 +73,8 @@ std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(
                 //unregister logical source
                 if (!catalogHandle->removeLogicalSource(logicalSourceDefinition.logicalSourceName)) {
                     NES_ERROR("Failed to unregister logical source: {}", logicalSourceDefinition.logicalSourceName);
+                    responsePromise.set_value(std::make_shared<UpdateSourceCatalogResponse>(false));
+                    return {};
                 }
             }
         } else if (std::holds_alternative<std::vector<LogicalSourceUpdate>>(sourceActions)) {
@@ -75,7 +83,9 @@ std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(
                 //unregister logical source
                 if (!catalogHandle->updateLogicalSource(logicalSourceDefinition.logicalSourceName,
                                                         logicalSourceDefinition.schema)) {
-                    NES_ERROR("Failed to unregister logical source: {}", logicalSourceDefinition.logicalSourceName);
+                    NES_ERROR("Failed to update logical source: {}", logicalSourceDefinition.logicalSourceName);
+                    responsePromise.set_value(std::make_shared<UpdateSourceCatalogResponse>(false));
+                    return {};
                 }
             }
         }
