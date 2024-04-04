@@ -116,7 +116,7 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
         EXPECT_NE(port, 0UL);
         //register logical schema
-        crd->getSourceCatalogService()->registerLogicalSource("logTestMetricStream", schema);
+        crd->getSourceCatalog()->addLogicalSource("logTestMetricStream", schema);
         NES_DEBUG("MonitoringQueriesTest: Coordinator started successfully");
 
         for (uint64_t i = 0; i < workerCnt; i++) {

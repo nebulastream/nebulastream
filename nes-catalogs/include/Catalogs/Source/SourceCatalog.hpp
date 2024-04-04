@@ -147,6 +147,9 @@ class SourceCatalog {
      */
     bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
+    bool
+    registerPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
+
     SourceCatalog();
 
   private:

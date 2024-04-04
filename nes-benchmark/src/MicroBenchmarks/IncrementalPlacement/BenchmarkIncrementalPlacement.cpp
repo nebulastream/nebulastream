@@ -123,13 +123,13 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
     uint64_t counter = 1;
     for (uint64_t j = 0; j < noOfLogicalSource; j++) {
         if (counter == 1) {
-            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema1);
+            sourceCatalog->addLogicalSource("example" + std::to_string(j + 1), schema1);
         } else if (counter == 2) {
-            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema2);
+            sourceCatalog->addLogicalSource("example" + std::to_string(j + 1), schema2);
         } else if (counter == 3) {
-            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema3);
+            sourceCatalog->addLogicalSource("example" + std::to_string(j + 1), schema3);
         } else if (counter == 4) {
-            sourceCatalogService->registerLogicalSource("example" + std::to_string(j + 1), schema4);
+            sourceCatalog->addLogicalSource("example" + std::to_string(j + 1), schema4);
             counter = 0;
         }
         counter++;
@@ -140,7 +140,7 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
             auto logicalSourceName = "example" + std::to_string(j + 1);
             auto physicalSourceName = "example" + std::to_string(j + 1) + std::to_string(i);
             int sourceTopologyId = 5;
-            sourceCatalogService->registerPhysicalSource(physicalSourceName, logicalSourceName, sourceTopologyId);
+            sourceCatalog->registerPhysicalSource(physicalSourceName, logicalSourceName, sourceTopologyId);
         }
     }
 }

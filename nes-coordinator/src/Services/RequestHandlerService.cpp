@@ -31,6 +31,7 @@
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
+#include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -147,4 +148,41 @@ bool RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor:
     return changeResponse->success;
 }
 
+bool RequestHandlerService::queueRegisterPhysicalSourceRequest(const std::string& physicalSourceName,
+                                                               const std::string& logicalSourceName,
+                                                               WorkerId topologyNodeId) const {
+    std::vector<RequestProcessor::PhysicalSourceAddition> physicalSourceDefinitions;
+    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName, topologyNodeId);
+    return modifySources(physicalSourceDefinitions);
+}
+
+bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string& logicalSourceName,
+                                                               SchemaPtr schema) const {
+    std::vector<RequestProcessor::LogicalSourceAddition> physicalSourceDefinitions;
+    physicalSourceDefinitions.emplace_back(logicalSourceName, schema);
+    return modifySources(physicalSourceDefinitions);
+}
+
+bool RequestHandlerService::queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
+                                                               const std::string& logicalSourceName,
+                                                               WorkerId topologyNodeId) const {
+    std::vector<RequestProcessor::PhysicalSourceRemoval> physicalSourceDefinitions;
+    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName, topologyNodeId);
+    return modifySources(physicalSourceDefinitions);
+}
+
+bool RequestHandlerService::queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const {
+    std::vector<RequestProcessor::LogicalSourceRemoval> physicalSourceDefinitions;
+    physicalSourceDefinitions.emplace_back(logicalSourceName);
+    return modifySources(physicalSourceDefinitions);
+}
+
+bool RequestHandlerService::modifySources(RequestProcessor::SourceActionVector sourceActionVector) const {
+    auto updateRequest = RequestProcessor::UpdateSourceCatalogRequest::create(sourceActionVector,
+                                                                              RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(updateRequest);
+    auto future = updateRequest->getFuture();
+    auto response = future.get();
+    return std::static_pointer_cast<RequestProcessor::UpdateSourceCatalogResponse>(response)->success;
+}
 }// namespace NES

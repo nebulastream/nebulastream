@@ -65,7 +65,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -114,7 +114,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -164,7 +164,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -263,7 +263,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -366,7 +366,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
                           ->addField(createField("val1", BasicType::UINT64))
                           ->addField(createField("val2", BasicType::UINT64))
                           ->addField(createField("val3", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -428,7 +428,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
                           ->addField(createField("val1", BasicType::UINT64))
                           ->addField(createField("val2", BasicType::UINT64))
                           ->addField(createField("val3", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -506,7 +506,7 @@ TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
                           ->addField(createField("val1", BasicType::UINT64))
                           ->addField(createField("val2", BasicType::UINT64))
                           ->addField(createField("val3", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");

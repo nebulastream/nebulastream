@@ -58,7 +58,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -132,7 +132,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -228,7 +228,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -314,7 +314,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -413,7 +413,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -497,7 +497,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -600,7 +600,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -720,7 +720,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -878,7 +878,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
                           ->addField(createField("value", BasicType::UINT64))
                           ->addField(createField("id", BasicType::UINT64))
                           ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

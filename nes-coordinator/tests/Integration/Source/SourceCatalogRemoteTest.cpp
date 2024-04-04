@@ -88,7 +88,7 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
+    crd->getSourceCatalog()->addLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
@@ -129,7 +129,7 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
+    crd->getSourceCatalog()->addLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
@@ -166,7 +166,7 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
+    crd->getSourceCatalog()->addLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");

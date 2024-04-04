@@ -1846,7 +1846,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("input1", input);
+    crd->getSourceCatalog()->addLogicalSource("input1", input);
 
     NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();

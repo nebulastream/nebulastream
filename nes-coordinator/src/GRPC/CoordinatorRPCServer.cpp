@@ -174,7 +174,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     RegisterPhysicalSourcesReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
     for (const auto& physicalSourceDefinition : request->physicalsourcetypes()) {
-        bool success = sourceCatalogService->registerPhysicalSource(physicalSourceDefinition.physicalsourcename(),
+        bool success = requestHandlerService->queueRegisterPhysicalSourceRequest(physicalSourceDefinition.physicalsourcename(),
                                                                     physicalSourceDefinition.logicalsourcename(),
                                                                     request->workerid());
         if (!success) {
@@ -193,7 +193,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
                                                       UnregisterPhysicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource: request ={}", request->DebugString());
 
-    bool success = sourceCatalogService->unregisterPhysicalSource(request->physicalsourcename(),
+    bool success = requestHandlerService->queueUnregisterPhysicalSourceRequest(request->physicalsourcename(),
                                                                   request->logicalsourcename(),
                                                                   request->workerid());
 
@@ -213,7 +213,7 @@ Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request = {}", request->DebugString());
 
     auto schema = queryParsingService->createSchemaFromCode(request->sourceschema());
-    bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), schema);
+    bool success = requestHandlerService->queueRegisterLogicalSourceRequest(request->logicalsourcename(), schema);
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource success");

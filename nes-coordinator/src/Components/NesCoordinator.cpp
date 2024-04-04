@@ -144,7 +144,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator: Register Logical sources");
     for (const auto& logicalSourceType : coordinatorConfiguration->logicalSourceTypes.getValues()) {
         auto schema = Schema::createFromSchemaType(logicalSourceType.getValue()->getSchemaType());
-        sourceCatalogService->registerLogicalSource(logicalSourceType.getValue()->getLogicalSourceName(), schema);
+        sourceCatalog->addLogicalSource(logicalSourceType.getValue()->getLogicalSourceName(), schema);
     }
     NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 

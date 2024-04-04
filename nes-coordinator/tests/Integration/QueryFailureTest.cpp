@@ -53,7 +53,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     //register logical source
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_u64");
 
-    crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
     NES_DEBUG("QueryFailureTest: Start worker 1");
@@ -98,7 +98,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
     NES_DEBUG("QueryFailureTest: Start worker 1");
@@ -186,7 +186,7 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
     auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-    crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
     NES_DEBUG("QueryFailureTest: Start worker 1");

@@ -18,6 +18,8 @@
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
+//todo: move enum decalration somewhere else?
+#include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
 #include <future>
 #include <nlohmann/json.hpp>
 
@@ -156,7 +158,19 @@ class RequestHandlerService {
      */
     bool queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
 
+    bool queueRegisterPhysicalSourceRequest(const std::string& physicalSourceName,
+                                            const std::string& logicalSourceName,
+                                            WorkerId topologyNodeId) const;
+
+    bool queueRegisterLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const;
+
+    bool queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
+                                              const std::string& logicalSourceName,
+                                              WorkerId topologyNodeId) const;
+    bool queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const;
+
   private:
+    bool modifySources(RequestProcessor::SourceActionVector sourceActions) const;
     /**
      * Assign unique operator ids to the incoming query plan from a client.
      * @param queryPlan : query plan to process

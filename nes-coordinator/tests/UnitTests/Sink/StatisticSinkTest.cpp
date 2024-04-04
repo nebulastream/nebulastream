@@ -20,6 +20,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sinks/Mediums/StatisticSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <StatisticIdentifiers.hpp>
 #include <Util/TestUtils.hpp>

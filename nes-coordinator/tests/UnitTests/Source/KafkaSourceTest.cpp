@@ -309,7 +309,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     EXPECT_NE(port, 0UL);
     //register logical source
     std::string source = R"(Schema::create()->addField(createField("var", BasicType::UINT32));)";
-    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
+    crd->getSourceCatalog()->addLogicalSource("stream", source);
     NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 
     NES_INFO("KAFKASOURCETEST:: Start worker 1");
@@ -390,7 +390,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
                             ->addField(createField("healthStatusDuration", BasicType::UINT32))
                             ->addField(createField("recovered", BasicType::BOOLEAN))
                             ->addField(createField("dead", BasicType::BOOLEAN));)";
-    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
+    crd->getSourceCatalog()->addLogicalSource("stream", source);
     NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 
     NES_INFO("KAFKASOURCETEST:: Start worker 1");

@@ -739,7 +739,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -795,7 +795,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -850,7 +850,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -1094,8 +1094,8 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
-    crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream1", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -1180,8 +1180,8 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
-    crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream1", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -1425,8 +1425,8 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
-    crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream1", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -1905,19 +1905,19 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
                       ->addField(createField("win1", BasicType::UINT64))
                       ->addField(createField("id1", BasicType::UINT64))
                       ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalog()->addLogicalSource("window1", window);
 
     auto window2 = Schema::create()
                        ->addField(createField("win2", BasicType::UINT64))
                        ->addField(createField("id2", BasicType::UINT64))
                        ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalog()->addLogicalSource("window2", window2);
 
     auto window3 = Schema::create()
                        ->addField(createField("win3", BasicType::UINT64))
                        ->addField(createField("id3", BasicType::UINT64))
                        ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalog()->addLogicalSource("window3", window3);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -2063,19 +2063,19 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
                       ->addField(createField("win1", BasicType::UINT64))
                       ->addField(createField("id1", BasicType::UINT64))
                       ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalog()->addLogicalSource("window1", window);
 
     auto window2 = Schema::create()
                        ->addField(createField("win2", BasicType::UINT64))
                        ->addField(createField("id2", BasicType::UINT64))
                        ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalog()->addLogicalSource("window2", window2);
 
     auto window3 = Schema::create()
                        ->addField(createField("win3", BasicType::UINT64))
                        ->addField(createField("id3", BasicType::UINT64))
                        ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalog()->addLogicalSource("window3", window3);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");

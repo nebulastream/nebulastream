@@ -282,7 +282,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     auto crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
+    crd->getSourceCatalog()->addLogicalSource("windowSource", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");

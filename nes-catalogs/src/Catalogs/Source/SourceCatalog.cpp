@@ -281,4 +281,32 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Sc
     return true;
 }
 
+
+bool SourceCatalog::registerPhysicalSource(const std::string& physicalSourceName,
+                                                  const std::string& logicalSourceName,
+                                                  WorkerId topologyNodeId) {
+
+    std::unique_lock lock(catalogMutex);
+
+    if (!containsLogicalSource(logicalSourceName)) {
+        NES_ERROR("SourceCatalogService::RegisterPhysicalSource logical source does not exist {}", logicalSourceName);
+        return false;
+    }
+
+    NES_DEBUG("SourceCatalogService::RegisterPhysicalSource: try to register physical node id {} physical source= {} logical "
+              "source= {}",
+              topologyNodeId,
+              physicalSourceName,
+              logicalSourceName);
+    auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName);
+    auto logicalSource = getLogicalSource(logicalSourceName);
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, topologyNodeId);
+    bool success = addPhysicalSource(logicalSourceName, sce);
+    if (!success) {
+        NES_ERROR("SourceCatalogService::RegisterPhysicalSource: adding physical source was not successful.");
+        return false;
+    }
+    return success;
+}
+
 }// namespace NES::Catalogs::Source

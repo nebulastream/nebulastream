@@ -73,7 +73,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
 
     NES_INFO("KTMDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("ktm", ktmSchema);
+    crd->getSourceCatalog()->addLogicalSource("ktm", ktmSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     ASSERT_EQ(port, *rpcCoordinatorPort);
     NES_DEBUG("KTMDeploymentTest: Coordinator started successfully");

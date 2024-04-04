@@ -265,7 +265,7 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
                            ->addField(createField("value", BasicType::UINT64))
                            ->addField(createField("id", BasicType::UINT64))
                            ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema1);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema1);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -343,12 +343,12 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
                            ->addField(createField("win1", BasicType::UINT64))
                            ->addField(createField("id1", BasicType::UINT64))
                            ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window1", testSchema1);
+    crd->getSourceCatalog()->addLogicalSource("window1", testSchema1);
     auto testSchema2 = Schema::create()
                            ->addField(createField("win2", BasicType::UINT64))
                            ->addField(createField("id2", BasicType::UINT64))
                            ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("window2", testSchema2);
+    crd->getSourceCatalog()->addLogicalSource("window2", testSchema2);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

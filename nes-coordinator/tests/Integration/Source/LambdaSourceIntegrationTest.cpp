@@ -49,8 +49,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
 
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("input1", input);
-    crd->getSourceCatalogService()->registerLogicalSource("input2", input);
+    crd->getSourceCatalog()->addLogicalSource("input1", input);
+    crd->getSourceCatalog()->addLogicalSource("input2", input);
 
     NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
@@ -136,8 +136,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("input1", input);
-    crd->getSourceCatalogService()->registerLogicalSource("input2", input);
+    crd->getSourceCatalog()->addLogicalSource("input1", input);
+    crd->getSourceCatalog()->addLogicalSource("input2", input);
 
     NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
@@ -230,7 +230,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);
     auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("input", input);
+    crd->getSourceCatalog()->addLogicalSource("input", input);
 
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;

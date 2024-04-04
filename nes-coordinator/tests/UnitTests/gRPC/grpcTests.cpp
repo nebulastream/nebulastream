@@ -59,7 +59,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     NES_INFO("GrpcNotifyQueryFailureTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
+    crd->getSourceCatalog()->addLogicalSource("Win1", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("GrpcNotifyQueryFailureTest: Coordinator started successfully");
@@ -127,7 +127,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
     coordinatorConfig->worker.numberOfBuffersInGlobalBufferManager = 2 * 1024;
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
+    crd->getSourceCatalog()->addLogicalSource("Win1", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");

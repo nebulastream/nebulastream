@@ -44,35 +44,13 @@ class SourceCatalogService {
 
   public:
     SourceCatalogService(Catalogs::Source::SourceCatalogPtr sourceCatalog);
-
-    /**
-     * @brief method to register a physical source
-     * @param logicalSourceName: logical source name
-     * @param physicalSourceName: physical source name
-     * @param topologyNodeId : the topology node id
-     * @return bool indicating success
-     */
-    bool
-    registerPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
-
-    /**
-     * @brief method to unregister a physical source
-     * @param logicalSourceName: logical source name
-     * @param physicalSourceName: physical source name
-     * @param topologyNodeId : the topology node id
-     * @return bool indicating success
-     */
-    bool unregisterPhysicalSource(const std::string& physicalSourceName,
-                                  const std::string& logicalSourceName,
-                                  WorkerId topologyNodeId);
-
     /**
      * @brief method to register a logical source
      * @param logicalSourceName: logical source name
      * @param schema: schema object
      * @return bool indicating success
      */
-    bool registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
+    //bool registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
     /**
      * @brief method to update schema of an existing logical source

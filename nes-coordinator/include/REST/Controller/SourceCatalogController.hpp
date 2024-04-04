@@ -150,7 +150,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                       logicalSourceName,
                       schemaString);
             auto schema = queryParsingService->createSchemaFromCode(schemaString);
-            bool added = sourceCatalogService->registerLogicalSource(logicalSourceName, schema);
+            bool added = sourceCatalog->addLogicalSource(logicalSourceName, schema);
             NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ? {}", added);
             //Prepare the response
             if (added) {
@@ -190,7 +190,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             auto sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
-            bool added = sourceCatalogService->registerLogicalSource(sourceName, deserializedSchema);
+            bool added = sourceCatalog->addLogicalSource(sourceName, deserializedSchema);
             NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ? {}", added);
 
             if (!added) {
@@ -329,7 +329,9 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     }
 
   private:
+    //todo: remove
     SourceCatalogServicePtr sourceCatalogService;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     QueryParsingServicePtr queryParsingService;
     ErrorHandlerPtr errorHandler;
 };
