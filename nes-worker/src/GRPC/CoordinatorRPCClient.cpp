@@ -236,7 +236,9 @@ bool CoordinatorRPCClient::unregisterPhysicalSource(const std::vector<PhysicalSo
             request,
             rpcRetryAttempts,
             rpcBackoff,
-            [this](ClientContext* context, const UnregisterPhysicalSourceRequest& innerRequest, UnregisterPhysicalSourceReply* reply) {
+            [this](ClientContext* context,
+                   const UnregisterPhysicalSourceRequest& innerRequest,
+                   UnregisterPhysicalSourceReply* reply) {
                 return coordinatorStub->UnregisterPhysicalSource(context, innerRequest, reply);
             });
 
