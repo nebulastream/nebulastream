@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
         Logger::getInstance()->changeLogLevel(workerConfiguration->logLevel.getValue());
 
         NES_INFO("NesWorkerStarter: Start with {}", workerConfiguration->toString());
-        NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
+        auto nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 
         NES_INFO("Starting worker");

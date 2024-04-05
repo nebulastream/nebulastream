@@ -80,7 +80,7 @@ class WorkerMobilityHandler {
      * run() function will run
      * @param currentParentWorkerIds a list of the workers current parents
      */
-    void start(std::vector<uint64_t> currentParentWorkerIds);
+    void start(const std::vector<uint64_t>& currentParentWorkerIds);
 
     /**
      * tell the thread which executes start() to exit the update loop and stop execution
@@ -217,7 +217,7 @@ class WorkerMobilityHandler {
      *      will reconnect to the closest node in that radius.
      */
     //FIXME: current assumption is just one parent per mobile worker
-    void run(std::vector<uint64_t> currentParentWorkerIds);
+    void run(const std::vector<uint64_t>& currentParentWorkerIds);
 
     //configuration
     uint64_t updateInterval;

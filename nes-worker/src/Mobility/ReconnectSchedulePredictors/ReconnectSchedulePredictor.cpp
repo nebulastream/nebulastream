@@ -16,15 +16,13 @@
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
-#include <Mobility/WorkerMobilityHandler.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/S2Utilities.hpp>
 #include <Util/Mobility/Waypoint.hpp>
-#include <Util/TimeMeasurement.hpp>
+#include <Mobility/WorkerMobilityHandler.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
 #include <stdexcept>
-#include <utility>
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSchedulePredictor(
     const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {

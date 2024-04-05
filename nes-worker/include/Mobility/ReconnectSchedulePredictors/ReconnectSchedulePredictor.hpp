@@ -60,7 +60,7 @@ using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor
  */
 class ReconnectSchedulePredictor {
   public:
-    ReconnectSchedulePredictor(
+    explicit ReconnectSchedulePredictor(
         const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
     /**
@@ -104,7 +104,7 @@ class ReconnectSchedulePredictor {
     std::optional<ReconnectSchedule> getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
                                                           const DataTypes::Experimental::GeoLocation& parentLocation,
                                                           const S2PointIndex<uint64_t>& FieldNodeIndex,
-                                                          bool isIndexUpdted);
+                                                          bool isIndexUpdated);
 #endif
   private:
     /**
