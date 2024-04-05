@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.6.88](https://github.com/nebulastream/nebulastream/tree/v0.6.88) (2024-04-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.87...v0.6.88)
+
+**Implemented enhancements:**
+
+- \[TASK\] CLion inspect nes-worker [\#4586](https://github.com/nebulastream/nebulastream/issues/4586)
+- \[Feature\] StreamJoin Window Size Reduce During Runtime [\#3427](https://github.com/nebulastream/nebulastream/issues/3427)
+- \[Feature\]  Slidingwindow Support for StreamJoin [\#3353](https://github.com/nebulastream/nebulastream/issues/3353)
+- \[Feature\] Improve Ease of Use for DynamicTupleBuffer [\#3323](https://github.com/nebulastream/nebulastream/issues/3323)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Refactor DynamicTupleBuffer [\#3396](https://github.com/nebulastream/nebulastream/issues/3396)
+- \[Feature\] Port static scheduler to new Benchmark repo [\#3335](https://github.com/nebulastream/nebulastream/issues/3335)
+- Track Nautilus Requests [\#3260](https://github.com/nebulastream/nebulastream/issues/3260)
+
 ## [v0.6.87](https://github.com/nebulastream/nebulastream/tree/v0.6.87) (2024-04-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.86...v0.6.87)
@@ -10,6 +27,13 @@
 - \[FEATURE\] Simplified Benchmark Configuration and Execution Tool [\#4635](https://github.com/nebulastream/nebulastream/issues/4635)
 - \[TASK\] Code quality improvement for nes-execution [\#4498](https://github.com/nebulastream/nebulastream/issues/4498)
 - \[TASK\] Write BloomFilter handler for FixedPages in Nautilus [\#4176](https://github.com/nebulastream/nebulastream/issues/4176)
+- \[TASK\] Investigate LocalState API in ExecutionContext [\#3858](https://github.com/nebulastream/nebulastream/issues/3858)
+- \[TASK\] Rewrite checkIfBuffersAreEqual and move to UtilityFunctions [\#3687](https://github.com/nebulastream/nebulastream/issues/3687)
+- \[TASK\] Check if rename function works with join [\#3686](https://github.com/nebulastream/nebulastream/issues/3686)
+
+### Bug Fixes 🐛
+
+- \[BUG\] E2ERunnerTest, multiplePhysicalLogicalSources [\#3826](https://github.com/nebulastream/nebulastream/issues/3826)
 
 ## [v0.6.86](https://github.com/nebulastream/nebulastream/tree/v0.6.86) (2024-04-04)
 
