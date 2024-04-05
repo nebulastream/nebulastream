@@ -58,6 +58,8 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(NES_USE_KAFKA "Build with Kafka support" OFF)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
 
+option(NES_FORCE_UBUNTU_DEPENDENCIES "Use ubuntu dependencies regardless of distribution" OFF)
+
 #toggle GPU runtime and test
 option(NES_USE_GPU "Build with GPU acceleration" OFF)
 
