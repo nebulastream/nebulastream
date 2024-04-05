@@ -23,7 +23,7 @@ namespace NES {
 grpc::Status NES::HealthCheckRPCServer::Check(grpc::ServerContext* /*context*/,
                                               const HealthCheckRequest* request,
                                               HealthCheckResponse* response) {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::scoped_lock<std::mutex> lock(mutex);
     auto iter = statusMap.find(request->service());
     if (iter == statusMap.end()) {
         return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
@@ -42,7 +42,7 @@ grpc::Status HealthCheckRPCServer::Watch(grpc::ServerContext* context,
             HealthCheckResponse response;
             auto iter = statusMap.find(request->service());
             if (iter == statusMap.end()) {
-                response.set_status(response.SERVICE_UNKNOWN);
+                response.set_status(HealthCheckResponse::SERVICE_UNKNOWN);
             } else {
                 response.set_status(iter->second);
             }
@@ -58,7 +58,7 @@ grpc::Status HealthCheckRPCServer::Watch(grpc::ServerContext* context,
 
 void HealthCheckRPCServer::SetStatus(const std::string& service_name,
                                      grpc::health::v1::HealthCheckResponse::ServingStatus status) {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::scoped_lock<std::mutex> lock(mutex);
     if (shutdown) {
         status = HealthCheckResponse::NOT_SERVING;
     }
@@ -66,7 +66,7 @@ void HealthCheckRPCServer::SetStatus(const std::string& service_name,
 }
 
 void HealthCheckRPCServer::SetAll(grpc::health::v1::HealthCheckResponse::ServingStatus status) {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::scoped_lock<std::mutex> lock(mutex);
     if (shutdown) {
         return;
     }
@@ -76,7 +76,7 @@ void HealthCheckRPCServer::SetAll(grpc::health::v1::HealthCheckResponse::Serving
 }
 
 void HealthCheckRPCServer::Shutdown() {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::scoped_lock<std::mutex> lock(mutex);
     if (shutdown) {
         return;
     }

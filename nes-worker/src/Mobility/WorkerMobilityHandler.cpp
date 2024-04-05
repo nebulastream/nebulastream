@@ -18,10 +18,10 @@
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Mobility/WorkerMobilityHandler.hpp>
+#include <Util/Mobility/S2Utilities.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
-#include <Util/Mobility/S2Utilities.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 #include <utility>
@@ -192,7 +192,7 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(
 
 bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconnectionRoutine(uint64_t& currentParentId,
                                                                                              uint64_t newParentId) {
-    //todo #4283: trigger buffering of sinks before reoconnect happens
+    //todo #4283: trigger buffering of sinks before reconnect happens
 
     auto workerId = nodeEngine->getNodeId();
     TopologyLinkInformation removedLink(workerId, currentParentId);
@@ -228,7 +228,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::sendCurrentWay
     coordinatorRpcClient->sendLocationUpdate(currentWaypoint);
 }
 
-void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::start(std::vector<uint64_t> currentParentWorkerIds) {
+void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::start(const std::vector<uint64_t>& currentParentWorkerIds) {
     //TODO  #3365: reset state of schedule predictor
     //start periodically pulling location updates and inform coordinator about location changes
     if (!isRunning) {
@@ -240,7 +240,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::start(std::vec
     }
 }
 
-void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vector<uint64_t> currentParentWorkerIds) {
+void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(const std::vector<uint64_t>& currentParentWorkerIds) {
 
 #ifdef S2DEF
     /**

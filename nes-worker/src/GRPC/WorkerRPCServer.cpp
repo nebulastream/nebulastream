@@ -14,7 +14,6 @@
 
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -23,7 +22,6 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
-#include <Util/Mobility/Waypoint.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
 
@@ -39,14 +37,16 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
 }
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
+    //TODO: This removes the const qualifier please check this @Ankit #4769
     auto decomposedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
         (SerializableDecomposedQueryPlan*) &request->decomposedqueryplan());
+
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
               "{} plan={}",
               decomposedQueryPlan->getSharedQueryId(),
               decomposedQueryPlan->getDecomposedQueryPlanId(),
               decomposedQueryPlan->toString());
-    bool success = 0;
+    bool success = false;
     try {
         //check if the plan is reconfigured
         if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_REDEPLOYMENT) {
