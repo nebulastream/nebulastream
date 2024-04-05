@@ -51,8 +51,8 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
         try {
             values = NES::Util::splitWithStringDelimiter<std::string>(csvLine, delimiter);
         } catch (std::exception& exception) {
-            std::string errorString =
-                std::string("An error occurred while splitting delimiter of waypoint CSV. ERROR: ") + strerror(errno) + " message=" + exception.what();
+            std::string errorString = std::string("An error occurred while splitting delimiter of waypoint CSV. ERROR: ")
+                + strerror(errno) + " message=" + exception.what();
             NES_ERROR("LocationProviderCSV:  {}", errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
         }
@@ -75,7 +75,8 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
             latitude = std::stod(latitudeString);
             longitude = std::stod(longitudeString);
         } catch (std::exception& exception) {
-            std::string errorString = std::string("An error occurred while creating the waypoint. ERROR: ") + strerror(errno) + " message=" + exception.what();
+            std::string errorString = std::string("An error occurred while creating the waypoint. ERROR: ") + strerror(errno)
+                + " message=" + exception.what();
             NES_ERROR("LocationProviderCSV: {}", errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
         }
