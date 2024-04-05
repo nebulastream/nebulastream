@@ -30,6 +30,11 @@
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/GetSourceInformationRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddLogicalSourceEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemoveLogicalSourceEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemovePhysicalSourceEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
@@ -37,6 +42,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
+#include <llvm/Support/MathExtras.h>
 #include <nlohmann/json.hpp>
 
 namespace NES {
@@ -145,40 +151,37 @@ bool RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor:
 bool RequestHandlerService::queueRegisterPhysicalSourceRequest(const std::string& physicalSourceName,
                                                                const std::string& logicalSourceName,
                                                                WorkerId workerId) const {
-    std::vector<RequestProcessor::PhysicalSourceAddition> physicalSourceDefinitions;
-    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName, workerId);
-    return modifySources(physicalSourceDefinitions);
-}
-bool RequestHandlerService::queueRegisterPhysicalSourceRequest(
-    std::vector<RequestProcessor::PhysicalSourceAddition> additions) const {
-    return modifySources(additions);
+    std::vector<RequestProcessor::PhysicalSourceDefinition> physicalSourceDefinitions;
+    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName);
+    return queueRegisterPhysicalSourceRequest(physicalSourceDefinitions, workerId);
 }
 
-bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string& logicalSourceName,
-                                                               SchemaPtr schema) const {
-    std::vector<RequestProcessor::LogicalSourceAddition> physicalSourceDefinitions;
-    physicalSourceDefinitions.emplace_back(logicalSourceName, schema);
-    return modifySources(physicalSourceDefinitions);
+bool RequestHandlerService::queueRegisterPhysicalSourceRequest(
+std::vector<RequestProcessor::PhysicalSourceDefinition> additions, WorkerId workerId) const {
+    auto event = RequestProcessor::AddPhysicalSourcesEvent::create(additions, workerId);
+    return modifySources(event);
+}
+
+bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
+    auto event = RequestProcessor::AddLogicalSourceEvent::create(logicalSourceName, schema);
+    return modifySources(event);
 }
 
 bool RequestHandlerService::queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
-                                                               const std::string& logicalSourceName,
-                                                               WorkerId workerId) const {
-    std::vector<RequestProcessor::PhysicalSourceRemoval> physicalSourceDefinitions;
-    physicalSourceDefinitions.emplace_back(logicalSourceName, physicalSourceName, workerId);
-    return modifySources(physicalSourceDefinitions);
+                                                                 const std::string& logicalSourceName,
+                                                                 WorkerId workerId) const {
+    auto event = RequestProcessor::RemovePhysicalSourceEvent::create(logicalSourceName, physicalSourceName, workerId);
+    return modifySources(event);
 }
 
 bool RequestHandlerService::queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const {
-    std::vector<RequestProcessor::LogicalSourceRemoval> physicalSourceDefinitions;
-    physicalSourceDefinitions.emplace_back(logicalSourceName);
-    return modifySources(physicalSourceDefinitions);
+    auto event = RequestProcessor::RemoveLogicalSourceEvent::create(logicalSourceName);
+    return modifySources(event);
 }
 
 bool RequestHandlerService::queueUpdateLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
-    std::vector<RequestProcessor::LogicalSourceUpdate> physicalSourceDefinitions;
-    physicalSourceDefinitions.emplace_back(logicalSourceName, schema);
-    return modifySources(physicalSourceDefinitions);
+    auto event = RequestProcessor::UpdateLogicalSourceEvent::create(logicalSourceName, schema);
+    return modifySources(event);
 }
 
 nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
@@ -190,7 +193,9 @@ nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
 }
 
 nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string logicelSourceName) const {
-    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::SourceType::PHYSICAL_SOURCE, logicelSourceName, RequestProcessor::DEFAULT_RETRIES);
+    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::SourceType::PHYSICAL_SOURCE,
+                                                                         logicelSourceName,
+                                                                         RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
@@ -198,20 +203,21 @@ nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string
 }
 
 nlohmann::json RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const {
-    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::SourceType::LOGICAL_SOURCE, logicelSourceName, RequestProcessor::DEFAULT_RETRIES);
+    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::SourceType::LOGICAL_SOURCE,
+                                                                         logicelSourceName,
+                                                                         RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
     return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->json;
-
 }
 
-bool RequestHandlerService::modifySources(RequestProcessor::SourceActionVector sourceActionVector) const {
-    auto updateRequest = RequestProcessor::UpdateSourceCatalogRequest::create(sourceActionVector,
-                                                                              RequestProcessor::DEFAULT_RETRIES);
+bool RequestHandlerService::modifySources(RequestProcessor::SourceCatalogEventPtr event) const {
+    auto updateRequest =
+        RequestProcessor::UpdateSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(updateRequest);
     auto future = updateRequest->getFuture();
     auto response = future.get();
-    return std::static_pointer_cast<RequestProcessor::UpdateSourceCatalogResponse>(response)->success;
+    return std::static_pointer_cast<RequestProcessor::SourceCatalogResponse>(response)->success;
 }
 }// namespace NES

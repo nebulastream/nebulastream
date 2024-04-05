@@ -26,46 +26,10 @@ namespace NES {
 namespace RequestProcessor {
 class UpdateSourceCatalogRequest;
 
-struct UpdateSourceCatalogResponse : AbstractRequestResponse {
-    explicit UpdateSourceCatalogResponse(bool success) : success(success){};
-    bool success;
-};
-
 using UpdateSourceCatalogRequestPtr = std::shared_ptr<UpdateSourceCatalogRequest>;
 
-//struct containing the definition of a single physical source to add
-struct PhysicalSourceAddition {
-    std::string logicalSourceName;
-    std::string physicalSourceName;
-    WorkerId workerId;
-};
-//struct containing the definition of a single physical source to remove
-struct PhysicalSourceRemoval {
-    std::string logicalSourceName;
-    std::string physicalSourceName;
-    WorkerId workeId;
-};
-
-//struct containing the definition of a logical source to add
-struct LogicalSourceAddition {
-    std::string logicalSourceName;
-    SchemaPtr schema;
-};
-//struct containing the definition of a logical source to update
-struct LogicalSourceUpdate {
-    std::string logicalSourceName;
-    SchemaPtr schema;
-};
-//struct containing the definition of a logical source to remove
-struct LogicalSourceRemoval {
-    std::string logicalSourceName;
-};
-
-using SourceActionVector = std::variant<std::vector<PhysicalSourceAddition>,
-                                        std::vector<PhysicalSourceRemoval>,
-                                        std::vector<LogicalSourceAddition>,
-                                        std::vector<LogicalSourceUpdate>,
-                                        std::vector<LogicalSourceRemoval>>;
+class SourceCatalogEvent;
+using SourceCatalogEventPtr = std::shared_ptr<SourceCatalogEvent>;
 
 /**
  * @brief This request allows modifying the source catalog by adding, updating or removing logical and physical sources
@@ -78,7 +42,7 @@ class UpdateSourceCatalogRequest : public AbstractUniRequest {
      * @param maxRetries the maximum number of retries to attempt
      * @return a pointer to the created request
      */
-    static UpdateSourceCatalogRequestPtr create(SourceActionVector sourceActions, uint8_t maxRetries);
+    static UpdateSourceCatalogRequestPtr create(SourceCatalogEventPtr event, uint8_t maxRetries);
 
     /**
      * @brief constructor
@@ -86,7 +50,7 @@ class UpdateSourceCatalogRequest : public AbstractUniRequest {
      * @param maxRetries the maximum number of retries to attempt
      * @return a pointer to the created request
      */
-    UpdateSourceCatalogRequest(SourceActionVector sourceActions, uint8_t maxRetries);
+    UpdateSourceCatalogRequest(SourceCatalogEventPtr event, uint8_t maxRetries);
 
     /**
      * @brief Executes the request logic.
@@ -126,8 +90,7 @@ class UpdateSourceCatalogRequest : public AbstractUniRequest {
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 
   private:
-    //vector holding the definitions of the sources to be modified
-    SourceActionVector sourceActions;
+    SourceCatalogEventPtr event;
 };
 }// namespace RequestProcessor
 }// namespace NES

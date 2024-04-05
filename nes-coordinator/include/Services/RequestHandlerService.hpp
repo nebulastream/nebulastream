@@ -17,7 +17,6 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers.hpp>
-#include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <future>
 #include <nlohmann/json.hpp>
@@ -34,7 +33,11 @@ using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
 
 class SemanticQueryValidation;
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
+
 }// namespace Optimizer
+
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -70,6 +73,14 @@ using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 
 class ISQPEvent;
 using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
+
+class SourceCatalogEvent;
+using SourceCatalogEventPtr = std::shared_ptr<SourceCatalogEvent>;
+
+class AddPhysicalSourcesEvent;
+using AddPhysicalSourcesEventPtr = std::shared_ptr<AddPhysicalSourcesEvent>;
+
+struct PhysicalSourceDefinition;
 
 }// namespace RequestProcessor
 
@@ -168,9 +179,10 @@ class RequestHandlerService {
     /**
       * @brief register multiple new physical sources
       * @param additions a vector of physical source additions
+      * @param workerId the id of the worker hosting the physical source
       * @return true on success
       */
-    bool queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceAddition> additions) const;
+    bool queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceDefinition> additions, WorkerId workerId) const;
 
     /**
       * @brief register a new logical source
@@ -230,7 +242,7 @@ class RequestHandlerService {
      * @param sourceActions a vector containing the modifications to make to the catalog
      * @return true on successfull execution of the request
      */
-    bool modifySources(RequestProcessor::SourceActionVector sourceActions) const;
+    bool modifySources(RequestProcessor::SourceCatalogEventPtr event) const;
 
     /**
      * Assign unique operator ids to the incoming query plan from a client.

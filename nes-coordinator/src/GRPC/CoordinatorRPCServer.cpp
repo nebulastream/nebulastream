@@ -30,7 +30,7 @@
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/TopologyLinkInformation.hpp>
-#include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
 #include <utility>
 
 using namespace NES;
@@ -173,11 +173,11 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
-    std::vector<RequestProcessor::PhysicalSourceAddition> additions;
+    std::vector<RequestProcessor::PhysicalSourceDefinition> additions;
     for (const auto& physicalSourceDefinition : request->physicalsourcetypes()) {
-        additions.emplace_back(physicalSourceDefinition.logicalsourcename(), physicalSourceDefinition.physicalsourcename(), request->workerid());
+        additions.emplace_back(physicalSourceDefinition.logicalsourcename(), physicalSourceDefinition.physicalsourcename());
     }
-        bool success = requestHandlerService->queueRegisterPhysicalSourceRequest(additions);
+        bool success = requestHandlerService->queueRegisterPhysicalSourceRequest(additions, request->workerid());
         if (!success) {
             NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource failed");
             reply->set_success(false);
