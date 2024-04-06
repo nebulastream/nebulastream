@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <RequestProcessor/RequestTypes/GetSourceInformationRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>

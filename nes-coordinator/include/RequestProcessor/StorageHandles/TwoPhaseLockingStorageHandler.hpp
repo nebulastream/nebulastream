@@ -23,6 +23,8 @@
 namespace NES::RequestProcessor {
 struct StorageDataStructures;
 using TicketId = uint16_t;
+class TwoPhaseLockingStorageHandler;
+using TwoPhaseLockingStorageHandlerPtr = std::shared_ptr<TwoPhaseLockingStorageHandler>;
 
 static constexpr TicketId MAX_TICKET = std::numeric_limits<TicketId>::max();
 /**

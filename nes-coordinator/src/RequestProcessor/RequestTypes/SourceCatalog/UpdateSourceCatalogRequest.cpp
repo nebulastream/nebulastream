@@ -18,7 +18,7 @@
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemoveLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemovePhysicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateLogicalSourceEvent.hpp>
-#include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -36,7 +36,7 @@ std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(
         if (event->insteanceOf<AddPhysicalSourcesEvent>()) {
             auto addPhysicalSourceEvent = event->as<AddPhysicalSourcesEvent>();
             auto physicalSourceDefinitions = addPhysicalSourceEvent->getPhysicalSources();
-            std::vector<std::string> succesful;
+            std::vector<std::string> successfulAdditions;
             for (const auto& physicalSourceDefinition : physicalSourceDefinitions) {
                 //register physical source
                 if (!catalogHandle->registerPhysicalSource(physicalSourceDefinition.physicalSourceName,
@@ -47,12 +47,14 @@ std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(
                               physicalSourceDefinition.logicalSourceName);
                     responsePromise.set_value(
                         std::make_shared<AddPhysicalSourcesResponse>(false,
-                                                                     succesful,
+                                                                     successfulAdditions,
                                                                      physicalSourceDefinition.physicalSourceName));
                     return {};
                 }
-                succesful.push_back(physicalSourceDefinition.physicalSourceName);
+                successfulAdditions.push_back(physicalSourceDefinition.physicalSourceName);
             }
+            responsePromise.set_value(std::make_shared<AddPhysicalSourcesResponse>(true, successfulAdditions));
+            return {};
         } else if (event->insteanceOf<RemovePhysicalSourceEvent>()) {
             auto removePhysicalSourceEvent = event->as<RemovePhysicalSourceEvent>();
             //unregister physical source
@@ -85,7 +87,8 @@ std::vector<AbstractRequestPtr> UpdateSourceCatalogRequest::executeRequestLogic(
         } else if (event->insteanceOf<UpdateLogicalSourceEvent>()) {
             auto updateLogicalSourceEvent = event->as<UpdateLogicalSourceEvent>();
             //unregister logical source
-            if (!catalogHandle->updateLogicalSource(updateLogicalSourceEvent->getLogicalSourceName(), updateLogicalSourceEvent->getSchema())) {
+            if (!catalogHandle->updateLogicalSource(updateLogicalSourceEvent->getLogicalSourceName(),
+                                                    updateLogicalSourceEvent->getSchema())) {
                 NES_ERROR("Failed to update logical source: {}", updateLogicalSourceEvent->getLogicalSourceName());
                 responsePromise.set_value(std::make_shared<SourceCatalogResponse>(false));
                 return {};

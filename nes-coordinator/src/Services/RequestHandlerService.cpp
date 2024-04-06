@@ -28,7 +28,7 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
-#include <RequestProcessor/RequestTypes/GetSourceInformationRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
@@ -37,7 +37,7 @@
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
-#include <RequestProcessor/RequestTypes/UpdateSourceCatalogRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequest.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>

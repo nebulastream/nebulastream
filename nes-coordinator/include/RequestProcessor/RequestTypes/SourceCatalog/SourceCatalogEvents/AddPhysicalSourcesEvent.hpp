@@ -15,11 +15,13 @@
 #ifndef ADDPHYSICALSOURCESEVENT_HPP
 #define ADDPHYSICALSOURCESEVENT_HPP
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/SourceCatalogEvent.hpp>
+#include <optional>
 namespace NES::RequestProcessor {
 
 struct PhysicalSourceDefinition {
     std::string logicalSourceName;
     std::string physicalSourceName;
+    bool operator==(const PhysicalSourceDefinition & other) const;
 };
 class AddPhysicalSourcesEvent;
 using AddPhysicalSourcesEventPtr = std::shared_ptr<AddPhysicalSourcesEvent>;
@@ -31,11 +33,23 @@ struct AddPhysicalSourcesResponse : public SourceCatalogResponse {
     /**
     * @brief Construct a new Add Physical Sources Response object
     */
-    AddPhysicalSourcesResponse(bool success, std::vector<std::string> succesful, std::string failed);
+    AddPhysicalSourcesResponse(bool success, std::vector<std::string> succesfulAdditions, std::optional<std::string> failed);
+
+    AddPhysicalSourcesResponse(bool success, std::vector<std::string> succesfulAdditions);
+
+    /**
+     * @brief get the list of physical sources that were succesfully added
+     */
+    std::vector<std::string> getSuccesfulAdditions() const;
+
+    /**
+     * @brief get
+     */
+    std::optional<std::string> getFailedAddition() const;
 
   private:
-    std::vector<std::string> succesful;
-    std::string failed;
+    std::vector<std::string> succesfulAdditions;
+    std::optional<std::string> failed;
 };
 
 /**
