@@ -28,6 +28,8 @@ enum class SourceType {
 //the response type for the request
 struct GetSourceInformationResponse : public AbstractRequestResponse {
     explicit GetSourceInformationResponse(nlohmann::json json) : json(json){};
+    nlohmann::json getJson();
+private:
     nlohmann::json json;
 };
 

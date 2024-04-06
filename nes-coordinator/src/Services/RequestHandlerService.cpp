@@ -189,7 +189,7 @@ nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
-    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->json;
+    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->getJson();
 }
 
 nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string logicelSourceName) const {
@@ -199,7 +199,7 @@ nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
-    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->json;
+    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->getJson();
 }
 
 nlohmann::json RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const {
@@ -209,7 +209,7 @@ nlohmann::json RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::st
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
-    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->json;
+    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->getJson();
 }
 
 bool RequestHandlerService::modifySources(RequestProcessor::SourceCatalogEventPtr event) const {

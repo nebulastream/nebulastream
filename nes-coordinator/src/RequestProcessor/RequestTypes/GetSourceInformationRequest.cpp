@@ -17,6 +17,9 @@
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::RequestProcessor {
+
+nlohmann::json GetSourceInformationResponse::getJson() { return json; }
+
 GetSourceInformationRequestPtr GetSourceInformationRequest::create(uint8_t maxRetries) {
     return std::make_shared<GetSourceInformationRequest>(maxRetries);
 }
@@ -45,13 +48,13 @@ std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic
                         throw Exceptions::RuntimeException("Required source does not exist " + sourceName.value());
                         break;
                     }
-                    NES_DEBUG("Got logical source: {}", logicalSource);
+                    NES_DEBUG("Got logical source schema: {}", logicalSource["schema"]);
                     responsePromise.set_value(std::make_shared<GetSourceInformationResponse>(logicalSource));
                     break;
                 } else {
                     //return all logical sources as json via promise
                     auto logicalSources = catalogHandle->getAllLogicalSourcesAsJson();
-                    NES_DEBUG("Got all logical sources: {}", logicalSources);
+                    NES_DEBUG("Got logical sources: {}", logicalSources.dump());
                     responsePromise.set_value(std::make_shared<GetSourceInformationResponse>(logicalSources));
                     break;
                 }
