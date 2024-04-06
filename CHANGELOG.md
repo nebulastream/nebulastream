@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.89](https://github.com/nebulastream/nebulastream/tree/v0.6.89) (2024-04-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.88...v0.6.89)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Numbers and strings are not validated in configuration [\#4661](https://github.com/nebulastream/nebulastream/issues/4661)
+
 ## [v0.6.88](https://github.com/nebulastream/nebulastream/tree/v0.6.88) (2024-04-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.87...v0.6.88)
