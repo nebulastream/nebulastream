@@ -13,4 +13,7 @@
 
 add_source_files(nes-configurations
         IpValidation.cpp
+        NumberValidation.cpp
+        FloatValidation.cpp
+        BooleanValidation.cpp
         )

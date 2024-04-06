@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
 
@@ -65,8 +66,8 @@ class OptimizerConfiguration : public BaseConfiguration {
      */
     BoolOption allowExhaustiveContainmentCheck = {
         ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK,
-        false,
-        "Allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP."};
+        "false",
+        "Allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP.", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Indicates the memory layout policy and allows the engine to prefer a row or columnar layout.
@@ -84,8 +85,9 @@ class OptimizerConfiguration : public BaseConfiguration {
      */
     BoolOption performOnlySourceOperatorExpansion = {
         PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
-        false,
-        "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
+        "false",
+        "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)", std::make_shared<BooleanValidation>()};
+
 
     /**
      * @brief Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping.
@@ -94,16 +96,17 @@ class OptimizerConfiguration : public BaseConfiguration {
      */
     BoolOption performAdvanceSemanticValidation = {
         PERFORM_ADVANCE_SEMANTIC_VALIDATION,
-        false,
-        "Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping. (Default: false)"};
+        "false",
+        "Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping. (Default: false)", std::make_shared<BooleanValidation>()};
 
     /**
-     * @brief Enable the NEMO placement
+     * @brief Enable for distributed windows the NEMO placement where aggregation happens based on the params
+     * distributedWindowChildThreshold and distributedWindowCombinerThreshold.
      */
     BoolOption enableNemoPlacement = {
         ENABLE_NEMO_PLACEMENT,
-        false,
-        "Enables NEMO placement. (Default: false)"};
+        "false",
+        "Enables NEMO distributed window rule to use central windows instead of the distributed windows. (Default: false)", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Indicates the amender mode for performing placement amendment.
@@ -118,14 +121,14 @@ class OptimizerConfiguration : public BaseConfiguration {
     /**
      * @brief Set the thread count for running concurrent placement amenders
      */
-    UIntOption placementAmendmentThreadCount = {PLACEMENT_AMENDMENT_THREAD_COUNT, 1, "set the placement amender thread count"};
+    UIntOption placementAmendmentThreadCount = {PLACEMENT_AMENDMENT_THREAD_COUNT, "1", "set the placement amender thread count", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Enable incremental placement of running query plans.
      */
     BoolOption enableIncrementalPlacement = {ENABLE_INCREMENTAL_PLACEMENT,
-                                             false,
-                                             "Enable reconfiguration of running query plans. (Default: false)"};
+                                             "false",
+                                             "Enable reconfiguration of running query plans. (Default: false)", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Indicates the optimization mode for distributed joins.
@@ -138,21 +141,21 @@ class OptimizerConfiguration : public BaseConfiguration {
         Optimizer::DistributedJoinOptimizationMode::NONE,
         "selects the distributed join optimization mode [NONE|MATRIX|NEMO]"};
 
-  private:
-    std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&queryMergerRule,
-                &memoryLayoutPolicy,
-                &performOnlySourceOperatorExpansion,
-                &performAdvanceSemanticValidation,
-                &enableNemoPlacement,
-                &joinOptimizationMode,
-                &allowExhaustiveContainmentCheck,
-                &placementAmendmentMode,
-                &placementAmendmentThreadCount,
-                &enableIncrementalPlacement};
-    }
-};
+          private:
+            std::vector<Configurations::BaseOption*> getOptions() override {
+                return {&queryMergerRule,
+                        &memoryLayoutPolicy,
+                        &performOnlySourceOperatorExpansion,
+                        &performAdvanceSemanticValidation,
+                        &enableNemoPlacement,
+                        &joinOptimizationMode,
+                        &allowExhaustiveContainmentCheck,
+                        &placementAmendmentMode,
+                        &placementAmendmentThreadCount,
+                        &enableIncrementalPlacement};
+            }
+        };
 
-}// namespace NES::Configurations
+    }// namespace NES::Configurations
 
 #endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
