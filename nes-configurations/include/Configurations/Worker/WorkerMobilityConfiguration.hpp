@@ -41,31 +41,31 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      * @brief defines how many locations should be saved in the buffer which is used to calculate the predicted path
      */
     UIntOption locationBufferSize = {LOCATION_BUFFER_SIZE_CONFIG,
-                                     30,
-                                     "The amount of past locations to be recorded in order to predict the future trajectory"};
+                                     "30",
+                                     "The amount of past locations to be recorded in order to predict the future trajectory", std::make_shared<NumberValidation>()};
 
     /**
      * @brief defines after how many path prediction update steps a new location should be saved to the buffer
      */
     UIntOption locationBufferSaveRate = {
         LOCATION_BUFFER_SAVE_RATE_CONFIG,
-        4,
-        "Determines after how many location updates a new location will be inserted in the location buffer"};
+        "4",
+        "Determines after how many location updates a new location will be inserted in the location buffer", std::make_shared<NumberValidation>()};
 
     /**
      * @brief defines the minimum distance in meters between the current predicted path and the device position that will lead to a recalculation of the prediction
      */
     UIntOption pathDistanceDelta = {PATH_DISTANCE_DELTA_CONFIG,
-                                    20,
+                                    "20",
                                     "when deviating further than delta meters from the current predicted path, an update of the "
-                                    "prediction will be triggered"};
+                                    "prediction will be triggered", std::make_shared<NumberValidation>()};
 
     /**
      * @brief defines the radius of the circle used to determine the area within which all field node data will be downloaded during an update of the local index
      */
     UIntOption nodeInfoDownloadRadius = {NODE_INFO_DOWNLOAD_RADIUS_CONFIG,
-                                         10000,
-                                         "The radius in meters in which nodes will be downloaded"};
+                                         "10000",
+                                         "The radius in meters in which nodes will be downloaded", std::make_shared<NumberValidation>()};
 
     /**
      * @brief defines the distance from the edge of the covered by the current node index which when reached will trigger an update.
@@ -73,53 +73,53 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      * scheduling suboptimal reconnects
      */
     UIntOption nodeIndexUpdateThreshold = {NODE_INDEX_UPDATE_THRESHOLD_CONFIG,
-                                           2000,
+                                           "2000",
                                            "Trigger download of new node info when the device is less than threshold away from "
-                                           "the boundary of the area covered by the current info"};
+                                           "the boundary of the area covered by the current info", std::make_shared<NumberValidation>()};
 
     /**
      * @brief the distance in meters from the geographical position of a field node within which we assume the connection
      * between the mobile devices and the field node to be reasonably fast
      */
     UIntOption defaultCoverageRadius = {DEFAULT_COVERAGE_RADIUS_CONFIG,
-                                        1000,
-                                        "The coverage in meters each field node is assumed to have"};
+                                        "1000",
+                                        "The coverage in meters each field node is assumed to have", std::make_shared<NumberValidation>()};
 
     /**
      * @brief the length of the path to be predicted
      */
-    UIntOption pathPredictionLength = {PATH_PREDICTION_LENGTH_CONFIG, 10000, "The Length of the predicted path to be computed"};
+    UIntOption pathPredictionLength = {PATH_PREDICTION_LENGTH_CONFIG, "10000", "The Length of the predicted path to be computed", std::make_shared<NumberValidation>()};
 
     /**
      * @brief the allowed factor for speed changes before a recalculation of the predictions is triggered
      */
-    ScalarOption<double> speedDifferenceThresholdFactor = {
+    FloatOption speedDifferenceThresholdFactor = {
         SPEED_DIFFERENCE_THRESHOLD_FACTOR_CONFIG,
-        0.00001,
-        "The factor by which the speed needs to change to trigger a recalculation of reconnect predictions"};
+        "0.00001",
+        "The factor by which the speed needs to change to trigger a recalculation of reconnect predictions", std::make_shared<FloatValidation>()};
 
     /**
      * @brief the distance in meters which a device has to move before it informs the coordinator about the location change
      */
     UIntOption sendDevicePositionUpdateThreshold = {
         SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG,
-        100,
-        "The distance in meters after which the device will report it's new position in meters"};
+        "100",
+        "The distance in meters after which the device will report it's new position in meters", std::make_shared<NumberValidation>()};
 
     /**
      * @brief a boolean to define if the worker should inform the coordinator about a change in position which is larger than a certain threshold
      */
     BoolOption pushDeviceLocationUpdates = {PUSH_DEVICE_LOCATION_UPDATES_CONFIG,
-                                            true,
-                                            "determines if position updates should be sent to the coordinator"};
+                                            "true",
+                                            "determines if position updates should be sent to the coordinator", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief the time which the thread running at the worker mobility handler will sleep after each iteration
      */
     UIntOption mobilityHandlerUpdateInterval = {
         SEND_LOCATION_UPDATE_INTERVAL_CONFIG,
-        10000,
-        "the time which the thread running at the worker mobility handler will sleep after each iteration"};
+        "10000",
+        "the time which the thread running at the worker mobility handler will sleep after each iteration", std::make_shared<NumberValidation>()};
 
     /**
      * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
@@ -140,8 +140,8 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
      * value being used as the start time to which offsets will be added to obtain absolute timestamps
      */
     UIntOption locationProviderSimulatedStartTime = {LOCATION_SIMULATED_START_TIME_CONFIG,
-                                                     0,
-                                                     "The start time to be simulated if device movement is simulated"};
+                                                     "0",
+                                                     "The start time to be simulated if device movement is simulated", std::make_shared<NumberValidation>()};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

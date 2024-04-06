@@ -18,9 +18,7 @@ namespace NES::Configurations {
 
 /**
  * @brief This class provides a general implementation for validation of configurations options.
- * @tparam T of the value.
  */
-template<class T>
 class ConfigurationValidation {
   public:
 
@@ -30,7 +28,7 @@ class ConfigurationValidation {
      * @param configuration option
      * @return success if validated
      */
-    virtual bool isValid(const T&) const = 0;
+    virtual bool isValid(const std::string&) const = 0;
 };
 }
 #endif//NES_CONFIGURATIONVALIDATION_H

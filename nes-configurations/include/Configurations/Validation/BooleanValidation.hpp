@@ -12,28 +12,27 @@
     limitations under the License.
 */
 
-#ifndef NES_IPVALIDATION_HPP
-#define NES_IPVALIDATION_HPP
+#ifndef NES_BOOLEANVALIDATION_HPP
+#define NES_BOOLEANVALIDATION_HPP
 
 #include <string>
 #include <regex>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
-
 namespace NES::Configurations {
 
-/**
- * @brief This class implements ip validation for ip configuration options.
- */
-class IpValidation : public ConfigurationValidation {
-  public:
-    /**
-     * @brief Method to check the validity of an ip address
-     * @param ip ip address
-     * @return success if validated
-     */
-    bool isValid(const std::string& ip) const override;
-};
-}
+        /**
+    * @brief This class implements validation for parameters that should represent booleans
+    */
+        class BooleanValidation : public ConfigurationValidation {
+          public:
+            /**
+         * @brief Method to check the validity of a parameter as a bool
+         * @param boolean number to validate
+         * @return true if the parameter is a valid bool, false otherwise
+         */
+            bool isValid(const std::string& boolean) const override;
+        };
+    } // namespace NES::Configurations
 
-#endif//NES_IPVALIDATION_HPP
+#endif//NES_BOOLEANVALIDATION_HPP

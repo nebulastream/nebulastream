@@ -39,23 +39,23 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief IP of the REST server.
      */
-    StringOption restIp = {REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server.", std::make_unique<IpValidation>()};
+    StringOption restIp = {REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server.", std::make_shared<IpValidation>()};
 
     /**
      * @brief Port of the REST server.
      */
-    UIntOption restPort = {REST_PORT_CONFIG, 8081, "Port exposed for rest endpoints"};
+    UIntOption restPort = {REST_PORT_CONFIG, "8081", "Port exposed for rest endpoints", std::make_shared<NumberValidation>()};
 
     /**
      * @brief IP of the Coordinator.
      */
-    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator.", std::make_unique<IpValidation>()};
+    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator.", std::make_shared<IpValidation>()};
 
     /**
      * @brief Port for the RPC server of the Coordinator.
      * This is used to receive control messages.
      */
-    UIntOption rpcPort = {RPC_PORT_CONFIG, 4000, "RPC server port of the Coordinator"};
+    UIntOption rpcPort = {RPC_PORT_CONFIG, "4000", "RPC server port of the Coordinator", std::make_shared<NumberValidation>()};
 
     /**
      * @brief The current log level. Controls the detail of log messages.
@@ -67,12 +67,12 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Indicates if the monitoring stack is enables.
      */
-    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
+    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, "false", "Enable monitoring", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Indicates the number of request executor threads
      */
-    UIntOption requestExecutorThreads = {REQUEST_EXECUTOR_THREAD_CONFIG, 1, "Number of request executor thread"};
+    UIntOption requestExecutorThreads = {REQUEST_EXECUTOR_THREAD_CONFIG, "1", "Number of request executor thread", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Storage handler for request executor
@@ -114,7 +114,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Configuration of waiting time of the coordinator health check.
      * Set the number of seconds waiting to perform health checks
      */
-    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
+    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, "1", "Number of seconds to wait between health checks", std::make_shared<NumberValidation>()};
 
     /**
      * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server.

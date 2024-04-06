@@ -34,7 +34,7 @@ class ElegantConfigurations : public BaseConfiguration {
     /**
      * @brief Accelerate java UDFs.
      */
-    BoolOption accelerateJavaUDFs = {ACCELERATE_JAVA_UDFS, false, "Accelerate java UDFs."};
+    BoolOption accelerateJavaUDFs = {ACCELERATE_JAVA_UDFS, "false", "Accelerate java UDFs.", std::make_unique<BooleanValidation>()};
 
     /**
      * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
@@ -49,7 +49,7 @@ class ElegantConfigurations : public BaseConfiguration {
     /**
      * @brief Network delay between two worker nodes in MBit/s.
      */
-    FloatOption transferRate = {TRANSFER_RATE, 100.0, "Network delay between two worker nodes in MBit/s"};
+    FloatOption transferRate = {TRANSFER_RATE, "100.0", "Network delay between two worker nodes in MBit/s", std::make_unique<FloatValidation>()};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
