@@ -48,7 +48,7 @@ std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic
             auto getPhysicalSourcesEvent = event->as<GetPhysicalSourcesEvent>();
             //get physical sources for logical source
             auto physicalSources = catalogHandle->getPhysicalSourcesAsJson(getPhysicalSourcesEvent->getLogicalSourceName());
-            NES_DEBUG("Got physical sources for logical source {}: {}", getPhysicalSourcesEvent->getLogicalSourceName(), physicalSources);
+            NES_DEBUG("Got physical sources for logical source {}: {}", getPhysicalSourcesEvent->getLogicalSourceName(), physicalSources.dump());
             responsePromise.set_value(std::make_shared<GetSourceJsonResponse>(true, physicalSources));
         }
     } catch (std::exception& e) {

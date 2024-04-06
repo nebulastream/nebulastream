@@ -17,6 +17,7 @@
 #include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetPhysicalSourcesEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
@@ -109,5 +110,31 @@ TEST_F(GetSourceInformationRequestTest, GetLogicalSource) {
     auto response = std::static_pointer_cast<GetSchemaResponse>(future.get());
     auto schema = response->getSchema();
     ASSERT_EQ(schema->toString(), schema1->toString());
+}
+
+TEST_F(GetSourceInformationRequestTest, GetPhysicalSources) {
+    //create request for logical source 1
+    auto event = GetPhysicalSourcesEvent::create(logicalSourceName1);
+    auto request = GetSourceInformationRequest::create(event, retries);
+    auto requestId = 1;
+    request->setId(requestId);
+    auto future = request->getFuture();
+    request->execute(storageHandler);
+    auto response = std::static_pointer_cast<GetSourceJsonResponse>(future.get());
+    auto json = response->getJson();
+    ASSERT_EQ(json.size(), 1);
+    ASSERT_EQ(json["Physical Sources"].size(), 1);
+
+    //create request for logical source 2
+    event = GetPhysicalSourcesEvent::create(logicalSourceName2);
+    request = GetSourceInformationRequest::create(event, retries);
+    requestId = 1;
+    request->setId(requestId);
+    future = request->getFuture();
+    request->execute(storageHandler);
+    response = std::static_pointer_cast<GetSourceJsonResponse>(future.get());
+    json = response->getJson();
+    ASSERT_EQ(json.size(), 1);
+    ASSERT_EQ(json["Physical Sources"].size(), 2);
 }
 }// namespace NES::RequestProcessor
