@@ -112,21 +112,19 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
 
     //setup test
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
-    bool successRegisterLogicalSource =
-        sourceCatalog->addLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
+    bool successRegisterLogicalSource = sourceCatalog->addLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
     EXPECT_TRUE(successRegisterLogicalSource);
 
     // common case
     bool successRegisterPhysicalSource = sourceCatalog->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
-                                                                                      physicalSource->getLogicalSourceName(),
-                                                                                      nodeId);
+                                                                               physicalSource->getLogicalSourceName(),
+                                                                               nodeId);
     EXPECT_TRUE(successRegisterPhysicalSource);
 
     //test register existing source
-    bool successRegisterExistingPhysicalSource =
-        sourceCatalog->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
-                                                     physicalSource->getLogicalSourceName(),
-                                                     nodeId);
+    bool successRegisterExistingPhysicalSource = sourceCatalog->registerPhysicalSource(physicalSource->getPhysicalSourceName(),
+                                                                                       physicalSource->getLogicalSourceName(),
+                                                                                       nodeId);
     EXPECT_TRUE(!successRegisterExistingPhysicalSource);
 
     //test unregister not existing physical source
@@ -140,9 +138,8 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     EXPECT_TRUE(!successUnregisterNotExistingLogicalSource);
 
     //test unregister existing node
-    bool successUnregisterExistingPhysicalSource =
-        sourceCatalog->removePhysicalSource(physicalSource->getPhysicalSourceName(),
-                                                       physicalSource->getLogicalSourceName(),
-                                                       nodeId);
+    bool successUnregisterExistingPhysicalSource = sourceCatalog->removePhysicalSource(physicalSource->getLogicalSourceName(),
+                                                                                       physicalSource->getPhysicalSourceName(),
+                                                                                       nodeId);
     EXPECT_TRUE(successUnregisterExistingPhysicalSource);
 }
