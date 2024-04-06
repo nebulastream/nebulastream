@@ -117,7 +117,8 @@ namespace TestUtils {
 
 [[nodiscard]] std::string enableMonitoring(bool prefix) {
     std::cout << prefix << " aha " << ENABLE_MONITORING_CONFIG;
-    return configOption(ENABLE_MONITORING_CONFIG, true, prefix); }
+    return configOption(ENABLE_MONITORING_CONFIG, true, prefix);
+}
 
 [[nodiscard]] std::string monitoringWaitTime(uint64_t monitoringWaitTime) {
     return "--monitoringWaitTime=" + std::to_string(monitoringWaitTime);
