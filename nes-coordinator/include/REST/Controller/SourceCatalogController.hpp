@@ -99,8 +99,10 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/schema", getSchema, QUERY(String, logicalSourceName, "logicalSourceName")) {
         try {
-            auto json = requestHandlerService->queueGetLogicalSourceSchemaRequest(logicalSourceName);
-            return createResponse(Status::CODE_200, json["schema"]);
+            auto schema = requestHandlerService->queueGetLogicalSourceSchemaRequest(logicalSourceName);
+            auto serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
+            auto string = serializableSchema->SerializeAsString();
+            return createResponse(Status::CODE_200, string);
         } catch (const MapEntryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "Resource Not Found: No Schema found for " + logicalSourceName);
         } catch (const std::exception& exc) {

@@ -234,7 +234,7 @@ class RequestHandlerService {
      * @brief get the schema of a logical source
      * @return json object containing the schema
      */
-    nlohmann::json queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const;
+    SchemaPtr queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const;
 
   private:
     /**

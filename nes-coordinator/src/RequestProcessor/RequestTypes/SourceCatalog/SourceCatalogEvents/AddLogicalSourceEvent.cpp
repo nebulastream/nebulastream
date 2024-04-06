@@ -13,7 +13,7 @@
 */
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddLogicalSourceEvent.hpp>
 namespace NES::RequestProcessor {
-AddLogicalSourceEventPtr
+std::shared_ptr<AddLogicalSourceEvent>
 AddLogicalSourceEvent::create(std::string logicalSourceName, SchemaPtr schema) {
     return std::make_shared<AddLogicalSourceEvent>(logicalSourceName, schema);
 }

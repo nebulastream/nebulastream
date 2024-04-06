@@ -11,60 +11,45 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetPhysicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceInformationEvent.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::RequestProcessor {
 
-nlohmann::json GetSourceInformationResponse::getJson() { return json; }
-
-GetSourceInformationRequestPtr GetSourceInformationRequest::create(uint8_t maxRetries) {
-    return std::make_shared<GetSourceInformationRequest>(maxRetries);
+GetSourceInformationRequestPtr GetSourceInformationRequest::create(GetSourceInformationEventPtr event, uint8_t maxRetries) {
+    return std::make_shared<GetSourceInformationRequest>(event, maxRetries);
 }
-GetSourceInformationRequestPtr GetSourceInformationRequest::create(SourceType sourceType, std::string sourceName, uint8_t maxRetries) {
-    return std::make_shared<GetSourceInformationRequest>(sourceType, sourceName, maxRetries);
-}
-GetSourceInformationRequest::GetSourceInformationRequest(uint8_t maxRetries)
-    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries),
-      sourceInformationType(SourceType::LOGICAL_SOURCE) {}
-
-GetSourceInformationRequest::GetSourceInformationRequest(SourceType sourceInformationType,
-                                                         std::string sourceName,
-                                                         uint8_t maxRetries)
-    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), sourceInformationType(sourceInformationType),
-      sourceName(sourceName) {}
+GetSourceInformationRequest::GetSourceInformationRequest(GetSourceInformationEventPtr event, uint8_t maxRetries)
+    : AbstractUniRequest({ResourceType::SourceCatalog}, maxRetries), event(event) {}
 
 std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     auto catalogHandle = storageHandle->getSourceCatalogHandle(requestId);
     try {
-        switch (sourceInformationType) {
-            case SourceType::LOGICAL_SOURCE: {
-                if (sourceName.has_value()) {
-                    auto logicalSource = catalogHandle->getLogicalSourceAsJson(sourceName.value());
-                    if (logicalSource.empty()) {
-                        NES_ERROR("Failed to get logical source: {}", sourceName.value());
-                        throw Exceptions::RuntimeException("Required source does not exist " + sourceName.value());
-                        break;
-                    }
-                    NES_DEBUG("Got logical source schema: {}", logicalSource["schema"]);
-                    responsePromise.set_value(std::make_shared<GetSourceInformationResponse>(logicalSource));
-                    break;
-                } else {
-                    //return all logical sources as json via promise
-                    auto logicalSources = catalogHandle->getAllLogicalSourcesAsJson();
-                    NES_DEBUG("Got logical sources: {}", logicalSources.dump());
-                    responsePromise.set_value(std::make_shared<GetSourceInformationResponse>(logicalSources));
-                    break;
-                }
-            }
-            case SourceType::PHYSICAL_SOURCE: {
-                //get physical sources for logical source
-                auto physicalSources = catalogHandle->getPhysicalSourcesAsJson(sourceName.value());
-                NES_DEBUG("Got physical sources for logical source {}: {}", sourceName.value(), physicalSources);
-                responsePromise.set_value(std::make_shared<GetSourceInformationResponse>(physicalSources));
-            }
+        if (event->insteanceOf<GetSchemaEvent>()) {
+            auto getSchemaEvent = event->as<GetSchemaEvent>();
+            auto schema = catalogHandle->getLogicalSourceOrThrowException(getSchemaEvent->getLogicalSourceName())->getSchema();
+            responsePromise.set_value(std::make_shared<GetSchemaResponse>(true, schema));
+            return {};
+        } else if (event->insteanceOf<GetAllLogicalSourcesEvent>()) {
+            //return all logical sources as json via promise
+            auto logicalSources = catalogHandle->getAllLogicalSourcesAsJson();
+            NES_DEBUG("Got logical sources: {}", logicalSources.dump());
+            responsePromise.set_value(std::make_shared<GetSourceJsonResponse>(true, logicalSources));
+            return {};
+        }
+        else if (event->insteanceOf<GetPhysicalSourcesEvent>()) {
+            auto getPhysicalSourcesEvent = event->as<GetPhysicalSourcesEvent>();
+            //get physical sources for logical source
+            auto physicalSources = catalogHandle->getPhysicalSourcesAsJson(getPhysicalSourcesEvent->getLogicalSourceName());
+            NES_DEBUG("Got physical sources for logical source {}: {}", getPhysicalSourcesEvent->getLogicalSourceName(), physicalSources);
+            responsePromise.set_value(std::make_shared<GetSourceJsonResponse>(true, physicalSources));
         }
     } catch (std::exception& e) {
         NES_ERROR("Failed to get source information: {}", e.what());
@@ -73,10 +58,7 @@ std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic
 
     return {};
 }
-std::vector<AbstractRequestPtr> GetSourceInformationRequest::rollBack(std::exception_ptr,
-                                                                      const StorageHandlerPtr&) {
-    return {};
-}
+std::vector<AbstractRequestPtr> GetSourceInformationRequest::rollBack(std::exception_ptr, const StorageHandlerPtr&) { return {}; }
 void GetSourceInformationRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 void GetSourceInformationRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 }// namespace NES::RequestProcessor

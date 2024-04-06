@@ -32,7 +32,7 @@ class AddLogicalSourceEvent : public SourceCatalogEvent {
      * @param schema the schema of the logical source
      * @return a pointer to the new event
      */
-    static AddLogicalSourceEventPtr create(std::string logicalSourceName, SchemaPtr schema);
+    static std::shared_ptr<AddLogicalSourceEvent> create(std::string logicalSourceName, SchemaPtr schema);
 
     /**
      * @brief Consstructor

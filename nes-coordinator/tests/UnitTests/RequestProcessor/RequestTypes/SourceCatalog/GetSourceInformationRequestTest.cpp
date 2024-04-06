@@ -16,6 +16,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
@@ -69,12 +71,13 @@ class GetSourceInformationRequestTest : public Testing::BaseUnitTest {
 
 TEST_F(GetSourceInformationRequestTest, GetAllLogicalSources) {
     //create request
-    auto request = GetSourceInformationRequest::create(retries);
+    auto event = GetAllLogicalSourcesEvent::create();
+    auto request = GetSourceInformationRequest::create(event, retries);
     auto requestId = 1;
     request->setId(requestId);
     auto future = request->getFuture();
     request->execute(storageHandler);
-    auto response = std::static_pointer_cast<GetSourceInformationResponse>(future.get());
+    auto response = std::static_pointer_cast<GetSourceJsonResponse>(future.get());
     auto json = response->getJson();
     ASSERT_EQ(json.size(), 3);
     ASSERT_EQ(json[0]["default_logical"], "id:INTEGER(32 bits) value:INTEGER(64 bits)");
@@ -97,15 +100,14 @@ TEST_F(GetSourceInformationRequestTest, GetAllLogicalSources) {
 
 TEST_F(GetSourceInformationRequestTest, GetLogicalSource) {
     //create request
-    auto request = GetSourceInformationRequest::create(SourceType::LOGICAL_SOURCE, logicalSourceName1, retries);
+    auto event = GetSchemaEvent::create(logicalSourceName1);
+    auto request = GetSourceInformationRequest::create(event, retries);
     auto requestId = 1;
     request->setId(requestId);
     auto future = request->getFuture();
     request->execute(storageHandler);
-    auto response = std::static_pointer_cast<GetSourceInformationResponse>(future.get());
-    auto json = response->getJson();
-    NES_DEBUG("{}: {}", logicalSourceName1, json.dump())
-    ASSERT_EQ(json.size(), 1);
-    ASSERT_EQ(json[0][logicalSourceName1], schema1->toString());
+    auto response = std::static_pointer_cast<GetSchemaResponse>(future.get());
+    auto schema = response->getSchema();
+    ASSERT_EQ(schema->toString(), schema1->toString());
 }
 }// namespace NES::RequestProcessor

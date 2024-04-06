@@ -14,15 +14,17 @@
 #ifndef SOURCECATALOGEVENT_HPP
 #define SOURCECATALOGEVENT_HPP
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
-namespace NES::RequestProcessor{
 
-class SourceCatalogEvent;
-using SourceCatalogEventPtr = std::shared_ptr<SourceCatalogEvent>;
+namespace NES::RequestProcessor {
+
 
 struct SourceCatalogResponse : AbstractRequestResponse {
     explicit SourceCatalogResponse(bool success) : success(success){};
     bool success;
 };
+
+class SourceCatalogEvent;
+using SourceCatalogEventPtr = std::shared_ptr<SourceCatalogEvent>;
 
 class SourceCatalogEvent : public std::enable_shared_from_this<SourceCatalogEvent> {
 public:

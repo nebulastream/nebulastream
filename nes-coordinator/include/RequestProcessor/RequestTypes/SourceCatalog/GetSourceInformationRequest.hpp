@@ -15,56 +15,30 @@
 #define GETSOURCEINFORMATIONREQUEST_HPP
 
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
-#include <nlohmann/json.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSourceInformationEvent.hpp>
 #include <optional>
 namespace NES::RequestProcessor {
-
-//an enum to specify the type of source information to get
-enum class SourceType {
-    LOGICAL_SOURCE,
-    PHYSICAL_SOURCE
-};
-
-//the response type for the request
-struct GetSourceInformationResponse : public AbstractRequestResponse {
-    explicit GetSourceInformationResponse(nlohmann::json json) : json(json){};
-    nlohmann::json getJson();
-private:
-    nlohmann::json json;
-};
-
 class GetSourceInformationRequest;
 using GetSourceInformationRequestPtr = std::shared_ptr<GetSourceInformationRequest>;
+
+using GetSourceInformationEventPtr = std::shared_ptr<GetSourceInformationEvent>;
 
 /**
  * @brief A request to get information about logical or physical sources in json format
  */
-class GetSourceInformationRequest : public NES::RequestProcessor::AbstractUniRequest {
+class GetSourceInformationRequest : public AbstractUniRequest {
 public:
     /**
-     * @brief creates a request to get all logical sources
-     */
-  static GetSourceInformationRequestPtr create(uint8_t maxRetries);
-
-    /**
      * @brief creates a request to get a specific logical source or all physical sources for a logical source
-     * @param sourceType: the type of source information to get (logical of physical)
-     * @param sourceName: the name of the source to get information for
+     * @param event specifies the type of information to obtain
      * @param maxRetries: the maximum number of retries to attempt
      */
-  static GetSourceInformationRequestPtr create(SourceType sourceType, std::string sourceName, uint8_t maxRetries);
+  static GetSourceInformationRequestPtr create(GetSourceInformationEventPtr event, uint8_t maxRetries);
     /**
      * @brief constructor that creates a request to get all logical sources
+     * @param event specifies the type of information to obtain
      */
-    GetSourceInformationRequest(uint8_t maxRetries);
-
-    /**
-     * @brief constructor for  a request to get a specific logical source or all physical sources for a logical source
-     * @param sourceType: the type of source information to get (logical of physical)
-     * @param sourceName: the name of the source to get information for
-     * @param maxRetries: the maximum number of retries to attempt
-     */
-    GetSourceInformationRequest(SourceType sourceType, std::string sourceName, uint8_t maxRetries);
+    GetSourceInformationRequest(GetSourceInformationEventPtr event, uint8_t maxRetries);
 
     /**
      * @brief Executes the request logic.
@@ -103,8 +77,7 @@ public:
      */
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 private:
-  SourceType sourceInformationType;
-  std::optional<std::string> sourceName;
+  GetSourceInformationEventPtr event;
 };
 
 }

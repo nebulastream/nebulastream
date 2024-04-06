@@ -28,16 +28,19 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceInformationRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetPhysicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemoveLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemovePhysicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateLogicalSourceEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
-#include <RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequest.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -185,31 +188,31 @@ bool RequestHandlerService::queueUpdateLogicalSourceRequest(const std::string& l
 }
 
 nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
-    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::DEFAULT_RETRIES);
+    auto event = RequestProcessor::GetAllLogicalSourcesEvent::create();
+    auto request = RequestProcessor::GetSourceInformationRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
-    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->getJson();
+    return std::static_pointer_cast<RequestProcessor::GetSourceJsonResponse>(response)->getJson();
 }
 
 nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string logicelSourceName) const {
-    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::SourceType::PHYSICAL_SOURCE,
-                                                                         logicelSourceName,
-                                                                         RequestProcessor::DEFAULT_RETRIES);
+    auto event = RequestProcessor::GetPhysicalSourcesEvent::create(logicelSourceName);
+    auto request = RequestProcessor::GetSourceInformationRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
-    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->getJson();
+    return std::static_pointer_cast<RequestProcessor::GetSourceJsonResponse>(response)->getJson();
 }
 
-nlohmann::json RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const {
-    auto request = RequestProcessor::GetSourceInformationRequest::create(RequestProcessor::SourceType::LOGICAL_SOURCE,
-                                                                         logicelSourceName,
+SchemaPtr RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const {
+    auto event = RequestProcessor::GetSchemaEvent::create(logicelSourceName);
+    auto request = RequestProcessor::GetSourceInformationRequest::create(event,
                                                                          RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(request);
     auto future = request->getFuture();
     auto response = future.get();
-    return std::static_pointer_cast<RequestProcessor::GetSourceInformationResponse>(response)->getJson();
+    return std::static_pointer_cast<RequestProcessor::GetSchemaResponse>(response)->getSchema();
 }
 
 bool RequestHandlerService::modifySources(RequestProcessor::SourceCatalogEventPtr event) const {
