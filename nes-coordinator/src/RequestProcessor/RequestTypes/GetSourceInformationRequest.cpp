@@ -34,7 +34,7 @@ std::vector<AbstractRequestPtr> GetSourceInformationRequest::executeRequestLogic
     try {
         if (event->insteanceOf<GetSchemaEvent>()) {
             auto getSchemaEvent = event->as<GetSchemaEvent>();
-            auto schema = catalogHandle->getLogicalSourceOrThrowException(getSchemaEvent->getLogicalSourceName())->getSchema();
+            auto schema = catalogHandle->getLogicalSourceOrThrowException(getSchemaEvent->getLogicalSourceName())->getSchema()->copy();
             responsePromise.set_value(std::make_shared<GetSchemaResponse>(true, schema));
             return {};
         } else if (event->insteanceOf<GetAllLogicalSourcesEvent>()) {
