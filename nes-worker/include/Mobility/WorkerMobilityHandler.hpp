@@ -248,8 +248,8 @@ class WorkerMobilityHandler {
     std::atomic<bool> indexUpdated = false;
     //todo: use folly on this one
     folly::Synchronized<std::unordered_map<uint64_t, S2Point>> neighbourWorkerIdToLocationMap;
-    std::atomic<std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>> currentParentLocation;
-    std::atomic<std::optional<ReconnectPoint>> currentReconnectPoint;
+    folly::Synchronized<std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>> currentParentLocation;
+    folly::Synchronized<std::optional<ReconnectPoint>> currentReconnectPoint;
 };
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Spatial::Mobility::Experimental
