@@ -273,16 +273,16 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
     }
 }
 
-void NetworkSink::onEvent(Runtime::BaseEvent& event) {
+void NetworkSink::onEvent(Runtime::EventPtr event) {
     NES_DEBUG("NetworkSink::onEvent(event) called. uniqueNetworkSinkDescriptorId: {}", this->uniqueNetworkSinkDescriptorId);
     auto qep = queryManager->getQueryExecutionPlan(decomposedQueryPlanId);
     qep->onEvent(event);
 
-    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
+    if (event->getEventType() == Runtime::EventType::kStartSourceEvent) {
         // todo jm continue here. how to obtain local worker context?
     }
 }
-void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
+void NetworkSink::onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef) {
     NES_DEBUG("NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: {}",
               this->uniqueNetworkSinkDescriptorId);
     // this function currently has no usage

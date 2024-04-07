@@ -213,7 +213,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
             void onChannelError(Messages::ErrorMessage) override {}
 
           private:
@@ -268,7 +268,7 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
             void onChannelError(Messages::ErrorMessage) override {}
 
           private:
@@ -393,7 +393,7 @@ TEST_F(NetworkStackTest, startCloseMaxChannel) {
                 }
             }
             void onServerError(Messages::ErrorMessage) override {}
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
             void onChannelError(Messages::ErrorMessage) override {}
 
           private:
@@ -496,7 +496,7 @@ TEST_F(NetworkStackTest, testSendData) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
             void onChannelError(Messages::ErrorMessage) override {}
         };
 
@@ -591,7 +591,7 @@ TEST_F(NetworkStackTest, testCorrectHandlingEOS) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
             void onChannelError(Messages::ErrorMessage) override {}
         };
 
@@ -682,7 +682,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
             void onChannelError(Messages::ErrorMessage) override {}
         };
 
@@ -780,7 +780,7 @@ TEST_F(NetworkStackTest, testMassiveSendingWithChildrenBuffer) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
             void onChannelError(Messages::ErrorMessage) override {}
         };
 
@@ -884,7 +884,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override {}
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
@@ -957,7 +957,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             void onEndOfStream(Messages::EndOfStreamMessage p) override {
                 completedPromises[p.getChannelId().getNesPartition().getQueryId().getRawValue()].set_value(true);
             }
-            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(NesPartition, Runtime::EventPtr) override {}
         };
 
         auto partMgr = std::make_shared<PartitionManager>();

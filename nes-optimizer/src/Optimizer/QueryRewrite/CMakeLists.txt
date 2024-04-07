@@ -13,18 +13,16 @@
 add_source_files(unikernel-export
         AttributeSortRule.cpp
         BinaryOperatorSortRule.cpp
-        DistributedJoinRule.cpp
-        DistributedWindowRule.cpp
         FilterMergeRule.cpp
         FilterPushDownRule.cpp
         FilterSplitUpRule.cpp
         LogicalSourceExpansionRule.cpp
         MapUDFsToOpenCLOperatorsRule.cpp
-        NemoWindowPinningRule.cpp
         PredicateReorderingRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
         RedundancyEliminationRule.cpp
         RenameSourceToProjectOperatorRule.cpp
+        DistributedMatrixJoinRule.cpp
 )
 add_source_files(nes-optimizer
         AttributeSortRule.cpp

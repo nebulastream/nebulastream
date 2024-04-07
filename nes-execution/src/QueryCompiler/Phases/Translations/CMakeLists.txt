@@ -13,6 +13,7 @@
 add_source_files(unikernel-export
         LowerLogicalToPhysicalOperators.cpp
         PhysicalOperatorProvider.cpp
+        LowerToExecutableQueryPlanPhase.cpp
         DefaultPhysicalOperatorProvider.cpp
         LowerPhysicalToNautilusOperators.cpp
         ExpressionProvider.cpp

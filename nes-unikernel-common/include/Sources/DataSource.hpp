@@ -251,10 +251,10 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     /**
      * @brief method injects epoch barrier to the data source
      * @param epochBarrier current epoch barrier
-     * @param queryId currect query id
+     * @param SharedQueryId currect query id
      * @return success is the message was sent
      */
-    virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId);
+    virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t SharedQueryId);
 
     [[nodiscard]] virtual bool fail();
 

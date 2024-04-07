@@ -184,13 +184,16 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
                                                                                       limitOperator->getOutputSchema(),
                                                                                       limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
+#ifndef UNIKERNEL_EXPORT
     } else if (operatorNode->instanceOf<Statistic::LogicalStatisticWindowOperator>()) {
         lowerStatisticBuildOperator(*operatorNode->as<Statistic::LogicalStatisticWindowOperator>());
+#endif
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
 }
 
+#ifndef UNIKERNEL_EXPORT
 void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(
     Statistic::LogicalStatisticWindowOperator& logicalStatisticWindowOperator) {
     const auto statisticDescriptor = logicalStatisticWindowOperator.getWindowStatisticDescriptor();
@@ -227,6 +230,7 @@ void DefaultPhysicalOperatorProvider::lowerStatisticBuildOperator(
         NES_NOT_IMPLEMENTED();
     }
 }
+#endif//UNIKERNEL_EXPORT
 
 void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorPtr& operatorNode) {
     if (operatorNode->instanceOf<LogicalUnionOperator>()) {
@@ -490,30 +494,14 @@ DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<
     } else {
 
         // FIXME Once #3407 is done, we can change this to get the left and right fieldname
-        auto timeStampFieldNameLeft = windowType->getTimeCharacteristic()->getField()->getName();
-        auto timeStampFieldNameRight =
-            (windowType->hasOther() ? windowType->getOther() : windowType->getTimeCharacteristic())->getField()->getName();
-
-        auto timeStampFieldNameWithoutSourceNameLeft =
-            timeStampFieldNameLeft.substr(timeStampFieldNameLeft.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
-
-        auto timeStampFieldNameWithoutSourceNameRight =
-            timeStampFieldNameRight.substr(timeStampFieldNameRight.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldNameWithoutSourceName =
+            timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
         // Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldNameLeft = [&](const SchemaPtr& schema) {
+        auto findTimeStampFieldName = [&](const SchemaPtr& schema) {
             for (const auto& field : schema->fields) {
-                if (field->getName().find(timeStampFieldNameWithoutSourceNameLeft) != std::string::npos) {
-                    return field->getName();
-                }
-            }
-            return std::string();
-        };
-
-        // Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldNameRight = [&](const SchemaPtr& schema) {
-            for (const auto& field : schema->fields) {
-                if (field->getName().find(timeStampFieldNameWithoutSourceNameRight) != std::string::npos) {
+                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
                     return field->getName();
                 }
             }
@@ -521,11 +509,11 @@ DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<
         };
 
         // Extracting the left and right timestamp
-        timeStampFieldNameLeft = findTimeStampFieldNameLeft(joinOperator->getLeftInputSchema());
-        timeStampFieldNameRight = findTimeStampFieldNameRight(joinOperator->getRightInputSchema());
+        auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator->getLeftInputSchema());
+        auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
 
         NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-                   "Could not find timestampfieldname in both streams!");
+                   "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
         NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
 
         return {TimestampField::EventTime(timeStampFieldNameLeft, windowType->getTimeCharacteristic()->getTimeUnit()),

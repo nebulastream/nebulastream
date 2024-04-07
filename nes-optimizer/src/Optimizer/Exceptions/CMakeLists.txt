@@ -12,7 +12,9 @@
 
 add_source_files(unikernel-export
         GlobalQueryPlanUpdateException.cpp
-        QueryPlacementException.cpp
+        QueryPlacementAdditionException.cpp
+        QueryPlacementAmendmentException.cpp
+        QueryPlacementRemovalException.cpp
         SharedQueryPlanNotFoundException.cpp
         OperatorNotFoundException.cpp
 )

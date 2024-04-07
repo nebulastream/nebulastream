@@ -53,13 +53,8 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 class DataEmitter;
 using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 #else
-template<typename Config>
-class DataSource;
-template<typename Config>
-using DataSourcePtr = std::shared_ptr<DataSource<Config>>;
-
 class DataEmitter;
-using DataEmitterPtr = std::shared_ptr<DataEmitter>;
+using DataEmitterPtr = DataEmitter*;
 #endif
 
 namespace Runtime {
@@ -137,9 +132,6 @@ using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
 #ifndef UNIKERNEL_LIB
 using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
-#else
-template<typename Config>
-using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource<Config>>, std::weak_ptr<ExecutablePipeline>>;
 #endif
 class ExecutablePipelineStage;
 using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;

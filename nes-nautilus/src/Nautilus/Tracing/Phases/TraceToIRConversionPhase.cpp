@@ -522,7 +522,9 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
     for (uint32_t i = 1; i < operation.input.size(); i++) {
         auto input = frame.getValue(createValueIdentifier(operation.input[i]));
         inputArguments.emplace_back(input);
+#ifndef UNIKERNEL_EXPORT
         uniqueFunctionSymbol << input->getStamp()->toString();
+#endif
     }
 
     auto resultType = std::holds_alternative<None>(operation.result) ? NES::Nautilus::IR::Types::StampFactory::createVoidStamp()

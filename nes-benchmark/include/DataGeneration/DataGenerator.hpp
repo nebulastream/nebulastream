@@ -15,8 +15,8 @@
 #ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_
 
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <vector>
 
@@ -117,12 +117,12 @@ class DataGenerator {
      * @return TupleBuffer
      */
     Runtime::TupleBuffer allocateBuffer();
-    virtual bool hasTimestampField() {return false;}
+    virtual bool hasTimestampField() { return false; }
     virtual Runtime::MemoryLayouts::DynamicField getTimestampField(Runtime::MemoryLayouts::DynamicTuple /*tuple*/) {
         NES_NOT_IMPLEMENTED();
     }
 
-  protected:
+  private:
     Runtime::BufferManagerPtr bufferManager;
 };
 }// namespace NES::Benchmark::DataGeneration

@@ -13,7 +13,6 @@
 add_subdirectory(Exceptions)
 
 add_source_files(unikernel-export
-        QueryCompilerOptions.cpp
         QueryCompilationRequest.cpp
         QueryCompilationResult.cpp
 )

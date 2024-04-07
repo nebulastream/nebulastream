@@ -14,7 +14,7 @@
 #include <string>
 
 struct Options {
-    NES::NodeId nodeId;
+    NES::WorkerId nodeId;
     NES::QueryId queryId;
     NES::QuerySubPlanId subQueryId;
     NES::OperatorId operatorId;

@@ -13,3 +13,7 @@
 add_source_files(nes-runtime
         TaskExecutionException.cpp
 )
+
+add_source_files(unikernel-export
+        TaskExecutionException.cpp
+)

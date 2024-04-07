@@ -131,7 +131,7 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
  * @return A new string with leading and trailing whitespace removed.
  */
 std::string trim(const std::string& str);
-
+#endif
 }// namespace Util
 }// namespace NES
 

@@ -16,7 +16,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -171,12 +171,6 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
 
         //pass channel back to calling thread via promise
         promise.set_value(std::move(channel));
-
-        //notify the sink about successful connection via reconfiguration message
-        queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(),
-                                                reconfigurationMessage.getParentPlanId(),
-                                                reconfigurationMessage,
-                                                false);
     });
 
     thread.detach();

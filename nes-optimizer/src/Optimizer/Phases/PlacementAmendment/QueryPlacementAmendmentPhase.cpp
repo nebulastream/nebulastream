@@ -24,7 +24,9 @@
 #include <Optimizer/QueryPlacementAddition/ILPStrategy.hpp>
 #include <Optimizer/QueryPlacementAddition/MlHeuristicStrategy.hpp>
 #include <Optimizer/QueryPlacementAddition/TopDownStrategy.hpp>
+#ifndef UNIKERNEL_EXPORT
 #include <Optimizer/QueryPlacementRemoval/PlacementRemovalStrategy.hpp>
+#endif
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -105,6 +107,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                 //5. Get next query sub plan versions
                 auto nextDecomposedQueryPlanVersion = getDecomposedQuerySubVersion();
 
+#ifndef UNIKERNEL_EXPORT
                 //6. Call placement removal strategy
                 if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
                     auto placementRemovalStrategy = PlacementRemovalStrategy::create(globalExecutionPlan,
@@ -126,6 +129,9 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                     NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
                                 "TO_BE_REPLACED state.");
                 }
+#else
+                NES_ASSERT(!containsOperatorsForRemoval(pinnedDownStreamOperators), "Export should not need to remove operators");
+#endif
 
                 //7. Call placement addition strategy
                 if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
@@ -189,7 +195,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
 
             //5. Get the next decomposed query plan version
             auto nextDecomposedQueryPlanVersion = getDecomposedQuerySubVersion();
-
+#ifndef UNIKERNEL_EXPORT
             //6. Call placement removal strategy
             if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
                 auto placementRemovalStrategy =
@@ -209,6 +215,9 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                             "TO_BE_REPLACED state.");
             }
 
+#else
+            NES_ASSERT(!containsOperatorsForRemoval(pinnedDownStreamOperators), "Export should not need to remove operators");
+#endif
             //7. Call placement addition strategy
             if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
                 auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
@@ -287,12 +296,13 @@ BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStra
     auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
 
     switch (placementStrategy) {
-        case PlacementStrategy::ILP:
-            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
         case PlacementStrategy::BottomUp:
             return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
         case PlacementStrategy::TopDown:
             return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
+#ifndef UNIKERNEL_EXPORT
+        case PlacementStrategy::ILP:
+            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
         case PlacementStrategy::ELEGANT_PERFORMANCE:
         case PlacementStrategy::ELEGANT_ENERGY:
         case PlacementStrategy::ELEGANT_BALANCED:
@@ -306,6 +316,7 @@ BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStra
             //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::MlHeuristic:
             return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
+#endif
         default:
             throw Exceptions::RuntimeException("Unknown placement strategy type "
                                                + std::string(magic_enum::enum_name(placementStrategy)));

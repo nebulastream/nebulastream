@@ -18,7 +18,9 @@
 namespace NES {
 class Topology;
 class QueryPlan;
+namespace Optimizer {
 class GlobalExecutionPlan;
+}// namespace Optimizer
 namespace Catalogs::Source {
 class SourceCatalog;
 }
@@ -30,7 +32,7 @@ class CoordinatorConfiguration;
 #include <memory>
 class ExportQueryOptimizer {
   public:
-    std::pair<std::shared_ptr<NES::QueryPlan>, std::shared_ptr<NES::GlobalExecutionPlan>>
+    std::pair<std::shared_ptr<NES::QueryPlan>, std::shared_ptr<NES::Optimizer::GlobalExecutionPlan>>
     optimize(std::shared_ptr<NES::Topology> topology,
              std::shared_ptr<NES::Configurations::CoordinatorConfiguration> config,
              std::shared_ptr<NES::QueryPlan> query,

@@ -133,7 +133,7 @@ bool StaticDataSource::start() {
 
 bool StaticDataSource::startStaticDataSourceManually() { return DataSource::start(); }
 
-void StaticDataSource::onEvent(Runtime::BaseEvent& event) {
+void StaticDataSource::onEvent(Runtime::EventPtr event) {
     std::unique_lock lock(startConfigMutex);
 
     NES_DEBUG("StaticDataSource::onEvent(event) called. operatorId: {}", this->operatorId);

@@ -11,10 +11,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
-#include <Phases/ConvertLogicalToPhysicalSource.hpp>
+#include "Sinks/Mediums/NullOutputSink.hpp"
+#include <NoOp/NoOpSource.hpp>
+#include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/Mediums/NullOutputSink.hpp>
-#include <Sources/NoOpSource.hpp>
 namespace NES {
 DataSourcePtr
 ConvertLogicalToPhysicalSource::createNoOpSource(const SchemaPtr& schema,
@@ -22,30 +22,27 @@ ConvertLogicalToPhysicalSource::createNoOpSource(const SchemaPtr& schema,
                                                  const Runtime::QueryManagerPtr& queryManager,
                                                  OperatorId operatorId,
                                                  OriginId originId,
+                                                 StatisticId statisticId,
                                                  size_t numSourceLocalBuffers,
                                                  const std::string& physicalSourceName,
+                                                 GatheringMode gatheringMode,
                                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<NoOpSource>(schema,
                                         bufferManager,
                                         queryManager,
                                         operatorId,
                                         originId,
+                                        statisticId,
                                         numSourceLocalBuffers,
-                                        physicalSourceName,
-                                        successors);
+                                        gatheringMode,
+                                        physicalSourceName);
 }
 
-DataSinkPtr createNullOutputSink(QueryId queryId,
-                                 QuerySubPlanId querySubPlanId,
+DataSinkPtr createNullOutputSink(SharedQueryId queryId,
+                                 DecomposedQueryPlanId querySubPlanId,
                                  const Runtime::NodeEnginePtr& nodeEngine,
                                  uint32_t activeProducers,
-                                 FaultToleranceType faultToleranceType,
                                  uint64_t numberOfOrigins) {
-    return std::make_shared<NullOutputSink>(nodeEngine,
-                                            activeProducers,
-                                            queryId,
-                                            querySubPlanId,
-                                            faultToleranceType,
-                                            numberOfOrigins);
+    return std::make_shared<NullOutputSink>(nodeEngine, activeProducers, queryId, querySubPlanId, numberOfOrigins);
 }
 }// namespace NES

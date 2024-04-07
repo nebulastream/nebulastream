@@ -12,7 +12,7 @@
 
 add_source_files(unikernel-export
         SourceDescriptor.cpp
-        SourceLogicalOperatorNode.cpp
+        SourceLogicalOperator.cpp
         DefaultSourceDescriptor.cpp
         LogicalSourceDescriptor.cpp
 )

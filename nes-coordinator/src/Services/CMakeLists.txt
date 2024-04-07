@@ -13,7 +13,6 @@
 add_source_files(unikernel-export
         QueryParsingService.cpp
 )
-add_source_files(nes-core
 add_source_files(nes-coordinator
         MonitoringService.cpp
         RequestHandlerService.cpp

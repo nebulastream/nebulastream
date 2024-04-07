@@ -72,7 +72,7 @@ class QueryPipeliner {
     sharedHandlers();
 
   public:
-    Result lowerQuery(const QueryPlanPtr& unikernelWorkerQueryPlan);
+    Result lowerQuery(const DecomposedQueryPlanPtr& unikernelWorkerQueryPlan);
 };
 
 }// namespace NES::Unikernel::Export

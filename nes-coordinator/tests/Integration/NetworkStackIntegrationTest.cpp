@@ -690,7 +690,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
 
-            void onEvent(NesPartition, Runtime::BaseEvent& event) override {
+            void onEvent(NesPartition, Runtime::EventPtr event) override {
                 eventReceived = event.getEventType() == Runtime::EventType::kCustomEvent
                     && dynamic_cast<Runtime::CustomEventWrapper&>(event).data<detail::TestEvent>()->testValue() == 123;
                 ASSERT_TRUE(eventReceived);
@@ -804,7 +804,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
         using NetworkSink::NetworkSink;
 
       protected:
-        void onEvent(Runtime::BaseEvent& event) override {
+        void onEvent(Runtime::EventPtr event) override {
             // NetworkSink::onEvent(event);
             bool eventReceived = event.getEventType() == Runtime::EventType::kCustomEvent
                 && dynamic_cast<Runtime::CustomEventWrapper&>(event).data<detail::TestEvent>()->testValue() == 123;

@@ -23,17 +23,20 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, uint32_t numOfProducers, QueryId queryId, QuerySubPlanId querySubPlanId)
-    : SinkMedium(sinkFormat, numOfProducers, queryId, querySubPlanId, FaultToleranceType::NONE, 1) {}
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
+                       uint32_t numOfProducers,
+                       SharedQueryId SharedQueryId,
+                       DecomposedQueryPlanId DecomposedQueryPlanId)
+    : SinkMedium(sinkFormat, numOfProducers, SharedQueryId, DecomposedQueryPlanId, FaultToleranceType::NONE, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
-                       QueryId queryId,
-                       QuerySubPlanId querySubPlanId,
+                       SharedQueryId SharedQueryId,
+                       DecomposedQueryPlanId DecomposedQueryPlanId,
                        FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins)
-    : sinkFormat(std::move(sinkFormat)), activeProducers(numOfProducers), queryId(queryId), querySubPlanId(querySubPlanId),
-      faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {
+    : sinkFormat(std::move(sinkFormat)), activeProducers(numOfProducers), SharedQueryId(SharedQueryId),
+      DecomposedQueryPlanId(DecomposedQueryPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {
     bufferCount = 0;
     buffersPerEpoch = 1000;//TODO
     schemaWritten = false;
@@ -66,9 +69,9 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
-QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId SinkMedium::getParentPlanId() const { return DecomposedQueryPlanId; }
 
-QueryId SinkMedium::getQueryId() const { return queryId; }
+SharedQueryId SinkMedium::getSharedQueryId() const { return SharedQueryId; }
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
     NES_DEBUG("EPOCH: {}", epochBarrier)

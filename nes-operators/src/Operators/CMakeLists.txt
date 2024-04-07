@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        OperatorNode.cpp
+        Operator.cpp
 )
 add_source_files(nes-operators
         Operator.cpp

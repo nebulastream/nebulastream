@@ -14,13 +14,11 @@ add_source_files(unikernel-query-export
         Expressions.cpp
         ArithmeticExpressions.cpp
         LogicalExpressions.cpp
-        GeographyExpressions.cpp
 )
 add_source_files(unikernel-export
         Expressions.cpp
         ArithmeticExpressions.cpp
         LogicalExpressions.cpp
-        GeographyExpressions.cpp
 )
 add_source_files(nes-client
         Expressions.cpp

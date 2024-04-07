@@ -11,14 +11,9 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        WindowOperatorNode.cpp
-        WindowLogicalOperatorNode.cpp
-        CentralWindowOperator.cpp
-        SliceCreationOperator.cpp
-        SliceMergingOperator.cpp
-        LogicalWindowDefinition.cpp
-        DistributionCharacteristic.cpp
-        WindowComputationOperator.cpp
+        WindowOperator.cpp
+        LogicalWindowDescriptor.cpp
+        LogicalWindowOperator.cpp
 )
 add_source_files(nes-operators
         LogicalWindowDescriptor.cpp

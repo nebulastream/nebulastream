@@ -27,6 +27,7 @@ class UnikernelPipelineExecutionContext {
     size_t currentStageId;
     size_t nextStageId;
     size_t numberOfWorkerThreads;
+    size_t currentChunkIndex = 0;
     UnikernelPipelineExecutionContext(std::function<void(NES::Runtime::TupleBuffer&)> emitProxy,
                                       std::function<void(size_t stageId, Runtime::QueryTerminationType type)> stop,
                                       std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy,
@@ -116,6 +117,9 @@ class UnikernelPipelineExecutionContext {
 
     NES::Runtime::BufferManagerPtr getBufferManager() { return TheBufferManager; }
     size_t getNumberOfWorkerThreads() { return numberOfWorkerThreads; }
+
+    uint64_t getNextChunkNumber() { return currentChunkIndex++; }
+    void removeSequenceState() { currentChunkIndex = 0; }
 };
 }// namespace NES::Unikernel
 #endif//NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_HPP

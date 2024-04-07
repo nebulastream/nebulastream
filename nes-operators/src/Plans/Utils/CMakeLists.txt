@@ -12,7 +12,7 @@
 
 add_source_files(unikernel-export
         PlanIdGenerator.cpp
-        QueryPlanIterator.cpp
+        PlanIterator.cpp
 )
 add_source_files(nes-operators
         PlanIdGenerator.cpp

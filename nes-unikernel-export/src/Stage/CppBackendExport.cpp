@@ -15,11 +15,13 @@
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
-#include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
+#include <Operators/Operator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Stage/CppBackendExport.hpp>
 #include <Stage/QueryPipeliner.hpp>
 #include <Util/DumpHelper.hpp>
@@ -57,15 +59,15 @@ std::string CppBackendExport::getCppSource(const std::shared_ptr<NES::Runtime::E
 
 std::string CppBackendExport::emitAsCppSourceFiles(Stage stage) {
     auto pipeline = stage.pipeline;
-    auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
+    auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
     auto nautilusPipeline = rootOperator->as<NES::QueryCompilation::NautilusPipelineOperator>();
 
     NES::Nautilus::CompilationOptions options;
     auto identifier = fmt::format("NautilusCompilation-{}-{}-{}",
-                                  pipeline->getQueryPlan()->getQueryId(),
-                                  pipeline->getQueryPlan()->getQuerySubPlanId(),
+                                  pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
+                                  pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
                                   pipeline->getPipelineId());
     options.setIdentifier(identifier);
 

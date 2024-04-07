@@ -11,22 +11,20 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-		BasePlacementStrategy.cpp
-		BottomUpStrategy.cpp
-		TopDownStrategy.cpp
-		MlHeuristicStrategy.cpp
-		ManualPlacementStrategy.cpp
-		IFCOPStrategy.cpp
-		ILPStrategy.cpp
-		PlacementStrategyFactory.cpp
+        BasePlacementAdditionStrategy.cpp
+        BottomUpStrategy.cpp
+        TopDownStrategy.cpp
+        #		MlHeuristicStrategy.cpp
+        #		IFCOPStrategy.cpp
+        #		ILPStrategy.cpp
 )
 add_source_files(nes-optimizer
-		BasePlacementAdditionStrategy.cpp
+        BasePlacementAdditionStrategy.cpp
         BottomUpStrategy.cpp
         TopDownStrategy.cpp
         MlHeuristicStrategy.cpp
         IFCOPStrategy.cpp
-		ILPStrategy.cpp
+        ILPStrategy.cpp
         ElegantPlacementStrategy.cpp
 )
 

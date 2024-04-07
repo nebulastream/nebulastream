@@ -11,6 +11,6 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        MapUDFLogicalOperatorNode.cpp)
+        MapUDFLogicalOperator.cpp)
 add_source_files(nes-operators
         MapUDFLogicalOperator.cpp)

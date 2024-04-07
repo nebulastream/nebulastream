@@ -43,12 +43,10 @@ struct formatter<NES::Runtime::Execution::Operators::EmittedNLJWindowTriggerTask
     }
 };
 template<>
-struct formatter<NES::Nautilus::Interface::PagedVector> : formatter<std::string> {
-    auto format(const NES::Nautilus::Interface::PagedVector& vector, format_context& ctx) -> decltype(ctx.out()) {
+struct formatter<NES::Nautilus::Interface::PagedVectorVarSized> : formatter<std::string> {
+    auto format(const NES::Nautilus::Interface::PagedVectorVarSized& vector, format_context& ctx) -> decltype(ctx.out()) {
         return fmt::format_to(ctx.out(),
-                              "PagedVector(capacity={}, pageSize={}, numberOfEntriesOnCurrentPage={}, numberOfEntries={})",
-                              vector.getCapacityPerPage(),
-                              vector.getPageSize(),
+                              "PagedVectorVarSized(numberOfEntriesOnCurrentPage={}, numberOfEntries={})",
                               vector.getNumberOfEntriesOnCurrentPage(),
                               vector.getNumberOfEntries());
     }

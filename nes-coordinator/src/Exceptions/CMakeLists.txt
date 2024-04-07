@@ -13,13 +13,10 @@
 add_source_files(unikernel-export
         ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp
-        TaskExecutionException.cpp
         QueryDeploymentException.cpp
         QueryUndeploymentException.cpp
-        WindowProcessingException.cpp
         InvalidCoordinateFormatException.cpp
         MapEntryNotFoundException.cpp
-        LocationProviderException.cpp
         ExecutionNodeNotFoundException.cpp
         ResourceLockingException.cpp
         StorageHandlerAcquireResourcesException.cpp

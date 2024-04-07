@@ -11,7 +11,9 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-       ExecutablePipelineStage.cpp
+        ExecutablePipelineStage.cpp
+        ExecutablePipeline.cpp
+        ExecutableQueryPlan.cpp
 )
 add_source_files(nes-runtime
         ExecutablePipelineStage.cpp

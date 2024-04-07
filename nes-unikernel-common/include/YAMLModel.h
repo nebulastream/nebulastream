@@ -149,11 +149,11 @@ struct convert<SchemaConfiguration> {
 enum SourceType { NetworkSource, TcpSource };
 
 struct SinkEndpointConfiguration {
-    NES::QuerySubPlanId subQueryID;
+    NES::DecomposedQueryPlanId decomposedQueryPlanId;
     SchemaConfiguration schema;
     std::string ip;
     uint32_t port;
-    NES::NodeId nodeId;
+    NES::WorkerId nodeId;
     NES::OperatorId operatorId;
     std::optional<bool> print;
 };
@@ -168,7 +168,7 @@ struct convert<SinkEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(port);
         UNIKERNEL_MODEL_YAML_ENCODE(operatorId);
         UNIKERNEL_MODEL_YAML_ENCODE(nodeId);
-        UNIKERNEL_MODEL_YAML_ENCODE(subQueryID);
+        UNIKERNEL_MODEL_YAML_ENCODE(decomposedQueryPlanId);
         UNIKERNEL_MODEL_YAML_ENCODE_OPT(print);
 
         return node;
@@ -180,7 +180,7 @@ struct convert<SinkEndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(port);
         UNIKERNEL_MODEL_YAML_DECODE(operatorId);
         UNIKERNEL_MODEL_YAML_DECODE(nodeId);
-        UNIKERNEL_MODEL_YAML_DECODE(subQueryID);
+        UNIKERNEL_MODEL_YAML_DECODE(decomposedQueryPlanId);
         UNIKERNEL_MODEL_YAML_DECODE_OPT(print);
 
         return node;
@@ -213,7 +213,7 @@ struct convert<DataSourceType> {
 }// namespace YAML
 
 struct SourceEndpointConfiguration {
-    NES::QuerySubPlanId subQueryID{};
+    NES::DecomposedQueryPlanId decomposedQueryPlanId{};
     SchemaConfiguration schema;
     std::optional<size_t> numberOfBuffers;
     std::optional<bool> print;
@@ -222,7 +222,7 @@ struct SourceEndpointConfiguration {
     std::optional<NES::FormatTypes> format;
     std::string ip;
     uint32_t port{};
-    NES::NodeId nodeId{};
+    NES::WorkerId nodeId{};
     NES::OriginId originId{};
     std::optional<size_t> delayInMS;
     SourceType type;
@@ -255,7 +255,7 @@ struct convert<SourceEndpointConfiguration> {
         if (rhs.type == NetworkSource) {
             UNIKERNEL_MODEL_YAML_ENCODE(nodeId);
             UNIKERNEL_MODEL_YAML_ENCODE(originId);
-            UNIKERNEL_MODEL_YAML_ENCODE(subQueryID);
+            UNIKERNEL_MODEL_YAML_ENCODE(decomposedQueryPlanId);
         }
 
         return node;
@@ -275,7 +275,7 @@ struct convert<SourceEndpointConfiguration> {
 
         if (rhs.type == NetworkSource) {
             UNIKERNEL_MODEL_YAML_DECODE(nodeId);
-            UNIKERNEL_MODEL_YAML_DECODE(subQueryID);
+            UNIKERNEL_MODEL_YAML_DECODE(decomposedQueryPlanId);
             UNIKERNEL_MODEL_YAML_DECODE(originId);
         }
 
@@ -286,7 +286,7 @@ struct convert<SourceEndpointConfiguration> {
 struct WorkerLinkConfiguration {
     std::string ip;
     uint32_t port;
-    NES::NodeId nodeId;
+    NES::WorkerId nodeId;
     NES::PartitionId partitionId;
     NES::SubpartitionId subpartitionId;
     NES::OperatorId operatorId;
@@ -461,7 +461,7 @@ struct convert<KafkaSinkConfiguration> {
 struct WorkerSubQueryConfiguration {
     std::optional<WorkerStageConfiguration> stage;
     std::optional<WorkerSourceConfiguration> upstream;
-    NES::QuerySubPlanId subQueryId;
+    NES::DecomposedQueryPlanId decomposedQueryPlanId;
     size_t outputSchemaSizeInBytes;
     WorkerDownStreamLinkConfigurationType type;
 
@@ -480,7 +480,7 @@ struct convert<WorkerSubQueryConfiguration> {
         if (rhs.upstream.has_value()) {
             node["upstream"] = *rhs.upstream;
         }
-        UNIKERNEL_MODEL_YAML_ENCODE(subQueryId);
+        UNIKERNEL_MODEL_YAML_ENCODE(decomposedQueryPlanId);
         UNIKERNEL_MODEL_YAML_ENCODE(outputSchemaSizeInBytes);
         node["type"] = std::string(magic_enum::enum_name(rhs.type));
         switch (rhs.type) {
@@ -499,7 +499,7 @@ struct convert<WorkerSubQueryConfiguration> {
             rhs.upstream.emplace(node["upstream"].as<WorkerSourceConfiguration>());
         }
 
-        UNIKERNEL_MODEL_YAML_DECODE(subQueryId);
+        UNIKERNEL_MODEL_YAML_DECODE(decomposedQueryPlanId);
         UNIKERNEL_MODEL_YAML_DECODE(outputSchemaSizeInBytes);
         auto type = magic_enum::enum_cast<WorkerDownStreamLinkConfigurationType>(node["type"].as<std::string>());
         NES_ASSERT(type.has_value(), "Missing or Invalid type Discriminator");
@@ -518,7 +518,7 @@ struct convert<WorkerSubQueryConfiguration> {
 struct WorkerConfiguration {
     std::string ip;
     uint32_t port;
-    NES::NodeId nodeId;
+    NES::WorkerId nodeId;
     std::vector<WorkerSubQueryConfiguration> subQueries;
 };
 
@@ -545,7 +545,7 @@ struct convert<WorkerConfiguration> {
 }// namespace YAML
 
 struct QueryConfiguration {
-    NES::QueryId queryID;
+    NES::SharedQueryId sharedQueryId;
     size_t workerID;
 };
 
@@ -553,14 +553,14 @@ namespace YAML {
 template<>
 struct convert<QueryConfiguration> {
     static Node decode(const Node& node, QueryConfiguration& rhs) {
-        UNIKERNEL_MODEL_YAML_DECODE(queryID);
+        UNIKERNEL_MODEL_YAML_DECODE(sharedQueryId);
         UNIKERNEL_MODEL_YAML_DECODE(workerID);
         return node;
     };
 
     static Node encode(const QueryConfiguration& rhs) {
         YAML::Node node;
-        UNIKERNEL_MODEL_YAML_ENCODE(queryID);
+        UNIKERNEL_MODEL_YAML_ENCODE(sharedQueryId);
         UNIKERNEL_MODEL_YAML_ENCODE(workerID);
         return node;
     };

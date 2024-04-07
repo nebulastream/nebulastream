@@ -350,8 +350,8 @@ void DataSource::runningRoutineWithGatheringInterval() {
     NES_DEBUG("DataSource {} end running", operatorId);
 }
 
-bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) {
-    NES_DEBUG("DataSource::injectEpochBarrier received timestamp  {} with queryId  {}", epochBarrier, queryId);
+bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t SharedQueryId) {
+    NES_DEBUG("DataSource::injectEpochBarrier received timestamp  {} with SharedQueryId  {}", epochBarrier, SharedQueryId);
     return true;
 }
 

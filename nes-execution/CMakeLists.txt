@@ -40,8 +40,8 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     else ()
         # Use Java helpers from test directory when working in CLion.
         target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS_JAR="${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/JavaUtils.jar")
-    endif()
-endif()
+    endif ()
+endif ()
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-execution REUSE_FROM nes-common)

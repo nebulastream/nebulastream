@@ -12,7 +12,7 @@
 
 add_source_files(unikernel-export
         InvalidFieldException.cpp
-        InvalidLogicalOperatorNodeException.cpp
+        InvalidLogicalOperatorException.cpp
         InvalidOperatorStateException.cpp
         SignatureComputationException.cpp
         TypeInferenceException.cpp

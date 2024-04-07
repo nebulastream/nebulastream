@@ -270,7 +270,7 @@ void ExecutableQueryPlan::destroy() {
     bufferManager.reset();
 }
 
-void ExecutableQueryPlan::onEvent(BaseEvent&) {
+void ExecutableQueryPlan::onEvent(EventPtr) {
     // nop :: left on purpose -> fill this in when you want to support events
 }
 void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType) {

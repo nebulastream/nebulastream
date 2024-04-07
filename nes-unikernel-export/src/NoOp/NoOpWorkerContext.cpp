@@ -43,7 +43,7 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::R
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
+bool WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
@@ -52,11 +52,12 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(N
 }
 
 void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
-
-bool WorkerContext::releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType) {
+bool WorkerContext::releaseNetworkChannel(OperatorId id,
+                                          Runtime::QueryTerminationType type,
+                                          uint16_t sendingThreadCount,
+                                          uint64_t currentMessageSequenceNumber) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
-
 void WorkerContext::storeEventOnlyChannel(NES::OperatorId id, Network::EventOnlyNetworkChannelPtr&& channel) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }

@@ -25,7 +25,6 @@ add_source_files(unikernel-export
         WindowType.cpp
         SlidingWindow.cpp
         TumblingWindow.cpp
-        WindowState.cpp
 )
 add_source_files(nes-window-types
         ContentBasedWindowType.cpp

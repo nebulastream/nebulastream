@@ -21,10 +21,12 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
-#include <UnikernelStage.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <Runtime/LocalBufferPool.hpp>
+#include <UnikernelStage.hpp>
+#include <Util/Common.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <proxy/common.hpp>
 
 template<typename T>
@@ -92,6 +94,44 @@ getSpecificOperatorHandler(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_
     return static_cast<NES::Runtime::Execution::Operators::NLJOperatorHandlerSlicing*>(ptrOpHandler);
 }
 
+PROXY_FN void
+setBufferManagerProxy(void* ptrOpHandler, void* ptrPipelineContext, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineContext != nullptr, "pipeline context should not be null!");
+
+    auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineContext);
+
+    opHandler->setBufferManager(pipelineCtx->getBufferManager());
+}
+
+PROXY_FN void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr) {
+    auto* pagedVectorVarSized = static_cast<NES::Nautilus::Interface::PagedVectorVarSized*>(pagedVectorVarSizedPtr);
+    pagedVectorVarSized->appendPage();
+}
+
+PROXY_FN void* getEntryVarSizedProxy(void* pagedVectorVarSizedPtr, uint64_t entryPos) {
+    auto* pagedVectorVarSized = static_cast<NES::Nautilus::Interface::PagedVectorVarSized*>(pagedVectorVarSizedPtr);
+    auto& allPages = pagedVectorVarSized->getPages();
+    for (auto& page : allPages) {
+        auto numTuplesOnPage = page.getNumberOfTuples();
+
+        if (entryPos < numTuplesOnPage) {
+            auto entryPtrOnPage = entryPos * pagedVectorVarSized->getEntrySize();
+            return page.getBuffer() + entryPtrOnPage;
+        } else {
+            entryPos -= numTuplesOnPage;
+        }
+    }
+
+    // As we might have not set the number of tuples of the last tuple buffer
+    if (entryPos < pagedVectorVarSized->getNumberOfEntriesOnCurrentPage()) {
+        auto entryPtrOnPage = entryPos * pagedVectorVarSized->getEntrySize();
+        return allPages.back().getBuffer() + entryPtrOnPage;
+    }
+    return nullptr;
+}
+
 PROXY_FN uint64_t getNLJSliceStartProxy(void* ptrNljSlice) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto* nljSlice = static_cast<NES::Runtime::Execution::NLJSlice*>(ptrNljSlice);
@@ -145,18 +185,20 @@ PROXY_FN void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
 
 PROXY_FN void checkWindowsTriggerProxy(void* ptrOpHandler,
                                        void* ptrPipelineCtx,
-                                       void* ptrWorkerCtx,
-                                       uint64_t watermarkTs,
-                                       uint64_t sequenceNumber,
-                                       NES::OriginId originId,
-                                       uint64_t joinStrategyInt,
-                                       uint64_t windowingStrategyInt) {
+                              void* ptrWorkerCtx,
+                              uint64_t watermarkTs,
+                              uint64_t sequenceNumber,
+                              uint64_t chunkNumber,
+                              bool lastChunk,
+                              NES::OriginId originId,
+                              uint64_t joinStrategyInt,
+                              uint64_t windowingStrategy) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
-    TRACE_PROXY_FUNCTION(watermarkTs, sequenceNumber, originId, joinStrategyInt, windowingStrategyInt);
+    TRACE_PROXY_FUNCTION(watermarkTs, sequenceNumber, chunkNumber, lastChunk, originId, joinStrategyInt, windowingStrategyInt);
 
-    auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategy);
     auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineCtx);
     auto* workerCtx = static_cast<NES::Runtime::WorkerContext*>(ptrWorkerCtx);
 
@@ -164,7 +206,7 @@ PROXY_FN void checkWindowsTriggerProxy(void* ptrOpHandler,
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    NES::Runtime::Execution::Operators::BufferMetaData bufferMetaData(minWatermark, sequenceNumber, originId);
+    NES::Runtime::Execution::BufferMetaData bufferMetaData(minWatermark, {sequenceNumber, chunkNumber, lastChunk}, originId);
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
@@ -243,13 +285,15 @@ PROXY_FN uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joi
 PROXY_FN void deleteAllSlicesProxy(void* ptrOpHandler,
                                    uint64_t watermarkTs,
                                    uint64_t sequenceNumber,
+                                   uint64_t chunkNumber,
+                                   bool lastChunk,
                                    NES::OriginId originId,
                                    uint64_t joinStrategyInt,
                                    uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    TRACE_PROXY_FUNCTION(watermarkTs, sequenceNumber, originId, joinStrategyInt, windowingStrategyInt);
-    NES::Runtime::Execution::Operators::BufferMetaData bufferMetaData(watermarkTs, sequenceNumber, originId);
+    TRACE_PROXY_FUNCTION(watermarkTs, sequenceNumber, chunkNumber, lastChunk, originId, joinStrategyInt, windowingStrategyInt);
+    NES::Runtime::Execution::BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, originId);
     opHandler->deleteSlices(bufferMetaData);
 }
 
@@ -319,17 +363,27 @@ PROXY_FN void triggerKeyedThreadLocalWindow(void* op,
                                             void* pctx,
                                             uint64_t originId,
                                             uint64_t sequenceNumber,
+                                            uint64_t chunkNumber,
+                                            bool lastChunk,
                                             uint64_t watermarkTs) {
     auto handler = static_cast<NES::Runtime::Execution::Operators::KeyedSlicePreAggregationHandler*>(op);
     auto workerContext = static_cast<NES::Runtime::WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(pctx);
-    TRACE_PROXY_FUNCTION(originId, sequenceNumber, watermarkTs);
-    handler->trigger(*workerContext, *pipelineExecutionContext, originId, sequenceNumber, watermarkTs);
+    TRACE_PROXY_FUNCTION(originId, sequenceNumber, chunkNumber, lastChunk, watermarkTs);
+    handler->trigger(*workerContext, *pipelineExecutionContext, originId, {sequenceNumber, chunkNumber, lastChunk}, watermarkTs);
 }
 
 PROXY_FN uint64_t hashValueUI64(uint64_t seed, uint64_t value) {
     TRACE_PROXY_FUNCTION(seed, value);
     return hashValue(seed, value);
+}
+
+PROXY_FN void
+deleteAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+    auto* opHandler = getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    opHandler->deleteAllSlices();
 }
 
 PROXY_FN void* createKeyedState(void* op, void* sliceMergeTaskPtr) {
@@ -384,13 +438,40 @@ PROXY_FN void* getPageProxy(void* hmPtr, uint64_t pageIndex) {
     return hashMap->getPage(pageIndex);
 }
 
-PROXY_FN void triggerSlidingWindowsKeyed(void* sh, void* wctx, void* pctx, uint64_t sequenceNumber, uint64_t sliceEnd) {
+PROXY_FN void triggerSlidingWindowsKeyed(void* sh,
+                                         void* wctx,
+                                         void* pctx,
+                                         uint64_t sequenceNumber,
+                                         uint64_t chunkNumber,
+                                         bool lastChunk,
+                                         uint64_t sliceEnd) {
     auto handler = static_cast<
         NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<NES::Runtime::Execution::Operators::KeyedSlice>*>(sh);
     auto workerContext = static_cast<NES::Runtime::WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(pctx);
-    TRACE_PROXY_FUNCTION(sequenceNumber, sliceEnd);
-    handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, sequenceNumber, sliceEnd);
+    TRACE_PROXY_FUNCTION(sequenceNumber, chunkNumber, lastChunk, sliceEnd);
+    handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, {sequenceNumber, chunkNumber, lastChunk}, sliceEnd);
+}
+
+PROXY_FN uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, NES::OriginId originId, NES::SequenceNumber sequenceNumber) {
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineCtx);
+    return pipelineCtx->getNextChunkNumber();
+}
+PROXY_FN bool isLastChunkProxy(void* ptrPipelineCtx,
+                               NES::OriginId originId,
+                               NES::SequenceNumber sequenceNumber,
+                               NES::ChunkNumber chunkNumber,
+                               bool isLastChunk) {
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineCtx);
+    return isLastChunk;
+}
+
+PROXY_FN void removeSequenceStateProxy(void* ptrPipelineCtx, NES::OriginId originId, NES::SequenceNumber sequenceNumber) {
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ptrPipelineCtx);
+    pipelineCtx->removeSequenceState();
 }
 
 PROXY_FN void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr) {
@@ -404,6 +485,19 @@ PROXY_FN uint64_t NES__Runtime__TupleBuffer__getBufferSize(void* thisPtr) {
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getNumberOfTuples();
+};
+
+PROXY_FN uint64_t NES__Runtime__TupleBuffer__getChunkNumber(void* thisPtr) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->getChunkNumber();
+};
+PROXY_FN uint64_t NES__Runtime__TupleBuffer__getStatisticId(void* thisPtr) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->getStatisticId();
+};
+PROXY_FN bool NES__Runtime__TupleBuffer__isLastChunk(void* thisPtr) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->isLastChunk();
 };
 PROXY_FN __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr,
                                                                                           uint64_t numberOfTuples) {
@@ -419,6 +513,18 @@ PROXY_FN void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, uint64_t val
     thisPtr_->setOriginId(value);
 };
 
+PROXY_FN void NES__Runtime__TupleBuffer__setStatisticId(void* thisPtr, uint64_t value) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    thisPtr_->setStatisticId(value);
+};
+PROXY_FN void NES__Runtime__TupleBuffer__setChunkNumber(void* thisPtr, uint64_t value) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    thisPtr_->setChunkNumber(value);
+};
+PROXY_FN void NES__Runtime__TupleBuffer__setLastChunk(void* thisPtr, bool value) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    thisPtr_->setLastChunk(value);
+};
 PROXY_FN uint64_t NES__Runtime__TupleBuffer__Watermark(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getWatermark();
@@ -463,11 +569,13 @@ PROXY_FN void triggerThreadLocalStateProxy(void* op,
                                            uint64_t,
                                            uint64_t originId,
                                            uint64_t sequenceNumber,
+                                           uint64_t chunkNumber,
+                                           bool lastChunk,
                                            uint64_t watermarkTs) {
     auto handler = static_cast<NES::Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler*>(op);
     auto workerContext = static_cast<NES::Runtime::WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<NES::Runtime::Execution::PipelineExecutionContext*>(pctx);
-    handler->trigger(*workerContext, *pipelineExecutionContext, originId, sequenceNumber, watermarkTs);
+    handler->trigger(*workerContext, *pipelineExecutionContext, originId, {sequenceNumber, chunkNumber, lastChunk}, watermarkTs);
 }
 
 PROXY_FN void* createGlobalState(void* op, void* sliceMergeTaskPtr) {
@@ -543,12 +651,18 @@ PROXY_FN void appendToGlobalSliceStoreNonKeyed(void* ss, void* slicePtr) {
     handler->appendToGlobalSliceStore(std::move(slice));
 }
 
-PROXY_FN void triggerSlidingWindowsNonKeyed(void* sh, void* wctx, void* pctx, uint64_t sequenceNumber, uint64_t sliceEnd) {
+PROXY_FN void triggerSlidingWindowsNonKeyed(void* sh,
+                                            void* wctx,
+                                            void* pctx,
+                                            uint64_t sequenceNumber,
+                                            uint64_t chunkNumber,
+                                            bool lastChunk,
+                                            uint64_t sliceEnd) {
     auto handler = static_cast<
         NES::Runtime::Execution::Operators::AppendToSliceStoreHandler<NES::Runtime::Execution::Operators::NonKeyedSlice>*>(sh);
     auto workerContext = static_cast<NES::Runtime::WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(pctx);
     NES_DEBUG("triggerSlidingWindowsNonKeyed(seq:{} end:{})", sequenceNumber, sliceEnd);
-    handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, sequenceNumber, sliceEnd);
+    handler->triggerSlidingWindows(*workerContext, *pipelineExecutionContext, {sequenceNumber, chunkNumber, lastChunk}, sliceEnd);
 }
 #endif//PROXYFUNCTIONS_HPP

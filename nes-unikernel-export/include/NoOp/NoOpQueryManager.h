@@ -23,8 +23,8 @@ class NoOpQueryManager : public AbstractQueryManager {
     void
     addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId) override;
     void poisonWorkers() override;
-    bool addReconfigurationMessage(QueryId queryId,
-                                   QuerySubPlanId queryExecutionPlanId,
+    bool addReconfigurationMessage(SharedQueryId queryId,
+                                   DecomposedQueryPlanId queryExecutionPlanId,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking) override;
     uint64_t getNumberOfTasksInWorkerQueues() const override;
@@ -40,14 +40,16 @@ class NoOpQueryManager : public AbstractQueryManager {
 
   protected:
     void updateStatistics(const Task& task,
-                          QueryId queryId,
-                          QuerySubPlanId subPlanId,
+                          SharedQueryId queryId,
+                          DecomposedQueryPlanId subPlanId,
                           PipelineId pipelineId,
                           WorkerContext& workerContext) override;
 
   private:
-    bool
-    addReconfigurationMessage(QueryId queryId, QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking) override;
+    bool addReconfigurationMessage(SharedQueryId queryId,
+                                   DecomposedQueryPlanId queryExecutionPlanId,
+                                   TupleBuffer&& buffer,
+                                   bool blocking) override;
     bool startThreadPool(uint64_t numberOfBuffersPerWorker) override;
 };
 }// namespace NES::Runtime

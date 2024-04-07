@@ -13,7 +13,7 @@
 add_source_files(unikernel-export
         EventTimeWatermarkStrategyDescriptor.cpp
         IngestionTimeWatermarkStrategyDescriptor.cpp
-        WatermarkAssignerLogicalOperatorNode.cpp
+        WatermarkAssignerLogicalOperator.cpp
         WatermarkStrategyDescriptor.cpp
 )
 

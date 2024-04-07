@@ -64,7 +64,7 @@ void AppendToSliceStoreHandler<Slice>::appendToGlobalSliceStore(std::unique_ptr<
 template<class Slice>
 void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerContext& wctx,
                                                              Runtime::Execution::PipelineExecutionContext& ctx,
-                                                             uint64_t sequenceNumber,
+                                                             SequenceData sequenceNumber,
                                                              uint64_t slideEnd) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 };

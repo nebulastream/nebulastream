@@ -13,7 +13,6 @@
 */
 
 #include <API/Schema.hpp>
-#include <API/TimeUnit.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -107,7 +106,11 @@
 #include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
 #include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
+#ifndef UNIKERNEL_EXPORT
+#include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
+#include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
+#endif
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
@@ -440,6 +443,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         parentOperator->setChild(joinBuildNautilus);
         return joinBuildNautilus;
+#ifndef UNIKERNEL_EXPORT
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalCountMinBuildOperator>()) {
         const auto physicalCountMinBuild = operatorNode->as<const PhysicalOperators::PhysicalCountMinBuildOperator>();
         auto countMinBuildOperator = lowerCountMinBuildOperator(*physicalCountMinBuild, operatorHandlers, bufferSize);
@@ -450,6 +454,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto hyperLogLogBuildOperator = lowerHyperLogLogBuildOperator(*physicalHyperLogLog, operatorHandlers, bufferSize);
         parentOperator->setChild(hyperLogLogBuildOperator);
         return hyperLogLogBuildOperator;
+#endif
     }
 
     // Check if a plugin is registered that handles this physical operator
@@ -464,6 +469,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     NES_NOT_IMPLEMENTED();
 }
 
+#ifndef UNIKERNEL_EXPORT
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(
     const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
@@ -551,6 +557,7 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     // 4. Creating the operator
     return std::make_shared<HyperLogLogBuild>(handlerIndex, fieldToTrackFieldName, metricHash, std::move(timeFunction));
 }
+#endif
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
     std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,

@@ -28,8 +28,8 @@ class ReconfigurationMessage {
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      */
-    explicit ReconfigurationMessage(const QueryId queryId,
-                                    const QuerySubPlanId parentPlanId,
+    explicit ReconfigurationMessage(const SharedQueryId queryId,
+                                    const DecomposedQueryPlanId parentPlanId,
                                     ReconfigurationType type,
                                     [[maybe_unused]] void* unused_instance,
                                     std::any&& userdata = nullptr)
@@ -45,8 +45,8 @@ class ReconfigurationMessage {
      * @param userdata extra information to use in this reconfiguration
      * @param blocking whether the reconfiguration must block for completion
      */
-    explicit ReconfigurationMessage(const QueryId queryId,
-                                    const QuerySubPlanId parentPlanId,
+    explicit ReconfigurationMessage(const SharedQueryId queryId,
+                                    const DecomposedQueryPlanId parentPlanId,
                                     ReconfigurationType type,
                                     [[maybe_unused]] void* unused_instance,
                                     [[maybe_unused]] uint64_t numThreads,
@@ -88,13 +88,13 @@ class ReconfigurationMessage {
      * @brief get the target plan id
      * @return the query id
      */
-    [[nodiscard]] QueryId getQueryId() const { return queryId; }
+    [[nodiscard]] SharedQueryId getSharedQueryId() const { return queryId; }
 
     /**
      * @brief get the target plan id
      * @return the plan id
      */
-    [[nodiscard]] QuerySubPlanId getParentPlanId() const { return parentPlanId; }
+    [[nodiscard]] DecomposedQueryPlanId getParentPlanId() const { return parentPlanId; }
 
     /**
      * @brief Provides the userdata installed in this reconfiguration descriptor
@@ -112,10 +112,10 @@ class ReconfigurationMessage {
     ReconfigurationType type;
 
     /// owning plan id
-    const QueryId queryId;
+    const SharedQueryId queryId;
 
     /// owning plan id
-    const QuerySubPlanId parentPlanId;
+    const DecomposedQueryPlanId parentPlanId;
 
     /// custom data
     std::any userdata;

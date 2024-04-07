@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        FlatMapUDFLogicalOperatorNode.cpp
+        FlatMapUDFLogicalOperator.cpp
 )
 add_source_files(nes-operators
         FlatMapUDFLogicalOperator.cpp

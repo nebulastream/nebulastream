@@ -22,8 +22,13 @@
 #include <string>
 #include <vector>
 
+namespace NES {
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+}// namespace NES
+
 struct WorkerSubQuery {
-    NES::QueryPlanPtr subplan;
+    NES::DecomposedQueryPlanPtr subplan;
     NES::Unikernel::Export::QueryPipeliner::Result stages;
     NES::Unikernel::Export::QueryPlanExporter::Result sourcesAndSinks;
 };
@@ -31,13 +36,18 @@ struct WorkerSubQuery {
 class YamlExport {
     Configuration configuration;
     std::optional<ExportKafkaConfiguration> exportToKafka;
-    const NES::NodeId SINK_NODE = 1;
+    const NES::WorkerId SINK_NODE = 1;
 
   public:
     explicit YamlExport(const std::optional<ExportKafkaConfiguration>& exportToKafka);
-    void setQueryPlan(NES::QueryPlanPtr queryPlan, NES::GlobalExecutionPlanPtr gep, NES::Catalogs::Source::SourceCatalogPtr);
+    void setQueryPlan(NES::QueryPlanPtr queryPlan,
+                      NES::TopologyPtr topology,
+                      NES::Optimizer::GlobalExecutionPlanPtr gep,
+                      NES::Catalogs::Source::SourceCatalogPtr);
 
-    void addWorker(const std::vector<WorkerSubQuery>& subqueries, const NES::ExecutionNodePtr& workerNode);
+    void addWorker(const std::vector<WorkerSubQuery>& subqueries,
+                   const NES::Optimizer::ExecutionNodePtr& workerNode,
+                   const NES::TopologyNodePtr& topologyNode);
 
     void setSinkSchema(const NES::SchemaPtr& schema);
     void writeToOutputFile(std::string filepath) const;

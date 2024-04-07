@@ -1,18 +1,4 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        https://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
- */
-
-/*
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
@@ -26,6 +12,7 @@
      limitations under the License.
 */
 #include <NoOp/NoOpQueryManager.h>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <vector>
@@ -35,25 +22,19 @@ bool NES::Runtime::NodeEngine::deployQueryInNodeEngine(const Execution::Executab
     NES_THROW_RUNTIME_ERROR("deployQueryInNodeEngine not implemented in NoOpNodeEngine");
 }
 
-bool NES::Runtime::NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr&) {
-    NES_THROW_RUNTIME_ERROR("registerQueryInNodeEngine not implemented in NoOpNodeEngine");
+bool NES::Runtime::NodeEngine::startQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
+    NES_THROW_RUNTIME_ERROR("startQuery not implemented in NoOpNodeEngine");
 }
 
-bool NES::Runtime::NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr&) {
-    NES_THROW_RUNTIME_ERROR("registerQueryInNodeEngine not implemented in NoOpNodeEngine");
-}
-
-bool NES::Runtime::NodeEngine::startQuery(QueryId) { NES_THROW_RUNTIME_ERROR("startQuery not implemented in NoOpNodeEngine"); }
-
-bool NES::Runtime::NodeEngine::undeployQuery(QueryId) {
+bool NES::Runtime::NodeEngine::undeployQuery(SharedQueryId, DecomposedQueryPlanId) {
     NES_THROW_RUNTIME_ERROR("undeployQuery not implemented in NoOpNodeEngine");
 }
 
-bool NES::Runtime::NodeEngine::unregisterQuery(QueryId) {
+bool NES::Runtime::NodeEngine::unregisterQuery(SharedQueryId) {
     NES_THROW_RUNTIME_ERROR("unregisterQuery not implemented in NoOpNodeEngine");
 }
 
-bool NES::Runtime::NodeEngine::stopQuery(QueryId, NES::Runtime::QueryTerminationType) {
+bool NES::Runtime::NodeEngine::stopQuery(SharedQueryId, DecomposedQueryPlanId, NES::Runtime::QueryTerminationType) {
     NES_THROW_RUNTIME_ERROR("stopQuery not implemented in NoOpNodeEngine");
 }
 
@@ -65,10 +46,6 @@ bool NES::Runtime::NodeEngine::stop(bool) { NES_THROW_RUNTIME_ERROR("stop not im
 
 NES::Runtime::BufferManagerPtr NES::Runtime::NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
-}
-
-void NES::Runtime::NodeEngine::injectEpochBarrier(uint64_t, uint64_t) const {
-    NES_THROW_RUNTIME_ERROR("injectEpochBarrier not implemented in NoOpNodeEngine");
 }
 
 uint64_t NES::Runtime::NodeEngine::getNodeEngineId() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
@@ -117,7 +94,7 @@ std::vector<NES::Runtime::QueryStatistics> NES::Runtime::NodeEngine::getQuerySta
 
 NES::Network::PartitionManagerPtr NES::Runtime::NodeEngine::getPartitionManager() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
-std::vector<NES::QuerySubPlanId> NES::Runtime::NodeEngine::getSubQueryIds(uint64_t) {
+std::vector<NES::DecomposedQueryPlanId> NES::Runtime::NodeEngine::getDecomposedQueryIds(NES::SharedQueryId sharedQueryId) {
     NES_THROW_RUNTIME_ERROR("getSubQueryIds not implemented in NoOpNodeEngine");
 }
 
@@ -148,17 +125,11 @@ NES::Runtime::NodeEngine::getExecutableQueryPlan(uint64_t) const {
     NES_THROW_RUNTIME_ERROR("getExecutableQueryPlan not implemented in NoOpNodeEngine");
 }
 
-bool NES::Runtime::NodeEngine::bufferData(QuerySubPlanId, uint64_t) {
+bool NES::Runtime::NodeEngine::bufferData(DecomposedQueryPlanId, uint64_t) {
     NES_THROW_RUNTIME_ERROR("bufferData not implemented in NoOpNodeEngine");
 }
 
-bool NES::Runtime::NodeEngine::bufferAllData() { NES_THROW_RUNTIME_ERROR("bufferAllData not implemented in NoOpNodeEngine"); }
-
-bool NES::Runtime::NodeEngine::stopBufferingAllData() {
-    NES_THROW_RUNTIME_ERROR("stopBufferingAllData not implemented in NoOpNodeEngine");
-}
-
-bool NES::Runtime::NodeEngine::updateNetworkSink(uint64_t, const std::string&, uint32_t, QuerySubPlanId, uint64_t) {
+bool NES::Runtime::NodeEngine::updateNetworkSink(uint64_t, const std::string&, uint32_t, DecomposedQueryPlanId, uint64_t) {
     NES_THROW_RUNTIME_ERROR("updateNetworkSink not implemented in NoOpNodeEngine");
 }
 
@@ -168,10 +139,13 @@ void NES::Runtime::NodeEngine::setMetricStore(Monitoring::MetricStorePtr) {
     NES_THROW_RUNTIME_ERROR("setMetricStore not implemented in NoOpNodeEngine");
 }
 
-NES::TopologyNodeId NES::Runtime::NodeEngine::getNodeId() const { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
+NES::WorkerId NES::Runtime::NodeEngine::getNodeId() const { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
-void NES::Runtime::NodeEngine::setNodeId(const TopologyNodeId) {
+void NES::Runtime::NodeEngine::setNodeId(const WorkerId) {
     NES_THROW_RUNTIME_ERROR("setNodeId not implemented in NoOpNodeEngine");
 }
 
+const std::vector<NES::PhysicalSourceTypePtr>& NES::Runtime::NodeEngine::getPhysicalSourceTypes() const {
+    return physicalSources;
+}
 #pragma clang diagnostic pop

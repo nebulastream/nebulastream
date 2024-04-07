@@ -12,8 +12,8 @@
 
 add_source_files(unikernel-lib
         ThreadNaming.cpp
-        NonBlockingMonotonicSeqQueue.cpp
 )
+
 add_source_files(unikernel-test-lib
         StacktraceLoader.cpp
         ThreadNaming.cpp

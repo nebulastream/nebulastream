@@ -15,7 +15,6 @@ add_source_files(unikernel-export
         MemoryLayoutTupleBuffer.cpp
         RowLayout.cpp
         MemoryLayout.cpp
-        DynamicTupleBuffer.cpp
         BufferAccessException.cpp
 )
 add_source_files(nes-runtime
@@ -31,6 +30,5 @@ add_source_files(unikernel-test-lib
         MemoryLayoutTupleBuffer.cpp
         RowLayout.cpp
         MemoryLayout.cpp
-        DynamicTupleBuffer.cpp
         BufferAccessException.cpp
         )

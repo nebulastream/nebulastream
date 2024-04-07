@@ -23,9 +23,9 @@ add_source_files(unikernel-export
         PhysicalMapOperator.cpp
         PhysicalMapUDFOperator.cpp
         PhysicalFlatMapUDFOperator.cpp
-        PhysicalMultiplexOperator.cpp
         PhysicalDemultiplexOperator.cpp
         PhysicalWatermarkAssignmentOperator.cpp
+        PhysicalUnionOperator.cpp
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
         PhysicalExternalOperator.cpp

@@ -13,3 +13,6 @@
 add_source_files(nes-execution
         NonKeyedThresholdWindow.cpp
         )
+add_source_files(unikernel-export
+        NonKeyedThresholdWindow.cpp
+)

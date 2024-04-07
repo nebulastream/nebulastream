@@ -11,9 +11,8 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        BinaryOperatorNode.cpp
-        UnaryOperatorNode.cpp
-        ExchangeOperatorNode.cpp
+        BinaryOperator.cpp
+        UnaryOperator.cpp
 )
 add_source_files(nes-operators
         BinaryOperator.cpp

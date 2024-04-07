@@ -81,11 +81,11 @@ bool NetworkSource::start() {
     auto expected = false;
     if (running.compare_exchange_strong(expected, true)) {
         for (const auto& successor : executableSuccessors) {
-            auto querySubPlanId = successor->getParentPlanId();
-            auto queryId = successor->getQueryId();
+            auto DecomposedQueryPlanId = successor->getParentPlanId();
+            auto SharedQueryId = successor->getSharedQueryId();
 
-            auto newReconf = ReconfigurationMessage(queryId,
-                                                    querySubPlanId,
+            auto newReconf = ReconfigurationMessage(SharedQueryId,
+                                                    DecomposedQueryPlanId,
                                                     Runtime::ReconfigurationType::Initialize,
                                                     shared_from_base<DataSource>(),
                                                     1u);
@@ -134,12 +134,12 @@ void NetworkSource::onEvent(Runtime::EventPtr event) {
     if (event->getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = std::dynamic_pointer_cast<Runtime::CustomEventWrapper>(event)->data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
-        auto queryId = epochEvent->queryIdValue();
+        auto SharedQueryId = epochEvent->SharedQueryIdValue();
         auto success = true;
         if (success) {
-            NES_DEBUG("NetworkSource::onEvent: epoch {} queryId {} propagated", epochBarrier, queryId);
+            NES_DEBUG("NetworkSource::onEvent: epoch {} SharedQueryId {} propagated", epochBarrier, SharedQueryId);
         } else {
-            NES_ERROR("NetworkSource::onEvent:: could not propagate epoch {} queryId {}", epochBarrier, queryId);
+            NES_ERROR("NetworkSource::onEvent:: could not propagate epoch {} SharedQueryId {}", epochBarrier, SharedQueryId);
         }
     }
 }

@@ -26,13 +26,15 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <argumentum/argparse.h>
 #include <sys/stat.h>
+#include <variant>
 #include <yaml-cpp/yaml.h>
 
 std::string Options::getQueryString() { return configuration.query; }
 
-bool Options::useKafka() const { return std::holds_alternative<ExportKafkaConfiguration>(configuration.topology.sink); }
+bool Options::useKafka() const { return configuration.topology.sink.kafka.has_value(); }
 ExportKafkaConfiguration Options::getKafkaConfiguration() const {
-    return std::get<ExportKafkaConfiguration>(configuration.topology.sink);
+    NES_ASSERT(configuration.topology.sink.kafka.has_value(), "Kafka is not used");
+    return configuration.topology.sink.kafka.value();
 }
 
 NES::SchemaPtr getBenchmarkSchema(SchemaType type) {
@@ -61,20 +63,20 @@ NES::SchemaPtr parseSchema(const SchemaConfiguration& schemaConfig) {
 
 void Options::createSource(std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog,
                            std::vector<NES::PhysicalSourceTypePtr> physicalSources,
-                           NES::TopologyNodePtr worker,
+                           NES::WorkerId workerId,
                            const ExportSourceConfiguration& source) {
 
-    if (!sourceCatalog->testIfLogicalSourceExistsInLogicalToPhysicalMapping(source.name)) {
+    if (!sourceCatalog->containsLogicalSource(source.name)) {
         sourceCatalog->addLogicalSource(source.name, parseSchema(source.schema));
     }
 
     auto logicalSource = sourceCatalog->getLogicalSource(source.name);
-    auto physicalSourceName = fmt::format("{}_phys_{}", source.name, worker->getId());
+    auto physicalSourceName = fmt::format("{}_phys_{}", source.name, workerId);
     auto physicalSourceType =
         std::make_shared<NES::NoOpPhysicalSourceType>(source.name, physicalSourceName, source.schema.type, source.tcp);
     auto physicalSource = NES::PhysicalSource::create(physicalSourceType);
     sourceCatalog->addPhysicalSource(source.name,
-                                     NES::Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, worker));
+                                     NES::Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, workerId));
     physicalSources.push_back(physicalSourceType);
 }
 std::tuple<NES::TopologyPtr, NES::Catalogs::Source::SourceCatalogPtr, std::vector<NES::PhysicalSourceTypePtr>>
@@ -82,47 +84,43 @@ Options::getTopologyAndSources() {
     auto sourceCatalog = std::make_shared<NES::Catalogs::Source::SourceCatalog>();
     std::vector<NES::PhysicalSourceTypePtr> physicalSources;
     auto topology = NES::Topology::create();
-
-    std::unordered_map<size_t, NES::TopologyNodePtr> nodes;
-
     if (useKafka()) {
-        nodes[1] = NES::TopologyNode::create(1, "0.0.0.0", 0, 0, 1, {{NES::Worker::Properties::MAINTENANCE, false}});
+        topology->registerWorkerAsRoot(1, "0.0.0.0", 0, 0, 1, {{NES::Worker::Properties::MAINTENANCE, false}}, 100, 30);
     } else {
-        const auto& sink = std::get<ExportTopologyNodeConfiguration>(configuration.topology.sink);
-        nodes[1] = NES::TopologyNode::create(1,
-                                             sink.ip,
-                                             sink.port,
-                                             sink.port,
-                                             sink.resources,
-                                             {{NES::Worker::Properties::MAINTENANCE, false}});
+        const auto& sink = configuration.topology.sink.node.value();
+        topology->registerWorkerAsRoot(1,
+                                       sink.ip,
+                                       sink.port,
+                                       sink.port,
+                                       sink.resources,
+                                       {{NES::Worker::Properties::MAINTENANCE, false}},
+                                       100,
+                                       30);
     }
 
-    topology->setAsRoot(nodes[1]);
+    for (size_t i = 0; const auto& workerConfiguration : configuration.topology.workers) {
+        topology->registerWorker(i + 2,
+                                 workerConfiguration.node.ip,
+                                 workerConfiguration.node.port,
+                                 workerConfiguration.node.port,
+                                 workerConfiguration.node.resources,
+                                 {{NES::Worker::Properties::MAINTENANCE, false}},
+                                 100,
+                                 30);
 
-    size_t i = 0;
-    for (const auto& workerConfiguration : configuration.topology.workers) {
-        auto worker = NES::TopologyNode::create(i + 2,
-                                                workerConfiguration.node.ip,
-                                                workerConfiguration.node.port,
-                                                workerConfiguration.node.port,
-                                                workerConfiguration.node.resources,
-                                                {{NES::Worker::Properties::MAINTENANCE, false}});
         for (const auto& source : workerConfiguration.sources) {
-            createSource(sourceCatalog, physicalSources, worker, source);
+            createSource(sourceCatalog, physicalSources, i + 2, source);
         }
 
-        nodes[i + 2] = std::move(worker);
         i++;
     }
 
-    i = 0;
-    for (const auto& workerConfiguration : configuration.topology.workers) {
+    for (size_t i = 0; const auto& workerConfiguration : configuration.topology.workers) {
         for (const auto& otherNode : workerConfiguration.links) {
             auto otherNodeId = getOtherNodeIdFromLink(otherNode);
             auto parent = std::min(otherNodeId, i + 2);
             auto child = std::max(otherNodeId, i + 2);
-            topology->addNewTopologyNodeAsChild(nodes[parent], nodes[child]);
-            nodes[parent]->addLinkProperty(nodes[child], std::make_shared<LinkProperty>(100, 100));
+            topology->addTopologyNodeAsChild(parent, child);
         }
         i++;
     }
@@ -214,7 +212,7 @@ CLIResult Options::getCLIOptions(int argc, char** argv) {
 }
 size_t Options::getBufferSize() const { return bufferSize; }
 std::string Options::getYAMLOutputPath() const { return this->yamlOutput; }
-boost::filesystem::path Options::getStageOutputPathForNode(NES::NodeId nodeId) const {
+boost::filesystem::path Options::getStageOutputPathForNode(NES::WorkerId nodeId) const {
     auto path = boost::filesystem::path(output.value_or(boost::filesystem::current_path().string()));
     NES_ASSERT2_FMT(is_directory(path), fmt::format("Path does not exist: {}", path.string()));
 

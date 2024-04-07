@@ -16,12 +16,3 @@ add_source_files(nes-runtime
 )
 add_subdirectory(Gauge)
 add_subdirectory(Wrapper)
-
-add_source_files(unikernel-test-lib
-        ZmqServer.cpp
-        NetworkManager.cpp
-)
-add_source_files(unikernel-lib
-        ZmqServer.cpp
-        NetworkManager.cpp
-)

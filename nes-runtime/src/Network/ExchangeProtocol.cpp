@@ -14,7 +14,6 @@
 
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Common.hpp>
@@ -161,12 +160,14 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       endOfStreamMessage.getChannelId().toString(),
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
         } else {
+#ifndef UNIKERNEL_LIB
             auto dataEmitter = partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition());
             auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);
             if (!(networkSource && networkSource->startNewVersion())) {
                 dataEmitter->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
                 protocolListener->onEndOfStream(endOfStreamMessage);
             }
+#endif
         }
     } else if (partitionManager->getProducerRegistrationStatus(eosNesPartition) == PartitionRegistrationStatus::Registered) {
         NES_ASSERT2_FMT(endOfStreamMessage.isEventChannel(),

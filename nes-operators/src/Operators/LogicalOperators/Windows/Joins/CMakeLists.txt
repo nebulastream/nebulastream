@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        LogicalJoinDefinition.cpp
-        JoinLogicalOperatorNode.cpp
+        LogicalJoinDescriptor.cpp
+        LogicalJoinOperator.cpp
 )
 add_source_files(nes-operators
         LogicalJoinDescriptor.cpp

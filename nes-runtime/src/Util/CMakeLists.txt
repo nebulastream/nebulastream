@@ -12,6 +12,7 @@
 
 add_source_files(unikernel-export
         BufferSequenceNumber.cpp
+        TestTupleBuffer.cpp
         Core.cpp
 )
 add_source_files(nes-runtime

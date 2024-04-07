@@ -55,7 +55,7 @@ class BaseEvent {
   private:
     EventType eventType;
 };
-
+using EventPtr = std::shared_ptr<BaseEvent>;
 /**
  * @brief This class shall be used to define custom events with user-supplied data
  */

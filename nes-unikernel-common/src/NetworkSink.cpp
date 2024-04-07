@@ -26,8 +26,8 @@ namespace NES::Network {
 
 NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
-                         QueryId queryId,
-                         QuerySubPlanId querySubPlanId,
+                         SharedQueryId SharedQueryId,
+                         DecomposedQueryPlanId DecomposedQueryPlanId,
                          const NodeLocation& destination,
                          NesPartition nesPartition,
                          Runtime::BufferManagerPtr bufferManager,
@@ -40,8 +40,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t numberOfOrigins)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
                  numOfProducers,
-                 queryId,
-                 querySubPlanId,
+                 SharedQueryId,
+                 DecomposedQueryPlanId,
                  faultToleranceType,
                  numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), networkManager(networkManager), workerContext(workerContext),
@@ -83,16 +83,16 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 }
 
 void NetworkSink::preSetup() {
-    NES_DEBUG("NetworkSink: method preSetup() called {} qep {}", nesPartition.toString(), querySubPlanId);
+    NES_DEBUG("NetworkSink: method preSetup() called {} qep {}", nesPartition.toString(), DecomposedQueryPlanId);
     NES_ASSERT2_FMT(
         networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, inherited1::shared_from_this()),
         "Cannot register event listener " << nesPartition.toString());
 }
 
 void NetworkSink::setup() {
-    NES_DEBUG("NetworkSink: method setup() called {} qep {}", nesPartition.toString(), querySubPlanId);
-    auto reconf = Runtime::ReconfigurationMessage(queryId,
-                                                  querySubPlanId,
+    NES_DEBUG("NetworkSink: method setup() called {} qep {}", nesPartition.toString(), DecomposedQueryPlanId);
+    auto reconf = Runtime::ReconfigurationMessage(SharedQueryId,
+                                                  DecomposedQueryPlanId,
                                                   Runtime::ReconfigurationType::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
@@ -100,14 +100,17 @@ void NetworkSink::setup() {
 }
 
 void NetworkSink::shutdown() {
-    NES_DEBUG("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), queryId, querySubPlanId);
+    NES_DEBUG("NetworkSink: shutdown() called {} SharedQueryId {} qepsubplan {}",
+              nesPartition.toString(),
+              SharedQueryId,
+              DecomposedQueryPlanId);
     networkManager->unregisterSubpartitionProducer(nesPartition);
 }
 
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
-    NES_DEBUG("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), querySubPlanId);
+    NES_DEBUG("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), DecomposedQueryPlanId);
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
@@ -140,8 +143,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto timestamp = task.getUserData<uint64_t>();
-            NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={}", queryId, timestamp);
-            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
+            NES_DEBUG("Executing PropagateEpoch on qep SharedQueryId={} punctuation={}", SharedQueryId, timestamp);
+            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, SharedQueryId);
             workerContext.trimStorage(nesPartition, timestamp);
             break;
         }
@@ -207,7 +210,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 }
 
 void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
-    NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}", nesPartition.toString(), querySubPlanId);
+    NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}",
+              nesPartition.toString(),
+              DecomposedQueryPlanId);
     inherited0::postReconfigurationCallback(task);
 }
 

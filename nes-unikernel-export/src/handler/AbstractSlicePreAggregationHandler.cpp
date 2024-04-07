@@ -51,7 +51,7 @@ template<class SliceType, typename SliceStore>
 void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::trigger(WorkerContext& wctx,
                                                                         PipelineExecutionContext& ctx,
                                                                         OriginId originId,
-                                                                        uint64_t sequenceNumber,
+                                                                        SequenceData sequenceNumber,
                                                                         uint64_t watermarkTs) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 };

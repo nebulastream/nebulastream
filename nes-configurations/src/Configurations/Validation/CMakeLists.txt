@@ -16,3 +16,9 @@ add_source_files(nes-configurations
         FloatValidation.cpp
         BooleanValidation.cpp
         )
+add_source_files(unikernel-export
+        IpValidation.cpp
+        NumberValidation.cpp
+        FloatValidation.cpp
+        BooleanValidation.cpp
+)

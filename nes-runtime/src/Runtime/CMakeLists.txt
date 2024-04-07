@@ -74,6 +74,15 @@ add_source_files(nes-runtime
         QueryStatistics.cpp
 )
 
+
+add_source_files(unikernel-test-lib
+        ReconfigurationMessage.cpp
+)
+
+add_source_files(nes-unikernel-core
+        ReconfigurationMessage.cpp
+)
+
 add_subdirectory(Profiler)
 
 add_source_files(nes-runtime

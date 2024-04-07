@@ -36,10 +36,10 @@ namespace NES::Unikernel::Export {
 class OperatorHandlerCppExporter {
     class HandlerExport {
         std::stringstream ss;
-        NES::QuerySubPlanId subPlanId;
+        NES::DecomposedQueryPlanId subPlanId;
 
       public:
-        explicit HandlerExport(NES::QuerySubPlanId subPlanId) : subPlanId(subPlanId) {}
+        explicit HandlerExport(NES::DecomposedQueryPlanId subPlanId) : subPlanId(subPlanId) {}
 
         const char* OP_HANDLER = "NES::Runtime::Execution::OperatorHandler";
 
@@ -61,11 +61,11 @@ class OperatorHandlerCppExporter {
     };
 
   public:
-    static std::string generateHandler(const Stage& stage, NES::QuerySubPlanId subPlanId);
+    static std::string generateHandler(const Stage& stage, NES::DecomposedQueryPlanId subPlanId);
 
     static std::string generateSharedHandler(
         const std::unordered_map<SharedOperatorHandlerIndex, Runtime::Unikernel::OperatorHandlerDescriptor>& sharedHandler,
-        NES::QuerySubPlanId subPlanId);
+        NES::DecomposedQueryPlanId subPlanId);
 };
 
 }// namespace NES::Unikernel::Export

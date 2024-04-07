@@ -78,7 +78,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      * @brief API method called upon receiving an event. At startSourceEvent, start source.
      * @param event
      */
-    void onEvent(Runtime::BaseEvent&) final;
+    void onEvent(Runtime::EventPtr) final;
 
     void open() override;
 

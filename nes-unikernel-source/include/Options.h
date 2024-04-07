@@ -13,7 +13,7 @@
 #include <boost/outcome.hpp>
 
 struct Options {
-    NES::NodeId nodeId;
+    NES::WorkerId nodeId;
     NES::QueryId queryId;
     NES::QuerySubPlanId subQueryId;
     NES::OperatorId operatorId;
@@ -22,7 +22,7 @@ struct Options {
     uint32_t port = 8082;
     std::string downstreamIp = "127.0.0.1";
     uint32_t downstreamPort = 8080;
-    NES::NodeId downstreamId;
+    NES::WorkerId downstreamId;
     NES::OriginId originId;
     NES::PartitionId partitionId;
     NES::SubpartitionId subPartitionId;

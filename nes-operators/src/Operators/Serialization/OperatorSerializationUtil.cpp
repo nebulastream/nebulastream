@@ -34,7 +34,6 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -45,7 +44,6 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -64,7 +62,6 @@
 #include <Operators/Operator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Types/SlidingWindow.hpp>
@@ -160,9 +157,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     } else if (operatorNode->instanceOf<LogicalOpenCLOperator>()) {
         // Serialize map udf operator
         serializeOpenCLOperator(*operatorNode->as<LogicalOpenCLOperator>(), serializedOperator);
-    } else if (operatorNode->instanceOf<Statistic::LogicalStatisticWindowOperator>()) {
-        // Serialize map udf operator
-        serializeStatisticWindowOperator(*operatorNode->as<Statistic::LogicalStatisticWindowOperator>(), serializedOperator);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", operatorNode->toString());
     }
@@ -319,11 +313,6 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
         details.UnpackTo(&openCLDetails);
         operatorNode = deserializeOpenCLOperator(openCLDetails);
 
-    } else if (details.Is<SerializableOperator_StatisticWindowDetails>()) {
-        NES_TRACE("Deserialize Statistic Window Operator.");
-        SerializableOperator_StatisticWindowDetails statisticWindowDetails;
-        details.UnpackTo(&statisticWindowDetails);
-        operatorNode = deserializeStatisticWindowOperator(statisticWindowDetails);
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }
@@ -443,7 +432,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
 
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
-    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, getNextOperatorId());
+    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeMapOperator(const LogicalMapOperator& mapOperator,
@@ -657,9 +646,6 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
         auto tumblingWindowDetails = SerializableOperator_TumblingWindow();
         tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
-        if (timeCharacteristicOtherDetails) {
-            tumblingWindowDetails.mutable_timecharacteristicother()->CopyFrom(*timeCharacteristicOtherDetails);
-        }
         joinDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
     } else if (windowType->instanceOf<Windowing::SlidingWindow>()) {
         auto slidingWindow = windowType->as<Windowing::SlidingWindow>();
@@ -711,12 +697,10 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
             auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
             window = Windowing::TumblingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
-                Windowing::TimeMeasure(serializedTumblingWindow.size()),
-                                                   other);
+                Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()),
-                                                   other);
+                                                   Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
             NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
                             serializedTimeCharacteristic.DebugString());

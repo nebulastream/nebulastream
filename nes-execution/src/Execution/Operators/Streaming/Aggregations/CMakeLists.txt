@@ -16,19 +16,17 @@ add_subdirectory(Buckets)
 
 add_source_files(unikernel-export
         WindowProcessingException.cpp
+        AppendToSliceStoreHandler.cpp
         AppendToSliceStoreAction.cpp
 )
 add_source_files(nes-execution
         WindowProcessingException.cpp
         SlidingWindowSliceStore.cpp
         AppendToSliceStoreAction.cpp
-        AppendToSliceStoreHandler.cpp
         AbstractSlicePreAggregationHandler.cpp
-        ThreadLocalSliceStore.cpp
 )
 add_source_files(unikernel-lib
         AbstractSlicePreAggregationHandler.cpp
-        ThreadLocalSliceStore.cpp
         WindowProcessingException.cpp
 )
 

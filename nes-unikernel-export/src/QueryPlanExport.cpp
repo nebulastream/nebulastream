@@ -14,10 +14,13 @@
 
 #include <NoOp/NoOpPhysicalSourceType.hpp>
 #include <NoOp/NoOpSourceDescriptor.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryPlanExport.hpp>
+
 namespace NES::Unikernel::Export {
 std::unordered_map<PipelineId, QueryPlanExporter::ExportSinkDescriptor>
 QueryPlanExporter::getSinks(const QueryPipeliner::Result& pipeliningResult) const {
@@ -29,8 +32,8 @@ QueryPlanExporter::getSinks(const QueryPipeliner::Result& pipeliningResult) cons
     std::unordered_map<PipelineId, ExportSinkDescriptor> sinkMap;
     std::ranges::for_each(pipelines | filterSink, [&sinkMap](const auto& stage) {
         auto& pipeline = stage.pipeline;
-        auto sinks =
-            pipeline->getQueryPlan()->template getOperatorByType<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>();
+        auto sinks = pipeline->getDecomposedQueryPlan()
+                         ->template getOperatorByType<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>();
         NES_ASSERT2_FMT(sinks.size() == 1, "Expected a single source");
         auto sink = sinks[0];
         std::vector<PipelineId> predecessor;
@@ -53,12 +56,13 @@ QueryPlanExporter::getSources(const QueryPipeliner::Result& pipeliningResult) co
     std::unordered_map<PipelineId, ExportSourceDescriptor> sourceMap;
     std::ranges::for_each(pipelines | filterSource, [&sourceMap, this](const Stage& sourceStage) {
         auto& pipeline = sourceStage.pipeline;
-        auto sources = pipeline->getQueryPlan()->getOperatorByType<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>();
+        auto sources =
+            pipeline->getDecomposedQueryPlan()->getOperatorByType<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>();
         NES_ASSERT2_FMT(sources.size() == 1, "Expected a single source");
         auto source = sources[0];
 
         if (source->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
-            sourceMap[pipeline->getPipelineId()] = {source->getSourceDescriptor(), source->getOriginId()};
+            sourceMap[pipeline->getPipelineId()] = {source->getSourceDescriptor(), source->getOriginId(), source->getId()};
             return;
         }
 
@@ -70,9 +74,9 @@ QueryPlanExporter::getSources(const QueryPipeliner::Result& pipeliningResult) co
             NoOpSourceDescriptor::create(source->getInputSchema(),
                                          noOpSource->getSchemaType(),
                                          source->getSourceDescriptor()->getLogicalSourceName(),
-                                         noOpSource->getTCP(),
-                                         source->getId()),
-            source->getOriginId()};
+                                         noOpSource->getTCP()),
+            source->getOriginId(),
+            source->getId()};
     });
 
     return sourceMap;

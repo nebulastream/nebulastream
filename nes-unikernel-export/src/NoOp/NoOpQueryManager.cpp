@@ -1,18 +1,4 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        https://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
- */
-
-/*
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
@@ -63,10 +49,6 @@ bool NES::Runtime::AbstractQueryManager::addFailureEndOfStream(DataSourcePtr sou
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-bool NES::Runtime::AbstractQueryManager::addEpochPropagation(DataSourcePtr source, uint64_t queryId, uint64_t epochBarrier) {
-    NES_THROW_RUNTIME_ERROR("Not Implemented");
-}
-
 bool NES::Runtime::AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
@@ -87,18 +69,18 @@ void NES::Runtime::AbstractQueryManager::notifySourceCompletion(DataSourcePtr so
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-void NES::Runtime::AbstractQueryManager::notifyPipelineCompletion(QuerySubPlanId subPlanId,
+void NES::Runtime::AbstractQueryManager::notifyPipelineCompletion(DecomposedQueryPlanId subPlanId,
                                                                   Execution::ExecutablePipelinePtr pipeline,
                                                                   QueryTerminationType terminationType) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 uint64_t NES::Runtime::AbstractQueryManager::getNumberOfWorkerThreads() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
-void NES::Runtime::AbstractQueryManager::notifySinkCompletion(QuerySubPlanId subPlanId,
+void NES::Runtime::AbstractQueryManager::notifySinkCompletion(DecomposedQueryPlanId subPlanId,
                                                               DataSinkPtr sink,
                                                               QueryTerminationType terminationType) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
-uint64_t NES::Runtime::AbstractQueryManager::getQueryId(uint64_t querySubPlanId) const {
+uint64_t NES::Runtime::AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId querySubPlanId) const {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 uint64_t NES::Runtime::AbstractQueryManager::getCurrentTaskSum() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
@@ -127,8 +109,8 @@ void NES::Runtime::AbstractQueryManager::poisonWorkers() { NES_THROW_RUNTIME_ERR
 void NES::Runtime::AbstractQueryManager::destroy() { /*NoOp*/
 }
 
-bool NES::Runtime::AbstractQueryManager::addReconfigurationMessage(NES::QueryId,
-                                                                   NES::QuerySubPlanId,
+bool NES::Runtime::AbstractQueryManager::addReconfigurationMessage(NES::SharedQueryId,
+                                                                   NES::DecomposedQueryPlanId,
                                                                    const NES::Runtime::ReconfigurationMessage&,
                                                                    bool) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
@@ -139,8 +121,8 @@ uint64_t NES::Runtime::AbstractQueryManager::getNumberOfTasksInWorkerQueues() co
 }
 
 void NES::Runtime::AbstractQueryManager::updateStatistics(const NES::Runtime::Task&,
-                                                          NES::QueryId,
-                                                          NES::QuerySubPlanId,
+                                                          NES::SharedQueryId,
+                                                          NES::DecomposedQueryPlanId,
                                                           NES::PipelineId,
                                                           NES::Runtime::WorkerContext&) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
@@ -150,8 +132,8 @@ NES::ExecutionResult NES::Runtime::AbstractQueryManager::terminateLoop(NES::Runt
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-bool NES::Runtime::AbstractQueryManager::addReconfigurationMessage(NES::QueryId,
-                                                                   NES::QuerySubPlanId,
+bool NES::Runtime::AbstractQueryManager::addReconfigurationMessage(NES::SharedQueryId,
+                                                                   NES::DecomposedQueryPlanId,
                                                                    NES::Runtime::TupleBuffer&&,
                                                                    bool) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
@@ -183,8 +165,8 @@ void NES::Runtime::NoOpQueryManager::poisonWorkers() { NES_THROW_RUNTIME_ERROR("
 void NES::Runtime::NoOpQueryManager::destroy() { /*NoOp*/
 }
 
-bool NES::Runtime::NoOpQueryManager::addReconfigurationMessage(NES::QueryId,
-                                                               NES::QuerySubPlanId,
+bool NES::Runtime::NoOpQueryManager::addReconfigurationMessage(NES::SharedQueryId,
+                                                               NES::DecomposedQueryPlanId,
                                                                const NES::Runtime::ReconfigurationMessage&,
                                                                bool) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
@@ -193,8 +175,8 @@ bool NES::Runtime::NoOpQueryManager::addReconfigurationMessage(NES::QueryId,
 uint64_t NES::Runtime::NoOpQueryManager::getNumberOfTasksInWorkerQueues() const { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
 void NES::Runtime::NoOpQueryManager::updateStatistics(const NES::Runtime::Task&,
-                                                      NES::QueryId,
-                                                      NES::QuerySubPlanId,
+                                                      NES::SharedQueryId,
+                                                      NES::DecomposedQueryPlanId,
                                                       NES::PipelineId,
                                                       NES::Runtime::WorkerContext&) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
@@ -204,8 +186,8 @@ NES::ExecutionResult NES::Runtime::NoOpQueryManager::terminateLoop(NES::Runtime:
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-bool NES::Runtime::NoOpQueryManager::addReconfigurationMessage(NES::QueryId,
-                                                               NES::QuerySubPlanId,
+bool NES::Runtime::NoOpQueryManager::addReconfigurationMessage(NES::SharedQueryId,
+                                                               NES::DecomposedQueryPlanId,
                                                                NES::Runtime::TupleBuffer&&,
                                                                bool) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");

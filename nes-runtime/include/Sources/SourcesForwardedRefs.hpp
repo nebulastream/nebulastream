@@ -20,11 +20,6 @@ namespace NES {
 #ifndef UNIKERNEL_LIB
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
-#else
-template<typename Config>
-class DataSource<Config>;
-template<typename Config>
-using DataSourcePtr = std::shared_ptr<DataSource<Config>>;
 #endif
 class MonitoringPlan;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;

@@ -12,6 +12,7 @@
 
 add_source_files(unikernel-export
         TopologyNode.cpp
+        PathFinder.cpp
         TopologyNodeSet.cpp
         Topology.cpp
 )

@@ -24,15 +24,10 @@ class NoOpSourceDescriptor : public SourceDescriptor {
     NoOpSourceDescriptor(SchemaPtr schema,
                          SchemaType schemaType,
                          std::string logicalSourceName,
-                         std::optional<TCPSourceConfiguration> tcp,
-                         NES::OperatorId operatorId);
+                         std::optional<TCPSourceConfiguration> tcp);
 
     static SourceDescriptorPtr create(SchemaPtr schemaPtr,
-                                      SchemaType schemaType,
-                                      std::string logicalSourceName,
-                                      std::optional<TCPSourceConfiguration>,
-                                      OperatorId operatorId);
-    NoOpSourceDescriptor(SchemaPtr schemaPtr, std::string logicalSourceName, std::optional<TCPSourceConfiguration>);
+                                      SchemaType schemaType, std::string logicalSourceName, std::optional<TCPSourceConfiguration>);
 
     std::string toString() const override;
 
@@ -40,15 +35,12 @@ class NoOpSourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorPtr copy() override;
 
-    [[nodiscard]] NES::OperatorId getOperatorId() const { return operatorId; }
-
     [[nodiscard]] std::optional<TCPSourceConfiguration> getTcp() const { return tcp; }
     [[nodiscard]] SchemaType getSchemaType() const { return schemaType; }
 
   private:
     SchemaType schemaType;
     std::optional<TCPSourceConfiguration> tcp;
-    NES::OperatorId operatorId;
 };
 }// namespace NES
 #endif//NES_NOOPSOURCEDESCRIPTOR_H

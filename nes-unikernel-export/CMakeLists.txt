@@ -49,7 +49,6 @@ target_include_directories(NesUnikernelExporter PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/tests/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-benchmark/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-catalogs/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-compiler/include>
@@ -58,6 +57,10 @@ target_include_directories(NesUnikernelExporter PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-execution/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-nautilus/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-coordinator/include>
 )
 
 target_compile_definitions(NesUnikernelExporter PRIVATE BENCHMARK_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/benchmark-data/")
@@ -78,6 +81,8 @@ target_link_libraries(NesUnikernelExporter PUBLIC
         yaml-cpp
         UnikernelCommon
         nes-common
+#        Folly::folly
+#        Folly::folly_deps
         nes-data-types
         UnikernelQueryExport
 )

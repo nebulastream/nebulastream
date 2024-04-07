@@ -20,7 +20,6 @@
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <string>
 
 namespace NES {
@@ -44,14 +43,13 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     */
     explicit NetworkSink(uint64_t uniqueNetworkSinkDescriptorId,
                          QueryId queryId,
-                         QuerySubPlanId querySubPlanId,
+                         DecomposedQueryPlanId DecomposedQueryPlanId,
                          NodeLocation const& destination,
                          NesPartition nesPartition,
                          size_t schemaSizeInBytes,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
-                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                          uint64_t numberOfOrigins = 0);
 
     /**
@@ -131,6 +129,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::chrono::milliseconds waitTime;
     uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
+    std::atomic<uint64_t> messageSequenceNumber;
     bool reconnectBuffering;
 };
 

@@ -31,6 +31,7 @@ class QueryPlanExporter {
     struct ExportSourceDescriptor {
         NES::SourceDescriptorPtr sourceDescriptor;
         NES::OriginId originId;
+        NES::OperatorId operatorId;
     };
 
     struct ExportSinkDescriptor {

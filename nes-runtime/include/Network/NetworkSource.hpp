@@ -77,7 +77,7 @@ class NetworkSource : public DataSource {
       * @brief This method is called once an event is triggered for the current source.
       *  @param event
       */
-    void onEvent(Runtime::BaseEvent& event) override;
+    void onEvent(Runtime::EventPtr event) override;
 
     /**
      * @brief Get source type
@@ -130,7 +130,7 @@ class NetworkSource : public DataSource {
      * @param event
      * @param workerContext
      */
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) override;
+    void onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef workerContext) override;
 
     /**
      * @brief

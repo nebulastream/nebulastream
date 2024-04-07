@@ -17,6 +17,7 @@
 
 #include <Runtime/ReconfigurationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES::Runtime {

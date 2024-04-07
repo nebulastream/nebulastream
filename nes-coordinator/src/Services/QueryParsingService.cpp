@@ -11,7 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef UNIKERNEL_EXPORT
 #include <ANTLRInputStream.h>
+#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
+#include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
+#endif
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
@@ -20,8 +24,6 @@
 #include <Compiler/DynamicObject.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
-#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
-#include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>

@@ -34,7 +34,7 @@ class AppendToSliceStoreHandler : public OperatorHandler {
     void appendToGlobalSliceStore(std::unique_ptr<Slice> slice);
     void triggerSlidingWindows(Runtime::WorkerContext& wctx,
                                Runtime::Execution::PipelineExecutionContext& ctx,
-                               uint64_t sequenceNumber,
+                               SequenceData sequenceNumber,
                                uint64_t slideEnd);
 
   private:

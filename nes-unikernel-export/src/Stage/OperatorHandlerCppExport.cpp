@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include "Common/DataTypes/Float.hpp"
+#include "Common/DataTypes/Integer.hpp"
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <OperatorHandlerTracer.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Stage/OperatorHandlerCppExport.hpp>
 #include <Stage/QueryPipeliner.hpp>
 #include <algorithm>
@@ -44,10 +46,22 @@ OperatorHandlerCppExporter::HandlerExport::typeName(const Runtime::Unikernel::Op
         case Runtime::Unikernel::OperatorHandlerParameterType::SHARED_PTR:
             return "std::shared_ptr<" + typeName(std::any_cast<Runtime::Unikernel::OperatorHandlerParameterDescriptor>(value))
                 + ">";
-        case Runtime::Unikernel::OperatorHandlerParameterType::SCHEMA: return "NES::Schema";
+        case Runtime::Unikernel::OperatorHandlerParameterType::SCHEMA: return "NES::SchemaPtr";
         case Runtime::Unikernel::OperatorHandlerParameterType::BATCH_JOIN_DEFINITION:
             return "NES::Join::Experimental::LogicalBatchJoinDefinition";
         default: NES_THROW_RUNTIME_ERROR("Not implemented");
+    }
+}
+std::string generateDataType(DataTypePtr dataType) {
+    if (auto integer = std::dynamic_pointer_cast<Integer>(dataType)) {
+        return fmt::format("NES::BasicType::INT{}", integer->getBits());
+    } else if (auto floating_point = std::dynamic_pointer_cast<Float>(dataType)) {
+        return fmt::format("NES::BasicType::FLOAT{}", floating_point->getBits());
+    } else if (dataType->isText()) {
+        return "NES::BasicType::TEXT";
+    } else {
+        NES_ERROR("Basic Data Type for {} is not implemented", dataType->toString());
+        NES_NOT_IMPLEMENTED();
     }
 }
 void OperatorHandlerCppExporter::HandlerExport::generateParameter(
@@ -101,21 +115,19 @@ void OperatorHandlerCppExporter::HandlerExport::generateParameter(
             ss << typeName(parameter) + "(" + std::to_string(std::any_cast<int8_t>(value)) + ")";
             break;
         case OperatorHandlerParameterType::SCHEMA: {
-            std::stringstream ss;
             auto schema = any_cast<NES::SchemaPtr>(value);
             ss << "NES::Schema::create()";
             for (size_t i = 0; i < schema->getSize(); ++i) {
                 ss << "->addField(";
-                ss << schema->get(i)->getName();
+                ss << "\"" << schema->get(i)->getName() << "\"";
                 ss << ", ";
-                ss << schema->get(i)->getDataType()->toString();
+                ss << generateDataType(schema->get(i)->getDataType());
                 ss << ")";
             }
-            ss << ss.str();
             break;
         }
         case OperatorHandlerParameterType::BATCH_JOIN_DEFINITION: {
-            auto joinDefinition = any_cast<NES::Join::Experimental::LogicalBatchJoinDefinitionPtr>(value);
+            auto joinDefinition = any_cast<NES::Join::Experimental::LogicalBatchJoinDescriptorPtr>(value);
             ss << "NES::Join::Experimental::LogicalBatchJoinDefinition::create(";
             ss << "NES::FieldAccessExpressionNode::create(";
             ss << joinDefinition->getBuildJoinKey()->getStamp()->toString();
@@ -201,7 +213,7 @@ void OperatorHandlerCppExporter::HandlerExport::sharedHandlerDefintion() {
     ss << OP_HANDLER << "* getSharedOperatorHandler(int index);\n";
 }
 
-std::string OperatorHandlerCppExporter::generateHandler(const Stage& stage, NES::QuerySubPlanId subPlanId) {
+std::string OperatorHandlerCppExporter::generateHandler(const Stage& stage, NES::DecomposedQueryPlanId subPlanId) {
     HandlerExport exporter(subPlanId);
 
     if (!stage.sharedHandlerIndices.empty()) {
@@ -213,7 +225,7 @@ std::string OperatorHandlerCppExporter::generateHandler(const Stage& stage, NES:
 }
 std::string OperatorHandlerCppExporter::generateSharedHandler(
     const std::unordered_map<SharedOperatorHandlerIndex, Runtime::Unikernel::OperatorHandlerDescriptor>& sharedHandler,
-    NES::QuerySubPlanId subPlanId) {
+    NES::DecomposedQueryPlanId subPlanId) {
     NES_ASSERT(!sharedHandler.empty(), "Should not be called without any shared handlers");
 
     std::vector<std::string> includes;

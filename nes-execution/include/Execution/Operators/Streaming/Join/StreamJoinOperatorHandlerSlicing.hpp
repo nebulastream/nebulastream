@@ -27,13 +27,7 @@ namespace NES::Runtime::Execution::Operators {
 class StreamJoinOperatorHandlerSlicing : public virtual JoinOperatorHandlerInterfaceSlicing,
                                          public virtual StreamJoinOperatorHandler {
   public:
-    virtual ~StreamJoinOperatorHandlerSlicing() override = default;
-    StreamJoinOperatorHandlerSlicing(const std::vector<OriginId>& inputOrigins,
-                                     const OriginId outputOriginId,
-                                     const uint64_t windowSize,
-                                     const uint64_t windowSlide,
-                                     uint64_t sizeOfRecordLeft,
-                                     uint64_t sizeOfRecordRight);
+    ~StreamJoinOperatorHandlerSlicing() override = default;
     StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) override;
     StreamSlice* getCurrentSliceOrCreate() override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;

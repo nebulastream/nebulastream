@@ -21,14 +21,6 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-StreamJoinOperatorHandlerSlicing::StreamJoinOperatorHandlerSlicing(const std::vector<OriginId>& inputOrigins,
-                                                                   const OriginId outputOriginId,
-                                                                   const uint64_t windowSize,
-                                                                   const uint64_t windowSlide,
-                                                                   uint64_t sizeOfRecordLeft,
-                                                                   uint64_t sizeOfRecordRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight) {}
-
 StreamSlice* StreamJoinOperatorHandlerSlicing::getCurrentSliceOrCreate() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
 std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(StreamSlice& slice) {

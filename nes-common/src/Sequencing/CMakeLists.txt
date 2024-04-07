@@ -15,3 +15,7 @@ add_source_files(nes-common
         SequenceData.cpp
 )
 
+add_source_files(unikernel-lib
+        SequenceData.cpp
+        NonBlockingMonotonicSeqQueue.cpp
+)

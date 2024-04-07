@@ -16,7 +16,7 @@
 #include "Util/Logger/Logger.hpp"
 #include <Identifiers.hpp>
 #include <OperatorHandlerTracer.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>

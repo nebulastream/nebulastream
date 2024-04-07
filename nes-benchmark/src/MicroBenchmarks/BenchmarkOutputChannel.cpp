@@ -74,7 +74,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
             void onServerError(Network::Messages::ErrorMessage) override {}
 
             void onChannelError(Network::Messages::ErrorMessage) override {}
-            void onEvent(Network::NesPartition, Runtime::BaseEvent&) override {}
+            void onEvent(Network::NesPartition, Runtime::EventPtr) override {}
         };
 
         class DummyDataEmitter : public DataEmitter {

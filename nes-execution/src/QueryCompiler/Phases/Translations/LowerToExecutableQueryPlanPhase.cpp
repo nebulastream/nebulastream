@@ -56,6 +56,11 @@
 #include <string>
 #include <utility>
 #include <variant>
+#ifdef UNIKERNEL_EXPORT
+#include <NoOp/NoOpPhysicalSourceType.hpp>
+#include <NoOp/NoOpSource.hpp>
+#include <NoOp/NoOpSourceDescriptor.hpp>
+#endif
 
 namespace NES::QueryCompilation {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
@@ -304,6 +309,15 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
               magic_enum::enum_name(sourceType));
 
     switch (sourceType) {
+#ifdef UNIKERNEL_EXPORT
+        case SourceType::NOOP_SOURCE: {
+            auto noopSourceType = physicalSourceType->as<NoOpPhysicalSourceType>();
+            return NoOpSourceDescriptor::create(schema,
+                                                noopSourceType->getSchemaType(),
+                                                logicalSourceName,
+                                                noopSourceType->getTCP());
+        }
+#else
         case SourceType::DEFAULT_SOURCE: {
             auto defaultSourceType = physicalSourceType->as<DefaultSourceType>();
             return DefaultSourceDescriptor::create(
@@ -406,6 +420,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
             throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()
                                             + " not supported");
         }
+#endif
     }
 }
 

@@ -17,7 +17,6 @@
 
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <mutex>
 
 namespace NES {
@@ -44,16 +43,18 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat, uint32_t numOfProducers, QueryId queryId, QuerySubPlanId querySubPlanId);
+    explicit SinkMedium(SinkFormatPtr sinkFormat,
+                        uint32_t numOfProducers,
+                        SharedQueryId SharedQueryId,
+                        DecomposedQueryPlanId DecomposedQueryPlanId);
 
     /**
      * @brief public constructor for data sink
      */
     explicit SinkMedium(SinkFormatPtr sinkFormat,
                         uint32_t numOfProducers,
-                        QueryId queryId,
-                        QuerySubPlanId querySubPlanId,
-                        FaultToleranceType faultToleranceType,
+                        SharedQueryId SharedQueryId,
+                        DecomposedQueryPlanId DecomposedQueryPlanId,
                         uint64_t numberOfOrigins);
 
     /**
@@ -78,15 +79,15 @@ class SinkMedium : public Runtime::Reconfigurable {
 
     /**
      * @brief get the id of the owning plan
-     * @return queryId
+     * @return SharedQueryId
      */
-    QueryId getQueryId() const;
+    SharedQueryId getSharedQueryId() const;
 
     /**
      * @brief get the suzbplan id of the owning plan
-     * @return QuerySubPlanId
+     * @return DecomposedQueryPlanId
      */
-    QuerySubPlanId getParentPlanId() const;
+    DecomposedQueryPlanId getParentPlanId() const;
 
     /**
      * @brief debug function for testing to get number of written buffers
@@ -170,8 +171,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     bool schemaWritten;
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
-    QueryId queryId;
-    QuerySubPlanId querySubPlanId;
+    SharedQueryId SharedQueryId;
+    DecomposedQueryPlanId DecomposedQueryPlanId;
     FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;

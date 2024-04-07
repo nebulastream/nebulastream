@@ -13,8 +13,6 @@
 */
 
 #include <API/Schema.hpp>
-#include <Components/NesWorker.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -22,23 +20,12 @@
 namespace NES {
 
 SinkMedium::SinkMedium(uint32_t numOfProducers,
-                       QueryId queryId,
-                       QuerySubPlanId querySubPlanId,
-                       FaultToleranceType faultToleranceType,
+                       SharedQueryId queryId,
+                       DecomposedQueryPlanId querySubPlanId,
                        uint64_t numberOfOrigins)
-    : queryId(queryId), querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {
+    : queryId(queryId), querySubPlanId(querySubPlanId), numberOfOrigins(numberOfOrigins) {
     bufferCount = 0;
-    buffersPerEpoch = 1000;//TODO
-
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
-            updateWatermark(inputBuffer);
-        };
-    } else {
-        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
-        };
-    }
 }
 
 OperatorId SinkMedium::getOperatorId() const { return 0; }
@@ -51,7 +38,7 @@ void SinkMedium::updateWatermark([[maybe_unused]] Runtime::TupleBuffer& inputBuf
 
 uint64_t SinkMedium::getNumberOfWrittenOutTuples() { return sentTuples; }
 
-QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
+DecomposedQueryPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 
 QueryId SinkMedium::getQueryId() const { return queryId; }
 

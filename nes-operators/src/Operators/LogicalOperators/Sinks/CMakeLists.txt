@@ -15,7 +15,7 @@ add_source_files(unikernel-query-export
         SinkDescriptor.cpp
 )
 add_source_files(unikernel-export
-        SinkLogicalOperatorNode.cpp
+        SinkLogicalOperator.cpp
         NullOutputSinkDescriptor.cpp
         SinkDescriptor.cpp
 )

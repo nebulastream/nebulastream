@@ -18,10 +18,9 @@
 #include <ExportQueryOptimizer.h>
 #include <NoOp/NoOpPhysicalSourceType.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -30,7 +29,7 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <memory>
 
-std::pair<NES::QueryPlanPtr, NES::GlobalExecutionPlanPtr>
+std::pair<NES::QueryPlanPtr, NES::Optimizer::GlobalExecutionPlanPtr>
 ExportQueryOptimizer::optimize(NES::TopologyPtr topology,
                                NES::Configurations::CoordinatorConfigurationPtr config,
                                NES::QueryPlanPtr query,
@@ -45,7 +44,7 @@ ExportQueryOptimizer::optimize(NES::TopologyPtr topology,
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(config);
     auto originInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto phaseFactory = QueryCompilation::Phases::ExportPhaseFactory::create();
-    auto gep = GlobalExecutionPlan::create();
+    auto gep = NES::Optimizer::GlobalExecutionPlan::create();
 
     query->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
 
@@ -55,7 +54,7 @@ ExportQueryOptimizer::optimize(NES::TopologyPtr topology,
     auto queryPlan = originInferencePhase->execute(queryPlan3);
 
     auto sharedQueryPlan = NES::SharedQueryPlan::create(queryPlan);
-    auto queryPlacementPhase = NES::Optimizer::QueryPlacementPhase::create(gep, topology, typeInferencePhase, config);
+    auto queryPlacementPhase = NES::Optimizer::QueryPlacementAmendmentPhase::create(gep, topology, typeInferencePhase, config);
 
     queryPlacementPhase->execute(sharedQueryPlan);
     typeInferencePhase->execute(queryPlan);

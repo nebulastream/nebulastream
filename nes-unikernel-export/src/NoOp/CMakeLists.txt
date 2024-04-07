@@ -3,5 +3,8 @@ add_source_files(unikernel-export
         NoOpQueryManager.cpp
         NoOpSourceCreator.cpp
         NoOpSourceDescriptor.cpp
+        NoOpSource.cpp
         NoOpWorkerContext.cpp
+        NoOpPipelineExecutionContext.cpp
+        NoOpReconfigurationMessage.cpp
 )

@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-#include <Configurations/Enums/QueryCompilerType.hpp>
-#include <Configurations/Enums/WindowingStrategy.hpp>
 #include <ExportPhaseFactory.h>
 #include <OperatorHandlerTracer.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -76,7 +75,7 @@ IntermediateStage QueryPipeliner::lowerToNautilus(const QueryCompilation::Operat
 
     const auto nautilusPipeline = lowerToNautilus->apply(pipeline, bufferSize);
     std::vector<Runtime::Unikernel::GlobalOperatorHandlerIndex> handlerIds;
-    auto handlers = nautilusPipeline->getQueryPlan()
+    auto handlers = nautilusPipeline->getDecomposedQueryPlan()
                         ->getRootOperators()[0]
                         ->as<QueryCompilation::NautilusPipelineOperator>()
                         ->getOperatorHandlers();
@@ -95,7 +94,7 @@ IntermediateStage QueryPipeliner::lowerToNautilus(const QueryCompilation::Operat
 
     return IntermediateStage{handlerIds, nautilusPipeline, successor, std::move(predecessor)};
 }
-QueryPipeliner::Result QueryPipeliner::lowerQuery(const QueryPlanPtr& unikernelWorkerQueryPlan) {
+QueryPipeliner::Result QueryPipeliner::lowerQuery(const DecomposedQueryPlanPtr& unikernelWorkerQueryPlan) {
     const auto phaseFactory = QueryCompilation::Phases::ExportPhaseFactory::create();
 
     Runtime::Unikernel::OperatorHandlerTracer::reset();

@@ -31,13 +31,7 @@ NLJOperatorHandlerSlicing::NLJOperatorHandlerSlicing(const std::vector<OriginId>
                          leftSchema,
                          rightSchema,
                          pageSizeLeft,
-                         pageSizeRight),
-      StreamJoinOperatorHandlerSlicing(inputOrigins,
-                                       outputOriginId,
-                                       windowSize,
-                                       windowSlide,
-                                       sizeOfRecordLeft,
-                                       sizeOfRecordRight) {}
+                         pageSizeRight) {}
 NLJOperatorHandlerPtr NLJOperatorHandlerSlicing::create(const std::vector<OriginId>& inputOrigins,
                                                         const OriginId outputOriginId,
                                                         const uint64_t windowSize,

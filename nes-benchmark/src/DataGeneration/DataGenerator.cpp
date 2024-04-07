@@ -28,6 +28,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES::Benchmark::DataGeneration {
 
@@ -107,7 +108,7 @@ void DataGenerator::insertTimestamps(std::vector<NES::Runtime::TupleBuffer>& buf
     size_t currentTimestamp = startingTimestamp;
 
     for (auto& tupleBuffer : buffers) {
-        Runtime::MemoryLayouts::DynamicTupleBuffer buffer(getMemoryLayout(bufferSize), tupleBuffer);
+        Runtime::MemoryLayouts::TestTupleBuffer buffer(getMemoryLayout(bufferSize), tupleBuffer);
         for (auto tuple : buffer) {
             getTimestampField(tuple).write<uint64_t>(currentTimestamp);
 

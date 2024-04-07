@@ -17,7 +17,6 @@ add_source_files(nes-execution
 )
 add_source_files(unikernel-export
         OperatorAtATimePolicy.cpp
-        OperatorFusionPolicy.cpp
         FuseNonPipelineBreakerPolicy.cpp
         DefaultPipeliningPhase.cpp
 )

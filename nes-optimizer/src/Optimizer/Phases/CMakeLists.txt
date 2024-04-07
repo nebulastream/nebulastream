@@ -11,11 +11,11 @@
 # limitations under the License.
 
 add_source_files(unikernel-export
-        SignatureInferencePhase.cpp
         TopologySpecificQueryRewritePhase.cpp
+        QueryPlacementRefinementPhase.cpp
         TypeInferencePhase.cpp
-        QueryPlacementPhase.cpp
         QueryRewritePhase.cpp
+        QueryPlacementAmendmentPhase.cpp
         MemoryLayoutSelectionPhase.cpp
         OriginIdInferencePhase.cpp
 )

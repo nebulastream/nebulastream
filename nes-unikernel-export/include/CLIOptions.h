@@ -281,13 +281,13 @@ class Options {
     std::string getOutputPathForFile(const std::string& file);
     void createSource(std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog,
                       std::vector<NES::PhysicalSourceTypePtr> physicalSources,
-                      NES::TopologyNodePtr worker,
+                      NES::WorkerId workerId,
                       const ExportSourceConfiguration& source);
     std::tuple<NES::TopologyPtr, NES::Catalogs::Source::SourceCatalogPtr, std::vector<NES::PhysicalSourceTypePtr>>
     getTopologyAndSources();
     [[nodiscard]] ExportKafkaConfiguration getKafkaConfiguration() const;
     [[nodiscard]] std::string getYAMLOutputPath() const;
-    [[nodiscard]] boost::filesystem::path getStageOutputPathForNode(NES::NodeId) const;
+    [[nodiscard]] boost::filesystem::path getStageOutputPathForNode(NES::WorkerId) const;
 
   private:
     ExportConfiguration configuration;

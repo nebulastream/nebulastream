@@ -154,7 +154,7 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     return true;
 }
 
-void NetworkSource::onEvent(Runtime::BaseEvent&) { NES_DEBUG("NetworkSource: received an event"); }
+void NetworkSource::onEvent(Runtime::EventPtr) { NES_DEBUG("NetworkSource: received an event"); }
 
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSource: reconfigure() called {} for the type {}",
@@ -328,7 +328,7 @@ bool NetworkSource::startNewVersion() {
 
 DecomposedQueryPlanVersion NetworkSource::getVersion() const { return version; }
 
-void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
+void NetworkSource::onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);

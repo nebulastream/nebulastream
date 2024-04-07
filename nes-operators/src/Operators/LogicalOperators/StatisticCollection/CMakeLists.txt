@@ -10,13 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(unikernel-export
-        OnTimeTriggerPolicyDescription.cpp
-        BaseWindowTriggerPolicyDescriptor.cpp
-        OnWatermarkChangeTriggerPolicyDescription.cpp
-        OnBufferTriggerPolicyDescription.cpp
-        OnRecordTriggerPolicyDescription.cpp
-)
 add_source_files(nes-operators
         LogicalStatisticWindowOperator.cpp
         WindowStatisticDescriptor.cpp

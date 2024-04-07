@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Runtime/Events.hpp>
@@ -27,7 +26,6 @@ namespace NES::Network {
 
 PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& senderLocation, DataEmitterPtr&& emitter)
     : senderLocation(std::move(senderLocation)), consumer(std::move(emitter)) {
-    auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(consumer);
 }
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }

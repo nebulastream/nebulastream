@@ -65,14 +65,14 @@ std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerO
 
 std::unique_ptr<NES::Runtime::Execution::ExecutablePipelineStage>
 NautilusCompilationPhase::getCompiledPipelineStage(OperatorPipelinePtr pipeline) {
-    auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
+    auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
     auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
     Nautilus::CompilationOptions options;
     auto identifier = fmt::format("NautilusCompilation-{}-{}-{}",
-                                  pipeline->getQueryPlan()->getQueryId(),
-                                  pipeline->getQueryPlan()->getQuerySubPlanId(),
+                                  pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
+                                  pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
                                   pipeline->getPipelineId());
     options.setIdentifier(identifier);
 

@@ -25,31 +25,6 @@ namespace NES::Runtime::Execution::Operators {
 class MultiOriginWatermarkProcessor;
 
 /**
- * @brief This is the operator handler for the AppendToSliceStoreAction.
- * It maintains the SlidingWindowSliceStore<Slice> that stores all slices.
- * @tparam Slice
- */
-template<class Slice>
-class AppendToSliceStoreHandler : public OperatorHandler {
-  public:
-    AppendToSliceStoreHandler(uint64_t windowSize, uint64_t windowSlide);
-    void start(PipelineExecutionContextPtr, uint32_t) override {}
-    void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
-    void appendToGlobalSliceStore(std::unique_ptr<Slice> slice);
-    void triggerSlidingWindows(Runtime::WorkerContext& wctx,
-                               Runtime::Execution::PipelineExecutionContext& ctx,
-                               SequenceData sequenceNumber,
-                               uint64_t slideEnd);
-
-  private:
-    std::unique_ptr<SlidingWindowSliceStore<Slice>> sliceStore;
-    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
-    std::atomic<uint64_t> lastTriggerWatermark = 0;
-    std::atomic<uint64_t> resultSequenceNumber = TupleBuffer::INITIAL_SEQUENCE_NUMBER;
-    std::mutex triggerMutex;
-};
-
-/**
  * @brief The AppendToSliceStoreAction appends slices to the slice store for sliding windows.
  * @tparam Slice
  */

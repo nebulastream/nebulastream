@@ -44,6 +44,8 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
 
+void StreamJoinOperatorHandler::deleteAllSlices() { NES_THROW_RUNTIME_ERROR("Not Implemented!"); }
+
 void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaData) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
@@ -52,6 +54,10 @@ uint64_t StreamJoinOperatorHandler::getNumberOfSlices() { NES_THROW_RUNTIME_ERRO
 
 uint64_t StreamJoinOperatorHandler::getNumberOfTuplesInSlice(uint64_t sliceIdentifier,
                                                              QueryCompilation::JoinBuildSideType buildSide) {
+    NES_THROW_RUNTIME_ERROR("Not Implemented!");
+}
+
+void StreamJoinOperatorHandler::setBufferManager(const BufferManagerPtr& bufManager) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }
 
@@ -77,12 +83,12 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
                                                      const OriginId outputOriginId,
                                                      const uint64_t windowSize,
                                                      const uint64_t windowSlide,
-                                                     uint64_t sizeOfRecordLeft,
-                                                     uint64_t sizeOfRecordRight)
+                                                     const NES::SchemaPtr& leftSchema,
+                                                     const NES::SchemaPtr& rightSchema)
     : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSlide), windowSize(windowSize), windowSlide(windowSlide),
       watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)),
       watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector<OriginId>(1, outputOriginId))),
-      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(sizeOfRecordLeft),
-      sizeOfRecordRight(sizeOfRecordRight) {}
+      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(leftSchema->getSchemaSizeInBytes()),
+      sizeOfRecordRight(rightSchema->getSchemaSizeInBytes()) {}
 
 }// namespace NES::Runtime::Execution::Operators

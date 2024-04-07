@@ -1,6 +1,7 @@
 
 #ifndef STATISTICSMEDIUM_HPP
 #define STATISTICSMEDIUM_HPP
+#include <Identifiers.hpp>
 
 struct Counter {
     explicit Counter(const std::chrono::seconds& duration) : duration(duration) {}
@@ -36,10 +37,10 @@ class LatencySink : public SinkMedium {
   public:
     LatencySink(SinkFormatPtr sinkFormat,
                 uint32_t numOfProducers,
-                QueryId queryId,
-                QuerySubPlanId querySubPlanId,
+                SharedQueryId SharedQueryId,
+                DecomposedQueryPlanId DecomposedQueryPlanId,
                 std::chrono::milliseconds allowedDelay)
-        : SinkMedium(std::move(sinkFormat), numOfProducers, queryId, querySubPlanId), allowedDelay(allowedDelay),
+        : SinkMedium(std::move(sinkFormat), numOfProducers, SharedQueryId, DecomposedQueryPlanId), allowedDelay(allowedDelay),
           numberOfProducers(numOfProducers) {}
     void setup() override;
     void shutdown() override {}
@@ -54,10 +55,10 @@ class StatisticsMedium : public SinkMedium {
   public:
     StatisticsMedium(SinkFormatPtr sinkFormat,
                      uint32_t numOfProducers,
-                     QueryId queryId,
-                     QuerySubPlanId querySubPlanId,
+                     SharedQueryId SharedQueryId,
+                     DecomposedQueryPlanId DecomposedQueryPlanId,
                      std::chrono::seconds duration)
-        : SinkMedium(std::move(sinkFormat), numOfProducers, queryId, querySubPlanId), counter(std::move(duration)) {}
+        : SinkMedium(std::move(sinkFormat), numOfProducers, SharedQueryId, DecomposedQueryPlanId), counter(std::move(duration)) {}
     void setup() override;
     void shutdown() override {}
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
