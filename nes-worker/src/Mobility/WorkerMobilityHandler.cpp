@@ -421,8 +421,11 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run() {
 
         //perform reconnect if needed
         //todo: just check if new reconnect happned here
-        auto reconnect = *currentReconnectPoint.rlock();
+        auto reconnectLocked = currentReconnectPoint.wlock();
+        auto reconnect = *reconnectLocked;
         if (reconnect.has_value()) {
+            reconnect = std::nullopt;
+            reconnectLocked.unlock();
             //NES_INFO("Mobility Handler checking for next reconnect")
             //get the reconnect if it is to be performed now
             //todo: the actual reconnect point is discarded here and we only consider the prediction
@@ -441,6 +444,8 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run() {
                                        reconnect.value().newParentId,
                                        predictedParentId,
                                        predictedReconnectTime);
+        } else {
+            reconnectLocked.unlock();
         }
 
         //if the schedule changed, the coordinator has to be informed about the next predicted reconnect
