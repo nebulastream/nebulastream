@@ -424,7 +424,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run() {
         auto reconnectLocked = currentReconnectPoint.wlock();
         auto reconnect = *reconnectLocked;
         if (reconnect.has_value()) {
-            reconnect = std::nullopt;
+            *reconnectLocked = std::nullopt;
             reconnectLocked.unlock();
             //NES_INFO("Mobility Handler checking for next reconnect")
             //get the reconnect if it is to be performed now
