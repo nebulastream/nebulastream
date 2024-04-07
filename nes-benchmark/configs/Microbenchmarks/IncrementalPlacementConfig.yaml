@@ -10,42 +10,42 @@ StartupSleepIntervalInSeconds: 3
 NumOfRuns: 5
 
 RunConfig:
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 1
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 2
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 4
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 3
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: false
-#    PlacementAmendmentThreadCount: 8
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 4
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 1
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 5
-#  - QueryPlacementStrategy: BottomUp
-#    IncrementalPlacement: true
-#    PlacementAmendmentThreadCount: 2
-#    PlacementAmendmentMode: PESSIMISTIC
-#    BatchSize: 8
-#    ConfNum: 6
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 1
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 2
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 4
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 3
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 4
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 5
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 2
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 6
   - QueryPlacementStrategy: BottomUp
     IncrementalPlacement: true
     PlacementAmendmentThreadCount: 4

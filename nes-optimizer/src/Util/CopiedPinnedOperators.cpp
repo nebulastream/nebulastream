@@ -75,7 +75,7 @@ CopiedPinnedOperators::create(const std::set<LogicalOperatorPtr>& pinnedUpStream
                                     || pinnedDownStreamOperator->getChildWithOperatorId(downStreamOperatorId);
                             });
 
-            // Add the  remaining process if not connected
+            // Add the remaining operators if connected to pinned downstream operator
             if (connectedToPinnedDownstreamOperator) {
 
                 auto parentOperator = operatorNode->as<LogicalOperator>();

@@ -229,7 +229,7 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
     runningQueryIds.emplace_back(queryId);
 }
 
-bool SharedQueryPlan::removeQuery(QueryId queryId) {
+bool SharedQueryPlan::markQueryForRemoval(QueryId queryId) {
     NES_DEBUG("SharedQueryPlan: Remove the Query Id {} and associated Global Query Nodes with sink operators.", queryId);
     if (queryIdToSinkOperatorMap.find(queryId) == queryIdToSinkOperatorMap.end()) {
         NES_ERROR("SharedQueryPlan: query id {} is not present in metadata information.", queryId);
@@ -253,7 +253,23 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
     }
-    removeQueryIds.emplace_back(queryId);
+    queriesMarkedForRemoval.emplace_back(queryId);
+    return true;
+}
+
+bool SharedQueryPlan::removeQueryMarkedForRemoval() {
+    for (const auto& queryId : queriesMarkedForRemoval){
+        std::set<LogicalOperatorPtr> sinkOperatorsToRemove = queryIdToSinkOperatorMap[queryId];
+        // Iterate over all sink global query nodes for the input query and remove the corresponding exclusive upstream operator chains
+        for (const auto& sinkOperator : sinkOperatorsToRemove) {
+            //mark sink and associated operators for removal
+            removeOperator(sinkOperator);
+            queryPlan->removeAsRootOperator(sinkOperator);
+        }
+        std::remove(runningQueryIds.begin(), runningQueryIds.end(), queryId);
+        queryIdToSinkOperatorMap.erase(queryId);
+    }
+    queriesMarkedForRemoval.clear();
     return true;
 }
 
@@ -309,15 +325,15 @@ std::set<LogicalOperatorPtr> SharedQueryPlan::markOperatorsToBeRemoved(const NES
         //If chas more than 1 downstream operators and not all downstream operators of this upstream operator is in to-be-removed state then add this operator
         // to the upstream operators to return.
         if (connectedDownstream.size() > 1) {
-            bool allInToBeRemoved =
+            bool allNotInToBeRemoved =
                 std::any_of(connectedDownstream.begin(),
                             connectedDownstream.end(),
                             [](const NodePtr connectedDownStreamOperator) {
                                 return connectedDownStreamOperator->as_if<LogicalOperator>()->getOperatorState()
-                                    == OperatorState::TO_BE_REMOVED;
+                                    != OperatorState::TO_BE_REMOVED;
                             });
 
-            if (!allInToBeRemoved) {
+            if (allNotInToBeRemoved) {
                 //add this upstream operator to operators to return
                 upstreamOperatorsToReturn.insert(upstreamOperator->as<LogicalOperator>());
                 //Skip remaining processing

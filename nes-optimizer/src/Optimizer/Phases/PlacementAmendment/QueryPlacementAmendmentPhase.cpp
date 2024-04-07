@@ -147,7 +147,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                         throw std::runtime_error("Placement addition phase unsuccessfully completed");
                     }
                 } else {
-                    NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
+                    NES_ERROR("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
                                 "TO_BE_PLACED state.");
                 }
             } catch (std::exception& ex) {
@@ -165,7 +165,6 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
         sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
     } else {
         try {
-
             //1. Mark all PLACED operators as TO-BE-REPLACED
             for (const auto& operatorToCheck : queryPlan->getAllOperators()) {
                 const auto& logicalOperator = operatorToCheck->as<LogicalOperator>();
@@ -174,16 +173,20 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                 }
             }
 
-            //2. Fetch all upstream pinned operators
+            //2. Fetch all upstream pinned operators that are not removed
             std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
             for (const auto& leafOperator : queryPlan->getLeafOperators()) {
-                pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
+                if(leafOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED){
+                    pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
+                }
             };
 
-            //3. Fetch all downstream pinned operators
+            //3. Fetch all downstream pinned operators that are not removed
             std::set<LogicalOperatorPtr> pinnedDownStreamOperators;
             for (const auto& rootOperator : queryPlan->getRootOperators()) {
-                pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
+                if(rootOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
+                    pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
+                }
             };
 
             //4. Pin all sink operators
@@ -219,7 +222,23 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                             "TO_BE_REPLACED state.");
             }
 
-            //8. Call placement addition strategy
+            //8. Fetch all upstream pinned operators that are not removed
+            pinnedUpstreamOperators.clear();
+            for (const auto& leafOperator : queryPlan->getLeafOperators()) {
+                if(leafOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED){
+                    pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
+                }
+            };
+
+            //9. Fetch all downstream pinned operators that are not removed
+            pinnedDownStreamOperators.clear();
+            for (const auto& rootOperator : queryPlan->getRootOperators()) {
+                if(rootOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
+                    pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
+                }
+            };
+
+            //10. Call placement addition strategy
             if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
                 auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
                 auto placementAdditionStrategy = getStrategy(placementStrategy);
@@ -246,6 +265,8 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::PARTIALLY_PROCESSED);
         }
     }
+
+    sharedQueryPlan->removeQueryMarkedForRemoval();
 
     if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::PARTIALLY_PROCESSED
         && sharedQueryPlan->getStatus() != SharedQueryPlanStatus::STOPPED) {

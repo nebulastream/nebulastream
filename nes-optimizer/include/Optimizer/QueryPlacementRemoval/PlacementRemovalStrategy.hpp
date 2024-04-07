@@ -124,9 +124,9 @@ class PlacementRemovalStrategy {
 
     /**
      * @brief Update the query sub plans by removing the query operators
-     * @param sharedQueryId
+     * @param sharedQueryId id of the shared query plan
      */
-    void updateQuerySubPlans(SharedQueryId sharedQueryId);
+    void updateDecomposedQueryPlans(SharedQueryId sharedQueryId);
 
     /**
      * @brief Add the computed query sub plans tot he global execution plan
@@ -147,12 +147,14 @@ class PlacementRemovalStrategy {
     PlacementAmendmentMode placementAmendmentMode;
     PathFinderPtr pathFinder;
     std::set<WorkerId> workerIdsInBFS;
+    std::vector<OperatorId> operatorsToBeProcessed;
     std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
     std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToDecomposedQueryPlanIds;
     std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
     std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>> workerIdToUpdatedDecomposedQueryPlans;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
+    std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
 };
 
 }// namespace Optimizer

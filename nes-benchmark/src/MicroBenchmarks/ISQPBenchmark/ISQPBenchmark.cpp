@@ -463,17 +463,17 @@ int main(int argc, const char* argv[]) {
 
         std::stringstream aggregatedBenchmarkOutput;
         aggregatedBenchmarkOutput << "File_Name,ConfigNum,PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,"
-                                     "PlacementAmendmentMode,BatchSize,Run_"
-                                     "Num,Batch_Num,Start_Time,End_Time,Total_Run_Time"
+                                     "PlacementAmendmentMode,NumOfAddQuery,NumOfRemoveQuery,BatchSize,Run_Num,Batch_Num,Start_"
+                                     "Time,End_Time,Total_Run_Time"
                                   << std::endl;
 
         std::stringstream detailedBenchmarkOutput;
-        detailedBenchmarkOutput
-            << "File_Name,ConfigNum,PlacementRule,IncrementalPlacement,PlacementAmendmentThreadCount,PlacementAmendmentMode,"
-               "BatchSize,"
-               "RunNum,QueryNum,BatchNum,batchEventTime,batchProcessingStartTime,batchAmendmentStartTime,batchProcessingEndTime,"
-               "batchFailureCount,batchAffectedSQPCount"
-            << std::endl;
+        detailedBenchmarkOutput << "File_Name,ConfigNum,PlacementRule,IncrementalPlacement,"
+                                   "PlacementAmendmentThreadCount,PlacementAmendmentMode,"
+                                   "BatchSize,RunNum,NumOfAddQuery,NumOfRemoveQuery,QueryNum,BatchNum,batchEventTime,"
+                                   "batchProcessingStartTime,batchAmendmentStartTime,batchProcessingEndTime,"
+                                   "batchFailureCount,batchAffectedSQPCount"
+                                << std::endl;
 
         //Perform benchmark for each run configuration
         auto runConfig = configs["RunConfig"];
@@ -482,6 +482,10 @@ int main(int argc, const char* argv[]) {
             auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
             auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
             auto batchSize = node["BatchSize"].As<uint16_t>();
+            auto numOfRemoveQueries = node["NumOfRemoveQueries"].As<uint16_t>();
+            auto numOfAddQueries = node["NumOfAddQueries"].As<uint16_t>();
+            NES_ASSERT(numOfAddQueries + numOfRemoveQueries == batchSize,
+                       "Number of remove and add queries should be same as the batch size");
             auto placementAmendmentThreadCount = node["PlacementAmendmentThreadCount"].As<uint32_t>();
             auto configNum = node["ConfNum"].As<uint32_t>();
             auto placementAmendmentMode = node["PlacementAmendmentMode"].As<std::string>();
@@ -512,11 +516,13 @@ int main(int argc, const char* argv[]) {
                 auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 
                 // Setup system with initially running query plans
-                uint64_t initiallyRunningQueries = 1024;
+                uint64_t initiallyRunningQueries = 4096;
+                std::vector<QueryId> potentialCandidatesForRemoval;
                 std::vector<RequestProcessor::ISQPEventPtr> initialISQPEvents;
                 uint64_t currentIndex;
                 for (currentIndex = 0; currentIndex < initiallyRunningQueries; currentIndex++) {
                     auto queryPlan = queryObjects[currentIndex];
+                    potentialCandidatesForRemoval.emplace_back(queryPlan->getQueryId());
                     initialISQPEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
                 }
                 std::cout << "_______________________________Placing initial queries" << std::endl;
@@ -526,16 +532,38 @@ int main(int argc, const char* argv[]) {
                 // Compute batches of ISQP events
                 std::vector<std::vector<RequestProcessor::ISQPEventPtr>> isqpBatches;
                 std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
+
                 uint16_t batchIncrement = 1;
+                uint16_t addQueryIncrement = 1;
+                uint16_t removeQueryIncrement = 1;
+
                 for (uint64_t i = currentIndex; i < numOfQueries; i++) {
                     auto queryPlan = queryObjects[i];
                     if (batchIncrement == 1) {
                         isqpEvents.clear();
                     }
-                    isqpEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
-                    if (batchIncrement == batchSize || i == numOfQueries - 1) {
+
+                    //Add query events
+                    if (addQueryIncrement <= numOfAddQueries) {
+                        isqpEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
+                        potentialCandidatesForRemoval.emplace_back(i + 1);
+                        addQueryIncrement++;
+                    }
+
+                    //Remove query events
+                    while (addQueryIncrement > numOfAddQueries && removeQueryIncrement <= numOfRemoveQueries) {
+                        QueryId& queryId = potentialCandidatesForRemoval.rbegin()[removeQueryIncrement - 1];
+                        isqpEvents.emplace_back(RequestProcessor::ISQPRemoveQueryEvent::create(queryId));
+                        removeQueryIncrement++;
+                        batchIncrement++;
+                        i++;
+                    }
+
+                    if (isqpEvents.size() == batchSize || i == numOfQueries - 1) {
                         isqpBatches.emplace_back(isqpEvents);
                         batchIncrement = 1;
+                        addQueryIncrement = 1;
+                        removeQueryIncrement = 1;
                         continue;
                     }
                     batchIncrement++;
@@ -563,8 +591,9 @@ int main(int argc, const char* argv[]) {
                         .count();
                 aggregatedBenchmarkOutput << fileName << "," << configNum << "," << placementStrategy << ","
                                           << std::to_string(incrementalPlacement) << "," << placementAmendmentThreadCount << ","
-                                          << placementAmendmentMode << "," << batchSize << "," << run << "," << count << ","
-                                          << startTime << "," << endTime << "," << (endTime - startTime) << std::endl;
+                                          << placementAmendmentMode << "," << numOfAddQueries << "," << numOfRemoveQueries << ","
+                                          << batchSize << "," << run << "," << count << "," << startTime << "," << endTime << ","
+                                          << (endTime - startTime) << std::endl;
 
                 for (const auto& batchResponse : batchResponses) {
                     uint64_t batchCount = std::get<0>(batchResponse);
@@ -572,8 +601,9 @@ int main(int argc, const char* argv[]) {
                     RequestProcessor::ISQPRequestResponsePtr response = std::get<2>(batchResponse);
                     detailedBenchmarkOutput << fileName << "," << configNum << "," << placementStrategy << ","
                                             << std::to_string(incrementalPlacement) << "," << placementAmendmentThreadCount << ","
-                                            << placementAmendmentMode << "," << batchSize << "," << run << "," << count << ","
-                                            << batchCount << "," << batchEventTime << "," << response->processingStartTime << ","
+                                            << placementAmendmentMode << "," << batchSize << "," << run << "," << numOfAddQueries
+                                            << "," << numOfRemoveQueries << "," << count << "," << batchCount << ","
+                                            << batchEventTime << "," << response->processingStartTime << ","
                                             << response->amendmentStartTime << "," << response->processingEndTime << ","
                                             << response->numOfFailedPlacements << "," << response->numOfSQPAffected << std::endl;
                 }

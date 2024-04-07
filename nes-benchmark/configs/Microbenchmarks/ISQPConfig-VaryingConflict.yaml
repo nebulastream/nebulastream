@@ -1,0 +1,42 @@
+#Location of query set
+# For each query set we will run the experiments
+#QuerySetLocation: '/home/ankit/dima/nes-2/nes-benchmark/src/MicroBenchmarks/ISQPBenchmark/QuerySet/'
+QuerySetLocation: '/data-ssd/ankit/ISQP-Exp/tmp/tmp.tqJypTtBkM/nes-benchmark/src/MicroBenchmarks/ISQPBenchmark/QuerySet/'
+# LOG level
+LogLevel: LOG_NONE
+# Sleep interval between each run
+StartupSleepIntervalInSeconds: 3
+# Number of times experiment is to be repeated
+NumOfRuns: 5
+
+RunConfig:
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 1
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 1
+    ConfNum: 1
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 2
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: false
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 8
+    ConfNum: 3
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: PESSIMISTIC
+    BatchSize: 8
+    ConfNum: 4
+  - QueryPlacementStrategy: BottomUp
+    IncrementalPlacement: true
+    PlacementAmendmentThreadCount: 8
+    PlacementAmendmentMode: OPTIMISTIC
+    BatchSize: 8
+    ConfNum: 5

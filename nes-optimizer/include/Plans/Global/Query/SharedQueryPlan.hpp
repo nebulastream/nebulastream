@@ -130,7 +130,13 @@ class SharedQueryPlan {
      * @param queryId : the original query Id
      * @return true if successful
      */
-    bool removeQuery(QueryId queryId);
+    bool markQueryForRemoval(QueryId queryId);
+
+    /**
+     * @brief Remove all Queries marked for removal, the associated exclusive operators, and clear sink and query id vectors
+     * @return true if successful
+     */
+    bool removeQueryMarkedForRemoval();
 
     /**
      * @brief Mark all operators between (excluding) upstream and downstream operators for re-operator placement
@@ -262,7 +268,7 @@ class SharedQueryPlan {
     QueryPlanPtr queryPlan;
     std::map<QueryId, std::set<LogicalOperatorPtr>> queryIdToSinkOperatorMap;
     std::vector<QueryId> runningQueryIds;
-    std::vector<QueryId> removeQueryIds;
+    std::vector<QueryId> queriesMarkedForRemoval;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     Optimizer::PlacementStrategy placementStrategy;

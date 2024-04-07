@@ -315,7 +315,7 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
 }
 
 //test adding a single
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithIncrementalPlacement) {
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithIncrementalPlacement2PL) {
 
     // init topology nodes
     std::map<std::string, std::any> properties;
@@ -424,6 +424,26 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     auto response2 = queryAddEvent2->getResponse().get();
     auto queryId2 = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response2)->queryId;
     EXPECT_EQ(queryCatalog->getQueryState(queryId2), QueryState::RUNNING);
+
+    // Prepare
+    auto queryRemoveEvent = ISQPRemoveQueryEvent::create(queryId2);
+    std::vector<ISQPEventPtr> isqpEventsForRequest3;
+    isqpEventsForRequest3.emplace_back(queryRemoveEvent);
+    auto isqpRequest3 = ISQPRequest::create(z3Context, isqpEventsForRequest3, ZERO_RETRIES);
+    constexpr RequestId requestId3 = 3;
+    isqpRequest3->setId(requestId3);
+    try {
+        isqpRequest3->execute(storageHandler);
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+        FAIL();
+    }
+
+    // Verify if removal happened
+    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId1);
+    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+    auto numOfSinks = sharedQueryPlan->getQueryPlan()->getSinkOperators().size();
+    EXPECT_EQ(numOfSinks, 1);
+
     placementAmendmentHandler.shutDown();
 }
 
@@ -538,6 +558,25 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     auto response2 = queryAddEvent2->getResponse().get();
     auto queryId2 = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response2)->queryId;
     EXPECT_EQ(queryCatalog->getQueryState(queryId2), QueryState::RUNNING);
+
+    // Prepare
+    auto queryRemoveEvent = ISQPRemoveQueryEvent::create(queryId2);
+    std::vector<ISQPEventPtr> isqpEventsForRequest3;
+    isqpEventsForRequest3.emplace_back(queryRemoveEvent);
+    auto isqpRequest3 = ISQPRequest::create(z3Context, isqpEventsForRequest3, ZERO_RETRIES);
+    constexpr RequestId requestId3 = 3;
+    isqpRequest3->setId(requestId3);
+    try {
+        isqpRequest3->execute(storageHandler);
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+        FAIL();
+    }
+
+    // Verify if removal happened
+    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId1);
+    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+    auto numOfSinks = sharedQueryPlan->getQueryPlan()->getSinkOperators().size();
+    EXPECT_EQ(numOfSinks, 1);
     placementAmendmentHandler.shutDown();
 }
 
@@ -653,6 +692,20 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto response2 = queryAddEvent2->getResponse().get();
     auto queryId2 = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response2)->queryId;
     EXPECT_EQ(queryCatalog->getQueryState(queryId2), QueryState::RUNNING);
+
+    auto queryRemoveEvent = ISQPRemoveQueryEvent::create(queryId2);
+    std::vector<ISQPEventPtr> isqpEventsForRequest3;
+    isqpEventsForRequest3.emplace_back(queryRemoveEvent);
+
+    // Prepare
+    auto isqpRequest3 = ISQPRequest::create(z3Context, isqpEventsForRequest3, ZERO_RETRIES);
+    constexpr RequestId requestId3 = 3;
+    isqpRequest3->setId(requestId3);
+    try {
+        isqpRequest3->execute(storageHandler);
+    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+        FAIL();
+    }
     placementAmendmentHandler.shutDown();
 }
 
@@ -891,7 +944,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
 }
 
 //test adding multiple queries
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWithIncrementalPlacement) {
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWithIncrementalPlacementOCC) {
 
     // init topology nodes
     std::map<std::string, std::any> properties;
@@ -923,6 +976,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
     // Number of amender threads
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 2;
+    // placement amendment mode
+    coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
 
     // Initialize the amender
     Optimizer::PlacementAmendmentHandler placementAmendmentHandler(

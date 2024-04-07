@@ -2913,7 +2913,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForProcessingSharedQueryPlanToBe
     }
 
     {
-        sharedQueryPlan->removeQuery(1);
+        sharedQueryPlan->markQueryForRemoval(1);
         queryPlacementAmendmentPhase->execute(sharedQueryPlan);
         auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
         EXPECT_EQ(executionNodes.size(), 3UL);
