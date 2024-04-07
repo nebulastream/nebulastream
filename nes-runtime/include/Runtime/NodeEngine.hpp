@@ -326,7 +326,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             uint64_t uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
                                             DecomposedQueryPlanVersion version);
-    bool bufferOutgoingTuples(WorkerId receivingWorkerId);
+    bool bufferOutgoingTuples(WorkerId currentParentId, WorkerId newParentId);
     bool markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
@@ -367,6 +367,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     std::optional<int> getTcpDescriptor() const;
     void setTcpDescriptor(int tcpDescriptor);
+    WorkerId getParentId();
+    void setParentId(WorkerId newParentId);
+
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
@@ -392,6 +395,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool sourceSharing;
     bool timestampOutPutSources;
     std::optional<int> tcpDescriptor;
+    WorkerId parentId;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

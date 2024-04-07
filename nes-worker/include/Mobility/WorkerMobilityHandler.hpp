@@ -23,6 +23,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <folly/Synchronized.h>
 
 #ifdef S2DEF
 #include <s2/s1angle.h>
@@ -82,6 +83,7 @@ class WorkerMobilityHandler {
      * @param currentParentWorkerIds a list of the workers current parents
      */
     void start(std::vector<uint64_t> currentParentWorkerIds);
+    void runReconnects();
 
     /**
      * tell the thread which executes start() to exit the update loop and stop execution
@@ -100,7 +102,7 @@ class WorkerMobilityHandler {
      *  which contains each workers location.
      * @return true if the reconnect was successful
      */
-    bool triggerReconnectionRoutine(uint64_t& currentParentId,
+    bool triggerReconnectionRoutine(uint64_t currentParentId,
                                     uint64_t newParentId,
                                     std::optional<uint64_t> predictedNextParent,
                                     std::optional<Timestamp> predictedNextReconnectTime);
@@ -179,11 +181,10 @@ class WorkerMobilityHandler {
      * potential new parents
      * @return nothing if no reconnection point is available else returns the new reconnection point
      */
-    std::pair<std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>, std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>>
-    getNextReconnectPoint(std::optional<ReconnectSchedule>& reconnectSchedule,
-                          const DataTypes::Experimental::GeoLocation& currentOwnLocation,
+    std::pair<std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>,
+              std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>>
+    getNextReconnectPoint(const DataTypes::Experimental::GeoLocation& currentOwnLocation,
                           const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,
-                          const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex,
                           WorkerId currentParentId);
 
     /**
@@ -223,7 +224,7 @@ class WorkerMobilityHandler {
      *      will reconnect to the closest node in that radius.
      */
     //FIXME: current assumption is just one parent per mobile worker
-    void run(std::vector<uint64_t> currentParentWorkerIds);
+    void run();
 
     //configuration
     uint64_t updateInterval;
@@ -237,12 +238,18 @@ class WorkerMobilityHandler {
 
     std::atomic<bool> isRunning{};
     std::shared_ptr<std::thread> workerMobilityHandlerThread;
+    std::shared_ptr<std::thread> reconnectThread;
 
     Runtime::NodeEnginePtr nodeEngine;
     LocationProviderPtr locationProvider;
     ReconnectSchedulePredictorPtr reconnectSchedulePredictor;
     CoordinatorRPCCLientPtr coordinatorRpcClient;
     ReconnectPredictorType reconnectPredictorType;
+    std::atomic<bool> indexUpdated = false;
+    //todo: use folly on this one
+    folly::Synchronized<std::unordered_map<uint64_t, S2Point>> neighbourWorkerIdToLocationMap;
+    std::atomic<std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>> currentParentLocation;
+    std::atomic<std::optional<ReconnectPoint>> currentReconnectPoint;
 };
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Spatial::Mobility::Experimental

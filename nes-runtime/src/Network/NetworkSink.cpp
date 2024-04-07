@@ -435,6 +435,9 @@ bool NetworkSink::applyNextSinkDescriptor() {
     if (!nextSinkDescriptor.has_value()) {
         return false;
     }
+    if (nextSinkDescriptor.value().getNodeLocation().getNodeId() != nodeEngine->getParentId()) {
+        return false;
+    }
     configureNewSinkDescriptor(nextSinkDescriptor.value());
     nextSinkDescriptor = std::nullopt;
     return true;

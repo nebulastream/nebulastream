@@ -674,14 +674,17 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
     }
 }
 
-bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId) {
+bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId, WorkerId newParentId) {
+    std::unique_lock lock(engineMutex);
     bool reconfiguredSink = false;
+    parentId = newParentId;
     for (const auto& executableQueryPlan : deployedExecutableQueryPlans) {
         for (auto& sink : executableQueryPlan.second->getSinks()) {
             auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
             if (networkSink != nullptr) {
                 if (networkSink->getReceiverId() == receivingWorkerId) {
                     networkSink->startBuffering();
+                    networkSink->applyNextSinkDescriptor();
                     reconfiguredSink = true;
                 }
             }
@@ -722,6 +725,7 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
         return false;
     }
     auto deployedPlan = deployedPlanIterator->second;
+
 
     /* iterator over all network sinks of the running plan and apply the new descriptors. If the version number
      * of the new descriptor is the same as the running version, nothing will be changed */
@@ -778,5 +782,13 @@ void NodeEngine::setTcpDescriptor(int tcpDescriptor) {
         NES_ERROR("NodeEngine: TCP descriptor already set");
     }
     this->tcpDescriptor = tcpDescriptor;
+}
+
+WorkerId NodeEngine::getParentId() {
+    return parentId;
+}
+
+void NodeEngine::setParentId(WorkerId newParentId) {
+    parentId = newParentId;
 }
 }// namespace NES::Runtime
