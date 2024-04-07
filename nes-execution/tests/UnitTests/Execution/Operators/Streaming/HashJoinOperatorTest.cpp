@@ -28,11 +28,11 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -103,8 +103,8 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
                                                     outputOriginId,
                                                     buildHelper.windowSize,
                                                     buildHelper.windowSize,
-                                                    buildHelper.schema->getSchemaSizeInBytes(),
-                                                    buildHelper.schema->getSchemaSizeInBytes(),
+                                                    buildHelper.schema,
+                                                    buildHelper.schema,
                                                     QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
                                                     buildHelper.joinSizeInByte,
                                                     buildHelper.preAllocPageCnt,
@@ -222,15 +222,6 @@ uint64_t calculateExpNoTuplesInWindow(uint64_t totalTuples, uint64_t windowIdent
 
 bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
-    if (!hashJoinProbeHelper.leftSchema->contains(hashJoinProbeHelper.joinFieldNameLeft)) {
-        NES_ERROR("JoinFieldNameLeft {} is not in leftSchema!", hashJoinProbeHelper.joinFieldNameLeft);
-        return false;
-    }
-    if (!hashJoinProbeHelper.rightSchema->contains(hashJoinProbeHelper.joinFieldNameRight)) {
-        NES_ERROR("JoinFieldNameLeft {} is not in leftSchema!", hashJoinProbeHelper.joinFieldNameRight);
-        return false;
-    }
-
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
                                                          hashJoinProbeHelper.bufferManager,
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
@@ -240,8 +231,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                                                          outputOriginId,
                                                                          hashJoinProbeHelper.windowSize,
                                                                          hashJoinProbeHelper.windowSize,
-                                                                         hashJoinProbeHelper.leftSchema->getSchemaSizeInBytes(),
-                                                                         hashJoinProbeHelper.rightSchema->getSchemaSizeInBytes(),
+                                                                         hashJoinProbeHelper.leftSchema,
+                                                                         hashJoinProbeHelper.rightSchema,
                                                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
                                                                          hashJoinProbeHelper.joinSizeInByte,
                                                                          hashJoinProbeHelper.preAllocPageCnt,
@@ -366,6 +357,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         executionContext.setCurrentTs(leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setOrigin(inputOriginIds[0]);
         executionContext.setSequenceNumber(uint64_t(i + 1));
+        executionContext.setChunkNumber(uint64_t(1));
+        executionContext.setLastChunk(true);
         NES_DEBUG("trigger left with ts={}", leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft)->toString());
 
         hashJoinBuildLeft->close(executionContext, recordBufferLeft);
@@ -389,6 +382,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         executionContext.setCurrentTs(rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight).as<UInt64>());
         executionContext.setOrigin(inputOriginIds[1]);
         executionContext.setSequenceNumber(uint64_t(i + 1));
+        executionContext.setChunkNumber(uint64_t(1));
+        executionContext.setLastChunk(true);
         NES_DEBUG("trigger right with ts={}",
                   rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight)->toString());
         hashJoinBuildRight->close(executionContext, recordBufferRight);
@@ -662,19 +657,19 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultipleWindows) {
 
 TEST_F(HashJoinOperatorTest, joinProbeTest) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f1_left", BasicType::UINT64)
-                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("left$f1_left", BasicType::UINT64)
+                                ->addField("left$f2_left", BasicType::UINT64)
                                 ->addField("left$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("f1_right", BasicType::UINT64)
-                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("right$f1_right", BasicType::UINT64)
+                                 ->addField("right$f2_right", BasicType::UINT64)
                                  ->addField("right$timestamp", BasicType::UINT64);
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinProbeHelper
-        hashJoinProbeHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+        hashJoinProbeHelper("left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
     hashJoinProbeHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
     hashJoinProbeHelper.numPartitions = 2;
     hashJoinProbeHelper.windowSize = 20;
@@ -711,18 +706,18 @@ TEST_F(HashJoinOperatorTest, joinProbeTestMultipleBuckets) {
 TEST_F(HashJoinOperatorTest, joinProbeTestMultipleWindows) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f1_left", BasicType::UINT64)
-                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("left$f1_left", BasicType::UINT64)
+                                ->addField("left$f2_left", BasicType::UINT64)
                                 ->addField("left$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("f1_right", BasicType::UINT64)
-                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("right$f1_right", BasicType::UINT64)
+                                 ->addField("right$f2_right", BasicType::UINT64)
                                  ->addField("right$timestamp", BasicType::UINT64);
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinProbeHelper
-        hashJoinProbeHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+        hashJoinProbeHelper("left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
     hashJoinProbeHelper.numPartitions = 1;
     hashJoinProbeHelper.windowSize = 10;
 

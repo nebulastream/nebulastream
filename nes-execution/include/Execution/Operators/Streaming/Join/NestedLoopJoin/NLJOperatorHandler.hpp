@@ -38,8 +38,8 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
                        const OriginId outputOriginId,
                        const uint64_t windowSize,
                        const uint64_t windowSlide,
-                       const uint64_t sizeOfRecordLeft,
-                       const uint64_t sizeOfRecordRight,
+                       const SchemaPtr& leftSchema,
+                       const SchemaPtr& rightSchema,
                        const uint64_t pageSizeLeft,
                        const uint64_t pageSizeRight);
 

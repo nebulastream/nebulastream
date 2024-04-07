@@ -19,6 +19,7 @@
 #include <Runtime/TaggedPointer.hpp>
 #include <atomic>
 #include <functional>
+#include <sstream>
 #include <vector>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -28,11 +29,7 @@
 #include <unordered_map>
 #endif
 
-namespace NES {
-using WatermarkTs = uint64_t;
-using SequenceNumber = uint64_t;
-
-namespace Runtime {
+namespace NES::Runtime {
 class BufferManager;
 class LocalBufferPool;
 class TupleBuffer;
@@ -154,6 +151,30 @@ class alignas(64) BufferControlBlock {
     void setSequenceNumber(uint64_t sequenceNumber);
 
     /**
+    * @brief method to get the chunk number
+    * @return chunk number
+    */
+    [[nodiscard]] uint64_t getChunkNumber() const noexcept;
+
+    /**
+     * @brief method to set the chunk number
+     * @param value
+     */
+    void setChunkNumber(uint64_t chunkNumber);
+
+    /**
+    * @brief method to check if this tuple buffer is the last chunk
+    * @return True or false, depending on the context
+    */
+    [[nodiscard]] bool isLastChunk() const noexcept;
+
+    /**
+     * @brief method to set if this is the last chunk of a sequence number
+     * @param value
+     */
+    void setLastChunk(bool lastChunk);
+
+    /**
      * @brief get id where this buffer was created
      * @return origin id
      */
@@ -164,6 +185,18 @@ class alignas(64) BufferControlBlock {
      * @param originId
      */
     void setOriginId(OriginId originId);
+
+    /**
+     * @brief get the statistic Id where this buffer was last touched
+     * @return StatisticId
+     */
+    [[nodiscard]] StatisticId getStatisticId() const noexcept;
+
+    /**
+     * @brief set statisticId
+     * @param statisticId represents the unique identifier of components that we can track statistics for
+     */
+    void setStatisticId(StatisticId statisticId);
 
     /**
     * @brief method to set the watermark with a timestamp
@@ -191,8 +224,11 @@ class alignas(64) BufferControlBlock {
     uint32_t numberOfTuples = 0;
     WatermarkTs watermark = 0;
     SequenceNumber sequenceNumber = 0;
+    ChunkNumber chunkNumber = 0;
+    bool lastChunk = true;
     int64_t creationTimestamp{};
     OriginId originId = INVALID_ORIGIN_ID;
+    StatisticId statisticId = INVALID_STATISTIC_ID;
     std::vector<MemorySegment*> children;
 
   public:
@@ -317,7 +353,6 @@ class MemorySegment {
 void zmqBufferRecyclingCallback(void* ptr, void* hint);
 
 }// namespace detail
-}// namespace Runtime
-}// namespace NES
+}// namespace NES::Runtime
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_

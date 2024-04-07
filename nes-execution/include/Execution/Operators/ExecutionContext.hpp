@@ -102,10 +102,22 @@ class ExecutionContext final {
     const Value<UInt64>& getOriginId() const;
 
     /**
+     * @brief Returns the current statistic id. This is set in the Operator::open()
+     * @return Value<UInt64> statistic id
+     */
+    const Value<UInt64>& getCurrentStatisticId() const;
+
+    /**
      * @brief Sets the current origin id.
      * @param origin
      */
     void setOrigin(Value<UInt64> origin);
+
+    /**
+     * @brief Sets the current statistic id of the current tuple buffer in this execution context
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
+     */
+    void setCurrentStatisticId(Value<UInt64> statisticId);
 
     /**
      * @brief Returns the current watermark ts. This is set in the scan.
@@ -132,6 +144,47 @@ class ExecutionContext final {
     const Value<UInt64>& getSequenceNumber() const;
 
     /**
+     * @brief Returns current chunk number
+     * @return Value<UInt64> chunk number
+     */
+    const Value<UInt64>& getChunkNumber() const;
+
+    /**
+     * @brief Sets the current chunk number
+     * @param chunkNumber
+     */
+    void setChunkNumber(Value<UInt64> chunkNumber);
+
+    /**
+     * @brief Returns last chunk
+     * @return Value<Boolean>&
+     */
+    const Value<Boolean>& getLastChunk() const;
+
+    /**
+     * @brief Removes the sequence state for the current <OrigindId, SequenceNumber>
+     */
+    void removeSequenceState() const;
+
+    /**
+     * @brief Checks if all chunks have been seen
+     * @return True or false
+     */
+    Value<Boolean> isLastChunk() const;
+
+    /**
+     * @brief Gets the next chunk number for the emitted tuple buffers
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getNextChunkNr() const;
+
+    /**
+     * @brief Sets last chunk
+     * @param isLastChunk
+     */
+    void setLastChunk(Value<Boolean> isLastChunk);
+
+    /**
      * @brief Returns the current time stamp ts. This is set by a time function
      * @return Value<UInt64> timestamp ts
      */
@@ -148,9 +201,12 @@ class ExecutionContext final {
     Value<MemRef> workerContext;
     Value<MemRef> pipelineContext;
     Value<UInt64> origin;
+    Value<UInt64> statisticId;
     Value<UInt64> watermarkTs;
     Value<UInt64> currentTs;
     Value<UInt64> sequenceNumber;
+    Value<UInt64> chunkNumber;
+    Value<Boolean> lastChunk;
 };
 
 }// namespace NES::Runtime::Execution

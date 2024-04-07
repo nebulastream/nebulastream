@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -50,7 +51,8 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u64");
+
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
@@ -70,7 +72,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     NES_INFO("QueryFailureTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
@@ -79,7 +81,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
         + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query={}", query);
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
-    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalog));
 }
 
 /**
@@ -95,7 +97,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u64");
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
@@ -117,7 +119,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     NES_INFO("QueryFailureTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
@@ -126,7 +128,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
         R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query={}", query1);
     QueryId queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp);
-    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId1, queryCatalog));
 
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
 
@@ -135,7 +137,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp);
 
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
@@ -153,7 +155,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
 
     NES_INFO("QueryFailureTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId2);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_INFO("QueryFailureTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -199,15 +201,15 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     NES_INFO("QueryFailureTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(FileSinkDescriptor::create(outputFilePath));
 
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
-    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalog));
 }
 
 }// namespace NES

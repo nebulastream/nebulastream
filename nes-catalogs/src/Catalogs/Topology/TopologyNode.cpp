@@ -30,7 +30,7 @@ TopologyNode::TopologyNode(WorkerId workerId,
                            uint16_t totalSlots,
                            const std::map<std::string, std::any>& properties)
     : workerId(workerId), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), totalSlots(totalSlots), occupiedSlots(0),
-      locked(false), nodeProperties(properties) {}
+      nodeProperties(properties) {}
 
 TopologyNodePtr TopologyNode::create(WorkerId workerId,
                                      const std::string& ipAddress,
@@ -50,12 +50,20 @@ uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
 uint16_t TopologyNode::getAvailableResources() const { return totalSlots - occupiedSlots; }
 
+uint16_t TopologyNode::getTotalResources() const { return totalSlots; }
+
+uint16_t TopologyNode::getOccupiedResources() const { return occupiedSlots; }
+
 bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodeProperties[NES::Worker::Properties::MAINTENANCE]); };
 
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
 bool TopologyNode::releaseSlots(uint16_t freedSlots) {
-    NES_DEBUG("Releasing slots {} on topology node {}. Currently occupied {} of {}", freedSlots, workerId, occupiedSlots, totalSlots);
+    NES_DEBUG("Releasing slots {} on topology node {}. Currently occupied {} of {}",
+              freedSlots,
+              workerId,
+              occupiedSlots,
+              totalSlots);
     NES_ASSERT(freedSlots <= totalSlots, "Amount of slots to free can't be more than actual resources");
     NES_ASSERT(freedSlots <= occupiedSlots, "Amount of slots to free can't be more than actual consumed resources");
     occupiedSlots = occupiedSlots - freedSlots;
@@ -63,9 +71,15 @@ bool TopologyNode::releaseSlots(uint16_t freedSlots) {
 }
 
 bool TopologyNode::occupySlots(uint16_t occupySlots) {
-    NES_DEBUG("Reducing slots {} on topology node {}. Currently occupied {} of {}", occupySlots, workerId, occupiedSlots, totalSlots);
-    NES_ASSERT(occupySlots <= (totalSlots - occupiedSlots),
-               "Amount of resources to be used should not be more than available resources.");
+    NES_DEBUG("Reducing slots {} on topology node {}. Currently occupied {} of {}",
+              occupySlots,
+              workerId,
+              occupiedSlots,
+              totalSlots);
+    if(occupySlots > (totalSlots - occupiedSlots)) {
+        NES_WARNING("Amount of resources to be used should not be more than available resources.");
+        return false;
+    }
     occupiedSlots = occupiedSlots + occupySlots;
     return true;
 }
@@ -169,31 +183,5 @@ void TopologyNode::setSpatialType(NES::Spatial::Experimental::SpatialType spatia
 
 Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
     return std::any_cast<Spatial::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
-}
-
-bool TopologyNode::acquireLock() {
-    //NOTE: Dear reviewer, I will fix it in #4456
-    bool expected = false;
-    bool desired = true;
-    //Check if no one has locked the topology node already
-    if (locked.compare_exchange_strong(expected, desired)) {
-        //lock the topology node and return true
-        return true;
-    }
-    //Someone has already locked the topology node
-    return false;
-}
-
-bool TopologyNode::releaseLock() {
-    //NOTE: Dear reviewer, I will fix it in #4456
-    bool expected = true;
-    bool desired = false;
-    //Check if the lock was acquired
-    if (locked.compare_exchange_strong(expected, desired)) {
-        //Unlock the topology node and return true
-        return true;
-    }
-    //Return false as the topology node was not locked
-    return false;
 }
 }// namespace NES

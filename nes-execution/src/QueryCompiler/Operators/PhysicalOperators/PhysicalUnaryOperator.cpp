@@ -18,15 +18,15 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema)
-    : OperatorNode(id), PhysicalOperator(id), UnaryOperatorNode(id) {
-    UnaryOperatorNode::setInputSchema(std::move(inputSchema));
-    UnaryOperatorNode::setOutputSchema(std::move(outputSchema));
+PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema)
+    : Operator(id), PhysicalOperator(id, statisticId), UnaryOperator(id) {
+    UnaryOperator::setInputSchema(std::move(inputSchema));
+    UnaryOperator::setOutputSchema(std::move(outputSchema));
 }
 
 std::string PhysicalUnaryOperator::toString() const {
     std::stringstream out;
-    out << UnaryOperatorNode::toString();
+    out << UnaryOperator::toString();
     return out.str();
 }
 

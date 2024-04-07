@@ -14,6 +14,7 @@
 add_nes_execution_test(execution-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
 add_nes_execution_test(execution-selection-pipeline-test "SelectionPipelineTest.cpp")
 add_nes_execution_test(execution-sequence-number-pipeline-test "SequenceNumberPipelineTest.cpp")
+add_nes_execution_test(execution-statistic-id-pipeline-test "StatisticIdPipelineTest.cpp")
 add_nes_execution_test(execution-nonkeyed-threshold-window-pipeline-test "NonKeyedThresholdWindowPipelineTest.cpp")
 add_nes_execution_test(execution-keyed-threshold-window-pipeline-test "KeyedThresholdWindowPipelineTest.cpp")
 add_nes_execution_test(execution-nonkeyed-window-pipeline-test "NonKeyedTimeWindowPipelineTest.cpp")
@@ -25,6 +26,8 @@ add_nes_execution_test(execution-map-pythonudf-pipeline-test "MapPythonUDFPipeli
 add_nes_execution_test(execution-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
 add_nes_execution_test(execution-batch-join-pipeline-test "BatchJoinPipelineTest.cpp")
 add_nes_execution_test(execution-limit-pipeline-test "LimitPipelineTest.cpp")
+add_nes_execution_test(count-min-pipeline-test "CountMinPipelineTest.cpp")
+add_nes_execution_test(hyper-log-log-pipeline-test "HyperLogLogPipelineTest.cpp")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_nes_execution_test(execution-javamapudf-pipeline-test "MapJavaUDFPipelineTest.cpp")

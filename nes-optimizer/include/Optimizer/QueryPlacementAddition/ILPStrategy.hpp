@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
-#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ILPSTRATEGY_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ILPSTRATEGY_HPP_
 
 #include <Nodes/Node.hpp>
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
@@ -40,15 +40,15 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
   public:
     ~ILPStrategy() override = default;
 
-    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                   DecomposedQueryPlanVersion querySubPlanVersion) override;
-
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
                                            PlacementAmendmentMode placementAmendmentMode);
+
+    PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
@@ -81,7 +81,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     // context from the Z3 library used for optimization
     z3::ContextPtr z3Context;
     //map to hold operators to place
-    std::map<OperatorId, LogicalOperatorNodePtr> operatorMap;
+    std::map<OperatorId, LogicalOperatorPtr> operatorMap;
     const char* const KEY_SEPARATOR = ",";
 
     explicit ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -97,9 +97,30 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     bool pinOperators(z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables);
 
     /**
+     * @brief is called from addConstraints and calling itself recursivly with parents of operator Node to identify their location on topologyPath
+     * @param logicalOperator the current logical operator
+     * @param topologyNodePath the selected sequence of topology node to add
+     * @param opt an instance of the Z3 optimize class
+     * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
+     * @param pinnedDownStreamOperators
+     * @param operatorDistanceMap a mapping between operators (represented by ids) to their next operator in the topology
+     * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
+     * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
+     */
+    void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
+                                 std::vector<TopologyNodeWLock>& topologyNodePath,
+                                 z3::optimize& opt,
+                                 std::map<std::string, z3::expr>& placementVariable,
+                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                 std::map<OperatorId, z3::expr>& operatorDistanceMap,
+                                 std::map<uint64_t, z3::expr>& nodeUtilizationMap,
+                                 std::map<uint64_t, double>& nodeMileageMap);
+
+    /**
     * @brief Populate the placement variables and adds constraints to the optimizer
     * @param opt an instance of the Z3 optimize class
-    * @param operatorNodePath the selected sequence of operator to add
+    * @param pinnedUpStreamOperators
+    * @param pinnedDownStreamOperators
     * @param topologyNodePath the selected sequence of topology node to add
     * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
     * @param operatorDistanceMap a mapping between operators (represented by ids) to their next operator in the topology
@@ -107,8 +128,9 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
     */
     void addConstraints(z3::optimize& opt,
-                        std::vector<NodePtr>& operatorNodePath,
-                        std::vector<TopologyNodePtr>& topologyNodePath,
+                        const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                        std::vector<TopologyNodeWLock>& topologyNodePath,
                         std::map<std::string, z3::expr>& placementVariable,
                         std::map<OperatorId, z3::expr>& operatorDistanceMap,
                         std::map<uint64_t, z3::expr>& nodeUtilizationMap,
@@ -116,10 +138,10 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
 
     /**
     * @brief computes heuristics for distance
-    * @param pinnedUpStreamOperators: pinned upstream operators
+    * @param pinnedDownStreamOperators: pinned downstream operators
     * @return a mapping of topology node (represented by string id) and their distance to the root node
     */
-    std::map<uint64_t, double> computeMileage(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators);
+    std::map<uint64_t, double> computeMileage(const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
     * @brief calculates the mileage property for a node
@@ -133,15 +155,15 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      * @param operatorNode : the operator for which output values are needed
      * @return weight for the output
      */
-    double getDefaultOperatorOutput(const LogicalOperatorNodePtr& operatorNode);
+    double getDefaultOperatorOutput(const LogicalOperatorPtr& operatorNode);
 
     /**
      * Get default value for operator cost
      * @param operatorNode : operator for which cost is to be computed
      * @return weight indicating operator cost
      */
-    int getDefaultOperatorCost(const LogicalOperatorNodePtr& operatorNode);
+    int getDefaultOperatorCost(const LogicalOperatorPtr& operatorNode);
 };
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ILPSTRATEGY_HPP_

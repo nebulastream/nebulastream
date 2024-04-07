@@ -19,9 +19,9 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -76,7 +76,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
     Query query = Query::from("src2").unionWith(subQuery).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(unionOperators.size(), 1U);
     auto unionChildren = unionOperators[0]->getChildren();
 
@@ -85,7 +85,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
     auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
-    auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto updatedUnionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(updatedUnionOperators.size(), 1U);
 
     auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
@@ -108,7 +108,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
     Query query = Query::from("src1").unionWith(subQuery).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(unionOperators.size(), 1U);
     auto unionChildren = unionOperators[0]->getChildren();
 
@@ -117,7 +117,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
     auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
-    auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto updatedUnionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(updatedUnionOperators.size(), 1U);
     auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
@@ -146,7 +146,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto joinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
     EXPECT_EQ(joinOperators.size(), 1U);
     auto joinChildren = joinOperators[0]->getChildren();
 
@@ -155,7 +155,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
     auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
-    auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto updatedJoinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
     EXPECT_EQ(updatedJoinOperators.size(), 1U);
     auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
@@ -184,7 +184,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto joinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
     EXPECT_EQ(joinOperators.size(), 1U);
     auto joinChildren = joinOperators[0]->getChildren();
 
@@ -193,7 +193,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
     auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
-    auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto updatedJoinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
     EXPECT_EQ(updatedJoinOperators.size(), 1U);
     auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
@@ -224,11 +224,11 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(unionOperators.size(), 1U);
     auto unionChildren = unionOperators[0]->getChildren();
 
-    auto joinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
     EXPECT_EQ(joinOperators.size(), 1U);
     auto joinChildren = joinOperators[0]->getChildren();
 
@@ -237,14 +237,14 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
     auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
-    auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto updatedUnionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(updatedUnionOperators.size(), 1U);
     auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
     EXPECT_EQ(unionChildren[0], updatedUnionChildren[1]);
     EXPECT_EQ(unionChildren[1], updatedUnionChildren[0]);
 
-    auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto updatedJoinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
     EXPECT_EQ(updatedJoinOperators.size(), 1U);
     auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 
@@ -275,11 +275,11 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(unionOperators.size(), 1U);
     auto unionChildren = unionOperators[0]->getChildren();
 
-    auto joinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
     EXPECT_EQ(joinOperators.size(), 1U);
     auto joinChildren = joinOperators[0]->getChildren();
 
@@ -288,14 +288,14 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
     auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
-    auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto updatedUnionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
     EXPECT_EQ(updatedUnionOperators.size(), 1U);
     auto updatedUnionChildren = updatedUnionOperators[0]->getChildren();
 
     EXPECT_EQ(unionChildren[0], updatedUnionChildren[0]);
     EXPECT_EQ(unionChildren[1], updatedUnionChildren[1]);
 
-    auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto updatedJoinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
     EXPECT_EQ(updatedJoinOperators.size(), 1U);
     auto updatedJoinChildren = updatedJoinOperators[0]->getChildren();
 

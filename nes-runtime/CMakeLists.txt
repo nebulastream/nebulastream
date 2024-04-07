@@ -68,26 +68,13 @@ target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 
 
 # Add Private Dependencies
-target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ})
-
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    target_link_libraries(nes-runtime PUBLIC ${JNI_LIBRARIES})
-    # Define map java udf utils class file
-    SET(NES_JAVA_UTILS_SRC_PATH "src/Execution/Operators/Relational/JavaUDF")
-    if (NES_JAVA_UDF_UTILS_PATH)
-        # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
-        SET(JAVA_UDF_UTILS_JAR "${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}/JavaUtils.jar")
-        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS_JAR="${JAVA_UDF_UTILS_JAR}")
-        message(STATUS "Setting JAR with Java helpers to: ${JAVA_UDF_UTILS_JAR}")
-        # Install Java Utils JAR
-        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/JavaUtils.jar" DESTINATION ${NES_JAVA_UDF_UTILS_PATH})
-    else ()
-        # Use Java helpers from test directory when working in CLion.
-        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS_JAR="${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/JavaUtils.jar")
-    endif()
-endif()
-
+if (NES_ENABLES_TESTS AND NOT (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"))
+    # this allows to mock read calls
+    target_compile_definitions(nes-runtime PRIVATE WRAP_READ_CALL)
+    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ} "-Wl,--wrap,read")
+else ()
+    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ})
+endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
@@ -96,9 +83,18 @@ endif ()
 
 
 if (NES_USE_GPU)
-    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_CUDA})
-endif ()
+    find_package(CUDAToolkit REQUIRED)
 
+    enable_language(CUDA)
+    if (NOT ${CUDAToolkit_FOUND})
+        message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
+    endif ()
+    set(CMAKE_CUDA_STANDARD 17)
+    set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
+    message("CUDA dependencies OK")
+
+    target_link_libraries(nes-runtime PRIVATE CUDA::cudart CUDA::nvrtc)
+endif (NES_USE_GPU)
 
 if (NES_USE_OPENCL)
     find_package(OpenCL REQUIRED)
@@ -123,7 +119,6 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp Runtime/MemoryLayout/DynamicTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayout.hpp Runtime/MemoryLayout/RowLayout.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayoutField.hpp Runtime/MemoryLayout/RowLayoutField.hpp)

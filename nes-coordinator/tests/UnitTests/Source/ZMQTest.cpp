@@ -21,6 +21,7 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -62,7 +63,7 @@ class ZMQTest : public Testing::BaseIntegrationTest {
         test_data_size = test_data.size() * sizeof(uint32_t);
         tupleCnt = 8;
         //    testDataSize = 4096;
-        test_schema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
+        test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
     }
 
     /* Will be called before a test is executed. */
@@ -90,7 +91,7 @@ class ZMQTest : public Testing::BaseIntegrationTest {
 /* - ZeroMQ Data Source ---------------------------------------------------- */
 TEST_F(ZMQTest, testZmqSourceReceiveData) {
     // Create ZeroMQ Data Source.
-    auto test_schema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
+    auto test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
     auto zmq_source = createZmqSource(test_schema,
                                       nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),
@@ -98,6 +99,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
                                       *zmqPort,
                                       1,
                                       0,
+                                      INVALID_STATISTIC_ID,
                                       12,
                                       "defaultPhysicalStreamName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());

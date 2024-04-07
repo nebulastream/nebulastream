@@ -30,12 +30,12 @@
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Optimizer/QueryRewrite/RedundancyEliminationRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -53,7 +53,7 @@ RedundancyEliminationRule::RedundancyEliminationRule() = default;
 QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("Applying RedundancyEliminationRule to query {}", queryPlan->toString());
     NES_DEBUG("Applying rule to filter operators");
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     for (auto& filter : filterOperators) {
         const ExpressionNodePtr filterPredicate = filter->getPredicate();
         ExpressionNodePtr updatedPredicate;
@@ -64,7 +64,7 @@ QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan) {
         filter->replace(updatedFilter);
     }
     NES_DEBUG("Applying rule to map operators");
-    auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperatorNode>();
+    auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     for (auto& map : mapOperators) {
         const ExpressionNodePtr mapExpression = map->getMapExpression();
         ExpressionNodePtr updatedMapExpression;

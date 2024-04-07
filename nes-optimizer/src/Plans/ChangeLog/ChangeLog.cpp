@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -141,15 +141,15 @@ ChangeLogEntryPtr
 ChangeLog::compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEntryPtr>>& changeLogEntriesToCompact) {
 
     ChangeLogEntryPtr firstChangeLogEntry = changeLogEntriesToCompact.at(0).second;
-    std::set<LogicalOperatorNodePtr> firstUpstreamOperators = firstChangeLogEntry->upstreamOperators;
-    std::set<LogicalOperatorNodePtr> firstDownstreamOperators = firstChangeLogEntry->downstreamOperators;
+    std::set<LogicalOperatorPtr> firstUpstreamOperators = firstChangeLogEntry->upstreamOperators;
+    std::set<LogicalOperatorPtr> firstDownstreamOperators = firstChangeLogEntry->downstreamOperators;
 
     //iterate from the first entry as the 0th entry is assigned as the first change log entry above.
     for (uint32_t index = 1; index < changeLogEntriesToCompact.size(); index++) {
         // check if the upstream operators in the temp is also the upstream operator of the change log entry under consideration
         // push the most upstream operator into the new upstream Operator set
-        std::set<LogicalOperatorNodePtr> tempUpstreamOperators;
-        std::set<LogicalOperatorNodePtr> nextUpstreamOperators = changeLogEntriesToCompact[index].second->upstreamOperators;
+        std::set<LogicalOperatorPtr> tempUpstreamOperators;
+        std::set<LogicalOperatorPtr> nextUpstreamOperators = changeLogEntriesToCompact[index].second->upstreamOperators;
 
         for (auto firstItr = firstUpstreamOperators.begin(); firstItr != firstUpstreamOperators.end();) {
             bool incFirstItr = true;
@@ -163,14 +163,14 @@ ChangeLog::compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEnt
                     nextUpstreamOperators.erase(nextItr);
                     incFirstItr = false;
                     break;
-                } else if ((*firstItr)->as<OperatorNode>()->containAsGrandParent((*nextItr))) {
+                } else if ((*firstItr)->as<Operator>()->containAsGrandParent((*nextItr))) {
                     // Insert item in the temp upstream operator list
                     tempUpstreamOperators.insert((*firstItr));
                     // It is okay to erase this next operator as there won't be any other operator in the first upstream operator list
                     // that can be this operator's upstream operator
                     nextItr =
                         nextUpstreamOperators.erase(nextItr);// Please note that we are assigning the iterator to the next item
-                } else if ((*nextItr)->as<OperatorNode>()->containAsGrandParent((*firstItr))) {
+                } else if ((*nextItr)->as<Operator>()->containAsGrandParent((*firstItr))) {
                     tempUpstreamOperators.insert((*nextItr));
                     //It is okay to erase this first operator as no other upstream operator can be its upstream operator
                     firstItr =
@@ -202,8 +202,8 @@ ChangeLog::compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEnt
 
         // check if the downstream operators in the temp is also the downstream operator of the change log entry under consideration
         // push the most downstream operator into the new downstream Operator set
-        std::set<LogicalOperatorNodePtr> tempDownstreamOperators;
-        std::set<LogicalOperatorNodePtr> nextDownstreamOperators = changeLogEntriesToCompact[index].second->downstreamOperators;
+        std::set<LogicalOperatorPtr> tempDownstreamOperators;
+        std::set<LogicalOperatorPtr> nextDownstreamOperators = changeLogEntriesToCompact[index].second->downstreamOperators;
 
         for (auto firstItr = firstDownstreamOperators.begin(); firstItr != firstDownstreamOperators.end();) {
             bool incFirstItr = true;
@@ -217,14 +217,14 @@ ChangeLog::compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEnt
                     nextDownstreamOperators.erase(nextItr);
                     incFirstItr = false;
                     break;
-                } else if ((*firstItr)->as<OperatorNode>()->containAsGrandParent((*nextItr))) {
+                } else if ((*firstItr)->as<Operator>()->containAsGrandParent((*nextItr))) {
                     tempDownstreamOperators.insert((*nextItr));
                     // It is okay to erase first operators as there won't be any other operators in the next change log entry that can also be its downstream operator.
                     firstItr = firstDownstreamOperators.erase(
                         firstItr);// Please note that we are assigning the iterator to the next item
                     incFirstItr = false;
                     break;
-                } else if ((*nextItr)->as<OperatorNode>()->containAsGrandParent((*firstItr))) {
+                } else if ((*nextItr)->as<Operator>()->containAsGrandParent((*firstItr))) {
                     // It is okay to erase next operators as there won't be any other operators in the first change log entry that can also be its downstream operator.
                     tempDownstreamOperators.insert((*firstItr));
                     nextItr = nextDownstreamOperators.erase(nextItr);

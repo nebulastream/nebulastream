@@ -266,7 +266,7 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
             queryCompilerConfiguration.maxHashTableSize.getValue());
     }
 
-    queryCompilationOptions->setStreamJoinStratgy(queryCompilerConfiguration.joinStrategy);
+    queryCompilationOptions->setStreamJoinStrategy(queryCompilerConfiguration.joinStrategy);
 
     queryCompilationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
 

@@ -22,14 +22,13 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -92,10 +91,10 @@ auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
 template<typename T>
 auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout) {
     auto buffer = bufferManager->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i][variableName].write((T) i);
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i][variableName].write((T) i);
+        testBuffer.setNumberOfTuples(i + 1);
     }
     return buffer;
 }
@@ -131,11 +130,11 @@ void checkBufferResult(std::string variableName, auto pipelineContext, auto memo
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     T udfState = 10;
     for (uint64_t i = 1; i < 10; i++) {
         udfState += i;
-        ASSERT_EQ((T) resultDynamicBuffer[i][variableName].read<T>(), udfState);
+        ASSERT_EQ((T) resulttestBuffer[i][variableName].read<T>(), udfState);
     }
 }
 
@@ -150,10 +149,10 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i].writeVarSized("stringVariable", "X Y Z", bm.get());
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i].writeVarSized("stringVariable", "X Y Z", bm.get());
+        testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -178,9 +177,9 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 30);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 30; i = i + 1) {
-        const auto text = resultDynamicBuffer[i].readVarSized("stringVariable");
+        const auto text = resulttestBuffer[i].readVarSized("stringVariable");
         switch (i % 3) {
             case 0: ASSERT_EQ(text, "X"); break;
             case 1: ASSERT_EQ(text, "Y"); break;
@@ -207,16 +206,16 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        dynamicBuffer[i]["byteVariable"].write((int8_t) i);
-        dynamicBuffer[i]["shortVariable"].write((int16_t) i);
-        dynamicBuffer[i]["intVariable"].write((int32_t) i);
-        dynamicBuffer[i]["longVariable"].write((int64_t) i);
-        dynamicBuffer[i]["floatVariable"].write((float) i);
-        dynamicBuffer[i]["doubleVariable"].write((double) i);
-        dynamicBuffer[i].writeVarSized("stringVariable", "X", bm.get());
-        dynamicBuffer.setNumberOfTuples(i + 1);
+        testBuffer[i]["byteVariable"].write((int8_t) i);
+        testBuffer[i]["shortVariable"].write((int16_t) i);
+        testBuffer[i]["intVariable"].write((int32_t) i);
+        testBuffer[i]["longVariable"].write((int64_t) i);
+        testBuffer[i]["floatVariable"].write((float) i);
+        testBuffer[i]["doubleVariable"].write((double) i);
+        testBuffer[i].writeVarSized("stringVariable", "X", bm.get());
+        testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
@@ -247,17 +246,17 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
 
     std::string flatMapStateString = "Appended String:";
     auto udfState = 10;
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
         udfState += i;
         flatMapStateString += "X";
-        EXPECT_EQ(resultDynamicBuffer[i]["byteVariable"].read<int8_t>(), udfState);
-        EXPECT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), udfState);
-        EXPECT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), udfState);
-        EXPECT_EQ(resultDynamicBuffer[i]["longVariable"].read<int64_t>(), udfState);
-        EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), udfState);
-        EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), udfState);
-        ASSERT_EQ(resultDynamicBuffer[i].readVarSized("stringVariable"), flatMapStateString);
+        EXPECT_EQ(resulttestBuffer[i]["byteVariable"].read<int8_t>(), udfState);
+        EXPECT_EQ(resulttestBuffer[i]["shortVariable"].read<int16_t>(), udfState);
+        EXPECT_EQ(resulttestBuffer[i]["intVariable"].read<int32_t>(), udfState);
+        EXPECT_EQ(resulttestBuffer[i]["longVariable"].read<int64_t>(), udfState);
+        EXPECT_EQ(resulttestBuffer[i]["floatVariable"].read<float>(), udfState);
+        EXPECT_EQ(resulttestBuffer[i]["doubleVariable"].read<double>(), udfState);
+        ASSERT_EQ(resulttestBuffer[i].readVarSized("stringVariable"), flatMapStateString);
     }
 }
 

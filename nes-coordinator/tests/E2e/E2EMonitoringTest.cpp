@@ -207,7 +207,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
     }
 }
 
-TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
+TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->enableMonitoring = true;
@@ -233,7 +233,7 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("WrappedNetworkMetrics")
@@ -243,10 +243,10 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
                      .sink(FileSinkDescriptor::create(outputFilePath, true));
 
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
@@ -265,7 +265,7 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
 
     NES_INFO("ContinuousSourceTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("ContinuousSourceTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

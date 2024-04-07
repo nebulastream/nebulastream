@@ -23,17 +23,19 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     PhysicalSourceOperator(OperatorId id,
+                           StatisticId statisticId,
                            OriginId originId,
                            SchemaPtr inputSchema,
                            SchemaPtr outputSchema,
                            SourceDescriptorPtr sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator> create(OperatorId id,
+                                                          StatisticId statisticId,
                                                           OriginId originId,
                                                           const SchemaPtr& inputSchema,
                                                           const SchemaPtr& outputSchema,
                                                           const SourceDescriptorPtr& sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator>
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
 
     /**
      * @brief Gets the source descriptor for this source operator
@@ -53,7 +55,7 @@ class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScan
      */
     OriginId getOriginId();
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;

@@ -27,6 +27,7 @@
 #include <numaif.h>
 #endif
 #endif
+#include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
@@ -41,6 +42,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                            uint64_t gatheringValue,
                            OperatorId operatorId,
                            OriginId originId,
+                           StatisticId statisticId,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
                            uint64_t sourceAffinity,
@@ -53,6 +55,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                       numBuffersToProcess,
                       operatorId,
                       originId,
+                      statisticId,
                       numSourceLocalBuffers,
                       gatheringMode,
                       std::move(successors),
@@ -69,32 +72,24 @@ MemorySource::MemorySource(SchemaPtr schema,
     this->sourceAffinity = sourceAffinity;
     schemaSize = this->schema->getSchemaSizeInBytes();
     bufferSize = localBufferManager->getBufferSize();
+    noTuplesPerBuffer = bufferSize / schemaSize;
 
     this->sourceAffinity = sourceAffinity;
     this->taskQueueId = taskQueueId;
 
-    //if the memory area is smaller than a buffer
-    if (memoryAreaSize <= bufferSize) {
-        numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schemaSize));
-    } else {
-        //if the memory area spans multiple buffers
-        auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schemaSize;
-        auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->schemaSize));
-        if (restTuples > numberOfTuplesPerBuffer) {
-            numberOfTuplesToProduce = numberOfTuplesPerBuffer;
-        } else {
-            numberOfTuplesToProduce = restTuples;
-        }
-    }
+    numberOfTuplesToProduce = memoryAreaSize / schemaSize;
 
-    NES_DEBUG("MemorySource() numBuffersToProcess= {}  memoryAreaSize= {}", numBuffersToProcess, memoryAreaSize);
+    NES_DEBUG("MemorySource() numberOfTuplesToProduce= {}  memoryAreaSize= {} numberOfBuffersToProduce = {}",
+              numberOfTuplesToProduce,
+              memoryAreaSize,
+              numberOfBuffersToProduce);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId={}", operatorId);
     if (memoryAreaSize > bufferSize) {
-        if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
+        if (currentPositionInBytes > memoryAreaSize) {
             if (numberOfBuffersToProduce != 0) {
                 NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
                 currentPositionInBytes = 0;
@@ -105,17 +100,14 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
         }
     }
 
-    NES_ASSERT2_FMT(numberOfTuplesToProduce * schemaSize <= bufferSize, "value to write is larger than the buffer");
-
-    Runtime::TupleBuffer buffer = bufferManager->getBufferBlocking();
-    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
-
-    if (memoryAreaSize > bufferSize) {
-        NES_TRACE("MemorySource::receiveData: add offset={} to currentpos={}", bufferSize, currentPositionInBytes);
-        currentPositionInBytes += bufferSize;
-    }
-
-    buffer.setNumberOfTuples(numberOfTuplesToProduce);
+    auto buffer = bufferManager->getBufferBlocking();
+    const auto bytesLeftInMemoryArea = memoryAreaSize - currentPositionInBytes;
+    const auto tupleCapacityOfMemoryArea = bytesLeftInMemoryArea / schemaSize;
+    const auto numTuplesToWrite = std::min(tupleCapacityOfMemoryArea, noTuplesPerBuffer);
+    const auto numBytesToWrite = numTuplesToWrite * schemaSize;
+    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, numBytesToWrite);
+    buffer.setNumberOfTuples(numTuplesToWrite);
+    currentPositionInBytes += numBytesToWrite;
 
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
@@ -124,6 +116,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }
+
     return buffer;
 }
 

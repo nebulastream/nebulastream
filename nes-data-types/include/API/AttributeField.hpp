@@ -53,6 +53,7 @@ class AttributeField {
     [[nodiscard]] std::string toString() const;
     bool isEqual(const AttributeFieldPtr& attr);
 
+    uint64_t hash() const;
     /**
      * @brief Make copy of this attribute
      * @return shared pointer

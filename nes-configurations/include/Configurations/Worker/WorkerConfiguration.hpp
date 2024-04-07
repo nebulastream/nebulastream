@@ -20,12 +20,15 @@
 #include <Configurations/Enums/EnumOptionDetails.hpp>
 #include <Configurations/Enums/QueryExecutionMode.hpp>
 #include <Configurations/Worker/GeoLocationFactory.hpp>
+#include <Configurations/Worker/NetworkCoordinateFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Util/Latency/NetworkCoordinate.hpp>
+#include <Util/Latency/SyntheticType.hpp>
 #include <map>
 #include <string>
 
@@ -56,45 +59,46 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Id of the Worker.
      * This is used to uniquely identify workers within the cluster.
      */
-    UIntOption workerId = {WORKER_ID, INVALID_WORKER_NODE_ID, "Worker id."};
+    UIntOption workerId = {WORKER_ID, std::to_string(INVALID_WORKER_NODE_ID), "Worker id.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief IP of the Worker.
      */
-    StringOption localWorkerIp = {LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP."};
+    StringOption localWorkerIp = {LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP.", std::make_shared<IpValidation>()};
 
     /**
      * @brief Port for the RPC server of the Worker.
      * This is used to receive control messages from the coordinator or other workers .
      */
-    UIntOption rpcPort = {RPC_PORT_CONFIG, 0, "RPC server port of the NES Worker."};
+    UIntOption rpcPort = {RPC_PORT_CONFIG, "0", "RPC server port of the NES Worker.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Port of the Data server of this worker.
      * This is used to receive data.
      */
-    UIntOption dataPort = {DATA_PORT_CONFIG, 0, "Data port of the NES Worker."};
+    UIntOption dataPort = {DATA_PORT_CONFIG, "0", "Data port of the NES Worker.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Server IP of the NES Coordinator to which the NES Worker should connect.
      */
     StringOption coordinatorIp = {COORDINATOR_IP_CONFIG,
                                   "127.0.0.1",
-                                  "Server IP of the NES Coordinator to which the NES Worker should connect."};
+                                  "Server IP of the NES Coordinator to which the NES Worker should connect.",
+                                  std::make_shared<IpValidation>()};
     /**
      * @brief RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs
      * to be the same as rpcPort in Coordinator.
      */
     UIntOption coordinatorPort = {
         COORDINATOR_PORT_CONFIG,
-        4000,
+        "4000",
         "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
-        "to be the same as rpcPort in Coordinator."};
+        "to be the same as rpcPort in Coordinator.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Parent ID of this node.
      */
-    UIntOption parentId = {PARENT_ID_CONFIG, 0, "Parent ID of this node."};
+    UIntOption parentId = {PARENT_ID_CONFIG, "0", "Parent ID of this node.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief The current log level. Controls the detail of log messages.
@@ -107,54 +111,54 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Number of Slots define the amount of computing resources that are usable at the coordinator.
      * This enables the restriction of the amount of concurrently deployed queryIdAndCatalogEntryMapping and operators.
      */
-    UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for the NES Worker."};
+    UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, std::to_string(UINT16_MAX), "Number of computing slots for the NES Worker.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief The link bandwidth of the link in Mbps.
      */
-    UIntOption bandwidth = {BANDWIDTH_IN_MBPS, 0, "The link bandwidth in Mbps."};
+    UIntOption bandwidth = {BANDWIDTH_IN_MBPS, "0", "The link bandwidth in Mbps.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief The link latency in milliseconds.
      */
-    UIntOption latency = {LATENCY_IN_MS, 0, "The link latency in milliseconds."};
+    UIntOption latency = {LATENCY_IN_MS, "0", "The link latency in milliseconds.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Configures the number of worker threads.
      */
-    UIntOption numWorkerThreads = {"numWorkerThreads", 1, "Number of worker threads."};
+    UIntOption numWorkerThreads = {"numWorkerThreads", "1", "Number of worker threads.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief The number of buffers in the global buffer manager.
      * Controls how much memory is consumed by the system.
      */
     UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
-                                                       1024,
-                                                       "Number buffers in global buffer pool."};
+                                                       "1024",
+                                                       "Number buffers in global buffer pool.", std::make_shared<NumberValidation>()};
     /**
      * @brief Indicates how many buffers a single worker thread can allocate.
      */
-    UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, 128, "Number buffers in task local buffer pool."};
+    UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, "128", "Number buffers in task local buffer pool.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Indicates how many buffers a single data source can allocate.
      * This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
      */
     UIntOption numberOfBuffersInSourceLocalBufferPool = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
-                                                         64,
-                                                         "Number buffers in source local buffer pool."};
+                                                         "64",
+                                                         "Number buffers in source local buffer pool.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Configures the wait time for collecting metrics in the monitoring streams.
      * Monitoring has to be enabled for it to work.
      */
-    UIntOption monitoringWaitTime = {MONITORING_WAIT_TIME, 1000, "Sampling period of metrics (ms)."};
+    UIntOption monitoringWaitTime = {MONITORING_WAIT_TIME, "1000", "Sampling period of metrics (ms).", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
      * This property has to be the same over a whole deployment.
      */
-    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
+    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, "4096", "BufferSizeInBytes.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Indicates a list of cpu cores, which are used to pin data sources to specific cores.
@@ -177,22 +181,22 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Enables support for Non-Uniform Memory Access (NUMA) systems.
      */
-    BoolOption numaAwareness = {NUMA_AWARENESS_CONFIG, false, "Enable Numa-Aware execution"};
+    BoolOption numaAwareness = {NUMA_AWARENESS_CONFIG, "false", "Enable Numa-Aware execution", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Enables the monitoring stack
      */
-    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
+    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, "false", "Enable monitoring", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Enables source sharing
      * */
-    BoolOption enableSourceSharing = {ENABLE_SOURCE_SHARING_CONFIG, false, "Enable source sharing"};
+    BoolOption enableSourceSharing = {ENABLE_SOURCE_SHARING_CONFIG, "false", "Enable source sharing", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Enables the statistic output
      */
-    BoolOption enableStatisticOuput = {ENABLE_STATISTIC_OUTPUT_CONFIG, false, "Enable statistic output"};
+    BoolOption enableStatisticOuput = {ENABLE_STATISTIC_OUTPUT_CONFIG, "false", "Enable statistic output", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Sets configuration properties for the query compiler.
@@ -229,6 +233,13 @@ class WorkerConfiguration : public BaseConfiguration {
         "the configuration data for the location provider class"};
 
     /**
+     * @brief network coordinate of the node if any
+     */
+    WrapOption<NES::Synthetic::DataTypes::Experimental::NetworkCoordinate,
+               Configurations::Synthetic::Index::Experimental::NetworkCoordinateFactory>
+        networkCoordinates = {NETWORK_COORDINATES_CONFIG, "the network coordinate of the worker"};
+
+    /**
      * @brief Configuration yaml path.
      * @warning this is just a placeholder configuration
      */
@@ -242,19 +253,19 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configuration numberOfQueues.
      * Set the number of processing queues in the system
      */
-    UIntOption numberOfQueues = {NUMBER_OF_QUEUES, 1, "Number of processing queues."};
+    UIntOption numberOfQueues = {NUMBER_OF_QUEUES, "1", "Number of processing queues.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Configuration numberOfThreadsPerQueue.
      * Set the number of threads per processing queue in the system
      */
-    UIntOption numberOfThreadsPerQueue = {NUMBER_OF_THREAD_PER_QUEUE, 0, "Number of threads per processing queue."};
+    UIntOption numberOfThreadsPerQueue = {NUMBER_OF_THREAD_PER_QUEUE, "0", "Number of threads per processing queue.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Number of buffers per epoch
      * Set trimming frequency for upstream backup
      */
-    UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, 100, "Number of tuple buffers allowed in one epoch."};
+    UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, "100", "Number of tuple buffers allowed in one epoch.", std::make_shared<NumberValidation>()};
 
     /**
      * @brief Configuration queryManagerMode
@@ -271,25 +282,25 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configuration of waiting time of the worker health check.
      * Set the number of seconds waiting to perform health checks
      */
-    UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
+    UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, "1", "Number of seconds to wait between health checks", std::make_shared<NumberValidation>()};
 
     /* Network specific settings */
 
-    IntOption senderHighwatermark = {SENDER_HIGH_WATERMARK,
-                                     8,
-                                     "Number of tuple buffers allowed in one network channel before blocking transfer."};
+    UIntOption senderHighwatermark = {SENDER_HIGH_WATERMARK,
+                                     "8",
+                                     "Number of tuple buffers allowed in one network channel before blocking transfer.", std::make_shared<NumberValidation>()};
 
-    BoolOption isJavaUDFSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Java UDF execution supported by the worker"};
+    BoolOption isJavaUDFSupported = {TENSORFLOW_SUPPORTED_CONFIG, "false", "Java UDF execution supported by the worker", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Let network sinks use a separate thread to establish a connection
      */
-    BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC, false, "Let network sinks use a separate thread to establish a connection"};
+    BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC, "false", "Let network sinks use a separate thread to establish a connection", std::make_shared<BooleanValidation>()};
 
     /**
      * @brief Let network sources use a separate thread to establish an event channel to their upstream sink
      */
-    BoolOption connectSourceEventChannelsAsync = {CONNECT_SOURCE_ASYNC, false, "Let network sources use a separate thread to establish a the upstream event channel"};
+    BoolOption connectSourceEventChannelsAsync = {CONNECT_SOURCE_ASYNC, "false", "Let network sources use a separate thread to establish a the upstream event channel", std::make_shared<BooleanValidation>()};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

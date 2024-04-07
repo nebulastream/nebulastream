@@ -57,7 +57,7 @@ class NonKeyedTumblingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 9; recordIndex++) {
         buf[recordIndex][0].write<uint64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(recordIndex * 10);
@@ -66,6 +66,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf[9][0].write<uint64_t>(0);
     buf[9][1].write<int64_t>(0);
     buf.setNumberOfTuples(10);
+    buf.getBuffer().setSequenceData({1, 1, true});
 }
 
 TEST_F(NonKeyedTumblingWindowQueryExecutionTest, testTumblingWindow) {
@@ -82,8 +83,10 @@ TEST_F(NonKeyedTumblingWindowQueryExecutionTest, testTumblingWindow) {
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -119,8 +122,10 @@ TEST_F(NonKeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProje
                      .apply(Sum(Attribute("test$f2", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);

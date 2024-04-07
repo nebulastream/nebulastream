@@ -15,13 +15,13 @@
 #include <sstream>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperator::PhysicalOperator(OperatorId id) : OperatorNode(id) {}
+PhysicalOperator::PhysicalOperator(OperatorId id, StatisticId statisticId) : Operator(id, statisticId) {}
 
 std::string PhysicalOperator::toString() const {
     std::stringstream out;
     out << std::endl;
     out << "PhysicalOperator:\n";
-    out << OperatorNode::toString();
+    out << Operator::toString();
     return out.str();
 }
 

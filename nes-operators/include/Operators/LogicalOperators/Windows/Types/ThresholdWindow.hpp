@@ -40,7 +40,7 @@ class ThresholdWindow : public ContentBasedWindowType {
     */
     static WindowTypePtr of(ExpressionNodePtr predicate, uint64_t minimumCount);
 
-    std::string toString() override;
+    std::string toString() const override;
 
     bool equal(WindowTypePtr otherWindowType) override;
 
@@ -56,7 +56,9 @@ class ThresholdWindow : public ContentBasedWindowType {
 
     bool inferStamp(const SchemaPtr& schema) override;
 
-  private:
+    uint64_t hash() const override;
+
+private:
     explicit ThresholdWindow(ExpressionNodePtr predicate);
     ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount);
 

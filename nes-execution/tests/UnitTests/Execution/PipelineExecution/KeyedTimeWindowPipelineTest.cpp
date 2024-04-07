@@ -30,13 +30,13 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -126,24 +126,24 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["k"].write(+1_s64);
-    dynamicBuffer[0]["v"].write(+10_s64);
-    dynamicBuffer[0]["ts"].write(+1_s64);
-    dynamicBuffer[1]["k"].write(+2_s64);
-    dynamicBuffer[1]["v"].write(+20_s64);
-    dynamicBuffer[1]["ts"].write(+1_s64);
-    dynamicBuffer[2]["k"].write(+3_s64);
-    dynamicBuffer[2]["v"].write(+30_s64);
-    dynamicBuffer[2]["ts"].write(+2_s64);
-    dynamicBuffer[3]["k"].write(+1_s64);
-    dynamicBuffer[3]["v"].write(+40_s64);
-    dynamicBuffer[3]["ts"].write(+3_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["k"].write(+1_s64);
+    testBuffer[0]["v"].write(+10_s64);
+    testBuffer[0]["ts"].write(+1_s64);
+    testBuffer[1]["k"].write(+2_s64);
+    testBuffer[1]["v"].write(+20_s64);
+    testBuffer[1]["ts"].write(+1_s64);
+    testBuffer[2]["k"].write(+3_s64);
+    testBuffer[2]["v"].write(+30_s64);
+    testBuffer[2]["ts"].write(+2_s64);
+    testBuffer[3]["k"].write(+1_s64);
+    testBuffer[3]["v"].write(+40_s64);
+    testBuffer[3]["ts"].write(+3_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     std::vector<OriginId> origins = {0};
@@ -165,11 +165,11 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
     EXPECT_EQ(pipeline2Context.buffers.size(), 1);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer.getNumberOfTuples(), 3);
-    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
-    EXPECT_EQ(resultDynamicBuffer[1][aggregationResultFieldName].read<int64_t>(), 20);
-    EXPECT_EQ(resultDynamicBuffer[2][aggregationResultFieldName].read<int64_t>(), 30);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer.getNumberOfTuples(), 3);
+    EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
+    EXPECT_EQ(resulttestBuffer[1][aggregationResultFieldName].read<int64_t>(), 20);
+    EXPECT_EQ(resulttestBuffer[2][aggregationResultFieldName].read<int64_t>(), 30);
 
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
@@ -236,28 +236,28 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["k1"].write(+1_s64);
-    dynamicBuffer[0]["k2"].write(+1_s64);
-    dynamicBuffer[0]["v"].write(+10_s64);
-    dynamicBuffer[0]["ts"].write(+1_s64);
-    dynamicBuffer[1]["k1"].write(+1_s64);
-    dynamicBuffer[1]["k2"].write(+2_s64);
-    dynamicBuffer[1]["v"].write(+20_s64);
-    dynamicBuffer[1]["ts"].write(+1_s64);
-    dynamicBuffer[2]["k1"].write(+2_s64);
-    dynamicBuffer[2]["k2"].write(+2_s64);
-    dynamicBuffer[2]["v"].write(+30_s64);
-    dynamicBuffer[2]["ts"].write(+2_s64);
-    dynamicBuffer[3]["k1"].write(+1_s64);
-    dynamicBuffer[3]["k2"].write(+2_s64);
-    dynamicBuffer[3]["v"].write(+40_s64);
-    dynamicBuffer[3]["ts"].write(+3_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["k1"].write(+1_s64);
+    testBuffer[0]["k2"].write(+1_s64);
+    testBuffer[0]["v"].write(+10_s64);
+    testBuffer[0]["ts"].write(+1_s64);
+    testBuffer[1]["k1"].write(+1_s64);
+    testBuffer[1]["k2"].write(+2_s64);
+    testBuffer[1]["v"].write(+20_s64);
+    testBuffer[1]["ts"].write(+1_s64);
+    testBuffer[2]["k1"].write(+2_s64);
+    testBuffer[2]["k2"].write(+2_s64);
+    testBuffer[2]["v"].write(+30_s64);
+    testBuffer[2]["ts"].write(+2_s64);
+    testBuffer[3]["k1"].write(+1_s64);
+    testBuffer[3]["k2"].write(+2_s64);
+    testBuffer[3]["v"].write(+40_s64);
+    testBuffer[3]["ts"].write(+3_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     std::vector<OriginId> origins = {0};
@@ -279,17 +279,17 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
     EXPECT_EQ(pipeline2Context.buffers.size(), 1);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer.getNumberOfTuples(), 3);
-    EXPECT_EQ(resultDynamicBuffer[0]["k1"].read<int64_t>(), 1);
-    EXPECT_EQ(resultDynamicBuffer[0]["k2"].read<int64_t>(), 1);
-    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 10);
-    EXPECT_EQ(resultDynamicBuffer[1]["k1"].read<int64_t>(), 1);
-    EXPECT_EQ(resultDynamicBuffer[1]["k2"].read<int64_t>(), 2);
-    EXPECT_EQ(resultDynamicBuffer[1][aggregationResultFieldName].read<int64_t>(), 60);
-    EXPECT_EQ(resultDynamicBuffer[2]["k1"].read<int64_t>(), 2);
-    EXPECT_EQ(resultDynamicBuffer[2]["k2"].read<int64_t>(), 2);
-    EXPECT_EQ(resultDynamicBuffer[2][aggregationResultFieldName].read<int64_t>(), 30);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer.getNumberOfTuples(), 3);
+    EXPECT_EQ(resulttestBuffer[0]["k1"].read<int64_t>(), 1);
+    EXPECT_EQ(resulttestBuffer[0]["k2"].read<int64_t>(), 1);
+    EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 10);
+    EXPECT_EQ(resulttestBuffer[1]["k1"].read<int64_t>(), 1);
+    EXPECT_EQ(resulttestBuffer[1]["k2"].read<int64_t>(), 2);
+    EXPECT_EQ(resulttestBuffer[1][aggregationResultFieldName].read<int64_t>(), 60);
+    EXPECT_EQ(resulttestBuffer[2]["k1"].read<int64_t>(), 2);
+    EXPECT_EQ(resulttestBuffer[2]["k2"].read<int64_t>(), 2);
+    EXPECT_EQ(resulttestBuffer[2][aggregationResultFieldName].read<int64_t>(), 30);
 
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);

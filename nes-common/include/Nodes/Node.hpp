@@ -330,12 +330,6 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     std::vector<NodePtr> getAndFlattenAllAncestors();
 
-    /**
-     * @brief Returns stacktrace of node source location.
-     * @return string
-     */
-    std::string getNodeSourceLocation();
-
     friend std::ostream& operator<<(std::ostream& os, const NodePtr& node);
 
   protected:

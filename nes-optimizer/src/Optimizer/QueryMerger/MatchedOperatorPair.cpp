@@ -17,15 +17,15 @@
 
 namespace NES::Optimizer {
 
-MatchedOperatorPairPtr MatchedOperatorPair::create(LogicalOperatorNodePtr hostOperator,
-                                                   LogicalOperatorNodePtr targetOperator,
+MatchedOperatorPairPtr MatchedOperatorPair::create(LogicalOperatorPtr hostOperator,
+                                                   LogicalOperatorPtr targetOperator,
                                                    Optimizer::ContainmentRelationship containmentRelationship) {
     return std::make_unique<MatchedOperatorPair>(
         MatchedOperatorPair(std::move(hostOperator), std::move(targetOperator), std::move(containmentRelationship)));
 }
 
-MatchedOperatorPair::MatchedOperatorPair(LogicalOperatorNodePtr hostOperator,
-                                         LogicalOperatorNodePtr targetOperator,
+MatchedOperatorPair::MatchedOperatorPair(LogicalOperatorPtr hostOperator,
+                                         LogicalOperatorPtr targetOperator,
                                          Optimizer::ContainmentRelationship containmentRelationship)
     : hostOperator(std::move(hostOperator)), targetOperator(std::move(targetOperator)),
       containmentRelationship(std::move(containmentRelationship)) {}

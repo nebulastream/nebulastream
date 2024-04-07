@@ -38,6 +38,9 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -98,7 +101,7 @@ class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 }// namespace Optimizer
 
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
 
 //a response to the creator of the request
 struct ExplainResponse : public AbstractRequestResponse {
@@ -157,12 +160,6 @@ class ExplainRequest : public AbstractUniRequest {
      * @param storageHandler: The storage access handle used by the request
      */
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
-
-    /**
-     * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
-     * @param storageHandler: The storage access handle used by the request
-     */
-    void postExecution(const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Executes the request logic.
@@ -229,7 +226,7 @@ class ExplainRequest : public AbstractUniRequest {
     const std::string DEVICE_INFO_EXTENSIONS_KEY = "deviceExtensions";
     const std::string DEVICE_INFO_AVAILABLE_PROCESSORS_KEY = "availableProcessors";
 };
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 }// namespace NES
 
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_

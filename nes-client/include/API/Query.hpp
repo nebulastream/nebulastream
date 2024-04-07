@@ -16,8 +16,10 @@
 #define NES_CLIENT_INCLUDE_API_QUERY_HPP_
 
 #include <API/Expressions/Expressions.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,8 +27,8 @@
 namespace NES {
 
 class Query;
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
@@ -34,11 +36,11 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class SourceLogicalOperator;
+using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+class SinkLogicalOperator;
+using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
@@ -402,6 +404,17 @@ class Query {
     static Query from(std::string const& sourceName);
 
     /**
+     * @brief Add a synopsis build operator to the query
+     * @param window
+     * @param statisticDescriptor
+     * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
+     * @return The query
+     */
+    Query& buildStatistic(Windowing::WindowTypePtr window,
+                          Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+                          Statistic::MetricHash metricHash);
+
+    /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
     * @param subQuery is the query to be unioned
     * @return the query
@@ -490,8 +503,9 @@ class Query {
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor
+     * @param workerId: location where sink is to be placed
      */
-    virtual Query& sink(SinkDescriptorPtr sinkDescriptor);
+    virtual Query& sink(SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Gets the query plan from the current query.

@@ -26,11 +26,11 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -39,9 +39,9 @@
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <z3++.h>
@@ -123,7 +123,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingEqualQueri
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
@@ -135,7 +135,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingEqualQueri
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
@@ -203,7 +203,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
                        .filter(Attribute("id1") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
@@ -215,7 +215,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
                        .filter(Attribute("value1") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
@@ -283,13 +283,13 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingQueriesWit
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("truck").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
@@ -345,19 +345,19 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingMoreThanTw
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").filter(Attribute("id") < 45).map(Attribute("queryId") = 1).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car").filter(Attribute("id") < 45).map(Attribute("queryId") = 2).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
     Query query3 = Query::from("car").filter(Attribute("id") < 45).map(Attribute("queryId") = 3).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan3 = query3.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator3 = queryPlan3->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator3 = queryPlan3->getSinkOperators()[0];
     QueryId queryId3 = PlanIdGenerator::getNextQueryId();
     queryPlan3->setQueryId(queryId3);
 
@@ -416,16 +416,16 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingMoreThanTw
     EXPECT_EQ(changeLogEntries.size(), 1U);
 
     for (const auto& upstreamOperator : changeLogEntries[0].second->upstreamOperators) {
-        EXPECT_TRUE(upstreamOperator->instanceOf<FilterLogicalOperatorNode>());
+        EXPECT_TRUE(upstreamOperator->instanceOf<LogicalFilterOperator>());
         // Three different map operators are added
         EXPECT_TRUE(upstreamOperator->getParents().size() == 3U);
         for (const auto& parent : upstreamOperator->getParents()) {
-            EXPECT_TRUE(parent->instanceOf<MapLogicalOperatorNode>());
+            EXPECT_TRUE(parent->instanceOf<LogicalMapOperator>());
         }
         // There are one physical sources
         EXPECT_TRUE(upstreamOperator->getChildren().size() == 1U);
         for (const auto& child : upstreamOperator->getChildren()) {
-            EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
+            EXPECT_TRUE(child->instanceOf<SourceLogicalOperator>());
         }
     }
 }
@@ -440,13 +440,13 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car").sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
@@ -502,14 +502,13 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
 
     //assert that the sink operators have same up-stream operator
     auto rootOperatorsAfterStop = updatedSharedPlanAfterStop->getRootOperators();
-    EXPECT_TRUE(rootOperatorsAfterStop.size() == 1);
+    EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
 
-    EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 1);
-
-    auto operatorsInQueryPlan2 = PlanIterator(queryPlan2).snapshot();
-    auto operatorsInSharedPlanAfterStop = PlanIterator(updatedSharedPlanAfterStop).snapshot();
-
-    EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
+    //assert that the at least one sink operator is in the state TO_BE_REMOVED
+    EXPECT_TRUE(
+        std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
+            return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
+        }));
 }
 
 TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
@@ -528,7 +527,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
                        .filter(Attribute("id1") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
@@ -540,7 +539,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
                        .filter(Attribute("value1") < 45)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    SinkLogicalOperatorPtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
@@ -609,12 +608,11 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingPartiallyE
 
     //assert that the sink operators have same up-stream operator
     auto rootOperatorsAfterStop = updatedSharedPlanAfterStop->getRootOperators();
-    EXPECT_TRUE(rootOperatorsAfterStop.size() == 1);
+    EXPECT_EQ(rootOperatorsAfterStop.size(), 2);
 
-    EXPECT_TRUE(updatedSharedPlanAfterStop->getSourceOperators().size() == 1);
-
-    auto operatorsInQueryPlan2 = PlanIterator(queryPlan2).snapshot();
-    auto operatorsInSharedPlanAfterStop = PlanIterator(updatedSharedPlanAfterStop).snapshot();
-
-    EXPECT_TRUE(operatorsInQueryPlan2.size() == operatorsInSharedPlanAfterStop.size());
+    //assert that the at least one sink operator is in the state TO_BE_REMOVED
+    EXPECT_TRUE(
+        std::any_of(rootOperatorsAfterStop.begin(), rootOperatorsAfterStop.end(), [](const OperatorPtr operatorToCheck) {
+            return operatorToCheck->as_if<LogicalOperator>()->getOperatorState() == OperatorState::TO_BE_REMOVED;
+        }));
 }

@@ -15,26 +15,28 @@
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementAmendmentException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <string>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 StopQueryRequest::StopQueryRequest(QueryId queryId, uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
@@ -58,7 +60,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         NES_TRACE("Acquire Resources.");
         globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
         topology = storageHandler->getTopologyHandle(requestId);
-        queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
         globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
         udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
@@ -69,8 +71,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                                                        topology,
                                                                                        typeInferencePhase,
                                                                                        coordinatorConfiguration);
-        queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
-        queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
+        deploymentPhase = DeploymentPhase::create(queryCatalog);
         NES_TRACE("Phases created. Stop request initialized.");
 
         if (queryId == INVALID_SHARED_QUERY_ID) {
@@ -78,15 +79,9 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                      + ". Please enter a valid query id.");
         }
 
-        //mark single query for hard stop
-        if (!queryCatalogService->checkAndMarkForHardStop(queryId)) {
-            throw Exceptions::InvalidQueryStateException({QueryState::OPTIMIZING,
-                                                          QueryState::REGISTERED,
-                                                          QueryState::DEPLOYED,
-                                                          QueryState::RUNNING,
-                                                          QueryState::RESTARTING},
-                                                         queryCatalogService->getEntryForQuery(queryId)->getQueryState());
-        }
+        //mark query for hard stop
+        queryCatalog->updateQueryStatus(queryId, QueryState::MARKED_FOR_HARD_STOP, "Query Stop Requested");
+
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
@@ -97,44 +92,58 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
             throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
                                                      + std::to_string(queryId) + " in the global query plan");
         }
-        //remove single query from global query plan
+
+        // remove single query from global query plan
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-        //undeploy SQP
-        queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
-        if (SharedQueryPlanStatus::STOPPED == sharedQueryPlan->getStatus()) {
-            //Mark all contained queryIdAndCatalogEntryMapping as stopped
-            for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
-                queryCatalogService->updateQueryStatus(involvedQueryIds, QueryState::STOPPED, "Hard Stopped");
-            }
-            globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
-        } else if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
-            //Perform placement of updated shared query plan
-            NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
-            bool placementSuccessful = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-            if (!placementSuccessful) {
-                throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                                  "QueryProcessingService: Failed to perform query placement for "
-                                                                  "query plan with shared query id: "
-                                                                      + std::to_string(sharedQueryId));
-            }
+        // remove placements and update the query sub plans
+        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+        deploymentPhase->execute(deploymentContexts, RequestType::StopQuery);
 
-            //Perform deployment of re-placed shared query plan
-            queryDeploymentPhase->execute(sharedQueryPlan);
-
-            //Update the shared query plan as deployed
-            sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
+        // Iterate over deployment context and update execution plan
+        for (const auto& deploymentContext : deploymentContexts) {
+            auto executionNodeId = deploymentContext->getWorkerId();
+            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+            switch (decomposedQueryPlanState) {
+                case QueryState::MARKED_FOR_REDEPLOYMENT:
+                case QueryState::MARKED_FOR_DEPLOYMENT: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::RUNNING);
+                    break;
+                }
+                case QueryState::MARKED_FOR_MIGRATION: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::STOPPED);
+                    globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                                                                   sharedQueryId,
+                                                                   decomposedQueryPlanId,
+                                                                   decomposedQueryPlanVersion);
+                    break;
+                }
+                default:
+                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+            }
         }
 
-        //todo: #3742 FIXME: This is a work-around for an edge case. To reproduce this:
+        //FIXME: #3742 This may not work well when shared query plan contains more than one queries:
         // 1. The query merging feature is enabled.
-        // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queryIdAndCatalogEntryMapping (Case 3.1).
+        // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queries.
         // Expected Result:
-        //  - Query status of the removed query is marked as stopped.
+        //  - only the stopped query is marked as stopped.
         // Actual Result:
-        //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
-        queryCatalogService->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
-        responsePromise.set_value(std::make_shared<StopQueryResponse>(true));
+        //  - All queries are set to stopped and the whole shared query plan is removed.
 
+        //Mark all contained queries as stopped
+        queryCatalog->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
+        globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
+        responsePromise.set_value(std::make_shared<StopQueryResponse>(true));
     } catch (RequestExecutionException& e) {
         NES_ERROR("{}", e.what());
         auto requests = handleError(std::current_exception(), storageHandler);
@@ -161,9 +170,9 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
 
     try {
         std::rethrow_exception(exception);
-    } catch (Exceptions::QueryPlacementAdditionException& ex) {
+    } catch (Exceptions::QueryPlacementAmendmentException& ex) {
         failRequest.push_back(
-            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, ex.what(), MAX_RETRIES_FOR_FAILURE));
     } catch (QueryDeploymentException& ex) {
         //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
         //Happens if:
@@ -171,19 +180,19 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
         //2. QueryDeploymentException: Error in call to Elegant acceleration service with code
         //3. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
         failRequest.push_back(
-            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, ex.what(), MAX_RETRIES_FOR_FAILURE));
     } catch (InvalidQueryException& ex) {
         //Happens if:
         //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
         failRequest.push_back(
-            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+            FailQueryRequest::create(ex.getQueryId(), INVALID_DECOMPOSED_QUERY_PLAN_ID, ex.what(), MAX_RETRIES_FOR_FAILURE));
     } catch (TypeInferenceException& ex) {
-        queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
+        queryCatalog->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
     } catch (Exceptions::QueryUndeploymentException& ex) {
         // In general, failures in QueryUndeploymentPhase are concerned with the current sqp id and a failure with a topology node
         // Therefore, for QueryUndeploymentException, we assume that the sqp is not running on any node, and we can set the sqp's status to stopped
         // we do this as long as there are retries present, otherwise, we fail the query
-        queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
+        queryCatalog->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
     } catch (Exceptions::QueryNotFoundException& ex) {
         //Could not find sqp in global query plan
         trySetExceptionInPromise(exception);
@@ -214,5 +223,5 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr ex
         std::make_exception_ptr<RequestExecutionException>(RequestExecutionException("No return value set in promise")));
     return failRequest;
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor
  // namespace NES

@@ -34,36 +34,41 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
     /**
      * @brief Constructor for PhysicalMapUDFOperator
      * @param id The identifier of this operator
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
      * @param udfDescriptor The UDF descriptor
      */
     PhysicalMapUDFOperator(OperatorId id,
+                           StatisticId statisticId,
                            const SchemaPtr& inputSchema,
                            const SchemaPtr& outputSchema,
                            const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
     /**
      * @brief Creates a new instance of PhysicalMapUDFOperator
      * @param id The identifier of this operator
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
      * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalMapUDFOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
 
     /**
      * @brief Creates a new instance of PhysicalMapUDFOperator with no specified operator ID
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema The schema of the input data
      * @param outputSchema The schema of the output data
      * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalMapUDFOperator
      */
     static PhysicalOperatorPtr
-    create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
+    create(StatisticId statisticId, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
 
     /**
      * @brief Returns a string representation of this operator
@@ -75,7 +80,7 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      * @brief Creates a copy of this operator node
      * @return A copy of this operator node
      */
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
      * @brief Returns the udf descriptor of this map operator

@@ -31,7 +31,11 @@ class TimeUnit : public WindowMeasure {
      */
     [[nodiscard]] uint64_t getMultiplier() const;
 
-    std::string toString() override;
+    /**
+     * @brief Creates a string representation
+     * @return std::string
+     */
+    std::string toString() const override;
 
     /**
      * @brief Compares for equality

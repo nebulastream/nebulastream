@@ -15,6 +15,7 @@
 syntax = "proto3";
 import "SerializableDecomposedQueryPlan.proto";
 import "WorkerLocation.proto";
+import "WorkerCoordinate.proto";
 
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
@@ -36,6 +37,8 @@ service WorkerRPCService {
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
 
   rpc GetLocation(GetLocationRequest) returns (GetLocationReply) {}
+
+  rpc GetNetworkCoordinate(GetNetworkCoordinateRequest) returns (GetNetworkCoordinateReply) {}
 
   rpc UploadMlModel(MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelClientStream(stream MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
@@ -75,7 +78,8 @@ message UnregisterQueryReply {
 }
 
 message StartQueryRequest {
-  uint64 queryId = 1;
+  uint64 sharedQueryId = 1;
+  uint64 decomposedQueryId = 2;
 }
 
 message StartQueryReply {
@@ -83,8 +87,9 @@ message StartQueryReply {
 }
 
 message StopQueryRequest {
-  uint64 queryId = 1;
-  uint64 queryTerminationType = 2;
+  uint64 sharedQueryId = 1;
+  uint64 decomposedQueryId = 2;
+  uint64 queryTerminationType = 3;
 }
 
 message StopQueryReply {
@@ -149,6 +154,13 @@ message GetReconnectScheduleRequest {
 
 message GetReconnectScheduleReply {
   NES.Spatial.Protobuf.ReconnectSchedule schedule = 1;
+}
+
+message GetNetworkCoordinateRequest {
+}
+
+message GetNetworkCoordinateReply {
+  NES.Synthetic.Protobuf.Waypoint waypoint = 1;
 }
 
 enum MlModelFileUploadStatus {

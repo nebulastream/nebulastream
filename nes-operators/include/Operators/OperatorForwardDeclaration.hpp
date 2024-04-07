@@ -21,8 +21,8 @@ namespace NES {
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
@@ -30,37 +30,37 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+class LogicalFilterOperator;
+using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
 
-class JoinLogicalOperatorNode;
-using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
+class LogicalJoinOperator;
+using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 
 namespace Experimental {
-class BatchJoinLogicalOperatorNode;
-using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+class LogicalBatchJoinOperator;
+using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
 }// namespace Experimental
 
-class UnionLogicalOperatorNode;
-using UnionLogicalOperatorNodePtr = std::shared_ptr<UnionLogicalOperatorNode>;
+class LogicalUnionOperator;
+using LogicalUnionOperatorPtr = std::shared_ptr<LogicalUnionOperator>;
 
-class ProjectionLogicalOperatorNode;
-using ProjectionLogicalOperatorNodePtr = std::shared_ptr<ProjectionLogicalOperatorNode>;
+class LogicalProjectionOperator;
+using LogicalProjectionOperatorPtr = std::shared_ptr<LogicalProjectionOperator>;
 
-class MapLogicalOperatorNode;
-using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
+class LogicalMapOperator;
+using LogicalMapOperatorPtr = std::shared_ptr<LogicalMapOperator>;
 
-class WindowLogicalOperatorNode;
-using WindowLogicalOperatorNodePtr = std::shared_ptr<WindowLogicalOperatorNode>;
+class LogicalWindowOperator;
+using LogicalWindowOperatorPtr = std::shared_ptr<LogicalWindowOperator>;
 
-class LimitLogicalOperatorNode;
-using LimitLogicalOperatorNodePtr = std::shared_ptr<LimitLogicalOperatorNode>;
+class LogicalLimitOperator;
+using LogicalLimitOperatorPtr = std::shared_ptr<LogicalLimitOperator>;
 
-class WatermarkAssignerLogicalOperatorNode;
-using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
+class WatermarkAssignerLogicalOperator;
+using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class SourceLogicalOperator;
+using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
 namespace Catalogs::UDF {
 class JavaUDFDescriptor;
@@ -74,12 +74,17 @@ using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 }// namespace Catalogs::UDF
 
 namespace InferModel {
-class InferModelLogicalOperatorNode;
-using InferModelLogicalOperatorNodePtr = std::shared_ptr<InferModelLogicalOperatorNode>;
+class LogicalInferModelOperator;
+using LogicalInferModelOperatorPtr = std::shared_ptr<LogicalInferModelOperator>;
 
 class InferModelOperatorHandler;
 using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
 }// namespace InferModel
+
+namespace Statistic {
+class LogicalStatisticWindowOperator;
+using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
+} // namespace Statistic
 
 }// namespace NES
 #endif // NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

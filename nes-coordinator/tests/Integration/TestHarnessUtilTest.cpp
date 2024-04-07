@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -41,19 +42,16 @@ class TestHarnessUtilTest : public Testing::BaseIntegrationTest {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
                                   .addLogicalSource("car", carSchema)
@@ -77,7 +75,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -86,19 +84,16 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")//2
@@ -124,7 +119,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -133,26 +128,20 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
     struct Truck {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
-    auto truckSchema = Schema::create()
-                           ->addField("key", DataTypeFactory::createUInt32())
-                           ->addField("value", DataTypeFactory::createUInt32())
-                           ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto truckSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
@@ -184,7 +173,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -193,26 +182,18 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
-        config->optimizer.distributedWindowChildThreshold.setValue(10);
-        config->optimizer.distributedWindowCombinerThreshold.setValue(1000);
-    };
-
     auto queryWithWindowOperator = Query::from("car")
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                                       .byKey(Attribute("key"))
+                                       .byKey(Attribute("id"))
                                        .apply(Sum(Attribute("value")));
     TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -246,7 +227,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
                                   .pushElement<Car>({1, 4, 4000}, 3)
                                   .pushElement<Car>({1, 5, 5000}, 3)
                                   .validate()
-                                  .setupTopology(crdFunctor);
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -268,7 +249,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -277,7 +258,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     struct Window1 {
-        uint64_t id1;
+        uint64_t id;
         uint64_t timestamp;
     };
 
@@ -286,20 +267,16 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
         uint64_t timestamp;
     };
 
-    auto window1Schema = Schema::create()
-                             ->addField("id1", DataTypeFactory::createUInt64())
-                             ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto window1Schema = TestSchemas::getSchemaTemplate("id_time_u64");
 
-    auto window2Schema = Schema::create()
-                             ->addField("id2", DataTypeFactory::createUInt64())
-                             ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto window2Schema = TestSchemas::getSchemaTemplate("id2_time_u64");
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
     auto queryWithJoinOperator = Query::from("window1")
                                      .joinWith(Query::from("window2"))
-                                     .where(Attribute("id1"))
+                                     .where(Attribute("id"))
                                      .equalsTo(Attribute("id2"))
                                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -342,7 +319,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -351,19 +328,16 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key"));
+    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("id"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -386,7 +360,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -395,19 +369,16 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key"));
+    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("id"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
 
@@ -455,7 +426,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -464,15 +435,12 @@ TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -487,7 +455,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 4);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 4);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
@@ -507,7 +475,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -516,15 +484,12 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -539,7 +504,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 4);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 4);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
@@ -566,7 +531,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -575,12 +540,12 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
 
     EXPECT_THROW(
         TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(),
@@ -592,12 +557,12 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
@@ -609,28 +574,22 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
  */
 TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     struct Car {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
     struct Truck {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
         uint64_t timestamp;
         uint64_t length;
         uint64_t weight;
     };
 
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto carSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
-    auto truckSchema = Schema::create()
-                           ->addField("key", DataTypeFactory::createUInt32())
-                           ->addField("value", DataTypeFactory::createUInt32())
-                           ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto truckSchema = TestSchemas::getSchemaTemplate("id_val_time_u32");
 
     auto queryWithFilterOperator = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())

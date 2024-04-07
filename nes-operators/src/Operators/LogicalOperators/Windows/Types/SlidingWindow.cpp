@@ -31,7 +31,7 @@ TimeMeasure SlidingWindow::getSize() { return size; }
 
 TimeMeasure SlidingWindow::getSlide() { return slide; }
 
-std::string SlidingWindow::toString() {
+std::string SlidingWindow::toString() const {
     std::stringstream ss;
     ss << "SlidingWindow: size=" << size.getTime();
     ss << " slide=" << slide.getTime();
@@ -46,6 +46,14 @@ bool SlidingWindow::equal(WindowTypePtr otherWindowType) {
             && this->timeCharacteristic->equals(*otherSlidingWindow->timeCharacteristic);
     }
     return false;
+}
+
+uint64_t SlidingWindow::hash() const {
+    uint64_t hashValue=0;
+    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
+    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(slide.getTime());
+    hashValue=hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
+    return hashValue;
 }
 
 }// namespace NES::Windowing

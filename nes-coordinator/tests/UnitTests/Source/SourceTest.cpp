@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -30,7 +31,6 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -48,6 +48,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/MetricValidator.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtils.hpp>
 #include <cstring>
 #include <gmock/gmock.h>
@@ -178,6 +179,7 @@ class MockDataSource : public DataSource {
                      queryManager,
                      operatorId,
                      0,
+                     INVALID_STATISTIC_ID,
                      numSourceLocalBuffers,
                      gatheringMode,
                      "defaultPhysicalStreamName",
@@ -224,6 +226,7 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                      queryManager,
                      operatorId,
                      0,
+                     INVALID_STATISTIC_ID,
                      numSourceLocalBuffers,
                      gatheringMode,
                      "defaultPhysicalStreamName",
@@ -258,6 +261,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
                      queryManager,
                      operatorId,
                      0,
+                     INVALID_STATISTIC_ID,
                      numSourceLocalBuffers,
                      gatheringMode,
                      "defaultPhysicalStreamName",
@@ -305,6 +309,7 @@ class BinarySourceProxy : public BinarySource {
                        file_path,
                        operatorId,
                        0,
+                       INVALID_STATISTIC_ID,
                        numSourceLocalBuffers,
                        GatheringMode::INTERVAL_MODE,
                        "defaultPhysicalStreamName",
@@ -334,6 +339,7 @@ class CSVSourceProxy : public CSVSource {
                     sourceConfig,
                     operatorId,
                     0,
+                    INVALID_STATISTIC_ID,
                     numSourceLocalBuffers,
                     GatheringMode::INTERVAL_MODE,
                     "defaultPhysicalStreamName",
@@ -364,6 +370,7 @@ class TCPSourceProxy : public TCPSource {
                     sourceConfig,
                     operatorId,
                     0,
+                    INVALID_STATISTIC_ID,
                     numSourceLocalBuffers,
                     GatheringMode::INTERVAL_MODE,
                     "defaultPhysicalStreamName",
@@ -391,6 +398,7 @@ class GeneratorSourceProxy : public GeneratorSource {
                           numbersOfBufferToProduce,
                           operatorId,
                           0,
+                          INVALID_STATISTIC_ID,
                           numSourceLocalBuffers,
                           gatheringMode,
                           successors,
@@ -415,6 +423,7 @@ class DefaultSourceProxy : public DefaultSource {
                         gatheringInterval,
                         operatorId,
                         0,
+                        INVALID_STATISTIC_ID,
                         numSourceLocalBuffers,
                         successors,
                         "defaultPhysicalStreamName"){};
@@ -441,6 +450,7 @@ class LambdaSourceProxy : public LambdaSource {
                        std::move(generationFunction),
                        operatorId,
                        0,
+                       INVALID_STATISTIC_ID,
                        numSourceLocalBuffers,
                        gatheringMode,
                        0,
@@ -468,6 +478,7 @@ class MonitoringSourceProxy : public MonitoringSource {
                            queryManager,
                            operatorId,
                            0,
+                           INVALID_STATISTIC_ID,
                            numSourceLocalBuffers,
                            "defaultPhysicalStreamName",
                            successors){};
@@ -612,7 +623,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
     std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head, path_to_decimals_file;
     SchemaPtr schema, lambdaSchema, decimalsSchema;
     uint8_t* singleMemoryArea;
-    uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId,
+    uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId, statisticId,
         numSourceLocalBuffersDefault, gatheringInterval, queryId, sourceAffinity;
     size_t bufferAreaSize;
     std::shared_ptr<uint8_t> singleBufferMemoryArea;
@@ -625,6 +636,7 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->originId,
+                                                      this->statisticId,
                                                       this->numSourceLocalBuffersDefault,
                                                       "defaultPhysicalSourceName",
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
@@ -638,6 +650,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceEmptySuccessors) {
                                                                                    this->nodeEngine->getQueryManager(),
                                                                                    this->operatorId,
                                                                                    this->originId,
+                                                                                   this->statisticId,
                                                                                    this->numSourceLocalBuffersDefault,
                                                                                    "defaultPhysicalSourceName",
                                                                                    {});
@@ -655,6 +668,7 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->originId,
+                                                      this->statisticId,
                                                       this->numSourceLocalBuffersDefault,
                                                       "defaultPhysicalSourceName",
                                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
@@ -787,7 +801,8 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
     mDataSource.runningRoutine();
 }
 
-TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
+// Disabled: ADAPTIVE is not currently supported
+TEST_F(SourceTest, DISABLED_testDataSourceRunningRoutineKalmanFilter) {
     MockDataSource mDataSource(this->schema,
                                this->nodeEngine->getBufferManager(),
                                this->nodeEngine->getQueryManager(),
@@ -831,8 +846,8 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
-    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1));
@@ -879,8 +894,8 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
-    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
@@ -893,7 +908,9 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
+// Disabled: ADAPTIVE is not currently supported
+/*
+TEST_F(SourceTest, DISABLED_testDataSourceKFRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -925,7 +942,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -938,8 +955,10 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
     mDataSource.reset();
-}
+} */
 
+// Disabled: ADAPTIVE is not currently supported
+/*
 TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
@@ -971,7 +990,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     auto oldInterval = mDataSource->gatheringInterval;
@@ -986,55 +1005,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     EXPECT_FALSE(mDataSource->running);
     EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
-}
-
-TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroInitialInterval) {
-    // create executable stage
-    auto executableStage = std::make_shared<MockedExecutablePipeline>();
-    // create sink
-    auto sink =
-        createCSVFileSink(this->schema, this->queryId, this->queryId, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
-    // get mocked pipeline to add to source
-    auto pipeline = this->createExecutablePipeline(executableStage, sink);
-    // mock query manager for passing addEndOfStream
-    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema,
-                                                           this->nodeEngine->getBufferManager(),
-                                                           this->nodeEngine->getQueryManager(),
-                                                           this->operatorId,
-                                                           this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::ADAPTIVE_MODE,
-                                                           {pipeline});
-    mDataSource->numberOfBuffersToProduce = 1;
-    mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
-    mDataSource->setGatheringInterval(std::chrono::milliseconds{1000});
-    auto fakeBuf = mDataSource->getRecyclableBuffer();
-    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
-    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
-    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
-    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
-    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
-                                                                         this->queryId,
-                                                                         {mDataSource},
-                                                                         {sink},
-                                                                         {pipeline},
-                                                                         this->nodeEngine->getQueryManager(),
-                                                                         this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
-    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
-    ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    auto oldInterval = mDataSource->gatheringInterval;
-    EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
-    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
-        mDataSource->running = false;
-        return;
-    }));
-    mDataSource->runningRoutine();
-    EXPECT_NE(oldInterval.count(), mDataSource->gatheringInterval.count());
-    EXPECT_FALSE(mDataSource->running);
-    EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
-    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
-}
+} */
 
 TEST_F(SourceTest, testDataSourceOpen) {
     DataSourceProxy mDataSource(this->schema,
@@ -1227,7 +1198,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     EXPECT_EQ(buf->getNumberOfTuples(), 0u);
 }
@@ -1252,7 +1223,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 1u);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1u);
@@ -1278,7 +1249,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
     std::shared_ptr<Runtime::MemoryLayouts::ColumnLayout> layoutPtr =
         Runtime::MemoryLayouts::ColumnLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 1u);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1u);
@@ -1303,7 +1274,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
     try {
         Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
             Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+        Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
         csvDataSource.fillBuffer(buffer);
     } catch (std::invalid_argument const& err) {// 1/2 throwables from stoull
         // TODO: is the "overwrite" of the message a good thing?
@@ -1336,7 +1307,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
     try {
         Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
             Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+        Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
         csvDataSource.fillBuffer(buffer);
     } catch (std::invalid_argument const& err) {// 1/2 throwables from stoull
         // TODO: is the "overwrite" of the message a good thing?
@@ -1368,7 +1339,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<ysbRecord>();
     EXPECT_STREQ(content->ad_type, "banner78");
@@ -1394,7 +1365,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<ysbRecord>();
     EXPECT_STREQ(content->ad_type, "banner78");
@@ -1423,7 +1394,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
         csvDataSource.fillBuffer(buffer);
         EXPECT_NE(buf->getNumberOfTuples(), 0u);
@@ -1461,7 +1432,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
         csvDataSource.fillBuffer(buffer);
         EXPECT_NE(buf->getNumberOfTuples(), 0u);
@@ -1508,7 +1479,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(int_schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyIntTypeRecord>();
     // number is in the expected range
@@ -1567,7 +1538,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(float_schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyFloatTypeRecord>();
     EXPECT_LE(content->float64_entry, std::numeric_limits<double>::max());
@@ -1606,7 +1577,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(bool_schema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyBooleanTypeRecord>();
     EXPECT_FALSE(content->false_entry);
@@ -1634,7 +1605,7 @@ TEST_F(SourceTest, testCSVSourceCommaFloatingPoint) {
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(this->decimalsSchema, this->nodeEngine->getBufferManager()->getBufferSize());
-    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    Runtime::MemoryLayouts::TestTupleBuffer buffer = Runtime::MemoryLayouts::TestTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<decimalsRecord>();
     ASSERT_NEAR(content->positive_with_decimal, 9.09, 0.01);
@@ -1874,10 +1845,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
-                     ->addField(createField("id", BasicType::UINT64))
-                     ->addField(createField("value", BasicType::UINT64))
-                     ->addField(createField("timestamp", BasicType::UINT64));
+    auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
     NES_DEBUG("E2EBase: Start worker 1");
@@ -1916,7 +1884,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
         R"(Query::from("input1").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
     auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));

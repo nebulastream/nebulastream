@@ -32,6 +32,7 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
      * @return bool true if window is of WindowType
      */
     template<class WindowType>
+
     bool instanceOf() {
         if (dynamic_cast<WindowType*>(this)) {
             return true;
@@ -54,7 +55,7 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
         return nullptr;
     }
 
-    virtual std::string toString() = 0;
+    virtual std::string toString() const = 0;
 
     /**
      * @brief Check equality of this window type with the input window type
@@ -69,6 +70,19 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
      * @return true if success else false
      */
     virtual bool inferStamp(const SchemaPtr& schema) = 0;
+
+    /**
+     * @brief Get the hash of the window type
+     *
+     * This function computes a hash value uniquely identifying the window type including characteristic attributes.
+     * The hash value is different for different WindowTypes and same WindowTypes with different attributes.
+     * Especially a SlidingWindow of same size and slide returns a different hash value,
+     * than a TumblingWindow with the same size.
+     *
+     * @return the hash of the window type
+     */
+    virtual uint64_t hash() const = 0;
+private:
 };
 
 }// namespace NES::Windowing

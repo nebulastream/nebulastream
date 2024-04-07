@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
 
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/Parser.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES {
 class JSONParser : public Parser {
@@ -42,7 +42,7 @@ class JSONParser : public Parser {
    */
     bool writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                       uint64_t tupleCount,
-                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                      Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema,
                                       const Runtime::BufferManagerPtr& bufferManager) override;
 

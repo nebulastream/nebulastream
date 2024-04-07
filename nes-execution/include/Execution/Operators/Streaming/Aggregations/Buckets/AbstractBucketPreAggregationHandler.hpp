@@ -55,7 +55,7 @@ class AbstractBucketPreAggregationHandler : public Runtime::Execution::OperatorH
 
     SliceStore* getThreadLocalBucketStore(uint64_t workerId);
     void
-    trigger(WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, uint64_t sequenceNumber, uint64_t watermarkTs);
+    trigger(WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, SequenceData sequenceData, uint64_t watermarkTs);
     void
     dispatchSliceMergingTasks(PipelineExecutionContext& ctx,
                               std::shared_ptr<AbstractBufferProvider> bufferProvider,

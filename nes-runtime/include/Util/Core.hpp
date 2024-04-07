@@ -41,8 +41,8 @@ using QueryPtr = std::shared_ptr<Query>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -93,6 +93,14 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 std::string toCSVString(const SchemaPtr& schema);
 
 /**
+ * @brief Creates a memory layout from the schema and the buffer Size
+ * @param schema
+ * @param bufferSize
+ * @return MemoryLayoutPtr
+ */
+Runtime::MemoryLayouts::MemoryLayoutPtr createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
+
+/**
  *
  * @param queryPlan queryIdAndCatalogEntryMapping to which the properties are assigned
  * @param properties properties to assign
@@ -114,17 +122,6 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
                                                                             Runtime::BufferManagerPtr bufferManager,
                                                                             const std::string& timeStampFieldName,
                                                                             uint64_t lastTimeStamp);
-/**
- * @brief Trim leading and trailing whitespace characters from a string.
- *
- * This function removes leading and trailing whitespace characters (space,
- * tab, newline, and carriage return) from the input string.
- *
- * @param str The input string to be trimmed.
- * @return A new string with leading and trailing whitespace removed.
- */
-std::string trim(const std::string& str);
-
 }// namespace Util
 }// namespace NES
 

@@ -74,12 +74,6 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const std::string& getClassName() const;
 
     /**
-     * @brief This method returns the class name of the Java UDF in JNI notation.
-     * @return std::string class name
-     */
-    const std::string& getClassJNIName() const;
-
-    /**
      * @brief This method returns the method name of the java udf
      * @return std::string method name
      */
@@ -96,12 +90,6 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      * @return std::string input class name in JNI notation.
      */
     const std::string& getInputClassJNIName() const;
-
-    /**
-     * @brief This method returns the class name of the output class name of the java udf
-     * @return std::string output class name
-     */
-    const std::string& getOutputClassName() const;
 
     /**
      * @brief This method returns the class name of the output class name of the Java UDF in JNI notation.
@@ -132,12 +120,6 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      * @return SchemaPtr Java UDF output schema
      */
     const SchemaPtr& getUdfOutputSchema() const;
-
-    /**
-     * @brief This method returns the java path of the java udf jar
-     * @return std::optional<std::string> java path
-     */
-    const std::optional<std::string>& getJavaPath() const { return javaPath; }
 
     /**
      * @brief This method returns the java udf object state
@@ -185,8 +167,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const SchemaPtr operatorOutputSchema;
     const std::optional<std::string> javaPath;
     jni::jmethodID udfMethodId;
-    jni::jobject udfInstance;
-    jni::jobject classLoader;
+    jni::jobject udfInstance = nullptr;
+    jni::jobject classLoader = nullptr;
     jni::jmethodID injectClassMethod;
     jni::jmethodID loadClassMethod;
 };

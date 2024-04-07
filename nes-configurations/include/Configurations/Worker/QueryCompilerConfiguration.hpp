@@ -112,24 +112,24 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     /**
      * @brief Enables compilation cache
      * */
-    BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG, false, "Enable use compilation caching"};
+    BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG, "false", "Enable use compilation caching", std::make_shared<BooleanValidation>()};
 
     /**
      * Config options for hash join
      */
     UIntOption numberOfPartitions = {STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG,
-                                     NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS,
-                                     "Partitions in the hash table"};
+                                     std::to_string(NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS),
+                                     "Partitions in the hash table", std::make_shared<NumberValidation>()};
     UIntOption pageSize = {STREAM_HASH_JOIN_PAGE_SIZE_CONFIG,
-                           NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
-                           "Page size of hash table"};
+                           std::to_string(NES::Configurations::DEFAULT_HASH_PAGE_SIZE),
+                           "Page size of hash table", std::make_shared<NumberValidation>()};
     UIntOption preAllocPageCnt = {STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG,
-                                  NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                  "Page count of pre allocated pages in each bucket hash table"};
+                                  std::to_string(NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT),
+                                  "Page count of pre allocated pages in each bucket hash table", std::make_shared<NumberValidation>()};
 
     UIntOption maxHashTableSize = {STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG,
-                                   NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
-                                   "Maximum size of hash table"};
+                                   std::to_string(NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE),
+                                   "Maximum size of hash table", std::make_shared<NumberValidation>()};
 
     EnumOption<QueryCompilation::StreamJoinStrategy> joinStrategy = {
         JOIN_STRATEGY,

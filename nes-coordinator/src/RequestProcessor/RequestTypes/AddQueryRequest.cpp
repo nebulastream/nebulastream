@@ -17,7 +17,6 @@
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
@@ -27,10 +26,8 @@
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
@@ -41,11 +38,10 @@
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -59,6 +55,7 @@
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <string>
@@ -168,8 +165,8 @@ void AddQueryRequest::removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e
 }
 
 void AddQueryRequest::markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler) {
-    auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
-    queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, e.what());
+    auto queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
+    queryCatalog->updateQueryStatus(queryId, QueryState::FAILED, e.what());
 }
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr exception,
@@ -181,7 +178,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
         auto topology = storageHandler->getTopologyHandle(requestId);
-        auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        auto queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
         auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
@@ -194,15 +191,14 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto queryDeploymentPhase =
-            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
         auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
+        auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
         auto topologySpecificQueryRewritePhase =
             Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations);
         auto signatureInferencePhase =
@@ -236,17 +232,17 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);
 
-        // respond to the calling service with the query id
+        // Create a new entry in the query catalog
+        queryCatalog->createQueryCatalogEntry(queryString, queryPlan, queryPlacementStrategy, QueryState::REGISTERED);
+
+        // respond to the calling service with the query id after creating an entry in the catalog
         responsePromise.set_value(std::make_shared<AddQueryResponse>(queryId));
 
-        // Create a new entry in the query catalog
-        queryCatalogService->createNewEntry(queryString, queryPlan, queryPlacementStrategy);
-
         //1. Add the initial version of the query to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
         //2. Set query status as Optimizing
-        queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
+        queryCatalog->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
         //3. Execute type inference phase
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
@@ -261,7 +257,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryPlan = queryRewritePhase->execute(queryPlan);
 
         //6. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
         //7. Execute type inference phase on rewritten query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
@@ -276,34 +272,37 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         //9. Perform signature inference phase for sharing identification among query plans
         signatureInferencePhase->execute(queryPlan);
 
-        //10. Perform topology specific rewrites to the query plan
+        //10. Assign a unique statisticId to all logical operators
+        queryPlan = statisticIdInferencePhase->execute(queryPlan);
+
+        //11. Perform topology specific rewrites to the query plan
         queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
-        //11. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
+        //12. Add the updated query plan to the query catalog
+        queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
-        //12. Perform type inference over re-written query plan
+        //13. Perform type inference over re-written query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
 
-        //13. Identify the number of origins and their ids for all logical operators
+        //14. Identify the number of origins and their ids for all logical operators
         queryPlan = originIdInferencePhase->execute(queryPlan);
 
-        //14. Set memory layout of each logical operator in the rewritten query
+        //15. Set memory layout of each logical operator in the rewritten query
         NES_DEBUG("Performing query choose memory layout phase:  {}", queryId);
         queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
 
-        //15. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
+        //16. Add the updated query plan to the query catalog
+        queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
 
-        //16. Add the updated query plan to the global query plan
+        //17. Add the updated query plan to the global query plan
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
         globalQueryPlan->addQueryPlan(queryPlan);
 
-        //17. Perform query merging for newly added query plan
+        //18. Perform query merging for newly added query plan
         NES_DEBUG("Applying Query Merger Rules as Query Merging is enabled.");
         queryMergerPhase->execute(globalQueryPlan);
 
-        //18. Get the shared query plan id for the added query
+        //19. Get the shared query plan id for the added query
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
             throw Exceptions::SharedQueryPlanNotFoundException(
@@ -311,35 +310,62 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                 sharedQueryId);
         }
 
-        //19. Get the shared query plan for the added query
+        //20. Get the shared query plan for the added query
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
         if (!sharedQueryPlan) {
             throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.",
                                                                sharedQueryId);
         }
 
-        //20. If the shared query plan is not new but updated an existing shared query plan, we first need to undeploy that plan
-        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
-
-            NES_DEBUG("Shared Query Plan is non empty and an older version is already "
-                      "running.");
-            //20.1 First undeploy the running shared query plan with the shared query plan id
-            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::UPDATED);
+        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED) {
+            queryCatalog->createSharedQueryCatalogEntry(sharedQueryId, {queryId}, QueryState::OPTIMIZING);
+        } else {
+            queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::OPTIMIZING, "");
         }
+        //Link both catalogs
+        queryCatalog->linkSharedQuery(queryId, sharedQueryId);
+
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        if (!queryPlacementAmendmentPhase->execute(sharedQueryPlan)) {
-            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                              "QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with shared query id: "
-                                                                  + std::to_string(sharedQueryId));
-        }
+        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //22. Perform deployment of re-placed shared query plan
-        queryDeploymentPhase->execute(sharedQueryPlan);
-
+        deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
         //23. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
+
+        // Iterate over deployment context and update execution plan
+        for (const auto& deploymentContext : deploymentContexts) {
+            auto executionNodeId = deploymentContext->getWorkerId();
+            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+            switch (decomposedQueryPlanState) {
+                case QueryState::MARKED_FOR_REDEPLOYMENT:
+                case QueryState::MARKED_FOR_DEPLOYMENT: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::RUNNING);
+                    break;
+                }
+                case QueryState::MARKED_FOR_MIGRATION: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::STOPPED);
+                    globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                                                                   sharedQueryId,
+                                                                   decomposedQueryPlanId,
+                                                                   decomposedQueryPlanVersion);
+                    break;
+                }
+                default:
+                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+            }
+        }
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);
@@ -351,7 +377,7 @@ void AddQueryRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
     auto queryPlanIterator = PlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
-        auto visitingOp = (*itr)->as<OperatorNode>();
+        auto visitingOp = (*itr)->as<Operator>();
         visitingOp->setId(NES::getNextOperatorId());
     }
 }

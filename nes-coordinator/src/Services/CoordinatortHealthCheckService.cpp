@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
@@ -21,11 +21,10 @@
 
 namespace NES {
 
-CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
+CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyPtr topology,
                                                              std::string healthServiceName,
                                                              Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
-    : topologyManagerService(topologyManagerService), workerRPCClient(WorkerRPCClient::create()),
-      coordinatorConfiguration(coordinatorConfiguration) {
+    : topology(topology), workerRPCClient(WorkerRPCClient::create()), coordinatorConfiguration(coordinatorConfiguration) {
     id = 9999;
     this->healthServiceName = healthServiceName;
 }
@@ -50,12 +49,14 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                     }
                 } else {
                     NES_WARNING("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
-                    if (topologyManagerService->getRootTopologyNodeId() == node.first) {
+                    const auto& rootWorkerNodeIds = topology->getRootWorkerNodeIds();
+                    auto found = std::find(rootWorkerNodeIds.begin(), rootWorkerNodeIds.end(), node.first);
+                    if (found != rootWorkerNodeIds.end()) {
                         NES_WARNING("The failing node is the root node so we cannot delete it");
                         shutdownRPC->set_value(true);
                         return;
                     } else {
-                        auto ret = topologyManagerService->removeTopologyNode(node.first);
+                        auto ret = topology->unregisterWorker(node.first);
                         inactiveWorkers.insert(node.first);
                         if (ret) {
                             NES_TRACE("NesCoordinator::healthCheck: remove node={} successfully", destAddress);

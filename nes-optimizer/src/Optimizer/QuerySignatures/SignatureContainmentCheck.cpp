@@ -16,8 +16,8 @@
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Optimizer/QuerySignatures/ContainedOperatorsUtil.hpp>
 #include <Optimizer/QuerySignatures/ContainmentRelationshipAndOperatorChain.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
@@ -41,8 +41,8 @@ SignatureContainmentCheck::SignatureContainmentCheck(const z3::ContextPtr& conte
 }
 
 ContainmentRelationshipAndOperatorChainPtr
-SignatureContainmentCheck::checkContainmentForBottomUpMerging(const LogicalOperatorNodePtr& leftOperator,
-                                                              const LogicalOperatorNodePtr& rightOperator) {
+SignatureContainmentCheck::checkContainmentForBottomUpMerging(const LogicalOperatorPtr& leftOperator,
+                                                              const LogicalOperatorPtr& rightOperator) {
     NES_TRACE("Checking for containment.");
     ContainmentRelationship containmentRelationship = ContainmentRelationship::NO_CONTAINMENT;
     auto otherConditions = rightOperator->getZ3Signature()->getConditions();
@@ -90,16 +90,16 @@ SignatureContainmentCheck::checkContainmentForBottomUpMerging(const LogicalOpera
 }
 
 ContainmentRelationshipAndOperatorChainPtr
-SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const LogicalOperatorNodePtr& leftOperator,
-                                                                         const LogicalOperatorNodePtr& rightOperator) {
+SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const LogicalOperatorPtr& leftOperator,
+                                                                         const LogicalOperatorPtr& rightOperator) {
     NES_TRACE("Checking for containment.");
     ContainmentRelationship containmentRelationship = ContainmentRelationship::NO_CONTAINMENT;
-    if (leftOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()
-        || rightOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+    if (leftOperator->instanceOf<WatermarkAssignerLogicalOperator>()
+        || rightOperator->instanceOf<WatermarkAssignerLogicalOperator>()) {
         NES_TRACE("Watermark assigner detected. Skipping containment check.");
         return ContainmentRelationshipAndOperatorChain::create(containmentRelationship, {});
     }
-    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
+    std::vector<LogicalOperatorPtr> containmentOperators = {};
     try {
         auto otherConditions = leftOperator->getZ3Signature()->getConditions();
         NES_TRACE("Left signature: {}", otherConditions->to_string());
@@ -123,7 +123,7 @@ SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const L
         if (containmentRelationship == ContainmentRelationship::EQUALITY) {
             containmentRelationship = checkProjectionContainment(leftOperator->getZ3Signature(), rightOperator->getZ3Signature());
             NES_TRACE("Check projection containment returned: {}", magic_enum::enum_name(containmentRelationship));
-            LogicalOperatorNodePtr containedOperator = nullptr;
+            LogicalOperatorPtr containedOperator = nullptr;
             if (containmentRelationship == ContainmentRelationship::EQUALITY) {
                 containmentRelationship = checkFilterContainment(leftOperator->getZ3Signature(), rightOperator->getZ3Signature());
                 NES_TRACE("Check filter containment returned: {}", magic_enum::enum_name(containmentRelationship));

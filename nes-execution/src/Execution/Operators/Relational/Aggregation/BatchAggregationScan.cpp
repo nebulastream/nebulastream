@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>

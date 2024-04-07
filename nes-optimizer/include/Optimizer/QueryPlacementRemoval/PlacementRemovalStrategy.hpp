@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PLACEMENTREMOVALSTRATEGY_HPP
-#define NES_PLACEMENTREMOVALSTRATEGY_HPP
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_
 
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Identifiers.hpp>
@@ -26,8 +26,8 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
@@ -53,6 +53,9 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 class PlacementRemovalStrategy;
 using PlacementRemovalStrategyPtr = std::shared_ptr<PlacementRemovalStrategy>;
+
+class DeploymentContext;
+using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 
 /**
  * @brief This class takes as input a query plan (represented by a upstream and downstream operators) and removes the
@@ -85,12 +88,12 @@ class PlacementRemovalStrategy {
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @param querySubPlanVersion: the new version of the updated query sub plans
-     * @return true if successful else false
+     * @return map of deployment context containing updated decomposed query plans
      */
-    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                   DecomposedQueryPlanVersion querySubPlanVersion);
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                                DecomposedQueryPlanVersion querySubPlanVersion);
 
     /**
      * @brief Destructor releases all locks (if any acquired) for pessimistic mode
@@ -103,8 +106,8 @@ class PlacementRemovalStrategy {
      * @param upStreamPinnedOperators: the pinned upstream operators
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
-    void performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
-                              const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
+    void performPathSelection(const std::set<LogicalOperatorPtr>& upStreamPinnedOperators,
+                              const std::set<LogicalOperatorPtr>& downStreamPinnedOperators);
 
     /**
      * @brief Select path for placement using pessimistic 2PL strategy. If attempt fails then an exponential retries are performed.
@@ -130,9 +133,9 @@ class PlacementRemovalStrategy {
      * @brief Add the computed query sub plans tot he global execution plan
      * @param sharedQueryId: the shared query plan id
      * @param querySubPlanVersion: the new version of the query sub plan
-     * @return true if global execution plan gets updated successfully else false
+     * @return vector of deployment contexts
      */
-    bool updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion);
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId, DecomposedQueryPlanVersion querySubPlanVersion);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,
@@ -145,7 +148,7 @@ class PlacementRemovalStrategy {
     PlacementAmendmentMode placementAmendmentMode;
     PathFinderPtr pathFinder;
     std::set<WorkerId> workerIdsInBFS;
-    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOriginalOperatorMap;
+    std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
     std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToDecomposedQueryPlanIds;
     std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
@@ -161,4 +164,4 @@ class PlacementRemovalStrategy {
 
 }// namespace Optimizer
 }// namespace NES
-#endif//NES_PLACEMENTREMOVALSTRATEGY_HPP
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTREMOVAL_PLACEMENTREMOVALSTRATEGY_HPP_

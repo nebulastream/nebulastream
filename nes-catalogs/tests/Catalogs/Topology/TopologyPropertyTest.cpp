@@ -91,12 +91,12 @@ TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
 
     // create src and dst nodes
     int sourceWorkerId = 1;
-    topology->registerTopologyNode(sourceWorkerId, "localhost", grpcPort, dataPort, 8, properties);
+    topology->registerWorker(sourceWorkerId, "localhost", grpcPort, dataPort, 8, properties, 0, 0);
 
     grpcPort++;
     dataPort++;
     int destinationWorkerId = 2;
-    topology->registerTopologyNode(destinationWorkerId, "localhost", grpcPort, dataPort, 8, properties);
+    topology->registerWorker(destinationWorkerId, "localhost", grpcPort, dataPort, 8, properties, 0, 0);
 
     topology->addTopologyNodeAsChild(destinationWorkerId, sourceWorkerId);
 
@@ -126,12 +126,12 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
 
     // create src and dst nodes
     int sourceWorkerId = 1;
-    topology->registerTopologyNode(sourceWorkerId, "localhost", grpcPort, dataPort, 8, properties);
+    topology->registerWorker(sourceWorkerId, "localhost", grpcPort, dataPort, 8, properties, 0, 0);
 
     grpcPort++;
     dataPort++;
     int destinationWorkerId = 2;
-    topology->registerTopologyNode(destinationWorkerId, "localhost", grpcPort, dataPort, 8, properties);
+    topology->registerWorker(destinationWorkerId, "localhost", grpcPort, dataPort, 8, properties, 0, 0);
     topology->addTopologyNodeAsChild(destinationWorkerId, sourceWorkerId);
     topology->addLinkProperty(destinationWorkerId, sourceWorkerId, 512, 100);
 

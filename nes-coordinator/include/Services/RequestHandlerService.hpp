@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COORDINATOR_INCLUDE_SERVICES_QUERYSERVICE_HPP_
-#define NES_COORDINATOR_INCLUDE_SERVICES_QUERYSERVICE_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_
+#define NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers.hpp>
@@ -41,12 +41,6 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
-class RequestQueue;
-using RequestQueuePtr = std::shared_ptr<RequestQueue>;
-
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
@@ -62,11 +56,20 @@ namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
+
+namespace Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Query
 }// namespace Catalogs
 
 namespace RequestProcessor {
 class AsyncRequestProcessor;
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
+
+class ISQPEvent;
+using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
+
 }// namespace RequestProcessor
 
 /**
@@ -76,12 +79,10 @@ using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 class RequestHandlerService {
 
   public:
-    explicit RequestHandlerService(bool enableNewRequestExecutor,
-                                   Configurations::OptimizerConfiguration optimizerConfiguration,
-                                   const QueryCatalogServicePtr& queryCatalogService,
-                                   const RequestQueuePtr& queryRequestQueue,
-                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+    explicit RequestHandlerService(Configurations::OptimizerConfiguration optimizerConfiguration,
                                    const QueryParsingServicePtr& queryParsingService,
+                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                    const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
                                    const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                                    const z3::ContextPtr& z3Context);
@@ -98,14 +99,11 @@ class RequestHandlerService {
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryString : queryIdAndCatalogEntryMapping in string format
      * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategy : Name of the placement strategy
      * @return query id
      */
-    QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
-                                            const QueryPlanPtr& queryPlan,
-                                            const Optimizer::PlacementStrategy placementStrategy);
+    QueryId validateAndQueueAddQueryRequest(const QueryPlanPtr& queryPlan, const Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -148,8 +146,15 @@ class RequestHandlerService {
      * @param addedLinks a list or topology links to add
      * @return true on success
      */
-    bool validateAndQueueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                               const std::vector<TopologyLinkInformation>& addedLinks);
+    bool queueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
+                                    const std::vector<TopologyLinkInformation>& addedLinks);
+
+    /**
+     * @brief Process multiple query and topology change request represented by isqp events in a batch
+     * @param isqpEvents a vector of ISQP requests to be handled
+     * @return true on success
+     */
+    bool queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents);
 
   private:
     /**
@@ -158,17 +163,15 @@ class RequestHandlerService {
      */
     void assignOperatorIds(QueryPlanPtr queryPlan);
 
-    bool enableNewRequestExecutor;
     Configurations::OptimizerConfiguration optimizerConfiguration;
-    QueryCatalogServicePtr queryCatalogService;
-    RequestQueuePtr queryRequestQueue;
+    QueryParsingServicePtr queryParsingService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     NES::RequestProcessor::AsyncRequestProcessorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
-    QueryParsingServicePtr queryParsingService;
 };
 
 }// namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_SERVICES_QUERYSERVICE_HPP_
+#endif// NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_

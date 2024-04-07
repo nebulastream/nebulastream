@@ -27,11 +27,13 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
+
+namespace Catalogs::Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Catalogs::Query
 
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
@@ -40,10 +42,11 @@ class MonitoringService {
   public:
     MonitoringService(TopologyPtr topology,
                       RequestHandlerServicePtr requestHandlerService,
-                      QueryCatalogServicePtr catalogService);
+                      Catalogs::Query::QueryCatalogPtr queryCatalog);
+
     MonitoringService(TopologyPtr topology,
                       RequestHandlerServicePtr requestHandlerService,
-                      QueryCatalogServicePtr catalogService,
+                      Catalogs::Query::QueryCatalogPtr queryCatalog,
                       bool enableMonitoring);
 
     /**

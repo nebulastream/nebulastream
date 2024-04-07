@@ -47,7 +47,8 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
     if (!rootOperator->instanceOf<PhysicalOperators::AbstractScanOperator>()) {
         if (rootOperator->instanceOf<PhysicalOperators::PhysicalUnaryOperator>()) {
             auto binaryRoot = rootOperator->as<PhysicalOperators::PhysicalUnaryOperator>();
-            auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getInputSchema());
+            auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getStatisticId(),
+                                                                           binaryRoot->getInputSchema());
             pipeline->prependOperator(newScan);
         } else {
             throw QueryCompilationException("Pipeline root should be a unary operator but was:" + rootOperator->toString());
@@ -57,9 +58,10 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
     // insert emit buffer operator if necessary
     auto pipelineLeafOperators = rootOperator->getAllLeafNodes();
     for (const auto& leaf : pipelineLeafOperators) {
-        auto leafOperator = leaf->as<OperatorNode>();
+        auto leafOperator = leaf->as<Operator>();
         if (!leafOperator->instanceOf<PhysicalOperators::AbstractEmitOperator>()) {
-            auto emitOperator = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getOutputSchema());
+            auto emitOperator = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getStatisticId(),
+                                                                                leafOperator->getOutputSchema());
             leafOperator->addChild(emitOperator);
         }
     }

@@ -24,11 +24,8 @@
 
 namespace NES {
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
-
-class TopologyNode;
-using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
@@ -47,7 +44,9 @@ using PlacedDecomposedQueryPlans = std::map<SharedQueryId, std::map<DecomposedQu
 class ExecutionNode : public Node {
 
   public:
-    static ExecutionNodePtr createExecutionNode(TopologyNodePtr physicalNode);
+    static ExecutionNodePtr create(ExecutionNodeId executionNodeId);
+
+    explicit ExecutionNode(ExecutionNodeId executionNodeId);
 
     virtual ~ExecutionNode() = default;
 
@@ -58,18 +57,11 @@ class ExecutionNode : public Node {
     ExecutionNodeId getId() const;
 
     /**
-     * Get the nes node for the execution node.
-     * @return the nes node
-     */
-    TopologyNodePtr getTopologyNode();
-
-    /**
-     * Register a new decomposed query plan for the given shared query id
-     * @param sharedQueryId : the shared query id
+     * Register a new decomposed query plan
      * @param decomposedQueryPlan : the decomposed query plan
      * @return true if operation is successful
      */
-    bool registerNewDecomposedQueryPlan(SharedQueryId sharedQueryId, const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    bool registerDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     /**
      * Update decomposed query plans for the given shared query plan id
@@ -123,23 +115,10 @@ class ExecutionNode : public Node {
     PlacedDecomposedQueryPlans getAllQuerySubPlans();
 
     /**
-     * Get the resources occupied by the decomposed query plans for the input query id.
-     * @param sharedQueryId : the input shared query plan id
-     */
-    uint32_t getOccupiedResources(SharedQueryId sharedQueryId);
-
-    /**
      * @brief Get identifier of all shared query plans placed on the execution node
      * @return set of shared query plan ids
      */
-    std::set<SharedQueryId> getPlacedSharedQueryPlanIds();
-
-    /**
-     * @brief Get the amount of resources used by a specific sub plan
-     * @param decomposedQueryPlan The decomposed query plan
-     * @return the amount of resources
-     */
-    static uint32_t getOccupiedResourcesForDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    std::set<SharedQueryId> getPlacedSharedQueryPlanIds() const;
 
     bool equal(NodePtr const& rhs) const override;
 
@@ -148,18 +127,12 @@ class ExecutionNode : public Node {
     std::vector<std::string> toMultilineString() override;
 
   private:
-    explicit ExecutionNode(const TopologyNodePtr& physicalNode);
 
     /**
      * Execution node id.
      * Same as physical node id.
      */
-    const ExecutionNodeId id;
-
-    /**
-     * Physical Node information
-     */
-    const TopologyNodePtr topologyNode;
+    const ExecutionNodeId executionNodeId;
 
     /**
      * a map of placed decomposed query plans
@@ -169,4 +142,4 @@ class ExecutionNode : public Node {
 }// namespace Optimizer
 }// namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_

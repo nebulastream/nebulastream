@@ -22,10 +22,10 @@
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
-class JoinLogicalOperatorNode;
-using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class LogicalJoinOperator;
+using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 }// namespace NES
@@ -58,4 +58,4 @@ class DistributedMatrixJoinRule : public BaseRewriteRule {
     Configurations::OptimizerConfiguration configuration;
 };
 }// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_

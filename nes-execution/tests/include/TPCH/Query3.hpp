@@ -42,11 +42,11 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TPCH/PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
+#include <Util/TestTupleBuffer.hpp>
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;

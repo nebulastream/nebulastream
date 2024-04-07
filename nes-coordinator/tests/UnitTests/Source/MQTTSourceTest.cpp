@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <API/Query.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #ifdef ENABLE_MQTT_BUILD
+#include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -26,7 +29,7 @@
 #include <iostream>
 #include <string>
 
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -43,6 +46,10 @@
 
 #ifndef ORIGINID
 #define ORIGINID 1
+#endif
+
+#ifndef STATISTICID
+#define STATISTICID 1
 #endif
 
 #ifndef NUMSOURCELOCALBUFFERS
@@ -112,6 +119,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        mqttSourceType,
                                        OPERATORID,
                                        ORIGINID,
+                                       STATISTICID,
                                        NUMSOURCELOCALBUFFERS,
                                        PHYSICALSOURCENAME,
                                        SUCCESSORS);
@@ -137,6 +145,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        mqttSourceType,
                                        OPERATORID,
                                        ORIGINID,
+                                       STATISTICID,
                                        NUMSOURCELOCALBUFFERS,
                                        PHYSICALSOURCENAME,
                                        SUCCESSORS);
@@ -165,6 +174,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
                                        mqttSourceType,
                                        OPERATORID,
                                        ORIGINID,
+                                       STATISTICID,
                                        NUMSOURCELOCALBUFFERS,
                                        PHYSICALSOURCENAME,
                                        SUCCESSORS);
@@ -224,7 +234,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -232,11 +242,11 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -290,23 +300,27 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("iris")
-        .inferModel(")"
-        + std::filesystem::path(TEST_DATA_DIRECTORY) / R"(iris_95acc.tflite",
+    std::string query =
+        R"(Query::from("iris")
+            .inferModel()"
+        + (std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite").string() + R"(,
                 {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
-        .filter((Attribute("iris0") > Attribute("iris1") && Attribute("iris0") > Attribute("iris2") && Attribute("SpeciesCode") > 0) ||
+                {Attribute("iris0", BasicType::FLOAT32),
+                 Attribute("iris1", BasicType::FLOAT32),
+                 Attribute("iris2", BasicType::FLOAT32)})
+            .filter(
+                (Attribute("iris0") > Attribute("iris1") && Attribute("iris0") > Attribute("iris2") && Attribute("SpeciesCode") > 0 )||
                 (Attribute("iris1") > Attribute("iris0") && Attribute("iris1") > Attribute("iris2") && (Attribute("SpeciesCode") < 1 || Attribute("SpeciesCode") > 1)) ||
                 (Attribute("iris2") > Attribute("iris0") && Attribute("iris2") > Attribute("iris1") && Attribute("SpeciesCode") < 2), 0.1)
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(10);
 
     NES_INFO("\n\n --------- CONTENT --------- \n\n");
@@ -316,7 +330,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
-#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_MLHEURISTICSTRATEGY_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_MLHEURISTICSTRATEGY_HPP_
 
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <iostream>
@@ -42,10 +42,10 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     static const bool DEFAULT_LOW_THROUGHPUT_SOURCE = false;
     static const bool DEFAULT_ML_HARDWARE = false;
 
-    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                   DecomposedQueryPlanVersion querySubPlanVersion) override;
+    PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     /**
      * @brief creates an Object of this class through a static create function
@@ -66,20 +66,20 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
                                  PlacementAmendmentMode placementAmendmentMode);
 
     void performOperatorPlacement(SharedQueryId sharedQueryId,
-                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+                                  const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     void identifyPinningLocation(SharedQueryId sharedQueryId,
-                                 const LogicalOperatorNodePtr& logicalOperator,
+                                 const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
 
     /**
      * @brief checks if the ratio of #sink_fields/#source_fields > 1/product of all selectivities
      * @param operatorNode
      * @return
      */
-    bool pushUpBasedOnFilterSelectivity(const LogicalOperatorNodePtr& operatorNode);
+    bool pushUpBasedOnFilterSelectivity(const LogicalOperatorPtr& operatorNode);
 
     /**
      * @brief removes redundant operators
@@ -89,4 +89,4 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_MLHEURISTICSTRATEGY_HPP_

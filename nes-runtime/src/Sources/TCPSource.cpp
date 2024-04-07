@@ -41,6 +41,7 @@ TCPSource::TCPSource(SchemaPtr schema,
                      TCPSourceTypePtr tcpSourceType,
                      OperatorId operatorId,
                      OriginId originId,
+                     StatisticId statisticId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      const std::string& physicalSourceName,
@@ -50,6 +51,7 @@ TCPSource::TCPSource(SchemaPtr schema,
                  std::move(queryManager),
                  operatorId,
                  originId,
+                 statisticId,
                  numSourceLocalBuffers,
                  gatheringMode,
                  physicalSourceName,
@@ -143,7 +145,7 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     return tupleBuffer.getBuffer();
 }
 
-bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
+bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();

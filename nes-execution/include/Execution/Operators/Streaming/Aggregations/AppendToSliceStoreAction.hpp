@@ -16,7 +16,10 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <memory>
 namespace NES::Runtime::Execution::Operators {
 class MultiOriginWatermarkProcessor;
@@ -35,14 +38,14 @@ class AppendToSliceStoreHandler : public OperatorHandler {
     void appendToGlobalSliceStore(std::unique_ptr<Slice> slice);
     void triggerSlidingWindows(Runtime::WorkerContext& wctx,
                                Runtime::Execution::PipelineExecutionContext& ctx,
-                               uint64_t sequenceNumber,
+                               SequenceData sequenceNumber,
                                uint64_t slideEnd);
 
   private:
     std::unique_ptr<SlidingWindowSliceStore<Slice>> sliceStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::atomic<uint64_t> lastTriggerWatermark = 0;
-    std::atomic<uint64_t> resultSequenceNumber = 1;
+    std::atomic<uint64_t> resultSequenceNumber = TupleBuffer::INITIAL_SEQUENCE_NUMBER;
     std::mutex triggerMutex;
 };
 
@@ -60,6 +63,8 @@ class AppendToSliceStoreAction : public SliceMergingAction {
                    Value<UInt64>& windowStart,
                    Value<UInt64>& windowEnd,
                    Value<UInt64>& sequenceNumber,
+                   Value<UInt64>& chunkNumber,
+                   Value<Boolean>& lastChunk,
                    Value<MemRef>& globalSlice) const override;
 
   private:

@@ -54,10 +54,10 @@ class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
 
     /* Generates an input buffer for each source schema, using the inputDataGenerators, creates a source and emits the 
        buffer using the newly created source. */
-    void generateAndEmitInputBuffers(
-        const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
-        const std::vector<SchemaPtr>& sourceSchemas,
-        std::vector<std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&)>> inputDataGenerators) {
+    void
+    generateAndEmitInputBuffers(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
+                                const std::vector<SchemaPtr>& sourceSchemas,
+                                std::vector<std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&)>> inputDataGenerators) {
         // Make sure that each source schema has one corresponding input data generator.
         EXPECT_EQ(sourceSchemas.size(), inputDataGenerators.size());
 
@@ -84,13 +84,13 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==-------- SETUP TEST PARAMETERS --------==//
     //==---------------------------------------==//
     constexpr uint64_t numInputRecords = 13;
-    constexpr uint64_t numResultRecords = 12;
+    constexpr uint64_t numResultRecords = 11;
     constexpr uint64_t timeoutInMilliseconds = 2000;
     constexpr uint64_t milliSecondsToHours = 3600000;
 
     // Define the input data generator functions.
-    std::function<void(Runtime::MemoryLayouts::DynamicTupleBuffer&)> windTurbineDataGenerator;
-    windTurbineDataGenerator = [](Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+    std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&)> windTurbineDataGenerator;
+    windTurbineDataGenerator = [](Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
         for (size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx) {
             buffer[recordIdx][0].write<int64_t>(1);
             buffer[recordIdx][1].write<int64_t>(recordIdx);
@@ -161,8 +161,10 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==-------------------------------------------------------==//
     //==-------- GENERATE INPUT DATA AND RUN THE QUERY --------==//
     //==-------------------------------------------------------==//
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     generateAndEmitInputBuffers(plan,
                                 {producerSchema, producerSchema, consumerSchema},

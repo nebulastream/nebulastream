@@ -17,18 +17,18 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalLimitOperator::PhysicalLimitOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), limit(limit) {}
+PhysicalLimitOperator::PhysicalLimitOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit)
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)), limit(limit) {}
 
 PhysicalOperatorPtr
-PhysicalLimitOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit) {
-    return std::make_shared<PhysicalLimitOperator>(id, inputSchema, outputSchema, limit);
+PhysicalLimitOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit) {
+    return std::make_shared<PhysicalLimitOperator>(id, statisticId, inputSchema, outputSchema, limit);
 }
 
 uint64_t PhysicalLimitOperator::getLimit() { return limit; }
 
-PhysicalOperatorPtr PhysicalLimitOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit) {
-    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), limit);
+PhysicalOperatorPtr PhysicalLimitOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit) {
+    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), limit);
 }
 
 std::string PhysicalLimitOperator::toString() const {
@@ -41,6 +41,6 @@ std::string PhysicalLimitOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalLimitOperator::copy() { return create(id, inputSchema, outputSchema, limit); }
+OperatorPtr PhysicalLimitOperator::copy() { return create(id, statisticId, inputSchema, outputSchema, limit); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

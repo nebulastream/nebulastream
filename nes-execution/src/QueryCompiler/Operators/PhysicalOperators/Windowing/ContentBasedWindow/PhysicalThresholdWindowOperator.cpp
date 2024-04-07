@@ -20,19 +20,23 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalThresholdWindowOperator::PhysicalThresholdWindowOperator(OperatorId id,
+                                                                 StatisticId statisticId,
                                                                  SchemaPtr inputSchema,
                                                                  SchemaPtr outputSchema,
-                                                                 Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+                                                                 Windowing::LogicalWindowDescriptorPtr windowDefinition)
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       windowDefinition(std::move(windowDefinition)) {}
+
 std::shared_ptr<PhysicalThresholdWindowOperator>
-PhysicalThresholdWindowOperator::create(SchemaPtr inputSchema,
+PhysicalThresholdWindowOperator::create(StatisticId statisticId,
+                                        SchemaPtr inputSchema,
                                         SchemaPtr outputSchema,
-                                        Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
+                                        Windowing::LogicalWindowDescriptorPtr windowDefinition) {
+    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), statisticId,
+                                                             inputSchema, outputSchema, windowDefinition);
 }
 
-Windowing::LogicalWindowDefinitionPtr PhysicalThresholdWindowOperator::getWindowDefinition() { return windowDefinition; }
+Windowing::LogicalWindowDescriptorPtr PhysicalThresholdWindowOperator::getWindowDefinition() { return windowDefinition; }
 
 std::string PhysicalThresholdWindowOperator::toString() const {
     std::stringstream out;
@@ -42,6 +46,6 @@ std::string PhysicalThresholdWindowOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalThresholdWindowOperator::copy() { return create(inputSchema, outputSchema, windowDefinition); }
+OperatorPtr PhysicalThresholdWindowOperator::copy() { return create(statisticId, inputSchema, outputSchema, windowDefinition); }
 
 }//namespace NES::QueryCompilation::PhysicalOperators

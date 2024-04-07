@@ -24,8 +24,8 @@ namespace NES::Runtime::Execution {
 
 ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext,
                                    const Value<NES::Nautilus::MemRef>& pipelineContext)
-    : workerContext(workerContext), pipelineContext(pipelineContext), origin(0_u64), watermarkTs(0_u64), currentTs(0_u64),
-      sequenceNumber(0_u64) {}
+    : workerContext(workerContext), pipelineContext(pipelineContext), origin(0_u64), statisticId(INVALID_STATISTIC_ID),
+      watermarkTs(0_u64), currentTs(0_u64), sequenceNumber(0_u64), chunkNumber(0_u64), lastChunk(true) {}
 
 void* allocateBufferProxy(void* workerContextPtr) {
     if (workerContextPtr == nullptr) {
@@ -50,6 +50,8 @@ void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
     auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto workerCtx = static_cast<WorkerContext*>(wc);
+
+    NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceData().toString());
 
     /* We have to emit all buffer, regardless of their number of tuples. This is due to the fact, that we expect all
      * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
@@ -115,10 +117,64 @@ void ExecutionContext::setSequenceNumber(Value<UInt64> sequenceNumber) { this->s
 
 const Value<UInt64>& ExecutionContext::getOriginId() const { return origin; }
 
+const Value<UInt64>& ExecutionContext::getCurrentStatisticId() const { return statisticId; }
+
 void ExecutionContext::setOrigin(Value<UInt64> origin) { this->origin = origin; }
+
+void ExecutionContext::setCurrentStatisticId(Value<UInt64> statisticId) { this->statisticId = statisticId; }
 
 const Value<UInt64>& ExecutionContext::getCurrentTs() const { return currentTs; }
 
 void ExecutionContext::setCurrentTs(Value<UInt64> currentTs) { this->currentTs = currentTs; }
+
+const Value<UInt64>& ExecutionContext::getChunkNumber() const { return chunkNumber; }
+
+void ExecutionContext::setChunkNumber(Value<UInt64> chunkNumber) { this->chunkNumber = chunkNumber; }
+
+const Value<Boolean>& ExecutionContext::getLastChunk() const { return lastChunk; }
+
+void ExecutionContext::setLastChunk(Value<Boolean> lastChunk) { this->lastChunk = lastChunk; }
+
+uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, OriginId originId, SequenceNumber sequenceNumber) {
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    return pipelineCtx->getNextChunkNumber({sequenceNumber, originId});
+}
+
+bool isLastChunkProxy(void* ptrPipelineCtx, OriginId originId, SequenceNumber sequenceNumber, ChunkNumber chunkNumber,
+                      bool isLastChunk) {
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    return pipelineCtx->isLastChunk({sequenceNumber, originId}, chunkNumber, isLastChunk);
+}
+
+void removeSequenceStateProxy(void* ptrPipelineCtx, OriginId originId, SequenceNumber sequenceNumber) {
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    pipelineCtx->removeSequenceState({sequenceNumber, originId});
+}
+
+Value<Boolean> ExecutionContext::isLastChunk() const {
+    return Nautilus::FunctionCall("isLastChunkProxy", isLastChunkProxy,
+                                  this->getPipelineContext(),
+                                  this->getOriginId(),
+                                  this->getSequenceNumber(),
+                                  this->getChunkNumber(),
+                                  this->getLastChunk());
+}
+
+Value<UInt64> ExecutionContext::getNextChunkNr() const {
+    return Nautilus::FunctionCall("getNextChunkNumberProxy", getNextChunkNumberProxy,
+                                  this->getPipelineContext(),
+                                  this->getOriginId(),
+                                  this->getSequenceNumber());
+}
+
+void ExecutionContext::removeSequenceState() const {
+    Nautilus::FunctionCall("removeSequenceStateProxy", removeSequenceStateProxy,
+                           this->getPipelineContext(),
+                           this->getOriginId(),
+                           this->getSequenceNumber());
+}
 
 }// namespace NES::Runtime::Execution

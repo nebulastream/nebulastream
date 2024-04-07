@@ -14,7 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -93,7 +93,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
                      .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
+
                                   .addLogicalSource("QnV1", schema)
                                   .attachWorkerWithCSVSourceToCoordinator(srcConf1);
 
@@ -112,7 +112,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers =
         TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -137,7 +137,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
                      .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
+
                                   .addLogicalSource("QnV1", schema)
                                   .attachWorkerWithCSVSourceToCoordinator(srcConf1)
                                   .validate()
@@ -158,7 +158,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers =
         TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -182,7 +182,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
                      .project(Attribute("timestamp"), Attribute("NewVelocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
+
                                   .addLogicalSource("QnV1", schema)
                                   .attachWorkerWithCSVSourceToCoordinator(srcConf1)
                                   .validate()
@@ -203,7 +203,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers =
         TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 

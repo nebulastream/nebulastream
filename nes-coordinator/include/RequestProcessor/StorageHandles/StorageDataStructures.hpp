@@ -22,8 +22,10 @@ namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+namespace Catalogs::Query {
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+}// namespace Catalogs::Query
 
 namespace Catalogs::Source {
 class SourceCatalog;
@@ -56,16 +58,17 @@ struct StorageDataStructures {
     StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                           TopologyPtr topology,
                           Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                          QueryCatalogServicePtr queryCatalogService,
                           GlobalQueryPlanPtr globalQueryPlan,
+                          Catalogs::Query::QueryCatalogPtr queryCatalog,
                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
                           Catalogs::UDF::UDFCatalogPtr udfCatalog);
+
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
-    QueryCatalogServicePtr queryCatalogService;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 }// namespace RequestProcessor

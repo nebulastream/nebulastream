@@ -30,7 +30,9 @@ uint64_t getNextPipelineId() {
 }
 
 OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
-    : id(pipelineId), decomposedQueryPlan(DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID)),
+    : id(pipelineId),
+      decomposedQueryPlan(
+          DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID, INVALID_SHARED_QUERY_ID, INVALID_WORKER_NODE_ID)),
       pipelineType(pipelineType) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {
@@ -109,7 +111,7 @@ void OperatorPipeline::clearSuccessors() {
 
 std::vector<OperatorPipelinePtr> const& OperatorPipeline::getSuccessors() const { return successorPipelines; }
 
-void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
+void OperatorPipeline::prependOperator(OperatorPtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
     }
@@ -134,7 +136,7 @@ std::string OperatorPipeline::toString() const {
                                              return result.empty() ? succPipelineId : result + ", " + succPipelineId;
                                          });
 
-    auto predeccesorsStr =
+    auto predecessorsStr =
         std::accumulate(predecessorPipelines.begin(),
                         predecessorPipelines.end(),
                         std::string(),
@@ -145,8 +147,8 @@ std::string OperatorPipeline::toString() const {
 
     std::ostringstream oss;
     oss << "- Id: " << id << ", Type: " << magic_enum::enum_name(pipelineType) << ", Successors: " << successorsStr
-        << ", Predecessors: " << predeccesorsStr << std::endl
-        << "- Queryplan: " << decomposedQueryPlan->toString();
+        << ", Predecessors: " << predecessorsStr << std::endl
+        << "- QueryPlan: " << decomposedQueryPlan->toString();
 
     return oss.str();
 }

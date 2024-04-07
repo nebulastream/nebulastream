@@ -106,6 +106,7 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
                                          kafkaSourceType,
                                          OPERATORID,
                                          OPERATORID,
+                                         INVALID_STATISTIC_ID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
                                          "defaultPhysicalStreamName",
@@ -131,6 +132,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          kafkaSourceType,
                                          OPERATORID,
                                          OPERATORID,
+                                         INVALID_STATISTIC_ID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
                                          "defaultPhysicalStreamName",
@@ -255,6 +257,7 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                          "earliest",
                                          OPERATORID,
                                          OPERATORID,
+                                         INVALID_STATISTIC_ID,
                                          NUMSOURCELOCALBUFFERS,
                                          1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
@@ -325,7 +328,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     NES_INFO("KAFKASOURCETEST: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("KAFKASOURCETEST: Submit query");
@@ -333,11 +336,11 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
         R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" + outputFilePath + R"("));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("KAFKASOURCETEST: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -406,7 +409,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -414,11 +417,11 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

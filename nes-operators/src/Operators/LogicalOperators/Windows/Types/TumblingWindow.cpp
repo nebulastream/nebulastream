@@ -33,7 +33,7 @@ TimeMeasure TumblingWindow::getSize() { return size; }
 
 TimeMeasure TumblingWindow::getSlide() { return getSize(); }
 
-std::string TumblingWindow::toString() {
+std::string TumblingWindow::toString() const {
     std::stringstream ss;
     ss << "TumblingWindow: size=" << size.getTime();
     ss << " timeCharacteristic=" << timeCharacteristic->toString();
@@ -47,5 +47,12 @@ bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
             && this->timeCharacteristic->equals(*otherTumblingWindow->timeCharacteristic);
     }
     return false;
+}
+
+uint64_t TumblingWindow::hash() const {
+    uint64_t hashValue=0;
+    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
+    hashValue=hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
+    return hashValue;
 }
 }// namespace NES::Windowing

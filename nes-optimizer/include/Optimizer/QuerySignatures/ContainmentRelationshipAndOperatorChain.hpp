@@ -20,8 +20,8 @@
 
 namespace NES {
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 namespace Optimizer {
 
@@ -40,14 +40,14 @@ class ContainmentRelationshipAndOperatorChain {
 
   public:
     static ContainmentRelationshipAndOperatorChainPtr create(ContainmentRelationship containmentRelationship,
-                                                             std::vector<LogicalOperatorNodePtr> containedOperatorChain);
+                                                             std::vector<LogicalOperatorPtr> containedOperatorChain);
 
     ContainmentRelationship containmentRelationship;
-    std::vector<LogicalOperatorNodePtr> containedOperatorChain;
+    std::vector<LogicalOperatorPtr> containedOperatorChain;
 
   private:
     explicit ContainmentRelationshipAndOperatorChain(ContainmentRelationship containmentRelationship,
-                                                     std::vector<LogicalOperatorNodePtr> containedOperatorChain);
+                                                     std::vector<LogicalOperatorPtr> containedOperatorChain);
 };
 }// namespace Optimizer
 }// namespace NES

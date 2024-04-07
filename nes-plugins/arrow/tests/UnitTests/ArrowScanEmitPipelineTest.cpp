@@ -22,12 +22,12 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
@@ -114,8 +114,8 @@ TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
     ASSERT_EQ(pipelineContext.buffers.size(), 4);
     auto resultBuffer = pipelineContext.buffers[0];
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
-    ASSERT_EQ(resultDynamicBuffer.getNumberOfTuples(), 8);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    ASSERT_EQ(resulttestBuffer.getNumberOfTuples(), 8);
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

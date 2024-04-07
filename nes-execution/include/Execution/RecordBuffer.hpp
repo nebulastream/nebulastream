@@ -74,11 +74,24 @@ class RecordBuffer {
     Value<UInt64> getOriginId();
 
     /**
+     * @brief Get the statistic ID of the underlying tuple buffer.
+     * @return Value<UInt64> containing the statistic ID of the tuple buffer.
+     */
+    Value<UInt64> getStatisticId();
+
+    /**
      * @brief Set the origin ID of the underlying tuple buffer.
      * @param originId Value<UInt64> containing the origin ID to set for the
      * tuple buffer.
      */
     void setOriginId(const Value<UInt64>& originId);
+
+    /**
+     * @brief Set the origin ID of the underlying tuple buffer.
+     * @param originId Value<UInt64> containing the origin ID to set for the
+     * tuple buffer.
+     */
+    void setStatisticId(const Value<UInt64>& statisticId);
 
     /**
      * @brief Get the sequence number of the underlying tuple buffer.
@@ -93,6 +106,30 @@ class RecordBuffer {
      * tuple buffer.
      */
     void setSequenceNr(const Value<UInt64>& seqNumber);
+
+    /**
+     * @brief Sets the chunk number for the tuple buffer
+     * @param chunkNumber
+     */
+    void setChunkNr(const Value<UInt64>& chunkNumber);
+
+    /**
+     * @brief Gets the chunk number of the underlying tuple buffer
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getChunkNr();
+
+    /**
+     * @brief Sets the last chunk for the tuple buffer
+     * @param chunkNumber
+     */
+    void setLastChunk(const Value<Boolean>& isLastChunk);
+
+    /**
+     * @brief Gets if this is the last chunk for a sequence number
+     * @return Value<Boolean>
+     */
+    Value<Boolean> isLastChunk();
 
     /**
      * @brief Get the watermark timestamp of the underlying tuple buffer.

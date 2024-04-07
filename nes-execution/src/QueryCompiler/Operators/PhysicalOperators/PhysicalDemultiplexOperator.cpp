@@ -16,15 +16,15 @@
 #include <utility>
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, const SchemaPtr& inputSchema) {
-    return std::make_shared<PhysicalDemultiplexOperator>(id, inputSchema);
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema) {
+    return std::make_shared<PhysicalDemultiplexOperator>(id, statisticId, inputSchema);
 }
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(SchemaPtr inputSchema) {
-    return create(getNextOperatorId(), std::move(inputSchema));
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(StatisticId statisticId, SchemaPtr inputSchema) {
+    return create(getNextOperatorId(), statisticId, std::move(inputSchema));
 }
 
-PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const SchemaPtr& inputSchema)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
+PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema) {}
 
 std::string PhysicalDemultiplexOperator::toString() const {
     std::stringstream out;
@@ -34,6 +34,6 @@ std::string PhysicalDemultiplexOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalDemultiplexOperator::copy() { return create(id, inputSchema); }
+OperatorPtr PhysicalDemultiplexOperator::copy() { return create(id, statisticId, inputSchema); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

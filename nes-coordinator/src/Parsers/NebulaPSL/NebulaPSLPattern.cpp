@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLOperator.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLPattern.hpp>
 
 namespace NES::Parsers {
@@ -20,8 +20,8 @@ namespace NES::Parsers {
 //Getter and Setter for the map/list entries of each clause
 const std::map<int32_t, std::string>& NebulaPSLPattern::getSources() const { return this->sourceList; }
 void NebulaPSLPattern::setSources(const std::map<int32_t, std::string>& sources) { this->sourceList = sources; }
-const std::map<int32_t, NebulaPSLOperatorNode>& NebulaPSLPattern::getOperatorList() const { return this->operatorList; }
-void NebulaPSLPattern::setOperatorList(const std::map<int32_t, NebulaPSLOperatorNode>& operatorList) {
+const std::map<int32_t, NebulaPSLOperator>& NebulaPSLPattern::getOperatorList() const { return this->operatorList; }
+void NebulaPSLPattern::setOperatorList(const std::map<int32_t, NebulaPSLOperator>& operatorList) {
     this->operatorList = operatorList;
 }
 const std::list<ExpressionNodePtr>& NebulaPSLPattern::getExpressions() const { return this->expressionList; }
@@ -43,7 +43,7 @@ void NebulaPSLPattern::addExpression(ExpressionNodePtr expressionNode) {
 }
 void NebulaPSLPattern::addSink(SinkDescriptorPtr sinkDescriptor) { this->sinkList.push_back(sinkDescriptor); }
 void NebulaPSLPattern::addProjectionField(ExpressionNodePtr expressionNode) { this->projectionFields.push_back(expressionNode); }
-void NebulaPSLPattern::addOperatorNode(NebulaPSLOperatorNode operatorNode) {
-    this->operatorList.insert(std::pair<uint32_t, NebulaPSLOperatorNode>(operatorNode.getId(), operatorNode));
+void NebulaPSLPattern::addOperator(NebulaPSLOperator operatorNode) {
+    this->operatorList.insert(std::pair<uint32_t, NebulaPSLOperator>(operatorNode.getId(), operatorNode));
 }
 }// namespace NES::Parsers

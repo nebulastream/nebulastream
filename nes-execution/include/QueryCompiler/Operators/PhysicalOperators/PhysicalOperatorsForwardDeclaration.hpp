@@ -17,8 +17,8 @@
 namespace NES {
 
 namespace Join {
-class LogicalJoinDefinition;
-using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
+class LogicalJoinDescriptor;
+using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
@@ -31,8 +31,8 @@ using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
 
 namespace Windowing {
 
-class LogicalWindowDefinition;
-using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
+class LogicalWindowDescriptor;
+using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 
 class WindowOperatorHandler;
 using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;

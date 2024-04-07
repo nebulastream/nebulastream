@@ -16,9 +16,9 @@
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -28,12 +28,18 @@
 
 namespace NES::Optimizer {
 
-ExecutionNode::ExecutionNode(const TopologyNodePtr& physicalNode) : id(physicalNode->getId()), topologyNode(physicalNode) {}
+ExecutionNodePtr ExecutionNode::create(ExecutionNodeId executionNodeId) {
+    return std::make_shared<ExecutionNode>(executionNodeId);
+}
 
-bool ExecutionNode::registerNewDecomposedQueryPlan(SharedQueryId sharedQueryId,
-                                                   const DecomposedQueryPlanPtr& decomposedQueryPlan) {
-    NES_DEBUG("Adding a new sub query plan to the collection for the shared query plan with id {}", sharedQueryId);
-    DecomposedQueryPlanId decomposedQueryId = decomposedQueryPlan->getDecomposedQueryPlanId();
+ExecutionNode::ExecutionNode(ExecutionNodeId executionNodeId) : executionNodeId(executionNodeId) {}
+
+bool ExecutionNode::registerDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+    auto sharedQueryId = decomposedQueryPlan->getSharedQueryId();
+    auto decomposedQueryId = decomposedQueryPlan->getDecomposedQueryPlanId();
+    NES_DEBUG("Adding a new decomposed query plan with id {} to the collection for the shared query plan with id {}",
+              decomposedQueryId,
+              sharedQueryId);
     mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId][decomposedQueryId] = decomposedQueryPlan;
     return true;
 }
@@ -43,8 +49,9 @@ void ExecutionNode::updateDecomposedQueryPlans(NES::SharedQueryId sharedQueryId,
     NES_DEBUG("ExecutionNode: Updating the decomposed query plan with id :{} to the collection of query sub plans",
               sharedQueryId);
     for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
+        auto copiedDecomposedPlan = decomposedQueryPlan->copy();
         mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId][decomposedQueryPlan->getDecomposedQueryPlanId()] =
-            decomposedQueryPlan->copy();
+            copiedDecomposedPlan;
     }
     NES_DEBUG("ExecutionNode: Updated the decomposed query plan with id : {} to the collection of query sub plans",
               sharedQueryId);
@@ -58,22 +65,24 @@ std::vector<DecomposedQueryPlanPtr> ExecutionNode::getAllDecomposedQueryPlans(Sh
         for (const auto& [decomposedQueryPlanId, decomposedQueryPlan] : decomposedQueryPlanMap) {
             decomposedQueryPlans.emplace_back(decomposedQueryPlan);
         }
+        return decomposedQueryPlans;
     }
-    NES_WARNING("ExecutionNode : Unable to find shared query plan with id {}", sharedQueryId);
+    NES_ERROR("ExecutionNode : Unable to find shared query plan with id {}", sharedQueryId);
     return decomposedQueryPlans;
 }
 
 DecomposedQueryPlanPtr ExecutionNode::getDecomposedQueryPlan(SharedQueryId sharedQueryId,
-                                                                   DecomposedQueryPlanId decomposedQueryPlanId) const {
+                                                             DecomposedQueryPlanId decomposedQueryPlanId) const {
     if (mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId)) {
         NES_DEBUG("ExecutionNode : Found shared query plan with id  {}", sharedQueryId);
         auto decomposedQueryPlanMap = mapOfSharedQueryToDecomposedQueryPlans.at(sharedQueryId);
         if (decomposedQueryPlanMap.contains(decomposedQueryPlanId)) {
             return decomposedQueryPlanMap[decomposedQueryPlanId];
         }
-        NES_WARNING("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryPlanId);
+        NES_ERROR("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryPlanId);
+        return nullptr;
     }
-    NES_WARNING("ExecutionNode: Unable to find shared query plan with id {}", sharedQueryId);
+    NES_ERROR("ExecutionNode: Unable to find shared query plan with id {}", sharedQueryId);
     return nullptr;
 }
 
@@ -108,82 +117,13 @@ bool ExecutionNode::removeDecomposedQueryPlan(SharedQueryId sharedQueryId, Decom
     return false;
 }
 
-uint32_t ExecutionNode::getOccupiedResources(SharedQueryId SharedQueryId) {
+std::string ExecutionNode::toString() const { return "ExecutionNode(id:" + std::to_string(executionNodeId) + ")"; }
 
-    // In this method we iterate from the root operators to all their child operator within a query sub plan
-    // and count the amount of resources occupied by them. While iterating the operator trees, we keep a list
-    // of visited operators so that we count each visited operator only once.
-
-    std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans = getAllDecomposedQueryPlans(SharedQueryId);
-    uint32_t occupiedResources = 0;
-    for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
-        NES_DEBUG("ExecutionNode : calculate the number of resources occupied by the query sub plan and release them");
-        occupiedResources += getOccupiedResourcesForDecomposedQueryPlan(decomposedQueryPlan);
-        NES_INFO("ExecutionNode: Releasing {} CPU resources from the node with id {}", occupiedResources, id);
-    }
-    return occupiedResources;
-}
-
-uint32_t ExecutionNode::getOccupiedResourcesForDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
-    uint32_t occupiedResources = 0;
-    auto roots = decomposedQueryPlan->getRootOperators();
-    // vector keeping track of already visited nodes.
-    std::set<uint64_t> visitedOpIds;
-    NES_DEBUG("ExecutionNode : Iterate over all root nodes in the query sub graph to calculate occupied resources");
-    for (const auto& root : roots) {
-        NES_DEBUG("ExecutionNode : Iterate the root node using BFS");
-        auto bfsIterator = BreadthFirstNodeIterator(root);
-        //for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
-        for (auto itr : bfsIterator) {
-            auto visitingOp = (*itr).as<OperatorNode>();
-            if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
-                NES_TRACE("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
-                break;
-            }
-            // If the visiting operator is not a system operator then count the resource and add it to the visited operator list.
-            if (visitingOp->instanceOf<SourceLogicalOperatorNode>()) {
-                auto srcOperator = visitingOp->as<SourceLogicalOperatorNode>();
-                if (!srcOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
-                    // increase the resource count
-                    occupiedResources++;
-                    // add operator id to the already visited operator id collection
-                    visitedOpIds.insert(visitingOp->getId());
-                }
-            } else if (visitingOp->instanceOf<SinkLogicalOperatorNode>()) {
-                auto sinkOperator = visitingOp->as<SinkLogicalOperatorNode>();
-                if (!sinkOperator->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
-                    // increase the resource count
-                    occupiedResources++;
-                    // add operator id to the already visited operator id collection
-                    visitedOpIds.insert(visitingOp->getId());
-                }
-            } else {
-                // increase the resource count
-                occupiedResources++;
-                // add operator id to the already visited operator id collection
-                visitedOpIds.insert(visitingOp->getId());
-            }
-        }
-    }
-    return occupiedResources;
-}
-
-std::string ExecutionNode::toString() const {
-    return "ExecutionNode(id:" + std::to_string(id) + ", ip:" + topologyNode->getIpAddress()
-        + ", topologyId:" + std::to_string(topologyNode->getId()) + ")";
-}
-
-ExecutionNodePtr ExecutionNode::createExecutionNode(TopologyNodePtr physicalNode) {
-    return std::make_shared<ExecutionNode>(ExecutionNode(physicalNode));
-}
-
-uint64_t ExecutionNode::getId() const { return id; }
-
-TopologyNodePtr ExecutionNode::getTopologyNode() { return topologyNode; }
+uint64_t ExecutionNode::getId() const { return executionNodeId; }
 
 PlacedDecomposedQueryPlans ExecutionNode::getAllQuerySubPlans() { return mapOfSharedQueryToDecomposedQueryPlans; }
 
-bool ExecutionNode::equal(NodePtr const& rhs) const { return rhs->as<ExecutionNode>()->getId() == id; }
+bool ExecutionNode::equal(NodePtr const& rhs) const { return rhs->as<ExecutionNode>()->getId() == executionNodeId; }
 
 std::vector<std::string> ExecutionNode::toMultilineString() {
     std::vector<std::string> lines;
@@ -211,7 +151,7 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
     return lines;
 }
 
-std::set<SharedQueryId> ExecutionNode::getPlacedSharedQueryPlanIds() {
+std::set<SharedQueryId> ExecutionNode::getPlacedSharedQueryPlanIds() const {
 
     //iterate over all placed plans to fetch the shared query plan ids
     std::set<SharedQueryId> sharedQueryIds;

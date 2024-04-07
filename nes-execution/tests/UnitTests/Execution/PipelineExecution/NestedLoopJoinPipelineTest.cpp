@@ -28,14 +28,13 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <string>
 
 namespace NES::Runtime::Execution {
@@ -169,8 +168,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                                                               joinFieldNameLeft,
                                                               joinFieldNameRight,
                                                               windowMetaData,
-                                                              leftEntrySize,
-                                                              rightEntrySize,
+                                                              leftSchema,
+                                                              rightSchema,
                                                               QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
                                                               QueryCompilation::WindowingStrategy::SLICING);
 
@@ -181,8 +180,8 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                                                                                outputOriginId,
                                                                                windowSize,
                                                                                windowSize,
-                                                                               leftEntrySize,
-                                                                               rightEntrySize,
+                                                                               leftSchema,
+                                                                               rightSchema,
                                                                                leftPageSize,
                                                                                rightPageSize);
 
@@ -238,7 +237,20 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
         }
         nljWorks = nljWorks && (executablePipelineSink->stop(pipelineExecCtxSink) == 0);
+        std::vector<SequenceData> seqNumbers;
 
+        std::transform(pipelineExecCtxSink.emittedBuffers.begin(),
+                       pipelineExecCtxSink.emittedBuffers.end(),
+                       std::back_inserter(seqNumbers),
+                       [](const TupleBuffer& buffer) {
+                           return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk());
+                       });
+        std::sort(seqNumbers.begin(), seqNumbers.end());
+        bool hasDuplicates = std::adjacent_find(seqNumbers.begin(), seqNumbers.end()) != seqNumbers.end();
+        nljWorks &= !hasDuplicates;
+        if (hasDuplicates) {
+            NES_ERROR("Result contains multiple buffer with the same Sequence Number");
+        }
         auto resultBuffer = Util::mergeBuffers(pipelineExecCtxSink.emittedBuffers, joinSchema, bufferManager);
         NES_DEBUG("resultBuffer: \n{}", Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
         NES_DEBUG("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));

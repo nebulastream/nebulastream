@@ -27,7 +27,7 @@ namespace NES {
  */
 class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
   public:
-    CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
+    CoordinatorHealthCheckService(TopologyPtr topology,
                                   std::string healthServiceName,
                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
@@ -37,7 +37,7 @@ class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
     void startHealthCheck() override;
 
   private:
-    TopologyManagerServicePtr topologyManagerService;
+    TopologyPtr topology;
     WorkerRPCClientPtr workerRPCClient;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };

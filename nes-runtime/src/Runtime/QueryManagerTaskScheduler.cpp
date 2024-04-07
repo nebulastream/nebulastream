@@ -367,7 +367,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
     return addReconfigurationMessage(queryId, queryExecutionPlanId, std::move(buffer), blocking);
 }
 
-bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
+bool DynamicQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
                                                     DecomposedQueryPlanId queryExecutionPlanId,
                                                     const ReconfigurationMessage& message,
                                                     bool blocking) {
@@ -380,27 +380,27 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     new (buffer.getBuffer()) ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
-    return addReconfigurationMessage(queryId, queryExecutionPlanId, std::move(buffer), blocking);
+    return addReconfigurationMessage(sharedQueryId, queryExecutionPlanId, std::move(buffer), blocking);
 }
 
-bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
-                                                    DecomposedQueryPlanId queryExecutionPlanId,
+bool DynamicQueryManager::addReconfigurationMessage(SharedQueryId sharedQueryId,
+                                                    DecomposedQueryPlanId decomposedQueryPlanId,
                                                     TupleBuffer&& buffer,
                                                     bool blocking) {
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     {
         std::unique_lock reconfLock(reconfigurationMutex);
         NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
-                  queryExecutionPlanId,
+                  decomposedQueryPlanId,
                   blocking,
                   magic_enum::enum_name(task->getType()));
         NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
-        auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId,
+        auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(decomposedQueryPlanId,
                                                                                                  inherited0::shared_from_this());
         auto reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
         auto pipeline = Execution::ExecutablePipeline::create(-1,
-                                                              queryId,
-                                                              queryExecutionPlanId,
+                                                              sharedQueryId,
+                                                              decomposedQueryPlanId,
                                                               inherited0::shared_from_this(),
                                                               pipelineContext,
                                                               reconfigurationExecutable,

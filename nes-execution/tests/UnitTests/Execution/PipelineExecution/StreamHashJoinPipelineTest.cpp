@@ -27,17 +27,15 @@
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <string>
 
 namespace NES::Runtime::Execution {
@@ -187,8 +185,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                                                         outputOriginId,
                                                         windowSize,
                                                         windowSlide,
-                                                        leftSchema->getSchemaSizeInBytes(),
-                                                        rightSchema->getSchemaSizeInBytes(),
+                                                        leftSchema,
+                                                        rightSchema,
                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
                                                         NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
                                                         NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,

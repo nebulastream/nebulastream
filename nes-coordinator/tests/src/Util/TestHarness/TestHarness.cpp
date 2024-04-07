@@ -12,16 +12,16 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -48,11 +48,6 @@ TestHarness::TestHarness(Query queryWithoutSink,
 TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema) {
     auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     this->logicalSources.emplace_back(logicalSource);
-    return *this;
-}
-
-TestHarness& TestHarness::enableNewRequestExecutor() {
-    useNewRequestExecutor = true;
     return *this;
 }
 
@@ -243,9 +238,10 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
         memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
     }
 
-    NES_ASSERT2_FMT(bufferSize >= schema->getSchemaSizeInBytes() * currentSourceNumOfRecords,
-                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
-                        << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
+    memSrcNumBuffToProcess =
+        std::ceil(static_cast<double>(memAreaSize) / workerConf->getWorkerConfiguration()->bufferSizeInBytes);
+    NES_DEBUG("memSrcNumBuffToProcess = {} currentSourceNumOfRecords = {}", memSrcNumBuffToProcess, currentSourceNumOfRecords);
+
     auto memorySourceType = MemorySourceType::create(logicalSourceName,
                                                      workerConf->getPhysicalSourceName(),
                                                      memArea,
@@ -258,8 +254,8 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
 
 SchemaPtr TestHarness::getOutputSchema() {
     auto requestHandlerService = nesCoordinator->getRequestHandlerService();
-    auto queryCatalogService = nesCoordinator->getQueryCatalogService();
-    return queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->getSinkOperators()[0]->getOutputSchema();
+    auto queryCatalog = nesCoordinator->getQueryCatalog();
+    return queryPlan->getSinkOperators()[0]->getOutputSchema();
 }
 
 TestHarness&
@@ -269,8 +265,8 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
             "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
     }
 
-    RequestHandlerServicePtr requestHandlerService = nesCoordinator->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
+    auto requestHandlerService = nesCoordinator->getRequestHandlerService();
+    auto queryCatalog = nesCoordinator->getQueryCatalog();
 
     // local fs
     remove(filePath.c_str());
@@ -280,17 +276,15 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     queryId = INVALID_QUERY_ID;
 
     auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                     query.getQueryPlan(),
-                                                                     placementStrategy);
+    queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), placementStrategy);
 
     // Now run the query
-    if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
+    if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
         NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
     }
 
     if (!TestUtils::checkOutputContentLengthOrTimeout(queryId,
-                                                      queryCatalogService,
+                                                      queryCatalog,
                                                       numberOfRecordsToExpect,
                                                       filePath,
                                                       testTimeoutInSeconds)) {
@@ -298,13 +292,12 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
                                 << numberOfRecordsToExpect);
     }
 
-    if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
+    if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalog)) {
         NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
     }
 
-    NES_DEBUG("TestHarness: ExecutedQueryPlan: {}",
-              queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
-    queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
+    queryPlan = queryCatalog->getCopyOfExecutedQueryPlan(queryId);
+    NES_DEBUG("TestHarness: ExecutedQueryPlan: {}", queryPlan->toString());
 
     for (const auto& worker : testHarnessWorkerConfigurations) {
         worker->getNesWorker()->stop(false);
@@ -314,13 +307,12 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     return *this;
 }
 
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestHarness::getOutput() {
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> receivedBuffers;
-    const auto queryCatalogService = nesCoordinator->getQueryCatalogService();
-    const auto schema =
-        queryCatalogService->getEntryForQuery(queryId)->getInputQueryPlan()->getSinkOperators()[0]->getOutputSchema();
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer> TestHarness::getOutput() {
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> receivedBuffers;
+    const auto queryCatalog = nesCoordinator->getQueryCatalog();
+    const auto schema = queryPlan->getSinkOperators()[0]->getOutputSchema();
     auto tupleBuffers = TestUtils::createExpectedBuffersFromCsv(filePath, schema, bufferManager, true);
-    return TestUtils::createDynamicBuffers(tupleBuffers, schema);
+    return TestUtils::createTestTupleBuffers(tupleBuffers, schema);
 }
 
 TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor) {
@@ -333,10 +325,6 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;
-
-    if (useNewRequestExecutor) {
-        coordinatorConfiguration->enableNewRequestExecutor = true;
-    }
 
     coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
     coordinatorConfiguration->worker.queryCompiler.windowingStrategy = windowingStrategy;
@@ -390,12 +378,12 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         workerConf->setQueryStatusListener(nesWorker);
     }
 
-    auto topologyManagerService = nesCoordinator->getTopologyManagerService();
+    auto topology = nesCoordinator->getTopology();
 
     auto start_timestamp = std::chrono::system_clock::now();
 
     for (const auto& workerId : workerIds) {
-        while (!topologyManagerService->topologyNodeWithIdExists(workerId)) {
+        while (!topology->nodeWithWorkerIdExists(workerId)) {
             if (std::chrono::system_clock::now() > start_timestamp + SETUP_TIMEOUT_IN_SEC) {
                 NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find setup topology in given timeout.");
             }

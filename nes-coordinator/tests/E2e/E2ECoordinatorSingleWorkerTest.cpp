@@ -309,11 +309,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::string testFile = "ktm-results.csv";
     remove(testFile.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::setDistributedWindowChildThreshold(1000),
-                                                    TestUtils::enableNautilusCoordinator(),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableNautilusCoordinator()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -395,10 +392,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::setDistributedWindowChildThreshold(1000),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -462,10 +456,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::setDistributedWindowChildThreshold(1000),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -616,7 +607,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     remove("nesWorkerStarter.log");
 
     auto coordinator = TestUtils::startCoordinator(
@@ -662,7 +653,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery)
     ASSERT_TRUE(found);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunning) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
     remove("nesWorkerStarter.log");
 
     auto coordinator = TestUtils::startCoordinator(
@@ -728,11 +719,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     NES_INFO("testFile = {}", testFile);
     remove(testFile.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::setDistributedWindowChildThreshold(1000),
-                                                    TestUtils::enableNautilusCoordinator(),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableNautilusCoordinator()});
 
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
@@ -822,10 +810,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
     NES_INFO("testFile = {}", testFile);
     remove(testFile.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::setDistributedWindowChildThreshold(1000),
-                                                    TestUtils::setDistributedWindowCombinerThreshold(1000)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
 
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 

@@ -18,7 +18,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NesThread.hpp>
@@ -31,10 +30,12 @@
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <ostream>
 
+#include <API/TestSchemas.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
@@ -70,8 +71,7 @@ class SinkTest : public Testing::BaseIntegrationTest {
     /* Called before a single test. */
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
-        test_schema =
-            Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
+        test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
         write_result = false;
         path_to_csv_file = getTestResourceFolder() / "sink.csv";
         path_to_bin_file = getTestResourceFolder() / "sink.bin";
@@ -114,14 +114,14 @@ TEST_F(SinkTest, testCSVFileSink) {
 
     EXPECT_TRUE(write_result);
     auto rowLayoutBeforeWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto dynamicTupleBufferBeforeWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutBeforeWrite, buffer);
-    std::string bufferContentBeforeWrite = dynamicTupleBufferBeforeWrite.toString(test_schema);
+    auto testTupleBufferBeforeWrite = Runtime::MemoryLayouts::TestTupleBuffer(rowLayoutBeforeWrite, buffer);
+    std::string bufferContentBeforeWrite = testTupleBufferBeforeWrite.toString(test_schema);
     NES_TRACE("Buffer Content= {}", bufferContentBeforeWrite);
 
     // get buffer content as string
     auto rowLayoutAfterWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto dynamicTupleBufferAfterWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutAfterWrite, buffer);
-    std::string bufferContentAfterWrite = dynamicTupleBufferAfterWrite.toString(test_schema);
+    auto testTupleBufferAfterWrite = Runtime::MemoryLayouts::TestTupleBuffer(rowLayoutAfterWrite, buffer);
+    std::string bufferContentAfterWrite = testTupleBufferAfterWrite.toString(test_schema);
     NES_TRACE("Buffer Content= {}", bufferContentAfterWrite);
 
     ifstream testFile(path_to_csv_file.c_str());
@@ -161,8 +161,8 @@ TEST_F(SinkTest, testCSVPrintSink) {
 
     EXPECT_TRUE(write_result);
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
-    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
+    auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowLayout, buffer);
+    std::string bufferContent = testTupleBuffer.toString(test_schema);
     //cout << "Buffer Content= " << bufferContent << endl;
 
     ifstream testFile(path_to_osfile_file.c_str());
@@ -212,8 +212,8 @@ TEST_F(SinkTest, testNullOutSink) {
 
     EXPECT_TRUE(write_result);
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
-    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
+    auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowLayout, buffer);
+    std::string bufferContent = testTupleBuffer.toString(test_schema);
     //cout << "Buffer Content= " << bufferContent << endl;
 }
 
@@ -240,6 +240,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                       zmqPort,
                                       1,
                                       0,
+                                      INVALID_STATISTIC_ID,
                                       12,
                                       "defaultPhysicalSourceName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
@@ -297,6 +298,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
                                       zmqPort,
                                       1,
                                       0,
+                                      INVALID_STATISTIC_ID,
                                       12,
                                       "defaultPhysicalSourceName",
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());

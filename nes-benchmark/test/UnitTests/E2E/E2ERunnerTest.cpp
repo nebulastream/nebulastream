@@ -89,6 +89,7 @@ namespace NES::Benchmark {
 
     /**
      * @brief Testing if a yaml file with multiple physical and logical sources can be run without any error
+     * TODO enable this with issue #3941
      */
     TEST_F(E2ERunnerTest, DISABLED_multiplePhysicalLogicalSources) {
         std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/join_multiple_phys_and_logical_sources.yaml";

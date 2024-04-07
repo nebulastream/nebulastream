@@ -37,6 +37,7 @@ class ZmqSource : public DataSource {
      * @param port port of the source queue
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param statisticId represents the unique identifier of components that we can track statistics for
      * @param numSourceLocalBuffers the number of buffers allocated to a source
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
      * @param physicalSourceName the name and unique identifier of a physical source
@@ -49,6 +50,7 @@ class ZmqSource : public DataSource {
                        uint16_t port,
                        OperatorId operatorId,
                        OriginId originId,
+                       StatisticId statisticId,
                        uint64_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        const std::string& physicalSourceName,

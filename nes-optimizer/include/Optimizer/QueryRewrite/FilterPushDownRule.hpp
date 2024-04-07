@@ -58,7 +58,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param curOperator the operator through which we want to push the filter.
      * @param parOperator the operator that is the parent of curOperator in this queryPlan
      */
-    void pushDownFilter(FilterLogicalOperatorNodePtr filterOperator, NodePtr curOperator, NodePtr parOperator);
+    void pushDownFilter(LogicalFilterOperatorPtr filterOperator, NodePtr curOperator, NodePtr parOperator);
 
     /**
      * In case the filter cant be pushed any further this method is called to remove the filter from its original position in the query plan
@@ -68,7 +68,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param parOperator  insert the filter operator below this operator in the query plan
      */
     static void
-    insertFilterIntoNewPosition(FilterLogicalOperatorNodePtr filterOperator, NodePtr childOperator, NodePtr parOperator);
+    insertFilterIntoNewPosition(LogicalFilterOperatorPtr filterOperator, NodePtr childOperator, NodePtr parOperator);
 
     /**
      * @brief pushes a filter that is above a join, below that join if that is possible. We differentiate four cases:
@@ -104,8 +104,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param parentOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
      * joinOperator and parOperator.
      */
-    void pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator,
-                             JoinLogicalOperatorNodePtr joinOperator,
+    void pushFilterBelowJoin(LogicalFilterOperatorPtr filterOperator,
+                             LogicalJoinOperatorPtr joinOperator,
                              NodePtr parentOperator);
 
     /**
@@ -126,7 +126,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param joinOperator the join operator to which the filter should be tried to be pushed down below. (it is currently the child of the filter)
      * @return true if we pushed the filter to both branches of this joinOperator
      */
-    bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, JoinLogicalOperatorNodePtr joinOperator);
+    bool pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator);
 
     /**
      * @brief pushes the filter below a map operator. If the the map operator changes any attribute that the filter uses, we
@@ -140,7 +140,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param mapOperator the map operator below which we want to push the filter operator. (it is currently the child of the filter)
      * mapOperator and parOperator
      */
-    void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, MapLogicalOperatorNodePtr mapOperator);
+    void pushFilterBelowMap(LogicalFilterOperatorPtr filterOperator, LogicalMapOperatorPtr mapOperator);
 
     /**
      * @brief pushes the filter below a union operator to both branches of the union. Both branches of the union have the same Attributes,
@@ -148,7 +148,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param filterOperator the filter operator to be pushed down
      * @param unionOperator the union operator to which the filter should be pushed down below. (it is currently the child of the filter)
      */
-    void pushFilterBelowUnion(FilterLogicalOperatorNodePtr filterOperator, NodePtr unionOperator);
+    void pushFilterBelowUnion(LogicalFilterOperatorPtr filterOperator, NodePtr unionOperator);
 
     /**
      * @brief pushes the filter below a keyed window operator. This is only possible if all the attributes accessed by the filter are
@@ -165,7 +165,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * windowOperator and parOperator
      */
     void
-    pushFilterBelowWindowAggregation(FilterLogicalOperatorNodePtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
+    pushFilterBelowWindowAggregation(LogicalFilterOperatorPtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
 
     /**
      * @brief Get the name of the field manipulated by the Map operator
@@ -190,14 +190,14 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param projectionOperator the projection operator to which the filter should be pushed down below. (it is currently the child of the filter)
      * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
      */
-    void pushBelowProjection(FilterLogicalOperatorNodePtr filterOperator, NodePtr projectionOperator);
+    void pushBelowProjection(LogicalFilterOperatorPtr filterOperator, NodePtr projectionOperator);
 
     /**
      * @brief Rename the attributes in the filter predicate if the attribute is changed by the expression node
      * @param filterOperator filter operator whose predicate need to be checked and updated
      * @param expressionNodes expression nodes containing the attribute name and the new attribute name
      */
-    static void renameFilterAttributesByExpressionNodes(const FilterLogicalOperatorNodePtr& filterOperator,
+    static void renameFilterAttributesByExpressionNodes(const LogicalFilterOperatorPtr& filterOperator,
                                                         const std::vector<ExpressionNodePtr>& expressionNodes);
 
     /**
@@ -215,8 +215,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param mapOperator map operator node where the filter should be pushed below
      * @param fieldName field name of the attribute that is assigned a field by the map transformation
      */
-    void substituteFilterAttributeWithMapTransformation(const FilterLogicalOperatorNodePtr& filterOperator,
-                                                        const MapLogicalOperatorNodePtr& mapOperator,
+    void substituteFilterAttributeWithMapTransformation(const LogicalFilterOperatorPtr& filterOperator,
+                                                        const LogicalMapOperatorPtr& mapOperator,
                                                         const std::string& fieldName);
 };
 

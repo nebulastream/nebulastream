@@ -28,6 +28,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
     /**
      * @brief creates a PhysicalStreamJoinBuildOperator with a provided operatorId
      * @param id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -38,6 +39,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
      * @return PhysicalStreamJoinSinkOperator
      */
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
@@ -49,6 +51,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
 
     /**
      * @brief creates a PhysicalStreamJoinBuildOperator that retrieves a new operatorId by calling method
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -58,7 +61,8 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
      * @param joinFieldName
      * @return PhysicalStreamJoinBuildOperator
      */
-    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       const JoinBuildSideType buildSide,
@@ -70,6 +74,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
     /**
      * @brief Constructor for PhysicalStreamJoinBuildOperator
      * @param id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema
      * @param outputSchema
      * @param operatorHandler
@@ -78,6 +83,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
      * @param joinFieldName
      */
     explicit PhysicalStreamJoinBuildOperator(const OperatorId id,
+                                             StatisticId statisticId,
                                              const SchemaPtr& inputSchema,
                                              const SchemaPtr& outputSchema,
                                              const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
@@ -100,9 +106,9 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
 
     /**
      * @brief Performs a deep copy of this physical operator
-     * @return OperatorNodePtr
+     * @return OperatorPtr
      */
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
      * @brief Getter for the build side, either left or right

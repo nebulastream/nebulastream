@@ -106,57 +106,53 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
-    NES_DEBUG("start checkAsyncResult for mode={} for {} queues", magic_enum::enum_name(mode), queues.size());
-    std::vector<Exceptions::RpcFailureInformation> failedRPCCalls;
-    for (const auto& queue : queues) {
+void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAsyncRequests) {
+    NES_DEBUG("start checkAsyncResult for {} requests", rpcAsyncRequests.size());
+    std::vector<RpcAsyncRequest> failedRPCCalls;
+    for (const auto& rpcAsyncRequest : rpcAsyncRequests) {
         //wait for all deploys to come back
         void* got_tag = nullptr;
         bool ok = false;
-        uint64_t queueIndex = 0;
         // Block until the next result is available in the completion queue "completionQueue".
-        while (queueIndex != queue.second && queue.first->Next(&got_tag, &ok)) {
-            // The tag in this example is the memory location of the call object
-            bool status = false;
-            if (mode == RpcClientModes::Register) {
-                auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
-                status = call->status.ok();
-                delete call;
-            } else if (mode == RpcClientModes::Unregister) {
-                auto* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
-                status = call->status.ok();
-                delete call;
-            } else if (mode == RpcClientModes::Start) {
-                auto* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
-                status = call->status.ok();
-                delete call;
-            } else if (mode == RpcClientModes::Stop) {
-                auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
-                status = call->status.ok();
-                delete call;
-            } else {
-                NES_NOT_IMPLEMENTED();
-            }
+        rpcAsyncRequest.completionQueue->Next(&got_tag, &ok);
+        // The tag in this example is the memory location of the call object
+        bool status;
+        auto requestClientMode = rpcAsyncRequest.rpcClientMode;
+        if (requestClientMode == RpcClientMode::Register) {
+            auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
+        } else if (requestClientMode == RpcClientMode::Unregister) {
+            auto* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
+        } else if (requestClientMode == RpcClientMode::Start) {
+            auto* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
+        } else if (requestClientMode == RpcClientMode::Stop) {
+            auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
 
-            if (!status) {
-                failedRPCCalls.push_back({queue.first, queueIndex});
-            }
-
-            // Once we're complete, deallocate the call object.
-            queueIndex++;
+        if (!status) {
+            failedRPCCalls.push_back(rpcAsyncRequest);
         }
     }
     if (!failedRPCCalls.empty()) {
-        throw Exceptions::RpcException("Some RPCs did not succeed", failedRPCCalls, mode);
+        throw Exceptions::RpcException("Some RPCs did not succeed", failedRPCCalls);
     }
-    NES_DEBUG("checkAsyncResult for mode={} succeed", magic_enum::enum_name(mode));
+    NES_DEBUG("All rpc async requests succeeded");
 }
 
-void WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, queryId);
+void WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId sharedQueryId, const CompletionQueuePtr& cq) {
+    NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, sharedQueryId);
 
     UnregisterQueryRequest request;
-    request.set_queryid(queryId);
+    request.set_queryid(sharedQueryId);
 
     UnregisterQueryReply reply;
     ClientContext context;
@@ -182,11 +178,11 @@ void WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId q
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryId) {
-    NES_DEBUG("WorkerRPCClient::unregisterQuery address={} queryId={}", address, queryId);
+bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId sharedQueryId) {
+    NES_DEBUG("WorkerRPCClient::unregisterQuery address={} queryId={}", address, sharedQueryId);
 
     UnregisterQueryRequest request;
-    request.set_queryid(queryId);
+    request.set_queryid(sharedQueryId);
 
     UnregisterQueryReply reply;
     ClientContext context;
@@ -203,11 +199,17 @@ bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryI
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::unregisterQuery");
 }
 
-bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
-    NES_DEBUG("WorkerRPCClient::startQuery address={} queryId={}", address, queryId);
+bool WorkerRPCClient::startQuery(const std::string& address,
+                                 SharedQueryId sharedQueryId,
+                                 DecomposedQueryPlanId decomposedQueryPlanId) {
+    NES_DEBUG("WorkerRPCClient::startQuery address={} shared queryId={} decomposed query plan {}",
+              address,
+              sharedQueryId,
+              decomposedQueryPlanId);
 
     StartQueryRequest request;
-    request.set_queryid(queryId);
+    request.set_sharedqueryid(sharedQueryId);
+    request.set_decomposedqueryid(decomposedQueryPlanId);
 
     StartQueryReply reply;
     ClientContext context;
@@ -225,11 +227,18 @@ bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::startQuery");
 }
 
-void WorkerRPCClient::startQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::startQueryAsync address={} queryId={}", address, queryId);
+void WorkerRPCClient::startQueryAsync(const std::string& address,
+                                      SharedQueryId sharedQueryId,
+                                      DecomposedQueryPlanId decomposedQueryPlanId,
+                                      const CompletionQueuePtr& cq) {
+    NES_DEBUG("WorkerRPCClient::startQueryAsync address={} shared queryId={} decomposed queryId={}",
+              address,
+              sharedQueryId,
+              decomposedQueryPlanId);
 
     StartQueryRequest request;
-    request.set_queryid(queryId);
+    request.set_sharedqueryid(sharedQueryId);
+    request.set_decomposedqueryid(decomposedQueryPlanId);
 
     StartQueryReply reply;
     ClientContext context;
@@ -255,11 +264,15 @@ void WorkerRPCClient::startQueryAsync(const std::string& address, QueryId queryI
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType) {
-    NES_DEBUG("WorkerRPCClient::markQueryForStop address={} queryId={}", address, queryId);
+bool WorkerRPCClient::stopQuery(const std::string& address,
+                                SharedQueryId sharedQueryId,
+                                DecomposedQueryPlanId decomposedQueryPlanId,
+                                Runtime::QueryTerminationType terminationType) {
+    NES_DEBUG("WorkerRPCClient::markQueryForStop address={} shared queryId={}", address, sharedQueryId);
 
     StopQueryRequest request;
-    request.set_queryid(queryId);
+    request.set_sharedqueryid(sharedQueryId);
+    request.set_decomposedqueryid(decomposedQueryPlanId);
     request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
     StopQueryReply reply;
@@ -278,13 +291,15 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Run
 }
 
 void WorkerRPCClient::stopQueryAsync(const std::string& address,
-                                     QueryId queryId,
+                                     SharedQueryId sharedQueryId,
+                                     DecomposedQueryPlanId decomposedQueryPlanId,
                                      Runtime::QueryTerminationType terminationType,
                                      const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::stopQueryAsync address={} queryId={}", address, queryId);
+    NES_DEBUG("WorkerRPCClient::stopQueryAsync address={} shared queryId={}", address, sharedQueryId);
 
     StopQueryRequest request;
-    request.set_queryid(queryId);
+    request.set_sharedqueryid(sharedQueryId);
+    request.set_decomposedqueryid(decomposedQueryPlanId);
     request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
     StopQueryReply reply;

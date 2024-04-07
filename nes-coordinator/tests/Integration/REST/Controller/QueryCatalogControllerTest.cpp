@@ -69,11 +69,14 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r.text));
 
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
-    auto queryCatalogService = coordinator->getQueryCatalogService();
+    auto queryCatalog = coordinator->getQueryCatalog();
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry("query string", queryPlan, Optimizer::PlacementStrategy::BottomUp);
+    queryCatalog->createQueryCatalogEntry("query string",
+                                          queryPlan,
+                                          Optimizer::PlacementStrategy::BottomUp,
+                                          QueryState::REGISTERED);
     cpr::AsyncResponse future2 =
         cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     future2.wait();
@@ -112,11 +115,14 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
 
     // create a query to add to query catalog service
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
-    auto queryCatalogService = coordinator->getQueryCatalogService();
+    auto queryCatalog = coordinator->getQueryCatalog();
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, Optimizer::PlacementStrategy::BottomUp);
+    queryCatalog->createQueryCatalogEntry("queryString",
+                                          queryPlan,
+                                          Optimizer::PlacementStrategy::BottomUp,
+                                          QueryState::REGISTERED);
 
     // when making a request for a query with a specific status after having submitted a query
     cpr::AsyncResponse future3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
@@ -155,11 +161,14 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
 
     //create a query and submit i to the queryCatalogService
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
-    auto queryCatalogService = coordinator->getQueryCatalogService();
+    auto queryCatalog = coordinator->getQueryCatalog();
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, Optimizer::PlacementStrategy::BottomUp);
+    queryCatalog->createQueryCatalogEntry("queryString",
+                                          queryPlan,
+                                          Optimizer::PlacementStrategy::BottomUp,
+                                          QueryState::REGISTERED);
 
     // when sending a request to the status endpoint with 'queryId' supplied and a query with specified id registered
     cpr::AsyncResponse f3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
@@ -175,69 +184,4 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     ASSERT_TRUE(jsonResponse["queryId"] == queryId);
     stopCoordinator();
 }
-
-TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProducedMissingQueryParameter) {
-    startCoordinator();
-    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-
-    // when sending a getNumberOfProducedBuffers request without specifying query parameter 'queryId'
-    cpr::AsyncResponse f1 =
-        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"});
-    f1.wait();
-    auto r1 = f1.get();
-
-    // return 400 BAD REQUEST
-    EXPECT_EQ(r1.status_code, 400l);
-    stopCoordinator();
-}
-
-TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoSuchQuery) {
-    startCoordinator();
-    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-
-    // when sending a getNumberOfProducedBuffers request with 'queryId' specified but no such query can be found
-    cpr::AsyncResponse f2 =
-        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
-                      cpr::Parameters{{"queryId", "1"}});
-    f2.wait();
-    auto r2 = f2.get();
-    //return 404 NO CONTENT
-    EXPECT_EQ(r2.status_code, 404l);
-    nlohmann::json jsonResponse1;
-    ASSERT_NO_THROW(jsonResponse1 = nlohmann::json::parse(r2.text));
-    std::string message1 = "no query found with ID: 1";
-    ASSERT_TRUE(jsonResponse1["message"] == message1);
-    stopCoordinator();
-}
-
-TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStatistics) {
-    startCoordinator();
-    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-
-    // create a query and register with coordinator
-    auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
-    auto queryCatalogService = coordinator->getQueryCatalogService();
-    const QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, Optimizer::PlacementStrategy::BottomUp);
-    coordinator->getGlobalQueryPlan()->createNewSharedQueryPlan(queryPlan);
-
-    // when sending a getNumberOfProducedBuffers with 'queryId' specified and a query can be found but no buffers produced yet
-    cpr::AsyncResponse f3 =
-        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/getNumberOfProducedBuffers"},
-                      cpr::Parameters{{"queryId", std::to_string(queryId)}});
-    f3.wait();
-    auto r3 = f3.get();
-
-    // return 404 NO CONTENT
-    EXPECT_EQ(r3.status_code, 404l);
-    nlohmann::json jsonResponse2;
-    ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(r3.text));
-    NES_DEBUG("{}", jsonResponse2.dump());
-    std::string message2 = "no statistics available for query with ID: " + std::to_string(queryId);
-    ASSERT_TRUE(jsonResponse2["message"] == message2);
-    stopCoordinator();
-}
-
 }//namespace NES

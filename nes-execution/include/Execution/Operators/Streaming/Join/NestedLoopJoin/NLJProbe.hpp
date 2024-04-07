@@ -39,8 +39,8 @@ class NLJProbe : public StreamJoinProbe {
              const std::string& joinFieldNameLeft,
              const std::string& joinFieldNameRight,
              const WindowMetaData& windowMetaData,
-             const uint64_t leftEntrySize,
-             const uint64_t rightEntrySize,
+             const SchemaPtr& leftSchema,
+             const SchemaPtr& rightSchema,
              QueryCompilation::StreamJoinStrategy joinStrategy,
              QueryCompilation::WindowingStrategy windowingStrategy,
              bool withDeletion = true);
@@ -48,10 +48,8 @@ class NLJProbe : public StreamJoinProbe {
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
   protected:
-    const uint64_t leftEntrySize;
-    const uint64_t rightEntrySize;
-    const MemoryProvider::MemoryProviderPtr leftMemProvider;
-    const MemoryProvider::MemoryProviderPtr rightMemProvider;
+    const SchemaPtr leftSchema;
+    const SchemaPtr rightSchema;
 };
 };    // namespace NES::Runtime::Execution::Operators
 #endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJPROBE_HPP_

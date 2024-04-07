@@ -15,7 +15,6 @@
 #ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -26,6 +25,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -73,17 +73,17 @@ class TestSink : public SinkMedium {
     Runtime::TupleBuffer get(uint64_t index);
 
     /**
-     * @brief Returns the DynamicTupleBuffer at the index
+     * @brief Returns the TestTupleBuffer at the index
      * @param index
-     * @return DynamicTupleBuffer
+     * @return TestTupleBuffer
      */
-    Runtime::MemoryLayouts::DynamicTupleBuffer getResultBuffer(uint64_t index);
+    Runtime::MemoryLayouts::TestTupleBuffer getResultBuffer(uint64_t index);
 
     /**
-     * @brief Returns all buffers as DynamicTupleBuffers
-     * @return Vector of DynamicTupleBuffers
+     * @brief Returns all buffers as TestTupleBuffers
+     * @return Vector of TestTupleBuffers
      */
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> getResultBuffers();
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> getResultBuffers();
 
     /**
      * @brief Setup method

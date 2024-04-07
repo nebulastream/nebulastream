@@ -16,8 +16,8 @@
 #include <BaseIntegrationTest.hpp>
 #include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -42,10 +42,12 @@ class PatternParsingServiceTest : public Testing::BaseUnitTest {
 };
 
 std::string queryPlanToString(const QueryPlanPtr queryPlan) {
-    std::regex r2("[0-9]");
     std::regex r1("  ");
+    std::regex r2("[0-9]");
+    std::regex r3("\\(.*?\\$");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
     queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
+    queryPlanStr = std::regex_replace(queryPlanStr, r3, "");
     return queryPlanStr;
 }
 
@@ -57,14 +59,13 @@ TEST_F(PatternParsingServiceTest, simplePattern) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
     // expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
-    LogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(
+    LogicalOperatorPtr filter = LogicalOperatorFactory::createFilterOperator(
         ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
                                                      NES::Attribute("allowedSpeed").getExpressionNode())));
     queryPlan->appendOperatorAsNewRoot(filter);
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //comparison of the expected and the actual generated query plan
@@ -77,20 +78,20 @@ TEST_F(PatternParsingServiceTest, simplePatternTwoFilters) {
                                 "A.random INTO Print :: testSink ";
     std::shared_ptr<QueryParsingService> patternParsingService;
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
+
     // expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-    queryPlan->appendOperatorAsNewRoot(source);
-    LogicalOperatorNodePtr filter1 = LogicalOperatorFactory::createFilterOperator(
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr filter1 = LogicalOperatorFactory::createFilterOperator(
         ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
                                                      NES::Attribute("allowedSpeed").getExpressionNode())));
-    queryPlan->appendOperatorAsNewRoot(filter1);
-    LogicalOperatorNodePtr filter2 = LogicalOperatorFactory::createFilterOperator(
+    LogicalOperatorPtr filter2 = LogicalOperatorFactory::createFilterOperator(
         ExpressionNodePtr(GreaterExpressionNode::create(NES::Attribute("value").getExpressionNode(),
                                                         NES::Attribute("random").getExpressionNode())));
+    queryPlan->appendOperatorAsNewRoot(source);
     queryPlan->appendOperatorAsNewRoot(filter2);
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    queryPlan->appendOperatorAsNewRoot(filter1);
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //comparison of the expected and the actual generated query plan
@@ -105,11 +106,10 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
     // expected results
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-    LogicalOperatorNodePtr sinkPrint = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
-    LogicalOperatorNodePtr sinkFile = LogicalOperatorFactory::createSinkOperator(NES::FileSinkDescriptor::create("testSink2"));
-    LogicalOperatorNodePtr sinkNull = LogicalOperatorFactory::createSinkOperator(NES::NullOutputSinkDescriptor::create());
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr sinkPrint = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sinkFile = LogicalOperatorFactory::createSinkOperator(NES::FileSinkDescriptor::create("testSink2"));
+    LogicalOperatorPtr sinkNull = LogicalOperatorFactory::createSinkOperator(NES::NullOutputSinkDescriptor::create());
     sinkPrint->addChild(source);
     sinkFile->addChild(source);
     sinkNull->addChild(source);
@@ -131,16 +131,15 @@ TEST_F(PatternParsingServiceTest, DisjunctionPattern) {
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
-    LogicalOperatorNodePtr source2 =
+    LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
     subQueryPlan->addRootOperator(source2);
-    OperatorNodePtr unionOp = LogicalOperatorFactory::createUnionOperator();
+    OperatorPtr unionOp = LogicalOperatorFactory::createUnionOperator();
     queryPlan->appendOperatorAsNewRoot(unionOp);
     unionOp->addChild(subQueryPlan->getRootOperators()[0]);
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
@@ -157,17 +156,16 @@ TEST_F(PatternParsingServiceTest, ConjunctionPattern) {
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-    queryPlan->addRootOperator(source1);
-    LogicalOperatorNodePtr source2 =
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
+    queryPlan->addRootOperator(source1);
     subQueryPlan->addRootOperator(source2);
     NES::Query query = Query(queryPlan)
                            .andWith(Query(subQueryPlan))
                            .window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)));
     queryPlan = query.getQueryPlan();
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
@@ -184,21 +182,20 @@ TEST_F(PatternParsingServiceTest, ConjunctionPatternWithFilter) {
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
-    LogicalOperatorNodePtr source2 =
+    LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
     subQueryPlan->addRootOperator(source2);
     NES::Query query = Query(queryPlan)
                            .andWith(Query(subQueryPlan))
                            .window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = query.getQueryPlan();
-    LogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(
+    LogicalOperatorPtr filter = LogicalOperatorFactory::createFilterOperator(
         ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("currentSpeed").getExpressionNode(),
                                                      NES::Attribute("allowedSpeed").getExpressionNode())));
     queryPlan->appendOperatorAsNewRoot(filter);
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
@@ -215,17 +212,16 @@ TEST_F(PatternParsingServiceTest, SequencePattern) {
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
     QueryPlanPtr subQueryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source1);
-    LogicalOperatorNodePtr source2 =
+    LogicalOperatorPtr source2 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
     subQueryPlan->addRootOperator(source2);
     NES::Query qSEQ = NES::Query(queryPlan)
                           .seqWith(NES::Query(subQueryPlan))
                           .window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = qSEQ.getQueryPlan();
-    LogicalOperatorNodePtr sink4 = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink4 = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink4);
 
     //Comparison of the expected and the actual generated query plan
@@ -241,14 +237,13 @@ TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source);
     std::vector<ExpressionNodePtr> expression;
     expression.push_back(Attribute("id").getExpressionNode());
-    LogicalOperatorNodePtr projection = LogicalOperatorFactory::createProjectionOperator(expression);
+    LogicalOperatorPtr projection = LogicalOperatorFactory::createProjectionOperator(expression);
     queryPlan->appendOperatorAsNewRoot(projection);
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
@@ -265,16 +260,15 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
 
     //expected result
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->addRootOperator(source);
     std::vector<ExpressionNodePtr> expression;
     expression.push_back(Attribute("name").getExpressionNode());
     expression.push_back(Attribute("type").getExpressionNode());
     expression.push_back(Attribute("department").getExpressionNode());
-    LogicalOperatorNodePtr projection = LogicalOperatorFactory::createProjectionOperator(expression);
+    LogicalOperatorPtr projection = LogicalOperatorFactory::createProjectionOperator(expression);
     queryPlan->appendOperatorAsNewRoot(projection);
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
@@ -288,13 +282,12 @@ TEST_F(PatternParsingServiceTest, TimesOperator) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
     NES::Query qTimes = NES::Query(queryPlan).times(2, 10).window(
         NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = qTimes.getQueryPlan();
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
@@ -308,13 +301,12 @@ TEST_F(PatternParsingServiceTest, TimesOperatorExact) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
     NES::Query qTime = NES::Query(queryPlan).times(2).window(
         NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = qTime.getQueryPlan();
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan
@@ -328,13 +320,12 @@ TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
 
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     queryPlan->appendOperatorAsNewRoot(source);
     NES::Query qTimes = NES::Query(queryPlan).times().window(
         NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
     queryPlan = qTimes.getQueryPlan();
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
     //Comparison of the expected and the actual generated query plan

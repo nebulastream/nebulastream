@@ -22,9 +22,7 @@
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/S2Utilities.hpp>
 #include <Util/Mobility/Waypoint.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <stdexcept>
-#include <utility>
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSchedulePredictor(
     const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {

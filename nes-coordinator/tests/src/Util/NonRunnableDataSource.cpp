@@ -23,6 +23,7 @@ NonRunnableDataSource::NonRunnableDataSource(const SchemaPtr& schema,
                                              uint64_t gatheringInterval,
                                              OperatorId operatorId,
                                              OriginId originId,
+                                             StatisticId statisticId,
                                              size_t numSourceLocalBuffers,
                                              const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                              NES::Runtime::QueryTerminationType type)
@@ -33,6 +34,7 @@ NonRunnableDataSource::NonRunnableDataSource(const SchemaPtr& schema,
                     gatheringInterval,
                     operatorId,
                     originId,
+                    statisticId,
                     numSourceLocalBuffers,
                     successors) {
     wasGracefullyStopped = type;
@@ -53,9 +55,9 @@ bool NonRunnableDataSource::stop(Runtime::QueryTerminationType termination) {
     return NES::DefaultSource::stop(termination);
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer NonRunnableDataSource::getBuffer() { return allocateBuffer(); }
+Runtime::MemoryLayouts::TestTupleBuffer NonRunnableDataSource::getBuffer() { return allocateBuffer(); }
 
-void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     auto buf = buffer.getBuffer();
     emitBuffer(buf);
 }
@@ -67,6 +69,7 @@ DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                       const Runtime::QueryManagerPtr& queryManager,
                                       OperatorId operatorId,
                                       OriginId originId,
+                                      StatisticId statisticId,
                                       size_t numSourceLocalBuffers,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                       NES::Runtime::QueryTerminationType terminationType) {
@@ -77,6 +80,7 @@ DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                                    /*frequency*/ 1000,
                                                    operatorId,
                                                    originId,
+                                                   statisticId,
                                                    numSourceLocalBuffers,
                                                    successors,
                                                    terminationType);

@@ -32,7 +32,7 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
      */
     explicit RPCQueryUndeploymentException(const std::string& message,
                                            std::vector<WorkerId> failedRpcExecutionNodeIds,
-                                           RpcClientModes mode);
+                                           RpcClientMode mode);
 
     [[nodiscard]] const char* what() const noexcept override;
 
@@ -46,12 +46,12 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
      * @brief get the mode of the failed operation
      * @return register, unregister, stop or start
      */
-    RpcClientModes getMode();
+    RpcClientMode getMode();
 
   private:
     std::string message;
     std::vector<WorkerId> failedExecutionNodeIds;
-    RpcClientModes mode;
+    RpcClientMode mode;
 };
 }// namespace NES::Exceptions
 #endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_

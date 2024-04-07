@@ -42,6 +42,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param gatheringValue how many tuples to collect per interval
      * @param operatorId the id of the source
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param statisticId represents the unique identifier of components that we can track statistics for
      * @param numSourceLocalBuffers the number of buffers allocated to a source
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
      * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
@@ -58,6 +59,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
                           uint64_t gatheringValue,
                           OperatorId operatorId,
                           OriginId originId,
+                          StatisticId statisticId,
                           size_t numSourceLocalBuffers,
                           GatheringMode gatheringMode,
                           uint64_t sourceAffinity,
@@ -97,6 +99,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
     uint64_t currentPositionInBytes;
     uint64_t schemaSize;
     uint64_t bufferSize;
+    uint64_t noTuplesPerBuffer;
 };
 
 using MemorySourcePtr = std::shared_ptr<MemorySource>;

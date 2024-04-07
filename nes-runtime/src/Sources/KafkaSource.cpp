@@ -42,6 +42,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                          const KafkaSourceTypePtr& kafkaSourceType,
                          OperatorId operatorId,
                          OriginId originId,
+                         StatisticId statisticId,
                          size_t numSourceLocalBuffers,
                          uint64_t batchSize,
                          const std::string& physicalSourceName,
@@ -51,6 +52,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                  std::move(queryManager),
                  operatorId,
                  originId,
+                 statisticId,
                  numSourceLocalBuffers,
                  GatheringMode::INTERVAL_MODE,
                  physicalSourceName,
@@ -121,7 +123,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     return tupleBuffer.getBuffer();
 }
 
-bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
+bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) {
 
     const uint64_t tupleSize = schema->getSchemaSizeInBytes();
     const uint32_t tupleBufferCapacity = tupleBuffer.getCapacity();

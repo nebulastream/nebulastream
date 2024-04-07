@@ -15,7 +15,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
@@ -29,16 +29,18 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <algorithm>
+#include <set>
 #include <utility>
 
 namespace NES::Optimizer {
 
-DecomposedQueryPlanVersion getNextQuerySubPlanVersion() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
+DecomposedQueryPlanVersion getDecomposedQuerySubVersion() {
+    static std::atomic_uint64_t version = 0;
+    return ++version;
 }
 
 QueryPlacementAmendmentPhase::QueryPlacementAmendmentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -62,12 +64,12 @@ QueryPlacementAmendmentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                                                        std::move(coordinatorConfiguration)));
 }
 
-bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
+std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO("QueryPlacementAmendmentPhase: Perform query placement phase for shared query plan {}",
              std::to_string(sharedQueryPlan->getId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
-    bool queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
+    bool enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
 
     auto sharedQueryId = sharedQueryPlan->getId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
@@ -77,14 +79,103 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
     uint64_t nowInMicroSec =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-    if (queryReconfiguration) {
-        for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
+    // Create container to record all deployment contexts
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
 
+    if (enableIncrementalPlacement) {
+        std::vector<Experimental::ChangeLogEntryPtr> failedChangelogEntries;
+        for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
+            try {
+                //1. Fetch all upstream pinned operators
+                auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
+
+                //2. Fetch all downstream pinned operators
+                auto pinnedDownStreamOperators = changeLogEntry.second->downstreamOperators;
+
+                //3. Pin all sink operators
+                pinAllSinkOperators(pinnedDownStreamOperators);
+
+                //4. Check if all operators are pinned
+                if (!containsOnlyPinnedOperators(pinnedDownStreamOperators)
+                    || !containsOnlyPinnedOperators(pinnedUpstreamOperators)) {
+                    throw Exceptions::QueryPlacementAdditionException(
+                        sharedQueryId,
+                        "QueryPlacementAmendmentPhase: Found operators without pinning.");
+                }
+
+                //5. Get next query sub plan versions
+                auto nextDecomposedQueryPlanVersion = getDecomposedQuerySubVersion();
+
+                //6. Call placement removal strategy
+                if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
+                    auto placementRemovalStrategy = PlacementRemovalStrategy::create(globalExecutionPlan,
+                                                                                     topology,
+                                                                                     typeInferencePhase,
+                                                                                     placementAmendmentMode);
+                    auto placementRemovalDeploymentContexts =
+                        placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                            pinnedUpstreamOperators,
+                                                                            pinnedDownStreamOperators,
+                                                                            nextDecomposedQueryPlanVersion);
+
+                    // Collect all deployment contexts returned by placement removal strategy
+                    for (const auto& [decomposedQueryPlanId, deploymentContext] : placementRemovalDeploymentContexts) {
+                        deploymentContexts[decomposedQueryPlanId] = deploymentContext;
+                    }
+
+                } else {
+                    NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
+                                "TO_BE_REPLACED state.");
+                }
+
+                //7. Call placement addition strategy
+                if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
+                    auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
+                    auto placementAdditionStrategy = getStrategy(placementStrategy);
+                    auto placementAdditionResults =
+                        placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                             pinnedUpstreamOperators,
+                                                                             pinnedDownStreamOperators,
+                                                                             nextDecomposedQueryPlanVersion);
+
+                    // Collect all deployment contexts returned by placement removal strategy
+                    for (const auto& [decomposedQueryPlanId, deploymentContext] : placementAdditionResults.deploymentContexts) {
+                        deploymentContexts[decomposedQueryPlanId] = deploymentContext;
+                    }
+
+                    if (!placementAdditionResults.completedSuccessfully) {
+                        throw std::runtime_error("Placement addition phase unsuccessfully completed");
+                    }
+                } else {
+                    NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
+                                "TO_BE_PLACED state.");
+                }
+            } catch (std::exception& ex) {
+                NES_ERROR("Failed to process change log. Marking shared query plan as partially processed and recording the "
+                          "failed changelog for further processing. {}",
+                          ex.what());
+                sharedQueryPlan->setStatus(SharedQueryPlanStatus::PARTIALLY_PROCESSED);
+                failedChangelogEntries.emplace_back(changeLogEntry.second);
+            }
+        }
+        if (!failedChangelogEntries.empty()) {
+            sharedQueryPlan->recordFailedChangeLogEntries(failedChangelogEntries);
+        }
+        //Update the change log's till processed timestamp and clear all entries before the timestamp
+        sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
+    } else {
+        try {
             //1. Fetch all upstream pinned operators
-            auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
+            std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
+            for (const auto& leafOperator : queryPlan->getLeafOperators()) {
+                pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
+            };
 
             //2. Fetch all downstream pinned operators
-            auto pinnedDownStreamOperators = changeLogEntry.second->downstreamOperators;
+            std::set<LogicalOperatorPtr> pinnedDownStreamOperators;
+            for (const auto& rootOperator : queryPlan->getRootOperators()) {
+                pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
+            };
 
             //3. Pin all sink operators
             pinAllSinkOperators(pinnedDownStreamOperators);
@@ -97,135 +188,96 @@ bool QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQuery
                     "QueryPlacementAmendmentPhase: Found operators without pinning.");
             }
 
-            auto nextQuerySubPlanVersion = getNextQuerySubPlanVersion();
+            //5. Get the next decomposed query plan version
+            auto nextDecomposedQueryPlanVersion = getDecomposedQuerySubVersion();
 
+            //6. Call placement removal strategy
             if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
                 auto placementRemovalStrategy =
                     PlacementRemovalStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
-                bool success = placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                                   pinnedUpstreamOperators,
-                                                                                   pinnedDownStreamOperators,
-                                                                                   nextQuerySubPlanVersion);
-                if (!success) {
-                    NES_ERROR("Unable to perform placement removal for the change log entry");
-                    return false;
+                auto placementRemovalDeploymentContexts =
+                    placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                        pinnedUpstreamOperators,
+                                                                        pinnedDownStreamOperators,
+                                                                        nextDecomposedQueryPlanVersion);
+
+                // Collect all deployment contexts returned by placement removal strategy
+                for (const auto& [decomposedQueryPlanId, deploymentContext] : placementRemovalDeploymentContexts) {
+                    deploymentContexts[decomposedQueryPlanId] = deploymentContext;
                 }
             } else {
                 NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
                             "TO_BE_REPLACED state.");
             }
 
+            //7. Call placement addition strategy
             if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
                 auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
                 auto placementAdditionStrategy = getStrategy(placementStrategy);
-                bool success = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                                    pinnedUpstreamOperators,
-                                                                                    pinnedDownStreamOperators,
-                                                                                    nextQuerySubPlanVersion);
+                auto placementAdditionResults =
+                    placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                         pinnedUpstreamOperators,
+                                                                         pinnedDownStreamOperators,
+                                                                         nextDecomposedQueryPlanVersion);
 
-                if (!success) {
-                    NES_ERROR("Unable to perform placement addition for the change log entry");
-                    return false;
+                // Collect all deployment contexts returned by placement removal strategy
+                for (const auto& [decomposedQueryPlanId, deploymentContext] : placementAdditionResults.deploymentContexts) {
+                    deploymentContexts[decomposedQueryPlanId] = deploymentContext;
+                }
+
+                if (!placementAdditionResults.completedSuccessfully) {
+                    throw std::runtime_error("Placement addition phase unsuccessfully completed");
                 }
             } else {
                 NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
                             "TO_BE_PLACED state.");
             }
-        }
-        //Update the change log's till processed timestamp and clear all entries before the timestamp
-        sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
-    } else {
-
-        //1. Fetch all upstream pinned operators
-        std::set<LogicalOperatorNodePtr> pinnedUpstreamOperators;
-        for (const auto& leafOperator : queryPlan->getLeafOperators()) {
-            pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperatorNode>());
-        };
-
-        //2. Fetch all downstream pinned operators
-        std::set<LogicalOperatorNodePtr> pinnedDownStreamOperators;
-        for (const auto& rootOperator : queryPlan->getRootOperators()) {
-            pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperatorNode>());
-        };
-
-        //3. Pin all sink operators
-        pinAllSinkOperators(pinnedDownStreamOperators);
-
-        //4. Check if all operators are pinned
-        if (!containsOnlyPinnedOperators(pinnedDownStreamOperators) || !containsOnlyPinnedOperators(pinnedUpstreamOperators)) {
-            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                              "QueryPlacementAmendmentPhase: Found operators without pinning.");
-        }
-
-        auto nextQuerySubPlanVersion = getNextQuerySubPlanVersion();
-
-        if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
-            auto placementRemovalStrategy =
-                PlacementRemovalStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode);
-
-            bool success = placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                               pinnedUpstreamOperators,
-                                                                               pinnedDownStreamOperators,
-                                                                               nextQuerySubPlanVersion);
-
-            if (!success) {
-                NES_ERROR("Unable to perform placement removal for the change log entry");
-                return false;
-            }
-        } else {
-            NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
-                        "TO_BE_REPLACED state.");
-        }
-
-        if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
-            auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
-            auto placementAdditionStrategy = getStrategy(placementStrategy);
-            bool success = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                                pinnedUpstreamOperators,
-                                                                                pinnedDownStreamOperators,
-                                                                                nextQuerySubPlanVersion);
-
-            if (!success) {
-                NES_ERROR("Unable to perform query placement for the change log entry");
-                return false;
-            }
-        } else {
-            NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
-                        "TO_BE_PLACED state.");
+        } catch (std::exception& ex) {
+            NES_ERROR("Failed to process query delta due to: {}", ex.what());
+            sharedQueryPlan->setStatus(SharedQueryPlanStatus::PARTIALLY_PROCESSED);
         }
     }
 
+    if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::PARTIALLY_PROCESSED
+        && sharedQueryPlan->getStatus() != SharedQueryPlanStatus::STOPPED) {
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::PROCESSED);
+    }
+
     NES_DEBUG("QueryPlacementAmendmentPhase: Update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
-    return true;
+    std::set<DeploymentContextPtr> computedDeploymentContexts;
+    for (const auto& [decomposedQueryPlanId, deploymentContext] : deploymentContexts) {
+        computedDeploymentContexts.emplace(deploymentContext);
+    }
+    return computedDeploymentContexts;
 }
 
-bool QueryPlacementAmendmentPhase::containsOnlyPinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators) {
+bool QueryPlacementAmendmentPhase::containsOnlyPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedOperators) {
 
-    //Find if one of the operator does not have PINNED_NODE_ID property
-    return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const LogicalOperatorNodePtr& pinnedOperator) {
+    //Find if one of the operator does not have PINNED_WORKER_ID property
+    return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const LogicalOperatorPtr& pinnedOperator) {
         return !pinnedOperator->hasProperty(PINNED_WORKER_ID);
     });
 }
 
-bool QueryPlacementAmendmentPhase::containsOperatorsForPlacement(const std::set<LogicalOperatorNodePtr>& operatorsToCheck) {
-    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorNodePtr& operatorToCheck) {
+bool QueryPlacementAmendmentPhase::containsOperatorsForPlacement(const std::set<LogicalOperatorPtr>& operatorsToCheck) {
+    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorPtr& operatorToCheck) {
         return (operatorToCheck->getOperatorState() == OperatorState::TO_BE_PLACED
                 || operatorToCheck->getOperatorState() == OperatorState::PLACED);
     });
 }
 
-bool QueryPlacementAmendmentPhase::containsOperatorsForRemoval(const std::set<LogicalOperatorNodePtr>& operatorsToCheck) {
-    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorNodePtr& operatorToCheck) {
+bool QueryPlacementAmendmentPhase::containsOperatorsForRemoval(const std::set<LogicalOperatorPtr>& operatorsToCheck) {
+    return std::any_of(operatorsToCheck.begin(), operatorsToCheck.end(), [](const LogicalOperatorPtr& operatorToCheck) {
         return (operatorToCheck->getOperatorState() == OperatorState::TO_BE_REPLACED
                 || operatorToCheck->getOperatorState() == OperatorState::TO_BE_REMOVED
                 || operatorToCheck->getOperatorState() == OperatorState::PLACED);
     });
 }
 
-void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOperatorNodePtr>& operators) {
-    uint64_t rootNodeId = topology->getRootTopologyNodeId();
+void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOperatorPtr>& operators) {
+    uint64_t rootNodeId = topology->getRootWorkerNodeIds()[0];
     for (const auto& operatorToCheck : operators) {
-        if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {
+        if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperator>()) {
             operatorToCheck->addProperty(PINNED_WORKER_ID, rootNodeId);
         }
     }

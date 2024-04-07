@@ -37,31 +37,31 @@ class DefaultPipeliningPhase : public PipeliningPhase {
 
   protected:
     void process(const PipelineQueryPlanPtr& pipeline,
-                 std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                 std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                  const OperatorPipelinePtr& currentPipeline,
                  const PhysicalOperators::PhysicalOperatorPtr& currentOperators);
     void processSink(const PipelineQueryPlanPtr& pipelinePlan,
-                     std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                     std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                      const OperatorPipelinePtr& currentPipeline,
                      const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     static void processSource(const PipelineQueryPlanPtr& pipelinePlan,
-                              std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                              std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                               OperatorPipelinePtr currentPipeline,
                               const PhysicalOperators::PhysicalOperatorPtr& sourceOperator);
     void processMultiplex(const PipelineQueryPlanPtr& pipelinePlan,
-                          std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                          std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                           OperatorPipelinePtr currentPipeline,
                           const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     void processDemultiplex(const PipelineQueryPlanPtr& pipelinePlan,
-                            std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                            std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                             OperatorPipelinePtr currentPipeline,
                             const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     void processFusibleOperator(const PipelineQueryPlanPtr& pipelinePlan,
-                                std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                 const OperatorPipelinePtr& currentPipeline,
                                 const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     void processPipelineBreakerOperator(const PipelineQueryPlanPtr& pipelinePlan,
-                                        std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                        std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                         const OperatorPipelinePtr& currentPipeline,
                                         const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
 

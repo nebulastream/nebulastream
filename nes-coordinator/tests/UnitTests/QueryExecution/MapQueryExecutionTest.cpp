@@ -53,7 +53,7 @@ class MapQueryExecutionTest
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryCatalogServiceTest: Tear down QueryCatalogServiceTest test class."); }
 
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
             buf[recordIndex][0].write<int64_t>(recordIndex);
             buf[recordIndex][1].write<int64_t>(1);
@@ -203,8 +203,10 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
                     .sink(testSinkDescriptor);
     }
 
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE((bool) source);

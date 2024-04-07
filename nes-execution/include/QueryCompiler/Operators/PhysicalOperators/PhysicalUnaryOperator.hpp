@@ -14,18 +14,18 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNARYOPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNARYOPERATOR_HPP_
 
-#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
- * @brief Physical Unary operator combines the PhysicalOperator and UnaryOperatorNode interfaces.
+ * @brief Physical Unary operator combines the PhysicalOperator and UnaryOperator interfaces.
  * A physical unary operator has exactly one child operators.
  */
-class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperatorNode {
+class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator {
   protected:
-    PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
+    PhysicalUnaryOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema);
 
   public:
     ~PhysicalUnaryOperator() noexcept override = default;

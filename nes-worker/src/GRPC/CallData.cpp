@@ -17,8 +17,7 @@
 
 namespace NES {
 
-CallData::CallData(WorkerRPCServer& service, grpc::ServerCompletionQueue* cq)
-    : service(service), completionQueue(cq), status(CallStatus::CREATE) {
+CallData::CallData(WorkerRPCServer& service) : service(service) {
     // Invoke the serving logic right away.
 }
 
@@ -43,7 +42,7 @@ void CallData::proceed() {
         // instances can serve different requests concurrently), in this case
         // the memory address of this CallData instance.
     } else if (status == CallStatus::PROCESS) {
-        NES_DEBUG("RequestInSyncInProcees={}", request.DebugString());
+        NES_DEBUG("RequestInSyncInProcess={}", request.DebugString());
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
@@ -57,8 +56,6 @@ void CallData::proceed() {
     } else {
         NES_DEBUG("RequestInSyncInFinish={}", request.DebugString());
         NES_ASSERT(status == CallStatus::FINISH, "RequestInSyncInFinish failed");
-        // Once in the FINISH state, deallocate ourselves (CallData).
-        delete this;
     }
 }
 

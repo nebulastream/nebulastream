@@ -51,8 +51,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
                               const OriginId outputOriginId,
                               const uint64_t windowSize,
                               const uint64_t windowSlide,
-                              uint64_t sizeOfRecordLeft,
-                              uint64_t sizeOfRecordRight);
+                              const SchemaPtr& leftSchema,
+                              const SchemaPtr& rightSchema);
 
     ~StreamJoinOperatorHandler() override = default;
 
@@ -73,6 +73,11 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @brief Triggers all slices/windows that have not been already emitted to the probe
      */
     void triggerAllSlices(PipelineExecutionContext* pipelineCtx);
+
+    /**
+     * @brief Deletes all slices/windows
+     */
+    void deleteAllSlices();
 
     /**
      * @brief Triggers windows that are ready. This method updates the watermarkProcessor and should be thread-safe
@@ -170,6 +175,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      */
     uint64_t getWindowSize() const;
 
+    void setBufferManager(const BufferManagerPtr& bufManager);
+
   protected:
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
@@ -183,8 +190,12 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     const OriginId outputOriginId;
     std::atomic<uint64_t> sequenceNumber;
     std::atomic<bool> alreadySetup{false};
+    // TODO with issue #4517 we can remove the sizes
     size_t sizeOfRecordLeft;
     size_t sizeOfRecordRight;
+    SchemaPtr leftSchema;
+    SchemaPtr rightSchema;
+    BufferManagerPtr bufferManager;
 };
 }// namespace NES::Runtime::Execution::Operators
 

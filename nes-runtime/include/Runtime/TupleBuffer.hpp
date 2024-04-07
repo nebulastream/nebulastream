@@ -16,12 +16,14 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
 
 #include <Runtime/detail/TupleBufferImpl.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <utility>
 
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
@@ -38,6 +40,7 @@ class NetworkEventSender;
 }// namespace NES::Network::detail
 
 namespace NES::Runtime {
+
 /**
  * @brief The TupleBuffer allows Runtime components to access memory to store records in a reference-counted and
  * thread-safe manner.
@@ -81,6 +84,12 @@ class TupleBuffer {
   public:
     ///@brief This is the logical identifier of a child tuple buffer
     using NestedTupleBufferKey = uint32_t;
+
+    ///@brief The initial sequence number of a stream of tuple buffers is 1.
+    constexpr static uint64_t INITIAL_SEQUENCE_NUMBER = 1;
+    ///@brief When the content of a tuple buffer outgrows the buffer size tuple buffers are chunked to preserve the order of
+    ///sequencenumbers (or prevent duplicated). The initial chunk number is 1.
+    constexpr static uint64_t INITIAL_CHUNK_NUMBER = 1;
 
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] constexpr TupleBuffer() noexcept = default;
@@ -264,8 +273,30 @@ class TupleBuffer {
     /// @brief set the sequence number
     inline void setSequenceNumber(uint64_t sequenceNumber) noexcept { controlBlock->setSequenceNumber(sequenceNumber); }
 
+    /// @brief set the sequence data, i.e., sequenceNumber, chunkNumber, and lastChunk
+    inline void setSequenceData(SequenceData sequenceData) noexcept {
+        setSequenceNumber(sequenceData.sequenceNumber);
+        setChunkNumber(sequenceData.chunkNumber);
+        setLastChunk(sequenceData.lastChunk);
+    }
+
+    /// @brief gets the sequence data from this buffer
+    inline SequenceData getSequenceData() const noexcept { return {getSequenceNumber(), getChunkNumber(), isLastChunk()}; }
+
     /// @brief get the sequence number
     [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); }
+
+    /// @brief set the sequence number
+    inline void setChunkNumber(uint64_t chunkNumber) noexcept { controlBlock->setChunkNumber(chunkNumber); }
+
+    /// @brief get the chunk number
+    [[nodiscard]] constexpr uint64_t getChunkNumber() const noexcept { return controlBlock->getChunkNumber(); }
+
+    /// @brief set if this is the last chunk of a sequence number
+    inline void setLastChunk(bool isLastChunk) noexcept { controlBlock->setLastChunk(isLastChunk); }
+
+    /// @brief retrieves if this is the last chunk
+    [[nodiscard]] constexpr bool isLastChunk() const noexcept { return controlBlock->isLastChunk(); }
 
     /// @brief set the creation timestamp in milliseconds
     inline void setCreationTimestampInMS(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
@@ -273,8 +304,14 @@ class TupleBuffer {
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }
 
+    ///@brief get the buffer's statistic id (where it was last touched).
+    [[nodiscard]] constexpr StatisticId getStatisticId() const noexcept { return controlBlock->getStatisticId(); }
+
     ///@brief set the buffer's origin id (the operator id that creates this buffer).
     inline void setOriginId(uint64_t id) noexcept { controlBlock->setOriginId(id); }
+
+    ///@brief set the buffer's statistic id (where it was last touched).
+    inline void setStatisticId(StatisticId statisticId) noexcept { controlBlock->setStatisticId(statisticId); }
 
     ///@brief set the buffer's recycle callback.
     inline void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept {

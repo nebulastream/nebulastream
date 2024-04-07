@@ -33,4 +33,4 @@ class QueryPlacementRemovalException : public Exceptions::RequestExecutionExcept
     const char* what() const noexcept override;
 };
 }// namespace NES::Exceptions
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTREMOVALEXCEPTION_HPP_

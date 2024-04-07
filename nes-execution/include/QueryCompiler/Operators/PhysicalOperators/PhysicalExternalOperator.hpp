@@ -28,23 +28,27 @@ class PhysicalExternalOperator : public PhysicalUnaryOperator, public AbstractEm
     /**
      * @brief Creates a new physical external operator, which contains an executable pipeline stage
      * @param id operator id
+     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema input schema
      * @param outputSchema output schema
      * @param executablePipelineStage executable pipeline stage
      */
     PhysicalExternalOperator(OperatorId id,
+                             StatisticId statisticId,
                              SchemaPtr inputSchema,
                              SchemaPtr outputSchema,
                              Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage);
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
-    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
     * @brief get executable pipeline stage

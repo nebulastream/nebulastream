@@ -24,8 +24,8 @@ namespace NES {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class OperatorNode;
-using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+class Operator;
+using OperatorPtr = std::shared_ptr<Operator>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -99,8 +99,8 @@ class SyntaxBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
                             const QueryPlanPtr& hostQueryPlan,
                             std::map<uint64_t, uint64_t>& targetHostOperatorMap);
 
-    bool areOperatorEqual(const OperatorNodePtr& targetOperator,
-                          const OperatorNodePtr& hostOperator,
+    bool areOperatorEqual(const OperatorPtr& targetOperator,
+                          const OperatorPtr& hostOperator,
                           std::map<uint64_t, uint64_t>& targetHostOperatorMap);
 };
 }// namespace NES::Optimizer

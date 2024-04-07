@@ -66,7 +66,7 @@ constexpr auto udfIncrement = 10;
 /**
  * This helper function fills a buffer with test data
  */
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < numberOfRecords; recordIndex++) {
         buf[recordIndex][0].write<int32_t>(recordIndex);
     }
@@ -96,8 +96,10 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);

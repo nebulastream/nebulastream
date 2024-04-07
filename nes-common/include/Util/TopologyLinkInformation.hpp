@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_EDGE_HPP_
-#define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_EDGE_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_
+#define NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_
 #include <cstdint>
 #include <string>
 
@@ -42,4 +42,4 @@ class TopologyLinkInformation {
     WorkerId downstreamTopologyNode;
 };
 }// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_EDGE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_

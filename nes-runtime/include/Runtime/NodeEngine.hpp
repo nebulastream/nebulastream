@@ -20,6 +20,7 @@
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
 #include <map>
@@ -97,9 +98,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief undeploy stops and undeploy a query
      * @param sharedQueryId to undeploy
+     * @param decomposedQueryPlanId to undeploy
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool undeployQuery(SharedQueryId sharedQueryId);
+    [[nodiscard]] bool undeployQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief registers a query
@@ -126,17 +128,20 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
      * @param sharedQueryId to start
+     * @param decomposedQueryPlanId the decomposed query plan to start
      * @return bool indicating success
      */
-    [[nodiscard]] bool startQuery(SharedQueryId sharedQueryId);
+    [[nodiscard]] bool startQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief method to stop a query
      * @param sharedQueryId to stop
+     * @param decomposedQueryPlanId to stop
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
     [[nodiscard]] bool stopQuery(SharedQueryId sharedQueryId,
+                                 DecomposedQueryPlanId decomposedQueryPlanId,
                                  Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
@@ -306,6 +311,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
+    const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
+
     /**
      * @brief This function is only to be used for experiments. Do not call from other classes. reconfigure the network sink to point to a new source. Buffer all tuples that are received while the new connection
      * is being established.
@@ -371,6 +378,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::PartitionManagerPtr partitionManager;
     AbstractQueryStatusListenerPtr nesWorker;
     Network::NetworkManagerPtr networkManager;
+    Statistic::AbstractStatisticStorePtr statisticStore;
     OpenCLManagerPtr openCLManager;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;

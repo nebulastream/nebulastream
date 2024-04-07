@@ -11,11 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
-#define NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_TOPOLOGYNODERELOCATIONREQUEST_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_TOPOLOGYNODERELOCATIONREQUEST_HPP_
+
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <Util/TopologyLinkInformation.hpp>
+#include <folly/Synchronized.h>
 
 namespace NES {
 
@@ -28,6 +29,8 @@ using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
+
+using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
 }// namespace Optimizer
 
 namespace RequestProcessor::Experimental {
@@ -75,18 +78,7 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
      * @param upstreamNodeId the id of the upstream node of removed link
      * @param downstreamNodeId the id of the downstream node of the removed link
      */
-    void processRemoveTopologyLinkRequest(OperatorId upstreamNodeId, OperatorId downstreamNodeId);
-
-    /**
-     * @brief identify the operators of the specified shared query plan that are affected by a topology change,
-     * run an incremental placement and deploy the changes
-     * @param sharedQueryPlanId the id of the shared query plan for which the placemetn is to be updated
-     * @param upstreamNodeId the id of the upstream node of removed link
-     * @param downstreamNodeId the id of the downstream node of the removed link
-     */
-    void markOperatorsForReOperatorPlacement(SharedQueryId sharedQueryPlanId,
-                                             const std::shared_ptr<Optimizer::ExecutionNode>& upstreamExecutionNode,
-                                             const std::shared_ptr<Optimizer::ExecutionNode>& downstreamExecutionNode);
+    std::set<WorkerId> identifyImpactedSharedQueries(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
@@ -124,9 +116,9 @@ class TopologyNodeRelocationRequest : public AbstractUniRequest {
     std::vector<TopologyLinkInformation> addedLinks;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    QueryCatalogServicePtr queryCatalogService;
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES
-#endif//NES_TOPOLOGYNODERELOCATIONREQUEST_HPP
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_TOPOLOGYNODERELOCATIONREQUEST_HPP_

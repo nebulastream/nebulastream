@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -53,7 +54,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
         }
     };
 
-    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
 
     auto query = Query::from("truck").unionWith(Query::from("car"));
@@ -82,7 +83,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -104,7 +105,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         }
     };
 
-    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(ResultRecord), testSchema->getSchemaSizeInBytes());
 
@@ -134,7 +135,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -144,40 +145,36 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
-
+    auto workerConfig = WorkerConfiguration::create();
     auto query = Query::from("test");
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("test");
+                                  .attachWorkerWithMemorySourceToWorkerWithId("test", 1, workerConfig);
 
-    for (uint32_t i = 0; i < 10; ++i) {
-        testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-9
+    const auto noTuplesInBuffer = workerConfig->bufferSizeInBytes / defaultLogicalSchema->getSchemaSizeInBytes();
+    const auto tuplesForThreeBuffers = noTuplesInBuffer * 3;
+    for (uint32_t i = 0; i < tuplesForThreeBuffers; ++i) {
+        testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-(noTuplesInBuffer * 3)
     }
     testHarness.validate().setupTopology();
 
     // Expected output
-    const auto expectedOutput = "1, 0\n"
-                                "1, 1\n"
-                                "1, 2\n"
-                                "1, 3\n"
-                                "1, 4\n"
-                                "1, 5\n"
-                                "1, 6\n"
-                                "1, 7\n"
-                                "1, 8\n"
-                                "1, 9\n";
+    std::ostringstream expectedOutput;
+    for (auto rec = 0_u64; rec < tuplesForThreeBuffers; ++rec) {
+        expectedOutput << "1, " << rec << std::endl;
+    }
 
     // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput.str())).getOutput();
 
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto tmpBuffers =
+        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -190,8 +187,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -222,7 +218,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -232,8 +228,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -278,7 +273,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -338,21 +333,21 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     remove(outputFilePath2.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("testSourceSharing: Submit query");
 
     auto query1 = Query::from("window1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
 
     auto query2 = Query::from("window1").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     start.set_value(true);
 
@@ -446,10 +441,10 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath2));
 
     NES_DEBUG("testSourceSharing: Remove query 1");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_DEBUG("testSourceSharing: Remove query 2");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_DEBUG("testSourceSharing: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -514,7 +509,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     EXPECT_NE(port, 0UL);
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("testSourceSharing: Submit query");
 
@@ -523,16 +518,16 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
                       .sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
 
     auto query2 = Query::from("window1")
                       .filter(Attribute("id") > 5)
                       .sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     start.set_value(true);
 
@@ -626,10 +621,10 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
 
     NES_DEBUG("testSourceSharing: Remove query 1");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_DEBUG("testSourceSharing: Remove query 2");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_DEBUG("testSourceSharing: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -643,8 +638,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -691,7 +685,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -701,8 +695,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -731,7 +724,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -745,10 +738,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -768,7 +758,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -776,13 +766,13 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
                      .filter(Attribute("id") < 5)
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -804,10 +794,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -827,7 +814,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -835,12 +822,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
                      .filter(Attribute("id") < 5)
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -862,10 +849,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -885,7 +869,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -893,12 +877,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
                      .filter(Attribute("id") < 5)
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -916,8 +900,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
         uint32_t value;
     };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto defaultLogicalSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
@@ -950,7 +933,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -978,7 +961,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -987,7 +970,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
     EXPECT_THROW(
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp),
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp),
         InvalidQueryException);
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
@@ -1032,7 +1015,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1043,10 +1026,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("default_logical").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     auto query2 = Query::from("default_logical").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
@@ -1075,10 +1058,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1110,10 +1093,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1147,7 +1127,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1155,27 +1135,27 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
+    string expectedContent1 = "stream1$id:INTEGER(64 bits),stream1$value:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
-    string expectedContent2 = "stream2$value:INTEGER(64 bits),stream2$id:INTEGER(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
+    string expectedContent2 = "stream2$id:INTEGER(64 bits),stream2$value:INTEGER(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath1));
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -1199,10 +1179,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1237,7 +1214,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1245,27 +1222,27 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
-    string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
+    string expectedContent1 = "stream1$id:INTEGER(64 bits),stream1$value:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
-    string expectedContent2 = "stream2$value:INTEGER(64 bits),stream2$id:INTEGER(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
+    string expectedContent2 = "stream2$id:INTEGER(64 bits),stream2$value:INTEGER(64 bits),stream2$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService, std::chrono::seconds(5)));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService, std::chrono::seconds(5)));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -1310,7 +1287,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1323,8 +1300,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
                              "1,1\n"
@@ -1352,10 +1329,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1382,15 +1359,12 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     struct Test {
-        uint64_t value;
         uint64_t id;
+        uint64_t value;
         uint64_t timestamp;
     };
 
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -1407,8 +1381,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     csvSourceType2->setSkipHeader(false);
     auto query = Query::from("window")
                      .joinWith(Query::from("window2"))
-                     .where(Attribute("id"))
-                     .equalsTo(Attribute("id"))
+                     .where(Attribute("value"))
+                     .equalsTo(Attribute("value"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -1436,7 +1410,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -1450,10 +1424,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema = Schema::create()
-                          ->addField(createField("value", BasicType::UINT64))
-                          ->addField(createField("id", BasicType::UINT64))
-                          ->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1488,7 +1459,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -1496,15 +1467,15 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
     QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
     QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     string expectedContent1 = "stream1$value:INTEGER(64 bits),stream1$id:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
                               "1,12,1001\n";
@@ -1513,10 +1484,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
                               "1,12,1001\n";
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService, std::chrono::seconds(5)));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService, std::chrono::seconds(5)));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -1543,10 +1514,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
         uint64_t timestamp;
     };
 
-    auto windowSchema = Schema::create()
-                            ->addField("value", DataTypeFactory::createUInt64())
-                            ->addField("id", DataTypeFactory::createUInt64())
-                            ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
 
@@ -1581,7 +1549,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -1654,7 +1622,80 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+}
+
+/*
+ * @brief Test if sliding windows properly trigger the join
+ */
+TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
+    struct Car {
+        uint64_t id;
+        uint64_t value;
+        uint64_t value2;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = TestSchemas::getSchemaTemplate("id_2val_time_u64");
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    auto queryWithWindowOperator =
+        Query::from("car1")
+            .joinWith(Query::from("car2")
+                          .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                          .byKey(Attribute("id"))
+                          .apply(Count())
+                          .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("id"), Attribute("count")))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)));
+
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("car1", carSchema)
+                           .addLogicalSource("car2", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car1")
+                           .attachWorkerWithMemorySourceToCoordinator("car2");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
+    // Sliding Windows Produced (start, end, key, value)
+    //[0, 1000, 1, 3]
+    //[500, 1500, 1, 2]
+    //[1000, 2000, 1, 1]
+    //[1500, 2500, 1, 1]
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 100ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 700ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 800ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1600ULL}, 2);
+
+    // Tumbling Windows of the Join (start, end, listofentries)
+    //[0, 1000, {1,2,3}]
+    //[1000, 2000, {4}]
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 100ULL}, 3);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 700ULL}, 3);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 800ULL}, 3);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1600ULL}, 3);
+
+    testHarness.validate().setupTopology();
+
+    // Run the query and get the actual dynamic buffers
+    auto expectedOutput = "0,1000,1,1,15,15,100,0,1000,1,3\n"
+                          "0,1000,1,1,15,15,100,500,1500,1,2\n"
+                          "0,1000,1,1,15,15,700,0,1000,1,3\n"
+                          "0,1000,1,1,15,15,700,500,1500,1,2\n"
+                          "0,1000,1,1,15,15,800,0,1000,1,3\n"
+                          "0,1000,1,1,15,15,800,500,1500,1,2\n"
+                          "1000,2000,1,1,15,15,1600,1000,2000,1,1\n"
+                          "1000,2000,1,1,15,15,1600,1500,2500,1,1\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -1736,7 +1777,7 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -1836,7 +1877,7 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -1849,6 +1890,8 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
+//TODO: this test will be enabled once the following issue is resolved
+//TODO: Distributed Window Aggregation #4557
 TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowDistributed) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -1932,7 +1975,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
 
@@ -1948,10 +1991,10 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
@@ -1972,7 +2015,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -2005,6 +2048,8 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
+//TODO: this test will be enabled once the following issue is resolved
+//TODO: Distributed Window Aggregation #4557
 TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDistributed) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -2087,7 +2132,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     remove(outputFilePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
 
@@ -2103,10 +2148,10 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
     QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
@@ -2136,7 +2181,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("QueryDeploymentTest: Remove query");
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

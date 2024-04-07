@@ -16,8 +16,8 @@
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NexmarkCommon.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <algorithm>
 #include <fstream>
 #include <math.h>
@@ -36,8 +36,8 @@ std::vector<Runtime::TupleBuffer> NEAuctionDataGenerator::createData(size_t numb
 
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
             long epoch = currentRecord / NexmarkCommon::TOTAL_EVENT_RATIO;
             long offset = currentRecord % NexmarkCommon::TOTAL_EVENT_RATIO;
             if (offset < NexmarkCommon::PERSON_EVENT_RATIO) {
@@ -64,10 +64,10 @@ std::vector<Runtime::TupleBuffer> NEAuctionDataGenerator::createData(size_t numb
                 long n = rand() % (activePersons + 100);
                 matchingPerson = personId + activePersons - n;
             }
-            dynamicBuffer[currentRecord]["id"].write<uint64_t>(auctionId);
-            dynamicBuffer[currentRecord]["seller"].write<uint64_t>(matchingPerson);
+            testBuffer[currentRecord]["id"].write<uint64_t>(auctionId);
+            testBuffer[currentRecord]["seller"].write<uint64_t>(matchingPerson);
         }
-        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+        testBuffer.setNumberOfTuples(testBuffer.getCapacity());
         buffers.emplace_back(buffer);
     }
     return buffers;

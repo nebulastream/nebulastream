@@ -14,6 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,7 +53,7 @@ class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryCatalogServiceTest: Tear down QueryCatalogServiceTest test class."); }
 
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
         int numberOfTuples = 10;
         for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
             buf[recordIndex][0].write<int64_t>(recordIndex);
@@ -69,18 +70,17 @@ class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
 
 TEST_F(ProjectionQueryExecutionTest, projectField) {
     const auto expectedNumberOfTuples = 10;
-    auto schema = Schema::create()
-                      ->addField("test$id", BasicType::INT64)
-                      ->addField("test$one", BasicType::INT64)
-                      ->addField("test$value", BasicType::INT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_one_val_64")->updateSourceName("test");
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(outputSchema, expectedNumberOfTuples);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);
@@ -100,18 +100,17 @@ TEST_F(ProjectionQueryExecutionTest, projectField) {
 
 TEST_F(ProjectionQueryExecutionTest, projectTwoFields) {
     const auto expectedNumberOfTuples = 10;
-    auto schema = Schema::create()
-                      ->addField("test$id", BasicType::INT64)
-                      ->addField("test$one", BasicType::INT64)
-                      ->addField("test$value", BasicType::INT64);
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_one_val_64")->updateSourceName("test");
+    auto outputSchema = TestSchemas::getSchemaTemplate("id_val_64");
     auto testSink = executionEngine->createDataSink(outputSchema, expectedNumberOfTuples);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);
@@ -131,16 +130,15 @@ TEST_F(ProjectionQueryExecutionTest, projectTwoFields) {
 }
 
 TEST_F(ProjectionQueryExecutionTest, projectNonExistingFields) {
-    auto schema = Schema::create()
-                      ->addField("test$id", BasicType::INT64)
-                      ->addField("test$one", BasicType::INT64)
-                      ->addField("test$value", BasicType::INT64);
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
+    auto schema = TestSchemas::getSchemaTemplate("id_one_val_64")->updateSourceName("test");
+    auto outputSchema = TestSchemas::getSchemaTemplate("id_val_64");
     auto testSink = executionEngine->createDataSink(outputSchema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("x")).sink(testSinkDescriptor);
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     ASSERT_ANY_THROW(executionEngine->submitQuery(decomposedQueryPlan));
 }

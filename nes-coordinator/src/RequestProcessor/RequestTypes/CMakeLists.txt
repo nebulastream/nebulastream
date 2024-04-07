@@ -12,15 +12,17 @@
 # limitations under the License.
 
 add_source_files(nes-coordinator
-        FailQueryRequest.cpp
-        StopQueryRequest.cpp
-        AbstractRequest.cpp
-        AddQueryRequest.cpp
-        ExplainRequest.cpp
         AbstractMultiRequest.cpp
+        AbstractRequest.cpp
         AbstractSubRequest.cpp
-        StorageResourceLocker.cpp
+        AddQueryRequest.cpp
         AbstractUniRequest.cpp
-        SubRequestFuture.cpp
+        ExplainRequest.cpp
+        FailQueryRequest.cpp
         TopologyNodeRelocationRequest.cpp
-        )
+        StorageResourceLocker.cpp
+        StopQueryRequest.cpp
+        SubRequestFuture.cpp
+)
+
+add_subdirectory(ISQP)

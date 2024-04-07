@@ -17,11 +17,9 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -36,12 +34,12 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -115,24 +113,24 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+1_s64);
-    dynamicBuffer[0]["f2"].write(+10_s64);
-    dynamicBuffer[0]["ts"].write(+1_s64);
-    dynamicBuffer[1]["f1"].write(+2_s64);
-    dynamicBuffer[1]["f2"].write(+20_s64);
-    dynamicBuffer[1]["ts"].write(+1_s64);
-    dynamicBuffer[2]["f1"].write(+3_s64);
-    dynamicBuffer[2]["f2"].write(+30_s64);
-    dynamicBuffer[2]["ts"].write(+2_s64);
-    dynamicBuffer[3]["f1"].write(+1_s64);
-    dynamicBuffer[3]["f2"].write(+40_s64);
-    dynamicBuffer[3]["ts"].write(+3_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["f1"].write(+1_s64);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[0]["ts"].write(+1_s64);
+    testBuffer[1]["f1"].write(+2_s64);
+    testBuffer[1]["f2"].write(+20_s64);
+    testBuffer[1]["ts"].write(+1_s64);
+    testBuffer[2]["f1"].write(+3_s64);
+    testBuffer[2]["f2"].write(+30_s64);
+    testBuffer[2]["ts"].write(+2_s64);
+    testBuffer[3]["f1"].write(+1_s64);
+    testBuffer[3]["f2"].write(+40_s64);
+    testBuffer[3]["ts"].write(+3_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
@@ -154,8 +152,8 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 100);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 100);
 
 }// namespace NES::Runtime::Execution
 
@@ -214,24 +212,24 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write(+1_s64);
-    dynamicBuffer[0]["f2"].write(+10_s64);
-    dynamicBuffer[0]["ts"].write(+1_s64);
-    dynamicBuffer[1]["f1"].write(+2_s64);
-    dynamicBuffer[1]["f2"].write(+20_s64);
-    dynamicBuffer[1]["ts"].write(+1_s64);
-    dynamicBuffer[2]["f1"].write(+3_s64);
-    dynamicBuffer[2]["f2"].write(+30_s64);
-    dynamicBuffer[2]["ts"].write(+2_s64);
-    dynamicBuffer[3]["f1"].write(+1_s64);
-    dynamicBuffer[3]["f2"].write(+40_s64);
-    dynamicBuffer[3]["ts"].write(+3_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["f1"].write(+1_s64);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[0]["ts"].write(+1_s64);
+    testBuffer[1]["f1"].write(+2_s64);
+    testBuffer[1]["f2"].write(+20_s64);
+    testBuffer[1]["ts"].write(+1_s64);
+    testBuffer[2]["f1"].write(+3_s64);
+    testBuffer[2]["f2"].write(+30_s64);
+    testBuffer[2]["ts"].write(+2_s64);
+    testBuffer[3]["f1"].write(+1_s64);
+    testBuffer[3]["f2"].write(+40_s64);
+    testBuffer[3]["ts"].write(+3_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
-    buffer.setSequenceNumber(1);
+    buffer.setSequenceData({1, 1, true});
     buffer.setOriginId(0);
 
     auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
@@ -255,12 +253,115 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer[0][0].read<int64_t>(), 100);
-    EXPECT_EQ(resultDynamicBuffer[0][1].read<int64_t>(), 25);
-    EXPECT_EQ(resultDynamicBuffer[0][2].read<int64_t>(), 10);
-    EXPECT_EQ(resultDynamicBuffer[0][3].read<int64_t>(), 40);
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer[0][0].read<int64_t>(), 100);
+    EXPECT_EQ(resulttestBuffer[0][1].read<int64_t>(), 25);
+    EXPECT_EQ(resulttestBuffer[0][2].read<int64_t>(), 10);
+    EXPECT_EQ(resulttestBuffer[0][3].read<int64_t>(), 40);
 
+}// namespace NES::Runtime::Execution
+
+/**
+ * @brief Test running a pipeline containing a threshold window with two min aggregations with different data types
+ */
+TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataType) {
+    auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    scanSchema->addField("f1", BasicType::INT64);
+    scanSchema->addField("f2", BasicType::INT64);
+    scanSchema->addField("f3", BasicType::FLOAT32);
+    scanSchema->addField("ts", BasicType::INT64);
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto readF3 = std::make_shared<Expressions::ReadFieldExpression>("f3");
+    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
+    auto aggregationResultFieldName1 = "test$min_i64";
+    auto aggregationResultFieldName2 = "test$min_f32";
+    auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
+        std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName1),
+        std::make_shared<Aggregation::MinAggregationFunction>(floatType, floatType, readF3, aggregationResultFieldName2)
+            };
+    auto slicePreAggregation =
+        std::make_shared<Operators::NonKeyedSlicePreAggregation>(0 /*handler index*/,
+                                                                 std::make_unique<Operators::EventTimeFunction>(readTsField),
+                                                                 aggregationFunctions);
+    scanOperator->setChild(slicePreAggregation);
+    auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    preAggPipeline->setRootOperator(scanOperator);
+    auto sliceMergingAction = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions,
+                                                                                    "start",
+                                                                                    "end",
+                                                                                    /*origin id*/ 0);
+    auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
+                                                                          aggregationFunctions,
+                                                                          std::move(sliceMergingAction));
+    auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    emitSchema = emitSchema->addField("test$min_i64", BasicType::INT64)
+                     ->addField("test$min_f32", BasicType::FLOAT32);
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    sliceMerging->setChild(emitOperator);
+    auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    sliceMergingPipeline->setRootOperator(sliceMerging);
+
+    auto buffer = bm->getBufferBlocking();
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
+
+    // Fill buffer
+    testBuffer[0]["f1"].write(+1_s64);
+    testBuffer[0]["f2"].write(+10_s64);
+    testBuffer[0]["f3"].write((float) 0.5);
+    testBuffer[0]["ts"].write(+1_s64);
+    testBuffer[1]["f1"].write(+2_s64);
+    testBuffer[1]["f2"].write(+20_s64);
+    testBuffer[1]["f3"].write((float) 0.5);
+    testBuffer[1]["ts"].write(+1_s64);
+    testBuffer[2]["f1"].write(+3_s64);
+    testBuffer[2]["f2"].write(+30_s64);
+    testBuffer[2]["f3"].write((float) 0.5);
+    testBuffer[2]["ts"].write(+2_s64);
+    testBuffer[3]["f1"].write(+1_s64);
+    testBuffer[3]["f2"].write(+40_s64);
+    testBuffer[3]["f3"].write((float) 0.5);
+    testBuffer[3]["ts"].write(+3_s64);
+    testBuffer.setNumberOfTuples(4);
+    buffer.setWatermark(20);
+    buffer.setSequenceData({1, 1, true});
+    buffer.setOriginId(0);
+
+    auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
+    std::vector<OriginId> origins = {0};
+    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
+
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    preAggExecutablePipeline->setup(pipeline1Context);
+
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
+    auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
+
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    sliceMergingExecutablePipeline->setup(pipeline2Context);
+
+    preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
+    EXPECT_EQ(pipeline1Context.buffers.size(), 1);
+    sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
+
+    EXPECT_EQ(pipeline2Context.buffers.size(), 1);
+    preAggExecutablePipeline->stop(pipeline1Context);
+    sliceMergingExecutablePipeline->stop(pipeline2Context);
+
+    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resulttestBuffer[0][0].read<int64_t>(), 10);
+    EXPECT_EQ(resulttestBuffer[0][1].read<float>(), 0.5);
 }// namespace NES::Runtime::Execution
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

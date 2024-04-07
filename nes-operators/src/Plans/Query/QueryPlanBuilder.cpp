@@ -15,16 +15,15 @@
 #include <API/AttributeField.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
@@ -43,82 +42,87 @@ QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName) {
     return queryPlanPtr;
 }
 
-QueryPlanPtr QueryPlanBuilder::addProjection(std::vector<NES::ExpressionNodePtr> expressions, NES::QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addProjection(std::vector<ExpressionNodePtr> expressions, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add projection operator to query plan");
-    OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
+    OperatorPtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addRename(std::string const& newSourceName, NES::QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addRename(std::string const& newSourceName, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add rename operator to query plan");
     auto op = LogicalOperatorFactory::createRenameSourceOperator(newSourceName);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addFilter(NES::ExpressionNodePtr const& filterExpression, NES::QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addFilter(ExpressionNodePtr const& filterExpression, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add filter operator to query plan");
     if (!filterExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Filter predicate cannot have a FieldRenameExpression");
     }
-    OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
+    OperatorPtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, NES::QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add limit operator to query plan");
-    OperatorNodePtr op = LogicalOperatorFactory::createLimitOperator(limit);
+    OperatorPtr op = LogicalOperatorFactory::createLimitOperator(limit);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add map java udf operator to query plan");
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor,
-                                                  NES::QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add flat map java udf operator to query plan");
     auto op = LogicalOperatorFactory::createFlatMapUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr const& mapExpression, NES::QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add map operator to query plan");
     if (!mapExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Map expression cannot have a FieldRenameExpression");
     }
-    OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(mapExpression);
+    OperatorPtr op = LogicalOperatorFactory::createMapOperator(mapExpression);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addUnion(NES::QueryPlanPtr leftQueryPlan, NES::QueryPlanPtr rightQueryPlan) {
+QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan) {
     NES_DEBUG("QueryPlanBuilder: unionWith the subQuery to current query plan");
-    OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
+    OperatorPtr op = LogicalOperatorFactory::createUnionOperator();
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
-                                       NES::QueryPlanPtr rightQueryPlan,
+QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePtr window,
+                                                         Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+                                                         Statistic::MetricHash metricHash,
+                                                         QueryPlanPtr queryPlan) {
+    auto op = LogicalOperatorFactory::createStatisticBuildOperator(std::move(window), std::move(statisticDescriptor), metricHash);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
+QueryPlanPtr QueryPlanBuilder::addJoin(QueryPlanPtr leftQueryPlan,
+                                       QueryPlanPtr rightQueryPlan,
                                        ExpressionNodePtr onLeftKey,
                                        ExpressionNodePtr onRightKey,
                                        const Windowing::WindowTypePtr& windowType,
-                                       Join::LogicalJoinDefinition::JoinType joinType) {
+                                       Join::LogicalJoinDescriptor::JoinType joinType) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
     auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
     auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "leftSide");
-
-    // we use a complete window type as we currently do not have a distributed join
-    auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
     NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
@@ -131,13 +135,8 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess,
-                                                              rightQueryPlanKeyFieldAccess,
-                                                              windowType,
-                                                              distrType,
-                                                              1,
-                                                              1,
-                                                              joinType);
+    auto joinDefinition =
+        Join::LogicalJoinDescriptor::create(leftKeyFieldAccess, rightQueryPlanKeyFieldAccess, windowType, 1, 1, joinType);
 
     NES_DEBUG("QueryPlanBuilder: add join operator to query plan");
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
@@ -145,10 +144,10 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
     return leftQueryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addBatchJoin(NES::QueryPlanPtr leftQueryPlan,
-                                                 NES::QueryPlanPtr rightQueryPlan,
-                                                 ExpressionNodePtr onProbeKey,
-                                                 ExpressionNodePtr onBuildKey) {
+QueryPlanPtr QueryPlanBuilder::addBatchJoin(QueryPlanPtr leftQueryPlan,
+                                            QueryPlanPtr rightQueryPlan,
+                                            ExpressionNodePtr onProbeKey,
+                                            ExpressionNodePtr onBuildKey) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
     auto probeKeyFieldAccess = checkExpression(onProbeKey, "onProbeKey");
     auto buildKeyFieldAccess = checkExpression(onBuildKey, "onBuildKey");
@@ -161,33 +160,31 @@ NES::QueryPlanPtr QueryPlanBuilder::addBatchJoin(NES::QueryPlanPtr leftQueryPlan
     // todo here again we wan't to extend to distributed joins:
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
+    auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
 
     auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addSink(NES::QueryPlanPtr queryPlan, NES::SinkDescriptorPtr sinkDescriptor) {
-    OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
+QueryPlanPtr QueryPlanBuilder::addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor, WorkerId workerId) {
+    OperatorPtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, workerId);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-NES::QueryPlanPtr
-QueryPlanBuilder::assignWatermark(NES::QueryPlanPtr queryPlan,
-                                  NES::Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor) {
-    OperatorNodePtr op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
+QueryPlanPtr QueryPlanBuilder::assignWatermark(QueryPlanPtr queryPlan,
+                                               Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor) {
+    OperatorPtr op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(NES::QueryPlanPtr queryPlan,
-                                                                   const NES::Windowing::WindowTypePtr windowType) {
+QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType) {
     NES_DEBUG("QueryPlanBuilder: checkAndAddWatermarkAssignment for a (sub)query plan");
     auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
 
-    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperator>().empty()) {
         if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             return assignWatermark(queryPlan, Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
         } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
@@ -202,19 +199,18 @@ NES::QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(NES::QueryPla
     return queryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(NES::OperatorNodePtr operatorNode,
-                                                                     NES::QueryPlanPtr leftQueryPlan,
-                                                                     NES::QueryPlanPtr rightQueryPlan) {
+QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode,
+                                                                QueryPlanPtr leftQueryPlan,
+                                                                QueryPlanPtr rightQueryPlan) {
     leftQueryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     leftQueryPlan->appendOperatorAsNewRoot(operatorNode);
     NES_DEBUG("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
-    auto newSourceName = NES::Util::updateSourceName(leftQueryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
+    auto newSourceName = Util::updateSourceName(leftQueryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
     leftQueryPlan->setSourceConsumed(newSourceName);
     return leftQueryPlan;
 }
 
-std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(NES::ExpressionNodePtr expression,
-                                                                             std::string side) {
+std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(ExpressionNodePtr expression, std::string side) {
     if (!expression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key ({}) has to be an FieldAccessExpression but it was a  {}", side, expression->toString());
         NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");

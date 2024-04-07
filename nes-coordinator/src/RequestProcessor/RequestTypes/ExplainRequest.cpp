@@ -13,31 +13,17 @@
 */
 
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
-#include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
-#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
-#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
-#include <Operators/Exceptions/SignatureComputationException.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Optimizer//Exceptions/QueryPlacementAdditionException.hpp>
-#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -48,8 +34,6 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -64,13 +48,14 @@
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
+#include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <cpr/cpr.h>
 #include <string>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                                const Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -105,15 +90,13 @@ std::vector<AbstractRequestPtr> ExplainRequest::rollBack([[maybe_unused]] std::e
 void ExplainRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr ex,
                                         [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
-void ExplainRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
-
 std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
     try {
         NES_DEBUG("Acquiring required resources.");
         // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
         auto topology = storageHandler->getTopologyHandle(requestId);
-        auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+        auto queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
         auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
         auto udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         auto sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
@@ -126,9 +109,6 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto queryDeploymentPhase =
-            QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
-        auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
@@ -160,13 +140,13 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         semanticQueryValidation->validate(queryPlan);
 
         // Create a new entry in the query catalog
-        queryCatalogService->createNewEntry(queryString, queryPlan, queryPlacementStrategy);
+        queryCatalog->createQueryCatalogEntry(queryString, queryPlan, queryPlacementStrategy, QueryState::REGISTERED);
 
         //1. Add the initial version of the query to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
         //2. Set query status as Optimizing
-        queryCatalogService->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
+        queryCatalog->updateQueryStatus(queryId, QueryState::OPTIMIZING, "");
 
         //3. Execute type inference phase
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
@@ -181,7 +161,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryPlan = queryRewritePhase->execute(queryPlan);
 
         //6. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
         //7. Execute type inference phase on rewritten query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
@@ -196,7 +176,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
         //11. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
         //12. Perform type inference over re-written query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
@@ -209,7 +189,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryPlan = memoryLayoutSelectionPhase->execute(queryPlan);
 
         //15. Add the updated query plan to the query catalog
-        queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
+        queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
 
         //16. Add the updated query plan to the global query plan
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
@@ -236,12 +216,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        if (!queryPlacementAmendmentPhase->execute(sharedQueryPlan)) {
-            throw Exceptions::QueryPlacementAdditionException(sharedQueryId,
-                                                              "QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with shared query id: "
-                                                                  + std::to_string(sharedQueryId));
-        }
+        queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //22. Fetch configurations for elegant optimizations
         auto accelerateJavaUdFs = coordinatorConfiguration->elegant.accelerateJavaUDFs;
@@ -255,17 +230,55 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                              accelerationServiceURL,
                                                              sampleCodeGenerationPhase);
 
-        //24. respond to the calling service with the query id
-        responsePromise.set_value(std::make_shared<ExplainResponse>(response));
-
-        //25. clean up the data structure
+        //24. clean up the global query plan by marking it for removal
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-        globalExecutionPlan->removeAllDecomposedQueryPlans(queryId);
+        //25. Get the shared query plan for the added query
+        sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+        //26. Perform placement removal of updated shared query plan
+        NES_DEBUG("Performing Operator placement for shared query plan");
+        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-        //26. Set query status as Explained
-        queryCatalogService->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
+        //27. Set query status as Explained
+        queryCatalog->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
+
+        //28. Iterate over deployment context and update execution plan
+        for (const auto& deploymentContext : deploymentContexts) {
+            auto executionNodeId = deploymentContext->getWorkerId();
+            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+            switch (decomposedQueryPlanState) {
+                case QueryState::MARKED_FOR_REDEPLOYMENT:
+                case QueryState::MARKED_FOR_DEPLOYMENT: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::RUNNING);
+                    break;
+                }
+                case QueryState::MARKED_FOR_MIGRATION: {
+                    globalExecutionPlan->updateDecomposedQueryPlanState(executionNodeId,
+                                                                        sharedQueryId,
+                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryPlanVersion,
+                                                                        QueryState::STOPPED);
+                    globalExecutionPlan->removeDecomposedQueryPlan(executionNodeId,
+                                                                   sharedQueryId,
+                                                                   decomposedQueryPlanId,
+                                                                   decomposedQueryPlanVersion);
+                    break;
+                }
+                default:
+                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+            }
+        }
+
+        //29. respond to the calling service with the query id
+        responsePromise.set_value(std::make_shared<ExplainResponse>(response));
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
+        responsePromise.set_value(std::make_shared<ExplainResponse>(""));
         handleError(std::current_exception(), storageHandler);
     }
     return {};
@@ -275,7 +288,7 @@ void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
     auto queryPlanIterator = PlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
-        auto visitingOp = (*itr)->as<OperatorNode>();
+        auto visitingOp = (*itr)->as<Operator>();
         visitingOp->setId(NES::getNextOperatorId());
     }
 }
@@ -292,16 +305,16 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};
 
-    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-    for (const auto& executionNode : executionNodes) {
+    auto lockedExecutionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
+    for (const auto& lockedExecutionNode : lockedExecutionNodes) {
         nlohmann::json executionNodeMetaData{};
 
-        executionNodeMetaData["nodeId"] = executionNode->getId();
-        auto topologyNode = topology->getCopyOfTopologyNodeWithId(executionNode->getId());
+        executionNodeMetaData["nodeId"] = lockedExecutionNode->operator*()->getId();
+        auto topologyNode = topology->getCopyOfTopologyNodeWithId(lockedExecutionNode->operator*()->getId());
 
         // loop over all query sub plans inside the current executionNode
         nlohmann::json scheduledSubQueries{};
-        for (const auto& decomposedQueryPlan : executionNode->getAllDecomposedQueryPlans(sharedQueryId)) {
+        for (const auto& decomposedQueryPlan : lockedExecutionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId)) {
 
             // prepare json object to hold information on current query sub plan
             nlohmann::json currentQuerySubPlanMetaData{};
@@ -323,7 +336,7 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
             std::set<uint64_t> pipelineIds;
             auto queryPlanIterator = PlanIterator(updatedSubQueryPlan);
             for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
-                auto visitingOp = (*itr)->as<OperatorNode>();
+                auto visitingOp = (*itr)->as<Operator>();
                 if (visitingOp->hasProperty("PIPELINE_ID")) {
                     auto pipelineId = std::any_cast<uint64_t>(visitingOp->getProperty("PIPELINE_ID"));
                     if (pipelineIds.emplace(pipelineId).second) {
@@ -354,7 +367,7 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
 
     //Elegant acceleration service call
     //1. Fetch the OpenCL Operators
-    auto openCLOperators = decomposedQueryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+    auto openCLOperators = decomposedQueryPlan->getOperatorByType<LogicalOpenCLOperator>();
 
     //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {
@@ -395,4 +408,4 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
     }
 }
 
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

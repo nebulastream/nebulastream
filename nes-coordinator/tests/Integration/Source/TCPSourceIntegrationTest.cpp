@@ -285,16 +285,15 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
     std::thread serverThread([&connection, this] {
@@ -306,7 +305,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ASSERT_EQ(connection, 0);
 
@@ -379,16 +378,15 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
     std::thread serverThread([&connection, this] {
@@ -400,7 +398,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ASSERT_EQ(connection, 0);
 
@@ -473,16 +471,15 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
     std::thread serverThread([&connection, this] {
@@ -494,7 +491,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ASSERT_EQ(connection, 0);
 
@@ -567,16 +564,15 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
     std::thread serverThread([&connection, this] {
@@ -588,7 +584,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ASSERT_EQ(connection, 0);
 
@@ -661,16 +657,15 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
     remove(filePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
     std::thread serverThread([&connection, this] {
@@ -682,7 +677,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ASSERT_EQ(connection, 0);
 
@@ -755,16 +750,15 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
     remove(filePath.c_str());
 
     auto requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
     std::thread serverThread([&connection, this] {
@@ -776,7 +770,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ASSERT_EQ(connection, 0);
 
@@ -849,16 +843,15 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
     remove(filePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
     std::thread serverThread([&connection, this] {
@@ -870,7 +863,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ASSERT_EQ(connection, 0);
 
@@ -943,16 +936,15 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
     remove(filePath.c_str());
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                             query.getQueryPlan(),
-                                                                             Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     int connection;
     std::thread serverThread([&connection, this] {
@@ -964,7 +956,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
 
     NES_INFO("QueryDeploymentTest: Remove query");
     requestHandlerService->validateAndQueueStopQueryRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ASSERT_EQ(connection, 0);
 

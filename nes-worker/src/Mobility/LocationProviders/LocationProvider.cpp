@@ -27,7 +27,7 @@ LocationProvider::LocationProvider(Spatial::Experimental::SpatialType spatialTyp
                                    DataTypes::Experimental::GeoLocation geoLocation)
     : workerGeoLocation(geoLocation), spatialType(spatialType) {}
 
-Spatial::Experimental::SpatialType LocationProvider::getSpatialType() const { return spatialType; };
+Spatial::Experimental::SpatialType LocationProvider::getSpatialType() const { return spatialType; }
 
 DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
     switch (spatialType) {

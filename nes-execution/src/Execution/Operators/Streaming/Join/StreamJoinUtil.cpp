@@ -35,7 +35,13 @@ SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSc
 
     retSchema->addField(newQualifierForSystemField + "$start", BasicType::UINT64);
     retSchema->addField(newQualifierForSystemField + "$end", BasicType::UINT64);
-    retSchema->addField(newQualifierForSystemField + "$key", BasicType::UINT64);
+
+    // We check if the keyFieldName was from the left or right schema and then add the field + data type
+    if (leftSchema->getField(keyFieldName) != nullptr) {
+        retSchema->addField(newQualifierForSystemField + "$key", leftSchema->getField(keyFieldName)->getDataType());
+    } else {
+        retSchema->addField(newQualifierForSystemField + "$key", rightSchema->getField(keyFieldName)->getDataType());
+    }
 
     for (auto& fields : leftSchema->fields) {
         retSchema->addField(fields->getName(), fields->getDataType());

@@ -36,6 +36,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                      CSVSourceTypePtr csvSourceType,
                      OperatorId operatorId,
                      OriginId originId,
+                     StatisticId statisticId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
                      const std::string& physicalSourceName,
@@ -45,6 +46,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                  std::move(queryManager),
                  operatorId,
                  originId,
+                 statisticId,
                  numSourceLocalBuffers,
                  gatheringMode,
                  physicalSourceName,
@@ -113,7 +115,7 @@ std::string CSVSource::toString() const {
     return ss.str();
 }
 
-void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");

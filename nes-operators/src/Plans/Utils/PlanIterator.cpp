@@ -37,7 +37,7 @@ std::vector<NodePtr> PlanIterator::snapshot() {
     return nodes;
 }
 
-PlanIterator::iterator::iterator(const std::vector<OperatorNodePtr>& rootOperators) {
+PlanIterator::iterator::iterator(const std::vector<OperatorPtr>& rootOperators) {
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--) {
         workStack.push(rootOperators[i]);
     }

@@ -66,8 +66,6 @@ void ConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, 
 
 void ConsoleDumpHandler::dump(const NodePtr node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
-void ConsoleDumpHandler::multilineDump(NodePtr const& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
-
 void ConsoleDumpHandler::dump(std::string, std::string, DecomposedQueryPlanPtr decomposedQueryPlan) {
     out << "Dumping pipelineQueryPlan: " << decomposedQueryPlan->toString() << std::endl;
 }

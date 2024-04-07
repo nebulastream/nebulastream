@@ -15,7 +15,6 @@
 #include <BorrowedPort.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -144,7 +143,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
  * @param noOfPhysicalSources : total number of physical sources
  * @param batchSize : the batch size for query processing
  */
-void setUp(const std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
+void setUp(const std::string queryMergerRule, uint64_t noOfPhysicalSources) {
     std::cout << "setup and start coordinator" << std::endl;
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     NES::Testing::BorrowedPortPtr restPort = NES::Testing::detail::getPortDispatcher().getNextPort();
@@ -153,7 +152,6 @@ void setUp(const std::string queryMergerRule, uint64_t noOfPhysicalSources, uint
     coordinatorConfig->restPort = *restPort;
     OptimizerConfiguration optimizerConfiguration;
     optimizerConfiguration.queryMergerRule = magic_enum::enum_cast<Optimizer::QueryMergerRule>(queryMergerRule).value();
-    optimizerConfiguration.queryBatchSize = batchSize;
     coordinatorConfig->optimizer = optimizerConfiguration;
     coordinatorConfig->logLevel = magic_enum::enum_cast<LogLevel>(logLevel).value();
     coordinator = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
@@ -211,12 +209,6 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
             auto configuredNoOfPhysicalSources = split(config["noOfPhysicalSources"].As<std::string>(), ',');
             for (const auto& item : configuredNoOfPhysicalSources) {
                 noOfPhysicalSources.emplace_back(std::stoi(item));
-            }
-
-            //Load batch size
-            auto configuredBatchSizes = split(config["batchSize"].As<std::string>(), ',');
-            for (const auto& item : configuredBatchSizes) {
-                batchSizes.emplace_back(std::stoi(item));
             }
 
             logLevel = config["logLevel"].As<std::string>();
@@ -353,9 +345,9 @@ int main(int argc, const char* argv[]) {
             for (uint64_t expRun = 1; expRun <= noOfMeasurementsToCollect; expRun++) {
 
                 //Setup coordinator for the experiment
-                setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum], batchSizes[configNum]);
+                setUp(queryMergerRules[configNum], noOfPhysicalSources[configNum]);
                 NES::RequestHandlerServicePtr requestHandlerService = coordinator->getRequestHandlerService();
-                auto queryCatalogService = coordinator->getQueryCatalogService();
+                auto queryCatalog = coordinator->getQueryCatalog();
                 auto globalQueryPlan = coordinator->getGlobalQueryPlan();
                 //Sleep for fixed time before starting the experiments
                 sleep(startupSleepIntervalInSeconds);
@@ -367,16 +359,13 @@ int main(int argc, const char* argv[]) {
                 for (uint64_t i = 1; i <= numOfQueries; i++) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1];
                     queryPlan->setQueryId(i);
-                    requestHandlerService->validateAndQueueAddQueryRequest(queries[i - 1],
-                                                                           queryPlan,
-                                                                           Optimizer::PlacementStrategy::TopDown);
+                    requestHandlerService->validateAndQueueAddQueryRequest(queryPlan, Optimizer::PlacementStrategy::TopDown);
                 }
 
-                //Fetch the last query for the query catalog
-                auto lastQuery = queryCatalogService->getEntryForQuery(numOfQueries + queryIter);
                 //Wait till the status of the last query is set as running
-                while (lastQuery->getQueryState() != QueryState::RUNNING) {
-                    std::cout << "Query status " << lastQuery->getQueryState() << std::endl;
+                QueryState lastQueryState;
+                while ((lastQueryState = queryCatalog->getQueryState(numOfQueries + queryIter)) != QueryState::RUNNING) {
+                    std::cout << "Query status " << magic_enum::enum_name(lastQueryState) << std::endl;
                     //Sleep for 100 milliseconds
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }

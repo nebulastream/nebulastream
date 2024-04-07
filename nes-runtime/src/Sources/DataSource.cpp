@@ -17,11 +17,11 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <chrono>
 #include <functional>
@@ -55,6 +55,7 @@ DataSource::DataSource(SchemaPtr pSchema,
                        Runtime::QueryManagerPtr queryManager,
                        OperatorId operatorId,
                        OriginId originId,
+                       StatisticId statisticId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        const std::string& physicalSourceName,
@@ -63,8 +64,9 @@ DataSource::DataSource(SchemaPtr pSchema,
                        uint64_t taskQueueId)
     : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
-      originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), physicalSourceName(physicalSourceName) {
+      originId(originId), statisticId(statisticId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers),
+      gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId),
+      physicalSourceName(physicalSourceName) {
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -90,6 +92,9 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // A data source generates a monotonic increasing sequence number
     maxSequenceNumber++;
     buffer.setSequenceNumber(maxSequenceNumber);
+    buffer.setChunkNumber(1);
+    buffer.setLastChunk(true);
+    buffer.setStatisticId(statisticId);
     emitWork(buffer);
 }
 
@@ -436,7 +441,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
 
                 if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-                    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+                    auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
                     NES_TRACE("DataSource produced buffer content={}", buffer.toString(schema));
                 }
 
@@ -485,9 +490,9 @@ bool DataSource::checkSupportedLayoutTypes(SchemaPtr& schema) {
     return std::find(supportedLayouts.begin(), supportedLayouts.end(), schema->getLayoutType()) != supportedLayouts.end();
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer DataSource::allocateBuffer() {
+Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() {
     auto buffer = bufferManager->getBufferBlocking();
-    return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
 void DataSource::onEvent(Runtime::BaseEvent& event) {

@@ -14,6 +14,7 @@
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <bitset>
@@ -257,13 +258,25 @@ uint64_t BufferControlBlock::getSequenceNumber() const noexcept { return sequenc
 
 void BufferControlBlock::setSequenceNumber(uint64_t sequenceNumber) { this->sequenceNumber = sequenceNumber; }
 
+uint64_t BufferControlBlock::getChunkNumber() const noexcept { return chunkNumber; }
+
+void BufferControlBlock::setChunkNumber(uint64_t chunkNumber) { this->chunkNumber = chunkNumber; }
+
+bool BufferControlBlock::isLastChunk() const noexcept { return lastChunk; }
+
+void BufferControlBlock::setLastChunk(bool lastChunk) { this->lastChunk = lastChunk; }
+
 void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimestamp = ts; }
 
 uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return creationTimestamp; }
 
 uint64_t BufferControlBlock::getOriginId() const noexcept { return originId; }
 
+uint64_t BufferControlBlock::getStatisticId() const noexcept { return statisticId; }
+
 void BufferControlBlock::setOriginId(OriginId originId) { this->originId = originId; }
+
+void BufferControlBlock::setStatisticId(StatisticId statisticId) { this->statisticId = statisticId; }
 
 void zmqBufferRecyclingCallback(void*, void* hint) {
     NES_VERIFY(hint != nullptr, "Hint cannot be null");

@@ -14,10 +14,19 @@
 
 #ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+#include <Identifiers.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <functional>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
+
+namespace NES {
+static constexpr auto H3_SEED = 42;
+static constexpr auto NUMBER_OF_BITS_IN_HASH_VALUE = 64;
+}// namespace NES
 
 namespace NES::QueryCompilation {
 enum class StreamJoinStrategy : uint8_t {
@@ -34,6 +43,29 @@ constexpr Out to_underlying(E e) noexcept {
 }
 
 }// namespace NES::QueryCompilation
+
+namespace NES::Runtime::Execution {
+/**
+ * @brief Stores the meta date for a RecordBuffer
+ */
+struct BufferMetaData {
+  public:
+    BufferMetaData(const uint64_t watermarkTs, const SequenceData seqNumber, const OriginId originId)
+        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId) {}
+
+    std::string toString() const {
+        std::ostringstream oss;
+        oss << "waterMarkTs: " << watermarkTs << ","
+            << "seqNumber: " << seqNumber << ","
+            << "originId: " << originId;
+        return oss.str();
+    }
+
+    const uint64_t watermarkTs;
+    const SequenceData seqNumber;
+    const OriginId originId;
+};
+}// namespace NES::Runtime::Execution
 
 namespace NES::Util {
 namespace detail {
@@ -142,7 +174,7 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
                                         const std::string& delim,
                                         std::function<T(std::string)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION) {
     std::string copy = inputString;
-    size_t pos = 0;
+    size_t pos;
     std::vector<T> elems;
     while ((pos = copy.find(delim)) != std::string::npos) {
         elems.push_back(fromStringToT(copy.substr(0, pos)));
@@ -259,6 +291,19 @@ uint64_t countLines(const std::string& str);
  * @return number of lines
  */
 uint64_t countLines(std::istream& stream);
+
+/**
+ * @brief Tries to update curVal until it succeeds or curVal is larger then newVal
+ * @tparam T
+ * @param curVal
+ * @param newVal
+ */
+template<typename T>
+void updateAtomicMax(std::atomic<T>& curVal, const T& newVal) {
+    T prev_value = curVal;
+    while (prev_value < newVal && !curVal.compare_exchange_weak(prev_value, newVal)) {
+    }
+};
 
 }// namespace NES::Util
 

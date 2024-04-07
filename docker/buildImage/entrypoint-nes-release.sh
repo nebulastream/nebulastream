@@ -23,6 +23,7 @@ ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 ## Setting up the git environment inside docker
 cd /nebulastream
+git config --global --add safe.directory /nebulastream
 git config --global user.name "NES-CI"
 git config --global user.email "nebulastream@dima.tu-berlin.de"
 git config --local core.sshcommand "/usr/bin/ssh -i \"~/.ssh/id_rsa\" -o \"UserKnownHostsFile=~/.ssh/known_hosts\""
@@ -31,7 +32,7 @@ git config --local core.sshcommand "/usr/bin/ssh -i \"~/.ssh/id_rsa\" -o \"UserK
 mkdir -p /nebulastream/build
 cd /nebulastream/build
 # build the project
-cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSORFLOW=1 -DNES_BUILD_PLUGIN_ARROW=1 -DNES_USE_S2=1 ..
+cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_USE_MQTT=1 -DNES_USE_KAFKA=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSORFLOW=1 -DNES_BUILD_PLUGIN_ARROW=1 -DNES_USE_S2=1 ..
 # fix format issues
 make format
 # build documentation

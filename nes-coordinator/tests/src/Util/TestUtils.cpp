@@ -13,7 +13,7 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -115,26 +115,16 @@ namespace TestUtils {
     return "--healthCheckWaitTime=" + std::to_string(coordinatorWaitTime);
 }
 
-[[nodiscard]] std::string enableMonitoring(bool prefix) { return configOption(ENABLE_MONITORING_CONFIG, true, prefix); }
+[[nodiscard]] std::string enableMonitoring(bool prefix) {
+    std::cout << prefix << " aha " << ENABLE_MONITORING_CONFIG;
+    return configOption(ENABLE_MONITORING_CONFIG, true, prefix);
+}
 
 [[nodiscard]] std::string monitoringWaitTime(uint64_t monitoringWaitTime) {
     return "--monitoringWaitTime=" + std::to_string(monitoringWaitTime);
 }
 
-// 2884: Fix configuration to disable distributed window rule
-[[nodiscard]] std::string disableDistributedWindowingOptimization() {
-    return "--optimizer.performDistributedWindowOptimization=false";
-}
-
 [[nodiscard]] std::string enableNemoPlacement() { return "--optimizer.enableNemoPlacement=true"; }
-
-[[nodiscard]] std::string setDistributedWindowChildThreshold(uint64_t val) {
-    return "--optimizer.distributedWindowChildThreshold=" + std::to_string(val);
-}
-
-[[nodiscard]] std::string setDistributedWindowCombinerThreshold(uint64_t val) {
-    return "--optimizer.distributedWindowCombinerThreshold=" + std::to_string(val);
-}
 
 [[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
     return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"SLICING"}, prefix);
@@ -210,24 +200,19 @@ namespace TestUtils {
 /**
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
      * @param queryId : the query id to check for
-     * @param queryCatalogService: the catalog to look into for status change
+     * @param queryCatalog: the catalog to look into for status change
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
 [[nodiscard]] bool
-waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, std::chrono::seconds timeoutInSec) {
+waitForQueryToStart(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& queryCatalog, std::chrono::seconds timeoutInSec) {
     NES_TRACE("TestUtils: wait till the query {} gets into Running status.", queryId);
     auto start_timestamp = std::chrono::system_clock::now();
 
     NES_TRACE("TestUtils: Keep checking the status of query {} until a fixed time out", queryId);
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-        if (!queryCatalogEntry) {
-            NES_ERROR("TestUtils: unable to find the entry for query {} in the query catalog.", queryId);
-            return false;
-        }
-        NES_TRACE("TestUtils: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
-        auto queryState = queryCatalogEntry->getQueryState();
+        QueryState queryState = queryCatalog->getQueryState(queryId);
+        NES_TRACE("TestUtils: Query {} is now in status {}", queryId, magic_enum::enum_name(queryState));
         switch (queryState) {
             case QueryState::MARKED_FOR_HARD_STOP:
             case QueryState::MARKED_FOR_SOFT_STOP:
@@ -257,22 +242,23 @@ waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogS
 /**
      * @brief Check if the query is been stopped successfully within the timeout.
      * @param queryId: Id of the query to be stopped
-     * @param queryCatalogService: the catalog containig the queries in the system
+     * @param queryCatalog: the catalog containig the queries in the system
      * @return true if successful
      */
 [[nodiscard]] bool
-checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, std::chrono::seconds timeout) {
+checkStoppedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& queryCatalog, std::chrono::seconds timeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for {}", queryId);
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::STOPPED) {
-            NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", queryId);
+        QueryState queryState = queryCatalog->getQueryState(queryId);
+        if (queryState == QueryState::STOPPED) {
+            NES_DEBUG("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
-        NES_DEBUG("checkStoppedOrTimeout: status not reached for {} as status is={}",
-                  queryId,
-                  queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+        NES_WARNING("checkStoppedOrTimeout: status not reached for {} as status is={}",
+                    queryId,
+                    magic_enum::enum_name(queryState));
         std::this_thread::sleep_for(sleepDuration);
     }
     NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -317,21 +303,20 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
 /**
      * @brief Check if the query has failed within the timeout.
      * @param queryId: Id of the query to be stopped
-     * @param queryCatalogService: the catalog containig the queries in the system
+     * @param queryCatalog: the catalog containig the queries in the system
      * @return true if successful
      */
 [[nodiscard]] bool
-checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, std::chrono::seconds timeout) {
+checkFailedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& queryCatalog, std::chrono::seconds timeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_TRACE("checkFailedOrTimeout: check query status");
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::FAILED) {
+        QueryState queryState = queryCatalog->getQueryState(queryId);
+        if (queryState == QueryState::FAILED) {
             NES_DEBUG("checkFailedOrTimeout: status reached stopped");
             return true;
         }
-        NES_TRACE("checkFailedOrTimeout: status not reached as status is={}",
-                  queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+        NES_TRACE("checkFailedOrTimeout: status not reached as status is={}", magic_enum::enum_name(queryState));
         std::this_thread::sleep_for(sleepDuration);
     }
     NES_WARNING("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -554,17 +539,18 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     return false;
 }
 
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> createDynamicBuffers(std::vector<Runtime::TupleBuffer>& buffers,
-                                                                             const SchemaPtr& schema) {
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> dynamicBuffers;
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer> createTestTupleBuffers(std::vector<Runtime::TupleBuffer>& buffers,
+                                                                            const SchemaPtr& schema) {
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> testBuffers;
     for (const auto& tupleBuffer : buffers) {
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
-        dynamicBuffers.emplace_back(dynamicTupleBuffer);
+        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
+        testBuffers.emplace_back(testTupleBuffer);
     }
-    return dynamicBuffers;
+    return testBuffers;
 }
-bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& expectedBuffers,
-                              std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& actualBuffers,
+
+bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& expectedBuffers,
+                              std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
                               bool orderSensitive) {
 
     auto numTuplesExpected =
@@ -794,9 +780,8 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
         }
     }
 
-    NES_ERROR("E2ECoordinatorMultiWorkerTest: Expected worker number not reached correctly {} but expected {}",
-              nodeNo,
-              expectedWorkers);
+    NES_ASSERT2_FMT(nodeNo == expectedWorkers,
+                    "Expected worker number not reached correctly " << nodeNo << " but expected " << expectedWorkers);
     return false;
 }
 
@@ -900,7 +885,7 @@ uint64_t TestUtils::countTuples(std::vector<Runtime::TupleBuffer>& buffers) {
     });
 }
 
-uint64_t TestUtils::countTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& buffers) {
+uint64_t TestUtils::countTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& buffers) {
     return std::accumulate(buffers.begin(), buffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
         return sum + buf.getNumberOfTuples();
     });
@@ -940,8 +925,8 @@ std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBufferFromStream(std:
         NES_DEBUG("Skipping first line!");
     }
     while (std::getline(istream, line)) {
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema);
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicBuffer, schema, bufferManager);
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, testBuffer, schema, bufferManager);
         tupleCount++;
 
         if (tupleCount >= numTuplesPerBuffer) {

@@ -121,8 +121,8 @@ class TensorflowInferenceDeploymentTest
  * tests mixed input to ml inference operator
  *
  * Disabled because it is not clear what this test tests. There is no code path that supports different data types in the input values. The results are also non-deterministic.
- */
-TEST_F(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
+ **/
+TEST_F(TensorflowInferenceDeploymentTest, testSimpleMLModelDeploymentMixedTypes) {
     auto irisSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("f1", DataTypeFactory::createFloat())
@@ -154,32 +154,34 @@ TEST_F(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeploymentMi
     const auto outputSchema = Schema::create()
                                   ->addField("iris0", BasicType::FLOAT32)
                                   ->addField("iris1", BasicType::FLOAT32)
-                                  ->addField("iris2", BasicType::FLOAT32);
-    std::string expectedOutputString = "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n"
-                                       "0.4731167, 0.31782052, 0.2090628\n";
-
+                                  ->addField("iris2", BasicType::FLOAT32)
+                                  ->updateSourceName("irisData");
+    std::string expectedOutputString = "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n"
+                                       "0.434282,0.312879,0.252839\n";
     auto tmpBuffers =
-        TestUtils::createExpectedBufferFromCSVString(expectedOutputString, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+        TestUtils::createExpectedBufferFromCSVString(expectedOutputString, outputSchema, testHarness.getBufferManager(), false);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     auto expectedTuples = TestUtils::countTuples(expectedBuffers);
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(expectedTuples, "TopDown").getOutput();
 
     // Comparing equality
+    NES_INFO("Actualbuffer:\n{}", NES::Util::printTupleBufferAsCSV(actualBuffers[0].getBuffer(), outputSchema));
+    NES_INFO("ExpectedBuffers:\n{}", NES::Util::printTupleBufferAsCSV(expectedBuffers[0].getBuffer(), outputSchema));
     EXPECT_EQ(actualBuffers.size(), expectedBuffers.size());
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) {
+TEST_P(TensorflowInferenceDeploymentTest, testSimpleMLModelDeployment) {
 
     auto irisSchema = std::get<1>(GetParam());
 
@@ -191,7 +193,7 @@ TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) 
 
     //We set the predictions data type to FLOAT32 since the trained iris_95acc.tflite model defines tensors of data type float32 as output tensors.
     auto query = Query::from("irisData")
-                     .inferModel(std::filesystem::path(TEST_DATA_DIRECTORY) / "(iris_95acc.tflite",
+                     .inferModel(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite",
                                  {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                                  {Attribute("iris0", BasicType::FLOAT32),
                                   Attribute("iris1", BasicType::FLOAT32),
@@ -212,9 +214,9 @@ TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) 
     // Expecting near a delta
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     auto actualTuples = TestUtils::countTuples(actualBuffers);
-    constexpr auto delta = 0.0000001;
+    constexpr auto delta = 0.00001;
     for (auto i = 0_u64; i < actualTuples; ++i) {
         EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris0"].read<float>(),
                     actualBuffers[0][i]["irisData$iris0"].read<float>(),

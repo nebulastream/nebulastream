@@ -15,10 +15,10 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/LambdaSource.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <chrono>
 #include <utility>
@@ -34,6 +34,7 @@ LambdaSource::LambdaSource(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId,
     OriginId originId,
+    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
@@ -46,6 +47,7 @@ LambdaSource::LambdaSource(
                       numbersOfBufferToProduce,
                       operatorId,
                       originId,
+                      statisticId,
                       numSourceLocalBuffers,
                       gatheringMode,
                       std::move(successors),

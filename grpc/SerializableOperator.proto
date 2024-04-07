@@ -17,6 +17,7 @@ import "google/protobuf/any.proto";
 import "SerializableExpression.proto";
 import "SerializableSchema.proto";
 import "JavaUdfDescriptorMessage.proto";
+import "StatisticWindowDescriptorMessage.proto";
 package NES;
 
 option java_package = "stream.nebula.protobuf";
@@ -324,6 +325,15 @@ message SerializableOperator{
       uint64 version = 6;
     }
 
+    message StatisticSinkDescriptor {
+      enum StatisticSinkFormatType {
+          COUNT_MIN = 0;
+          HLL = 1;
+      }
+
+      StatisticSinkFormatType sinkFormatType = 1;
+    }
+
     google.protobuf.Any sinkDescriptor = 1;
     uint64 numberOfOriginIds = 3;
   }
@@ -567,6 +577,15 @@ message SerializableOperator{
     uint64 origin = 6;
   }
 
+  /**
+    Properties of a statistic window detail
+   */
+  message StatisticWindowDetails {
+    google.protobuf.Any windowType = 1;
+    StatisticWindowDescriptorMessage statisticWindowDescriptor = 2;
+    uint64 metricHash = 3;
+  }
+
 
   google.protobuf.Any details = 1;
   repeated uint64 childrenIds = 2;
@@ -575,7 +594,8 @@ message SerializableOperator{
   SerializableSchema leftInputSchema = 5;
   SerializableSchema rightInputSchema = 6;
   uint64 operatorId = 7;
-  repeated uint64 originIds = 8;
-  repeated uint64 leftOriginIds = 9;
-  repeated uint64 rightOriginIds = 10;
+  uint64 statisticId = 8;
+  repeated uint64 originIds = 9;
+  repeated uint64 leftOriginIds = 10;
+  repeated uint64 rightOriginIds = 11;
 }

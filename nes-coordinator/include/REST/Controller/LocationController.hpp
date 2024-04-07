@@ -14,7 +14,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
 
-#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/DTOs/ErrorResponse.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
@@ -37,10 +37,10 @@ class LocationController : public oatpp::web::server::api::ApiController {
      */
     LocationController(const std::shared_ptr<ObjectMapper>& objectMapper,
                        const oatpp::String& completeRouterPrefix,
-                       const TopologyManagerServicePtr& topologyManagerService,
+                       const TopologyPtr& topology,
                        const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          topologyManagerService(topologyManagerService), errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(topology),
+          errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -49,15 +49,15 @@ class LocationController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<LocationController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                      const TopologyManagerServicePtr& topologyManagerService,
+                                                      const TopologyPtr& topology,
                                                       const std::string& routerPrefixAddition,
                                                       const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, topologyManagerService, errorHandler);
+        return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, topology, errorHandler);
     }
 
     ENDPOINT("GET", "", getLocationInformationOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
-        auto nodeLocationJson = topologyManagerService->requestNodeLocationDataAsJson(nodeId);
+        auto nodeLocationJson = topology->requestNodeLocationDataAsJson(nodeId);
         if (nodeLocationJson == nullptr) {
             NES_ERROR("node with id {} does not exist", nodeId);
             return errorHandler->handleError(Status::CODE_404, "No node with Id: " + std::to_string(nodeId));
@@ -66,7 +66,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/allMobile", getLocationDataOfAllMobileNodes) {
-        auto locationsJson = topologyManagerService->requestLocationAndParentDataFromAllMobileNodes();
+        auto locationsJson = topology->requestLocationAndParentDataFromAllMobileNodes();
         return createResponse(Status::CODE_200, locationsJson.dump());
     }
 
@@ -76,7 +76,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
     }
 
   private:
-    TopologyManagerServicePtr topologyManagerService;
+    TopologyPtr topology;
     ErrorHandlerPtr errorHandler;
 };
 }// namespace NES::REST::Controller

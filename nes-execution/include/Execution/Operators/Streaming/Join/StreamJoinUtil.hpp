@@ -16,8 +16,9 @@
 
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
@@ -96,27 +97,6 @@ class WindowSliceIdKey {
 
     uint64_t sliceId;
     uint64_t windowId;
-};
-
-/**
- * @brief Stores the meta date for a RecordBuffer
- */
-struct BufferMetaData {
-  public:
-    BufferMetaData(const uint64_t watermarkTs, const uint64_t seqNumber, const OriginId originId)
-        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId) {}
-
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << "waterMarkTs: " << watermarkTs << ","
-            << "seqNumber: " << seqNumber << ","
-            << "originId: " << originId;
-        return oss.str();
-    }
-
-    const uint64_t watermarkTs;
-    const uint64_t seqNumber;
-    const OriginId originId;
 };
 
 /**

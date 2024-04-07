@@ -28,17 +28,17 @@
 namespace NES {
 MonitoringService::MonitoringService(TopologyPtr topology,
                                      RequestHandlerServicePtr requestHandlerService,
-                                     QueryCatalogServicePtr catalogService)
-    : MonitoringService(topology, requestHandlerService, catalogService, true) {}
+                                     Catalogs::Query::QueryCatalogPtr queryCatalog)
+    : MonitoringService(topology, requestHandlerService, queryCatalog, true) {}
 
 MonitoringService::MonitoringService(TopologyPtr topology,
                                      RequestHandlerServicePtr requestHandlerService,
-                                     QueryCatalogServicePtr catalogService,
+                                     Catalogs::Query::QueryCatalogPtr queryCatalog,
                                      bool enable)
     : topology(topology), enableMonitoring(enable) {
     NES_DEBUG("MonitoringService: Initializing with monitoring= {}", enable);
     monitoringManager =
-        std::make_shared<Monitoring::MonitoringManager>(topology, requestHandlerService, catalogService, enableMonitoring);
+        std::make_shared<Monitoring::MonitoringManager>(topology, requestHandlerService, queryCatalog, enableMonitoring);
 }
 
 nlohmann::json MonitoringService::registerMonitoringPlanToAllNodes(Monitoring::MonitoringPlanPtr monitoringPlan) {

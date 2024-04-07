@@ -21,5 +21,6 @@ add_source_files(nes-configurations
 
 add_subdirectory(Coordinator)
 add_subdirectory(Enums)
+add_subdirectory(Validation)
 add_subdirectory(Worker)
 

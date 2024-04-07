@@ -28,17 +28,10 @@ namespace NES {
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
-class QueryDeploymentPhase;
-using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
-
-class QueryUndeploymentPhase;
-using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
-
+namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace Optimizer
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -215,8 +208,6 @@ class AddQueryRequest : public AbstractUniRequest {
     Optimizer::PlacementStrategy queryPlacementStrategy;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
-    void markAsFailedInQueryCatalog(RequestExecutionException& e);
-    void markAsFailedInQueryCatalog(std::exception& e, StorageHandlerPtr& storageHandler);
     void markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler);
     void removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler);
 };

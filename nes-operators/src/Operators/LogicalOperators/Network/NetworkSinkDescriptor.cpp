@@ -24,8 +24,8 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              DecomposedQueryPlanVersion version,
                                              uint64_t numberOfOrigins,
                                              OperatorId uniqueId)
-    : SinkDescriptor(numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes), version(version), uniqueNetworkSinkId(uniqueId) {}
+    : SinkDescriptor(numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime),
+      retryTimes(retryTimes), version(version), uniqueNetworkSinkId(uniqueId) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
@@ -44,11 +44,13 @@ bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     }
     auto otherSinkDescriptor = other->as<NetworkSinkDescriptor>();
     return (nesPartition == otherSinkDescriptor->nesPartition) && (nodeLocation == otherSinkDescriptor->nodeLocation)
-        && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes) && (version == otherSinkDescriptor->version) && (uniqueNetworkSinkId == otherSinkDescriptor->uniqueNetworkSinkId);
+        && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes)
+        && (version == otherSinkDescriptor->version) && (uniqueNetworkSinkId == otherSinkDescriptor->uniqueNetworkSinkId);
 }
 
 std::string NetworkSinkDescriptor::toString() const {
-    return "NetworkSinkDescriptor(partition=" + nesPartition.toString() + ";nodeLocation=" + nodeLocation.createZmqURI() + ")";
+    return "NetworkSinkDescriptor(Version=" + std::to_string(version) + ";Partition=" + nesPartition.toString()
+        + ";NetworkSourceNodeLocation=" + nodeLocation.createZmqURI() + ")";
 }
 
 NodeLocation NetworkSinkDescriptor::getNodeLocation() const { return nodeLocation; }

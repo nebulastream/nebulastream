@@ -37,6 +37,7 @@ class CSVSource : public DataSource {
    * @param csvSourceType points to the current source configuration object, look at mqttSourceType and CSVSourceType for info
    * @param operatorId current operator id
    * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param statisticId represents the unique identifier of components that we can track statistics for
    * @param numSourceLocalBuffers number of local source buffers
    * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
    * @param physicalSourceName the name and unique identifier of a physical source
@@ -49,6 +50,7 @@ class CSVSource : public DataSource {
                        CSVSourceTypePtr csvSourceType,
                        OperatorId operatorId,
                        OriginId originId,
+                       StatisticId statisticId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        const std::string& physicalSourceName,
@@ -64,7 +66,7 @@ class CSVSource : public DataSource {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 
     /**
      * @brief override the toString method for the csv source

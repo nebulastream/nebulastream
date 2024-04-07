@@ -628,8 +628,6 @@ std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
     return result;
 }
 
-std::string Node::getNodeSourceLocation() { return stackTrace; }
-
 bool Node::isCyclic() {
     auto allChildren = getAndFlattenAllChildren(false);
     for (auto&& node : allChildren) {

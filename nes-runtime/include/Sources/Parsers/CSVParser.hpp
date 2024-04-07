@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/Parser.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES {
 
@@ -44,7 +44,7 @@ class CSVParser : public Parser {
    */
     bool writeInputTupleToTupleBuffer(const std::string& csvInput,
                                       uint64_t tupleCount,
-                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                      Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema,
                                       const Runtime::BufferManagerPtr& bufferManager) override;
 

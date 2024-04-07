@@ -50,6 +50,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        const MQTTSourceTypePtr& sourceConfig,
                        OperatorId operatorId,
                        OriginId originId,
+                       StatisticId statisticId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        const std::string& physicalSourceName,
@@ -59,6 +60,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  queryManager,
                  operatorId,
                  originId,
+                 statisticId,
                  numSourceLocalBuffers,
                  gatheringMode,
                  physicalSourceName,
@@ -149,7 +151,7 @@ std::string MQTTSource::toString() const {
     return ss.str();
 }
 
-bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
+bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();

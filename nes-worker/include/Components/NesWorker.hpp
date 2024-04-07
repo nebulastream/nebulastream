@@ -29,11 +29,9 @@
 namespace grpc {
 class Server;
 class ServerCompletionQueue;
-};// namespace grpc
+}// namespace grpc
 
 namespace NES {
-
-class WorkerHealthCheckService;
 
 class WorkerHealthCheckService;
 
@@ -84,12 +82,12 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @brief default constructor which creates a sensor node with a metric store
      * @note this will create the worker actor using the default worker config
      */
-    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
+    NesWorker(Configurations::WorkerConfigurationPtr workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
 
     /**
      * @brief default dtor
      */
-    ~NesWorker();
+    ~NesWorker() override;
 
     /**
      * @brief start the worker using the default worker config
@@ -122,7 +120,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     * @param physicalSources vector of configured physical sources
      * @return bool indicating success
     */
-    bool unregisterPhysicalSource(std::vector<PhysicalSourceTypePtr> physicalSources);
+    bool unregisterPhysicalSource(const std::vector<PhysicalSourceTypePtr>& physicalSources);
 
     /**
     * @brief method add new parent to this node
@@ -166,12 +164,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     WorkerId getWorkerId() const;
 
     /**
-     * @brief Method to check if a worker is still running
-     * @return running status of the worker
-     */
-    [[nodiscard]] bool isWorkerRunning() const noexcept;
-
-    /**
      * @brief Method to let the Coordinator know that a Query failed
      * @param queryId of the failed query
      * @param subQueryId of the failed query
@@ -209,12 +201,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @return worker id
     */
     uint64_t getWorkerId();
-
-    /**
-     * @brief Method to get numberOfBuffersPerEpoch
-     * @return numberOfBuffersPerEpoch
-    */
-    uint64_t getNumberOfBuffersPerEpoch();
 
     const Configurations::WorkerConfigurationPtr& getWorkerConfiguration() const;
 
@@ -279,13 +265,13 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     void handleRpcs(WorkerRPCServer& service);
 
     const Configurations::WorkerConfigurationPtr workerConfig;
-    std::atomic<uint16_t> localWorkerRpcPort;
+    std::atomic<uint64_t> localWorkerRpcPort;
     std::string rpcAddress;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr workerMobilityHandler;
     std::atomic<bool> isRunning{false};
-    WorkerId workerId;
+    WorkerId workerId = INVALID_WORKER_NODE_ID;
     std::unique_ptr<WorkerHealthCheckService> healthCheckService;
 
     std::unique_ptr<grpc::Server> rpcServer;
@@ -297,7 +283,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     Monitoring::MetricStorePtr metricStore;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     std::atomic<bool> connected{false};
-    uint32_t parentId;
+    uint64_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
     Util::PluginLoader pluginLoader = Util::PluginLoader();
 };

@@ -21,7 +21,6 @@
 #include <Execution/Operators/Relational/Sort/BatchSort.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>

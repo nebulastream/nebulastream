@@ -16,11 +16,12 @@
 #include <BaseIntegrationTest.hpp>
 #include <DataProvider/ExternalProvider.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
+#include <API/TestSchemas.hpp>
 
 namespace NES::Benchmark::DataProvision {
     class ExternalProviderTest : public Testing::BaseIntegrationTest {
@@ -62,6 +63,7 @@ namespace NES::Benchmark::DataProvision {
      * @brief This test should not be run on the CI, as here we use a sleep to generate x amount of buffers and then
      * compare to an expected. This might fail randomly as the CI is not fast enough to produce large amounts of buffers
      */
+    // Enable when fixing #4625
     TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -71,25 +73,21 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField(createField("id", BasicType::UINT64))
-                                 ->addField(createField("value", BasicType::UINT64))
-                                 ->addField(createField("payload", BasicType::UINT64))
-                                 ->addField(createField("timestamp", BasicType::UINT64));
+        auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
 
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             createdBuffers.emplace_back(bufferRef);
         }
 
@@ -120,25 +118,21 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField(createField("id", BasicType::UINT64))
-                                 ->addField(createField("value", BasicType::UINT64))
-                                 ->addField(createField("payload", BasicType::UINT64))
-                                 ->addField(createField("timestamp", BasicType::UINT64));
+        auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
 
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             createdBuffers.emplace_back(bufferRef);
         }
 
@@ -186,16 +180,16 @@ namespace NES::Benchmark::DataProvision {
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
 
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             createdBuffers.emplace_back(bufferRef);
         }
 
@@ -234,25 +228,21 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField(createField("id", BasicType::UINT64))
-                                 ->addField(createField("value", BasicType::UINT64))
-                                 ->addField(createField("payload", BasicType::UINT64))
-                                 ->addField(createField("timestamp", BasicType::UINT64));
+        auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
 
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             createdBuffers.emplace_back(bufferRef);
         }
 
@@ -293,16 +283,16 @@ namespace NES::Benchmark::DataProvision {
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
 
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             createdBuffers.emplace_back(bufferRef);
         }
 
@@ -334,25 +324,21 @@ namespace NES::Benchmark::DataProvision {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
-        auto schemaDefault = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField(createField("id", BasicType::UINT64))
-                                 ->addField(createField("value", BasicType::UINT64))
-                                 ->addField(createField("payload", BasicType::UINT64))
-                                 ->addField(createField("timestamp", BasicType::UINT64));
+        auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
 
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             createdBuffers.emplace_back(bufferRef);
         }
 
@@ -395,16 +381,16 @@ namespace NES::Benchmark::DataProvision {
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
 
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             createdBuffers.emplace_back(bufferRef);
         }
 

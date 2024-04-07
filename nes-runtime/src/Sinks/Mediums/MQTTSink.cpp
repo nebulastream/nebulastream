@@ -13,12 +13,12 @@
 */
 
 #ifdef ENABLE_MQTT_BUILD
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cstdint>
 #include <memory>
@@ -92,7 +92,7 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     }
     // Print received Tuple Buffer for debugging purposes.
     auto layout = Runtime::MemoryLayouts::RowLayout::create(sinkFormat->getSchemaPtr(), inputBuffer.getBufferSize());
-    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, inputBuffer);
+    auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, inputBuffer);
     NES_TRACE("MQTTSink::writeData {}", buffer.toString(sinkFormat->getSchemaPtr()));
 
     try {

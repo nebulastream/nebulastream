@@ -23,9 +23,9 @@ SerialStorageHandler::SerialStorageHandler(StorageDataStructures& storageDataStr
     : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration)),
       topology(std::move(storageDataStructures.topology)),
       globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
-      queryCatalogService(std::move(storageDataStructures.queryCatalogService)),
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
-      sourceCatalog(std::move(storageDataStructures.sourceCatalog)), udfCatalog(std::move(storageDataStructures.udfCatalog)) {}
+      queryCatalog(std::move(storageDataStructures.queryCatalog)), sourceCatalog(std::move(storageDataStructures.sourceCatalog)),
+      udfCatalog(std::move(storageDataStructures.udfCatalog)) {}
 
 StorageHandlerPtr SerialStorageHandler::create(StorageDataStructures storageDataStructures) {
     return std::make_shared<SerialStorageHandler>(storageDataStructures);
@@ -37,9 +37,7 @@ Optimizer::GlobalExecutionPlanPtr SerialStorageHandler::getGlobalExecutionPlanHa
 
 TopologyHandle SerialStorageHandler::getTopologyHandle(const RequestId) { return {&*topology, UnlockDeleter()}; }
 
-QueryCatalogServiceHandle SerialStorageHandler::getQueryCatalogServiceHandle(const RequestId) {
-    return {&*queryCatalogService, UnlockDeleter()};
-}
+QueryCatalogHandle SerialStorageHandler::getQueryCatalogHandle(const RequestId) { return {&*queryCatalog, UnlockDeleter()}; }
 
 GlobalQueryPlanHandle SerialStorageHandler::getGlobalQueryPlanHandle(const RequestId) {
     return {&*globalQueryPlan, UnlockDeleter()};

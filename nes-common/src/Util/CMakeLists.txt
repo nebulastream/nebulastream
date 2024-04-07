@@ -16,7 +16,6 @@ add_source_files(nes-common
         Common.cpp
         DumpHelper.cpp
         FileMutex.cpp
-        NonBlockingMonotonicSeqQueue.cpp
         DumpHelper.cpp
         Common.cpp
         PluginLoader.cpp
@@ -29,6 +28,6 @@ add_source_files(nes-common
 )
 add_subdirectory(Logger)
 add_subdirectory(Mobility)
+add_subdirectory(Latency)
 add_subdirectory(Subprocess)
 add_subdirectory(yaml)
-

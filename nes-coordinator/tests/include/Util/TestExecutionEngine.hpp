@@ -26,11 +26,11 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -97,17 +97,19 @@ class TestExecutionEngine {
     bool stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
                    Runtime::QueryTerminationType type = Runtime::QueryTerminationType::HardStop);
 
-    Runtime::MemoryLayouts::DynamicTupleBuffer getBuffer(const SchemaPtr& schema);
+    Runtime::MemoryLayouts::TestTupleBuffer getBuffer(const SchemaPtr& schema);
 
     bool stop();
 
     Runtime::BufferManagerPtr getBufferManager() const;
 
+    Runtime::NodeEnginePtr getNodeEngine() const;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
-    Optimizer::DistributeWindowRulePtr distributeWindowRule;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
+    Optimizer::StatisticIdInferencePhasePtr statisticIdInferencePhase;
 };
 
 }// namespace NES::Testing

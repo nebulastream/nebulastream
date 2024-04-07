@@ -69,6 +69,8 @@ class TimeCharacteristic final {
      */
     virtual bool equals(const TimeCharacteristic& other) const;
 
+    uint64_t hash() const;
+
     std::string toString();
     std::string getTypeAsString();
     TimeUnit getTimeUnit();

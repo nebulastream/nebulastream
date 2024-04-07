@@ -18,7 +18,6 @@
 #include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -96,7 +95,6 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyPtr topology = Topology::create();
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 
     std::string physicalSourceName = "testStream";
 
@@ -112,8 +110,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
     uint64_t nodeId =
-        topologyManagerService
-            ->registerWorker(INVALID_WORKER_NODE_ID, address, 4000, 5000, 6, properties, bandwidthInMbps, latencyInMs);
+        topology->registerWorker(INVALID_WORKER_NODE_ID, address, 4000, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_NE(nodeId, 0u);
 
     //setup test

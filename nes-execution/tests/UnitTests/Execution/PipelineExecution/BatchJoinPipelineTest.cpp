@@ -26,11 +26,11 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -98,18 +98,18 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["k1"].write(+1_s64);
-    dynamicBuffer[0]["v1"].write(+10_s64);
-    dynamicBuffer[1]["k1"].write(+1_s64);
-    dynamicBuffer[1]["v1"].write(+1_s64);
-    dynamicBuffer[2]["k1"].write(+2_s64);
-    dynamicBuffer[2]["v1"].write(+2_s64);
-    dynamicBuffer[3]["k1"].write(+3_s64);
-    dynamicBuffer[3]["v1"].write(+10_s64);
-    dynamicBuffer.setNumberOfTuples(4);
+    testBuffer[0]["k1"].write(+1_s64);
+    testBuffer[0]["v1"].write(+10_s64);
+    testBuffer[1]["k1"].write(+1_s64);
+    testBuffer[1]["v1"].write(+1_s64);
+    testBuffer[2]["k1"].write(+2_s64);
+    testBuffer[2]["v1"].write(+2_s64);
+    testBuffer[3]["k1"].write(+3_s64);
+    testBuffer[3]["v1"].write(+10_s64);
+    testBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);

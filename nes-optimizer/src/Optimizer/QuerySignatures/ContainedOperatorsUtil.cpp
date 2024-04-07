@@ -17,20 +17,20 @@
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QuerySignatures/ContainedOperatorsUtil.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
@@ -39,16 +39,16 @@
 
 namespace NES::Optimizer {
 
-std::vector<LogicalOperatorNodePtr>
-ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
-                                                      const LogicalOperatorNodePtr& containerOperator) {
+std::vector<LogicalOperatorPtr>
+ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorPtr& containedOperator,
+                                                      const LogicalOperatorPtr& containerOperator) {
     NES_TRACE("Contained operator: {}", containedOperator->toString());
-    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
-    auto containedWindowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
+    std::vector<LogicalOperatorPtr> containmentOperators = {};
+    auto containedWindowOperators = containedOperator->getNodesByType<LogicalWindowOperator>();
     //obtain the most downstream window operator from the container query plan
-    auto containerWindowOperators = containerOperator->getNodesByType<WindowLogicalOperatorNode>().front();
+    auto containerWindowOperators = containerOperator->getNodesByType<LogicalWindowOperator>().front();
     const auto containerWindowType =
-        containerWindowOperators->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getWindowType();
+        containerWindowOperators->as<LogicalWindowOperator>()->getWindowDefinition()->getWindowType();
     auto containerTimeBasedWindow = containerWindowType->as<Windowing::TimeBasedWindowType>();
     NES_TRACE("Contained operator: {}", containedOperator->toString());
     if (containerTimeBasedWindow == nullptr) {
@@ -58,8 +58,8 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
     if (!containedWindowOperators.empty()) {
         auto windowOperatorCopy = containedWindowOperators.front()->copy();
         auto watermarkOperatorCopy =
-            containedWindowOperators.front()->getChildren()[0]->as<WatermarkAssignerLogicalOperatorNode>()->copy();
-        auto windowDefinition = windowOperatorCopy->as<WindowLogicalOperatorNode>()->getWindowDefinition();
+            containedWindowOperators.front()->getChildren()[0]->as<WatermarkAssignerLogicalOperator>()->copy();
+        auto windowDefinition = windowOperatorCopy->as<LogicalWindowOperator>()->getWindowDefinition();
         auto windowType = windowDefinition->getWindowType();
         //check that containee is a time based window, else return false
         if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
@@ -73,9 +73,9 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
             timeBasedWindow->getTimeCharacteristic()->setField(field);
             timeBasedWindow->getTimeCharacteristic()->setTimeUnit(
                 containerTimeBasedWindow->getTimeCharacteristic()->getTimeUnit());
-            containmentOperators.push_back(windowOperatorCopy->as<LogicalOperatorNode>());
+            containmentOperators.push_back(windowOperatorCopy->as<LogicalOperator>());
             //obtain the watermark operator
-            auto watermarkOperator = watermarkOperatorCopy->as<WatermarkAssignerLogicalOperatorNode>();
+            auto watermarkOperator = watermarkOperatorCopy->as<WatermarkAssignerLogicalOperator>();
             if (watermarkOperator->getWatermarkStrategyDescriptor()
                     ->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
                 auto fieldName = field->getName();
@@ -94,40 +94,40 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
     if (!containmentOperators.empty()
         && !checkDownstreamOperatorChainForSingleParent(
             containedOperator,
-            containedWindowOperators.front()->getChildren()[0]->as<LogicalOperatorNode>())) {
+            containedWindowOperators.front()->getChildren()[0]->as<LogicalOperator>())) {
         return {};
     }
     containmentOperators.back()->addParent(containmentOperators.front());
     return containmentOperators;
 }
 
-LogicalOperatorNodePtr
-ContainedOperatorsUtil::createContainedProjectionOperator(const LogicalOperatorNodePtr& containedOperator) {
-    auto projectionOperators = containedOperator->getNodesByType<ProjectionLogicalOperatorNode>();
+LogicalOperatorPtr
+ContainedOperatorsUtil::createContainedProjectionOperator(const LogicalOperatorPtr& containedOperator) {
+    auto projectionOperators = containedOperator->getNodesByType<LogicalProjectionOperator>();
     //get the most downstream projection operator
     if (!projectionOperators.empty()) {
         if (!checkDownstreamOperatorChainForSingleParent(containedOperator, projectionOperators.at(0))) {
             return {};
         }
-        return projectionOperators.at(0)->copy()->as<LogicalOperatorNode>();
+        return projectionOperators.at(0)->copy()->as<LogicalOperator>();
     }
     return nullptr;
 }
 
-LogicalOperatorNodePtr ContainedOperatorsUtil::createContainedFilterOperators(const LogicalOperatorNodePtr& container,
-                                                                              const LogicalOperatorNodePtr& containee) {
+LogicalOperatorPtr ContainedOperatorsUtil::createContainedFilterOperators(const LogicalOperatorPtr& container,
+                                                                              const LogicalOperatorPtr& containee) {
     NES_DEBUG("Check if filter containment is possible for container {}, containee {}.",
               container->toString(),
               containee->toString());
     //we don't pull up filters from under windows or unions
-    if (containee->instanceOf<WindowLogicalOperatorNode>() || containee->instanceOf<UnionLogicalOperatorNode>()) {
+    if (containee->instanceOf<LogicalWindowOperator>() || containee->instanceOf<LogicalUnionOperator>()) {
         return nullptr;
     }
     //if all checks pass, we extract the filter operators
-    std::vector<FilterLogicalOperatorNodePtr> upstreamFilterOperatorsCopy = {};
-    std::vector<FilterLogicalOperatorNodePtr> upstreamFilterOperators = containee->getNodesByType<FilterLogicalOperatorNode>();
+    std::vector<LogicalFilterOperatorPtr> upstreamFilterOperatorsCopy = {};
+    std::vector<LogicalFilterOperatorPtr> upstreamFilterOperators = containee->getNodesByType<LogicalFilterOperator>();
     for (const auto& filterOperator : upstreamFilterOperators) {
-        upstreamFilterOperatorsCopy.push_back(filterOperator->copy()->as<FilterLogicalOperatorNode>());
+        upstreamFilterOperatorsCopy.push_back(filterOperator->copy()->as<LogicalFilterOperator>());
     }
     try {
         // if there are no upstream filter operators return an empty vector
@@ -187,7 +187,7 @@ LogicalOperatorNodePtr ContainedOperatorsUtil::createContainedFilterOperators(co
     }
 }
 
-bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
+bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(LogicalFilterOperatorPtr const& filterOperator,
                                                                    const std::vector<std::string>& fieldNames,
                                                                    const SchemaPtr& containerOutputSchema) {
 
@@ -220,8 +220,8 @@ bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(FilterLogical
 }
 
 bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
-    const LogicalOperatorNodePtr& containedOperator,
-    const LogicalOperatorNodePtr& extractedContainedOperator) {
+    const LogicalOperatorPtr& containedOperator,
+    const LogicalOperatorPtr& extractedContainedOperator) {
     NES_TRACE("Extracted contained operator: {}", extractedContainedOperator->toString());
     for (const auto& source : containedOperator->getAllLeafNodes()) {
         NodePtr parent = source;
@@ -240,9 +240,9 @@ bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
             //if we found the extracted contained operator we make sure that none of its parents are unions or windows
             //we cannot pull up from under a union or a window operator
             if (foundExtracted) {
-                if (parent->instanceOf<UnionLogicalOperatorNode>()
-                    || (extractedContainedOperator->instanceOf<ProjectionLogicalOperatorNode>()
-                        && parent->instanceOf<WindowLogicalOperatorNode>())) {
+                if (parent->instanceOf<LogicalUnionOperator>()
+                    || (extractedContainedOperator->instanceOf<LogicalProjectionOperator>()
+                        && parent->instanceOf<LogicalWindowOperator>())) {
                     return false;
                 }
             }
@@ -252,8 +252,8 @@ bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
 }
 
 bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParentAndMapOperator(
-    const LogicalOperatorNodePtr& containedOperator,
-    const LogicalOperatorNodePtr& extractedContainedOperator,
+    const LogicalOperatorPtr& containedOperator,
+    const LogicalOperatorPtr& extractedContainedOperator,
     std::vector<std::string>& mapAttributeNames) {
     NES_DEBUG("extractedContainedOperator parents size: {}", extractedContainedOperator->getParents().size());
     //return false if the extracted contained operator has multiple parents
@@ -271,7 +271,7 @@ bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParentAndMapOp
             }
             if (foundExtracted) {
                 //we don't pull up filter operators from under union operators
-                if (parent->instanceOf<WindowLogicalOperatorNode>() || parent->instanceOf<UnionLogicalOperatorNode>()) {
+                if (parent->instanceOf<LogicalWindowOperator>() || parent->instanceOf<LogicalUnionOperator>()) {
                     return false;
                 }
             }
@@ -282,8 +282,8 @@ bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParentAndMapOp
             } else {
                 //if there is only one parent, we check if the current operator is a map operator and add its field name to the mapAttributeNames vector
                 if (foundExtracted) {
-                    if (parent->instanceOf<MapLogicalOperatorNode>()) {
-                        auto mapOperator = parent->as<MapLogicalOperatorNode>();
+                    if (parent->instanceOf<LogicalMapOperator>()) {
+                        auto mapOperator = parent->as<LogicalMapOperator>();
                         mapAttributeNames.push_back(mapOperator->getMapExpression()->getField()->getFieldName());
                     }
                 }

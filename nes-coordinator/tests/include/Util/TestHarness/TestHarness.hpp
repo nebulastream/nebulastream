@@ -19,7 +19,7 @@
 #include <API/Query.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -89,12 +89,6 @@ class TestHarness {
                          std::filesystem::path testHarnessResourcePath,
                          uint64_t memSrcFrequency = 0,
                          uint64_t memSrcNumBuffToProcess = 1);
-
-    /**
-     * @brief Enable new request executor
-     * @return self
-     */
-    TestHarness& enableNewRequestExecutor();
 
     /**
      * @brief Sets the join strategy
@@ -261,9 +255,9 @@ class TestHarness {
 
     /**
      * @brief Returns the output for the previously run query. Support also data types with variable data size
-     * @return Vector of DynamicTupleBuffers
+     * @return Vector of TestTupleBuffers
      */
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> getOutput();
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> getOutput();
 
     /**
      * @brief Returns the output schema of the query

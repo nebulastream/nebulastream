@@ -14,12 +14,8 @@
 add_source_files(nes-runtime
         BufferSequenceNumber.cpp
         Core.cpp
+        TestTupleBuffer.cpp
 )
-
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_subdirectory(JNI)
-endif ()
 
 if (NES_USE_MQTT)
     add_source_files(nes-runtime

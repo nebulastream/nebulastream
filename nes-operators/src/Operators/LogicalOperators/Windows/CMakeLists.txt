@@ -12,14 +12,9 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        CentralWindowOperator.cpp
-        DistributionCharacteristic.cpp
-        LogicalWindowDefinition.cpp
-        SliceCreationOperator.cpp
-        SliceMergingOperator.cpp
-        WindowComputationOperator.cpp
-        WindowLogicalOperatorNode.cpp
-        WindowOperatorNode.cpp
+        LogicalWindowDescriptor.cpp
+        LogicalWindowOperator.cpp
+        WindowOperator.cpp
 )
 
 add_subdirectory(Aggregations)

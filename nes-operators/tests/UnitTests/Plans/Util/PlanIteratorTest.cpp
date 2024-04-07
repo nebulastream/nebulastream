@@ -19,11 +19,10 @@
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
@@ -69,10 +68,10 @@ class PlanIteratorTest : public Testing::BaseUnitTest {
 
   protected:
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
-    LogicalOperatorNodePtr sourceOp1, sourceOp2;
+    LogicalOperatorPtr sourceOp1, sourceOp2;
 
-    LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4;
-    LogicalOperatorNodePtr sinkOp1, sinkOp2, sinkOp3;
+    LogicalOperatorPtr filterOp1, filterOp2, filterOp3, filterOp4;
+    LogicalOperatorPtr sinkOp1, sinkOp2, sinkOp3;
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};

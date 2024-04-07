@@ -25,6 +25,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalInferModelOperator : public PhysicalUnaryOperator {
   public:
     PhysicalInferModelOperator(OperatorId id,
+                               StatisticId statisticId,
                                SchemaPtr inputSchema,
                                SchemaPtr outputSchema,
                                std::string model,
@@ -32,20 +33,22 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
                                std::vector<ExpressionNodePtr> outputFields);
 
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
                                       std::string model,
                                       std::vector<ExpressionNodePtr> inputFields,
                                       std::vector<ExpressionNodePtr> outputFields);
 
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema,
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
                                       std::string model,
                                       std::vector<ExpressionNodePtr> inputFields,
                                       std::vector<ExpressionNodePtr> outputFields);
 
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
     const std::string& getModel() const;
     const std::vector<ExpressionNodePtr>& getInputFields() const;
     const std::vector<ExpressionNodePtr>& getOutputFields() const;

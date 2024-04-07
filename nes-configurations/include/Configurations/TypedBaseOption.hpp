@@ -14,6 +14,8 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
 #include <Configurations/BaseOption.hpp>
+#include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <memory>
 namespace NES::Configurations {
 
 /**
@@ -45,10 +47,20 @@ class TypedBaseOption : public BaseOption {
     TypedBaseOption(const std::string& name, T defaultValue, const std::string& description);
 
     /**
+     * @brief Constructor to create a new option that declares a specific default value.
+     * @param name of the option.
+     * @param defaultValue of the option. Has to be of type T.
+     * @param description of the option.
+     * @param validator class to validate the configuration value
+     */
+    TypedBaseOption(const std::string& name, T defaultValue, const std::string& description, std::shared_ptr<ConfigurationValidation> validator);
+
+    /**
      * @brief Operator to directly access the value of this option.
      * @return Returns an object of the option type T.
      */
     operator T() const { return this->value; }
+
 
     /**
      * @brief Clears the option and sets the value to the default value.
@@ -76,6 +88,7 @@ class TypedBaseOption : public BaseOption {
   protected:
     T value;
     T defaultValue;
+    std::shared_ptr<ConfigurationValidation> validator;
 };
 
 template<class T>
@@ -87,6 +100,11 @@ TypedBaseOption<T>::TypedBaseOption(const std::string& name, const std::string& 
 template<class T>
 TypedBaseOption<T>::TypedBaseOption(const std::string& name, T defaultValue, const std::string& description)
     : BaseOption(name, description), value(defaultValue), defaultValue(defaultValue) {}
+
+template<class T>
+TypedBaseOption<T>::TypedBaseOption(const std::string& name, T defaultValue, const std::string& description, std::shared_ptr<ConfigurationValidation> validator)
+    : BaseOption(name, description), value(defaultValue), defaultValue(defaultValue), validator(validator) {}
+
 
 template<class T>
 T TypedBaseOption<T>::getValue() const {

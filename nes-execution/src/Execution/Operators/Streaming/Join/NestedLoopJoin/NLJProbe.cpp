@@ -20,6 +20,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -66,6 +67,8 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // As this operator functions as a scan, we have to set the execution context for this pipeline
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
+    ctx.setChunkNumber(recordBuffer.getChunkNr());
+    ctx.setLastChunk(recordBuffer.isLastChunk());
     ctx.setOrigin(recordBuffer.getOriginId());
     Operator::open(ctx, recordBuffer);
 
@@ -106,14 +109,15 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                                workerIdForPagedVectors,
                                Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
-    Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
-    Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
+    Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
+    Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
 
-    Nautilus::Value<UInt64> zeroVal(0_u64);
-    for (auto leftRecordMemRef : leftPagedVector) {
-        for (auto rightRecordMemRef : rightPagedVector) {
-            auto leftRecord = leftMemProvider->read({}, leftRecordMemRef, zeroVal);
-            auto rightRecord = rightMemProvider->read({}, rightRecordMemRef, zeroVal);
+    const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
+    const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
+    for (Value<UInt64> leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
+        for (Value<UInt64> rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
+            auto leftRecord = leftPagedVector.readRecord(leftCnt);
+            auto rightRecord = rightPagedVector.readRecord(rightCnt);
             /* This can be later replaced by an interface that returns boolean and gets passed the
              * two Nautilus::Records (left and right) #3691 */
             if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
@@ -132,8 +136,8 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    const std::string& joinFieldNameLeft,
                    const std::string& joinFieldNameRight,
                    const WindowMetaData& windowMetaData,
-                   const uint64_t leftEntrySize,
-                   const uint64_t rightEntrySize,
+                   const SchemaPtr& leftSchema,
+                   const SchemaPtr& rightSchema,
                    QueryCompilation::StreamJoinStrategy joinStrategy,
                    QueryCompilation::WindowingStrategy windowingStrategy,
                    bool withDeletion)
@@ -145,11 +149,6 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                       joinStrategy,
                       windowingStrategy,
                       withDeletion),
-      leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
-      // As we are only ever reading a single record, we do not care about the buffer size
-      leftMemProvider(
-          Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.leftSchema)),
-      rightMemProvider(
-          Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.rightSchema)) {}
+      leftSchema(leftSchema), rightSchema(rightSchema) {}
 
 };// namespace NES::Runtime::Execution::Operators

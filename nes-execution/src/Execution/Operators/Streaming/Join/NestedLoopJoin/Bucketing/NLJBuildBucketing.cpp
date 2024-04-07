@@ -14,13 +14,11 @@
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -55,20 +53,10 @@ void NLJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill,
                                                     curIndex,
                                                     workerId,
                                                     Value<UInt64>(to_underlying(joinBuildSide)));
-    auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(curPagedVectorRef, entrySize);
 
-    // Get the memRef to the new entry
-    auto entryMemRef = pagedVectorRef.allocateEntry();
-
-    // Write Record at entryMemRef
-    DefaultPhysicalTypeFactory physicalDataTypeFactory;
-    for (auto& field : schema->fields) {
-        auto const fieldName = field->getName();
-        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-
-        entryMemRef.store(record.read(fieldName));
-        entryMemRef = entryMemRef + fieldType->size();
-    }
+    // Write record to the pagedVector
+    auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(curPagedVectorRef, schema);
+    pagedVectorVarSizedRef.writeRecord(record);
 }
 
 NLJBuildBucketing::NLJBuildBucketing(const uint64_t operatorHandlerIndex,

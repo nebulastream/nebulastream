@@ -65,5 +65,4 @@ bool recycleTupleBuffer(void* bufferPointer) {
     auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - sizeof(Runtime::detail::BufferControlBlock));
     return block->release();
 }
-
 }// namespace NES::Runtime

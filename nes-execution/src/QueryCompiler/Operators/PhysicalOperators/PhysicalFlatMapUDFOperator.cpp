@@ -17,23 +17,26 @@
 #include <sstream>
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalFlatMapUDFOperator::PhysicalFlatMapUDFOperator(OperatorId id,
+                                                       StatisticId statisticId,
                                                        const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
                                                        const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       udfDescriptor(std::move(udfDescriptor)) {}
 
-PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(const SchemaPtr& inputSchema,
+PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(StatisticId statisticId,
+                                                       const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
                                                        const Catalogs::UDF::UDFDescriptorPtr udfDescriptor) {
-    return create(getNextOperatorId(), inputSchema, outputSchema, udfDescriptor);
+    return create(getNextOperatorId(), statisticId,  inputSchema, outputSchema, udfDescriptor);
 }
 
 PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(OperatorId id,
+                                                       StatisticId statisticId,
                                                        const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
                                                        const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor) {
-    return std::make_shared<PhysicalFlatMapUDFOperator>(id, inputSchema, outputSchema, udfDescriptor);
+    return std::make_shared<PhysicalFlatMapUDFOperator>(id, statisticId, inputSchema, outputSchema, udfDescriptor);
 }
 
 std::string PhysicalFlatMapUDFOperator::toString() const {
@@ -48,8 +51,8 @@ std::string PhysicalFlatMapUDFOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalFlatMapUDFOperator::copy() {
-    auto result = create(id, inputSchema, outputSchema, udfDescriptor);
+OperatorPtr PhysicalFlatMapUDFOperator::copy() {
+    auto result = create(id, statisticId, inputSchema, outputSchema, udfDescriptor);
     result->addAllProperties(properties);
     return result;
 }

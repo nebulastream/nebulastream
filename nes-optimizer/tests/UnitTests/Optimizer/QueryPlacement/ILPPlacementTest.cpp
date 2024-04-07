@@ -25,15 +25,15 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -88,20 +88,18 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-        properties["slots"] = 100;
 
         WorkerId rootNodeId = 1;
-        topologyForILP->registerTopologyNode(rootNodeId, "localhost", 123, 124, 100, properties);
-        topologyForILP->setRootTopologyNodeId(rootNodeId);
+        topologyForILP->registerWorker(rootNodeId, "localhost", 123, 124, 100, properties, 0,0);
+        topologyForILP->addAsRootWorkerId(rootNodeId);
 
         WorkerId middleNodeId = 2;
-        properties["slots"] = 10;
-        topologyForILP->registerTopologyNode(middleNodeId, "localhost", 123, 124, 10, properties);
+        topologyForILP->registerWorker(middleNodeId, "localhost", 123, 124, 10, properties, 0,0);
         topologyForILP->addTopologyNodeAsChild(rootNodeId, middleNodeId);
 
         WorkerId srcNodeId = 3;
-        properties["slots"] = 1;
-        topologyForILP->registerTopologyNode(srcNodeId, "localhost", 123, 124, 1, properties);
+        topologyForILP->registerWorker(srcNodeId, "localhost", 123, 124, 3, properties, 0,0);
+        topologyForILP->removeTopologyNodeAsChild(rootNodeId, srcNodeId);
         topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
         topologyForILP->addLinkProperty(middleNodeId, srcNodeId, 512, 100);
@@ -121,35 +119,35 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
     }
 
-    void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode) {
+    void assignOperatorPropertiesRecursive(LogicalOperatorPtr operatorNode) {
         int cost = 1;
         double dmf = 1;
         double input = 0;
 
         for (const auto& child : operatorNode->getChildren()) {
-            LogicalOperatorNodePtr op = child->as<LogicalOperatorNode>();
+            LogicalOperatorPtr op = child->as<LogicalOperator>();
             assignOperatorPropertiesRecursive(op);
             std::any output = op->getProperty("output");
             input += std::any_cast<double>(output);
         }
 
         NodePtr nodePtr = operatorNode->as<Node>();
-        if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        if (operatorNode->instanceOf<SinkLogicalOperator>()) {
             dmf = 0;
             cost = 0;
-        } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
             dmf = 0.5;
             cost = 1;
-        } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
             dmf = 2;
             cost = 2;
-        } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
             cost = 2;
-        } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalUnionOperator>()) {
             cost = 2;
-        } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
             cost = 1;
-        } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<SourceLogicalOperator>()) {
             cost = 0;
             input = 100;
         }
@@ -245,9 +243,8 @@ TEST_F(ILPPlacementTest, Z3Test) {
     }
 }
 
-//TODO: Enable with #4453
 /* Test query placement with ILP strategy - simple filter query */
-TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -264,7 +261,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     auto topologySpecificQueryRewrite =
@@ -280,37 +277,36 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     //Perform placement
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto lockedExecutionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
 
     //Assertion
-    ASSERT_EQ(executionNodes.size(), 3U);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
+    ASSERT_EQ(lockedExecutionNodes.size(), 3U);
+    for (const auto& executionNode : lockedExecutionNodes) {
+        if (executionNode->operator*()->getId() == 3) {
             // place filter on source node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == 1) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
         }
     }
 }
 
-//TODO: Enable with #4453
-/* Test query placement with ILP strategy - window query */
-TEST_F(ILPPlacementTest, DISABLED_testPlacingWindowQueryWithILPStrategy) {
+/* Test query placement with ILP strategy with a window query */
+TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -331,7 +327,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingWindowQueryWithILPStrategy) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     auto topologySpecificQueryRewrite =
@@ -345,52 +341,50 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingWindowQueryWithILPStrategy) {
 
     //Perform placement
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto lockedExecutionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
 
     //Assertion
-    ASSERT_EQ(executionNodes.size(), 3U);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+    ASSERT_EQ(lockedExecutionNodes.size(), 3U);
+    for (const auto& executionNode : lockedExecutionNodes) {
+        if (executionNode->operator*()->getId() == 1) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 2) {
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == 2) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            OperatorPtr actualRootOperator = actualRootOperators[0];
             // assertion for window and watermark operator being placed after source
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperator>());
             EXPECT_TRUE(
-                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>());
+                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperator>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]
                             ->getChildren()[0]
                             ->getChildren()[0]
-                            ->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+                            ->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == 3) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
         }
     }
 }
 
-//TODO: Enable with #4453
-/* Test query placement with ILP strategy - window query with sliding window */
-TEST_F(ILPPlacementTest, DISABLED_testPlacingSlidingWindowQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -411,7 +405,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingSlidingWindowQueryWithILPStrategy) 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     auto topologySpecificQueryRewrite =
@@ -425,52 +419,52 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingSlidingWindowQueryWithILPStrategy) 
 
     //Perform placement
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3U);
     for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+        if (executionNode->operator*()->getId() == 1) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 2) {
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == 2) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            OperatorPtr actualRootOperator = actualRootOperators[0];
             // assertion for window and watermark operator being placed after source
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperator>());
             EXPECT_TRUE(
-                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>());
+                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperator>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]
                             ->getChildren()[0]
                             ->getChildren()[0]
-                            ->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+                            ->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == 3) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
         }
     }
 }
 
-//TODO: Enable with #4453
+
 /* Test query placement with ILP strategy - simple map query */
-TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     setupTopologyAndSourceCatalogForILP();
@@ -492,7 +486,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
 
     for (const auto& sink : queryPlan->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
@@ -508,37 +502,37 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     //Assertion
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
     ASSERT_EQ(executionNodes.size(), 3U);
     for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+        if (executionNode->operator*()->getId() == 3) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == 1) {
             // both map operators should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            OperatorPtr actualRootOperator = actualRootOperators[0];
             EXPECT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalMapOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<LogicalMapOperator>());
         }
     }
 }
 
-//TODO: Enable with #4453
+
 /* Test query placement with ILP strategy - simple query of source - filter - map - sink */
-TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     setupTopologyAndSourceCatalogForILP();
@@ -560,7 +554,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
     queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
 
     for (const auto& sink : queryPlan->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
@@ -573,43 +567,42 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
     auto queryId = sharedQueryPlan->getId();
 
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3U);
     for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
+        if (executionNode->operator*()->getId() == 3) {
             // filter should be placed on source node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == 1) {
             // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(queryId);
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
             ASSERT_EQ(decomposedQueryPlans.size(), 1U);
             auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalMapOperator>());
         }
     }
 }
 
-//TODO: Enable with #4453
 /* Test incremental query placement with ILP strategy - simple query of source - filter - map - sink and then added filter - sink to filter operator*/
-TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->enableQueryReconfiguration = true;
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
@@ -624,7 +617,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrate
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
     queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
 
     Query query2 = Query::from("car")
@@ -635,7 +628,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrate
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
     queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
 
     // Perform signature computation
@@ -679,36 +672,39 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrate
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
+    {
+        SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
+        auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlanId);
 
-    //Assertions to check correct placement
-    ASSERT_EQ(executionNodes.size(), 3U);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
-            // filter should be placed on source node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
-            auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
-            // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
-            auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+        //Assertions to check correct placement
+        ASSERT_EQ(executionNodes.size(), 3U);
+        for (const auto& executionNode : executionNodes) {
+            if (executionNode->operator*()->getId() == 3) {
+                // filter should be placed on source node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+                auto decomposedQueryPlan = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1U);
+                OperatorPtr actualRootOperator = actualRootOperators[0];
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            } else if (executionNode->operator*()->getId() == 1) {
+                // map should be placed on cloud node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+                auto decomposedQueryPlan = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1U);
+                OperatorPtr actualRootOperator = actualRootOperators[0];
+                EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalMapOperator>());
+            }
         }
     }
+
 
     //Here we add two partially equivalent queries to build a shared query plan to generate change logs
     // Add the new operators to the query plan
@@ -725,77 +721,76 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrate
 
     NES_INFO("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
-    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
-    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
+    {
+        auto sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
+        auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlanId);
 
-    //Assertions to check correct placement
-    ASSERT_EQ(executionNodes.size(), 3U);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
-            // filter should be placed on source node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
-            auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 2U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 2) {
-            // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 2U);
-            //Assertion for first subquery plan
-            auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
-            OperatorNodePtr rootOperator1 = rootOperatorsForPlan1[0];
-            EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        //Assertions to check correct placement
+        ASSERT_EQ(executionNodes.size(), 3U);
+        for (const auto& executionNode : executionNodes) {
+            if (executionNode->operator*()->getId() == 3) {
+                // filter should be placed on source node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+                auto decomposedQueryPlan = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 2U);
+                OperatorPtr actualRootOperator = actualRootOperators[0];
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            } else if (executionNode->operator*()->getId() == 2) {
+                // map should be placed on cloud node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 2U);
+                //Assertion for first subquery plan
+                auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
+                OperatorPtr rootOperator1 = rootOperatorsForPlan1[0];
+                EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
+                EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<SourceLogicalOperator>());
 
-            //Assertion for second subquery plan
-            auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
-            OperatorNodePtr rootOperator2 = rootOperatorsForPlan2[0];
-            EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
-            // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 2U);
-            //Assertion for first subquery plan
-            auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
-            OperatorNodePtr rootOperator1 = rootOperatorsForPlan1[0];
-            ASSERT_EQ(rootOperator1->getId(), queryPlan1->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                //Assertion for second subquery plan
+                auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
+                std::vector<OperatorPtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
+                OperatorPtr rootOperator2 = rootOperatorsForPlan2[0];
+                EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
+            } else if (executionNode->operator*()->getId() == 1) {
+                // map should be placed on cloud node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 2U);
+                //Assertion for first subquery plan
+                auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
+                OperatorPtr rootOperator1 = rootOperatorsForPlan1[0];
+                ASSERT_EQ(rootOperator1->getId(), queryPlan1->getRootOperators()[0]->getId());
+                EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
+                EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<LogicalMapOperator>());
 
-            //Assertion for second subquery plan
-            auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
-            OperatorNodePtr rootOperator2 = rootOperatorsForPlan2[0];
-            ASSERT_EQ(rootOperator2->getId(), queryPlan2->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                //Assertion for second subquery plan
+                auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
+                std::vector<OperatorPtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
+                OperatorPtr rootOperator2 = rootOperatorsForPlan2[0];
+                ASSERT_EQ(rootOperator2->getId(), queryPlan2->getRootOperators()[0]->getId());
+                EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
+            }
         }
     }
 }
 
-//TODO: Enable with #4453
 /* Test incremental query placement with ILP strategy - simple query of source - filter - map - sink and then added map - sink and filter - sink to the filter operator*/
-TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->enableQueryReconfiguration = true;
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
@@ -810,7 +805,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWi
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
     queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
 
     Query query2 = Query::from("car")
@@ -821,7 +816,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWi
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
     queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
 
     Query query3 = Query::from("car")
@@ -832,7 +827,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWi
     queryPlan3->setQueryId(PlanIdGenerator::getNextQueryId());
     queryPlan3->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan3->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
 
     // Perform signature computation
@@ -879,34 +874,36 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWi
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
+    {
+        SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
+        auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlanId);
 
-    //Assertions to check correct placement
-    ASSERT_EQ(executionNodes.size(), 3U);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
-            // filter should be placed on source node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
-            auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
-            // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
-            auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+        //Assertions to check correct placement
+        ASSERT_EQ(executionNodes.size(), 3U);
+        for (const auto& executionNode : executionNodes) {
+            if (executionNode->operator*()->getId() == 3) {
+                // filter should be placed on source node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+                auto decomposedQueryPlan = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1U);
+                OperatorPtr actualRootOperator = actualRootOperators[0];
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            } else if (executionNode->operator*()->getId() == 1) {
+                // map should be placed on cloud node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+                auto decomposedQueryPlan = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1U);
+                OperatorPtr actualRootOperator = actualRootOperators[0];
+                EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalMapOperator>());
+            }
         }
     }
 
@@ -926,85 +923,84 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWi
 
     NES_INFO("{}", sharedQueryPlansToDeploy[0]->getQueryPlan()->toString());
     queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
-    sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
-    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
+    {
+        auto sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
+        auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlanId);
 
-    NES_INFO("{}", globalExecutionPlan->getAsString());
+        //Assertions to check correct placement
+        ASSERT_EQ(executionNodes.size(), 3U);
+        for (const auto& executionNode : executionNodes) {
+            if (executionNode->operator*()->getId() == 3) {
+                // filter should be placed on source node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+                auto decomposedQueryPlan = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 3U);
+                OperatorPtr actualRootOperator = actualRootOperators[0];
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            } else if (executionNode->operator*()->getId() == 2) {
+                // map should be placed on cloud node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 3U);
+                //Assertion for first subquery plan
+                auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
+                OperatorPtr rootOperator1 = rootOperatorsForPlan1[0];
+                EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
+                EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<SourceLogicalOperator>());
 
-    //Assertions to check correct placement
-    ASSERT_EQ(executionNodes.size(), 3U);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
-            // filter should be placed on source node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
-            auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 3U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 2) {
-            // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 3U);
-            //Assertion for first subquery plan
-            auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
-            OperatorNodePtr rootOperator1 = rootOperatorsForPlan1[0];
-            EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                //Assertion for second subquery plan
+                auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
+                std::vector<OperatorPtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
+                OperatorPtr rootOperator2 = rootOperatorsForPlan2[0];
+                EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
+            } else if (executionNode->operator*()->getId() == 1) {
+                // map should be placed on cloud node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 3U);
 
-            //Assertion for second subquery plan
-            auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
-            OperatorNodePtr rootOperator2 = rootOperatorsForPlan2[0];
-            EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
-            // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 3U);
+                for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
 
-            for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
+                    //Assertion for all subquery plans
+                    std::vector<OperatorPtr> rootOperatorsForPlan = decomposedQueryPlan->getRootOperators();
+                    ASSERT_EQ(rootOperatorsForPlan.size(), 1U);
+                    OperatorPtr rootOperator = rootOperatorsForPlan[0];
 
-                //Assertion for all subquery plans
-                std::vector<OperatorNodePtr> rootOperatorsForPlan = decomposedQueryPlan->getRootOperators();
-                ASSERT_EQ(rootOperatorsForPlan.size(), 1U);
-                OperatorNodePtr rootOperator = rootOperatorsForPlan[0];
-
-                if (rootOperator->getId() == queryPlan1->getRootOperators()[0]->getId()) {
-                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
-                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
-                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
-                } else if (rootOperator->getId() == queryPlan2->getRootOperators()[0]->getId()) {
-                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
-                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
-                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-                } else if (rootOperator->getId() == queryPlan3->getRootOperators()[0]->getId()) {
-                    EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
-                    ASSERT_EQ(rootOperator->getChildren().size(), 1U);
-                    EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
-                } else {
-                    //Sub query plan should contain for one of the three sink operator as its root
-                    FAIL();
+                    if (rootOperator->getId() == queryPlan1->getRootOperators()[0]->getId()) {
+                        EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperator>());
+                        ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                        EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<LogicalMapOperator>());
+                    } else if (rootOperator->getId() == queryPlan2->getRootOperators()[0]->getId()) {
+                        EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperator>());
+                        ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                        EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+                    } else if (rootOperator->getId() == queryPlan3->getRootOperators()[0]->getId()) {
+                        EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperator>());
+                        ASSERT_EQ(rootOperator->getChildren().size(), 1U);
+                        EXPECT_TRUE(rootOperator->getChildren()[0]->instanceOf<LogicalMapOperator>());
+                    } else {
+                        //Sub query plan should contain for one of the three sink operator as its root
+                        FAIL();
+                    }
                 }
             }
         }
     }
 }
 
-//TODO: as part of issue number #2939
+
 /* Test query placement with ILP strategy for query: source - filter - map - sink and then added map - sink and filter - sink to the filter operator*/
-TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) {
+TEST_F(ILPPlacementTest, testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    coordinatorConfiguration->enableQueryReconfiguration = true;
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
 
     // Setup topology and source catalog
     setupTopologyAndSourceCatalogForILP();
@@ -1019,7 +1015,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
     queryPlan1->setQueryId(PlanIdGenerator::getNextQueryId());
     queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan1->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
 
     Query query2 = Query::from("car")
@@ -1030,7 +1026,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
     queryPlan2->setQueryId(PlanIdGenerator::getNextQueryId());
     queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
     for (const auto& sink : queryPlan2->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
 
     Query query3 = Query::from("car")
@@ -1040,7 +1036,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
     QueryPlanPtr queryPlan3 = query3.getQueryPlan();
     queryPlan3->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan3->getSinkOperators()) {
-        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
     }
 
     // Perform signature computation
@@ -1080,7 +1076,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
     auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
 
     //Assertion to check correct amount of shared query plans to deploy are extracted.
-    ASSERT_EQ(sharedQueryPlansToDeploy.size(), 1l);
+    ASSERT_EQ(sharedQueryPlansToDeploy.size(), 2l);
 
     //Place the shared query plan
     auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
@@ -1089,79 +1085,139 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
-    SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
-    std::vector<Optimizer::ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId);
+    {
+        SharedQueryId sharedQueryPlanId = sharedQueryPlansToDeploy[0]->getId();
+        auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryPlanId);
 
-    NES_INFO("{}", globalExecutionPlan->getAsString());
+        //Assertions to check correct placement
+        ASSERT_EQ(executionNodes.size(), 3U);
+        for (const auto& executionNode : executionNodes) {
+            if (executionNode->operator*()->getId() == 3) {
+                // filter should be placed on source node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+                auto decomposedQueryPlan = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 2U);
+                OperatorPtr actualRootOperator = actualRootOperators[0];
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalFilterOperator>());
+                EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            } else if (executionNode->operator*()->getId() == 2) {
+                // map should be placed on cloud node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 2U);
+                //Assertion for first subquery plan
+                auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
+                OperatorPtr rootOperator1 = rootOperatorsForPlan1[0];
+                EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
+                EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<SourceLogicalOperator>());
 
-    //Assertions to check correct placement
-    ASSERT_EQ(executionNodes.size(), 3U);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1) {
-            // filter should be placed on source node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
-            auto decomposedQueryPlan = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 3U);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 2) {
-            // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 3U);
-            //Assertion for first subquery plan
-            auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
-            OperatorNodePtr rootOperator1 = rootOperatorsForPlan1[0];
-            EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+                //Assertion for second subquery plan
+                auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
+                std::vector<OperatorPtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
+                OperatorPtr rootOperator2 = rootOperatorsForPlan2[0];
+                EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
+                EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            } else if (executionNode->operator*()->getId() == 1) {
+                // map should be placed on cloud node
+                auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
+                ASSERT_EQ(decomposedQueryPlans.size(), 2U);
+                //Assertion for first subquery plan
+                auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
+                std::vector<OperatorPtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
+                OperatorPtr rootOperator1 = rootOperatorsForPlan1[0];
+                ASSERT_EQ(rootOperator1->getId(), queryPlan1->getRootOperators()[0]->getId());
+                EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
+                EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<LogicalMapOperator>());
 
-            //Assertion for second subquery plan
-            auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
-            OperatorNodePtr rootOperator2 = rootOperatorsForPlan2[0];
-            EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3) {
-            // map should be placed on cloud node
-            auto decomposedQueryPlans = executionNode->getAllDecomposedQueryPlans(sharedQueryPlanId);
-            ASSERT_EQ(decomposedQueryPlans.size(), 3U);
-            //Assertion for first subquery plan
-            auto decomposedQueryPlan1 = decomposedQueryPlans[0U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan1 = decomposedQueryPlan1->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan1.size(), 1U);
-            OperatorNodePtr rootOperator1 = rootOperatorsForPlan1[0];
-            ASSERT_EQ(rootOperator1->getId(), queryPlan1->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator1->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator1->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator1->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
-
-            //Assertion for second subquery plan
-            auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
-            OperatorNodePtr rootOperator2 = rootOperatorsForPlan2[0];
-            ASSERT_EQ(rootOperator2->getId(), queryPlan2->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-
-            //Assertion for second subquery plan
-            auto decomposedQueryPlan3 = decomposedQueryPlans[2U];
-            std::vector<OperatorNodePtr> rootOperatorsForPlan3 = decomposedQueryPlan3->getRootOperators();
-            ASSERT_EQ(rootOperatorsForPlan3.size(), 1U);
-            OperatorNodePtr rootOperator3 = rootOperatorsForPlan3[0];
-            ASSERT_EQ(rootOperator3->getId(), queryPlan3->getRootOperators()[0]->getId());
-            EXPECT_TRUE(rootOperator3->instanceOf<SinkLogicalOperatorNode>());
-            ASSERT_EQ(rootOperator3->getChildren().size(), 1U);
-            EXPECT_TRUE(rootOperator3->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+                //Assertion for second subquery plan
+                auto decomposedQueryPlan2 = decomposedQueryPlans[1U];
+                std::vector<OperatorPtr> rootOperatorsForPlan2 = decomposedQueryPlan2->getRootOperators();
+                ASSERT_EQ(rootOperatorsForPlan2.size(), 1U);
+                OperatorPtr rootOperator2 = rootOperatorsForPlan2[0];
+                ASSERT_EQ(rootOperator2->getId(), queryPlan2->getRootOperators()[0]->getId());
+                EXPECT_TRUE(rootOperator2->instanceOf<SinkLogicalOperator>());
+                ASSERT_EQ(rootOperator2->getChildren().size(), 1U);
+                EXPECT_TRUE(rootOperator2->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+            }
         }
     }
+}
+
+/* Test query placement with ILP strategy - this tests checks if ILP strategy works when operators have multiple children/parents */
+TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
+    setupTopologyAndSourceCatalogForILP();
+
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+
+    auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
+    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                        topologyForILP,
+                                                                                        typeInferencePhase,
+                                                                                        coordinatorConfiguration);
+    //Prepare query plan
+    Query query = Query::from("car").unionWith(Query::from("car")).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperator>());
+    }
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
+                                                             sourceCatalogForILP,
+                                                             Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
+
+    //Perform placement
+    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+
+    auto lockedExecutionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(lockedExecutionNodes.size(), 3U);
+    for (const auto& executionNode : lockedExecutionNodes) {
+        if (executionNode->operator*()->getId() == 3) {
+            // place filter on source node
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+            ASSERT_EQ(decomposedQueryPlans.size(), 2U);
+            auto decomposedQueryPlan = decomposedQueryPlans[0U];
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperator>());
+        } else if (executionNode->operator*()->getId() == 2) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+            auto decomposedQueryPlan = decomposedQueryPlans[0U];
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<LogicalUnionOperator>());
+        } else if (executionNode->operator*()->getId() == 1) {
+            auto decomposedQueryPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+            ASSERT_EQ(decomposedQueryPlans.size(), 1U);
+            auto decomposedQueryPlan = decomposedQueryPlans[0U];
+            std::vector<OperatorPtr> actualRootOperators = decomposedQueryPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorPtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
+        }
+
+    }
+
 }

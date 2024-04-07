@@ -58,17 +58,14 @@ add_nes_integration_test(window-deployment-test "Windowing/WindowDeploymentTest.
 add_nes_integration_test(ysb-deployment-test "Windowing/YSBDeploymentTest.cpp")
 add_nes_integration_test(ktm-deployment-test "Windowing/KTMDeploymentTest.cpp")
 
+### WindowTypeHashTest ###
+add_nes_integration_test(window-type-hash "Windowing/WindowTypeHashTest.cpp")
 
 ### window integration tests ###
 add_nes_integration_test(keyed-tumbling-window-tests "Windowing/TumblingWindow/KeyedTumblingWindowTests.cpp")
 add_nes_integration_test(non-keyed-tumbling-window-tests "Windowing/TumblingWindow/NotKeyedlTumblingWindowTests.cpp")
 add_nes_integration_test(keyed-sliding-window-tests "Windowing/SlidingWindow/KeyedSlidingWindowTests.cpp")
 add_nes_integration_test(non-keyed-sliding-window-tests "Windowing/SlidingWindow/NonKeyedSlidingWindowTests.cpp")
-
-### distributed window deployment test ###
-# Disable this tests currently
-
-#add_nes_integration_test(distributed-window-deployment-test "Windowing/DistributedWindowDeploymentTest.cpp")
 
 
 ### MultipleWindowsTest ###
@@ -122,6 +119,9 @@ add_nes_integration_test(query-failure-test "QueryFailureTest.cpp")
 
 ### Query Redeployment Integration Test ###
 add_nes_integration_test(query-redeployment-integration-tests "QueryRedeploymentIntegrationTest.cpp")
+
+### Explain Integration Test ###
+add_nes_integration_test(explain-request-integration-test "ExplainRequestIntegrationTest.cpp")
 
 ### Location Integration Test ###
 # Enabled with issue #4270

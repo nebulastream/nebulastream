@@ -13,16 +13,16 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -48,10 +48,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
 
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
-                     ->addField(createField("id", BasicType::UINT64))
-                     ->addField(createField("value", BasicType::UINT64))
-                     ->addField(createField("timestamp", BasicType::UINT64));
+    auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
@@ -113,10 +110,9 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
                      .sink(NullOutputSinkDescriptor::create());
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalogService();
-    auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                          query.getQueryPlan(),
-                                                                          Optimizer::PlacementStrategy::BottomUp);
+    auto queryCatalog = crd->getQueryCatalog();
+    auto queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
@@ -139,10 +135,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
-                     ->addField(createField("id", BasicType::UINT64))
-                     ->addField(createField("value", BasicType::UINT64))
-                     ->addField(createField("timestamp", BasicType::UINT64));
+    auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
@@ -199,14 +192,12 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto query2 = Query::from("input2").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalogService();
-    auto queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan()->toString(),
-                                                                           query1.getQueryPlan(),
-                                                                           Optimizer::PlacementStrategy::BottomUp);
+    auto queryCatalog = crd->getQueryCatalog();
+    auto queryId1 =
+        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
-    auto queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan()->toString(),
-                                                                           query2.getQueryPlan(),
-                                                                           Optimizer::PlacementStrategy::BottomUp);
+    auto queryId2 =
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
     if (!ret) {
@@ -238,10 +229,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
 
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
-                     ->addField(createField("id", BasicType::UINT64))
-                     ->addField(createField("value", BasicType::UINT64))
-                     ->addField(createField("timestamp", BasicType::UINT64));
+    auto input = TestSchemas::getSchemaTemplate("id_val_time_u64");
     crd->getSourceCatalogService()->registerLogicalSource("input", input);
 
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
@@ -283,10 +271,9 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     auto query = Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());
 
     NES::RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    auto queryCatalog = crd->getQueryCatalogService();
-    auto queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan()->toString(),
-                                                                          query.getQueryPlan(),
-                                                                          Optimizer::PlacementStrategy::BottomUp);
+    auto queryCatalog = crd->getQueryCatalog();
+    auto queryId =
+        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {

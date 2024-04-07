@@ -23,10 +23,12 @@ add_nes_unit_test(optimizer-unit-tests "UnitTests/Optimizer/Phases/TypeInference
         "UnitTests/Optimizer/Phases/OriginIdInferencePhaseTest.cpp"
         "UnitTests/Optimizer/Phases/MemoryLayoutSelectionPhaseTest.cpp"
         "UnitTests/Optimizer/Phases/QueryPlacementAmendmentTest.cpp"
+        "UnitTests/Optimizer/Phases/QueryRewritePhaseTest.cpp"
         "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp"
+        "UnitTests/Optimizer/Phases/StatisticIdInferenceTest.cpp"
         "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp"
         "UnitTests/Optimizer/QueryPlacement/DistributedMatrixJoinPlacementTest.cpp"
-        "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp"
+        "UnitTests/Optimizer/QueryPlacement/NemoJoinPlacementTest.cpp"
         "UnitTests/Optimizer/QuerySignatures/QuerySignatureUtilTests.cpp"
         "UnitTests/Optimizer/QuerySignatures/QueryContainmentIdentificationTest.cpp"
         "UnitTests/Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRuleTest.cpp"
@@ -60,6 +62,6 @@ add_nes_unit_test(change-log-test "UnitTests/Plans/ChangeLog/ChangeLogTest.cpp")
 ### ChangeLogEntry Test ###
 add_nes_unit_test(change-log-entry-test "UnitTests/Plans/ChangeLog/ChangeLogEntryTest.cpp")
 
-if (NES_USE_TF)
+if (NES_BUILD_PLUGIN_TENSORFLOW)
     add_nes_unit_test(ml-heuristic-placement-test "UnitTests/Optimizer/QueryPlacement/MlHeuristicPlacementTest.cpp")
 endif ()

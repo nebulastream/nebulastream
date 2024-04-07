@@ -46,10 +46,6 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpM
 
     // enable distributed window optimization
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
-    optimizerConfiguration.performDistributedWindowOptimization = true;
-    optimizerConfiguration.distributedWindowChildThreshold = 2;
-    optimizerConfiguration.distributedWindowCombinerThreshold = 4;
-    distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
     originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
 
     // Initialize the typeInferencePhase with a dummy SourceCatalog & UDFCatalog
@@ -57,6 +53,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpM
     // We inject an invalid query parsing service as it is not used in the tests.
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
 }
 
 std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr& outputSchema, uint32_t expectedTuples) {
@@ -70,6 +67,7 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
         [&](SchemaPtr inputSchema,
             OperatorId id,
             OriginId originId,
+            StatisticId statisticId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr& nodeEngine,
             size_t numSourceLocalBuffers,
@@ -79,6 +77,7 @@ std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPt
                                            nodeEngine->getQueryManager(),
                                            id,
                                            originId,
+                                           statisticId,
                                            numSourceLocalBuffers,
                                            successors,
                                            Runtime::QueryTerminationType::Graceful);
@@ -90,9 +89,10 @@ TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan) {
     // pre submission optimization
     decomposedQueryPlan = typeInferencePhase->execute(decomposedQueryPlan);
     decomposedQueryPlan = originIdInferencePhase->execute(decomposedQueryPlan);
+    decomposedQueryPlan = statisticIdInferencePhase->execute(decomposedQueryPlan);
     NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan), "query plan could not be started.");
-    NES_ASSERT(nodeEngine->startQuery(decomposedQueryPlan->getSharedQueryId()), "query plan could not be started.");
-
+    NES_ASSERT(nodeEngine->startQuery(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId()),
+               "query plan could not be started.");
     return nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlan->getSharedQueryId());
 }
 
@@ -112,15 +112,17 @@ bool TestExecutionEngine::stopQuery(std::shared_ptr<Runtime::Execution::Executab
     return nodeEngine->getQueryManager()->stopQuery(plan, type);
 }
 
-Runtime::MemoryLayouts::DynamicTupleBuffer TestExecutionEngine::getBuffer(const SchemaPtr& schema) {
+Runtime::MemoryLayouts::TestTupleBuffer TestExecutionEngine::getBuffer(const SchemaPtr& schema) {
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     // add support for columnar layout
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
-    return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 
 bool TestExecutionEngine::stop() { return nodeEngine->stop(); }
 
 Runtime::BufferManagerPtr TestExecutionEngine::getBufferManager() const { return nodeEngine->getBufferManager(); }
+
+Runtime::NodeEnginePtr TestExecutionEngine::getNodeEngine() const { return nodeEngine; }
 
 }// namespace NES::Testing

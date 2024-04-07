@@ -14,29 +14,24 @@
 #ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Util/PlanJsonGenerator.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
-#include <Util/PlanJsonGenerator.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
 #include <utility>
 #include OATPP_CODEGEN_BEGIN(ApiController)
-
-#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
+#include <Catalogs/Query/DecomposedQueryPlanMetaData.hpp>
 
 namespace NES {
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
-
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -51,20 +46,18 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     /**
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-     * @param queryCatalogService - queryCatalogService
+     * @param queryCatalog - queryCatalogService
      * @param coordinator - central entity of NebulaStream
-     * @param globalQueryPlan - responsible for storing all currently running and to be deployed QueryPlans in the NES system.
      * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      * @param errorHandler - responsible for handling errors
      */
     QueryCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                           const QueryCatalogServicePtr& queryCatalogService,
+                           const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                            const NesCoordinatorWeakPtr& coordinator,
-                           const GlobalQueryPlanPtr& globalQueryPlan,
                            const oatpp::String& completeRouterPrefix,
                            const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryCatalogService(queryCatalogService),
-          coordinator(coordinator), globalQueryPlan(globalQueryPlan), errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryCatalog(queryCatalog),
+          coordinator(coordinator), errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -76,34 +69,21 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     static std::shared_ptr<QueryCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                          const QueryCatalogServicePtr& queryCatalogService,
+                                                          const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                                           const NesCoordinatorWeakPtr& coordinator,
-                                                          const GlobalQueryPlanPtr& globalQueryPlan,
                                                           const std::string& routerPrefixAddition,
                                                           const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<QueryCatalogController>(objectMapper,
-                                                        queryCatalogService,
+                                                        queryCatalog,
                                                         coordinator,
-                                                        globalQueryPlan,
                                                         completeRouterPrefix,
                                                         errorHandler);
     }
 
     ENDPOINT("GET", "/allRegisteredQueries", getAllRegisteredQueires) {
-        nlohmann::json response;
         try {
-            std::map<uint64_t, Catalogs::Query::QueryCatalogEntryPtr> queryCatalogEntries =
-                queryCatalogService->getAllQueryCatalogEntries();
-            for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
-                nlohmann::json entry;
-                entry["queryId"] = queryId;
-                entry["queryString"] = catalogEntry->getQueryString();
-                entry["queryStatus"] = catalogEntry->getQueryStatusAsString();
-                entry["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
-                entry["queryMetaData"] = catalogEntry->getMetaInformation();
-                response.push_back(entry);
-            }
+            auto response = queryCatalog->getAllQueryEntries();
             return createResponse(Status::CODE_200, response.dump());
         } catch (const std::exception& exc) {
             NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
@@ -119,18 +99,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/queries", getQueriesWithASpecificStatus, QUERY(String, status, "status")) {
         try {
-            std::map<uint64_t, std::string> queries = queryCatalogService->getAllQueriesInStatus(status);
-            nlohmann::json response;
-            for (auto [key, value] : queries) {
-                nlohmann::json entry;
-                auto catalogEntry = queryCatalogService->getEntryForQuery(key);
-                entry["queryId"] = key;
-                entry["queryString"] = catalogEntry->getQueryString();
-                entry["queryStatus"] = catalogEntry->getQueryStatusAsString();
-                entry["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
-                entry["queryMetaData"] = catalogEntry->getMetaInformation();
-                response.push_back(entry);
-            }
+            auto response = queryCatalog->getQueryEntriesWithStatus(status);
             return createResponse(Status::CODE_200, response.dump());
         } catch (InvalidArgumentException e) {
             return errorHandler->handleError(Status ::CODE_400, "Invalid Status provided");
@@ -142,19 +111,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/status", getStatusOfQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
             NES_DEBUG("Get current status of the query");
-            const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            nlohmann::json response;
-            response["queryId"] = queryId.getValue(0);
-            response["queryString"] = catalogEntry->getQueryString();
-            response["status"] = catalogEntry->getQueryStatusAsString();
-            response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
-            response["queryMetaData"] = catalogEntry->getMetaInformation();
-            response["history"] = catalogEntry->getHistory();
-            std::unordered_map<std::string, QueryStateHistory> workerHistory;
-            for (const QuerySubPlanMetaDataPtr& subPlanMetaData : catalogEntry->getAllSubQueryPlanMetaData()) {
-                workerHistory.emplace(std::to_string(subPlanMetaData->getWorkerId()), subPlanMetaData->getHistory());
-            }
-            response["workerHistory"] = workerHistory;
+            auto response = queryCatalog->getQueryEntry(queryId);
             return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
@@ -167,7 +124,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
         try {
             NES_DEBUG("getNumberOfProducedBuffers called");
             //Prepare Input query from user string
-            SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+            auto sharedQueryId = queryCatalog->getLinkedSharedQueryId(queryId);
             if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
                 return errorHandler->handleError(Status::CODE_404, "no query found with ID: " + std::to_string(queryId));
             }
@@ -189,9 +146,8 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
     }
 
   private:
-    QueryCatalogServicePtr queryCatalogService;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     NesCoordinatorWeakPtr coordinator;
-    GlobalQueryPlanPtr globalQueryPlan;
     ErrorHandlerPtr errorHandler;
 };
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/OperatorNode.hpp>
+#include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
@@ -20,6 +20,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr
 PhysicalStreamJoinBuildOperator::create(OperatorId id,
+                                        StatisticId statisticId,
                                         const SchemaPtr& inputSchema,
                                         const SchemaPtr& outputSchema,
                                         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
@@ -29,6 +30,7 @@ PhysicalStreamJoinBuildOperator::create(OperatorId id,
                                         QueryCompilation::StreamJoinStrategy joinStrategy,
                                         QueryCompilation::WindowingStrategy windowingStrategy) {
     return std::make_shared<PhysicalStreamJoinBuildOperator>(id,
+                                                             statisticId,
                                                              inputSchema,
                                                              outputSchema,
                                                              operatorHandler,
@@ -39,7 +41,8 @@ PhysicalStreamJoinBuildOperator::create(OperatorId id,
                                                              windowingStrategy);
 }
 PhysicalOperatorPtr
-PhysicalStreamJoinBuildOperator::create(const SchemaPtr& inputSchema,
+PhysicalStreamJoinBuildOperator::create(StatisticId statisticId,
+                                        const SchemaPtr& inputSchema,
                                         const SchemaPtr& outputSchema,
                                         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                         const JoinBuildSideType buildSide,
@@ -48,6 +51,7 @@ PhysicalStreamJoinBuildOperator::create(const SchemaPtr& inputSchema,
                                         QueryCompilation::StreamJoinStrategy joinStrategy,
                                         QueryCompilation::WindowingStrategy windowingStrategy) {
     return create(getNextOperatorId(),
+                  statisticId,
                   inputSchema,
                   outputSchema,
                   operatorHandler,
@@ -60,6 +64,7 @@ PhysicalStreamJoinBuildOperator::create(const SchemaPtr& inputSchema,
 
 PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const OperatorId id,
+    const StatisticId statisticId,
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
@@ -68,9 +73,9 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const std::string& joinFieldName,
     QueryCompilation::StreamJoinStrategy joinStrategy,
     QueryCompilation::WindowingStrategy windowingStrategy)
-    : OperatorNode(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
-      PhysicalUnaryOperator(id, inputSchema, outputSchema), timeStampFieldName(timeStampFieldName), joinFieldName(joinFieldName),
-      buildSide(buildSide) {}
+    : Operator(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
+      PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), timeStampFieldName(timeStampFieldName),
+      joinFieldName(joinFieldName), buildSide(buildSide) {}
 
 std::string PhysicalStreamJoinBuildOperator::toString() const {
     std::stringstream out;
@@ -84,8 +89,9 @@ std::string PhysicalStreamJoinBuildOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalStreamJoinBuildOperator::copy() {
+OperatorPtr PhysicalStreamJoinBuildOperator::copy() {
     auto result = create(id,
+                         statisticId,
                          inputSchema,
                          outputSchema,
                          joinOperatorHandler,

@@ -15,10 +15,12 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
@@ -86,6 +88,13 @@ std::string Util::toCSVString(const SchemaPtr& schema) {
     return ss.str();
 }
 
+Runtime::MemoryLayouts::MemoryLayoutPtr Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize) {
+    switch (schema->getLayoutType()) {
+        case Schema::MemoryLayoutType::ROW_LAYOUT: return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+    }
+}
+
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                             std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
@@ -108,7 +117,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
     for (auto&& node : queryPlanIterator) {
         for (auto const& [key, val] : *propertyIterator) {
             // add the current property to the current operator
-            node->as<LogicalOperatorNode>()->addProperty(key, val);
+            node->as<LogicalOperator>()->addProperty(key, val);
         }
         ++propertyIterator;
     }
@@ -138,12 +147,12 @@ std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::stri
     auto buffer = bufferManager->getBufferBlocking();
     do {
         std::string line = *it;
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(buffer, schema);
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicTupleBuffer, schema, bufferManager);
+        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferManager);
         ++tupleCount;
 
         // If we have read enough tuples from the csv file, then stop iterating over it
-        auto curTimeStamp = dynamicTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>();
+        auto curTimeStamp = testTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>();
         if (curTimeStamp >= lastTimeStamp) {
             break;
         }
@@ -176,13 +185,11 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema) {
     return retVector;
 }
 
-std::string Util::trim(const std::string& str) {
-    size_t start = str.find_first_not_of(" \t\n\r");
-    if (start == std::string::npos) {
-        return "";
-    }
-    size_t end = str.find_last_not_of(" \t\n\r");
-    return str.substr(start, end - start + 1);
-}
-
+#ifdef WRAP_READ_CALL
+// If NES is build with NES_ENABLES_TESTS the linker is instructed to wrap the read function
+// to keep the usual functionality __wrap_read just calls __real_read which is the real read function.
+// However this allows to mock calls to read (e.g. TCPSourceTest)
+extern "C" ssize_t __real_read(int fd, void* data, size_t size);
+__attribute__((weak)) extern "C" ssize_t __wrap_read(int fd, void* data, size_t size) { return __real_read(fd, data, size); }
+#endif
 }// namespace NES

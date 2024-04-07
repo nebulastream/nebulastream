@@ -16,7 +16,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -78,7 +78,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWi
     globalQueryPlan->createNewSharedQueryPlan(plan);
 
     //Assert
-    NES_DEBUG("GlobalQueryPlanTest: A global query node containing operator of type SinkLogicalOperatorNode should be returned");
+    NES_DEBUG("GlobalQueryPlanTest: A global query node containing operator of type SinkLogicalOperator should be returned");
     auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
 }
@@ -157,7 +157,6 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddAndRemoveQuery) {
     NES_DEBUG("GlobalQueryPlanTest: Should return empty global query nodes");
     listOfSQPsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(listOfSQPsToDeploy.size() == 1);
-    EXPECT_TRUE(listOfSQPsToDeploy[0]->isEmpty());
 }
 
 /**
@@ -291,8 +290,6 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     //Get MetaData information
     sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     queryIdToSinkOperatorMap1 = sharedQueryPlansToDeploy[0]->getQueryIdToSinkOperatorMap();
-    EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId1) == queryIdToSinkOperatorMap1.end());
-    EXPECT_TRUE(queryIdToSinkOperatorMap1.find(queryId2) != queryIdToSinkOperatorMap1.end());
 
     auto queryIdToSinkOperatorMap2 = sharedQueryPlansToDeploy[1]->getQueryIdToSinkOperatorMap();
     EXPECT_EQ(queryIdToSinkOperatorMap2.size(), 1u);

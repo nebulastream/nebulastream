@@ -16,7 +16,6 @@
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -54,11 +53,14 @@ void triggerKeyedBucketsProxy(void* op,
                               void* pctx,
                               uint64_t originId,
                               uint64_t sequenceNumber,
+                              uint64_t chunkNumber,
+                              bool lastChunk,
                               uint64_t watermarkTs) {
     auto handler = static_cast<KeyedBucketPreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->trigger(*workerContext, *pipelineExecutionContext, originId, sequenceNumber, watermarkTs);
+    handler->trigger(*workerContext, *pipelineExecutionContext, originId, {sequenceNumber, chunkNumber, lastChunk},
+                     watermarkTs);
 }
 
 void setupKeyedBucketWindowHandler(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
@@ -74,12 +76,7 @@ class LocalKeyedBucketStoreState : public Operators::OperatorState {
                                         uint64_t valueSize,
                                         const Value<MemRef>& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
-
-    auto findSliceStateByTs(Value<UInt64>& timestampValue) {
-        Value<MemRef> htPtr =
-            Nautilus::FunctionCall("findKeyedBucketsByTs", findKeyedBucketsByTs, sliceStoreState, timestampValue);
-        return Interface::ChainedHashMapRef(htPtr, keyDataTypes, keySize, valueSize);
-    }
+    
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const uint64_t keySize;
     const uint64_t valueSize;
@@ -180,6 +177,8 @@ void KeyedBucketPreAggregation::close(ExecutionContext& ctx, RecordBuffer&) cons
                            ctx.getPipelineContext(),
                            ctx.getOriginId(),
                            ctx.getSequenceNumber(),
+                           ctx.getChunkNumber(),
+                           ctx.getLastChunk(),
                            ctx.getWatermarkTs());
 }
 

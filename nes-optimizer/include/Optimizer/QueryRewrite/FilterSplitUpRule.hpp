@@ -22,8 +22,8 @@ namespace NES {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+class LogicalFilterOperator;
+using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -55,7 +55,7 @@ class FilterSplitUpRule : public BaseRewriteRule {
      * reformulate the predicate to an andExpression and call splitUpFilter on the Filter.
      * @param filterOperator the filter operator node that we want to split up
      */
-    void splitUpFilters(FilterLogicalOperatorNodePtr filterOperator);
+    void splitUpFilters(LogicalFilterOperatorPtr filterOperator);
 };
 
 }// namespace NES::Optimizer

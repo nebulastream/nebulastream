@@ -16,12 +16,12 @@
 namespace NES::Exceptions {
 RPCQueryUndeploymentException::RPCQueryUndeploymentException(const std::string& message,
                                                              std::vector<uint64_t> failedRpcExecutionNodeIds,
-                                                             RpcClientModes mode)
+                                                             RpcClientMode mode)
     : RequestExecutionException(message), failedExecutionNodeIds(std::move(failedRpcExecutionNodeIds)), mode(mode) {}
 
 const char* RPCQueryUndeploymentException::what() const noexcept { return message.c_str(); }
 
 std::vector<uint64_t> RPCQueryUndeploymentException::getFailedExecutionNodeIds() { return failedExecutionNodeIds; }
 
-RpcClientModes RPCQueryUndeploymentException::getMode() { return mode; }
+RpcClientMode RPCQueryUndeploymentException::getMode() { return mode; }
 }// namespace NES::Exceptions

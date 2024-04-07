@@ -41,6 +41,7 @@ class TestSourceDescriptor : public SourceDescriptor {
         std::function<DataSourcePtr(SchemaPtr schema,
                                     OperatorId,
                                     OriginId,
+                                    StatisticId,
                                     SourceDescriptorPtr,
                                     Runtime::NodeEnginePtr,
                                     size_t,
@@ -57,6 +58,7 @@ class TestSourceDescriptor : public SourceDescriptor {
      */
     DataSourcePtr create(OperatorId operatorId,
                          OriginId originId,
+                         StatisticId statisticId,
                          SourceDescriptorPtr sourceDescriptor,
                          Runtime::NodeEnginePtr nodeEngine,
                          size_t numSourceLocalBuffers,
@@ -84,6 +86,7 @@ class TestSourceDescriptor : public SourceDescriptor {
     std::function<DataSourcePtr(SchemaPtr schema,
                                 OperatorId,
                                 OriginId,
+                                StatisticId,
                                 SourceDescriptorPtr,
                                 Runtime::NodeEnginePtr,
                                 size_t,

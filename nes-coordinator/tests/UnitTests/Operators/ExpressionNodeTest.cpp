@@ -27,7 +27,12 @@
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -278,6 +283,118 @@ TEST_F(ExpressionNodeTest, caseInfereStampTest) {
     auto badCaseNode2 = CASE({whenNode1, whenNode3}, Attribute("float3"));
     ASSERT_ANY_THROW(badCaseNode1->inferStamp(schema));
     ASSERT_ANY_THROW(badCaseNode2->inferStamp(schema));
+}
+
+TEST_F(ExpressionNodeTest, testOrExpressionNodeEqual) {
+    auto expr1 = Attribute("f1") < 10 || Attribute("f2") > 12;
+    auto expr2 = expr1->copy();
+    auto expr3 = Attribute("f1") < 10 || Attribute("f2") > 13;
+    auto expr4 = Attribute("f2") < 10 || Attribute("f2") > 12;
+
+    ASSERT_TRUE(expr1->instanceOf<OrExpressionNode>());
+    ASSERT_TRUE(expr3->instanceOf<OrExpressionNode>());
+    ASSERT_TRUE(expr4->instanceOf<OrExpressionNode>());
+    ASSERT_TRUE(expr1->equal(expr2));
+    ASSERT_FALSE(expr1->equal(expr3));
+    ASSERT_FALSE(expr1->equal(expr4));
+}
+
+TEST_F(ExpressionNodeTest, testAndExpressionNodeEqual) {
+    auto expr1 = Attribute("f1") > 10 && Attribute("f2") < 12;
+    auto expr2 = expr1->copy();
+    auto expr3 = Attribute("f1") > 10 && Attribute("f2") < 13;
+    auto expr4 = Attribute("f2") > 10 && Attribute("f2") < 12;
+
+    ASSERT_TRUE(expr1->instanceOf<AndExpressionNode>());
+    ASSERT_TRUE(expr3->instanceOf<AndExpressionNode>());
+    ASSERT_TRUE(expr4->instanceOf<AndExpressionNode>());
+    ASSERT_TRUE(expr1->equal(expr2));
+    ASSERT_FALSE(expr1->equal(expr3));
+    ASSERT_FALSE(expr1->equal(expr4));
+}
+
+TEST_F(ExpressionNodeTest, testEqualsExpressionNodeEqual) {
+    auto expr1 = Attribute("f1") == 10;
+    auto expr2 = expr1->copy();
+    auto expr3 = Attribute("f1") == 12;
+    auto expr4 = Attribute("f2") == 10;
+
+    ASSERT_TRUE(expr1->instanceOf<EqualsExpressionNode>());
+    ASSERT_TRUE(expr3->instanceOf<EqualsExpressionNode>());
+    ASSERT_TRUE(expr4->instanceOf<EqualsExpressionNode>());
+    ASSERT_TRUE(expr1->equal(expr2));
+    ASSERT_FALSE(expr1->equal(expr3));
+    ASSERT_FALSE(expr1->equal(expr4));
+}
+
+TEST_F(ExpressionNodeTest, testNegateExpressionNodeEqual) {
+    auto expr1 = Attribute("f1") != 10;
+    auto expr2 = expr1->copy();
+    auto expr3 = Attribute("f1") != 12;
+    auto expr4 = Attribute("f2") != 10;
+
+    ASSERT_TRUE(expr1->instanceOf<NegateExpressionNode>());
+    ASSERT_TRUE(expr3->instanceOf<NegateExpressionNode>());
+    ASSERT_TRUE(expr4->instanceOf<NegateExpressionNode>());
+    ASSERT_TRUE(expr1->equal(expr2));
+    ASSERT_FALSE(expr1->equal(expr3));
+    ASSERT_FALSE(expr1->equal(expr4));
+}
+
+TEST_F(ExpressionNodeTest, testLessEqualsExpressionNodeEqual) {
+    auto expr1 = Attribute("f1") <= 10;
+    auto expr2 = expr1->copy();
+    auto expr3 = Attribute("f1") <= 12;
+    auto expr4 = Attribute("f2") <= 10;
+
+    ASSERT_TRUE(expr1->instanceOf<LessEqualsExpressionNode>());
+    ASSERT_TRUE(expr3->instanceOf<LessEqualsExpressionNode>());
+    ASSERT_TRUE(expr4->instanceOf<LessEqualsExpressionNode>());
+    ASSERT_TRUE(expr1->equal(expr2));
+    ASSERT_FALSE(expr1->equal(expr3));
+    ASSERT_FALSE(expr1->equal(expr4));
+}
+
+TEST_F(ExpressionNodeTest, testLessExpressionNodeEqual) {
+    auto expr1 = Attribute("f1") < 10;
+    auto expr2 = expr1->copy();
+    auto expr3 = Attribute("f1") < 12;
+    auto expr4 = Attribute("f2") < 10;
+
+    ASSERT_TRUE(expr1->instanceOf<LessExpressionNode>());
+    ASSERT_TRUE(expr3->instanceOf<LessExpressionNode>());
+    ASSERT_TRUE(expr4->instanceOf<LessExpressionNode>());
+    ASSERT_TRUE(expr1->equal(expr2));
+    ASSERT_FALSE(expr1->equal(expr3));
+    ASSERT_FALSE(expr1->equal(expr4));
+}
+
+TEST_F(ExpressionNodeTest, testGreaterEqualsExpressionNodeEqual) {
+    auto expr1 = Attribute("f1") >= 10;
+    auto expr2 = expr1->copy();
+    auto expr3 = Attribute("f1") >= 12;
+    auto expr4 = Attribute("f2") >= 10;
+
+    ASSERT_TRUE(expr1->instanceOf<GreaterEqualsExpressionNode>());
+    ASSERT_TRUE(expr3->instanceOf<GreaterEqualsExpressionNode>());
+    ASSERT_TRUE(expr4->instanceOf<GreaterEqualsExpressionNode>());
+    ASSERT_TRUE(expr1->equal(expr2));
+    ASSERT_FALSE(expr1->equal(expr3));
+    ASSERT_FALSE(expr1->equal(expr4));
+}
+
+TEST_F(ExpressionNodeTest, testGreaterExpressionNodeEqual) {
+    auto expr1 = Attribute("f1") > 10;
+    auto expr2 = expr1->copy();
+    auto expr3 = Attribute("f1") > 12;
+    auto expr4 = Attribute("f2") > 10;
+
+    ASSERT_TRUE(expr1->instanceOf<GreaterExpressionNode>());
+    ASSERT_TRUE(expr3->instanceOf<GreaterExpressionNode>());
+    ASSERT_TRUE(expr4->instanceOf<GreaterExpressionNode>());
+    ASSERT_TRUE(expr1->equal(expr2));
+    ASSERT_FALSE(expr1->equal(expr3));
+    ASSERT_FALSE(expr1->equal(expr4));
 }
 
 }// namespace NES

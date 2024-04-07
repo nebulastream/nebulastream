@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
@@ -58,7 +58,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
-            std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
+            std::map<OperatorPtr, OperatorPtr> targetToHostSinkOperatorMap;
             auto targetSink = targetQueryPlan->getSinkOperators()[0];
             auto hostSink = hostQueryPlan->getSinkOperators()[0];
             bool foundMatch = false;
@@ -80,8 +80,8 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
                 //Iterate over all matched pairs of sink operators and merge the query plan
                 for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
                     //add to the matched pair
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator->as<LogicalOperatorNode>(),
-                                                                                  targetSinkOperator->as<LogicalOperatorNode>(),
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator->as<LogicalOperator>(),
+                                                                                  targetSinkOperator->as<LogicalOperator>(),
                                                                                   ContainmentRelationship::EQUALITY));
                 }
 

@@ -18,20 +18,20 @@
 #include <Identifiers.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
+#include <Util/QueryStateHistory.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
-#include <Util/QueryStateHistory.hpp>
 
 namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class QuerySubPlanMetaData;
-using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
+class DecomposedQueryPlanMetaData;
+using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaData>;
 
 namespace Catalogs::Query {
 
@@ -56,6 +56,12 @@ class QueryCatalogEntry {
      * @return query id
      */
     [[nodiscard]] QueryId getQueryId() const noexcept;
+
+    /**
+     * @brief get shared query id of the query
+     * @return shared query id
+     */
+    [[nodiscard]] SharedQueryId getSharedQueryId() const noexcept;
 
     /**
      * @brief method to get the string of the query
@@ -88,16 +94,10 @@ class QueryCatalogEntry {
     [[nodiscard]] QueryState getQueryState() const;
 
     /**
-     * @brief method to get the status of the query as string
-     * @return query status: as string
-     */
-    [[nodiscard]] std::string getQueryStatusAsString() const;
-
-    /**
      * @brief method to set the status of the query
      * @param query status
      */
-    void setQueryStatus(QueryState queryStatus);
+    void setQueryState(QueryState queryStatus);
 
     /**
      * @brief Get name of the query placement strategy
@@ -111,7 +111,7 @@ class QueryCatalogEntry {
      */
     Optimizer::PlacementStrategy getQueryPlacementStrategy();
 
-    void setMetaInformation(std::string metaInformation);
+    void setTerminationReason(std::string terminationReason);
 
     std::string getMetaInformation();
 
@@ -129,48 +129,26 @@ class QueryCatalogEntry {
     std::map<std::string, QueryPlanPtr> getOptimizationPhases();
 
     /**
-     * @brief Check if metadata exists for a specific subplan
-     * @param Ths id of the subplan to check
-     * @return true if metadata has already been created for the subplan in question
+     * @brief Retrieve a timestamped history of query status changes.
      */
-    bool hasQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId);
-
-    /**
-     * Add sub query plan to the query catalog
-     * @param querySubPlanId : the sub query plan id
-     * @param workerId : the worker node on which the query is running
-     * @param subQueryState : the state of the subplan
-     */
-    void addQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState);
-
-    /**
-     * Get sub query plan meta data
-     * @param querySubPlanId : the sub query plan id
-     */
-    QuerySubPlanMetaDataPtr getQuerySubPlanMetaData(DecomposedQueryPlanId querySubPlanId);
-
-    /**
-     * Get all sub query plan mea data
-     * @return vector of sub query plan meta data
-     */
-    std::vector<QuerySubPlanMetaDataPtr> getAllSubQueryPlanMetaData();
-
-    void removeAllQuerySubPlanMetaData();
-
-    /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;
 
+    /**
+     * @brief Set the shared query id
+     * @param sharedQueryId : the input shared query id
+     */
+    void setSharedQueryId(SharedQueryId sharedQueryId);
+
   private:
-    mutable std::mutex mutex;
     QueryId queryId;
+    SharedQueryId sharedQueryId;
     std::string queryString;
     Optimizer::PlacementStrategy queryPlacementStrategy;
     QueryPlanPtr inputQueryPlan;
     QueryPlanPtr executedQueryPlan;
     QueryState queryState;
-    std::string metaInformation;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
-    std::map<DecomposedQueryPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;
+    std::string terminationReason;
     QueryStateHistory history;
 };
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;

@@ -14,7 +14,6 @@
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
@@ -31,13 +30,26 @@ namespace NES::Runtime::Execution::Operators {
 void deleteAllSlicesProxy(void* ptrOpHandler,
                           uint64_t watermarkTs,
                           uint64_t sequenceNumber,
+                          uint64_t chunkNumber,
+                          bool lastChunk,
                           OriginId originId,
                           uint64_t joinStrategyInt,
                           uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    BufferMetaData bufferMetaData(watermarkTs, sequenceNumber, originId);
+    BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, originId);
     opHandler->deleteSlices(bufferMetaData);
+}
+
+void deleteAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    NES_DEBUG("Deleting all slices for pipelineId {}!", pipelineCtx->getPipelineID());
+
+    opHandler->deleteAllSlices();
 }
 
 void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
@@ -49,6 +61,8 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
                                operatorHandlerMemRef,
                                ctx.getWatermarkTs(),
                                ctx.getSequenceNumber(),
+                               ctx.getChunkNumber(),
+                               ctx.getLastChunk(),
                                ctx.getOriginId(),
                                Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                                Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
@@ -90,5 +104,17 @@ StreamJoinProbe::StreamJoinProbe(const uint64_t operatorHandlerIndex,
     : StreamJoinOperator(joinStrategy, windowingStrategy), operatorHandlerIndex(operatorHandlerIndex), joinSchema(joinSchema),
       withDeletion(withDeletion), joinFieldNameLeft(std::move(joinFieldNameLeft)),
       joinFieldNameRight(std::move(joinFieldNameRight)), windowMetaData(windowMetaData) {}
+
+void StreamJoinProbe::terminate(ExecutionContext& ctx) const {
+    // Delete all slices, as the query has ended
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    Nautilus::FunctionCall("deleteAllWindowsProxy",
+                           deleteAllWindowsProxy,
+                           operatorHandlerMemRef,
+                           ctx.getPipelineContext(),
+                           Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                           Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    Operator::terminate(ctx);
+}
 
 }// namespace NES::Runtime::Execution::Operators

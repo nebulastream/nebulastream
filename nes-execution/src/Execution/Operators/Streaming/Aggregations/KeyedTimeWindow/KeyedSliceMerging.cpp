@@ -93,6 +93,8 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     auto startSliceTs = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, startSlice).load<UInt64>();
     auto endSliceTs = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, endSlice).load<UInt64>();
     auto sequenceNumber = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, sequenceNumber).load<UInt64>();
+    auto chunkNumber = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, chunkNumber).load<UInt64>();
+    auto lastChunk = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, lastChunk).load<Boolean>();
 
     // 2. initialize global slice state, which is represented by a chained hashtable
     auto globalSlice = Nautilus::FunctionCall("createKeyedState", createKeyedState, globalOperatorHandler, sliceMergeTask);
@@ -104,7 +106,8 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     FunctionCall("freeKeyedSliceMergeTask", freeKeyedSliceMergeTask, sliceMergeTask);
 
     // 4. emit global slice when we have a tumbling window.
-    sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, globalSlice);
+    sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk,
+                                  globalSlice);
 }
 
 void KeyedSliceMerging::combineThreadLocalSlices(Interface::ChainedHashMapRef& globalHashTable,

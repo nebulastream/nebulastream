@@ -54,7 +54,7 @@ bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime, const Topolo
 
 TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog&) {
     /*auto copiedTopology = Topology::create();
-    copiedTopology->setRootTopologyNodeId(originalTopology->getRoot()->copy());
+    copiedTopology->addAsRootWorkerId(originalTopology->getRoot()->copy());
 
     //bfs starting at root node
     std::queue<TopologyNodePtr> queue;

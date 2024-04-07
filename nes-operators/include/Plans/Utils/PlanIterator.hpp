@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
+#ifndef NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_
+#define NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_
 
 #include <iterator>
 #include <stack>
@@ -76,7 +76,7 @@ class PlanIterator {
         NodePtr operator*();
 
       private:
-        explicit iterator(const std::vector<OperatorNodePtr>& rootOperators);
+        explicit iterator(const std::vector<OperatorPtr>& rootOperators);
         explicit iterator();
         std::stack<NodePtr> workStack;
     };
@@ -100,9 +100,9 @@ class PlanIterator {
     std::vector<NodePtr> snapshot();
 
   private:
-    std::vector<OperatorNodePtr> rootOperators;
+    std::vector<OperatorPtr> rootOperators;
 };
 
 }// namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_

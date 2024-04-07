@@ -80,7 +80,7 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
         const auto outputSchema = testHarness.getOutputSchema();
         auto tmpBuffers =
             TestUtils::createExpectedBufferFromCSVString(expectedOutputCSV, outputSchema, testHarness.getBufferManager());
-        auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+        auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
         EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
     }
 };
@@ -89,15 +89,18 @@ TEST_P(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     const auto windowSchema = Schema::create()
                                   ->addField(createField("win1", BasicType::UINT64))
                                   ->addField(createField("id1", BasicType::UINT64))
-                                  ->addField(createField("timestamp", BasicType::UINT64));
+                                  ->addField(createField("timestamp", BasicType::UINT64))
+                                  ->updateSourceName("window1");
     const auto window2Schema = Schema::create()
                                    ->addField(createField("win2", BasicType::UINT64))
                                    ->addField(createField("id2", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window2");
     const auto window3Schema = Schema::create()
                                    ->addField(createField("win3", BasicType::UINT64))
                                    ->addField(createField("id3", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window3");
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema}, {"id1", "id2", "id3"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv"}, "");
 
@@ -127,19 +130,23 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     const auto windowSchema = Schema::create()
                                   ->addField(createField("win1", BasicType::UINT64))
                                   ->addField(createField("id1", BasicType::UINT64))
-                                  ->addField(createField("timestamp", BasicType::UINT64));
+                                  ->addField(createField("timestamp", BasicType::UINT64))
+                                  ->updateSourceName("window1");
     const auto window2Schema = Schema::create()
                                    ->addField(createField("win2", BasicType::UINT64))
                                    ->addField(createField("id2", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window2");
     const auto window3Schema = Schema::create()
                                    ->addField(createField("win3", BasicType::UINT64))
                                    ->addField(createField("id3", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window3");
     const auto window4Schema = Schema::create()
                                    ->addField(createField("win4", BasicType::UINT64))
                                    ->addField(createField("id4", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window4");
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema, window4Schema}, {"id1", "id2", "id3", "id4"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv", "window4.csv"});
 
@@ -174,19 +181,23 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     const auto windowSchema = Schema::create()
                                   ->addField(createField("win1", BasicType::UINT64))
                                   ->addField(createField("id1", BasicType::UINT64))
-                                  ->addField(createField("timestamp", BasicType::UINT64));
+                                  ->addField(createField("timestamp", BasicType::UINT64))
+                                  ->updateSourceName("window1");
     const auto window2Schema = Schema::create()
                                    ->addField(createField("win2", BasicType::UINT64))
                                    ->addField(createField("id2", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window2");
     const auto window3Schema = Schema::create()
                                    ->addField(createField("win3", BasicType::UINT64))
                                    ->addField(createField("id3", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window3");
     const auto window4Schema = Schema::create()
                                    ->addField(createField("win4", BasicType::UINT64))
                                    ->addField(createField("id4", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window4");
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema, window4Schema}, {"id1", "id2", "id3", "id4"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv", "window4.csv"});
 
@@ -226,15 +237,18 @@ TEST_P(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     const auto windowSchema = Schema::create()
                                   ->addField(createField("win1", BasicType::UINT64))
                                   ->addField(createField("id1", BasicType::UINT64))
-                                  ->addField(createField("timestamp", BasicType::UINT64));
+                                  ->addField(createField("timestamp", BasicType::UINT64))
+                                  ->updateSourceName("window1");
     const auto window2Schema = Schema::create()
                                    ->addField(createField("win2", BasicType::UINT64))
                                    ->addField(createField("id2", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window2");
     const auto window3Schema = Schema::create()
                                    ->addField(createField("win3", BasicType::UINT64))
                                    ->addField(createField("id3", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window3");
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema}, {"id1", "id2", "id3"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv"}, "");
 
@@ -288,19 +302,23 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     const auto windowSchema = Schema::create()
                                   ->addField(createField("win1", BasicType::UINT64))
                                   ->addField(createField("id1", BasicType::UINT64))
-                                  ->addField(createField("timestamp", BasicType::UINT64));
+                                  ->addField(createField("timestamp", BasicType::UINT64))
+                                  ->updateSourceName("window1");
     const auto window2Schema = Schema::create()
                                    ->addField(createField("win2", BasicType::UINT64))
                                    ->addField(createField("id2", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window2");
     const auto window3Schema = Schema::create()
                                    ->addField(createField("win3", BasicType::UINT64))
                                    ->addField(createField("id3", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window3");
     const auto window4Schema = Schema::create()
                                    ->addField(createField("win4", BasicType::UINT64))
                                    ->addField(createField("id4", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window4");
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema, window4Schema}, {"id1", "id2", "id3", "id4"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv", "window4.csv"});
 
@@ -391,19 +409,23 @@ TEST_P(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     const auto windowSchema = Schema::create()
                                   ->addField(createField("win1", BasicType::UINT64))
                                   ->addField(createField("id1", BasicType::UINT64))
-                                  ->addField(createField("timestamp", BasicType::UINT64));
+                                  ->addField(createField("timestamp", BasicType::UINT64))
+                                  ->updateSourceName("window1");
     const auto window2Schema = Schema::create()
                                    ->addField(createField("win2", BasicType::UINT64))
                                    ->addField(createField("id2", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window2");
     const auto window3Schema = Schema::create()
                                    ->addField(createField("win3", BasicType::UINT64))
                                    ->addField(createField("id3", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window3");
     const auto window4Schema = Schema::create()
                                    ->addField(createField("win4", BasicType::UINT64))
                                    ->addField(createField("id4", BasicType::UINT64))
-                                   ->addField(createField("timestamp", BasicType::UINT64));
+                                   ->addField(createField("timestamp", BasicType::UINT64))
+                                   ->updateSourceName("window4");
     TestUtils::JoinParams joinParams({windowSchema, window2Schema, window3Schema, window4Schema}, {"id1", "id2", "id3", "id4"});
     TestUtils::CsvFileParams csvFileParams({"window.csv", "window2.csv", "window4.csv", "window4.csv"});
 

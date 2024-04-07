@@ -23,7 +23,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -41,7 +41,6 @@
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -175,6 +174,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
 
     auto source = sourceProvider->lower(sourceOperator->getId(),
                                         sourceOperator->getOriginId(),
+                                        sourceOperator->getStatisticId(),
                                         sourceDescriptor,
                                         nodeEngine,
                                         executableSuccessorPipelines);

@@ -90,6 +90,7 @@ class JoinMultiThreadedTest
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
         auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
                                                                defaultSharedQueryId,
+                                                               INVALID_WORKER_NODE_ID,
                                                                query.getQueryPlan()->getRootOperators());
         auto queryPlan = executionEngine->submitQuery(decomposedQueryPlan);
 
@@ -623,11 +624,11 @@ TEST_P(JoinMultiThreadedTest, threeJoinsSlidingWindow) {
                                        ->addField(createField("test4$win4", BasicType::UINT64))
                                        ->addField(createField("test4$id4", BasicType::UINT64))
                                        ->addField(createField("test4$timestamp", BasicType::UINT64));
-    const auto joinFieldNameLeft = "test1$id1";
+    const auto joinFieldNameRight = "test2$id2";
     const auto joinFieldNameThird = "test3$id3";
     const auto joinFieldNameFourth = "test4$id4";
     const auto joinSchemaLeftRight =
-        Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameLeft);
+        Runtime::Execution::Util::createJoinSchema(inputSchemaLeft, inputSchemaRight, joinFieldNameRight);
     const auto joinSchemaLeftRightThird =
         Runtime::Execution::Util::createJoinSchema(joinSchemaLeftRight, inputSchemaThird, joinFieldNameThird);
     const auto outputSchema =

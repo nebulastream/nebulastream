@@ -36,6 +36,7 @@ class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
      */
     DataSourcePtr lower(OperatorId operatorId,
                         OriginId originId,
+                        StatisticId statisticId,
                         SourceDescriptorPtr sourceDescriptor,
                         Runtime::NodeEnginePtr nodeEngine,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override;

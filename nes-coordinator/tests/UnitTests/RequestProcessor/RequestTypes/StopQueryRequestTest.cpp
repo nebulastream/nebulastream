@@ -14,7 +14,6 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -32,7 +31,7 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 class StopQueryRequestTest : public Testing::BaseIntegrationTest {
   public:
@@ -48,7 +47,7 @@ TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     constexpr QueryId queryId = 1;
     const uint8_t retries = 0;
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto stopQueryRequest = Experimental::StopQueryRequest::create(queryId, retries);
+    auto stopQueryRequest = StopQueryRequest::create(queryId, retries);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}");
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

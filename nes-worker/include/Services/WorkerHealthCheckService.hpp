@@ -47,8 +47,6 @@ class WorkerHealthCheckService {
     std::condition_variable cv;
 };
 
-using WorkerHealthCheckServicePtr = std::shared_ptr<WorkerHealthCheckService>;
-
 }// namespace NES
 
 #endif// NES_WORKER_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_

@@ -16,11 +16,11 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
@@ -69,9 +69,9 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
     : BasePlacementAdditionStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmendmentMode),
       serviceURL(serviceURL), timeWeight(timeWeight) {}
 
-bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                         const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+PlacementAdditionResult ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                         const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                         const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                          DecomposedQueryPlanVersion querySubPlanVersion) {
 
     try {
@@ -115,7 +115,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQue
 
 void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
     SharedQueryId sharedQueryId,
-    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
     cpr::Response& response) const {
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
     //Fetch the placement data
@@ -128,13 +128,13 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
 
         bool pinned = false;
         for (const auto& item : pinnedDownStreamOperators) {
-            auto operatorToPin = item->getChildWithOperatorId(operatorId)->as<OperatorNode>();
+            auto operatorToPin = item->getChildWithOperatorId(operatorId)->as<Operator>();
             if (operatorToPin) {
                 operatorToPin->addProperty(PINNED_WORKER_ID, topologyNodeId);
 
-                if (operatorToPin->instanceOf<OpenCLLogicalOperatorNode>()) {
+                if (operatorToPin->instanceOf<LogicalOpenCLOperator>()) {
                     size_t deviceId = placement[DEVICE_ID_KEY];
-                    operatorToPin->as<OpenCLLogicalOperatorNode>()->setDeviceId(deviceId);
+                    operatorToPin->as<LogicalOpenCLOperator>()->setDeviceId(deviceId);
                 }
 
                 pinned = true;
@@ -150,9 +150,9 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
     }
 }
 
-void ElegantPlacementStrategy::addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node) {
-    if (logicalOperator->instanceOf<MapUDFLogicalOperatorNode>()
-        || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
+void ElegantPlacementStrategy::addJavaUdfByteCodeField(const OperatorPtr& logicalOperator, nlohmann::json& node) {
+    if (logicalOperator->instanceOf<MapUDFLogicalOperator>()
+        || logicalOperator->instanceOf<FlatMapUDFLogicalOperator>()) {
         const auto* udfDescriptor =
             dynamic_cast<Catalogs::UDF::JavaUDFDescriptor*>(logicalOperator->as<UDFLogicalOperator>()->getUDFDescriptor().get());
         const auto& byteCode = udfDescriptor->getByteCodeList();
@@ -171,16 +171,16 @@ void ElegantPlacementStrategy::addJavaUdfByteCodeField(const OperatorNodePtr& lo
     }
 }
 
-void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                                   const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
                                                    nlohmann::json& payload) {
 
     NES_DEBUG("Getting the json representation of the query plan");
 
     std::vector<nlohmann::json> nodes{};
 
-    std::set<OperatorNodePtr> visitedOperator;
-    std::queue<OperatorNodePtr> operatorsToVisit;
+    std::set<OperatorPtr> visitedOperator;
+    std::queue<OperatorPtr> operatorsToVisit;
     //initialize with upstream operators
     for (const auto& pinnedDownStreamOperator : pinnedDownStreamOperators) {
         operatorsToVisit.emplace(pinnedDownStreamOperator);
@@ -205,7 +205,7 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
 
             auto found = std::find_if(pinnedUpStreamOperators.begin(),
                                       pinnedUpStreamOperators.end(),
-                                      [logicalOperator](const OperatorNodePtr& pinnedOperator) {
+                                      [logicalOperator](const OperatorPtr& pinnedOperator) {
                                           return pinnedOperator->getId() == logicalOperator->getId();
                                       });
 
@@ -214,8 +214,8 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             //Only explore further upstream operators if this operator is not in the list of pinned upstream operators
             if (found == pinnedUpStreamOperators.end()) {
                 for (const auto& upstreamOperator : logicalOperator->getChildren()) {
-                    upstreamOperatorIds.push_back(upstreamOperator->as<OperatorNode>()->getId());
-                    operatorsToVisit.emplace(upstreamOperator->as<OperatorNode>());// add children for future visit
+                    upstreamOperatorIds.push_back(upstreamOperator->as<Operator>()->getId());
+                    operatorsToVisit.emplace(upstreamOperator->as<Operator>());// add children for future visit
                 }
             }
             node[CHILDREN_KEY] = upstreamOperatorIds;

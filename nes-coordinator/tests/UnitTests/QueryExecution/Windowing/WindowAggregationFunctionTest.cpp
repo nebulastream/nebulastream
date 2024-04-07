@@ -65,17 +65,19 @@ class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
     static constexpr uint64_t defaultDecomposedQueryPlanId = 0;
     static constexpr uint64_t defaultSharedQueryId = 0;
 
-    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, uint64_t ts) {
+    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf, uint64_t ts) {
         for (int64_t recordIndex = 0; recordIndex < (int64_t) recordsPerBuffer; recordIndex++) {
             buf[recordIndex][0].write<uint64_t>(ts);
             buf[recordIndex][1].write<int64_t>(recordIndex);
         }
         buf.setNumberOfTuples(recordsPerBuffer);
+        buf.getBuffer().setSequenceData({1, 1, true});
     }
 
     Runtime::Execution::ExecutableQueryPlanPtr executeQuery(Query query) {
         auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
                                                                defaultSharedQueryId,
+                                                               INVALID_WORKER_NODE_ID,
                                                                query.getQueryPlan()->getRootOperators());
         auto plan = executionEngine->submitQuery(decomposedQueryPlan);
         auto source = executionEngine->getDataSource(plan, 0);

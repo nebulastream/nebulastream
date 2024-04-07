@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <string>
 
 namespace NES {
@@ -77,6 +77,19 @@ class QueryPlanBuilder {
     static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
 
     /**
+     * @brief Adds a synopsis build operator to this query
+     * @param window
+     * @param statisticDescriptor: Descriptor for the synopsis
+     * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
+     * @param queryPlan the queryPlan the synopsis is added to
+     * @return the updated queryPlanPtr
+     */
+    static QueryPlanPtr addStatisticBuildOperator(Windowing::WindowTypePtr window,
+                                                  Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+                                                  Statistic::MetricHash metricHash,
+                                                  QueryPlanPtr queryPlan);
+
+    /**
      * @brief: Map java udf according to the java method given in the descriptor.
      * @param descriptor as java udf descriptor
      * @param queryPlan the queryPlan the map is added to
@@ -111,11 +124,11 @@ class QueryPlanBuilder {
      * @return the updated queryPlan
      */
     static QueryPlanPtr addJoin(QueryPlanPtr leftQueryPlan,
-                                     QueryPlanPtr rightQueryPlan,
-                                     ExpressionNodePtr onLeftKey,
-                                     ExpressionNodePtr onRightKey,
-                                     const Windowing::WindowTypePtr& windowType,
-                                     Join::LogicalJoinDefinition::JoinType joinType);
+                                QueryPlanPtr rightQueryPlan,
+                                ExpressionNodePtr onLeftKey,
+                                ExpressionNodePtr onRightKey,
+                                const Windowing::WindowTypePtr& windowType,
+                                Join::LogicalJoinDescriptor::JoinType joinType);
 
     /**
      * @brief This methods add the batch join operator to a query
@@ -127,16 +140,18 @@ class QueryPlanBuilder {
      * @return the updated queryPlan
      */
     static QueryPlanPtr addBatchJoin(QueryPlanPtr leftQueryPlan,
-                                          QueryPlanPtr rightQueryPlan,
-                                          ExpressionNodePtr onProbeKey,
-                                          ExpressionNodePtr onBuildKey);
+                                     QueryPlanPtr rightQueryPlan,
+                                     ExpressionNodePtr onProbeKey,
+                                     ExpressionNodePtr onBuildKey);
     /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor to add to the queryPlan
+     * @param workerId id of the worker node where sink need to be placed
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor);
+    static QueryPlanPtr
+    addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Create watermark assigner operator and adds it to the queryPlan
@@ -144,7 +159,7 @@ class QueryPlanBuilder {
      * @return queryPlan
      */
     static QueryPlanPtr assignWatermark(QueryPlanPtr queryPlan,
-                                             Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+                                        Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
 
     /**
     * @brief: Method that checks in case a window is contained in the query
@@ -153,8 +168,7 @@ class QueryPlanBuilder {
     * @param queryPlan the queryPlan to check and add the watermark strategy to
     * @return the updated queryPlan
     */
-    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan,
-                                                            const Windowing::WindowTypePtr windowType);
+    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType);
 
   private:
     /**
@@ -172,9 +186,8 @@ class QueryPlanBuilder {
     * @param: rightQueryPlan the right query plan of the binary operation
     * @return the updated queryPlan
     */
-    static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorNodePtr operatorNode,
-                                                              QueryPlanPtr leftQueryPlan,
-                                                              QueryPlanPtr rightQueryPlan);
+    static QueryPlanPtr
+    addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
 };
 }// end namespace NES
-#endif // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
+#endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_

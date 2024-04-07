@@ -111,9 +111,9 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRule final : public BaseQue
      * @param containedOperatorChain vector with all extracted operators from the contained query
      */
     void addContainmentOperatorChain(SharedQueryPlanPtr& containerQueryPlan,
-                                     const OperatorNodePtr& containerOperator,
-                                     const OperatorNodePtr& containedOperator,
-                                     const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const;
+                                     const OperatorPtr& containerOperator,
+                                     const OperatorPtr& containedOperator,
+                                     const std::vector<LogicalOperatorPtr> containedOperatorChain) const;
 
     SignatureContainmentCheckPtr SignatureContainmentUtil;
 };

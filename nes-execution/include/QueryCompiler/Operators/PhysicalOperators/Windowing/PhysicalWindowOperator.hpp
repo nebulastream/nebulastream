@@ -25,10 +25,11 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalWindowOperator : public PhysicalUnaryOperator {
   public:
     PhysicalWindowOperator(OperatorId id,
+                           StatisticId statisticId,
                            SchemaPtr inputSchema,
                            SchemaPtr outputSchema,
-                           Windowing::LogicalWindowDefinitionPtr windowDefinition);
-    const Windowing::LogicalWindowDefinitionPtr& getWindowDefinition() const;
+                           Windowing::LogicalWindowDescriptorPtr windowDefinition);
+    const Windowing::LogicalWindowDescriptorPtr& getWindowDefinition() const;
 
     /**
      * @brief returns the string representation of the class
@@ -37,7 +38,7 @@ class PhysicalWindowOperator : public PhysicalUnaryOperator {
     std::string toString() const override;
 
   protected:
-    Windowing::LogicalWindowDefinitionPtr windowDefinition;
+    Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
@@ -44,7 +45,7 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
         sourceDiamond = TestUtils::createSourceTypeCSV({"diamond", "diamond_physical", "window.csv", 1, 28, 1});
 
         // Setup schemas.
-        schemaCarTruck = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        schemaCarTruck = TestSchemas::getSchemaTemplate("id_val_u64");
         schemaRubyDiamond = Schema::create()
                                 ->addField(createField("value", BasicType::UINT32))
                                 ->addField(createField("id", BasicType::UINT32))
@@ -61,7 +62,6 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
     const auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("car", schemaCarTruck)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceCar)
                                   .addLogicalSource("truck", schemaCarTruck)
@@ -85,7 +85,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -96,7 +96,6 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
     const auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("car", schemaCarTruck)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceCar)
                                   .addLogicalSource("truck", schemaCarTruck)
@@ -120,7 +119,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -138,7 +137,6 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
                                           .map(Attribute("timestamp") = 2)
                                           .filter(Attribute("id") > 4));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
@@ -162,7 +160,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -181,7 +179,6 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
                                           .map(Attribute("timestamp") = 2)
                                           .filter(Attribute("value") > 3));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
@@ -206,7 +203,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -226,7 +223,6 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
                                           .filter(Attribute("value") > 3)
                                           .filter(Attribute("value") < 6));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
@@ -251,7 +247,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 }// namespace NES

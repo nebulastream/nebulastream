@@ -20,3 +20,6 @@ add_source_files(nes-optimizer
 		ILPStrategy.cpp
         ElegantPlacementStrategy.cpp
 )
+
+add_subdirectory(CostBasedStrategy)
+add_subdirectory(CostFunction)

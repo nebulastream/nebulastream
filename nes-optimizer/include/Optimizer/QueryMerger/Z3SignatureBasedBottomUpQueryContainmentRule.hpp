@@ -113,7 +113,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param hostQueryPlan : host query plan
      * @return Map containing matching pair of target and host operators
      */
-    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>>
+    std::map<LogicalOperatorPtr, std::tuple<LogicalOperatorPtr, ContainmentRelationship>>
     areQueryPlansContained(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan);
 
     /**
@@ -122,8 +122,8 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param hostOperator : the host operator to compare with
      * @return bool true if equal else false
      */
-    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>>
-    areOperatorsContained(const LogicalOperatorNodePtr& targetOperator, const LogicalOperatorNodePtr& hostOperator);
+    std::map<LogicalOperatorPtr, std::tuple<LogicalOperatorPtr, ContainmentRelationship>>
+    areOperatorsContained(const LogicalOperatorPtr& targetOperator, const LogicalOperatorPtr& hostOperator);
 
     /**
      * @brief This method makes sure that we can reset the time attribute for the contained window operation
@@ -131,7 +131,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param containee contained operation
      * @return true, if container and contanee are not a window operation or if window containment is possible, false otherwise
      */
-    bool checkWindowContainmentPossible(const LogicalOperatorNodePtr& container, const LogicalOperatorNodePtr& containee) const;
+    bool checkWindowContainmentPossible(const LogicalOperatorPtr& container, const LogicalOperatorPtr& containee) const;
 
     SignatureContainmentCheckPtr signatureContainmentUtil;
 };

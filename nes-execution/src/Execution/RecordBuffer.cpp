@@ -11,17 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -60,11 +53,50 @@ void RecordBuffer::setOriginId(const Value<UInt64>& originId) {
                    originId);
 }
 
+Value<UInt64> RecordBuffer::getStatisticId() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getStatisticId",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getStatisticId,
+                          tupleBufferRef);
+}
+
+void RecordBuffer::setStatisticId(const Value<UInt64>& statisticId) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setStatisticId",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setStatisticId,
+                   tupleBufferRef,
+                   statisticId);
+}
+
 void RecordBuffer::setSequenceNr(const Value<UInt64>& seqNumber) {
     FunctionCall<>("NES__Runtime__TupleBuffer__setSequenceNr",
                    Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setSequenceNumber,
                    tupleBufferRef,
                    seqNumber);
+}
+
+void RecordBuffer::setChunkNr(const Value<UInt64>& chunkNumber) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setChunkNumber",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setChunkNumber,
+                   tupleBufferRef,
+                   chunkNumber);
+}
+
+Value<UInt64> RecordBuffer::getChunkNr() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getChunkNumber",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getChunkNumber,
+                   tupleBufferRef);
+}
+
+void RecordBuffer::setLastChunk(const Value<Boolean>& isLastChunk) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setLastChunk",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setLastChunk,
+                   tupleBufferRef,
+                   isLastChunk);
+}
+
+Value<Boolean> RecordBuffer::isLastChunk() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__isLastChunk",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__isLastChunk,
+                          tupleBufferRef);
 }
 
 Value<UInt64> RecordBuffer::getWatermarkTs() {

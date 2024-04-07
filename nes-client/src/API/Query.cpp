@@ -20,10 +20,9 @@
 #include <API/Windowing.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -229,6 +228,16 @@ Query Query::from(const std::string& sourceName) {
     return Query(queryPlan);
 }
 
+Query& Query::buildStatistic(Windowing::WindowTypePtr window,
+                             Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+                             Statistic::MetricHash metricHash) {
+    this->queryPlan = QueryPlanBuilder::addStatisticBuildOperator(std::move(window),
+                                                                  std::move(statisticDescriptor),
+                                                                  metricHash,
+                                                                  this->queryPlan);
+    return *this;
+}
+
 Query& Query::project(std::vector<ExpressionNodePtr> expressions) {
     NES_DEBUG("Query: add projection to query");
     this->queryPlan = QueryPlanBuilder::addProjection(expressions, this->queryPlan);
@@ -252,7 +261,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
+    Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                 subQueryRhs.getQueryPlan(),
                                                 onLeftKey.getExpressionNode(),
@@ -276,7 +285,7 @@ Query& Query::andWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to AND Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
+    Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                 subQueryRhs.getQueryPlan(),
                                                 onLeftKey.getExpressionNode(),
@@ -291,7 +300,7 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to SEQ Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
+    Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                 subQueryRhs.getQueryPlan(),
                                                 onLeftKey.getExpressionNode(),
@@ -352,15 +361,15 @@ Query& Query::inferModel(const std::string model,
         outputFieldsPtr.push_back(outputField.getExpressionNode());
     }
 
-    OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
+    OperatorPtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
     NES_DEBUG("Query::inferModel: Current Operator: {}", op->toString());
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 
-Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
+Query& Query::sink(const SinkDescriptorPtr sinkDescriptor, WorkerId workerId) {
     NES_DEBUG("Query: add sink operator to query");
-    this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor);
+    this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor, workerId);
     return *this;
 }
 

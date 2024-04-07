@@ -13,7 +13,6 @@
 */
 
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketStore.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <memory>

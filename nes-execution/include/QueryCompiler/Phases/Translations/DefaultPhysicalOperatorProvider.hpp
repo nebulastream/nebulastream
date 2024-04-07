@@ -25,30 +25,30 @@ namespace NES::QueryCompilation {
  * @brief Stores a window operator and window definition, as well as in- and output schema
  */
 struct WindowOperatorProperties {
-    WindowOperatorProperties(WindowOperatorNodePtr windowOperator,
+    WindowOperatorProperties(WindowOperatorPtr windowOperator,
                              SchemaPtr windowInputSchema,
                              SchemaPtr windowOutputSchema,
-                             Windowing::LogicalWindowDefinitionPtr windowDefinition)
+                             Windowing::LogicalWindowDescriptorPtr windowDefinition)
         : windowOperator(std::move(windowOperator)), windowInputSchema(std::move(windowInputSchema)),
           windowOutputSchema(std::move(windowOutputSchema)), windowDefinition(std::move(windowDefinition)){};
 
-    WindowOperatorNodePtr windowOperator;
+    WindowOperatorPtr windowOperator;
     SchemaPtr windowInputSchema;
     SchemaPtr windowOutputSchema;
-    Windowing::LogicalWindowDefinitionPtr windowDefinition;
+    Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
 /**
  * @brief Stores all operator nodes for lowering the stream joins
  */
-struct StreamJoinOperatorNodes {
-    StreamJoinOperatorNodes(const LogicalOperatorNodePtr& operatorNode,
-                            const OperatorNodePtr& leftInputOperator,
-                            const OperatorNodePtr& rightInputOperator)
+struct StreamJoinOperators {
+    StreamJoinOperators(const LogicalOperatorPtr& operatorNode,
+                            const OperatorPtr& leftInputOperator,
+                            const OperatorPtr& rightInputOperator)
         : operatorNode(operatorNode), leftInputOperator(leftInputOperator), rightInputOperator(rightInputOperator) {}
-    const LogicalOperatorNodePtr& operatorNode;
-    const OperatorNodePtr& leftInputOperator;
-    const OperatorNodePtr& rightInputOperator;
+    const LogicalOperatorPtr& operatorNode;
+    const OperatorPtr& leftInputOperator;
+    const OperatorPtr& rightInputOperator;
 };
 
 /**
@@ -82,7 +82,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
   public:
     DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options);
     static PhysicalOperatorProviderPtr create(const QueryCompilerOptionsPtr& options);
-    void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorNodePtr operatorNode) override;
+    void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) override;
     virtual ~DefaultPhysicalOperatorProvider() noexcept = default;
 
   protected:
@@ -90,31 +90,31 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @brief Insets demultiplex operator before the current operator.
      * @param operatorNode
      */
-    void insertDemultiplexOperatorsBefore(const LogicalOperatorNodePtr& operatorNode);
+    void insertDemultiplexOperatorsBefore(const LogicalOperatorPtr& operatorNode);
     /**
      * @brief Insert multiplex operator after the current operator.
      * @param operatorNode
      */
-    void insertMultiplexOperatorsAfter(const LogicalOperatorNodePtr& operatorNode);
+    void insertMultiplexOperatorsAfter(const LogicalOperatorPtr& operatorNode);
     /**
      * @brief Checks if the current operator is a demultiplexer, if it has multiple parents.
      * @param operatorNode
      * @return
      */
-    bool isDemultiplex(const LogicalOperatorNodePtr& operatorNode);
+    bool isDemultiplex(const LogicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a binary operator
      * @param operatorNode current operator
      */
-    void lowerBinaryOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerBinaryOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a unary operator
     * @param decomposedQueryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
@@ -123,61 +123,67 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     *        does not lead to code that is compiled and is entirely executed on the source/sink/TupleBuffer level.
     * @param operatorNode current operator
     */
-    void lowerUnionOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerUnionOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a project operator
     * @param operatorNode current operator
     */
-    void lowerProjectOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerProjectOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers an infer model operator
     * @param operatorNode current operator
     */
-    void lowerInferModelOperator(LogicalOperatorNodePtr operatorNode);
+    void lowerInferModelOperator(LogicalOperatorPtr operatorNode);
 
     /**
     * @brief Lowers a map operator
     * @param operatorNode current operator
     */
-    void lowerMapOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerMapOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a udf map operator
     * @param operatorNode current operator
     */
-    void lowerUDFMapOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerUDFMapOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a udf flat map operator
     * @param operatorNode current operator
     */
-    void lowerUDFFlatMapOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerUDFFlatMapOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a window operator
     * @param operatorNode current operator
     */
-    void lowerWindowOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerWindowOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a thread local window operator
     * @param operatorNode current operator
     */
-    void lowerTimeBasedWindowOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a watermark assignment operator
     * @param operatorNode current operator
     */
-    void lowerWatermarkAssignmentOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
     * @brief Lowers a join operator
     * @param operatorNode current operator
     */
-    void lowerJoinOperator(const LogicalOperatorNodePtr& operatorNode);
+    void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
+
+    /**
+     * @brief Lowers a statistic build operator
+     * @param logicalStatisticWindowOperator
+     */
+    void lowerStatisticBuildOperator(Statistic::LogicalStatisticWindowOperator& logicalStatisticWindowOperator);
 
     /**
      * @brief Get a join build input generator
@@ -185,9 +191,9 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param schema the operator schema
      * @param children the upstream operators
      */
-    OperatorNodePtr getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
+    OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator,
                                               SchemaPtr schema,
-                                              std::vector<OperatorNodePtr> children);
+                                              std::vector<OperatorPtr> children);
 
   private:
     /**
@@ -195,14 +201,14 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param windowOperatorProperties
      * @param operatorNode
      */
-    std::shared_ptr<Node> replaceOperatorNodeTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties,
-                                                             const LogicalOperatorNodePtr& operatorNode);
+    std::shared_ptr<Node> replaceOperatorTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties,
+                                                             const LogicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a join operator for the nautilus query compiler
      * @param operatorNode
      */
-    void lowerNautilusJoin(const LogicalOperatorNodePtr& operatorNode);
+    void lowerNautilusJoin(const LogicalOperatorPtr& operatorNode);
 
     /**
      * @brief Returns the left and right timestamp
@@ -211,26 +217,26 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @return {
      */
     [[nodiscard]] std::tuple<std::string, std::string>
-    getTimestampLeftAndRight(const std::shared_ptr<JoinLogicalOperatorNode>& joinOperator,
+    getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator,
                              const Windowing::TimeBasedWindowTypePtr& windowType) const;
 
     /**
      * @brief Lowers the stream hash join
-     * @param streamJoinOperatorNodes
+     * @param streamJoinOperators
      * @param streamJoinConfig
      * @return StreamJoinOperatorHandlerPtr
      */
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes, const StreamJoinConfigs& streamJoinConfig);
+    lowerStreamingHashJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
 
     /**
      * @brief Lowers the stream nested loop join
-     * @param streamJoinOperatorNodes
+     * @param streamJoinOperators
      * @param streamJoinConfig
      * @return StreamJoinOperatorHandlerPtr
      */
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingNestedLoopJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
+    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators,
                                  const StreamJoinConfigs& streamJoinConfig);
 };
 

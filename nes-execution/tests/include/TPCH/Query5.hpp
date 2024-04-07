@@ -46,11 +46,11 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TPCH/PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
+#include <Util/TestTupleBuffer.hpp>
 namespace NES::Runtime::Execution {
 using namespace Expressions;
 using namespace Operators;
@@ -97,8 +97,8 @@ class TPCH_Query5 {
         customerPipeline->setRootOperator(customersScanOperator);
         std::vector<Runtime::Execution::OperatorHandlerPtr> customerJoinHandler = {
             std::make_shared<Operators::BatchJoinHandler>()};
-        auto customerPipelineContex = std::make_shared<MockedPipelineExecutionContext>(customerJoinHandler);
-        plan.appendPipeline(customerPipeline, customerPipelineContex);
+        auto customerPipelineContext = std::make_shared<MockedPipelineExecutionContext>(customerJoinHandler);
+        plan.appendPipeline(customerPipeline, customerPipelineContext);
         return customerJoinHandler[0];
     }
 

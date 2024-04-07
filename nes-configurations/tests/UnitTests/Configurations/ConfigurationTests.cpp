@@ -86,8 +86,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
               coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(),
               coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
-              coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
               coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->worker.numberOfBuffersPerEpoch.getValue(),
@@ -143,11 +141,10 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
               coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(),
               coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
-
-    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
-              coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
               coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(),
+              coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
@@ -405,97 +402,200 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
     EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), magic_enum::enum_cast<GatheringMode>("ADAPTIVE_MODE").value());
 }
 
-TEST_F(ConfigTest, parseWorkerOptionInCoordinatorConfigFile) {
-    // This test checks if a worker configuration option can be set in the coordinator configuration file.
-    // given: Set up the coordinator configuration file with the worker option numWorkerThreads.
-    auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
-    std::ofstream coordinatorConfigFile(coordinatorConfigPath);
-    coordinatorConfigFile << WORKER_CONFIG << ":" << std::endl << "  " << NUM_WORKER_THREADS_CONFIG << ": 99" << std::endl;
-    coordinatorConfigFile.close();
-    // given: Specify the coordinator configuration file on the command line.
-    std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath)};
-    auto posixArgs = makePosixArgs(args);
-    // then
-    auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
-    ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 99);
+
+TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
+        {"--numaAwareness", {"not_a_bool", "2", "-1"}},
+        {"--enableMonitoring", {"not_a_bool", "2", "-1"}},
+        {"--enableSourceSharing", {"not_a_bool", "2", "-1"}},
+        {"--enableStatisticOuput", {"not_a_bool", "2", "-1"}},
+        {"--isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
+        {"--connectSinksAsync", {"not_a_bool", "2", "-1"}},
+        {"--connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}
+    };
+
+    for (const auto& optionPair : commandLineArgs) {
+        for (const auto& value : optionPair.second) {
+            EXPECT_ANY_THROW({
+                WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
+                std::vector<std::string> args = {optionPair.first + "=" + value};
+                config->overwriteConfigWithCommandLineInput(makeCommandLineArgs(args));
+            });
+        }
+    }
 }
 
-TEST_F(ConfigTest, parseWorkerOptionInWorkerConfigFileSpecifiedInCoordinatorConfigFile) {
-    // This test checks if a worker configuration can be set in a worker configuration file,
-    // that is specified in the option workerConfigPath in the coordinator configuration file.
-    // The options set in the worker configuration file should have precedence over any worker options
-    // that are set in the coordinator configuration file.
-    // given: Set up the worker configuration file.
-    auto workerConfigPath = getTestResourceFolder() / "worker.yml";
-    std::ofstream workerConfigFile(workerConfigPath);
-    workerConfigFile << NUM_WORKER_THREADS_CONFIG << ": 35" << std::endl;
-    workerConfigFile.close();
-    // given: Set up the coordinator configuration file.
-    auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
-    std::ofstream coordinatorConfigFile(coordinatorConfigPath);
-    coordinatorConfigFile << WORKER_CONFIG << ":" << std::endl
-                          << "  " << NUM_WORKER_THREADS_CONFIG << ": 15" << std::endl
-                          << "  " << NUMBER_OF_SLOTS_CONFIG << ": 25" << std::endl
-                          << WORKER_CONFIG_PATH << ": " << workerConfigPath << std::endl;
-    coordinatorConfigFile.close();
-    // given: Specify the coordinator configuration file on the command line.
-    std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath)};
-    auto posixArgs = makePosixArgs(args);
-    // then: The value in the worker configuration file takes precedence.
-    auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
-    ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 35);
-    // then: Other options set in the coordinator configuration file are still processed.
-    ASSERT_EQ(config->worker.numberOfSlots.getValue(), 25);
+TEST_F(ConfigTest, invalidCommandLineInputForIntOptions) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
+        {"--workerId", {"not_an_int", "1.5", "-1"}},
+        {"--rpcPort", {"not_an_int", "1.5", "-1"}},
+        {"--dataPort", {"not_an_int", "1.5", "-1"}},
+        {"--coordinatorPort", {"not_an_int", "1.5", "-1"}},
+        {"--numWorkerThreads", {"not_an_int", "1.5", "-1"}},
+        {"--numberOfBuffersInGlobalBufferManager", {"not_an_int", "1.5", "-1"}},
+        {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
+        {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
+        {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
+        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}
+    };
+
+    for (const auto& optionPair : commandLineArgs) {
+        for (const auto& value : optionPair.second) {
+            EXPECT_ANY_THROW({
+                WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
+                std::vector<std::string> args = {optionPair.first + "=" + value};
+                config->overwriteConfigWithCommandLineInput(makeCommandLineArgs(args));
+            });
+        }
+    }
 }
 
-TEST_F(ConfigTest, parserWorkerOptionInWorkerConfigFileSpecifiedOnCommmandLine) {
-    // This test checks if a worker configuration file can be set on the command line
-    // using the workerConfig option.
-    // The options that are set in this worker configuration file should take precedence
-    // over any worker options set in a coordinator configuration file
-    // (and by implication options set in the coordinator configuration file).
-    // Given: Set up the first worker configuration file.
-    auto workerConfigPath1 = getTestResourceFolder() / "worker-1.yml";
-    std::ofstream workerConfigFile1(workerConfigPath1);
-    workerConfigFile1 << NUM_WORKER_THREADS_CONFIG << ": 66" << std::endl;
-    workerConfigFile1.close();
-    // Given: Set up the second worker configuration file.
-    auto workerConfigPath2 = getTestResourceFolder() / "worker-2.yml";
-    std::ofstream workerConfigFile2(workerConfigPath2);
-    workerConfigFile2 << NUM_WORKER_THREADS_CONFIG << ": 50" << std::endl << NUMBER_OF_SLOTS_CONFIG << ": 83" << endl;
-    workerConfigFile2.close();
-    // Given: Set up a coordinator configuration file that references the second worker file.
-    auto coordinatorConfigPath = getTestResourceFolder() / "coordinator.yml";
-    std::ofstream coordinatorConfigFile(coordinatorConfigPath);
-    coordinatorConfigFile << WORKER_CONFIG_PATH << ": " << workerConfigPath2 << std::endl;
-    coordinatorConfigFile.close();
-    // given: Specify the first worker configuration file on the command line.
-    std::vector<std::string> args = {TestUtils::configPath(coordinatorConfigPath),
-                                     TestUtils::workerConfigPath(workerConfigPath1)};
-    auto posixArgs = makePosixArgs(args);
-    // then: The value in the first worker configuration file takes precedence.
-    auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
-    ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 66);
-    // then: Other options set in the second worker configuration file are still processed.
-    ASSERT_EQ(config->worker.numberOfSlots.getValue(), 83);
+TEST_F(ConfigTest, invalidCommandLineInputForFloatOptions) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
+        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}
+    };
+
+    for (const auto& optionPair : commandLineArgs) {
+        for (const auto& value : optionPair.second) {
+            EXPECT_ANY_THROW({
+                auto config = std::make_shared<ElegantConfigurations>();
+                std::vector<std::string> args = {optionPair.first + "=" + value};
+                config->overwriteConfigWithCommandLineInput(makeCommandLineArgs(args));
+            });
+        }
+    }
 }
 
-TEST_F(ConfigTest, parseWorkerOptionOnCommandline) {
-    // This test checks if a worker option can be set on the command line of the coordinator.
-    // These options take precedence over any option set in a worker configuration file.
-    // Given: Set up the worker configuration file.
-    auto workerConfigPath = getTestResourceFolder() / "worker.yml";
-    std::ofstream workerConfigFile(workerConfigPath);
-    workerConfigFile << NUM_WORKER_THREADS_CONFIG << ": 59" << std::endl << NUMBER_OF_SLOTS_CONFIG << ": 28" << endl;
-    workerConfigFile.close();
-    // Given: Set up coordinator command line
-    std::vector<std::string> args = {"--worker.numWorkerThreads=68", TestUtils::workerConfigPath(workerConfigPath)};
-    auto posixArgs = makePosixArgs(args);
-    // then: The value set on the command line takes precedence.
-    auto config = CoordinatorConfiguration::create(posixArgs.size(), posixArgs.data());
-    ASSERT_EQ(config->worker.numWorkerThreads.getValue(), 68);
-    // then: Other options set in the worker configuration file are still processed.
-    ASSERT_EQ(config->worker.numberOfSlots.getValue(), 28);
+TEST_F(ConfigTest, invalidCommandLineInputForIpOptions) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {
+        {"--localWorkerIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
+        {"--coordinatorIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
+    };
+
+    for (const auto& optionPair : commandLineArgs) {
+        for (const auto& value : optionPair.second) {
+            EXPECT_ANY_THROW({
+                WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
+                std::vector<std::string> args = {optionPair.first + "=" + value};
+                config->overwriteConfigWithCommandLineInput(makeCommandLineArgs(args));
+            });
+        }
+    }
 }
 
+TEST_F(ConfigTest, invalidBooleanYamlInputs) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> invalidBooleanConfigs = {
+        {"numaAwareness", {"not_a_bool", "2", "-1"}},
+        {"enableMonitoring", {"not_a_bool", "2", "-1"}},
+        {"enableSourceSharing", {"not_a_bool", "2", "-1"}},
+        {"enableStatisticOutput", {"not_a_bool", "2", "-1"}},
+        {"isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
+        {"connectSinksAsync", {"not_a_bool", "2", "-1"}},
+        {"connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}
+    };
+
+    for (const auto& [optionName, invalidValues] : invalidBooleanConfigs) {
+        for (const auto& value : invalidValues) {
+            std::string fileName = optionName + "_" + value + ".yaml";
+            auto filePath = std::filesystem::path(TEST_DATA_DIRECTORY) / fileName;
+
+            std::ofstream file(filePath);
+            ASSERT_TRUE(file.is_open());
+            file << optionName << ": " << value << std::endl;
+            file.close();
+
+            EXPECT_ANY_THROW({
+                WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
+                config->overwriteConfigWithYAMLFileInput(filePath);
+            });
+
+            std::filesystem::remove(filePath);
+        }
+    }
+}
+
+TEST_F(ConfigTest, invalidIntYamlInputs) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> invalidIntConfigs = {
+        {"--workerId", {"not_an_int", "1.5", "-1"}},
+        {"--rpcPort", {"not_an_int", "1.5", "-1"}},
+        {"--dataPort", {"not_an_int", "1.5", "-1"}},
+        {"--coordinatorPort", {"not_an_int", "1.5", "-1"}},
+        {"--numWorkerThreads", {"not_an_int", "1.5", "-1"}},
+        {"--numberOfBuffersInGlobalBufferManager", {"not_an_int", "1.5", "-1"}},
+        {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
+        {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
+        {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
+        {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}
+    };
+
+    for (const auto& [optionName, invalidValues] : invalidIntConfigs) {
+        for (const auto& value : invalidValues) {
+            std::string fileName = optionName + "_" + value + ".yaml";
+            auto filePath = std::filesystem::path(TEST_DATA_DIRECTORY) / fileName;
+
+            std::ofstream file(filePath);
+            ASSERT_TRUE(file.is_open());
+            file << optionName << ": " << value << std::endl;
+            file.close();
+
+            EXPECT_ANY_THROW({
+                WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
+                config->overwriteConfigWithYAMLFileInput(filePath);
+            });
+
+            std::filesystem::remove(filePath);
+        }
+    }
+}
+
+TEST_F(ConfigTest, invalidFloatYamlInputs) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> invalidFloatConfigs = {
+        {"--transferRate", {"not_a_float", "2..5", "-1.0"}}
+    };
+
+    for (const auto& [optionName, invalidValues] : invalidFloatConfigs) {
+        for (const auto& value : invalidValues) {
+            std::string fileName = optionName + "_" + value + ".yaml";
+            auto filePath = std::filesystem::path(TEST_DATA_DIRECTORY) / fileName;
+
+            std::ofstream file(filePath);
+            ASSERT_TRUE(file.is_open());
+            file << optionName << ": " << value << std::endl;
+            file.close();
+
+            EXPECT_ANY_THROW({
+                auto config = std::make_shared<ElegantConfigurations>();
+                config->overwriteConfigWithYAMLFileInput(filePath);
+            });
+
+            std::filesystem::remove(filePath);
+        }
+    }
+}
+
+TEST_F(ConfigTest, invalidIpYamlInputs) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> invalidIpConfigs = {
+        {"--localWorkerIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
+        {"--coordinatorIp", {"300.300.300.300", "192.168.1", "not_an_ip", "127.0.0.-1", "192.168..1"}},
+    };
+
+    for (const auto& [optionName, invalidValues] : invalidIpConfigs) {
+        for (const auto& value : invalidValues) {
+            std::string fileName = optionName + "_" + value + ".yaml";
+            auto filePath = std::filesystem::path(TEST_DATA_DIRECTORY) / fileName;
+
+            std::ofstream file(filePath);
+            ASSERT_TRUE(file.is_open());
+            file << optionName << ": " << value << std::endl;
+            file.close();
+
+            EXPECT_ANY_THROW({
+                WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
+                config->overwriteConfigWithYAMLFileInput(filePath);
+            });
+
+            std::filesystem::remove(filePath);
+        }
+    }
+}
 }// namespace NES

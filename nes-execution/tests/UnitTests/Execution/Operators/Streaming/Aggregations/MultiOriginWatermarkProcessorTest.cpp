@@ -13,6 +13,7 @@
 */
 #include <BaseIntegrationTest.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <atomic>
@@ -37,16 +38,14 @@ class MultiOriginWatermarkProcessorTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(MultiOriginWatermarkProcessorTest, singleThreadWatermarkUpdaterTest) {
-    auto updates = 10000;
+    auto updates = 10000_u64;
     auto watermarkManager = MultiOriginWatermarkProcessor::create({0});
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
-    for (int i = 1; i <= updates; i++) {
-        watermarkBarriers.emplace_back(/*ts*/ i,
-                                       /*sequence number*/ i,
-                                       /*origin*/ 0);
+    std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
+    for (auto i = 1_u64; i <= updates; i++) {
+        watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, 0));
     }
-    for (auto i = 0; i < updates; i++) {
+    for (auto i = 0_u64; i < updates; i++) {
         auto currentWatermarkBarrier = watermarkBarriers[i];
         auto oldWatermark = watermarkManager->getCurrentWatermark();
         ASSERT_LT(oldWatermark, std::get<0>(currentWatermarkBarrier));
@@ -59,16 +58,14 @@ TEST_F(MultiOriginWatermarkProcessorTest, singleThreadWatermarkUpdaterTest) {
 }
 
 TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterTest) {
-    const auto updates = 100000;
+    const auto updates = 100000_u64;
     const auto threadsCount = 10;
     auto watermarkManager = MultiOriginWatermarkProcessor::create({0});
 
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
-    for (int i = 1; i <= updates * threadsCount; i++) {
-        watermarkBarriers.emplace_back(/*ts*/ i,
-                                       /*sequence number*/ i,
-                                       /*origin*/ 0);
+    std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
+    for (auto i = 1_u64; i <= updates * threadsCount; i++) {
+        watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, 0));
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
@@ -76,10 +73,10 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterTest) {
     for (int threadId = 0; threadId < threadsCount; threadId++) {
         threads.emplace_back(thread([&watermarkManager, &watermarkBarriers, &globalUpdateCounter]() {
             // each thread processes a particular update
-            for (auto i = 0; i < updates; i++) {
+            for (auto i = 0_u64; i < updates; i++) {
                 auto currentWatermark = watermarkBarriers[globalUpdateCounter++];
                 auto oldWatermark = watermarkManager->getCurrentWatermark();
-                // check if the watermark manager dose not return a watermark higher then the current one
+                // check if the watermark manager does not return a watermark higher than the current one
                 ASSERT_LT(oldWatermark, std::get<0>(currentWatermark));
                 watermarkManager->updateWatermark(std::get<0>(currentWatermark),
                                                   std::get<1>(currentWatermark),
@@ -99,16 +96,14 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterTest) {
 }
 
 TEST_F(MultiOriginWatermarkProcessorTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
-    auto updates = 10000;
+    auto updates = 10000_u64;
     auto origins = 10;
     auto watermarkManager = MultiOriginWatermarkProcessor::create({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
-    for (int i = 1; i <= updates; i++) {
+    std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
+    for (auto i = 1_u64; i <= updates; i++) {
         for (int o = 0; o < origins; o++) {
-            watermarkBarriers.emplace_back(/*ts*/ i,
-                                           /*sequence number*/ i,
-                                           /*origin*/ o);
+            watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, o));
         }
     }
 
@@ -130,12 +125,10 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterMultipleOrig
     auto watermarkManager = MultiOriginWatermarkProcessor::create({0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
-    for (int i = 1; i <= updates; i++) {
+    std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
+    for (auto i = 1_u64; i <= updates; i++) {
         for (int o = 0; o < origins; o++) {
-            watermarkBarriers.emplace_back(/*ts*/ i,
-                                           /*sequence number*/ i,
-                                           /*origin*/ o);
+            watermarkBarriers.emplace_back(std::tuple<WatermarkTs, SequenceData, OriginId>(i, {i, 1, true}, o));
         }
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
@@ -147,7 +140,7 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterMultipleOrig
             for (auto i = 0; i < updates; i++) {
                 auto currentWatermark = watermarkBarriers[globalUpdateCounter++];
                 auto oldWatermark = watermarkManager->getCurrentWatermark();
-                // check if the watermark manager dose not return a watermark higher then the current one
+                // check if the watermark manager does not return a watermark higher than the current one
                 ASSERT_LT(oldWatermark, std::get<0>(currentWatermark));
                 watermarkManager->updateWatermark(std::get<0>(currentWatermark),
                                                   std::get<1>(currentWatermark),
@@ -165,5 +158,4 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterMultipleOrig
     }
     ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
 }
-
 }// namespace NES::Runtime::Execution::Operators

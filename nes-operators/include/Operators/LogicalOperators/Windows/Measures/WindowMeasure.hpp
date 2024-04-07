@@ -20,7 +20,11 @@ namespace NES::Windowing {
  * Defines the measure of a window, common measures are time and count.
  */
 class WindowMeasure {
-    virtual std::string toString() = 0;
+    /**
+     * @brief Creates a string representation
+     * @return std::string
+     */
+    virtual std::string toString() const = 0;
 };
 
 }// namespace NES::Windowing

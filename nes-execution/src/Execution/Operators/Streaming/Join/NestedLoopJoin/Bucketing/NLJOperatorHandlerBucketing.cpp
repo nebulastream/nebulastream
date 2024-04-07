@@ -19,17 +19,17 @@ NLJOperatorHandlerBucketing::NLJOperatorHandlerBucketing(const std::vector<Origi
                                                          const OriginId outputOriginId,
                                                          const uint64_t windowSize,
                                                          const uint64_t windowSlide,
-                                                         uint64_t sizeOfRecordLeft,
-                                                         uint64_t sizeOfRecordRight,
+                                                         const SchemaPtr& leftSchema,
+                                                         const SchemaPtr& rightSchema,
                                                          const uint64_t pageSizeLeft,
                                                          const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
       NLJOperatorHandler(inputOrigins,
                          outputOriginId,
                          windowSize,
                          windowSlide,
-                         sizeOfRecordLeft,
-                         sizeOfRecordRight,
+                         leftSchema,
+                         rightSchema,
                          pageSizeLeft,
                          pageSizeRight) {}
 
@@ -37,16 +37,16 @@ NLJOperatorHandlerPtr NLJOperatorHandlerBucketing::create(const std::vector<Orig
                                                           const OriginId outputOriginId,
                                                           const uint64_t windowSize,
                                                           const uint64_t windowSlide,
-                                                          uint64_t sizeOfRecordLeft,
-                                                          uint64_t sizeOfRecordRight,
+                                                          const SchemaPtr& leftSchema,
+                                                          const SchemaPtr& rightSchema,
                                                           const uint64_t pageSizeLeft,
                                                           const uint64_t pageSizeRight) {
     return std::make_shared<NLJOperatorHandlerBucketing>(inputOrigins,
                                                          outputOriginId,
                                                          windowSize,
                                                          windowSlide,
-                                                         sizeOfRecordLeft,
-                                                         sizeOfRecordRight,
+                                                         leftSchema,
+                                                         rightSchema,
                                                          pageSizeLeft,
                                                          pageSizeRight);
 }

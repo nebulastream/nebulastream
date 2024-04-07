@@ -103,7 +103,7 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
                     auto pipelineCPPSourceCode = lp.lower(ir);
                     auto& operatorsInPipeline = pipeline->getOperatorIds();
                     for (auto& operatorId : operatorsInPipeline) {
-                        auto op = inputPlan->getOperatorWithId(operatorId);
+                        auto op = inputPlan->getOperatorWithOperatorId(operatorId);
                         if (op) {
                             op->addProperty(NES::Optimizer::ElegantPlacementStrategy::sourceCodeKey, pipelineCPPSourceCode);
                             op->addProperty("PIPELINE_ID", pipeline->getPipelineId());
@@ -137,8 +137,10 @@ SampleCodeGenerationPhasePtr SampleCodeGenerationPhase::create() {
 QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& queryPlan) {
     // use query compiler to generate operator code
     // we append a property to "code" some operators
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(queryPlan->getQueryId(), INVALID_SHARED_QUERY_ID, queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(queryPlan->getQueryId(),
+                                                           INVALID_SHARED_QUERY_ID,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           queryPlan->getRootOperators());
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, nullptr);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);

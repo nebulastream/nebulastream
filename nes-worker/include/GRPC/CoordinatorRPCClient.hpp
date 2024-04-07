@@ -60,7 +60,7 @@ class CoordinatorRPCClient {
      * @param backOffTimeMs: backoff time to wait after a failed connection attempt
      */
     explicit CoordinatorRPCClient(const std::string& address,
-                                  uint32_t rpcRetryAttemps = 10,
+                                  uint32_t rpcRetryAttempts = 10,
                                   std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
 
     /**
@@ -128,7 +128,7 @@ class CoordinatorRPCClient {
      * @param healthServiceName name of the service
      * @return bool indicating success
      */
-    bool checkCoordinatorHealth(std::string healthServiceName);
+    bool checkCoordinatorHealth(std::string healthServiceName) const;
 
     /**
    * @brief method to unregister a node after the connection is established
@@ -238,15 +238,15 @@ class CoordinatorRPCClient {
      * @param addedTopologyLinks a list or topology links to add
      * @return true on success
      */
-    bool relocateTopologyNode(std::vector<TopologyLinkInformation> removedTopologyLinks,
-                              std::vector<TopologyLinkInformation> addedTopologyLinks);
+    bool relocateTopologyNode(const std::vector<TopologyLinkInformation>& removedTopologyLinks,
+                              const std::vector<TopologyLinkInformation>& addedTopologyLinks);
 
   private:
     uint64_t workerId;
     std::string address;
     std::shared_ptr<::grpc::Channel> rpcChannel;
     std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;
-    uint32_t rpcRetryAttemps;
+    uint32_t rpcRetryAttempts;
     std::chrono::milliseconds rpcBackoff;
 };
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;

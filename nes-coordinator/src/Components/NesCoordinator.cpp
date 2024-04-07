@@ -13,13 +13,11 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -33,7 +31,7 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.pb.h>
 #include <Monitoring/MonitoringManager.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -46,10 +44,8 @@
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/RequestHandlerService.hpp>
-#include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/server_builder.h>
@@ -85,14 +81,9 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
-    coordinatorHealthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService,
-                                                                                    HEALTH_SERVICE_NAME,
-                                                                                    this->coordinatorConfiguration);
-    queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
+    coordinatorHealthCheckService =
+        std::make_shared<CoordinatorHealthCheckService>(topology, HEALTH_SERVICE_NAME, this->coordinatorConfiguration);
     globalQueryPlan = GlobalQueryPlan::create();
-
-    queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
     z3::config cfg;
     cfg.set("timeout", 1000);
@@ -100,40 +91,21 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     cfg.set("type_check", false);
     auto z3Context = std::make_shared<z3::context>(cfg);
 
-    queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
-                                                                             topology,
-                                                                             queryCatalogService,
-                                                                             globalQueryPlan,
-                                                                             sourceCatalog,
-                                                                             udfCatalog,
-                                                                             queryRequestQueue,
-                                                                             this->coordinatorConfiguration,
-                                                                             z3Context);
-
-    RequestProcessor::StorageDataStructures storageDataStructures = {this->coordinatorConfiguration,
-                                                                     topology,
-                                                                     globalExecutionPlan,
-                                                                     queryCatalogService,
-                                                                     globalQueryPlan,
-                                                                     sourceCatalog,
-                                                                     udfCatalog};
+    RequestProcessor::StorageDataStructures storageDataStructures =
+        {this->coordinatorConfiguration, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog};
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
-    bool enableNewRequestExecutor = this->coordinatorConfiguration->enableNewRequestExecutor.getValue();
-    requestHandlerService = std::make_shared<RequestHandlerService>(enableNewRequestExecutor,
-                                                                    this->coordinatorConfiguration->optimizer,
-                                                                    queryCatalogService,
-                                                                    queryRequestQueue,
-                                                                    sourceCatalog,
+    requestHandlerService = std::make_shared<RequestHandlerService>(this->coordinatorConfiguration->optimizer,
                                                                     queryParsingService,
+                                                                    queryCatalog,
+                                                                    sourceCatalog,
                                                                     udfCatalog,
                                                                     asyncRequestExecutor,
                                                                     z3Context);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
-    monitoringService =
-        std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalogService, enableMonitoring);
+    monitoringService = std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalog, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 }
 
@@ -141,7 +113,7 @@ NesCoordinator::~NesCoordinator() {
     stopCoordinator(true);
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     sourceCatalogService->reset();
-    queryCatalogService->clearQueries();
+    queryCatalog.reset();
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
@@ -156,14 +128,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes coordinator");
     }
-
-    queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {
-        setThreadName("RqstProc");
-
-        NES_INFO("NesCoordinator: started queryRequestProcessor");
-        queryRequestProcessorService->start();
-        NES_WARNING("NesCoordinator: finished queryRequestProcessor");
-    }));
 
     std::shared_ptr<std::promise<bool>> promRPC = std::make_shared<std::promise<bool>>();
 
@@ -212,9 +176,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     restServer = std::make_shared<RestServer>(restIp,
                                               restPort,
                                               this->inherited0::weak_from_this(),
-                                              queryCatalogService,
+                                              queryCatalog,
                                               sourceCatalogService,
-                                              topologyManagerService,
+                                              topology,
                                               globalExecutionPlan,
                                               requestHandlerService,
                                               monitoringService,
@@ -281,16 +245,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
-        queryRequestProcessorService->shutDown();
-        if (queryRequestProcessorThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join queryRequestProcessorThread");
-            queryRequestProcessorThread->join();
-            NES_DEBUG("NesCoordinator: joined queryRequestProcessorThread");
-        } else {
-            NES_ERROR("NesCoordinator: query processor thread not joinable");
-            NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
-        }
-
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
         rpcServer->Wait();
@@ -314,12 +268,12 @@ bool NesCoordinator::stopCoordinator(bool force) {
 void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     grpc::ServerBuilder builder;
     NES_ASSERT(sourceCatalogService, "null sourceCatalogService");
-    NES_ASSERT(topologyManagerService, "null topologyManagerService");
+    NES_ASSERT(topology, "null topology");
 
     CoordinatorRPCServer service(requestHandlerService,
-                                 topologyManagerService,
+                                 topology,
                                  sourceCatalogService,
-                                 queryCatalogService,
+                                 queryCatalog,
                                  monitoringService->getMonitoringManager(),
                                  queryParsingService,
                                  coordinatorHealthCheckService);
@@ -352,7 +306,7 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
 
 RequestHandlerServicePtr NesCoordinator::getRequestHandlerService() { return requestHandlerService; }
 
-QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
+Catalogs::Query::QueryCatalogPtr NesCoordinator::getQueryCatalog() { return queryCatalog; }
 
 Catalogs::UDF::UDFCatalogPtr NesCoordinator::getUDFCatalog() { return udfCatalog; }
 
@@ -365,8 +319,6 @@ void NesCoordinator::onFatalError(int, std::string) {}
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
 
 SourceCatalogServicePtr NesCoordinator::getSourceCatalogService() const { return sourceCatalogService; }
-
-TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
 
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 

@@ -28,8 +28,8 @@ namespace NES {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -59,8 +59,6 @@ struct RemovedEdge {
 };
 
 using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>>;
-
-const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
 
 /**
  * @brief This class holds a query plan shared by multiple queryIdAndCatalogEntryMapping i.e. from its source nodes we can reach the sink nodes of all
@@ -146,7 +144,7 @@ class SharedQueryPlan {
      * @brief Method to update the placement information and state of the shared query plan operators
      * @param updatedOperators: operators with new mappings
      */
-    void updateOperators(const std::set<LogicalOperatorNodePtr>& updatedOperators);
+    void updateOperators(const std::set<LogicalOperatorPtr>& updatedOperators);
 
     /**
      * @brief Clear all MetaData information
@@ -169,13 +167,13 @@ class SharedQueryPlan {
      * @brief Get the vector of sink operators sharing common upstream operators
      * @return the vector of Sink Operators
      */
-    std::vector<LogicalOperatorNodePtr> getSinkOperators();
+    std::vector<LogicalOperatorPtr> getSinkOperators();
 
     /**
      * @brief Get the collection of registered query ids and their sink operators
      * @return map of registered query ids and their sink operators
      */
-    std::map<QueryId, std::set<LogicalOperatorNodePtr>> getQueryIdToSinkOperatorMap();
+    std::map<QueryId, std::set<LogicalOperatorPtr>> getQueryIdToSinkOperatorMap();
 
     /**
      * @brief Get the shared query id
@@ -195,6 +193,16 @@ class SharedQueryPlan {
      * @return the change log entries with timestamp of their creation
      */
     ChangeLogEntries getChangeLogEntries(Timestamp timestamp);
+
+    /**
+     * @brief Create and store new change log entries from all input failed change log entries. Following is the logic:
+     * 1. Iterate over the upstream pinned operators to compute an updated upstream pinned operator set by finding
+     * connected downstream operators that are pinned during the previous process.
+     * 2. Iterate over the downstream pinned operators to compute an updated downstream pinned operator set by finding
+     * connected upstream operators that are pinned during the previous process.
+     * @param changeLogEntries : failed change log entries
+     */
+    void recordFailedChangeLogEntries(std::vector<Optimizer::Experimental::ChangeLogEntryPtr> failedChangeLogEntries);
 
     /**
      * @brief: update the timestamp till which the changes have been processed
@@ -229,28 +237,18 @@ class SharedQueryPlan {
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
-    //TODO: activate with #4483
     /**
      * @brief Recursively mark input and all its connected upstream operators for To-Be-Removed. The function terminates upon encountering
      * an upstream operator that is connected to another downstream operator and returns it as output.
      * @param connectedDownStreamOperator : the operator to remove
      * @return last upstream operators that was marked for removal
      */
-    std::set<LogicalOperatorNodePtr> markOperatorsToBeRemoved(const LogicalOperatorNodePtr& connectedDownStreamOperator);
+    std::set<LogicalOperatorPtr> markOperatorsToBeRemoved(const LogicalOperatorPtr& connectedDownStreamOperator);
 
     /**
-     * @brief Recursively remove the operator and all its subsequent upstream operators. The function terminates upon encountering
-     * an upstream operator that is connected to another downstream operator and returns it as output.
-     * @param operatorToRemove : the operator to remove
-     * @return last upstream operators that are not removed
+     * @brief Recursively remove the input and all its subsequent upstream operators that are marked as Removed.
      */
-    std::set<LogicalOperatorNodePtr> removeOperator(const LogicalOperatorNodePtr& operatorToRemove);
-
-    //TODO: activate with #4483
-//    /**
-//     * @brief Recursively remove the input and all its subsequent upstream operators that are marked as Removed.
-//     */
-//    void removeOperator(const LogicalOperatorNodePtr& operatorToRemove);
+    void removeOperator(const LogicalOperatorPtr& operatorToRemove);
 
     /**
      * @brief Update the hash based signatures with new values
@@ -262,7 +260,7 @@ class SharedQueryPlan {
     SharedQueryId sharedQueryId;
     SharedQueryPlanStatus sharedQueryPlanStatus;
     QueryPlanPtr queryPlan;
-    std::map<QueryId, std::set<LogicalOperatorNodePtr>> queryIdToSinkOperatorMap;
+    std::map<QueryId, std::set<LogicalOperatorPtr>> queryIdToSinkOperatorMap;
     std::vector<QueryId> runningQueryIds;
     std::vector<QueryId> removeQueryIds;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
@@ -272,4 +270,4 @@ class SharedQueryPlan {
 };
 }// namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_

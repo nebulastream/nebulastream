@@ -15,6 +15,7 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
 
+#include <Identifiers.hpp>
 #include <memory>
 #include <string>
 
@@ -67,6 +68,13 @@ class PhysicalSource {
 
     std::string toString();
 
+
+    /**
+     * @brief Get the statistic id of this physical source
+     * @return StatisticId
+     */
+    StatisticId getStatisticId() const;
+
   private:
     explicit PhysicalSource(std::string logicalSourceName,
                             std::string physicalSourceName,
@@ -75,6 +83,7 @@ class PhysicalSource {
     std::string logicalSourceName;
     std::string physicalSourceName;
     PhysicalSourceTypePtr physicalSourceType;
+    StatisticId statisticId;
 };
 
 }// namespace NES

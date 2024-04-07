@@ -32,9 +32,6 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-class TopologyManagerService;
-using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
-
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 

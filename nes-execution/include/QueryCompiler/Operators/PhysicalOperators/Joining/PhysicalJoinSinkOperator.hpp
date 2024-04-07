@@ -25,21 +25,24 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& leftInputSchema,
                                       const SchemaPtr& rightInputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Join::JoinOperatorHandlerPtr& operatorHandler);
-    static PhysicalOperatorPtr create(const SchemaPtr& leftInputSchema,
+    static PhysicalOperatorPtr create(StatisticId statisticId,
+                                      const SchemaPtr& leftInputSchema,
                                       const SchemaPtr& rightInputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Join::JoinOperatorHandlerPtr& operatorHandler);
     PhysicalJoinSinkOperator(OperatorId id,
+                             StatisticId statisticId,
                              SchemaPtr leftInputSchema,
                              SchemaPtr rightInputSchema,
                              SchemaPtr outputSchema,
                              Join::JoinOperatorHandlerPtr operatorHandler);
     [[nodiscard]] std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 

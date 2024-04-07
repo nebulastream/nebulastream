@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
@@ -50,12 +51,11 @@ class DeepHierarchyTopologyTest : public Testing::BaseIntegrationTest {
  */
 TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -93,7 +93,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -110,12 +110,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -155,7 +154,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -171,12 +170,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
  */
 TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     auto query = Query::from("test");
@@ -214,7 +212,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -231,12 +229,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -276,7 +273,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -297,12 +294,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
     struct Test {
-        uint32_t key;
+        uint32_t id;
         uint32_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u32");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -348,7 +344,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -428,180 +424,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
-}
-
-/**
- * @brief This tests applies a window on a three level hierarchy
- * Topology:
-    PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |--PhysicalNode[id=7, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |  |--PhysicalNode[id=9, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |  |--PhysicalNode[id=8, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0]
-    |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
- */
-TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
-    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
-        config->optimizer.distributedWindowChildThreshold.setValue(0);
-        config->optimizer.distributedWindowCombinerThreshold.setValue(0);
-    };
-
-    struct Test {
-        uint64_t id;
-        uint64_t value;
-        uint64_t ts;
-    };
-
-    auto testSchema = Schema::create()
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("ts", DataTypeFactory::createUInt64());
-
-    ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
-
-    std::vector<CSVSourceTypePtr> csvSourceTypes;
-    for (uint64_t i = 0; i < 4; i++) {
-        auto csvSourceType = CSVSourceType::create("window", "window" + std::to_string(i));
-        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
-        csvSourceType->setNumberOfBuffersToProduce(3);
-        csvSourceTypes.emplace_back(csvSourceType);
-    }
-
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")));
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("window", testSchema)
-                                  // Workers
-                                  .attachWorkerToCoordinator()  // id=2
-                                  .attachWorkerToWorkerWithId(2)// id=3
-                                  .attachWorkerToWorkerWithId(2)// id=4
-                                  .attachWorkerToCoordinator()  // id=5
-                                  .attachWorkerToWorkerWithId(5)// id=6
-                                  .attachWorkerToWorkerWithId(5)// id=7
-                                  // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), 7)// id=11
-                                  .validate()
-                                  .setupTopology(crdFunctor);
-
-    TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-
-    // Expected output
-    const auto expectedOutput = "1000, 2000, 1, 68\n"
-                                "2000, 3000, 2, 112\n";
-
-    // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
-
-    // Comparing equality
-    const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
-}
-
-/**
- * @brief This tests applies a window on a three level hierarchy
- * Topology:
-    PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |--PhysicalNode[id=7, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |  |--PhysicalNode[id=9, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |  |--PhysicalNode[id=8, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0]
-    |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
-    |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
- */
-TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPlacement) {
-    uint64_t workerNo = 10;
-    std::vector<WorkerConfigurationPtr> workerConfigs;
-
-    struct Test {
-        uint64_t id;
-        uint64_t value;
-        uint64_t ts;
-    };
-
-    auto testSchema = Schema::create()
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("ts", DataTypeFactory::createUInt64());
-
-    ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
-
-    std::vector<CSVSourceTypePtr> csvSourceTypes;
-    for (uint64_t i = 0; i < 4; i++) {
-        auto csvSourceType = CSVSourceType::create("window", "window" + std::to_string(i));
-        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
-        csvSourceType->setNumberOfBuffersToProduce(3);
-        csvSourceTypes.emplace_back(csvSourceType);
-    }
-
-    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
-        config->optimizer.enableNemoPlacement.setValue(true);
-        config->optimizer.distributedWindowCombinerThreshold.setValue(100);
-        config->optimizer.distributedWindowChildThreshold.setValue(100);
-    };
-
-    for (uint64_t i = 0; i < workerNo; i++) {
-        auto workerConfig = WorkerConfiguration::create();
-        workerConfig->queryCompiler.windowingStrategy.setValue(QueryCompilation::WindowingStrategy::SLICING);
-        workerConfigs.emplace_back(workerConfig);
-    }
-
-    uint64_t i = 0;
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")));
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("window", testSchema)
-                                  // Workers
-                                  .attachWorkerToCoordinator()  // id=2
-                                  .attachWorkerToWorkerWithId(2)// id=3
-                                  .attachWorkerToWorkerWithId(2)// id=4
-                                  .attachWorkerToCoordinator()  // id=5
-                                  .attachWorkerToWorkerWithId(5)// id=6
-                                  .attachWorkerToWorkerWithId(5)// id=7
-                                  // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), 7)// id=11
-                                  .validate()
-                                  .setupTopology(crdFunctor);
-
-    TopologyPtr topology = testHarness.getTopology();
-    NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
-
-    // Expected output
-    const auto expectedOutput = "1000, 2000, 1, 68\n"
-                                "2000, 3000, 2, 112\n";
-
-    // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
-
-    // Comparing equality
-    const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -626,8 +449,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
         uint64_t value;
     };
 
-    auto testSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt64())->addField("value", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -674,7 +496,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
@@ -691,15 +513,12 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
     struct Test {
-        uint64_t value;
         uint64_t id;
+        uint64_t value;
         uint64_t timestamp;
     };
 
-    auto testSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
@@ -713,16 +532,16 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     }
 
     auto query = Query::from("window")
-                     .filter(Attribute("id") < 15)
+                     .filter(Attribute("value") < 15)
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")))
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")))
                      .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)))
-                     .byKey(Attribute("id"))
-                     .apply(Sum(Attribute("value")))
-                     .filter(Attribute("id") < 10)
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")))
+                     .filter(Attribute("value") < 10)
                      .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)))
-                     .apply(Sum(Attribute("value")));
+                     .apply(Sum(Attribute("id")));
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
@@ -752,9 +571,66 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
-    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-//TODO:add join once it is implemented correctly
+TEST_F(DeepHierarchyTopologyTest, testMapAndAggregationQuery) {
+    struct Test {
+        uint64_t id;
+        uint64_t value;
+        uint64_t timestamp;
+    };
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+
+    ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
+
+    constexpr auto NUM_BUFFERS = 5;
+    constexpr auto windowSize = 10;
+    auto query = Query::from("window")
+                     .map(Attribute("newField") = Attribute("id") + Attribute("value"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize)))
+                     .apply(Sum(Attribute("newField")));
+
+    auto workerConfigEdgeNode = WorkerConfiguration::create();
+    workerConfigEdgeNode->numberOfSlots = 1;
+
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerToCoordinator()                                                   //2
+                           .attachWorkerWithMemorySourceToWorkerWithId("window", 2, workerConfigEdgeNode);//3
+
+    const auto bufferCapacity = workerConfigEdgeNode->bufferSizeInBytes / testSchema->getSchemaSizeInBytes();
+    NES_INFO("testHarness.getBufferManager()->getBufferSize = {} bufferCapacity = {}",
+             workerConfigEdgeNode->bufferSizeInBytes.getValue(),
+             bufferCapacity);
+    for (auto i = 0_u64; i < NUM_BUFFERS * bufferCapacity; ++i) {
+        testHarness.pushElement<Test>({1, i, i}, 3);
+    }
+    testHarness.validate().setupTopology();
+
+    TopologyPtr topology = testHarness.getTopology();
+    NES_DEBUG("TestHarness: topology:{}\n", topology->toString());
+
+    // Expected output
+    auto lastWindowStart = ((NUM_BUFFERS * bufferCapacity) - 1);
+    std::ostringstream oss;
+    for (auto windowStart = 0_u64; windowStart < lastWindowStart; windowStart += windowSize) {
+        const auto windowEnd = windowStart + windowSize;
+        auto newFieldSum = 0_u64;
+        for (auto i = windowStart; i < windowEnd; ++i) {
+            newFieldSum += (i + 1);
+        }
+        oss << windowStart << ", " << windowEnd << ", " << newFieldSum << std::endl;
+    }
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(oss.str())).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(oss.str(), outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
+}
 }// namespace NES

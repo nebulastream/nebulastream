@@ -46,7 +46,7 @@ Value<> ExtractingRegex::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value<> text = textValue->execute(record);
 
-    // Evaluate the mid sub expression and retrieve the value.
+    // Evaluate the mid-sub expression and retrieve the value.
     Value<> pattern = regexpPattern->execute(record);
 
     // Evaluate the right sub expression and retrieve the value.

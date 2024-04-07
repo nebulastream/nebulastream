@@ -16,9 +16,9 @@
 #include <BaseIntegrationTest.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <random>
 #include <vector>
 
@@ -47,13 +47,13 @@ namespace NES::Benchmark::DataGeneration {
         static void TearDownTestCase() { NES_INFO("Tear down DefaultDataGeneratorTest test class."); }
     };
 
+    const auto minValue = 0;
+    const auto maxValue = 1000;
+
     /**
      * @brief Testing if DefaultDataGenerator::getSchema() works by comparing versus a hardcoded truth
      */
     TEST_F(DefaultDataGeneratorTest, getSchemaTest) {
-        auto minValue = 0;
-        auto maxValue = 1000;
-
         auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
         auto schemaDefault = defaultDataGenerator->getSchema();
 
@@ -70,9 +70,6 @@ namespace NES::Benchmark::DataGeneration {
      * @brief Testing if DefaultDataGenerator::getName() works by comparing versus a hardcoded truth
      */
     TEST_F(DefaultDataGeneratorTest, getNameTest) {
-        auto minValue = 0;
-        auto maxValue = 1000;
-
         auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
         auto nameDefault = defaultDataGenerator->getName();
 
@@ -85,8 +82,6 @@ namespace NES::Benchmark::DataGeneration {
      * @brief Testing if DefaultDataGenerator::toString() works by comparing versus a hardcoded truth
      */
     TEST_F(DefaultDataGeneratorTest, toStringTest) {
-        auto minValue = 0;
-        auto maxValue = 1000;
         std::ostringstream oss;
 
         auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
@@ -103,8 +98,6 @@ namespace NES::Benchmark::DataGeneration {
      * with the created one's from the DefaultDataGenerator
      */
     TEST_F(DefaultDataGeneratorTest, createDataTest) {
-        auto minValue = 0;
-        auto maxValue = 1000;
         size_t numberOfBuffers = 10;
 
         auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
@@ -119,20 +112,20 @@ namespace NES::Benchmark::DataGeneration {
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
-            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+            auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
             std::mt19937 generator(GENERATOR_SEED_DEFAULT);
             std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
-            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
                 auto value = uniformIntDistribution(generator);
-                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["value"].write<uint64_t>(value);
+                testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                testBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }
-            
-            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+
+            testBuffer.setNumberOfTuples(testBuffer.getCapacity());
             expectedData.emplace_back(bufferRef);
         }
 

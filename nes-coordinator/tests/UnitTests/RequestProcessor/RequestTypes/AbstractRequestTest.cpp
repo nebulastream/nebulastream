@@ -16,7 +16,7 @@
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <gtest/gtest.h>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 class DummyResponse : public AbstractRequestResponse {
   public:
@@ -52,7 +52,7 @@ class DummyStorageHandler : public StorageHandler {
 
     TopologyHandle getTopologyHandle(RequestId) override { return nullptr; };
 
-    QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId) override { return nullptr; };
+    QueryCatalogHandle getQueryCatalogHandle(RequestId) override { return nullptr; };
 
     GlobalQueryPlanHandle getGlobalQueryPlanHandle(RequestId) override { return nullptr; };
 
@@ -83,4 +83,4 @@ TEST_F(AbstractRequestTest, testPromise) {
     thread->join();
     EXPECT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
 }
-}// namespace NES::RequestProcessor::Experimental
+}// namespace NES::RequestProcessor

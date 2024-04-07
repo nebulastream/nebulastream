@@ -31,6 +31,8 @@ class NonKeyedWindowEmitAction : public SliceMergingAction {
                    Value<UInt64>& windowStart,
                    Value<UInt64>& windowEnd,
                    Value<UInt64>& sequenceNumber,
+                   Value<UInt64>& chunkNumber,
+                   Value<Boolean>& lastChunk,
                    Value<MemRef>& globalSlice) const override;
 
   private:

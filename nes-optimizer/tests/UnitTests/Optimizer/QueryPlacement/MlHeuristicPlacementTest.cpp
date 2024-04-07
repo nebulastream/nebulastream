@@ -25,17 +25,17 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 #include <Services/RequestHandlerService.hpp>
@@ -97,13 +97,16 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
                 properties["ml_hardware"] = true;
             }
 
-            topology->registerTopologyNode(workerId, "localhost", 123, 124, resources[i], properties);
+            workerId = topology->registerWorker(workerId, "localhost", 123, 124, resources[i], properties, 0, 0);
             if (i == 0) {
-                topology->setRootTopologyNodeId(workerId);
-            } else {
+                topology->addAsRootWorkerId(workerId);
+            } else if (i > 1) {
                 topology->addTopologyNodeAsChild(workerId - 1, workerId);
+                topology->removeTopologyNodeAsChild(1, workerId);
             }
         }
+
+        topology->print();
 
         auto irisSchema = Schema::create()
                               ->addField(createField("id", BasicType::UINT64))
@@ -173,15 +176,17 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getId();
-    auto queryPlacementAmendmentPhase =
-        Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                        topology,
+                                                                                        typeInferencePhase,
+                                                                                        coordinatorConfiguration);
     queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     NES_DEBUG("MlHeuristicPlacementTest: topology: \n{}", topology->toString());
     NES_DEBUG("MlHeuristicPlacementTest: query plan \n{}", globalExecutionPlan->getAsString());
     NES_DEBUG("MlHeuristicPlacementTest: shared plan \n{}", sharedQueryPlan->getQueryPlan()->toString());
 
-    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
     ASSERT_EQ(executionNodes.size(), 13U);
 
     // Index represents the id of the execution node
@@ -212,11 +217,11 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
                                                      totalQuerySubPlansOnNode12,
                                                      totalQuerySubPlansOnNode13};
     for (const auto& executionNode : executionNodes) {
-        auto querySubPlans = executionNode->getAllDecomposedQueryPlans(queryId);
-        NES_INFO("Worker Id {} ", executionNode->getId());
-        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->getId() - 1]);
+        auto querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
+        NES_INFO("Worker Id {} ", executionNode->operator*()->getId());
+        EXPECT_EQ(querySubPlans.size(), querySubPlanSizeCompare[executionNode->operator*()->getId() - 1]);
         auto querySubPlan = querySubPlans[0];
-        std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+        std::vector<OperatorPtr> actualRootOperators = querySubPlan->getRootOperators();
         EXPECT_EQ(actualRootOperators.size(), 1U);
     }
 }

@@ -16,11 +16,11 @@
 #include <Monitoring/MonitoringCatalog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <chrono>
 #include <utility>
 
@@ -32,6 +32,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                                    Runtime::QueryManagerPtr queryManager,
                                    OperatorId operatorId,
                                    OriginId originId,
+                                   StatisticId statisticId,
                                    size_t numSourceLocalBuffers,
                                    const std::string& physicalSourceName,
                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -40,6 +41,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                  queryManager,
                  operatorId,
                  originId,
+                 statisticId,
                  numSourceLocalBuffers,
                  GatheringMode::INTERVAL_MODE,
                  physicalSourceName,
@@ -62,7 +64,7 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
 
     if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
         auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-        auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+        auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
         NES_TRACE("MonitoringSource::Buffer content:  {}", buffer.toString(schema));
     }

@@ -13,8 +13,6 @@
 */
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -112,6 +110,8 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // As this operator functions as a scan, we have to set the execution context for this pipeline
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
+    ctx.setChunkNumber(recordBuffer.getChunkNr());
+    ctx.setLastChunk(recordBuffer.isLastChunk());
     ctx.setOrigin(recordBuffer.getOriginId());
     Operator::open(ctx, recordBuffer);
 

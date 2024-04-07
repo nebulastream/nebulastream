@@ -1817,8 +1817,8 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
             }
             stream << "\n";
 
-            for (auto& line : lines) {
-                stream << std::string(level, ' ') << line << "\n";
+            for (auto& eachLine : lines) {
+                stream << std::string(level, ' ') << eachLine << "\n";
             }
         } break;
 

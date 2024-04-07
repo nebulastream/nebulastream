@@ -18,7 +18,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
 #include <iostream>
 #include <thread>
@@ -55,7 +54,7 @@ void WorkerHealthCheckService::startHealthCheck() {
             {
                 std::unique_lock<std::mutex> lk(cvMutex);
                 cv.wait_for(lk, waitTime, [this] {
-                    return isRunning == false;
+                    return !isRunning;
                 });
             }
         }

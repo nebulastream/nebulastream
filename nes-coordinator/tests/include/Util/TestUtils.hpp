@@ -16,10 +16,6 @@
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTUTILS_HPP_
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
-// #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-// #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -33,6 +29,7 @@
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <chrono>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -48,9 +45,6 @@ using namespace std::string_literals;
 
 namespace NES {
 static const char* BASE_URL = "http://127.0.0.1:";
-
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 namespace Runtime {
 class NodeEngine;
@@ -400,12 +394,12 @@ template<typename T>
 /**
  * @brief This method is used for waiting till the query gets into running status or a timeout occurs
  * @param queryId : the query id to check for
- * @param queryCatalogService: the catalog to look into for status change
+ * @param queryCatalog: the catalog to look into for status change
  * @param timeoutInSec: time to wait before stop checking
  * @return true if query gets into running status else false
  */
 [[nodiscard]] bool waitForQueryToStart(QueryId queryId,
-                                       const QueryCatalogServicePtr& queryCatalogService,
+                                       const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                        std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
 /**
@@ -535,11 +529,11 @@ template<typename Predicate = std::equal_to<uint64_t>>
 /**
  * @brief Check if the query is been stopped successfully within the timeout.
  * @param queryId: Id of the query to be stopped
- * @param queryCatalogService: the catalog containig the queries in the system
+ * @param queryCatalog: the catalog containig the queries in the system
  * @return true if successful
  */
 [[nodiscard]] bool checkStoppedOrTimeout(QueryId queryId,
-                                         const QueryCatalogServicePtr& queryCatalogService,
+                                         const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                          std::chrono::seconds timeout = defaultTimeout);
 
 /**
@@ -554,11 +548,11 @@ checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono:
 /**
  * @brief Check if the query has failed within the timeout.
  * @param queryId: Id of the query to be stopped
- * @param queryCatalogService: the catalog containig the queries in the system
+ * @param queryCatalog: the catalog containig the queries in the system
  * @return true if successful
  */
 [[nodiscard]] bool checkFailedOrTimeout(QueryId queryId,
-                                        const QueryCatalogServicePtr& queryCatalogService,
+                                        const Catalogs::Query::QueryCatalogPtr& queryCatalog,
                                         std::chrono::seconds timeout = defaultTimeout);
 
 /**
@@ -588,7 +582,7 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
   * @return True if numberOfRecordsToExpect have been seen
   */
 [[nodiscard]] bool checkOutputContentLengthOrTimeout(QueryId queryId,
-                                                     QueryCatalogServicePtr queryCatalogService,
+                                                     Catalogs::Query::QueryCatalogPtr queryCatalog,
                                                      uint64_t numberOfRecordsToExpect,
                                                      const string& outputFilePath,
                                                      auto testTimeout = defaultTimeout) {
@@ -598,14 +592,14 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
         std::this_thread::sleep_for(sleepDuration);
         NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file {}", outputFilePath);
 
-        auto entry = queryCatalogService->getEntryForQuery(queryId);
-        if (entry->getQueryState() == QueryState::FAILED) {
+        auto currentQueryState = queryCatalog->getQueryState(queryId);
+        if (currentQueryState == QueryState::FAILED) {
             // the query failed, so we return true as a failure append during execution.
             NES_TRACE("checkStoppedOrTimeout: status reached failed");
             return false;
         }
 
-        auto isQueryStopped = entry->getQueryState() == QueryState::STOPPED;
+        auto isQueryStopped = currentQueryState == QueryState::STOPPED;
 
         if (std::filesystem::exists(outputFilePath) && std::filesystem::is_regular_file(outputFilePath)) {
 
@@ -623,7 +617,7 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
                           numberOfRecordsToExpect);
                 return false;
             } else if (currentContentSize < numberOfRecordsToExpect) {
-                NES_DEBUG("number of expected bytes {} not reached yet with {} Bytes",
+                NES_DEBUG("number of expected lines {} not reached yet with {} lines",
                           numberOfRecordsToExpect,
                           currentContentSize);
             } else {
@@ -780,16 +774,17 @@ std::vector<Runtime::TupleBuffer> createExpectedBufferFromCSVString(std::string 
  * @return Tuplecount
  */
 uint64_t countTuples(std::vector<Runtime::TupleBuffer>& buffers);
-uint64_t countTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& buffers);
+
+uint64_t countTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& buffers);
 
 /**
  * @brief Converts all of the tuple buffers to dynamic tuple buffers
  * @param buffers
  * @param schema
- * @return Vector of DynamicTupleBuffer
+ * @return Vector of TestTupleBuffer
  */
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> createDynamicBuffers(std::vector<Runtime::TupleBuffer>& buffers,
-                                                                             const SchemaPtr& schema);
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer> createTestTupleBuffers(std::vector<Runtime::TupleBuffer>& buffers,
+                                                                            const SchemaPtr& schema);
 
 /**
  * @brief Compares if leftBuffers contain the same tuples as rightBuffers
@@ -798,8 +793,8 @@ std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> createDynamicBuffers(std
  * @param orderSensitive: If set to true, the order is taken into account
  * @return True if the leftBuffers contain the same tuples in the rightBuffer
  */
-bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& expectedBuffers,
-                              std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& actualBuffers,
+bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& expectedBuffers,
+                              std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
                               bool orderSensitive = false);
 
 /**

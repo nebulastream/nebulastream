@@ -21,9 +21,9 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
@@ -1403,10 +1403,10 @@ TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingCon
     for (const auto& containmentCase : containmentCases) {
         QueryPlanPtr queryPlanSQPQuery = containmentCase.leftQuery.getQueryPlan();
         QueryPlanPtr queryPlanNewQuery = containmentCase.rightQuery.getQueryPlan();
-        SinkLogicalOperatorNodePtr sinkOperator1 = queryPlanSQPQuery->getSinkOperators()[0];
+        SinkLogicalOperatorPtr sinkOperator1 = queryPlanSQPQuery->getSinkOperators()[0];
         QueryId queryId1 = PlanIdGenerator::getNextQueryId();
         queryPlanSQPQuery->setQueryId(queryId1);
-        SinkLogicalOperatorNodePtr sinkOperator2 = queryPlanNewQuery->getSinkOperators()[0];
+        SinkLogicalOperatorPtr sinkOperator2 = queryPlanNewQuery->getSinkOperators()[0];
         QueryId queryId2 = PlanIdGenerator::getNextQueryId();
         queryPlanNewQuery->setQueryId(queryId2);
 

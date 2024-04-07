@@ -79,7 +79,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     NES_INFO("GrpcNotifyQueryFailureTest: Worker started successfully");
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     NES_INFO("GrpcNotifyQueryFailureTest: Submit query");
@@ -87,7 +87,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
         R"(Query::from("Win1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     QueryId subQueryId = 1;
     std::string errormsg = "Query failed.";
@@ -95,7 +95,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
 
     EXPECT_TRUE(successOfNotifyingQueryFailure);
 
-    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalog));
 
     // stop coordinator and worker
     NES_INFO("GrpcNotifyQueryFailureTest: Stop worker");

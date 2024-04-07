@@ -23,7 +23,8 @@ NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema,
                                                  NodeLocation nodeLocation,
                                                  std::chrono::milliseconds waitTime,
                                                  uint32_t retryTimes,
-                                                 DecomposedQueryPlanVersion version, OperatorId uniqueNetworkSourceId)
+                                                 DecomposedQueryPlanVersion version,
+                                                 OperatorId uniqueNetworkSourceId)
     : SourceDescriptor(std::move(schema)), nesPartition(nesPartition), nodeLocation(nodeLocation), waitTime(waitTime),
       retryTimes(retryTimes), version(version), uniqueNetworkSourceId(uniqueNetworkSourceId) {}
 
@@ -32,9 +33,15 @@ SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema,
                                                     NodeLocation nodeLocation,
                                                     std::chrono::milliseconds waitTime,
                                                     uint32_t retryTimes,
-                                                    DecomposedQueryPlanVersion version, OperatorId uniqueNetworkSourceId) {
-    return std::make_shared<NetworkSourceDescriptor>(
-        NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation, waitTime, retryTimes, version, uniqueNetworkSourceId));
+                                                    DecomposedQueryPlanVersion version,
+                                                    OperatorId uniqueNetworkSourceId) {
+    return std::make_shared<NetworkSourceDescriptor>(NetworkSourceDescriptor(std::move(schema),
+                                                                             nesPartition,
+                                                                             nodeLocation,
+                                                                             waitTime,
+                                                                             retryTimes,
+                                                                             version,
+                                                                             uniqueNetworkSourceId));
 }
 
 bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
@@ -46,7 +53,8 @@ bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
 }
 
 std::string NetworkSourceDescriptor::toString() const {
-    return "NetworkSourceDescriptor{" + nodeLocation.createZmqURI() + " " + nesPartition.toString() + "}";
+    return "NetworkSourceDescriptor{Version=" + std::to_string(version) + ";Partition=" + nesPartition.toString()
+        + ";NetworkSinkNodeLocation=" + nodeLocation.createZmqURI() + "}";
 }
 
 NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }
@@ -60,7 +68,13 @@ uint8_t NetworkSourceDescriptor::getRetryTimes() const { return retryTimes; }
 uint16_t NetworkSourceDescriptor::getVersion() const { return version; }
 
 SourceDescriptorPtr NetworkSourceDescriptor::copy() {
-    auto copy = NetworkSourceDescriptor::create(schema->copy(), nesPartition, nodeLocation, waitTime, retryTimes, version, uniqueNetworkSourceId);
+    auto copy = NetworkSourceDescriptor::create(schema->copy(),
+                                                nesPartition,
+                                                nodeLocation,
+                                                waitTime,
+                                                retryTimes,
+                                                version,
+                                                uniqueNetworkSourceId);
     return copy;
 }
 OperatorId NetworkSourceDescriptor::getUniqueId() const { return uniqueNetworkSourceId; }

@@ -45,11 +45,6 @@ class ConsoleDumpHandler {
     void dump(NodePtr node);
 
     /**
-    * Dump the specific node and its children with details in multiple lines.
-    */
-    void multilineDump(NodePtr const& node);
-
-    /**
      * @brief Dump a pipeline query plan with a specific context and scope.
      * @param context the context
      * @param scope the scope
@@ -73,4 +68,4 @@ class ConsoleDumpHandler {
 
 }// namespace NES
 
-#endif// NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_

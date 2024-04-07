@@ -75,4 +75,15 @@ bool TimeCharacteristic::equals(const TimeCharacteristic& other) const {
     return this->type == other.type && equalField && this->unit.equals(other.unit);
 }
 
+uint64_t TimeCharacteristic::hash() const {
+
+    uint64_t hashValue=0;
+    hashValue=hashValue * 0x9e3779b1 + std::hash<uint8_t>{}((unsigned char) type);
+    if (field) {
+        hashValue=hashValue * 0x9e3779b1 + field->hash();
+    }
+    hashValue=hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(unit.getMultiplier());
+    return hashValue;
+}
+
 }// namespace NES::Windowing

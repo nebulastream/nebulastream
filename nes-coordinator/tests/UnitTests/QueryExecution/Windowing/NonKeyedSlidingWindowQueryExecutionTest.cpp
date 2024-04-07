@@ -65,12 +65,13 @@ class NonKeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     static constexpr uint64_t defaultSharedQueryId = 0;
 };
 
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 30; recordIndex++) {
         buf[recordIndex][0].write<uint64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(1);
     }
     buf.setNumberOfTuples(30);
+    buf.getBuffer().setSequenceData({1, 1, true});
 }
 
 TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {
@@ -87,8 +88,10 @@ TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);

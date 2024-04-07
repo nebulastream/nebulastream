@@ -154,11 +154,6 @@ class LowerPhysicalToNautilusOperators {
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerNonKeyedSlidingWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                           const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
-
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
@@ -231,6 +226,31 @@ class LowerPhysicalToNautilusOperators {
                       Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
                       uint64_t windowSize,
                       uint64_t windowSlide);
+
+    /**
+     * @brief Lowers a physicalCountMinBuild to a CountMinBuild
+     * @param physicalCountMinBuild
+     * @param operatorHandlers
+     * @param bufferSize
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerCountMinBuildOperator(const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
+                               std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                               uint64_t bufferSize);
+
+    /**
+     * @brief Lowers a physicalHyperLogLogBuild to a HyperLogLogBuild
+     * @param physicalHLLBuildOperator
+     * @param operatorHandlers
+     * @param bufferSize
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerHyperLogLogBuildOperator(const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
+                                                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                                                                    uint64_t bufferSize);
+
 
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;

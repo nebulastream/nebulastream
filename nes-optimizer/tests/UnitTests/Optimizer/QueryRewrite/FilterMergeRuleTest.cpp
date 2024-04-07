@@ -26,7 +26,7 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -67,11 +67,11 @@ class FilterMergeRuleTest : public Testing::BaseIntegrationTest {
     }
 
     bool isFilterAndHasCorrectPredicate(NodePtr filter, ExpressionNodePtr expectedPredicate) {
-        if (!filter->instanceOf<FilterLogicalOperatorNode>()) {
+        if (!filter->instanceOf<LogicalFilterOperator>()) {
             return false;
         }
 
-        auto filterPredicates = filter->as<FilterLogicalOperatorNode>()->getPredicate()->getAndFlattenAllChildren(true);
+        auto filterPredicates = filter->as<LogicalFilterOperator>()->getPredicate()->getAndFlattenAllChildren(true);
         auto expectedPredicates = expectedPredicate->getAndFlattenAllChildren(true);
 
         for (unsigned int i = 0; i < filterPredicates.size(); i++) {
@@ -79,7 +79,7 @@ class FilterMergeRuleTest : public Testing::BaseIntegrationTest {
                 return false;
             }
         }
-        auto filterPredicate = filter->as<FilterLogicalOperatorNode>()->getPredicate();
+        auto filterPredicate = filter->as<LogicalFilterOperator>()->getPredicate();
         return true;
     }
 };
@@ -102,10 +102,10 @@ TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperator1 = (*itr);
-    auto predicate1 = filterOperator1->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicate1 = filterOperator1->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr filterOperator2 = (*itr);
-    auto predicate2 = filterOperator2->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicate2 = filterOperator2->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr srcOperator = (*itr);
 
@@ -114,7 +114,7 @@ TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
     const QueryPlanPtr updatedPlan = filterMergeRule->apply(queryPlan);
 
     // Validate
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     EXPECT_TRUE(filterOperators.size() == 1);
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
@@ -145,13 +145,13 @@ TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperator1 = (*itr);
-    auto predicate1 = filterOperator1->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicate1 = filterOperator1->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr filterOperator2 = (*itr);
-    auto predicate2 = filterOperator2->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicate2 = filterOperator2->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr filterOperator3 = (*itr);
-    auto predicate3 = filterOperator3->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicate3 = filterOperator3->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr srcOperator = (*itr);
 
@@ -160,7 +160,7 @@ TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
     const QueryPlanPtr updatedPlan = filterMergeRule->apply(queryPlan);
 
     // Validate
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     EXPECT_TRUE(filterOperators.size() == 1);
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
@@ -199,13 +199,13 @@ TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperatorPQ1 = (*itr);
-    auto predicatePQ1 = filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicatePQ1 = filterOperatorPQ1->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr filterOperatorPQ2 = (*itr);
-    auto predicatePQ2 = filterOperatorPQ2->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicatePQ2 = filterOperatorPQ2->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr filterOperatorPQ3 = (*itr);
-    auto predicatePQ3 = filterOperatorPQ3->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicatePQ3 = filterOperatorPQ3->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr projectOperatorPQ = (*itr);
     ++itr;
@@ -214,15 +214,15 @@ TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
     const NodePtr mergeOperator = (*itr);
     ++itr;
     const NodePtr filterOperatorSQ = (*itr);
-    auto predicateSQ = filterOperatorSQ->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicateSQ = filterOperatorSQ->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr srcOperatorSQ = (*itr);
     ++itr;
     const NodePtr filterOperatorPQ4 = (*itr);
-    auto predicatePQ4 = filterOperatorPQ4->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicatePQ4 = filterOperatorPQ4->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr filterOperatorPQ5 = (*itr);
-    auto predicatePQ5 = filterOperatorPQ5->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicatePQ5 = filterOperatorPQ5->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr srcOperatorPQ = (*itr);
     ++itr;
@@ -232,7 +232,7 @@ TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
     const QueryPlanPtr updatedPlan = filterMergeRule->apply(queryPlan);
 
     // Validate
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     EXPECT_TRUE(filterOperators.size() == 3);
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
@@ -277,12 +277,12 @@ TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween) {
     const NodePtr sinkOperator = (*itr);
     ++itr;
     const NodePtr filterOperator1 = (*itr);
-    auto predicate1 = filterOperator1->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicate1 = filterOperator1->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr mapOperator = (*itr);
     ++itr;
     const NodePtr filterOperator2 = (*itr);
-    auto predicate2 = filterOperator2->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicate2 = filterOperator2->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr srcOperator = (*itr);
 
@@ -291,7 +291,7 @@ TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween) {
     const QueryPlanPtr updatedPlan = filterMergeRule->apply(queryPlan);
 
     // Validate
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     EXPECT_TRUE(filterOperators.size() == 2);
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();
@@ -326,7 +326,7 @@ TEST_F(FilterMergeRuleTest, testMergeNotPossibleOneFilter) {
     const NodePtr mapOperator = (*itr);
     ++itr;
     const NodePtr filterOperator1 = (*itr);
-    auto predicate1 = filterOperator1->as<FilterLogicalOperatorNode>()->getPredicate();
+    auto predicate1 = filterOperator1->as<LogicalFilterOperator>()->getPredicate();
     ++itr;
     const NodePtr srcOperator = (*itr);
 
@@ -335,7 +335,7 @@ TEST_F(FilterMergeRuleTest, testMergeNotPossibleOneFilter) {
     const QueryPlanPtr updatedPlan = filterMergeRule->apply(queryPlan);
 
     // Validate
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     EXPECT_TRUE(filterOperators.size() == 1);
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = queryPlanNodeIterator.begin();

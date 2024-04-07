@@ -19,6 +19,10 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
+#include <Configurations/Validation/BooleanValidation.hpp>
+#include <Configurations/Validation/FloatValidation.hpp>
+#include <Configurations/Validation/IpValidation.hpp>
+#include <Configurations/Validation/NumberValidation.hpp>
 #include <Configurations/WrapOption.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>

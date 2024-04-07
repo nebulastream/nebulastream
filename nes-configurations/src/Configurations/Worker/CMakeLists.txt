@@ -14,6 +14,7 @@
 add_source_files(nes-configurations
         PhysicalSourceTypeFactory.cpp
         GeoLocationFactory.cpp
+        NetworkCoordinateFactory.cpp
 )
 
 add_subdirectory(PhysicalSourceTypes)

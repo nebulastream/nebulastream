@@ -53,9 +53,6 @@ using RestServerPtr = std::shared_ptr<RestServer>;
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
-class RequestProcessorService;
-using QueryRequestProcessorServicePtr = std::shared_ptr<RequestProcessorService>;
-
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
@@ -65,9 +62,6 @@ using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
-class QueryCatalogService;
-using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
-
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
@@ -76,9 +70,6 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class SourceCatalogService;
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
-
-class TopologyManagerService;
-using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 class CoordinatorHealthCheckService;
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
@@ -165,7 +156,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief Get instance of query catalog
      * @return query catalog pointer
      */
-    QueryCatalogServicePtr getQueryCatalogService();
+    Catalogs::Query::QueryCatalogPtr getQueryCatalog();
 
     /**
      * @brief Return the UDF catalog.
@@ -203,12 +194,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     SourceCatalogServicePtr getSourceCatalogService() const;
 
     /**
-     * getter for the topologyManagerService
-     * @return
-     */
-    TopologyManagerServicePtr getTopologyManagerService() const;
-
-    /**
      * getter for the locationService
      * @return
      */
@@ -236,20 +221,16 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     uint16_t rpcPort;
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
-    std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
-    TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
     CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    QueryCatalogServicePtr queryCatalogService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
     std::atomic<bool> isRunning{false};
-    QueryRequestProcessorServicePtr queryRequestProcessorService;
     RequestHandlerServicePtr requestHandlerService;
     MonitoringServicePtr monitoringService;
     QueryParsingServicePtr queryParsingService;

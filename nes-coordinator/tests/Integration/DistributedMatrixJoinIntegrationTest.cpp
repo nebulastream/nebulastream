@@ -136,7 +136,7 @@ class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
 TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
     uint64_t sourceNo = 4;
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config) {
-        config->optimizer.performDistributedWindowOptimization.setValue(true);
+        config->optimizer.joinOptimizationMode.setValue(Optimizer::DistributedJoinOptimizationMode::MATRIX);
     };
     Query query = Query::from(sourceNameLeft)
                       .joinWith(Query::from(sourceNameRight))

@@ -16,12 +16,12 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <chrono>
 #include <utility>
 
@@ -34,6 +34,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                              uint64_t gatheringInterval,
                              OperatorId operatorId,
                              OriginId originId,
+                             StatisticId statisticId,
                              size_t numSourceLocalBuffers,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                              const std::string& physicalSourceName)
@@ -43,6 +44,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                       numberOfBufferToProduce,
                       operatorId,
                       originId,
+                      statisticId,
                       numSourceLocalBuffers,
                       GatheringMode::INTERVAL_MODE,
                       std::move(successors),

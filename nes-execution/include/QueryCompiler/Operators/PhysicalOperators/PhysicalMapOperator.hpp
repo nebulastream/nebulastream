@@ -24,17 +24,19 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalMapOperator : public PhysicalUnaryOperator {
   public:
     PhysicalMapOperator(OperatorId id,
+                        StatisticId statisticId,
                         SchemaPtr inputSchema,
                         SchemaPtr outputSchema,
                         FieldAssignmentExpressionNodePtr mapExpression);
     static PhysicalOperatorPtr create(OperatorId id,
+                                      StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const FieldAssignmentExpressionNodePtr& mapExpression);
     static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
+    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
     std::string toString() const override;
-    OperatorNodePtr copy() override;
+    OperatorPtr copy() override;
 
     /**
      * @brief Returns the expression of this map operator

@@ -12,3 +12,4 @@
 # limitations under the License.
 
 add_nes_execution_test(nautilus-paged-vector-test "PagedVectorTest.cpp")
+add_nes_execution_test(nautilus-paged-vector-var-sized-test "PagedVectorVarSizedTest.cpp")

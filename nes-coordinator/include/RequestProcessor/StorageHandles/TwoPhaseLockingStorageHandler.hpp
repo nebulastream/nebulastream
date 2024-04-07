@@ -106,7 +106,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param requestId the id of the request calling this function
      * @return a handle to the query catalog.
      */
-    QueryCatalogServiceHandle getQueryCatalogServiceHandle(RequestId requestId) override;
+    QueryCatalogHandle getQueryCatalogHandle(RequestId requestId) override;
 
     /**
      * @brief Obtain a mutable global query plan handle. Will throw an exception if the resource has not been locked in the
@@ -175,15 +175,15 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
-    QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
     ResourceHolderData coordinatorConfigurationHolder;
     ResourceHolderData topologyHolder;
     ResourceHolderData globalExecutionPlanHolder;
-    ResourceHolderData queryCatalogServiceHolder;
+    ResourceHolderData queryCatalogHolder;
     ResourceHolderData globalQueryPlanHolder;
     ResourceHolderData sourceCatalogHolder;
     ResourceHolderData udfCatalogHolder;

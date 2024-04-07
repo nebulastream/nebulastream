@@ -54,6 +54,7 @@ jobs:
         run: |
           echo "Unauthorized user triggering release"
           exit 1
+      - uses: AutoModality/action-clean@v1
       - name: Checkout
         uses: actions/checkout@v4
       - name: Contextual QA Checklists
@@ -69,13 +70,14 @@ jobs:
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [ validateTrigger ]
     steps:
+      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.0
+        uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: preamble-check
@@ -114,7 +116,7 @@ jobs:
   #          ssh-strict: 'false'
   #          fetch-depth: '0'
   #      - name: Cancel Previous Runs
-  #        uses: styfle/cancel-workflow-action@0.12.0
+  #        uses: styfle/cancel-workflow-action@0.12.1
   #        with:
   #          access_token: ${{ secrets.NES_CI_SECRET }}
   #      - name: Build Docker
@@ -150,7 +152,7 @@ jobs:
   #        run: |
   #          docker rm -f ${{ github.run_id }}_cc_${{ matrix.osversion }}_build
   #      - name: Notify Slack
-  #        uses: 8398a7/action-slack@v3.15.1
+  #        uses: 8398a7/action-slack@v3.16.2
   #        with:
   #          status: ${{ job.status }}
   #          author_name: ${{ github.actor }}
@@ -161,10 +163,12 @@ jobs:
 
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    name: ${{ matrix.osversion }} ${{ matrix.arch }}
+    name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
     needs: [ pre-build-checks ]
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+    runs-on:
+      group: ${{ matrix.runner_group }}
+      labels: [ self-hosted, linux, '${{ matrix.arch }}', Build]
     strategy:
       fail-fast: false
       matrix:
@@ -175,28 +179,67 @@ jobs:
             require_test: "true"
             build_parallelism: "16"
             test_parallelism: "4"
+            runner_group: "default"
           - osversion: ubuntu-22_04
             arch: "X64"
             require_build: "true"
             require_test: "true"
             build_parallelism: "16"
             test_parallelism: "4"
+            runner_group: "default"
+          - osversion: ubuntu-22_04
+            arch: "X64"
+            require_build: "true"
+            require_test: "true"
+            build_parallelism: "16"
+            test_parallelism: "4"
+            runner_group: "gpu"
           - osversion: ubuntu-22_04
             arch: "arm64"
             require_build: "true"
             require_test: "true"
             build_parallelism: "8"
             test_parallelism: "4"
+            runner_group: "default"
     steps:
+      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.0
+        uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
+      - name: Build Docker for CleanUp
+        id: builddocker_cleanup
+        if: github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+      - name: "Perform cleanup, if necessary"
+        run: |
+          os_version_arch="${{ matrix.osversion }}_${{ matrix.arch }}"
+          cache_dir="/data/nes-ci/tmp/nes-ccache_$os_version_arch"
+          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          docker_image_name="nes_build_${{ matrix.osversion }}"
+          github_workspace=${{ github.workspace }}
+          file="/data/nes-ci/tmp/last_checked_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}.txt"
+          
+          # We check, if we have to perform some cleanup. 
+          perform_cleanup=$(bash $github_workspace/scripts/build/check_cleanup.sh $file)
+          if [ $perform_cleanup -eq 1 ]; then
+            echo "Performing cleanup!"
+            # Running the script in the docker container, as otherwise, we will have permission issues
+            docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
+            docker rm ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
+            echo "Cleanup done!"
+          else
+            echo "We will not perform any cleanup!"
+          fi
+
       - name: Build Docker
         id: builddocker
         if: github.event_name != 'workflow_dispatch'
@@ -207,6 +250,10 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
+          GPU_RUNNER_PARAMS=""
+          if [ "${{ matrix.runner_group }}" == "gpu" ]; then
+            GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/nvidia:/usr/lib/nvidia:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/nvidia:${LD_LIBRARY_PATH}"
+          fi
           cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "cache_dir=$cache_dir"
           mkdir -p $cache_dir
@@ -214,20 +261,25 @@ jobs:
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "build_dir=$build_dir"
           mkdir -p $build_dir
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
       - name: Run tests
         if: github.event_name != 'workflow_dispatch'
         run: |
+          GPU_RUNNER_PARAMS=""
+          if [ "${{ matrix.runner_group }}" == "gpu" ]; then
+            GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+          fi
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+        shell: bash
       - name: docker cleanup
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
-          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
-          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_test
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test
       - name: Notify Slack
-        uses: 8398a7/action-slack@v3.15.1
+        uses: 8398a7/action-slack@v3.16.2
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
@@ -255,7 +307,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.0
+        uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
@@ -268,7 +320,7 @@ jobs:
           mkdir -p $build_dir
           $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh "$build_dir"
       - name: Notify Slack
-        uses: 8398a7/action-slack@v3.15.1
+        uses: 8398a7/action-slack@v3.16.2
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
@@ -278,51 +330,51 @@ jobs:
         if: always()
 
 
-  infer-static-analysis:
-    name: Static Analysis FB Infer
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')  || github.event_name != 'workflow_dispatch' || github.ref != 'refs/heads/master'"
-    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
-    needs: [ pre-build-checks ]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - osversion: ubuntu-22_04
-            arch: "X64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "16"
-            test_parallelism: "4"
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
-      - name: Build Docker
-        id: builddocker
-        if: github.event_name != 'workflow_dispatch'
-        continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker/staticAnalysisImage
-        run: docker build  -t nes_static_analysis_${{ matrix.osversion }} -f Dockerfile-NES-StaticAnalysis-${{ matrix.osversion }} .
-      - name: Build NebulaStream & Run Static Analysis
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/data/nes-ci/tmp/nes-staticAnalysis_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          echo "build_dir=$build_dir" >> $GITHUB_ENV
-          mkdir -p $build_dir
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE nes_static_analysis_${{ matrix.osversion }}
-      - name: Check Infer report
-        uses: srz-zumix/reviewdog-action-infer@v1
-        with:
-          reporter: github-pr-review
-          report_path: "${{ env.build_dir }}/infer-out"
-      - name: docker cleanup
-        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
-        run: |
-          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis
+#  infer-static-analysis:
+#    name: Static Analysis FB Infer
+#    if: "!contains(github.event.head_commit.message, 'GIT-CI:')  || github.event_name != 'workflow_dispatch' || github.ref != 'refs/heads/master'"
+#    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+#    needs: [ pre-build-checks ]
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        include:
+#          - osversion: ubuntu-22_04
+#            arch: "X64"
+#            require_build: "true"
+#            require_test: "true"
+#            build_parallelism: "16"
+#            test_parallelism: "4"
+#    steps:
+#      - name: Check out code
+#        uses: actions/checkout@v4
+#        with:
+#          ssh-key: ${{ secrets.CI_SECRET }}
+#          ssh-strict: 'false'
+#          fetch-depth: '0'
+#      - name: Build Docker
+#        id: builddocker
+#        if: github.event_name != 'workflow_dispatch'
+#        continue-on-error: true
+#        working-directory: ${{ github.workspace }}/docker/staticAnalysisImage
+#        run: docker build  -t nes_static_analysis_${{ matrix.osversion }} -f Dockerfile-NES-StaticAnalysis-${{ matrix.osversion }} .
+#      - name: Build NebulaStream & Run Static Analysis
+#        if: github.event_name != 'workflow_dispatch'
+#        run: |
+#          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+#          build_dir="/data/nes-ci/tmp/nes-staticAnalysis_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+#          echo "build_dir=$build_dir" >> $GITHUB_ENV
+#          mkdir -p $build_dir
+#          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE nes_static_analysis_${{ matrix.osversion }}
+#      - name: Check Infer report
+#        uses: srz-zumix/reviewdog-action-infer@v1
+#        with:
+#          reporter: github-pr-review
+#          report_path: "${{ env.build_dir }}/infer-out"
+#      - name: docker cleanup
+#        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+#        run: |
+#          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis
           
 
   release:
@@ -384,7 +436,7 @@ jobs:
           echo "Pushed the dev image"          
           docker logout
       - name: "Generate ChangeLogs"
-        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        uses: heinrichreimer/github-changelog-generator-action@v2.4
         with:
           token: ${{ secrets.NES_CI_SECRET }}
           issues: true
@@ -435,7 +487,7 @@ jobs:
           external_repository: nebulastream/nebulastream-docs
           publish_branch: master
       - name: "Notify Slack"
-        uses: 8398a7/action-slack@v3.15.1
+        uses: 8398a7/action-slack@v3.16.2
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}

@@ -65,15 +65,15 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    int rootWorkerId = 0;
-    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
-    int middleNodeId = 1;
-    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    int rootWorkerId = 1;
+    topology->registerWorker(rootWorkerId, "localhost", 4000, 5000, 4, properties, 0, 0);
+    int middleNodeId = 2;
+    topology->registerWorker(middleNodeId, "localhost", 4001, 5001, 4, properties, 0, 0);
     int srcNodeId = 3;
-    topology->registerTopologyNode(srcNodeId, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId));
+    topology->addAsRootWorkerId(rootWorkerId);
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId, srcNodeId));
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology: {}", topology->toString());
@@ -108,17 +108,18 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     WorkerId rootWorkerId = 1;
-    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    topology->registerWorker(rootWorkerId, "localhost", 4000, 5000, 4, properties, 0, 0);
     WorkerId middleNodeId1 = 2;
-    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId srcNodeId1 = 3;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId1, "localhost", 4004, 5004, 4, properties, 0, 0);
     WorkerId srcNodeId2 = 4;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
 
@@ -157,19 +158,21 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     WorkerId rootWorkerId = 1;
-    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    topology->registerWorker(rootWorkerId, "localhost", 4000, 5000, 4, properties, 0, 0);
     WorkerId middleNodeId1 = 2;
-    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId middleNodeId2 = 3;
-    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId srcNodeId1 = 5;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId1, "localhost", 4004, 5004, 4, properties, 0, 0);
     WorkerId srcNodeId2 = 6;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId2));
@@ -213,19 +216,21 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     WorkerId rootWorkerId = 1;
-    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    topology->registerWorker(rootWorkerId, "localhost", 4000, 5000, 4, properties, 0, 0);
     WorkerId middleNodeId1 = 2;
-    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId middleNodeId2 = 3;
-    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId srcNodeId1 = 5;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId1, "localhost", 4004, 5004, 4, properties, 0, 0);
     WorkerId srcNodeId2 = 6;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
@@ -272,21 +277,24 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     WorkerId rootWorkerId = 1;
-    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    topology->registerWorker(rootWorkerId, "localhost", 4000, 5000, 4, properties, 0, 0);
     WorkerId middleNodeId1 = 2;
-    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId middleNodeId2 = 3;
-    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId middleNodeId3 = 4;
-    topology->registerTopologyNode(middleNodeId3, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId3, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId srcNodeId1 = 5;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId1, "localhost", 4004, 5004, 4, properties, 0, 0);
     WorkerId srcNodeId2 = 6;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, middleNodeId3));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, middleNodeId3));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId1));
@@ -343,24 +351,26 @@ TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     WorkerId rootWorkerId = 1;
-    topology->registerTopologyNode(rootWorkerId, "localhost", 4000, 5000, 4, properties);
+    topology->registerWorker(rootWorkerId, "localhost", 4000, 5000, 4, properties, 0, 0);
     WorkerId middleNodeId1 = 2;
-    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId1, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId middleNodeId2 = 3;
-    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    topology->registerWorker(middleNodeId2, "localhost", 4001, 5001, 4, properties, 0, 0);
     WorkerId srcNodeId1 = 4;
-    topology->registerTopologyNode(srcNodeId1, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId1, "localhost", 4004, 5004, 4, properties, 0, 0);
     WorkerId srcNodeId2 = 5;
-    topology->registerTopologyNode(srcNodeId2, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId2, "localhost", 4004, 5004, 4, properties, 0, 0);
     WorkerId srcNodeId3 = 6;
-    topology->registerTopologyNode(srcNodeId3, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId3, "localhost", 4004, 5004, 4, properties, 0, 0);
     WorkerId srcNodeId4 = 7;
-    topology->registerTopologyNode(srcNodeId4, "localhost", 4004, 5004, 4, properties);
+    topology->registerWorker(srcNodeId4, "localhost", 4004, 5004, 4, properties, 0, 0);
 
-    topology->setRootTopologyNodeId(rootWorkerId);
+    topology->addAsRootWorkerId(rootWorkerId);
 
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId1));
-    ASSERT_TRUE(topology->addTopologyNodeAsChild(rootWorkerId, middleNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId1));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId2));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId3));
+    ASSERT_TRUE(topology->removeTopologyNodeAsChild(rootWorkerId, srcNodeId4));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId1));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId1, srcNodeId2));
     ASSERT_TRUE(topology->addTopologyNodeAsChild(middleNodeId2, srcNodeId3));

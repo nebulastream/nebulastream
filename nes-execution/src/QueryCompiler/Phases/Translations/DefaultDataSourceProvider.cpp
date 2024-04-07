@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
@@ -30,6 +29,7 @@ DataSourceProviderPtr QueryCompilation::DefaultDataSourceProvider::create(const 
 
 DataSourcePtr DefaultDataSourceProvider::lower(OperatorId operatorId,
                                                OriginId originId,
+                                               StatisticId statisticId,
                                                SourceDescriptorPtr sourceDescriptor,
                                                Runtime::NodeEnginePtr nodeEngine,
                                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
@@ -37,6 +37,7 @@ DataSourcePtr DefaultDataSourceProvider::lower(OperatorId operatorId,
     for (const auto& plugin : SourcePluginRegistry::getPlugins()) {
         auto dataSource = plugin->createDataSource(operatorId,
                                                    originId,
+                                                   statisticId,
                                                    sourceDescriptor,
                                                    nodeEngine,
                                                    compilerOptions->getNumSourceLocalBuffers(),
@@ -48,6 +49,7 @@ DataSourcePtr DefaultDataSourceProvider::lower(OperatorId operatorId,
 
     return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                             originId,
+                                                            statisticId,
                                                             std::move(sourceDescriptor),
                                                             std::move(nodeEngine),
                                                             compilerOptions->getNumSourceLocalBuffers(),

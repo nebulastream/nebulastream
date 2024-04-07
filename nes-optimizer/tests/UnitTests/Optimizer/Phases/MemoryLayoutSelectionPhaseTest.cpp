@@ -20,18 +20,17 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -41,6 +40,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestQuery.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -119,7 +119,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
 
     // Check if all operators in the query have an column layout
     for (auto node : PlanIterator(plan)) {
-        if (auto op = node->as_if<OperatorNode>()) {
+        if (auto op = node->as_if<Operator>()) {
             ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
         }
     }
@@ -149,7 +149,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
 
     // Check if all operators in the query have an column layout
     for (auto node : PlanIterator(plan)) {
-        if (auto op = node->as_if<OperatorNode>()) {
+        if (auto op = node->as_if<Operator>()) {
             ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
         }
     }
@@ -182,7 +182,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     plan = typeInference->execute(plan);
     // Check if all operators in the query have an column layout
     for (auto node : PlanIterator(plan)) {
-        if (auto op = node->as_if<OperatorNode>()) {
+        if (auto op = node->as_if<Operator>()) {
             ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
         }
     }

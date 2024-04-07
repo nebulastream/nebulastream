@@ -38,6 +38,7 @@ class GeneratorSource : public DataSource {
    * @param numberOfBuffersToProduce the number of buffers to be produced by the source
    * @param operatorId current operator id
    * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+   * @param statisticId represents the unique identifier of components that we can track statistics for
    * @param numSourceLocalBuffers the number of buffers allocated to a source
    * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
    * @param physicalSourceName the name and unique identifier of a physical source
@@ -49,6 +50,7 @@ class GeneratorSource : public DataSource {
                     uint64_t numberOfBufferToProduce,
                     OperatorId operatorId,
                     OriginId originId,
+                    StatisticId statisticId,
                     size_t numSourceLocalBuffers,
                     GatheringMode gatheringMode,
                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
@@ -58,6 +60,7 @@ class GeneratorSource : public DataSource {
                      std::move(queryManager),
                      operatorId,
                      originId,
+                     statisticId,
                      numSourceLocalBuffers,
                      gatheringMode,
                      physicalSourceName,

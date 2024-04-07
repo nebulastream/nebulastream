@@ -18,16 +18,4 @@ namespace NES {
 
 double SpatialUtils::degreesToRadians(double degrees) { return (degrees * M_PI / 180.0); }
 
-double SpatialUtils::radiansToDegrees(double radians) { return (radians * 180.0 / M_PI); }
-
-double SpatialUtils::haversineDistance(double lat1, double lng1, double lat2, double lng2) {
-    double lat1r = degreesToRadians(lat1);
-    double lon1r = degreesToRadians(lng1);
-    double lat2r = degreesToRadians(lat2);
-    double lon2r = degreesToRadians(lng2);
-    double u = sin((lat2r - lat1r) / 2);
-    double v = sin((lon2r - lon1r) / 2);
-    return 2.0 * earthRadiusMeters * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
-}
-
 }// namespace NES

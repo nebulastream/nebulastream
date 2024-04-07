@@ -13,13 +13,11 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -29,11 +27,8 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -56,7 +51,6 @@ using std::filesystem::directory_iterator;
 std::chrono::nanoseconds Runtime;
 NES::NesCoordinatorPtr coordinator;
 
-TopologyManagerServicePtr topologyManagerService;
 TopologyPtr topology;
 SourceCatalogServicePtr sourceCatalogService;
 Catalogs::Source::SourceCatalogPtr sourceCatalog;
@@ -162,36 +156,34 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     topology = Topology::create();
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
     //Register root worker
-    topologyManagerService
-        ->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties, bandwidthInMbps, latencyInMs);
+    topology->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties, bandwidthInMbps, latencyInMs);
     //register child workers
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID,
-                                               std::to_string(i),
-                                               0,
-                                               0,
-                                               UINT16_MAX,
-                                               properties,
-                                               bandwidthInMbps,
-                                               latencyInMs);
+        topology->registerWorker(INVALID_WORKER_NODE_ID,
+                                 std::to_string(i),
+                                 0,
+                                 0,
+                                 UINT16_MAX,
+                                 properties,
+                                 bandwidthInMbps,
+                                 latencyInMs);
     }
 
-    topologyManagerService->addLinkProperty(1, 2, 512, 100);
-    topologyManagerService->addLinkProperty(2, 3, 512, 100);
-    topologyManagerService->addLinkProperty(3, 4, 512, 100);
-    topologyManagerService->addLinkProperty(4, 5, 512, 100);
-    topologyManagerService->addTopologyNodeAsChild(3, 2);
-    topologyManagerService->removeTopologyNodeAsChild(3, 1);
+    topology->addLinkProperty(1, 2, 512, 100);
+    topology->addLinkProperty(2, 3, 512, 100);
+    topology->addLinkProperty(3, 4, 512, 100);
+    topology->addLinkProperty(4, 5, 512, 100);
+    topology->addTopologyNodeAsChild(3, 2);
+    topology->removeTopologyNodeAsChild(3, 1);
 
-    topologyManagerService->addTopologyNodeAsChild(4, 3);
-    topologyManagerService->removeTopologyNodeAsChild(4, 1);
+    topology->addTopologyNodeAsChild(4, 3);
+    topology->removeTopologyNodeAsChild(4, 1);
 
-    topologyManagerService->addTopologyNodeAsChild(5, 4);
-    topologyManagerService->removeTopologyNodeAsChild(5, 1);
+    topology->addTopologyNodeAsChild(5, 4);
+    topology->removeTopologyNodeAsChild(5, 1);
 }
 
 /**
@@ -373,7 +365,7 @@ int main(int argc, const char* argv[]) {
         auto node = (*entry).second;
         auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
         auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
-        coordinatorConfiguration->enableQueryReconfiguration = incrementalPlacement;
+        coordinatorConfiguration->optimizer.enableIncrementalPlacement = incrementalPlacement;
 
         for (uint32_t run = 0; run < numberOfRun; run++) {
             std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
@@ -387,19 +379,9 @@ int main(int argc, const char* argv[]) {
             cfg.set("type_check", false);
             auto z3Context = std::make_shared<z3::context>(cfg);
             udfCatalog = Catalogs::UDF::UDFCatalog::create();
-            Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-            QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+            auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
             auto globalQueryPlan = GlobalQueryPlan::create();
             auto globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
-            auto globalQueryUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
-                                                                                        queryCatalogService,
-                                                                                        sourceCatalog,
-                                                                                        globalQueryPlan,
-                                                                                        z3Context,
-                                                                                        coordinatorConfiguration,
-                                                                                        udfCatalog,
-                                                                                        globalExecutionPlan);
-
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
             auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                                 topology,
@@ -410,25 +392,22 @@ int main(int argc, const char* argv[]) {
             for (uint64_t i = 0; i < numOfQueries; i++) {
 
                 auto queryPlan = queryObjects[i];
-                queryCatalogService->createNewEntry(
+                queryCatalog->createQueryCatalogEntry(
                     "",
                     queryPlan,
-                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value());
-                Optimizer::PlacementStrategy queryPlacementStrategy =
-                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
-                auto runQueryRequest = AddQueryRequest::create(queryPlan, queryPlacementStrategy);
+                    magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value(),
+                    QueryState::REGISTERED);
 
-                globalQueryUpdatePhase->execute({runQueryRequest});
                 auto sharedQueryPlansToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
                 NES_ASSERT(sharedQueryPlansToDeploy.size() == 1, "Shared Query Plan to deploy has to be one");
                 auto startTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                bool placed = queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
+                auto deploymentcontexts = queryPlacementAmendmentPhase->execute(sharedQueryPlansToDeploy[0]);
                 auto endTime =
                     std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
                         .count();
-                NES_ASSERT(placed, "Placement should be successful");
+                NES_ASSERT(!deploymentcontexts.empty(), "Placement should be successful");
                 benchmarkOutput << startTime << ",BM_Name," << placementStrategy << "," << incrementalPlacement << "," << run
                                 << "," << queryPlan->getQueryId() << "," << startTime << "," << endTime << ","
                                 << (endTime - startTime) << std::endl;

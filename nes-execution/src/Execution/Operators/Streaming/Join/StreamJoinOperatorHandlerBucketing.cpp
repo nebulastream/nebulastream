@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerBucketing.hpp>
-#include <numeric>
 
 namespace NES::Runtime::Execution::Operators {
 

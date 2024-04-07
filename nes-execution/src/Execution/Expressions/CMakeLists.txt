@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        Expression.cpp
         ReadFieldExpression.cpp
         WriteFieldExpression.cpp
         ConstantValueExpression.cpp

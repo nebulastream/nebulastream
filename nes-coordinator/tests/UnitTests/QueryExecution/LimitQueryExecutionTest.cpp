@@ -48,7 +48,7 @@ class LimitQueryExecutionTest : public Testing::BaseUnitTest {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("LimitQueryExecutionTest: Tear down LimitQueryExecutionTest test class."); }
 
-    static void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, const uint64_t tuples) {
+    static void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf, const uint64_t tuples) {
         for (uint64_t recordIndex = 0; recordIndex < tuples; recordIndex++) {
             buf[recordIndex][0].write<int64_t>(recordIndex);
         }
@@ -70,8 +70,10 @@ TEST_F(LimitQueryExecutionTest, limitQuery) {
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).limit(expectedTuples).sink(testSinkDescriptor);
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(defaultDecomposedQueryPlanId, defaultSharedQueryId, query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
+                                                           defaultSharedQueryId,
+                                                           INVALID_WORKER_NODE_ID,
+                                                           query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);
