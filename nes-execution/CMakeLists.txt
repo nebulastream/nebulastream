@@ -21,7 +21,7 @@ add_subdirectory(src)
 get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
 
 # Add Library
-add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
+add_library(nes-execution STATIC ${NES_EXECUTION_SOURCE_FILES})
 # link libraries
 target_link_libraries(nes-execution PRIVATE nes-common nes-compiler nes-grpc nes-data-types nes-operators nes-configurations nes-runtime nes-nautilus)
 # target_link_libraries(nes-execution PRIVATE nes-common nes-grpc nes-data-types nes-operators nes-configurations)

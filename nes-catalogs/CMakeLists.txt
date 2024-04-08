@@ -21,7 +21,7 @@ get_source(nes-catalogs NES_CATALOGS_SOURCE_FILES)
 find_package(folly CONFIG REQUIRED)
 
 # Add Library
-add_library(nes-catalogs SHARED ${NES_CATALOGS_SOURCE_FILES})
+add_library(nes-catalogs ${NES_CATALOGS_SOURCE_FILES})
 target_link_libraries(nes-catalogs PRIVATE nes-common nes-grpc nes-data-types nes-operators nes-configurations Folly::folly)
 target_include_directories(nes-catalogs PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -18,7 +18,7 @@ include(GoogleTest)
 #-------------------------------##############----------------------------------
 #------------------------------- # Nes Utils for Test Suite --------------------------------
 
-add_library(nes-test-util SHARED
+add_library(nes-test-util
         "Util/src/BorrowedPort.cpp"
         "Util/src/BaseIntegrationTest.cpp"
         "Util/src/BaseUnitTest.cpp"

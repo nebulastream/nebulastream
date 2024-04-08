@@ -17,7 +17,7 @@ include(GNUInstallDirs)
 
 # Add nes-coordinator library
 get_source(nes-coordinator NES_COORDINATOR_SOURCE_FILES)
-add_library(nes-coordinator SHARED ${NES_COORDINATOR_SOURCE_FILES})
+add_library(nes-coordinator STATIC ${NES_COORDINATOR_SOURCE_FILES})
 
 # Find folly
 find_package(folly CONFIG REQUIRED)

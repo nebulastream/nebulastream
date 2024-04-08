@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-execution-test-util SHARED
+add_library(nes-execution-test-util STATIC
         "src/AbstractCompilationBackendTest.cpp"
         "src/MockedPipelineExecutionContext.cpp"
         "src/CollectOperator.cpp"

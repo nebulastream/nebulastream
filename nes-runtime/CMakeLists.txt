@@ -20,7 +20,7 @@ add_subdirectory(src)
 get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
-add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
+add_library(nes-runtime STATIC ${NES_EXECUTION_ENGINE_SOURCE_FILES})
 # if musl we cant use can't use backtrace for tracing
 if (HOST_IS_MUSL)
     target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
