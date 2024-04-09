@@ -218,7 +218,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             NES_WARNING("Attempting to start worker mobility handler for worker with multiple parents. This is"
                         "currently not supported, mobility handler will not be started");
         } else {
-            workerMobilityHandler->start(parentIds);
+            //todo: do not use mobility handler on this branch
+            //workerMobilityHandler->start(parentIds);
         }
     }
 
@@ -540,7 +541,8 @@ bool NesWorker::canTriggerEndOfStream(QueryId queryId,
                                       OperatorId sourceId,
                                       Runtime::QueryTerminationType terminationType) {
     NES_ASSERT(waitForConnect(), "cannot connect");
-    NES_ASSERT(terminationType == Runtime::QueryTerminationType::Graceful, "invalid termination type");
+    NES_ASSERT(terminationType == Runtime::QueryTerminationType::Graceful || terminationType == Runtime::QueryTerminationType::Drain, "invalid termination type");
+    //todo #4506: implement call dedicated to sending only drain messages to the coordinator
     return coordinatorRpcClient->checkAndMarkForSoftStop(queryId, subPlanId, sourceId);
 }
 

@@ -140,17 +140,29 @@ class NetworkSource : public DataSource {
     void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
 
     /**
+     * @brief handle incoming drain message: if a new version is present, start it. If a the source is marked as
+     * migrated, stop it. Otherwise do nothing until a reconfiguration message is received from the coordinator
+     */
+    void onDrainMessage(uint64_t version);
+
+    /**
+     * @brief mark this source as migrated. If not incoming channels are connected to this source, stop the source.
+     * Otherwise wait for all remaining channels to disconnect and stop the source afterwards.
+     */
+    void markAsMigrated(uint64_t version);
+
+    /**
      * @brief Reconfigures this source with ReconfigurationType::UpdateVersion causing it to close event channels to the old
      * upstream sink and open channels to the new one
      * @return true if a scheduled new version was found and applied, false otherwise
      */
-    bool startNewVersion() override;
+    bool tryStartingNewVersion() override;
 
     /**
     * @brief Getter for the initial version.
     * @return The version this source was started with
     */
-    DecomposedQueryPlanVersion getVersion() const override;
+    //DecomposedQueryPlanVersion getVersion() override;
 
     /**
      * @brief getter for the network sinks unique id
@@ -159,11 +171,11 @@ class NetworkSource : public DataSource {
     OperatorId getUniqueId() const;
 
     /**
-     * @brief set a new source descriptor to be applied once startNewVersion() is called
+     * @brief set a new source descriptor to be applied once tryStartingNewVersion() is called
      * @param networkSourceDescriptor the new descriptor
      * @return true if the partition to be scheduled if different from the current one and the descriptor was scheduled.
      */
-    bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
+    //bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
 
     bool bind();
 
@@ -176,9 +188,12 @@ class NetworkSource : public DataSource {
     // for event channel
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    DecomposedQueryPlanVersion version;
+    [[maybe_unused]] DecomposedQueryPlanVersion version;
     const uint64_t uniqueNetworkSourceIdentifier;
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
+    std::optional<uint64_t> migrated;
+    std::optional<uint64_t> receivedDrain;
+    std::recursive_mutex versionMutex;
 };
 
 }// namespace NES::Network

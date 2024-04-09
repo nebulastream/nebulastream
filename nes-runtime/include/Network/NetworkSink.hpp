@@ -110,6 +110,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @return type of medium
     */
     SinkMediumTypes getSinkMediumType() override;
+    bool writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext);
 
     /**
      * @brief method to return the network sinks descriptor id
@@ -145,7 +146,21 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool applyNextSinkDescriptor();
 
+    /**
+     * @brief disconnect all existing data channels and buffer outgoing tuples until this source is reconfigured with
+     * a new descriptor
+     * @return true if the reconfiguration message has been queued succesfully
+     */
+    bool startBuffering();
+
+    /**
+     * @brief getter for the node id of the worker hosting the source which receives data from this sink
+     * @return the worker id of the node hosting the source
+     */
+    WorkerId getReceiverId();
+
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
+    void setDrainVersion(uint64_t version);
 
   private:
     /**
@@ -175,6 +190,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext);
 
+
     uint64_t uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
@@ -188,6 +204,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
+    std::mutex scheduledVersionMutex;
+    //todo: this should instead by passed via the reconfig
+    uint64_t drainVersion;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

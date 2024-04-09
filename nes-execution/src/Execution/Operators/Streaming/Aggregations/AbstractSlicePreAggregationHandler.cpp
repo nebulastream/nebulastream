@@ -137,6 +137,8 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::stop(QueryTermin
             }
         }
         dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(), collectedSlices);
+    } else if (queryTerminationType == Runtime::QueryTerminationType::Drain) {
+        NES_NOT_IMPLEMENTED();
     }
 }
 template<class SliceType, typename SliceStore>

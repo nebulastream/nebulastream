@@ -108,7 +108,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
         // Remove the old topology node
         topology->unregisterWorker(configWorkerId);
     } else {
-        configWorkerId = INVALID_WORKER_NODE_ID;
+        //configWorkerId = INVALID_WORKER_NODE_ID;
     }
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());

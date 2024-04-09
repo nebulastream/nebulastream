@@ -61,12 +61,16 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
 
+    Status MigrateQuery(ServerContext* context, const MigrateQueryRequest* request, MigrateQueryReply* reply) override;
+
     Status
     RegisterMonitoringPlan(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) override;
 
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
+
+    Status StartBufferingOnAllSinks(ServerContext* context, const StartBufferingRequest* request, StartBufferingReply* reply) override;
 
     Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;
 

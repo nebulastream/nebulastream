@@ -14,6 +14,7 @@
 #ifndef NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 #define NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 
+#include <Identifiers.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -80,13 +81,29 @@ class WorkerMobilityHandler {
      * run() function will run
      * @param currentParentWorkerIds a list of the workers current parents
      */
-    void start(const std::vector<uint64_t>& currentParentWorkerIds);
+    void start(std::vector<uint64_t> currentParentWorkerIds);
 
     /**
      * tell the thread which executes start() to exit the update loop and stop execution
      * @return true if the thread was running, false if no such thread was running
      */
     bool stop();
+
+    /**
+     * @brief Buffer outgoing data, perform reconnect and unbuffer data once reconnect succeeded. (This method is public
+     * for testing purposes)
+     * @param oldParent : the mobile workers old parent
+     * @param newParent : the mobile workers new parent
+     * @param currentParentWorkerIds : a list of the ids of this workers current parents
+     * @param currentParentLocations : a list of this workers parents locations if they are known
+     * @param neighbourWorkerIdToLocationMap : a map on the ids of other workers nodes in the vicinity of this worker,
+     *  which contains each workers location.
+     * @return true if the reconnect was successful
+     */
+    bool triggerReconnectionRoutine(uint64_t& currentParentId,
+                                    uint64_t newParentId,
+                                    std::optional<uint64_t> predictedNextParent,
+                                    std::optional<Timestamp> predictedNextReconnectTime);
 
   private:
     /**
@@ -110,18 +127,6 @@ class WorkerMobilityHandler {
     bool
     sendNextPredictedReconnect(const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& scheduledReconnects,
                                const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& removedReconnects);
-
-    /**
-     * @brief Buffer outgoing data, perform reconnect and unbuffer data once reconnect succeeded
-     * @param oldParent : the mobile workers old parent
-     * @param newParent : the mobile workers new parent
-     * @param currentParentWorkerIds : a list of the ids of this workers current parents
-     * @param currentParentLocations : a list of this workers parents locations if they are known
-     * @param neighbourWorkerIdToLocationMap : a map on the ids of other workers nodes in the vicinity of this worker,
-     *  which contains each workers location.
-     * @return true if the reconnect was successful
-     */
-    bool triggerReconnectionRoutine(uint64_t& currentParentId, uint64_t newParentId);
 
     /**
      * @brief Method to get all field nodes within a certain range around a geographical point
@@ -174,11 +179,12 @@ class WorkerMobilityHandler {
      * potential new parents
      * @return nothing if no reconnection point is available else returns the new reconnection point
      */
-    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>
+    std::pair<std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>, std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>>
     getNextReconnectPoint(std::optional<ReconnectSchedule>& reconnectSchedule,
                           const DataTypes::Experimental::GeoLocation& currentOwnLocation,
                           const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,
-                          const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex);
+                          const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex,
+                          WorkerId currentParentId);
 
     /**
      * @brief checks if the position supplied as an argument is further than the configured threshold from the last position
@@ -217,7 +223,7 @@ class WorkerMobilityHandler {
      *      will reconnect to the closest node in that radius.
      */
     //FIXME: current assumption is just one parent per mobile worker
-    void run(const std::vector<uint64_t>& currentParentWorkerIds);
+    void run(std::vector<uint64_t> currentParentWorkerIds);
 
     //configuration
     uint64_t updateInterval;
@@ -236,6 +242,7 @@ class WorkerMobilityHandler {
     LocationProviderPtr locationProvider;
     ReconnectSchedulePredictorPtr reconnectSchedulePredictor;
     CoordinatorRPCCLientPtr coordinatorRpcClient;
+    ReconnectPredictorType reconnectPredictorType;
 };
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Spatial::Mobility::Experimental

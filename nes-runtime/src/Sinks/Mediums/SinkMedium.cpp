@@ -18,6 +18,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -77,6 +78,10 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            terminationType = Runtime::QueryTerminationType::Drain;
+            break;
+        }
         case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
             break;
@@ -86,7 +91,7 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
-        NES_DEBUG("Got EoS on Sink  {}", toString());
+        NES_INFO("Got EoS with type {} on Sink  {}", magic_enum::enum_name(terminationType), toString());
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
             nodeEngine->getQueryManager()->notifySinkCompletion(decomposedQueryPlanId,

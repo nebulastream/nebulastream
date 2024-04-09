@@ -584,7 +584,10 @@ bool CoordinatorRPCClient::notifySourceStopTriggered(QueryId queryId,
                                                      DecomposedQueryPlanId querySubPlanId,
                                                      OperatorId sourceId,
                                                      Runtime::QueryTerminationType queryTermination) {
-    NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful, "Wrong termination requested");
+    //todo #4506: once there is a dedicated call for drain messages, only accept graceful here
+    NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful
+                        || queryTermination == Runtime::QueryTerminationType::Drain,
+                    "Wrong termination requested");
 
     //Build request
     SoftStopTriggeredMessage softStopTriggeredMessage;

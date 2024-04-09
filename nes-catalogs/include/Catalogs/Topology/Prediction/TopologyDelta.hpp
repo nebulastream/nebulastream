@@ -13,6 +13,7 @@
 */
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYDELTA_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYDELTA_HPP_
+#include <Util/TopologyLinkInformation.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>

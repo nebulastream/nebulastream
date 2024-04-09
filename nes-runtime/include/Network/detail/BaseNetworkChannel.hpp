@@ -61,8 +61,11 @@ class BaseNetworkChannel {
      */
     void close(bool isEventOnly,
                Runtime::QueryTerminationType terminationType,
-               uint16_t numSendingThreads = 0,
-               uint64_t currentMessageSequenceNumber = 0);
+               uint64_t version,
+               uint16_t numSendingThreads,
+               uint64_t currentMessageSequenceNumber, uint64_t nextVersion = 0);
+
+    NesPartition getPartition();
 
   protected:
     const std::string socketAddr;

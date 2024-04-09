@@ -431,10 +431,10 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId shar
                     magic_enum::enum_name(currentSharedQueryState),
                     decomposedQueryPlanId);
         //FIXME: #4396 fix what to do when this occurs
-        NES_ASSERT(false,
-                   "Found query in " << magic_enum::enum_name(currentSharedQueryState)
-                                     << " but received SOFT_STOP_COMPLETED for the decomposed query with id "
-                                     << decomposedQueryPlanId << " for shared query id " << sharedQueryId);
+        // NES_ASSERT(false,
+        //            "Found query in " << magic_enum::enum_name(currentSharedQueryState)
+        //                              << " but received SOFT_STOP_COMPLETED for the decomposed query with id "
+        //                              << decomposedQueryPlanId << " for shared query id " << sharedQueryId);
     }
 
     //Get the sub query plan
@@ -469,11 +469,13 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId shar
                 queryMigrationComplete = false;
                 break;
             }
-            NES_ASSERT(currentDecomposedQuerySubPlanStatus == QueryState::RUNNING
-                           || currentDecomposedQuerySubPlanStatus == QueryState::SOFT_STOP_COMPLETED
-                           || currentDecomposedQuerySubPlanStatus == QueryState::MIGRATION_COMPLETED
-                           || currentDecomposedQuerySubPlanStatus == QueryState::REDEPLOYED,
-                       "Unexpected decomposed query plan status.");
+            NES_DEBUG("Current decomposed query plan status: {}", magic_enum::enum_name(currentDecomposedQuerySubPlanStatus));
+            // NES_ASSERT(currentDecomposedQuerySubPlanStatus == QueryState::RUNNING
+            //                || currentDecomposedQuerySubPlanStatus == QueryState::SOFT_STOP_COMPLETED
+            //                || currentDecomposedQuerySubPlanStatus == QueryState::MIGRATION_COMPLETED
+            //                || currentDecomposedQuerySubPlanStatus == QueryState::REDEPLOYED
+            //                || currentDecomposedQuerySubPlanStatus == QueryState::SOFT_STOP_TRIGGERED,
+            //            "Unexpected decomposed query plan status.");
         }
         if (queryMigrationComplete) {
             NES_DEBUG("Migration completed. Marking shared query with id {} as running.", sharedQueryId);

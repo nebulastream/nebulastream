@@ -718,7 +718,8 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             completedProm.set_value(false);
         } else {
             senderChannel->sendEvent<detail::TestEvent>(Runtime::EventType::kCustomEvent, 123);
-            senderChannel->close(Runtime::QueryTerminationType::Graceful);
+            //todo: check if we should have 2 kinds of close functions
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, 0, 1);
             senderChannel.reset();
             netManager->unregisterSubpartitionProducer(nesPartition);
         }

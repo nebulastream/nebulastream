@@ -322,6 +322,9 @@ void PlacementRemovalStrategy::updateDecomposedQueryPlans(SharedQueryId sharedQu
             // 3. Fetch the copy of Decomposed query plan to modify
             auto decomposedQueryPlanToUpdate =
                 globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryPlanId);
+            if (!querySubPlanToUpdate) {
+                continue;
+            }
 
             // 4. Check if plan is a sys generated query sub plan.
             // A Sys generated plan will contain only network source and sink operators.
@@ -418,11 +421,13 @@ void PlacementRemovalStrategy::updateDecomposedQueryPlans(SharedQueryId sharedQu
             }
 
             // 12. Mark the plan for migration if the plan is empty else for re-deployment
-            if (decomposedQueryPlanToUpdate->getRootOperators().empty()) {
-                decomposedQueryPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
-            } else {
-                decomposedQueryPlanToUpdate->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
-            }
+            // if (decomposedQueryPlanToUpdate->getRootOperators().empty()) {
+            //     decomposedQueryPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
+            // } else {
+            //     decomposedQueryPlanToUpdate->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
+            // }
+
+            decomposedQueryPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
             // 13. Add the updated query sub plan
             updatedDecomposedQueryPlans.emplace_back(decomposedQueryPlanToUpdate);
         }

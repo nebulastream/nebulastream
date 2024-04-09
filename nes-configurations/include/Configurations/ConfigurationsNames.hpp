@@ -81,7 +81,9 @@ const std::string PLACEMENT_AMENDMENT_THREAD_COUNT = "placementAmendmentThreadCo
 const std::string DISTRIBUTED_JOIN_OPTIMIZATION_MODE_CONFIG = "distributedJoinOptimizationMode";
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
+//todo: check which options do what and sort one out
 const std::string ENABLE_INCREMENTAL_PLACEMENT = "enableIncrementalPlacement";
+const std::string ENABLE_PROACTIVE_DEPLOYMENT = "enableProactiveDeployment";
 const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
 const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
 const std::string ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK = "allowExhaustiveContainmentCheck";
@@ -113,6 +115,7 @@ const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
 const std::string CONNECT_SOURCE_ASYNC = "connectSourceEventChannelsAsync";
+const std::string TIMESTAMP_FILE_SINK = "timestampFileSink";
 
 // CUDA config names
 const std::string CUDA_SDK_PATH = "cudaSdkPath";
@@ -139,7 +142,9 @@ const std::string SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG = "sendDevicePosi
 const std::string PUSH_DEVICE_LOCATION_UPDATES_CONFIG = "pushPositionUpdates";
 const std::string SEND_LOCATION_UPDATE_INTERVAL_CONFIG = "mobilityHandlerUpdateInterval";
 const std::string LOCATION_PROVIDER_CONFIG = "locationProviderConfig";
+const std::string PRECALCULATED_RECONNECTS_PATH = "precalcReconnectPath";
 const std::string LOCATION_PROVIDER_TYPE_CONFIG = "locationProviderType";
+const std::string RECONNECT_PREDICTOR_TYPE_CONFIG = "reconnectPredictorType";
 const std::string LOCATION_SIMULATED_START_TIME_CONFIG = "locationProviderSimulatedStartTime";
 
 //Different Source Types supported in NES

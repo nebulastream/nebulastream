@@ -48,7 +48,8 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                                       append,
                                       queryId,
                                       querySubPlanId,
-                                      numberOfOrigins);
+                                      numberOfOrigins,
+                                      nodeEngine->getTimesStampOutputSources());
 }
 
 DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,

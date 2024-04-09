@@ -26,6 +26,7 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -224,16 +225,32 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
 
         queryCatalog->updateSharedQueryStatus(impactedSharedQueryId, QueryState::MIGRATING, "");
 
-        if (enableIncrementalPlacement) {
+        std::set<OperatorId> upstreamOperatorIds;
+        std::set<OperatorId> downstreamOperatorIds;
+        if (coordinatorConfiguration->optimizer.enableIncrementalPlacement) {
             //find the pinned operators for the changelog
-            auto [upstreamOperatorIds, downstreamOperatorIds] =
+            auto [upstream, downstream] =
                 NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
                                                                             upstreamExecutionNode,
                                                                             downstreamExecutionNode,
                                                                             topology);
-            //perform re-operator placement on the query plan
-            sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
+            upstreamOperatorIds = upstream;
+            downstreamOperatorIds = downstream;
+        } else {
+            //1. Fetch all upstream pinned operators
+            std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
+            for (const auto& leafOperator : sharedQueryPlan->getQueryPlan()->getLeafOperators()) {
+                upstreamOperatorIds.insert(leafOperator->getId());
+            };
+
+            //2. Fetch all downstream pinned operators
+            std::set<LogicalOperatorPtr> pinnedDownStreamOperators;
+            for (const auto& rootOperator : sharedQueryPlan->getQueryPlan()->getRootOperators()) {
+                downstreamOperatorIds.insert(rootOperator->getId());
+            };
         }
+        //perform re-operator placement on the query plan
+        sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
     }
 }
 

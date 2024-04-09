@@ -60,7 +60,7 @@ using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor
  */
 class ReconnectSchedulePredictor {
   public:
-    explicit ReconnectSchedulePredictor(
+    ReconnectSchedulePredictor(
         const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
     /**
@@ -88,7 +88,7 @@ class ReconnectSchedulePredictor {
      */
     static std::pair<S2Point, S1Angle> findPathCoverage(const S2Polyline& path, S2Point coveringNode, S1Angle coverage);
 
-    /**
+    virtual /**
      * @brief calculate a new reconnect schedule based on the location of other workers (potential parents to reconnect
      * to), this devices own position and the position of the current parent. A new reconnect schedule will only be calculated,
      * if the workers trajectory or speed has changed enough to pass the thresholds which were set at object construction
@@ -104,7 +104,9 @@ class ReconnectSchedulePredictor {
     std::optional<ReconnectSchedule> getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
                                                           const DataTypes::Experimental::GeoLocation& parentLocation,
                                                           const S2PointIndex<uint64_t>& FieldNodeIndex,
-                                                          bool isIndexUpdated);
+                                                          bool isIndexUpdted);
+
+    virtual ~ReconnectSchedulePredictor();
 #endif
   private:
     /**

@@ -258,8 +258,11 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @brief Informs the query manager about a status change in a sub query plan
      * @param qep the sub query plan
      * @param newStatus the new status of the query plan
+     * @param reconfigurationType The type of the reconfiguration that caused the status change
      */
-    void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus newStatus);
+    void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
+                                 Execution::ExecutableQueryPlanStatus newStatus,
+                                 ReconfigurationType reconfigurationType);
 
     /**
      * @brief get the shared query id mapped to the decomposed query plan id
@@ -403,6 +406,13 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     void injectEpochMarker(uint64_t epochBarrier, uint64_t queryId, OperatorId source);
 
   protected:
+    /**
+     * @brief Triggers a drain end of stream for a source
+     * @param source the source for which to trigger the drain end of stream
+     * @return true if successful
+     */
+    bool drain(DataSourcePtr source);
+
     uint64_t nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
     std::vector<BufferManagerPtr> bufferManagers;

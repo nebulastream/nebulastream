@@ -329,6 +329,24 @@ void WorkerRPCClient::stopQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
+bool WorkerRPCClient::migrateSubplans(const std::string& address, std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds, uint64_t version) {
+    NES_DEBUG("WorkerRPCCLient: Migrate query subplans");
+    ClientContext context;
+    MigrateQueryRequest request;
+    MigrateQueryReply reply;
+
+    request.set_version(version);
+    for (auto id : decomposedQueryPlanIds) {
+        request.add_subplanids(id);
+    }
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->MigrateQuery(&context, request, &reply);
+    return reply.success();
+}
+
 bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address={}", address);
 
@@ -479,6 +497,25 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     }
     //location is invalid
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
+}
+
+void WorkerRPCClient::startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent) {
+    StartBufferingRequest request;
+    request.set_parent(newParent);
+    StartQueryReply reply;
+    ClientContext context;
+
+    std::shared_ptr<Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<StartBufferingReply>;
+
+    call->responseReader = workerStub->PrepareAsyncStartBufferingOnAllSinks(&call->context, request, cq.get());
+
+    call->responseReader->StartCall();
+
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
 std::vector<Statistic::StatisticValue<>>

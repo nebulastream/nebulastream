@@ -176,6 +176,15 @@ class WorkerRPCClient {
                         const CompletionQueuePtr& cq);
 
     /**
+     * @brief method to stop a query
+     * @param address address of the new worker
+     * @param queryId to stop
+     * @param terminationType termination type of the query
+     * @return bool indicating success
+     */
+    bool migrateSubplans(const std::string& address, std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds, uint64_t version);
+
+    /**
      * @brief Registers to a remote worker node its monitoring plan.
      * @param ipAddress
      * @param the monitoring plan
@@ -257,6 +266,8 @@ class WorkerRPCClient {
      * @return Vector of StatisticValues
      */
     std::vector<Statistic::StatisticValue<>> probeStatistics(const Statistic::StatisticProbeRequestGRPC& probeRequest);
+
+    void startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent);
 
   private:
     WorkerRPCClient() = default;

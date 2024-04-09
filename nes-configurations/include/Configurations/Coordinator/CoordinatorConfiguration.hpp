@@ -82,6 +82,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
         RequestProcessor::StorageHandlerType::TwoPhaseLocking,
         "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
 
+    BoolOption enableProactiveDeployment = {ENABLE_PROACTIVE_DEPLOYMENT,
+                                             "false",
+                                             "Enable proactive deployment of migrated sub query plans. (Default: false)"};
+
     /**
      * @brief Configures different properties for the query optimizer.
      */
@@ -150,6 +154,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &rpcPort,
                 &restPort,
                 &logLevel,
+                &enableProactiveDeployment,
                 &enableMonitoring,
                 &configPath,
                 &worker,

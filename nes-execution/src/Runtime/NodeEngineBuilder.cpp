@@ -196,15 +196,15 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(bufferManagers),
             std::move(queryManager),
             [this](const std::shared_ptr<NodeEngine>& engine) {
-            return Network::NetworkManager::create(engine->getNodeEngineId(),
-                                                   this->workerConfiguration->localWorkerIp.getValue(),
-                                                   this->workerConfiguration->dataPort.getValue(),
-                                                   Network::ExchangeProtocol(engine->getPartitionManager(), engine),
-                                                   engine->getBufferManager(),
-                                                   this->workerConfiguration->senderHighwatermark.getValue(),
-                                                   this->workerConfiguration->numWorkerThreads.getValue(),
-                                                   workerConfiguration->connectSinksAsync.getValue(),
-                                                   workerConfiguration->connectSourceEventChannelsAsync.getValue());
+                return Network::NetworkManager::create(engine->getNodeEngineId(),
+                                                       this->workerConfiguration->localWorkerIp.getValue(),
+                                                       this->workerConfiguration->dataPort.getValue(),
+                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine),
+                                                       engine->getBufferManager(),
+                                                       this->workerConfiguration->senderHighwatermark.getValue(),
+                                                       this->workerConfiguration->numWorkerThreads.getValue(),
+                                                       workerConfiguration->connectSinksAsync.getValue(),
+                                                       workerConfiguration->connectSourceEventChannelsAsync.getValue());
             },
             std::move(partitionManager),
             std::move(compiler),
@@ -214,7 +214,8 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
             workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
             workerConfiguration->numberOfBuffersPerWorker.getValue(),
-            workerConfiguration->enableSourceSharing.getValue());
+            workerConfiguration->enableSourceSharing.getValue(),
+            workerConfiguration->timestampFileSinkAndWriteToTCP.getValue());
         //        Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {

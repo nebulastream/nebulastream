@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
+#include <optional>
 
 namespace NES {
 
@@ -311,6 +312,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
+    const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
+    WorkerId getParentId() const;
+    void setParentId(WorkerId newParent);
+    void initializeParentId(WorkerId newParent);
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
     /**
@@ -332,6 +337,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             uint64_t uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
                                             DecomposedQueryPlanVersion version);
+    bool bufferOutgoingTuples(WorkerId receivingWorkerId);
+    bool markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId, uint64_t version);
 
     /**
      * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
@@ -343,6 +350,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * plan did not match any running sub query
      */
     bool reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan);
+
+    bool getTimesStampOutputSources();
 
   public:
     /**
@@ -362,8 +371,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerWorker,
-                        bool sourceSharing);
+                        bool sourceSharing, bool timeStampOutputSources = true);
 
+    /**
+     * @brief get the opened tcp descriptor if there is one
+     */
+    std::optional<int> getTcpDescriptor(std::string sourceName) const;
+    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
@@ -387,6 +401,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+    bool timestampOutPutSources;
+    std::map<std::string, int> tcpDescriptor;
+    std::atomic<WorkerId> parentId;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

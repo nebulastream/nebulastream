@@ -30,8 +30,10 @@ void BaseNetworkChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR("
 
 void BaseNetworkChannel::close(bool isEventOnly,
                                Runtime::QueryTerminationType terminationType,
+                               uint64_t version,
                                uint16_t numSendingThreads,
-                               uint64_t currentMessageSequenceNumber) {
+                               uint64_t currentMessageSequenceNumber,
+                               uint64_t nextVersion) {
     if (isClosed) {
         return;
     }
@@ -41,7 +43,8 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                   Messages::ChannelType::EventOnlyChannel,
                                                   terminationType,
                                                   numSendingThreads,
-                                                  currentMessageSequenceNumber);
+                                                  currentMessageSequenceNumber,
+                                                  version);
     } else {
         //todo #4313: pass number of threads on client announcement instead of on closing
         sendMessage<Messages::EndOfStreamMessage>(zmqSocket,
@@ -49,10 +52,16 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                   Messages::ChannelType::DataChannel,
                                                   terminationType,
                                                   numSendingThreads,
-                                                  currentMessageSequenceNumber);
+                                                  currentMessageSequenceNumber,
+                                                  version,
+                                                  nextVersion);
     }
     zmqSocket.close();
     NES_DEBUG("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
     isClosed = true;
+}
+
+NesPartition BaseNetworkChannel::getPartition() {
+    return channelId.getNesPartition();
 }
 }// namespace NES::Network::detail

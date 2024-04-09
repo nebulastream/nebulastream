@@ -109,6 +109,24 @@ bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
     return false;
 }
 
+bool PartitionManager::unregisterSubpartitionConsumerIfNotConnected(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+
+    auto it = consumerPartitions.find(partition);
+    NES_ASSERT2_FMT(it != consumerPartitions.end(),
+                    "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
+
+    if (it->second.count() != 1) {
+        NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
+        return false;
+    }
+
+    it->second.unpin();
+
+    NES_INFO("PartitionManager: Unregistering Consumer {}; newCnt({})", partition.toString(), it->second.count());
+    return true;
+}
+
 std::optional<uint64_t> PartitionManager::getSubpartitionConsumerCounter(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
@@ -195,12 +213,23 @@ bool PartitionManager::addSubpartitionEventListener(NesPartition partition,
                                                     Runtime::RuntimeEventListenerPtr eventListener) {
     std::unique_lock lock(producerPartitionsMutex);
     //check if partition is present
-    if (auto it = producerPartitions.find(partition); it == producerPartitions.end()) {
+    auto it = producerPartitions.find(partition);
+    if (it == producerPartitions.end()) {
         it = producerPartitions.insert_or_assign(it, partition, PartitionProducerEntry(std::move(receiverLocation)));
         it->second.registerEventListener(eventListener);
         NES_DEBUG("PartitionManager: Registering Subpartition Event Consumer {}={}", partition.toString(), (*it).second.count());
         return true;
     }
+
+    if (eventListener.get() == it->second.getEventListener().get()) {
+        NES_DEBUG("PartitionManager: Cannot register {}", partition.toString());
+        return false;
+    }
+    it->second.registerEventListener(eventListener);
+    it->second.pin();
+    return true;
+
+
     NES_DEBUG("PartitionManager: Cannot register {}", partition.toString());
     return false;
 }

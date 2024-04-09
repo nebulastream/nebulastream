@@ -108,7 +108,7 @@ void RestServer::run() {
     auto connectivityController = REST::Controller::ConnectivityController::create(objectMapper, "/connectivity");
     auto queryCatalogController =
         REST::Controller::QueryCatalogController::create(objectMapper, queryCatalog, coordinator, "/queryCatalog", errorHandler);
-    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
+    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler, requestHandlerService);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      requestHandlerService,
                                                                      queryCatalog,
@@ -165,7 +165,7 @@ void RestServer::run() {
 
     /* Run server */
     server.run([this]() -> bool {
-        NES_DEBUG("checking if stop request has arrived for rest server listening on port {}.", port);
+        //NES_DEBUG("checking if stop request has arrived for rest server listening on port {}.", port);
         std::unique_lock lock(mutex);
         return !stopRequested;
     });

@@ -52,10 +52,18 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     bool success = false;
     try {
         //check if the plan is reconfigured
-        if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_REDEPLOYMENT) {
-            success = nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
-        } else {
-            success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
+        switch (decomposedQueryPlan->getState()) {
+            //case QueryState::REDEPLOYED: {
+            case QueryState::MARKED_FOR_REDEPLOYMENT: {
+                success = nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
+                break;
+            }
+            //case QueryState::DEPLOYED: {
+            case QueryState::MARKED_FOR_DEPLOYMENT: {
+                success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
+                break;
+            }
+            default: NES_ASSERT(false, "Cannot register query in another state than MARKED_FOR_DEPLOYMENT or MARKED_FOR_REDEPLOYMENT");
         }
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: {}", error.what());
@@ -101,9 +109,26 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     NES_DEBUG("WorkerRPCServer::StopQuery: got request for {}", request->sharedqueryid());
     auto terminationType = Runtime::QueryTerminationType(request->queryterminationtype());
     NES_ASSERT2_FMT(terminationType != Runtime::QueryTerminationType::Graceful
-                        && terminationType != Runtime::QueryTerminationType::Invalid,
+                        && terminationType != Runtime::QueryTerminationType::Invalid
+                        && terminationType != Runtime::QueryTerminationType::Drain,
                     "Invalid termination type requested");
     bool success = nodeEngine->stopQuery(request->sharedqueryid(), request->decomposedqueryid(), terminationType);
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("WorkerRPCServer::StopQuery: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
+Status WorkerRPCServer::MigrateQuery(ServerContext*, const MigrateQueryRequest* request, MigrateQueryReply* reply) {
+    NES_DEBUG("WorkerRPCServer::MigrateQuery: got request to migrate queries");
+    bool success = true;
+    for (auto id : request->subplanids()) {
+        success = success && nodeEngine->markSubPlanAsMigrated(id, request->version());
+    }
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
@@ -160,6 +185,23 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
         reply->set_success(false);
         return Status::CANCELLED;
     }
+}
+Status WorkerRPCServer::StartBufferingOnAllSinks(ServerContext* ,
+                                                 const StartBufferingRequest* request,
+                                                 StartBufferingReply* reply) {
+    //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
+    nodeEngine->setParentId(request->parent());
+    auto success = true;
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StartBufferingOnAllSinks: success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("WorkerRPCServer::StartBufferingOnAllSinks: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+
 }
 Status
 WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {

@@ -24,6 +24,7 @@
 #include <Sinks/Mediums/StatisticSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sinks/Mediums/StatisticSink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <StatisticIdentifiers.hpp>
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>

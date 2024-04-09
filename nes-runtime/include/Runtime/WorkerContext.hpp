@@ -35,6 +35,14 @@ class AbstractBufferProvider;
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
+struct BufferMetaData {
+    uint64_t numberOfTuples;
+    uint64_t originId;
+    uint64_t watermark;
+    uint64_t creationTimestampInMS;
+    uint64_t sequenceNumber;
+};
+
 /**
  * @brief A WorkerContext represents the current state of a worker thread
  * Note that it is not thread-safe per se but it is meant to be used in
@@ -53,7 +61,8 @@ class WorkerContext {
     /// data channels that send data downstream
     std::unordered_map<OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>> dataChannelFutures;
+    std::unordered_map<OperatorId, std::optional<std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>>
+        dataChannelFutures;
     /// event only channels that send events upstream
     std::unordered_map<OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// reverse event channels that have not established a connection yet
@@ -66,7 +75,8 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
-    std::unordered_map<uint64_t, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+    std::unordered_map<uint64_t, std::queue<TupleBuffer>> reconnectBufferStorage;
+//    std::unordered_map<uint64_t, std::queue<std::pair<BufferMetaData, std::vector<uint8_t>>>> reconnectBufferStorage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -188,7 +198,7 @@ class WorkerContext {
     bool releaseNetworkChannel(OperatorId id,
                                Runtime::QueryTerminationType type,
                                uint16_t sendingThreadCount,
-                               uint64_t currentMessageSequenceNumber);
+                               uint64_t currentMessageSequenceNumber, uint64_t version, uint64_t nextVersion);
 
     /**
      * @brief This stores a network channel for an operator
@@ -226,7 +236,7 @@ class WorkerContext {
      * @param operatorId id of the operator which will use the network channel
      * @return a pointer to the network channel or nullptr if the connection timed out
      */
-    Network::NetworkChannelPtr waitForAsyncConnection(OperatorId operatorId);
+    Network::NetworkChannelPtr waitForAsyncConnection(NES::OperatorId operatorId, uint64_t retries);
 
     /**
      * @brief check if an async connection that was started by the operator with the specified id is currently in progress
@@ -234,6 +244,13 @@ class WorkerContext {
      * @return true if a connection is currently being established
      */
     bool isAsyncConnectionInProgress(OperatorId operatorId);
+
+    /**
+     * @brief do not try connecting to a new data channel until the next time storeNetworkChannelFuture() is called
+     * @param operatorId the id of the callling operator
+     * @return true on success. False if the operation was aborted because a connection attempt is still in progress
+     */
+    bool doNotTryConnectingDataChannel(OperatorId operatorId);
 
     /**
      * @brief retrieve a registered output channel
@@ -260,7 +277,7 @@ class WorkerContext {
      * @brief stop a connection process which is currently in progress
      * @param operatorId the id of the operator that started the connection process
      */
-    void abortConnectionProcess(OperatorId operatorId);
+    void abortConnectionProcess(OperatorId operatorId, uint64_t version);
 
     /**
      * @brief check if a network channel exists for the sink in question

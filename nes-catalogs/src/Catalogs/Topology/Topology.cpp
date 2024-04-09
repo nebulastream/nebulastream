@@ -1015,5 +1015,27 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
     return nodeInfo;
 }
 
+void Topology::insertPrediction(const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
+                                const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                                std::vector<SharedQueryPlanPtr> affectedQueryPlans,
+                                WorkerId id) {
+    if (predictions.contains(id)) {
+        //todo: merge delta
+        NES_NOT_IMPLEMENTED();
+    }
+    Experimental::TopologyPrediction::TopologyDelta delta(expectedAddedLinks, expectedRemovedLinks);
+    predictions.insert({id, {std::move(delta), affectedQueryPlans}});
+}
+std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> Topology::getPrediction(WorkerId id) {
+    if (!predictions.contains(id)) {
+        return std::nullopt;
+    }
+    return predictions.at(id);
+}
+
+void Topology::removePrediction(WorkerId id) {
+    predictions.erase(id);
+}
+
 WorkerId Topology::getNextWorkerId() { return ++topologyNodeIdCounter; }
 }// namespace NES

@@ -26,6 +26,7 @@ service WorkerRPCService {
 
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
+  rpc MigrateQuery (MigrateQueryRequest) returns (MigrateQueryReply) {}
 
   rpc RegisterMonitoringPlan (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
@@ -33,6 +34,7 @@ service WorkerRPCService {
   rpc InjectEpochBarrier (EpochBarrierNotification) returns (EpochBarrierReply) {}
 
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
+  rpc StartBufferingOnAllSinks(StartBufferingRequest) returns (StartBufferingReply) {}
 
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
 
@@ -80,6 +82,15 @@ message UnregisterQueryReply {
 message StartQueryRequest {
   uint64 sharedQueryId = 1;
   uint64 decomposedQueryId = 2;
+}
+
+message MigrateQueryRequest {
+  repeated uint64 subPlanIds = 1;
+  uint64 version = 2;
+}
+
+message MigrateQueryReply {
+  bool success = 1;
 }
 
 message StartQueryReply {
@@ -191,4 +202,12 @@ message StatisticReply {
 
 message ProbeStatisticsReply {
   repeated StatisticReply statistics = 1;
+}
+
+message StartBufferingRequest {
+  uint64 parent = 1;
+}
+
+message StartBufferingReply {
+  bool success = 1;
 }

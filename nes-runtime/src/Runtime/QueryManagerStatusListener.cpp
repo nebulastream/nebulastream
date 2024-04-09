@@ -32,12 +32,19 @@
 
 namespace NES::Runtime {
 void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
-                                                   Execution::ExecutableQueryPlanStatus status) {
+                                                   Execution::ExecutableQueryPlanStatus status,
+                                                   ReconfigurationType reconfigurationType) {
     NES_ASSERT(qep, "Invalid query plan object");
     if (status == Execution::ExecutableQueryPlanStatus::Finished) {
         for (const auto& source : qep->getSources()) {
             if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
-                NES_ASSERT2_FMT(source->stop(Runtime::QueryTerminationType::Graceful),
+                QueryTerminationType terminationType;
+                switch (reconfigurationType) {
+                    case ReconfigurationType::SoftEndOfStream: terminationType = QueryTerminationType::Graceful; break;
+                    case ReconfigurationType::Drain: terminationType = QueryTerminationType::Drain; break;
+                    default: NES_THROW_RUNTIME_ERROR("Unexpected reconfiguration type");
+                }
+                NES_ASSERT2_FMT(source->stop(terminationType),
                                 "Cannot cleanup source " << source->getOperatorId());// just a clean-up op
             }
         }
@@ -144,11 +151,11 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
                   entry->getSharedQueryId(),
                   entry->getDecomposedQueryPlanId());
         entry->notifySourceCompletion(source, terminationType);
-        if (terminationType == QueryTerminationType::Graceful) {
+        if (terminationType == QueryTerminationType::Graceful || terminationType == QueryTerminationType::Drain) {
             queryStatusListener->notifySourceTermination(entry->getSharedQueryId(),
                                                          entry->getDecomposedQueryPlanId(),
                                                          source->getOperatorId(),
-                                                         QueryTerminationType::Graceful);
+                                                         terminationType);
         }
     }
 }

@@ -127,6 +127,12 @@ class NonBlockingMonotonicSeqQueue {
         return *this;
     }
 
+    //todo: make this a move constructor instead
+    NonBlockingMonotonicSeqQueue(const NonBlockingMonotonicSeqQueue& other) {
+        this->head = other.head;
+        this->currentSeq = other.currentSeq.load();
+    }
+
     /**
      * @brief Emplace a new element to the queue.
      * This method can be called concurrently.
