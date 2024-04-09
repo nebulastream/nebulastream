@@ -20,6 +20,7 @@ add_source_files(unikernel-export
 
 add_source_files(unikernel-lib
         PagedVector.cpp
+        PagedVectorRowLayout.cpp
 )
 add_source_files(nes-nautilus
         PagedVector.cpp

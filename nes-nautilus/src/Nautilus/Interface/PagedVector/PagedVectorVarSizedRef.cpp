@@ -13,11 +13,11 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRowLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 
@@ -80,6 +80,11 @@ Value<UInt64> PagedVectorVarSizedRef::getNumberOfEntriesOnCurrPage() {
 
 void PagedVectorVarSizedRef::setNumberOfEntriesOnCurrPage(const Value<>& val) {
     getMember(pagedVectorVarSizedRef, PagedVectorVarSized, numberOfEntriesOnCurrPage).store(val);
+}
+
+void* allocateEntryProxy(void* pagedVectorRef) {
+    auto pagedVector = static_cast<PagedVectorRowLayout*>(pagedVectorRef);
+    pagedVector->allocateEntry();
 }
 
 void PagedVectorVarSizedRef::writeRecord(Record record) {
