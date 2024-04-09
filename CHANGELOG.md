@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.90](https://github.com/nebulastream/nebulastream/tree/v0.6.90) (2024-04-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.89...v0.6.90)
+
+### Bug Fixes 🐛
+
+- \[BUG\] The master branch does not compile on macOS [\#4717](https://github.com/nebulastream/nebulastream/issues/4717)
+
 ## [v0.6.89](https://github.com/nebulastream/nebulastream/tree/v0.6.89) (2024-04-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.88...v0.6.89)
