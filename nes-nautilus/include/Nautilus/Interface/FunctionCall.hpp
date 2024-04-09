@@ -13,8 +13,10 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#include "Identifiers/Identifiers.hpp"
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
+#include <Nautilus/Interface/DataTypes/Identifier.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -31,7 +33,9 @@ struct dependent_false : std::false_type {};
 
 template<typename Arg>
 auto transform(Arg argument) {
-    if constexpr (std::is_same<Arg, Value<Int8>>::value) {
+    if constexpr (std::is_same<Arg, Value<WorkerId>>::value) {
+        return *argument.value;
+    } else if constexpr (std::is_same<Arg, Value<Int8>>::value) {
         return argument.value->getValue();
     } else if constexpr (std::is_same<Arg, Value<Int16>>::value) {
         return argument.value->getValue();
@@ -116,6 +120,12 @@ template<typename T>
     requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
 auto createDefault();
 
+template<typename T>
+    requires NESIdentifier<T>
+auto createDefault() {
+    return INVALID<T>;
+}
+
 template<typename R>
     requires std::is_fundamental_v<R> || std::is_same_v<void*, R>
 auto createDefault() {
@@ -189,4 +199,4 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
 
 }// namespace NES::Nautilus
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_

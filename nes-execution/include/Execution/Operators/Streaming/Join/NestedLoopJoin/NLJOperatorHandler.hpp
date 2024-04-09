@@ -64,7 +64,7 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
  * @param joinBuildSide
  * @return void* that will be translated to a MemRef
  */
-void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, uint64_t joinBuildSideInt);
+void* getNLJPagedVectorProxy(void* ptrNljWindow, WorkerId workerId, uint64_t joinBuildSideInt);
 
 };    // namespace NES::Runtime::Execution::Operators
 #endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

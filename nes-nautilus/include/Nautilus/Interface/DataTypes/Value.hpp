@@ -13,12 +13,14 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Identifier.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
@@ -119,7 +121,7 @@ class Value : BaseValue {
     using element_type = ValueType;
 
     /*
-     * Creates a Value<Int8> object from an std::int8_t.
+     * Creates a Value<Int8> object from a std::int8_t.
      */
     Value(int8_t value) : Value(std::make_shared<Int8>(value)) {
         Tracing::TraceUtil::traceConstOperation(this->value, this->ref);
@@ -197,10 +199,16 @@ class Value : BaseValue {
     /*
      * Creates a Value<MemRef> object from an std::int8_t*.
      */
-    template<typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
+    template<typename T = ValueType>
+        requires(std::is_same_v<T, MemRef>)
     Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) {
         Tracing::TraceUtil::traceConstOperation(this->value, this->ref);
     };
+
+    template<NESIdentifier T = ValueType>
+    explicit Value(T identifier) : Value(std::static_pointer_cast<const Any>(std::make_shared<Identifier<T>>(identifier))) {
+        Tracing::TraceUtil::traceConstOperation(this->value, this->ref);
+    }
 
     Value(ValueType&& value) : value(std::make_shared<ValueType>(value)), ref(createNextValueReference(value.getType())){};
 
@@ -706,4 +714,4 @@ typename Value<ValueType>::ValueIndexReference Value<ValueType>::operator[](uint
 
 }// namespace NES::Nautilus
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_

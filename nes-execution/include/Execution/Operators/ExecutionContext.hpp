@@ -69,7 +69,7 @@ class ExecutionContext final {
      * @brief Get worker id of the current execution.
      * @return Value<UInt64>
      */
-    Value<UInt64> getWorkerId();
+    Value<WorkerId> getWorkerId();
 
     /**
      * @brief Allocate a new tuple buffer.

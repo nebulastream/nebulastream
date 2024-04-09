@@ -68,7 +68,7 @@ void QueryStatistics::incProcessedTasks() { this->processedTasks++; }
 void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
-void QueryStatistics::incTasksPerPipelineId(PipelineId pipelineId, uint64_t workerId) {
+void QueryStatistics::incTasksPerPipelineId(PipelineId pipelineId, WorkerId workerId) {
     (*this->pipelineIdToTaskThroughputMap.wlock())[pipelineId][workerId]++;
 }
 void QueryStatistics::incQueueSizeSum(uint64_t size) { this->queueSizeSum += size; }
@@ -81,7 +81,7 @@ void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency)
     (*tsToLatencyMap.wlock())[now].push_back(latency);
 }
 
-folly::Synchronized<std::map<PipelineId, std::map<uint64_t, std::atomic<uint64_t>>>>& QueryStatistics::getPipelineIdToTaskMap() {
+folly::Synchronized<std::map<PipelineId, std::map<WorkerId, std::atomic<uint64_t>>>>& QueryStatistics::getPipelineIdToTaskMap() {
     return pipelineIdToTaskThroughputMap;
 };
 

@@ -41,7 +41,7 @@ WorkerContext::~WorkerContext() {
     localBufferPoolTLS.reset(nullptr);
 }
 
-uint32_t WorkerContext::getId() const { return workerId; }
+WorkerId WorkerContext::getId() const { return workerId; }
 
 uint32_t WorkerContext::getQueueId() const { return queueId; }
 

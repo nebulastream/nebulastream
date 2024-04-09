@@ -23,7 +23,8 @@
 namespace NES::Runtime::Execution::Operators {
 
 void* getCountMinRefProxy(void* ptrOpHandler, Statistic::MetricHash metricHash, StatisticId statisticId,
-                          uint64_t workerId, uint64_t timestamp)  {
+                          WorkerId workerId,
+                          uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<CountMinOperatorHandler*>(ptrOpHandler);
 

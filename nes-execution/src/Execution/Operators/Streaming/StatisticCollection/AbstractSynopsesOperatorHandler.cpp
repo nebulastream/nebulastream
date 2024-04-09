@@ -37,14 +37,17 @@ void AbstractSynopsesOperatorHandler::stop(QueryTerminationType terminationType,
         std::vector<Statistic::HashStatisticPair> allStatisticsPlusHashesToSend;
         for (auto& statisticStore : operatorStatisticStores) {
             auto statisticsPlusHashesToSend = statisticStore->getAllStatistics();
-            allStatisticsPlusHashesToSend.insert(allStatisticsPlusHashesToSend.end(), statisticsPlusHashesToSend.begin(), statisticsPlusHashesToSend.end());
+            allStatisticsPlusHashesToSend.insert(allStatisticsPlusHashesToSend.end(),
+                                                 statisticsPlusHashesToSend.begin(),
+                                                 statisticsPlusHashesToSend.end());
         }
 
         // Merging the count min sketches according to their timestamp and hash
         auto combinedStatistics = mergeStatistics(allStatisticsPlusHashesToSend);
 
         // Writing them into tuple buffers and then emitting the sketches
-        auto statisticTupleBuffers = statisticFormat->writeStatisticsIntoBuffers(combinedStatistics, *pipelineCtx->getBufferManager());
+        auto statisticTupleBuffers =
+            statisticFormat->writeStatisticsIntoBuffers(combinedStatistics, *pipelineCtx->getBufferManager());
         for (auto& buf : statisticTupleBuffers) {
             pipelineCtx->dispatchBuffer(buf);
         }
@@ -52,9 +55,7 @@ void AbstractSynopsesOperatorHandler::stop(QueryTerminationType terminationType,
 }
 
 Statistic::StatisticPtr
-AbstractSynopsesOperatorHandler::getStatistic(uint64_t workerId,
-                                                               Statistic::StatisticHash statisticHash,
-                                                               uint64_t timestamp) {
+AbstractSynopsesOperatorHandler::getStatistic(WorkerId workerId, Statistic::StatisticHash statisticHash, uint64_t timestamp) {
     auto sliceStart = Windowing::TimeMeasure(sliceAssigner.getSliceStartTs(timestamp));
     auto sliceEnd = Windowing::TimeMeasure(sliceAssigner.getSliceEndTs(timestamp));
     // We have to do this modulo, as the workerIds might not always start at 0
@@ -73,21 +74,22 @@ AbstractSynopsesOperatorHandler::getStatistic(uint64_t workerId,
 }
 
 void AbstractSynopsesOperatorHandler::checkStatisticsSending(const BufferMetaData& bufferMetaData,
-                                                      Statistic::StatisticHash statisticHash,
-                                                      PipelineExecutionContext* pipelineCtx) {
+                                                             Statistic::StatisticHash statisticHash,
+                                                             PipelineExecutionContext* pipelineCtx) {
     // The watermark processor handles the minimal watermark across the stream
     uint64_t newGlobalWatermark =
         watermarkProcessor->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
 
-
     // Get statistics from all statistics stores
     std::vector<Statistic::HashStatisticPair> allStatisticsPlusHashesToSend;
     for (auto& statisticStore : operatorStatisticStores) {
-        auto statisticsToSend = statisticStore->getStatistics(statisticHash, Windowing::TimeMeasure(0), Windowing::TimeMeasure(newGlobalWatermark));
+        auto statisticsToSend =
+            statisticStore->getStatistics(statisticHash, Windowing::TimeMeasure(0), Windowing::TimeMeasure(newGlobalWatermark));
         std::vector<Statistic::HashStatisticPair> statisticsPlusHashesToSend(statisticsToSend.size());
         std::transform(statisticsToSend.begin(),
-                       statisticsToSend.end(), std::back_inserter(allStatisticsPlusHashesToSend),
+                       statisticsToSend.end(),
+                       std::back_inserter(allStatisticsPlusHashesToSend),
                        [statisticHash](const Statistic::StatisticPtr statistic) {
                            return std::make_pair(statisticHash, statistic);
                        });
@@ -98,12 +100,15 @@ void AbstractSynopsesOperatorHandler::checkStatisticsSending(const BufferMetaDat
 
     // If there are no statistics, then just return
     if (combinedStatisticsToSend.empty()) {
-        NES_DEBUG("Not sending any statistics for statistic hash = {}, bufferMetaData = {}", statisticHash, bufferMetaData.toString());
+        NES_DEBUG("Not sending any statistics for statistic hash = {}, bufferMetaData = {}",
+                  statisticHash,
+                  bufferMetaData.toString());
         return;
     }
 
     // Sending these statistics to the sink
-    auto statisticTupleBuffers = statisticFormat->writeStatisticsIntoBuffers(combinedStatisticsToSend, *pipelineCtx->getBufferManager());
+    auto statisticTupleBuffers =
+        statisticFormat->writeStatisticsIntoBuffers(combinedStatisticsToSend, *pipelineCtx->getBufferManager());
     for (auto& buf : statisticTupleBuffers) {
         pipelineCtx->dispatchBuffer(buf);
     }
@@ -128,9 +133,7 @@ AbstractSynopsesOperatorHandler::mergeStatistics(const std::vector<Statistic::Ha
          * @return True, if equal, false otherwise
          */
         bool operator==(const MergeStatisticKey& other) const {
-            return statisticHash == other.statisticHash &&
-                startTs == other.startTs &&
-                endTs == other.endTs;
+            return statisticHash == other.statisticHash && startTs == other.startTs && endTs == other.endTs;
         }
 
         /**
@@ -162,7 +165,8 @@ AbstractSynopsesOperatorHandler::mergeStatistics(const std::vector<Statistic::Ha
     for (auto& [statisticHash, statistic] : statisticsPlusHashes) {
         MergeStatisticKey key(statisticHash, statistic->getStartTs(), statistic->getEndTs());
         if (mergeStatisticKeyToStatistics.contains(key)) {
-            mergeStatisticKeyToStatistics[key]->as<Statistic::SynopsesStatistic>()->merge(*statistic->as<Statistic::SynopsesStatistic>());
+            mergeStatisticKeyToStatistics[key]->as<Statistic::SynopsesStatistic>()->merge(
+                *statistic->as<Statistic::SynopsesStatistic>());
         } else {
             mergeStatisticKeyToStatistics[key] = statistic;
         }
@@ -182,6 +186,6 @@ AbstractSynopsesOperatorHandler::AbstractSynopsesOperatorHandler(const uint64_t 
                                                                  const Statistic::AbstractStatisticFormatPtr& statisticFormat,
                                                                  const std::vector<OriginId>& inputOrigins)
     : sliceAssigner(windowSize, windowSlide), sendingPolicy(sendingPolicy), statisticFormat(statisticFormat),
-      watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)){}
+      watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)) {}
 
 }// namespace NES::Runtime::Execution::Operators

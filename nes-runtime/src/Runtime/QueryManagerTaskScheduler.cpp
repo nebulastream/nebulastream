@@ -291,7 +291,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
                                             DecomposedQueryPlanId decomposedQueryPlanId,
                                             PipelineId pipelineId,
                                             WorkerContext& workerContext) {
-    tempCounterTasksCompleted[workerContext.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
+    tempCounterTasksCompleted[workerContext.getId().getRawValue() % tempCounterTasksCompleted.size()].fetch_add(1);
 #ifndef LIGHT_WEIGHT_STATISTICS
     if (queryToStatisticsMap.contains(decomposedQueryPlanId)) {
         auto statistics = queryToStatisticsMap.find(decomposedQueryPlanId);

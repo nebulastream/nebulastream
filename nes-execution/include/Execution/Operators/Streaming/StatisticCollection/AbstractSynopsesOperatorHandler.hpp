@@ -25,7 +25,6 @@
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
 
-
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -50,7 +49,7 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
      * @param timestamp
      * @return StatisticPtr
      */
-    Statistic::StatisticPtr getStatistic(uint64_t workerId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
+    Statistic::StatisticPtr getStatistic(WorkerId workerId, Statistic::StatisticHash statisticHash, uint64_t timestamp);
 
     /**
      * @brief Checks if we can/have to send/emit sketches to the sink
@@ -68,7 +67,8 @@ class AbstractSynopsesOperatorHandler : public OperatorHandler {
      * @param statisticsPlusHashes
      * @return Vector of merged statistics.
      */
-    std::vector<Statistic::HashStatisticPair> mergeStatistics(const std::vector<Statistic::HashStatisticPair>& statisticsPlusHashes);
+    std::vector<Statistic::HashStatisticPair>
+    mergeStatistics(const std::vector<Statistic::HashStatisticPair>& statisticsPlusHashes);
 
     /**
      * @brief Abstract method that each synopsis has to implement. It creates a new statistic for the given time period.

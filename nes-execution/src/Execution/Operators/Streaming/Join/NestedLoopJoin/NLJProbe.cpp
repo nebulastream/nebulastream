@@ -89,7 +89,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     const auto windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, nljWindowTriggerTaskRef);
 
     // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const Value<UInt64> workerIdForPagedVectors(0_u64);
+    const Value<WorkerId> workerIdForPagedVectors(INVALID_WORKER_NODE_ID);
 
     // Getting the left and right paged vector
     const auto sliceRefLeft =

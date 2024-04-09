@@ -47,7 +47,7 @@ class WorkerContext {
     using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
 
     /// the id of this worker context (unique per thread).
-    uint32_t workerId;
+    WorkerId workerId;
     /// object reference counters
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
@@ -100,7 +100,7 @@ class WorkerContext {
      * @brief get current worker context thread id. This is assigned by calling NesThread::getId()
      * @return current worker context thread id
      */
-    uint32_t getId() const;
+    WorkerId getId() const;
 
     /**
      * @brief Sets the ref counter for a generic object using its pointer address as lookup

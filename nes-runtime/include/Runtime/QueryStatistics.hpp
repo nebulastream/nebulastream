@@ -130,12 +130,12 @@ class QueryStatistics {
      * @param pipelineId
      * @param workerId
     */
-    void incTasksPerPipelineId(PipelineId pipelineId, uint64_t workerId);
+    void incTasksPerPipelineId(PipelineId pipelineId, WorkerId workerId);
 
     /**
     * @brief get pipeline id task map
     */
-    folly::Synchronized<std::map<PipelineId, std::map<uint64_t, std::atomic<uint64_t>>>>& getPipelineIdToTaskMap();
+    folly::Synchronized<std::map<PipelineId, std::map<WorkerId, std::atomic<uint64_t>>>>& getPipelineIdToTaskMap();
 
     /**
      * @brief get sum of all latencies
@@ -240,7 +240,7 @@ class QueryStatistics {
     std::atomic<SharedQueryId> queryId = INVALID_SHARED_QUERY_ID;
     std::atomic<DecomposedQueryPlanId> subQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>> tsToLatencyMap;
-    folly::Synchronized<std::map<PipelineId, std::map<uint64_t, std::atomic<uint64_t>>>> pipelineIdToTaskThroughputMap;
+    folly::Synchronized<std::map<PipelineId, std::map<WorkerId, std::atomic<uint64_t>>>> pipelineIdToTaskThroughputMap;
 };
 
 }// namespace NES::Runtime

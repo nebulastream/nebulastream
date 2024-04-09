@@ -74,14 +74,14 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
       pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
 
-void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {
+void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerId workerId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
     NES_DEBUG("nljSlice:\n{}", nljSlice->toString());
     switch (joinBuildSide) {
-        case QueryCompilation::JoinBuildSideType::Left: return nljSlice->getPagedVectorRefLeft(workerId);
-        case QueryCompilation::JoinBuildSideType::Right: return nljSlice->getPagedVectorRefRight(workerId);
+        case QueryCompilation::JoinBuildSideType::Left: return nljSlice->getPagedVectorRefLeft(workerId.getRawValue());
+        case QueryCompilation::JoinBuildSideType::Right: return nljSlice->getPagedVectorRefRight(workerId.getRawValue());
     }
 }
 }// namespace NES::Runtime::Execution::Operators
