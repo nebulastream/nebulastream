@@ -21,6 +21,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <StatisticIdentifiers.hpp>
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>
