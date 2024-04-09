@@ -1,7 +1,6 @@
 find_package(Argumentum REQUIRED)
 
 add_subdirectory(src)
-set(BOOST_ROOT "${_VCPKG_INSTALLED_DIR}/x64-linux-nes")
 find_package(Argumentum REQUIRED)
 get_source(unikernel-query-export UNIKERNEL_QUERY_EXPORT_SOURCES)
 add_library(UnikernelQueryExport SHARED ${UNIKERNEL_QUERY_EXPORT_SOURCES})
@@ -75,14 +74,14 @@ foreach (HEADER_FILE ${HEADER_FILES})
     get_filename_component(HEADER_NAME ${HEADER_FILE} NAME)
     register_public_header_file(NesUnikernelExporter ${CMAKE_CURRENT_SOURCE_DIR}/include/handler/${HEADER_NAME} handler/${HEADER_NAME})
 endforeach ()
-
+find_package(folly CONFIG REQUIRED)
 target_link_libraries(NesUnikernelExporter PUBLIC
         Argumentum::argumentum
         yaml-cpp
         UnikernelCommon
         nes-common
-#        Folly::folly
-#        Folly::folly_deps
+        Folly::folly
+        Folly::folly_deps
         nes-data-types
         UnikernelQueryExport
 )

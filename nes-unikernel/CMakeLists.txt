@@ -43,8 +43,9 @@ endif ()
 
 if (UNIKERNEL_USE_CUSTOM_DEPS)
     find_package(scn CONFIG REQUIRED)
-    find_package(smallfolly REQUIRED)
-    set(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} smallfolly)
+    find_package(smallfolly CONFIG REQUIRED)
+    find_package(spdlog CONFIG REQUIRED)
+    set(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} smallfolly scn::scn spdlog::spdlog zmq-fork)
     message("Unikernel use custom libs")
 else ()
     FetchContent_Declare(
@@ -54,7 +55,7 @@ else ()
     )
     FetchContent_MakeAvailable(scnlib)
     message("Unikernel does not use custom libs")
-    set(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} Folly::folly)
+    set(UNIKERNEL_LIBS ${UNIKERNEL_LIBS} Folly::folly Folly::folly_deps)
 endif ()
 
 add_subdirectory(src)
@@ -65,7 +66,8 @@ if (UNIKERNEL_USE_LTO)
     SET_PROPERTY(TARGET unikernel-lib PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
 endif ()
 
-target_include_directories(unikernel-lib PRIVATE
+target_include_directories(unikernel-lib PUBLIC
+        ${SMALLFOLLY_INCLUDE_DIR}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-catalogs/include>
@@ -75,10 +77,13 @@ target_include_directories(unikernel-lib PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>)
-target_compile_options(unikernel-lib PRIVATE ${UNIKERNEL_COMPILE_OPTIONS}
+target_compile_options(unikernel-lib PUBLIC ${UNIKERNEL_COMPILE_OPTIONS}
         -Wno-error=unused-parameter
 )
-target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork scn::scn ${UNIKERNEL_LIBS} -static)
+
+get_target_property(UNIKERNEL_INCLUDES unikernel-lib INCLUDE_DIRECTORIES)
+message("unikernel-lib ${UNIKERNEL_INCLUDES}")
+target_link_libraries(unikernel-lib PUBLIC ${UNIKERNEL_LIBS} -static)
 
 add_executable(pipeline-test tests/pipelineTest.cpp)
 target_compile_options(pipeline-test PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
@@ -129,23 +134,11 @@ foreach (PIPELINE_FILE ${PIPELINE_FILES})
     endif ()
 
     set_target_properties(unikernel${PIPELINE_NUMBER} PROPERTIES OUTPUT_NAME "unikernel${PIPELINE_NUMBER}")
-    target_compile_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline${PIPELINE_NUMBER}.hpp")
-    target_link_options(unikernel${PIPELINE_NUMBER} PRIVATE ${UNIKERNEL_LINK_OPTIONS} -static)
-    target_compile_definitions(unikernel${PIPELINE_NUMBER} PRIVATE NES_LOGLEVEL_INFO)
+    target_compile_options(unikernel${PIPELINE_NUMBER} PUBLIC ${UNIKERNEL_COMPILE_OPTIONS} "-include${CMAKE_CURRENT_SOURCE_DIR}/pipelines/Pipeline${PIPELINE_NUMBER}.hpp")
+    target_link_options(unikernel${PIPELINE_NUMBER} PUBLIC ${UNIKERNEL_LINK_OPTIONS} -static)
+    target_compile_definitions(unikernel${PIPELINE_NUMBER} PUBLIC NES_LOGLEVEL_INFO)
+    target_link_libraries(unikernel${PIPELINE_NUMBER} PUBLIC unikernel-lib)
 
-    # Link libraries and include directories
-    target_link_libraries(unikernel${PIPELINE_NUMBER} PRIVATE ${OPERATOR_FILES} unikernel-lib)
-    target_include_directories(unikernel${PIPELINE_NUMBER} PRIVATE
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-execution/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-nautilus/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-catalogs/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
-    )
 endforeach ()
 
 add_executable(compile-time-schema-test tests/compileTimeSchemaTest.cpp)
