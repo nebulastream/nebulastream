@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "Plans/Global/Query/SharedQueryPlan.hpp"
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>

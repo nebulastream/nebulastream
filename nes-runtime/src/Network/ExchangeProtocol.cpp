@@ -71,7 +71,7 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
         }
         if (!(*maxSeqNumberPerNesPartitionLocked)[nesPartition].contains(version)) {
             //std::pair<Util::NonBlockingMonotonicSeqQueue<uint64_t>, std::optional<uint64_t>> pair{Util::NonBlockingMonotonicSeqQueue<uint64_t>(), std::nullopt};
-            SequenceInfo info{Util::NonBlockingMonotonicSeqQueue<uint64_t>(), std::nullopt, 1};
+            SequenceInfo info{Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>(), std::nullopt, 1};
             (*maxSeqNumberPerNesPartitionLocked)[nesPartition][version] = info;
         } else {
             (*maxSeqNumberPerNesPartitionLocked)[nesPartition][version].counter++;

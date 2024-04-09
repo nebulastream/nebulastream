@@ -85,12 +85,13 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Enable reconfiguration of running query plans.
      */
+     //todo: probably this should be removed in favor of enable incremental placement
     BoolOption enableQueryReconfiguration = {ENABLE_QUERY_RECONFIGURATION,
-                                             false,
+                                             "true",
                                              "Enable reconfiguration of running query plans. (Default: false)"};
 
     BoolOption enableProactiveDeployment = {ENABLE_PROACTIVE_DEPLOYMENT,
-                                             false,
+                                             "false",
                                              "Enable proactive deployment of migrated sub query plans. (Default: false)"};
 
     /**

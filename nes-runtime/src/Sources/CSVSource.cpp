@@ -130,7 +130,9 @@ CSVSource::CSVSource(SchemaPtr schema,
         physicalTypes.push_back(physicalField);
     }
 
-    this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter, addTimeStampsAndReadOnStartup);
+    //todo: we are not usign the parser when timestamping
+    //this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter, addTimeStampsAndReadOnStartup);
+    this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
     if (addTimeStampsAndReadOnStartup) {
         NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
         if (this->fileEnded) {
@@ -378,7 +380,7 @@ std::string CSVSource::toString() const {
     return ss.str();
 }
 
-void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");

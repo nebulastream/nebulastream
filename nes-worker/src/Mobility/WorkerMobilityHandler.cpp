@@ -261,9 +261,12 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconne
         NES_ASSERT(predictedNextReconnectTime.has_value(), "predicted reconnect provided but no time provided");
         TopologyLinkInformation expectedRemovedLink(workerId, newParentId);
         TopologyLinkInformation expectedAddedLink(workerId, predictedNextParent.value());
-        success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink}, {expectedRemovedLink}, {expectedAddedLink}, predictedNextReconnectTime.value());
+        //todo: reactivate this later
+        //success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink}, {expectedRemovedLink}, {expectedAddedLink}, predictedNextReconnectTime.value());
+        success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink});
     } else {
-        success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink}, {}, {}, 0);
+        //success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink}, {}, {}, 0);
+        success = coordinatorRpcClient->relocateTopologyNode({removedLink}, {addedLink});
     }
     if (success) {
         //update locally saved information about parent

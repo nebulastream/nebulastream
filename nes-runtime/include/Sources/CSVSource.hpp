@@ -16,7 +16,6 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>

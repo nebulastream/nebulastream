@@ -18,6 +18,7 @@
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <folly/Synchronized.h>
 #include <map>
+#include <optional>
 #include <variant>
 
 namespace NES::Runtime {
@@ -93,7 +94,7 @@ class ExchangeProtocol {
     [[nodiscard]] std::shared_ptr<PartitionManager> getPartitionManager() const;
 
     struct SequenceInfo {
-        Util::NonBlockingMonotonicSeqQueue<uint64_t> queue;
+        Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> queue;
         std::optional<uint64_t> expected;
         uint64_t counter;
     };
