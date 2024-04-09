@@ -206,7 +206,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     for (const auto& sink : qep->getSinks()) {
         const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
         if (networkSink) {
-            networkSink->applyNextSinkDescriptor();
+            //networkSink->applyNextSinkDescriptor();
         }
     }
 
@@ -343,10 +343,10 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
     }
 
     for (const auto& source : qep->getSources()) {
-        if (type == QueryTerminationType::Graceful) {
+        if (type == QueryTerminationType::Graceful || type == QueryTerminationType::Drain) {
             // graceful shutdown :: only leaf sources
             if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
-                NES_ASSERT2_FMT(source->stop(QueryTerminationType::Graceful),
+                NES_ASSERT2_FMT(source->stop(type),
                                 "Cannot terminate source " << source->getOperatorId());
             }
         } else if (type == QueryTerminationType::HardStop) {
@@ -435,6 +435,55 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source) {
                 "soft end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep{}",
                 sourceId,
                 magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
+                sink->get()->getParentPlanId(),
+                threadPool->getNumberOfThreads(),
+                sink->get()->getSharedQueryId());
+        }
+    }
+    return true;
+}
+
+
+bool AbstractQueryManager::drain(DataSourcePtr source) {
+    auto sourceId = source->getOperatorId();
+    auto pipelineSuccessors = source->getExecutableSuccessors();
+
+    // send EOS to `source` itself, iff a network source
+    if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
+        //add soft eaos for network source
+        auto reconfMessage = ReconfigurationMessage(-1, -1, ReconfigurationType::Drain, netSource);
+        addReconfigurationMessage(-1, -1, reconfMessage, false);
+    }
+
+    for (auto successor : pipelineSuccessors) {
+        // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
+        // If successor is a data sink we send the reconfiguration message to the query plan.
+        if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
+            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                                        executablePipeline->get()->getDecomposedQueryPlanId(),
+                                                        ReconfigurationType::Drain,
+                                                        (*executablePipeline));
+            addReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                      executablePipeline->get()->getDecomposedQueryPlanId(),
+                                      reconfMessage,
+                                      false);
+            NES_DEBUG("soft end-of-stream Exec Pipeline opId={} reconfType={} queryExecutionPlanId={} "
+                      "threadPool->getNumberOfThreads()={} qep {}",
+                      sourceId,
+                      magic_enum::enum_name(ReconfigurationType::Drain),
+                      executablePipeline->get()->getDecomposedQueryPlanId(),
+                      threadPool->getNumberOfThreads(),
+                      executablePipeline->get()->getSharedQueryId());
+        } else if (auto* sink = std::get_if<DataSinkPtr>(&successor)) {
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getSharedQueryId(),
+                                                            sink->get()->getParentPlanId(),
+                                                            ReconfigurationType::Drain,
+                                                            (*sink));
+            addReconfigurationMessage(sink->get()->getSharedQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
+            NES_DEBUG(
+                "soft end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep{}",
+                sourceId,
+                magic_enum::enum_name(ReconfigurationType::Drain),
                 sink->get()->getParentPlanId(),
                 threadPool->getNumberOfThreads(),
                 sink->get()->getSharedQueryId());
@@ -540,6 +589,10 @@ bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTe
     switch (terminationType) {
         case Runtime::QueryTerminationType::Graceful: {
             success = addSoftEndOfStream(source);
+            break;
+        }
+        case Runtime::QueryTerminationType::Drain: {
+            success = drain(source);
             break;
         }
         case Runtime::QueryTerminationType::HardStop: {

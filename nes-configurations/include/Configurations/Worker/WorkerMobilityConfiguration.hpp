@@ -17,6 +17,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Util/Mobility/LocationProviderType.hpp>
+#include <Util/Mobility/ReconnectPredictorType.hpp>
 #include <memory>
 
 namespace NES::Configurations::Spatial::Mobility::Experimental {
@@ -130,10 +131,19 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
         NES::Spatial::Mobility::Experimental::LocationProviderType::BASE,
         "the kind of interface which the  mobile worker gets its geolocation info from"};
 
+    EnumOption<NES::Spatial::Mobility::Experimental::ReconnectPredictorType> reconnectPredictorType = {
+        RECONNECT_PREDICTOR_TYPE_CONFIG,
+        NES::Spatial::Mobility::Experimental::ReconnectPredictorType::LIVE,
+        "The method how the worker obtains the next reconnects"};
+
     /**
      * @brief specify the config data specific to the source of location data which was specified in the locationProviderType option
      */
     StringOption locationProviderConfig = {LOCATION_PROVIDER_CONFIG, "", "the configuration data for the location interface"};
+
+    StringOption precalculatedReconnectPath = {PRECALCULATED_RECONNECTS_PATH,
+                                               "",
+                                               "the configuration data for the location interface"};
 
     /**
      * @brief if the locationprovider simulates device movement, setting this option to a non zero value will result in that
@@ -145,20 +155,24 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&locationBufferSize,
-                &locationBufferSaveRate,
-                &pathDistanceDelta,
-                &nodeInfoDownloadRadius,
-                &nodeIndexUpdateThreshold,
-                &defaultCoverageRadius,
-                &pathPredictionLength,
-                &speedDifferenceThresholdFactor,
-                &sendDevicePositionUpdateThreshold,
-                &pushDeviceLocationUpdates,
-                &mobilityHandlerUpdateInterval,
-                &locationProviderType,
-                &locationProviderConfig,
-                &locationProviderSimulatedStartTime};
+        return {
+            &locationBufferSize,
+            &locationBufferSaveRate,
+            &pathDistanceDelta,
+            &nodeInfoDownloadRadius,
+            &nodeIndexUpdateThreshold,
+            &defaultCoverageRadius,
+            &pathPredictionLength,
+            &speedDifferenceThresholdFactor,
+            &sendDevicePositionUpdateThreshold,
+            &pushDeviceLocationUpdates,
+            &mobilityHandlerUpdateInterval,
+            &locationProviderType,
+            &locationProviderConfig,
+            &locationProviderSimulatedStartTime,
+            &precalculatedReconnectPath,
+            &reconnectPredictorType,
+        };
     }
 };
 }// namespace NES::Configurations::Spatial::Mobility::Experimental

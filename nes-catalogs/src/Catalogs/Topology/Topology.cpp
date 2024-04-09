@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Plans/Global/Query/SharedQueryPlan.hpp"
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -1030,6 +1031,28 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
     nlohmann::json locJson = convertLocationToJson(std::move(geoLocation));
     nodeInfo["location"] = locJson;
     return nodeInfo;
+}
+
+void Topology::insertPrediction(const std::vector<TopologyLinkInformation>& expectedRemovedLinks,
+                                const std::vector<TopologyLinkInformation>& expectedAddedLinks,
+                                std::vector<SharedQueryPlanPtr> affectedQueryPlans,
+                                WorkerId id) {
+    if (predictions.contains(id)) {
+        //todo: merge delta
+        NES_NOT_IMPLEMENTED();
+    }
+    Experimental::TopologyPrediction::TopologyDelta delta(expectedAddedLinks, expectedRemovedLinks);
+    predictions.insert({id, {std::move(delta), affectedQueryPlans}});
+}
+std::optional<std::pair<Experimental::TopologyPrediction::TopologyDelta, std::vector<SharedQueryPlanPtr>>> Topology::getPrediction(WorkerId id) {
+    if (!predictions.contains(id)) {
+        return std::nullopt;
+    }
+    return predictions.at(id);
+}
+
+void Topology::removePrediction(WorkerId id) {
+    predictions.erase(id);
 }
 
 WorkerId Topology::getNextWorkerId() { return ++topologyNodeIdCounter; }

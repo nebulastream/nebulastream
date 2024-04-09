@@ -14,4 +14,5 @@
 add_source_files(nes-worker
         ReconnectSchedule.cpp
         ReconnectSchedulePredictor.cpp
+        PreCalculatedReconnectSchedulePredictor.cpp
         )

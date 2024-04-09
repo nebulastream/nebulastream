@@ -165,6 +165,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
 
     switch (task.getType()) {
         case Runtime::ReconfigurationType::UpdateVersion: {
+            NES_NOT_IMPLEMENTED();
             if (!networkManager->getConnectSourceEventChannelsAsync()) {
                 NES_THROW_RUNTIME_ERROR(
                     "Attempt to reconfigure a network source but asynchronous connecting of event channels is not "
@@ -177,6 +178,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             break;
         }
         case Runtime::ReconfigurationType::Initialize: {
+            NES_INFO("Initializing network source with unique id {} and partition {}", uniqueNetworkSourceIdentifier, nesPartition);
             // we need to check again because between the invocations of
             // NetworkSource::start() and NetworkSource::reconfigure() the query might have
             // been stopped for some reason
@@ -184,34 +186,49 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                 NES_WARNING(
                     "NetworkManager shows the partition {} to be deleted, but now we should init it here, so we simply return!",
                     nesPartition.toString());
+                //todo: this will need to become allowed when ack protocol exists
+                NES_THROW_RUNTIME_ERROR("Trying to reuse deleted partition");
                 return;
             }
 
-            if (networkManager->getConnectSourceEventChannelsAsync()) {
-                auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
-                                                                                            nesPartition,
-                                                                                            localBufferManager,
-                                                                                            waitTime,
-                                                                                            retryTimes);
-                workerContext.storeEventChannelFuture(this->operatorId, std::move(channelFuture));
-                break;
-            } else {
-                auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
-                                                                                 nesPartition,
-                                                                                 localBufferManager,
-                                                                                 waitTime,
-                                                                                 retryTimes);
+            if (workerContext.doesEventChannelExist(uniqueNetworkSourceIdentifier)) {
+                NES_DEBUG("NetworkSource: reconfigure() channel already exists on {} Thread {}, unique id {}",
+                          nesPartition.toString(),
+                          Runtime::NesThread::getId(),
+                          uniqueNetworkSourceIdentifier);
+                NES_THROW_RUNTIME_ERROR("An channel has already been created for the source with the unique id");
+                return;
+            }
+
+//            if (networkManager->getConnectSourceEventChannelsAsync()) {
+//                auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
+//                                                                                            nesPartition,
+//                                                                                            localBufferManager,
+//                                                                                            waitTime,
+//                                                                                            retryTimes);
+//                workerContext.storeEventChannelFuture(uniqueNetworkSourceIdentifier, std::move(channelFuture));
+//                break;
+//            } else {
+            (void ) waitTime;
+            (void ) retryTimes;
+                  EventOnlyNetworkChannelPtr channel = nullptr;
+//                auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
+//                                                                                 nesPartition,
+//                                                                                 localBufferManager,
+//                                                                                 waitTime,
+//                                                                                 retryTimes);
                 if (channel == nullptr) {
                     NES_WARNING("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
                                 nesPartition.toString(),
                                 Runtime::NesThread::getId());
                     return;// partition was deleted on the other side of the channel... no point in waiting for a channel
                 }
-                workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
+                //workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
+                workerContext.storeEventOnlyChannel(uniqueNetworkSourceIdentifier, std::move(channel));
                 NES_DEBUG("NetworkSource: reconfigure() stored event-channel {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
-            }
+            //}
             break;
         }
         case Runtime::ReconfigurationType::Destroy: {
@@ -231,6 +248,12 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             isTermination = true;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            //event channels do not need to be drained
+            terminationType = Runtime::QueryTerminationType::Graceful;
+            isTermination = true;
+            break;
+        }
         case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
             isTermination = true;
@@ -241,15 +264,16 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         }
     }
     if (isTermination) {
-        if (!workerContext.doesEventChannelExist(this->operatorId)) {
+        if (!workerContext.doesEventChannelExist(uniqueNetworkSourceIdentifier)) {
             //todo #4490: allow aborting connection here
-            auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
-            if (channel) {
-                channel->close(terminationType);
-            }
+//            auto channel = workerContext.waitForAsyncConnectionEventChannel(uniqueNetworkSourceIdentifier);
+//            if (channel) {
+//                channel->close(terminationType);
+//            }
             return;
         }
-        workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
+        //workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
+        workerContext.releaseEventOnlyChannel(uniqueNetworkSourceIdentifier, terminationType);
         NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
@@ -276,6 +300,10 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }
+        case Runtime::ReconfigurationType::Drain: {
+            terminationType = Runtime::QueryTerminationType::Drain;
+            break;
+        }
         default: {
             break;
         }
@@ -298,50 +326,88 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runti
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
-    if (Runtime::QueryTerminationType::Graceful == terminationType) {
-        queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
+    if (Runtime::QueryTerminationType::Graceful == terminationType || Runtime::QueryTerminationType::Drain == terminationType) {
+        queryManager->addEndOfStream(shared_from_base<DataSource>(), terminationType);
     } else {
         NES_WARNING("Ignoring forceful EoS on {}", nesPartition);
     }
 }
 
-bool NetworkSource::startNewVersion() {
-    NES_DEBUG("Updating version for network source {}", nesPartition);
-    if (!nextSourceDescriptor) {
-        return false;
-    }
-    networkManager->unregisterSubpartitionConsumer(nesPartition);
-    auto newDescriptor = nextSourceDescriptor.value();
-    version = newDescriptor.getVersion();
-    sinkLocation = newDescriptor.getNodeLocation();
-    nesPartition = newDescriptor.getNesPartition();
-    nextSourceDescriptor = std::nullopt;
-    //bind the sink to the new partition
-    bind();
-    auto reconfMessage = Runtime::ReconfigurationMessage(-1,
-                                                         -1,
-                                                         Runtime::ReconfigurationType::UpdateVersion,
-                                                         Runtime::Reconfigurable::shared_from_this());
-    queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
-    return true;
+void NetworkSource::onDrainMessage() {
+    std::unique_lock lock(versionMutex);
+    receivedDrain = true;
+    lock.unlock();
+    tryStartingNewVersion();
 }
 
-DecomposedQueryPlanVersion NetworkSource::getVersion() const { return version; }
+void NetworkSource::markAsMigrated() {
+    std::unique_lock lock(versionMutex);
+    migrated = true;
+    lock.unlock();
+    tryStartingNewVersion();
+}
+
+bool NetworkSource::tryStartingNewVersion() {
+    NES_DEBUG("Updating version for network source {}", nesPartition);
+    std::unique_lock lock(versionMutex);
+//    if (nextSourceDescriptor) {
+//        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
+//        //check if the partition is still registered of if it was removed because no channels were connected
+//        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+//            auto newDescriptor = nextSourceDescriptor.value();
+//            version = newDescriptor.getVersion();
+//            sinkLocation = newDescriptor.getNodeLocation();
+//            nesPartition = newDescriptor.getNesPartition();
+//            nextSourceDescriptor = std::nullopt;
+//            //bind the sink to the new partition
+//            bind();
+//            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
+//                                                                 -1,
+//                                                                 Runtime::ReconfigurationType::UpdateVersion,
+//                                                                 Runtime::Reconfigurable::shared_from_this());
+//            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+//            return true;
+//        }
+//        return false;
+//    }
+    if (migrated) {
+        //we have to check receive drian here, because otherwise we might migrate the source before the upstream has connected at all
+        if (receivedDrain && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+            migrated = false;
+            receivedDrain = false;
+            lock.unlock();
+            onEndOfStream(Runtime::QueryTerminationType::Drain);
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+//DecomposedQueryPlanVersion NetworkSource::getVersion() {
+//    std::unique_lock lock(versionMutex);
+//    return version;
+//}
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
-        auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+        //auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+        auto senderChannel = workerContext.getEventOnlyNetworkChannel(uniqueNetworkSourceIdentifier);
         if (!senderChannel) {
-            auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(this->operatorId);
+            //auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(this->operatorId);
+            auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(uniqueNetworkSourceIdentifier);
             if (!senderChannelOptional) {
-                NES_DEBUG("NetworkSource::onEvent(event, wrkContext) operatorId: {}: could not send event because event channel "
+                NES_DEBUG("NetworkSource::onEvent(event, wrkContext) operatorId: {}: could not send event because event "
+                          "channel "
                           "has not been established yet",
                           this->operatorId);
                 return;
             }
-            workerContext.storeEventOnlyChannel(this->operatorId, std::move(senderChannelOptional.value()));
-            senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+            //workerContext.storeEventOnlyChannel(this->operatorId, std::move(senderChannelOptional.value()));
+            workerContext.storeEventOnlyChannel(uniqueNetworkSourceIdentifier, std::move(senderChannelOptional.value()));
+            //senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+            senderChannel = workerContext.getEventOnlyNetworkChannel(uniqueNetworkSourceIdentifier);
             if (!senderChannel) {
                 return;
             }
@@ -353,11 +419,13 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef
 
 OperatorId NetworkSource::getUniqueId() const { return uniqueNetworkSourceIdentifier; }
 
-bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
-    if (nesPartition != networkSourceDescriptor.getNesPartition()) {
-        nextSourceDescriptor = networkSourceDescriptor;
-        return true;
-    }
-    return false;
-}
+//bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor) {
+//    std::unique_lock lock(versionMutex);
+//    if (nesPartition != networkSourceDescriptor.getNesPartition()) {
+//        nextSourceDescriptor = networkSourceDescriptor;
+//        tryStartingNewVersion();
+//        return true;
+//    }
+//    return false;
+//}
 }// namespace NES::Network

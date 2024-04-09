@@ -271,7 +271,7 @@ void DataSource::close() {
         std::unique_lock lock(startStopMutex);
         queryTerminationType = this->wasGracefullyStopped;
     }
-    if (queryTerminationType != Runtime::QueryTerminationType::Graceful
+    if ((queryTerminationType != Runtime::QueryTerminationType::Graceful && queryTerminationType != Runtime::QueryTerminationType::Drain)
         || queryManager->canTriggerEndOfStream(shared_from_base<DataSource>(), queryTerminationType)) {
         // inject reconfiguration task containing end of stream
         std::unique_lock lock(startStopMutex);
@@ -460,7 +460,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
                       numberOfBuffersToProduce);
             running = false;
         }
-        NES_TRACE("DataSource {} : Data Source finished processing iteration {}", operatorId, numberOfBuffersProduced);
+        NES_DEBUG("DataSource {} : Data Source finished processing iteration {}, with gathering interval {}", operatorId, numberOfBuffersProduced, gatheringInterval.count());
 
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {

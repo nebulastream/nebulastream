@@ -55,7 +55,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker,
-                       bool sourceSharing)
+                       bool sourceSharing, bool timeStampOutputSources)
     : nodeId(INVALID_WORKER_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)),
@@ -63,7 +63,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
       statisticStore(Statistic::DefaultStatisticStore::create()), openCLManager(std::move(openCLManager)),
       nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
-      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing), timestampOutPutSources(timeStampOutputSources) {
 
     NES_TRACE("Runtime() id={}", nodeEngineId);
     // here shared_from_this() does not work because of the machinery behind make_shared
@@ -115,14 +115,17 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
              sharedQueryId,
              decomposedQueryPlanId);
 
+    //std::unique_lock lock(compilationMutex);
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, inherited1::shared_from_this());
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
+    //lock.unlock();
     try {
         auto executablePlan = result->getExecutableQueryPlan();
         return registerExecutableQueryPlan(executablePlan);
     } catch (std::exception const& error) {
         NES_ERROR("Error while building query execution plan: {}", error.what());
+        NES_ASSERT(false, "Error while building query execution plan: " << error.what());
         return false;
     }
 }
@@ -287,6 +290,7 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId,
         }
 
         switch (terminationType) {
+            case QueryTerminationType::Drain:
             case QueryTerminationType::Graceful:
             case QueryTerminationType::HardStop: {
                 try {
@@ -388,6 +392,9 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     partitionManager->clear();
     for (auto&& bufferManager : bufferManagers) {
         bufferManager->destroy();
+    }
+    if (tcpDescriptor.has_value()) {
+        close(tcpDescriptor.value());
     }
     nesWorker.reset();// break cycle
     return !withError;
@@ -682,6 +689,45 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
     }
 }
 
+bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId) {
+    bool reconfiguredSink = false;
+    for (const auto& executableQueryPlan : deployedExecutableQueryPlans) {
+        for (auto& sink : executableQueryPlan.second->getSinks()) {
+            auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+            if (networkSink != nullptr) {
+                if (networkSink->getReceiverId() == receivingWorkerId) {
+                    networkSink->startBuffering();
+                    reconfiguredSink = true;
+                }
+            }
+        }
+    }
+    return reconfiguredSink;
+}
+
+bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId) {
+    std::unique_lock lock(engineMutex);
+    auto deployedPlanIterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId);
+
+    //if not running sub query plan with the given id exists, return false
+    if (deployedPlanIterator == deployedExecutableQueryPlans.end()) {
+        return false;
+    }
+
+    auto deployedPlan = deployedPlanIterator->second;
+    // iterate over all network sources and apply the reconfigurations
+    for (auto& source : deployedPlan->getSources()) {
+        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
+        if (networkSource != nullptr) {
+            networkSource->markAsMigrated();
+        } else {
+            //Migrating non network sources not supported
+            NES_NOT_IMPLEMENTED();
+        }
+    }
+    return true;
+}
+
 bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("Received for shared query plan {} the decomposed query plan {} for reconfiguration.",
@@ -711,28 +757,29 @@ bool NodeEngine::reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecompos
                               reconfiguredDecomposedQueryPlan->getSharedQueryId(),
                               reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
                     networkSink->scheduleNewDescriptor(*reconfiguredNetworkSinkDescriptor);
+                    networkSink->applyNextSinkDescriptor();
                 }
             }
         }
     }
     // iterate over all network sources and apply the reconfigurations
-    for (auto& source : deployedPlan->getSources()) {
-        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
-        if (networkSource != nullptr) {
-            for (auto& reconfiguredSource : reconfiguredDecomposedQueryPlan->getSourceOperators()) {
-                auto reconfiguredNetworkSourceDescriptor =
-                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
-                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
-                    NES_DEBUG("Reconfiguring the network source {} with new descriptor for shared query plan {} and the "
-                              "decomposed query plan {}.",
-                              reconfiguredNetworkSourceDescriptor->getUniqueId(),
-                              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
-                              reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
-                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
-                }
-            }
-        }
-    }
+//    for (auto& source : deployedPlan->getSources()) {
+//        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
+//        if (networkSource != nullptr) {
+//            for (auto& reconfiguredSource : reconfiguredDecomposedQueryPlan->getSourceOperators()) {
+//                auto reconfiguredNetworkSourceDescriptor =
+//                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
+//                if (reconfiguredNetworkSourceDescriptor->getUniqueId() == networkSource->getUniqueId()) {
+//                    NES_DEBUG("Reconfiguring the network source {} with new descriptor for shared query plan {} and the "
+//                              "decomposed query plan {}.",
+//                              reconfiguredNetworkSourceDescriptor->getUniqueId(),
+//                              reconfiguredDecomposedQueryPlan->getSharedQueryId(),
+//                              reconfiguredDecomposedQueryPlan->getDecomposedQueryPlanId());
+//                    networkSource->scheduleNewDescriptor(*reconfiguredNetworkSourceDescriptor);
+//                }
+//            }
+//        }
+//    }
     return true;
 }
 
@@ -749,6 +796,17 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 }
 
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
+
+bool NodeEngine::getTimesStampOutputSources() { return timestampOutPutSources; }
+
+std::optional<int> NodeEngine::getTcpDescriptor() const { return tcpDescriptor; }
+
+void NodeEngine::setTcpDescriptor(int tcpDescriptor) {
+    if (this->tcpDescriptor.has_value()) {
+        NES_ERROR("NodeEngine: TCP descriptor already set");
+    }
+    this->tcpDescriptor = tcpDescriptor;
+}
 
 const Statistic::AbstractStatisticStorePtr NodeEngine::getStatisticStore() const { return statisticStore; }
 }// namespace NES::Runtime

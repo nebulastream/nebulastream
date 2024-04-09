@@ -59,7 +59,7 @@ class ExchangeProtocol {
      * @param buffer content
      * @param messageSequenceData
      */
-    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, SequenceData messageSequenceData);
+    void onBuffer(NesPartition nesPartition, Runtime::TupleBuffer& buffer, SequenceData messageSequenceData, uint64_t sinkVersion);
 
     /**
      * @brief Reaction of the zmqServer after an error occurs.
@@ -92,10 +92,16 @@ class ExchangeProtocol {
      */
     [[nodiscard]] std::shared_ptr<PartitionManager> getPartitionManager() const;
 
+    struct SequenceInfo {
+        Util::NonBlockingMonotonicSeqQueue<uint64_t> queue;
+        std::optional<uint64_t> expected;
+        uint64_t counter;
+    };
   private:
     std::shared_ptr<PartitionManager> partitionManager{nullptr};
     std::shared_ptr<ExchangeProtocolListener> protocolListener{nullptr};
-    folly::Synchronized<std::unordered_map<NesPartition, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>
+    folly::Synchronized<std::unordered_map<NesPartition, std::unordered_map<uint64_t, SequenceInfo>>>
+        //folly::Synchronized<std::unordered_map<NesPartition, std::unordered_map<uint64_t, std::pair<Util::NonBlockingMonotonicSeqQueue<uint64_t>, std::optional<uint64_t>>>>>
         maxSeqNumberPerNesPartition;
 };
 

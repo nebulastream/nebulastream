@@ -62,7 +62,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     /**
      * @brief Closes the underlying network connection with a termination type
      */
-    void close(Runtime::QueryTerminationType, uint16_t numSendingThreads = 0, uint64_t currentMessageSequenceNumber = 0);
+    void close(Runtime::QueryTerminationType, uint16_t numSendingThreads, uint64_t currentMessageSequenceNumber, uint64_t version);
 
     /**
      * @brief Creates a network channel instance with the given parameters

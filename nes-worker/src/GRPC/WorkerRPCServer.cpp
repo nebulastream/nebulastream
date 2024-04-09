@@ -49,10 +49,16 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     bool success = false;
     try {
         //check if the plan is reconfigured
-        if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_REDEPLOYMENT) {
-            success = nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
-        } else {
-            success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
+        switch (decomposedQueryPlan->getState()) {
+            case QueryState::REDEPLOYED: {
+                success = nodeEngine->reconfigureSubPlan(decomposedQueryPlan);
+                break;
+            }
+            case QueryState::DEPLOYED: {
+                success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan);
+                break;
+            }
+            default: NES_ASSERT(false, "Cannot register query in another state than DEPLOYED or REDEPLOYED");
         }
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: {}", error.what());
@@ -98,9 +104,26 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     NES_DEBUG("WorkerRPCServer::StopQuery: got request for {}", request->sharedqueryid());
     auto terminationType = Runtime::QueryTerminationType(request->queryterminationtype());
     NES_ASSERT2_FMT(terminationType != Runtime::QueryTerminationType::Graceful
-                        && terminationType != Runtime::QueryTerminationType::Invalid,
+                        && terminationType != Runtime::QueryTerminationType::Invalid
+                        && terminationType != Runtime::QueryTerminationType::Drain,
                     "Invalid termination type requested");
     bool success = nodeEngine->stopQuery(request->sharedqueryid(), request->decomposedqueryid(), terminationType);
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("WorkerRPCServer::StopQuery: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
+Status WorkerRPCServer::MigrateQuery(ServerContext*, const MigrateQueryRequest* request, MigrateQueryReply* reply) {
+    NES_DEBUG("WorkerRPCServer::MigrateQuery: got request to migrate queries");
+    bool success = true;
+    for (auto id : request->subplanids()) {
+        success = success && nodeEngine->markSubPlanAsMigrated(id);
+    }
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);

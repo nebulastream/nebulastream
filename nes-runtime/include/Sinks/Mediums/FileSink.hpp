@@ -43,7 +43,7 @@ class FileSink : public SinkMedium {
                       bool append,
                       QueryId queryId,
                       DecomposedQueryPlanId querySubPlanId,
-                      uint64_t numberOfOrigins = 1);
+                      uint64_t numberOfOrigins = 1, bool timestampAndWriteToSocket = true);
 
     /**
      * @brief dtor
@@ -110,6 +110,12 @@ class FileSink : public SinkMedium {
     std::string filePath;
     std::ofstream outputFile;
     bool append{false};
+    //std::vector<Runtime::TupleBuffer> receivedBuffers;
+    std::vector<std::basic_string<char>> receivedBuffers;
+    std::vector<uint64_t> arrivalTimestamps;
+    int sockfd;
+    bool timestampAndWriteToSocket;
+    //uint64_t totalTupleCountreceived = 0;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

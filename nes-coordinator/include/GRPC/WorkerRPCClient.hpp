@@ -174,6 +174,15 @@ class WorkerRPCClient {
                         const CompletionQueuePtr& cq);
 
     /**
+     * @brief method to stop a query
+     * @param address address of the new worker
+     * @param queryId to stop
+     * @param terminationType termination type of the query
+     * @return bool indicating success
+     */
+    bool migrateSubplans(const std::string& address, std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds);
+
+    /**
      * @brief Registers to a remote worker node its monitoring plan.
      * @param ipAddress
      * @param the monitoring plan

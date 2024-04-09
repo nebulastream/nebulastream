@@ -83,6 +83,17 @@ class CoordinatorConfiguration : public BaseConfiguration {
         "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
 
     /**
+     * @brief Enable reconfiguration of running query plans.
+     */
+    BoolOption enableQueryReconfiguration = {ENABLE_QUERY_RECONFIGURATION,
+                                             false,
+                                             "Enable reconfiguration of running query plans. (Default: false)"};
+
+    BoolOption enableProactiveDeployment = {ENABLE_PROACTIVE_DEPLOYMENT,
+                                             false,
+                                             "Enable proactive deployment of migrated sub query plans. (Default: false)"};
+
+    /**
      * @brief Configures different properties for the query optimizer.
      */
     OptimizerConfiguration optimizer = {OPTIMIZER_CONFIG, "Defines the configuration for the optimizer."};
@@ -150,6 +161,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &rpcPort,
                 &restPort,
                 &logLevel,
+                &enableQueryReconfiguration,
+                &enableProactiveDeployment,
                 &enableMonitoring,
                 &configPath,
                 &worker,

@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
+#include <optional>
 
 namespace NES {
 
@@ -332,6 +333,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             uint64_t uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
                                             DecomposedQueryPlanVersion version);
+    bool bufferOutgoingTuples(WorkerId receivingWorkerId);
+    bool markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
@@ -343,6 +346,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * plan did not match any running sub query
      */
     bool reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan);
+
+    bool getTimesStampOutputSources();
 
   public:
     /**
@@ -362,8 +367,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerWorker,
-                        bool sourceSharing);
+                        bool sourceSharing, bool timeStampOutputSources = true);
 
+    /**
+     * @brief get the opened tcp descriptor if there is one
+     */
+    std::optional<int> getTcpDescriptor() const;
+    void setTcpDescriptor(int tcpDescriptor);
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
@@ -387,6 +397,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+    bool timestampOutPutSources;
+    std::optional<int> tcpDescriptor;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

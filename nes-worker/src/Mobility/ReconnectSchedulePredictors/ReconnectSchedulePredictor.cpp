@@ -303,4 +303,5 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
     }
     return true;
 }
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::~ReconnectSchedulePredictor() {}
 #endif

@@ -131,6 +131,11 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     std::unordered_map<Network::NesPartition, LogicalOperatorPtr> upstreamSinkMap;
     auto downstreamWorkerId = lockedDownstreamNode->operator*()->getId();
     for (const auto& subPlan : upstreamSubPlans) {
+        //todo: remove this once proper cleanup wokrs
+        if (subPlan->getState() == QueryState::MIGRATION_COMPLETED) {
+            NES_INFO("Skipping plan because it has migrated")
+            continue;
+        }
         for (const auto& sinkOperator : subPlan->getSinkOperators()) {
             auto upstreamNetworkSinkDescriptor =
                 std::dynamic_pointer_cast<Network::NetworkSinkDescriptor>(sinkOperator->getSinkDescriptor());
@@ -145,6 +150,11 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     auto upstreamWorkerId = lockedUpstreamNode->operator*()->getId();
     std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>> pairs;
     for (const auto& subPlan : downstreamSubPlans) {
+        if (subPlan->getState() == QueryState::MIGRATION_COMPLETED) {
+            NES_INFO("Skipping plan because it has migrated")
+            continue;
+        }
+        NES_INFO("Checking sub plan: {}", subPlan->toString());
         for (const auto& sourceOperator : subPlan->getSourceOperators()) {
             auto downNetworkSourceDescriptor =
                 std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());

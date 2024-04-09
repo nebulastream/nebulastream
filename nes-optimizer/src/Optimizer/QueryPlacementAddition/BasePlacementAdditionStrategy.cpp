@@ -643,11 +643,24 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 
                             // 13. Record information about the query plan and worker id
                             DecomposedQueryPlanId decomposedPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-                            if (candidateOperator->as<LogicalOperator>()->getOperatorState() == OperatorState::PLACED) {
-                                decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
-                                    candidateOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                            //todo: check all operators if they are placed, only then
+                            auto firstPlacedFound = true;
+                            for (auto operatorInPlan : decomposedQueryPlan->getAllOperators()) {
+                                if (operatorInPlan->as<LogicalOperator>()->getOperatorState() == OperatorState::PLACED) {
+                                    //if (candidateOperator->as<LogicalOperator>()->getOperatorState() == OperatorState::PLACED) {
+//                                    decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
+//                                        operatorInPlan->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                                    if (firstPlacedFound) {
+                                        decomposedPlanId = PlanIdGenerator::getNextDecomposedQueryPlanId();
+                                        firstPlacedFound = false;
+                                    }
+                                    operatorInPlan->addProperty(PLACED_DECOMPOSED_PLAN_ID, decomposedPlanId);
+                                    //break;
+                                }
                             }
+                            //todo: check if we need to update the placed plan id for the operators here
 
+                            //decomposedQueryPlan->setDecomposedQueryPlanId(decomposedPlanId);
                             connectedSysSubPlanDetails.emplace_back(SysPlanMetaData(decomposedPlanId, currentWorkerId));
                             // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
