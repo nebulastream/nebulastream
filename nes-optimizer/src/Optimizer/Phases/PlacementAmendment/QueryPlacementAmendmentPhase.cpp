@@ -86,11 +86,21 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
         std::vector<Experimental::ChangeLogEntryPtr> failedChangelogEntries;
         for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
             try {
-                //1. Fetch all upstream pinned operators
-                auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
+                //1. Fetch all upstream pinned operators that are not removed
+                std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
+                for (const auto& upstreamOperator : changeLogEntry.second->upstreamOperators) {
+                    if (upstreamOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
+                        pinnedUpstreamOperators.insert(upstreamOperator->as<LogicalOperator>());
+                    }
+                };
 
-                //2. Fetch all downstream pinned operators
-                auto pinnedDownStreamOperators = changeLogEntry.second->downstreamOperators;
+                //2. Fetch all downstream pinned operators that are not removed
+                std::set<LogicalOperatorPtr> pinnedDownStreamOperators;
+                for (const auto& downstreamOperator : changeLogEntry.second->downstreamOperators) {
+                    if (downstreamOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
+                        pinnedDownStreamOperators.insert(downstreamOperator->as<LogicalOperator>());
+                    }
+                };
 
                 //3. Pin all sink operators
                 pinAllSinkOperators(pinnedDownStreamOperators);
@@ -108,6 +118,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
 
                 //6. Call placement removal strategy
                 if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
+
                     auto placementRemovalStrategy = PlacementRemovalStrategy::create(globalExecutionPlan,
                                                                                      topology,
                                                                                      typeInferencePhase,
@@ -128,7 +139,23 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                                 "TO_BE_REPLACED state.");
                 }
 
-                //7. Call placement addition strategy
+                //7. Fetch all upstream pinned operators that are not removed
+                pinnedUpstreamOperators.clear();
+                for (const auto& upstreamOperator : changeLogEntry.second->upstreamOperators) {
+                    if (upstreamOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
+                        pinnedUpstreamOperators.insert(upstreamOperator->as<LogicalOperator>());
+                    }
+                };
+
+                //8. Fetch all downstream pinned operators that are not removed
+                pinnedDownStreamOperators.clear();
+                for (const auto& downstreamOperator : changeLogEntry.second->downstreamOperators) {
+                    if (downstreamOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
+                        pinnedDownStreamOperators.insert(downstreamOperator->as<LogicalOperator>());
+                    }
+                };
+
+                //9. Call placement addition strategy
                 if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
                     auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
                     auto placementAdditionStrategy = getStrategy(placementStrategy);
@@ -147,7 +174,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                         throw std::runtime_error("Placement addition phase unsuccessfully completed");
                     }
                 } else {
-                    NES_ERROR("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
+                    NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
                                 "TO_BE_PLACED state.");
                 }
             } catch (std::exception& ex) {
@@ -176,7 +203,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
             //2. Fetch all upstream pinned operators that are not removed
             std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
             for (const auto& leafOperator : queryPlan->getLeafOperators()) {
-                if(leafOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED){
+                if (leafOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
                     pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
                 }
             };
@@ -184,7 +211,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
             //3. Fetch all downstream pinned operators that are not removed
             std::set<LogicalOperatorPtr> pinnedDownStreamOperators;
             for (const auto& rootOperator : queryPlan->getRootOperators()) {
-                if(rootOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
+                if (rootOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
                     pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
                 }
             };
@@ -225,7 +252,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
             //8. Fetch all upstream pinned operators that are not removed
             pinnedUpstreamOperators.clear();
             for (const auto& leafOperator : queryPlan->getLeafOperators()) {
-                if(leafOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED){
+                if (leafOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
                     pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
                 }
             };
@@ -233,7 +260,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
             //9. Fetch all downstream pinned operators that are not removed
             pinnedDownStreamOperators.clear();
             for (const auto& rootOperator : queryPlan->getRootOperators()) {
-                if(rootOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
+                if (rootOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::REMOVED) {
                     pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
                 }
             };

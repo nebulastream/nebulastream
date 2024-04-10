@@ -69,6 +69,8 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class DeploymentContext;
 using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 
+static std::atomic_uint64_t counter{0};
+
 /**
  * @brief This class is responsible for placing and removing operators (depending on their status) from the
  * global execution.

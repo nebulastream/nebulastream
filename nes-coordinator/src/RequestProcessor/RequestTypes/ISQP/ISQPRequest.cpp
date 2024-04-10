@@ -163,7 +163,6 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         auto processingEndTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         auto numOfSQPAffected = sharedQueryPlans.size();
-        NES_INFO("After Completion of ISQP request the update Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
         responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
                                                                         amendmentStartTime,
                                                                         processingEndTime,
@@ -171,7 +170,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                         numOfFailedPlacements,
                                                                         true));
     } catch (RequestExecutionException& exception) {
-        NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
+        NES_ERROR("Exception occurred while processing ISQPRequest with error {}", exception.what());
         responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, -1, -1, -1, true));
         handleError(std::current_exception(), storageHandle);
     }
@@ -309,9 +308,9 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     auto queryPlacementStrategy = addQueryEvent->getPlacementStrategy();
 
     // Set unique identifier and additional properties to the query
-    auto queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
-//    auto queryId = queryPlan->getQueryId();
+    //    auto queryId = PlanIdGenerator::getNextQueryId();
+    //    queryPlan->setQueryId(queryId);
+    auto queryId = queryPlan->getQueryId();
     queryPlan->setPlacementStrategy(queryPlacementStrategy);
 
     // Create a new entry in the query catalog

@@ -118,7 +118,7 @@ void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr s
 
     //Add the logical and physical stream to the stream catalog such that each leaf has two distinct sources attached
     for (const auto& leafWorkerId : leafWorkerIds) {
-        uint16_t noOfPhySourcePerWorker = 4;
+        uint16_t noOfPhySourcePerWorker = 32;
         for (uint16_t counter = 1; counter <= noOfPhySourcePerWorker; counter++) {
             const auto& logicalSourceName = "example" + std::to_string(leafWorkerId) + "-" + std::to_string(counter);
             auto physicalSourceName = "phy_" + logicalSourceName;
@@ -253,7 +253,7 @@ void setupTopology(uint16_t rootNodes,
     }
     requestHandlerService->queueISQPRequest(addLinkPropertyEvents);
 
-    topology->print();
+
 
     //Create execution Nodes
     for (const auto& workerId : rootWorkerIds) {
@@ -484,6 +484,7 @@ int main(int argc, const char* argv[]) {
             auto batchSize = node["BatchSize"].As<uint16_t>();
             auto numOfRemoveQueries = node["NumOfRemoveQueries"].As<uint16_t>();
             auto numOfAddQueries = node["NumOfAddQueries"].As<uint16_t>();
+            std::cout<< "NumOfRemoveQueries:"<< numOfRemoveQueries<<", NumOfAddQueries:"<< numOfAddQueries<<", BatchSize"<<batchSize;
             NES_ASSERT(numOfAddQueries + numOfRemoveQueries == batchSize,
                        "Number of remove and add queries should be same as the batch size");
             auto placementAmendmentThreadCount = node["PlacementAmendmentThreadCount"].As<uint32_t>();
@@ -511,7 +512,7 @@ int main(int argc, const char* argv[]) {
                 auto globalExecutionPlan = nesCoordinator->getGlobalExecutionPlan();
                 std::cout << "Setting up the topology." << std::endl;
                 //Setup topology and source catalog
-                setUp(9, 10, 100, requestHandlerService, sourceCatalogService, topology, globalExecutionPlan);
+                setUp(63, 64, 640, requestHandlerService, sourceCatalogService, topology, globalExecutionPlan);
 
                 auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 
@@ -537,6 +538,7 @@ int main(int argc, const char* argv[]) {
                 uint16_t addQueryIncrement = 1;
                 uint16_t removeQueryIncrement = 1;
 
+                std::vector<QueryId> newCandidatesForRemoval;
                 for (uint64_t i = currentIndex; i < numOfQueries; i++) {
                     auto queryPlan = queryObjects[i];
                     if (batchIncrement == 1) {
@@ -546,7 +548,7 @@ int main(int argc, const char* argv[]) {
                     //Add query events
                     if (addQueryIncrement <= numOfAddQueries) {
                         isqpEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
-                        potentialCandidatesForRemoval.emplace_back(i + 1);
+                        newCandidatesForRemoval.emplace_back(i + 1);
                         addQueryIncrement++;
                     }
 
@@ -559,8 +561,11 @@ int main(int argc, const char* argv[]) {
                         i++;
                     }
 
-                    if (isqpEvents.size() == batchSize || i == numOfQueries - 1) {
+                    if (batchIncrement == batchSize || i == numOfQueries - 1) {
                         isqpBatches.emplace_back(isqpEvents);
+                        potentialCandidatesForRemoval.clear();
+                        potentialCandidatesForRemoval = newCandidatesForRemoval;
+                        newCandidatesForRemoval.clear();
                         batchIncrement = 1;
                         addQueryIncrement = 1;
                         removeQueryIncrement = 1;
