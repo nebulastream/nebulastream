@@ -27,4 +27,5 @@ add_source_files(nes-nautilus
         PagedVectorRef.cpp
         PagedVectorVarSized.cpp
         PagedVectorVarSizedRef.cpp
-        )
+        PagedVectorRowLayout.cpp
+)

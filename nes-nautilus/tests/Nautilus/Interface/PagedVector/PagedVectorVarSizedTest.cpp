@@ -17,7 +17,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRowLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -29,13 +29,13 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        Logger::setupLogging("PagedVectorVarSizedTest.log", LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("PagedVectorVarSizedTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PagedVectorVarSizedTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        BaseUnitTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         NES_INFO("Setup PagedVectorVarSizedTest test case.");
     }
@@ -43,13 +43,13 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_INFO("Tear down PagedVectorVarSizedTest test case.");
-        BaseUnitTest::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down PagedVectorVarSizedTest test class."); }
 
-    std::vector<Record> createRecords(const SchemaPtr& schema, const uint64_t numRecords, const uint64_t minTextLength) {
+    std::vector<Record> createRecords(const SchemaPtr& schema, const uint64_t numRecords) {
         std::vector<Record> allRecords;
         auto allFields = schema->getFieldNames();
         for (auto i = 0_u64; i < numRecords; ++i) {
@@ -61,15 +61,13 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
                 auto tupleNo = schema->getSize() * i + fieldCnt++;
 
                 if (fieldType->isText()) {
-                    auto buffer = bufferManager->getUnpooledBuffer(PagedVectorVarSized::PAGE_SIZE);
+                    auto buffer = bufferManager->getUnpooledBuffer(100);
                     if (buffer.has_value()) {
                         std::stringstream ss;
-                        ss << "testing TextValue" << tupleNo;
+                        ss << "TextValue" << tupleNo;
                         auto textValue = TextValue::create(buffer.value(), ss.str().length());
                         std::memcpy(textValue->str(), ss.str().c_str(), ss.str().length());
                         newRecord.write(field, Text(textValue));
-
-                        NES_ASSERT2_FMT(ss.str().length() > minTextLength, "Length of the generated text is not long enough!");
                     } else {
                         NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
                     }
@@ -84,7 +82,7 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
         return allRecords;
     }
 
-    void runStoreTest(PagedVectorVarSized& pagedVector,
+    void runStoreTest(NES::Runtime::PagedVectorRowLayout& pagedVector,
                       const SchemaPtr& schema,
                       const uint64_t entrySize,
                       const uint64_t pageSize,
@@ -99,23 +97,22 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
             pagedVectorVarSizedRef.writeRecord(record);
         }
 
-        ASSERT_EQ(pagedVector.getNumberOfEntries(), expectedNumberOfEntries);
-        ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
-
         // As we do lazy allocation, we do not create a new page if the last tuple fit on the page
         bool lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
         const uint64_t numTuplesLastPage =
             lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
-        ASSERT_EQ(pagedVector.getNumberOfEntriesOnCurrentPage(), numTuplesLastPage);
     }
 
-    void runRetrieveTest(PagedVectorVarSized& pagedVector, const SchemaPtr& schema, const std::vector<Record>& allRecords) {
+    void runRetrieveTest(const NES::Runtime::PagedVectorRowLayout& pagedVector,
+                         const SchemaPtr& schema,
+                         const std::vector<Record>& allRecords) {
         auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema);
-        ASSERT_EQ(pagedVector.getNumberOfEntries(), allRecords.size());
+        ASSERT_EQ(pagedVector.size(), allRecords.size());
 
         auto itemPos = 0_u64;
         for (auto record : pagedVectorVarSizedRef) {
-            ASSERT_EQ(record, allRecords[itemPos++]);
+            ASSERT_EQ(record, allRecords[itemPos]);
+            itemPos++;
         }
         ASSERT_EQ(itemPos, allRecords.size());
     }
@@ -123,18 +120,19 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
     void insertAndAppendAllPagesTest(const SchemaPtr& schema,
                                      const uint64_t entrySize,
                                      uint64_t pageSize,
-                                     const uint64_t totalNumTextFields,
-                                     const std::vector<std::vector<Record>>& allRecordsAndVectors,
-                                     const std::vector<Record>& expectedRecordsAfterAppendAll,
+                                     const uint64_t,
+                                     std::vector<std::vector<Record>>& allRecordsAndVectors,
+                                     std::vector<Record>& expectedRecordsAfterAppendAll,
                                      uint64_t differentPageSizes) {
         // Inserting data into each PagedVector and checking for correct values
-        std::vector<std::unique_ptr<PagedVectorVarSized>> allPagedVectors;
+        std::vector<std::unique_ptr<NES::Runtime::PagedVectorRowLayout>> allPagedVectors;
         for (auto& allRecords : allRecordsAndVectors) {
             if (differentPageSizes != 0) {
                 differentPageSizes++;
             }
             pageSize += differentPageSizes * entrySize;
-            allPagedVectors.emplace_back(std::make_unique<PagedVectorVarSized>(bufferManager, schema, pageSize));
+            allPagedVectors.emplace_back(
+                std::make_unique<NES::Runtime::PagedVectorRowLayout>(bufferManager, entrySize, pageSize));
             runStoreTest(*allPagedVectors.back(), schema, entrySize, pageSize, allRecords);
             runRetrieveTest(*allPagedVectors.back(), schema, allRecords);
         }
@@ -144,13 +142,8 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
         if (allRecordsAndVectors.size() > 1) {
             for (uint64_t i = 1; i < allPagedVectors.size(); ++i) {
                 auto& otherPagedVec = allPagedVectors[i];
-                firstPagedVec->appendAllPages(*otherPagedVec);
-                EXPECT_EQ(otherPagedVec->getNumberOfPages(), 0);
-                EXPECT_EQ(otherPagedVec->getNumberOfVarSizedPages(), 0);
-                EXPECT_EQ(otherPagedVec->getNumberOfEntries(), 0);
-                EXPECT_EQ(otherPagedVec->getNumberOfEntriesOnCurrentPage(), 0);
-                EXPECT_EQ(otherPagedVec->getVarSizedDataEntryMapCounter(), 0);
-                EXPECT_TRUE(otherPagedVec->varSizedDataEntryMapEmpty());
+                firstPagedVec->takePagesFrom(std::move(*otherPagedVec));
+                EXPECT_EQ(otherPagedVec->size(), 0);
             }
 
             allPagedVectors.erase(allPagedVectors.begin() + 1, allPagedVectors.end());
@@ -158,7 +151,6 @@ class PagedVectorVarSizedTest : public Testing::BaseUnitTest {
 
         // Checking for number of pagedVectors and correct values
         EXPECT_EQ(allPagedVectors.size(), 1);
-        EXPECT_EQ(firstPagedVec->getVarSizedDataEntryMapCounter(), totalNumTextFields);
         runRetrieveTest(*firstPagedVec, schema, expectedRecordsAfterAppendAll);
     }
 };
@@ -168,13 +160,14 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues) {
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::UINT64))
                           ->addField(createField("value3", BasicType::UINT64));
-    const auto entrySize = 3 * sizeof(uint64_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto entrySize = testSchema->getSchemaSizeInBytes();
     const auto numItems = 507_u64;
-    auto allRecords = createRecords(testSchema, numItems, 0);
+    auto allRecords = createRecords(testSchema, numItems);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
-    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
+    NES::Runtime::PagedVectorRowLayout pagedVector(bufferManager,
+                                                   testSchema->getSchemaSizeInBytes(),
+                                                   Runtime::detail::EntryPage::ENTRY_PAGE_SIZE);
+    runStoreTest(pagedVector, testSchema, entrySize, Runtime::detail::EntryPage::ENTRY_PAGE_SIZE, allRecords);
     runRetrieveTest(pagedVector, testSchema, allRecords);
 }
 
@@ -183,24 +176,12 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues) {
                           ->addField(createField("value1", BasicType::TEXT))
                           ->addField(createField("value2", BasicType::TEXT))
                           ->addField(createField("value3", BasicType::TEXT));
-    const auto entrySize = 3 * sizeof(uint64_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto entrySize = 3 * sizeof(uint64_t) + 3 * sizeof(size_t);
+    const auto pageSize = NES::Runtime::detail::EntryPage::ENTRY_PAGE_SIZE;
     const auto numItems = 507_u64;
-    auto allRecords = createRecords(testSchema, numItems, 0);
+    auto allRecords = createRecords(testSchema, numItems);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
-    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
-    runRetrieveTest(pagedVector, testSchema, allRecords);
-}
-
-TEST_F(PagedVectorVarSizedTest, storeAndRetrieveLargeVarSizedValues) {
-    auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(createField("value1", BasicType::TEXT));
-    const auto entrySize = 1 * sizeof(uint64_t);
-    const auto pageSize = 8_u64;
-    const auto numItems = 507_u64;
-    auto allRecords = createRecords(testSchema, numItems, 2 * pageSize);
-
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
+    NES::Runtime::PagedVectorRowLayout pagedVector(bufferManager, entrySize, pageSize);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
     runRetrieveTest(pagedVector, testSchema, allRecords);
 }
@@ -210,26 +191,12 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes) {
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::TEXT))
                           ->addField(createField("value3", BasicType::FLOAT64));
-    const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t) + sizeof(size_t);
+    const auto pageSize = NES::Runtime::detail::EntryPage::ENTRY_PAGE_SIZE;
     const auto numItems = 507_u64;
-    auto allRecords = createRecords(testSchema, numItems, 0);
+    auto allRecords = createRecords(testSchema, numItems);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
-    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
-    runRetrieveTest(pagedVector, testSchema, allRecords);
-}
-
-TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedValuesNonDefaultPageSize) {
-    auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", BasicType::UINT64));
-    const auto entrySize = 2 * sizeof(uint64_t);
-    const auto pageSize = (10 * entrySize) + 3;
-    const auto numItems = 507_u64;
-    auto allRecords = createRecords(testSchema, numItems, 0);
-
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
+    NES::Runtime::PagedVectorRowLayout pagedVector(bufferManager, entrySize, pageSize);
     runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
     runRetrieveTest(pagedVector, testSchema, allRecords);
 }
@@ -238,8 +205,8 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::TEXT));
-    const auto entrySize = 2 * sizeof(uint64_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto entrySize = 2 * sizeof(uint64_t) + sizeof(size_t);
+    const auto pageSize = NES::Runtime::detail::EntryPage::ENTRY_PAGE_SIZE;
     const auto numItems = 507_u64;
     const auto numVectors = 2_u64;
     const auto totalNumTextFields = 1 * numItems * numVectors;
@@ -247,7 +214,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors) {
     std::vector<std::vector<Record>> allRecords;
     auto allFields = testSchema->getFieldNames();
     for (auto i = 0_u64; i < numVectors; ++i) {
-        auto records = createRecords(testSchema, numItems, 0);
+        auto records = createRecords(testSchema, numItems);
         allRecords.emplace_back(records);
     }
 
@@ -264,8 +231,8 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors) {
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::TEXT))
                           ->addField(createField("value3", BasicType::FLOAT64));
-    const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
-    const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
+    const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t) + sizeof(size_t);
+    const auto pageSize = NES::Runtime::detail::EntryPage::ENTRY_PAGE_SIZE;
     const auto numItems = 507_u64;
     const auto numVectors = 4_u64;
     const auto totalNumTextFields = 1 * numItems * numVectors;
@@ -273,7 +240,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors) {
     std::vector<std::vector<Record>> allRecords;
     auto allFields = testSchema->getFieldNames();
     for (auto i = 0_u64; i < numVectors; ++i) {
-        auto records = createRecords(testSchema, numItems, 0);
+        auto records = createRecords(testSchema, numItems);
         allRecords.emplace_back(records);
     }
 

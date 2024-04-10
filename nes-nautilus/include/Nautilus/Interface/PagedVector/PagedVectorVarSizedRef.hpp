@@ -20,7 +20,46 @@
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Nautilus::Interface {
-class PagedVectorVarSizedRefIter;
+uint64_t pagedVectorIteratorLoadProxy(void* iteratorPtr);
+
+void pagedVectorIteratorIncProxy(void* iteratorPtr);
+
+bool pagedVectorIteratorEqualsProxy(void* iteratorPtr, void* iteratorOtherPtr);
+void releasePagedVectorIterator(void* iteratorPtr);
+
+class PagedVectorVarSizedRefIterator {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = Value<UInt32>;
+    using value_type = Record;
+    using pointer = Record;  // or also value_type*
+    using reference = Record;// or also value_type&
+
+  public:
+    PagedVectorVarSizedRefIterator(Value<MemRef> iteratorPtr, SchemaPtr schema, Value<MemRef> pagedVectorPtr);
+    ~PagedVectorVarSizedRefIterator();
+
+    reference operator*() const;
+    pointer operator->() { return operator*(); }
+
+    // Prefix increment
+    PagedVectorVarSizedRefIterator& operator++();
+
+    // Postfix increment
+    PagedVectorVarSizedRefIterator operator++(int) {
+        PagedVectorVarSizedRefIterator tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    friend Value<Boolean> operator==(const PagedVectorVarSizedRefIterator& a, const PagedVectorVarSizedRefIterator& b);
+    friend Value<Boolean> operator!=(const PagedVectorVarSizedRefIterator& a, const PagedVectorVarSizedRefIterator& b);
+
+  private:
+    Value<MemRef> iteratorPtr;
+    SchemaPtr schema;
+    Value<MemRef> pagedVectorPtr;
+};
+
 class PagedVectorVarSizedRef {
   public:
     /**
@@ -53,20 +92,13 @@ class PagedVectorVarSizedRef {
      * @brief Creates a PageVectorVarSizedRefIter that points to the first entry in the PagedVectorVarSizedRef
      * @return PagedVectorVarSizedRefIter
      */
-    PagedVectorVarSizedRefIter begin();
-
-    /**
-     * @brief Creates a PageVectorVarSizedRefIter that points to the entry at the given position in the PagedVectorVarSizedRef
-     * @param pos
-     * @return PagedVectorVarSizedRefIter
-     */
-    PagedVectorVarSizedRefIter at(Value<UInt64> pos);
+    PagedVectorVarSizedRefIterator begin();
 
     /**
      * @brief Creates a PageVectorVarSizedRefIter that points to the end of the PagedVectorVarSizedRef
      * @return PagedVectorVarSizedRefIter
      */
-    PagedVectorVarSizedRefIter end();
+    PagedVectorVarSizedRefIterator end();
 
     /**
      * @brief Equality operator
