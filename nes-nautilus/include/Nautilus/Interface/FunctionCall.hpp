@@ -30,6 +30,20 @@ namespace NES::Nautilus {
 template<class T>
 struct dependent_false : std::false_type {};
 
+template<class T, std::size_t N>
+concept has_tuple_element = requires(T t) {
+    typename std::tuple_element_t<N, std::remove_const_t<T>>;
+    { get<N>(t) } -> std::convertible_to<const std::tuple_element_t<N, T>&>;
+};
+
+template<class T>
+concept tuple_like = !std::is_reference_v<T> && requires(T t) {
+    typename std::tuple_size<T>::type;
+    requires std::derived_from<std::tuple_size<T>, std::integral_constant<std::size_t, std::tuple_size_v<T>>>;
+} && []<std::size_t... N>(std::index_sequence<N...>) {
+    return (has_tuple_element<T, N> && ...);
+}(std::make_index_sequence<std::tuple_size_v<T>>());
+
 template<NESIdentifier T>
 auto transform(ValueId<T> argument) {
     return argument.value->getValue();
@@ -117,6 +131,15 @@ auto transformReturnValues(Arg argument) {
     }
 }
 
+template<tuple_like T>
+auto transformReturnValues(T argument) {
+    return std::apply(
+        []<typename... Ts>(Ts... arg) {
+            return std::make_tuple(transformReturnValues(arg)...);
+        },
+        argument);
+}
+
 class TextValue;
 template<typename T>
     requires std::is_same_v<TextValue*, T>
@@ -167,6 +190,15 @@ auto createDefault() {
     }
 }
 
+template<tuple_like T>
+auto createDefault() {
+    return std::apply(
+        []<typename... Ts>(Ts...) {
+            return std::make_tuple(createDefault<Ts>()...);
+        },
+        T{});
+}
+
 void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments);
 void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments);
 
@@ -198,7 +230,15 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
         } else {
             auto resultValue = createDefault<R>();
             auto functionArgumentReferences = getArgumentReferences(functionName, (void*) fnptr, arguments...);
-            traceFunctionCall(resultValue.ref, functionArgumentReferences);
+            if constexpr (tuple_like<R>) {
+                std::apply(
+                    [&functionArgumentReferences]<typename... Ts>(Ts... ts) {
+                        (traceFunctionCall(ts.ref, functionArgumentReferences), ...);
+                    },
+                    resultValue);
+            } else {
+                traceFunctionCall(resultValue.ref, functionArgumentReferences);
+            }
             return resultValue;
         }
     }
