@@ -240,7 +240,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
         auto senderChannel =
             netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 3);
-        senderChannel->close(Runtime::QueryTerminationType::Graceful);
+        senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, 0, 1);
         senderChannel.reset();
         netManager->unregisterSubpartitionProducer(nesPartition);
 
@@ -355,7 +355,7 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
         }
         ASSERT_TRUE(queryManager->receivedCallback);
 
-        senderChannel->close(Runtime::QueryTerminationType::Graceful);
+        senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, 0, 1);
         senderChannel.reset();
         netManagerSender->unregisterSubpartitionProducer(nesPartition);
 
@@ -442,7 +442,7 @@ TEST_F(NetworkStackTest, startCloseMaxChannel) {
         int i = 0;
         for (auto&& senderChannel : channels) {
             auto nesPartition = NesPartition(i++, 0, 0, 0);
-            senderChannel->close(Runtime::QueryTerminationType::Graceful);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, channels.size(), 0, 1);
             netManagerSender->unregisterSubpartitionProducer(nesPartition);
         }
         connectionsReady.set_value(true);
@@ -531,8 +531,8 @@ TEST_F(NetworkStackTest, testSendData) {
             buffer.getBuffer<uint64_t>()[0] = 0;
             buffer.setNumberOfTuples(1);
             buffer.setSequenceNumber(1);
-            senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBufferSequenceNumber);
-            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, 1);
+            senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBufferSequenceNumber, 1);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, sentBufferSequenceNumber, 1);
             senderChannel.reset();
             netManager->unregisterSubpartitionProducer(nesPartition);
         }
@@ -626,9 +626,9 @@ TEST_F(NetworkStackTest, testCorrectHandlingEOS) {
                 }
                 buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
                 buffer.setSequenceNumber(i + 1);
-                senderChannel->sendBuffer(buffer, sizeof(uint64_t), i + 1);
+                senderChannel->sendBuffer(buffer, sizeof(uint64_t), i + 1, 1);
             }
-            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer, 1);
             senderChannel.reset();
             netManager->unregisterSubpartitionProducer(nesPartition);
         }
@@ -715,9 +715,9 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 }
                 buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
                 buffer.setSequenceNumber(i + 1);
-                senderChannel->sendBuffer(buffer, sizeof(uint64_t), i + 1);
+                senderChannel->sendBuffer(buffer, sizeof(uint64_t), i + 1, 1);
             }
-            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer, 1);
             senderChannel.reset();
             netManager->unregisterSubpartitionProducer(nesPartition);
         }
@@ -821,9 +821,9 @@ TEST_F(NetworkStackTest, testMassiveSendingWithChildrenBuffer) {
                 buffer.setNumberOfTuples(bufferSize / sizeof(Record));
                 buffer.setSequenceNumber(i + 1);
                 ASSERT_EQ(buffer.getNumberOfChildrenBuffer(), bufferSize / sizeof(Record));
-                senderChannel->sendBuffer(buffer, sizeof(Record), i + 1);
+                senderChannel->sendBuffer(buffer, sizeof(Record), i + 1, 1);
             }
-            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful, 1, totalNumBuffer, 1);
             senderChannel.reset();
             netManager->unregisterSubpartitionProducer(nesPartition);
         }
@@ -999,10 +999,10 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
                         }
                         buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
                         buffer.setSequenceNumber(sentBuffers + 1);
-                        senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBuffers + 1);
+                        senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBuffers + 1, 1);
                         usleep(gen(rnd));
                     }
-                    senderChannel->close(Runtime::QueryTerminationType::Graceful, 0, totalNumBuffer);
+                    senderChannel->close(Runtime::QueryTerminationType::Graceful, 0, totalNumBuffer, 1);
                     senderChannel.reset();
                     netManager->unregisterSubpartitionProducer(nesPartition);
                 }

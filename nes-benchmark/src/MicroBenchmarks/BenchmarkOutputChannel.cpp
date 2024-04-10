@@ -126,7 +126,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
         auto secondBarrier = std::make_shared<NES::ThreadBarrier>(numSenderThreads);
         for (uint64_t thread = 0; thread < numSenderThreads; ++thread) {
             allThreads.emplace_back(
-                [totalNumBuffer, &completedProm, nesPartition, bufferSize, &buffMgr, &netManager, port, secondBarrier] {
+                [totalNumBuffer, &completedProm, nesPartition, bufferSize, &buffMgr, &netManager, port, secondBarrier, numSenderThreads] {
                     Network::NodeLocation nodeLocation(0, "127.0.0.1", port);
                     auto senderChannel =
                         netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
@@ -141,9 +141,9 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
                                 buffer.getBuffer<uint64_t>()[j] = j;
                             }
                             buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
-                            senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBuffer + 1);
+                            senderChannel->sendBuffer(buffer, sizeof(uint64_t), sentBuffer + 1, 1);
                         }
-                        senderChannel->close(Runtime::QueryTerminationType::Graceful);
+                        senderChannel->close(Runtime::QueryTerminationType::Graceful, numSenderThreads, totalNumBuffer, 1);
                         senderChannel.reset();
                     }
                     netManager->unregisterSubpartitionProducer(nesPartition);
