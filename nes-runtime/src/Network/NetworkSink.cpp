@@ -195,7 +195,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                 Runtime::QueryTerminationType::Drain,
                                                 queryManager->getNumberOfWorkerThreads(),
                                                 messageSequenceNumber,
-                                                version);
+                                                version, 0);
             workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             break;
         }
@@ -264,7 +264,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                 terminationType,
                                                                 queryManager->getNumberOfWorkerThreads(),
                                                                 messageSequenceNumber,
-                                                                version),
+                                                                version, drainVersion),
                             "Cannot remove network channel " << nesPartition.toString());
             /* store a nullptr in place of the released channel, in case another write happens afterwards, that will prevent crashing and
             allow throwing an error instead */
@@ -370,7 +370,7 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                         Runtime::QueryTerminationType::Drain,
                                         queryManager->getNumberOfWorkerThreads(),
                                         messageSequenceNumber,
-                                        version);
+                                        version, newVersion);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
 }
 
@@ -419,6 +419,10 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     NES_INFO("stop buffering data for context {}", workerContext.getId());
     unbuffer(workerContext);
     return true;
+}
+
+void NetworkSink::setDrainVersion(uint64_t version) {
+    drainVersion = version;
 }
 
 bool NetworkSink::scheduleNewDescriptor(const NetworkSinkDescriptor& networkSinkDescriptor) {

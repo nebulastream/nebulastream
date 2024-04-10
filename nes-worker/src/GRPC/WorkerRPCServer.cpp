@@ -124,7 +124,7 @@ Status WorkerRPCServer::MigrateQuery(ServerContext*, const MigrateQueryRequest* 
     NES_DEBUG("WorkerRPCServer::MigrateQuery: got request to migrate queries");
     bool success = true;
     for (auto id : request->subplanids()) {
-        success = success && nodeEngine->markSubPlanAsMigrated(id);
+        success = success && nodeEngine->markSubPlanAsMigrated(id, request->version());
     }
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");

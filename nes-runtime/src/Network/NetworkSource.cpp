@@ -178,7 +178,9 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             break;
         }
         case Runtime::ReconfigurationType::Initialize: {
-            NES_INFO("Initializing network source with unique id {} and partition {}", uniqueNetworkSourceIdentifier, nesPartition);
+            NES_INFO("Initializing network source with unique id {} and partition {}",
+                     uniqueNetworkSourceIdentifier,
+                     nesPartition);
             // we need to check again because between the invocations of
             // NetworkSource::start() and NetworkSource::reconfigure() the query might have
             // been stopped for some reason
@@ -200,34 +202,34 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                 return;
             }
 
-//            if (networkManager->getConnectSourceEventChannelsAsync()) {
-//                auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
-//                                                                                            nesPartition,
-//                                                                                            localBufferManager,
-//                                                                                            waitTime,
-//                                                                                            retryTimes);
-//                workerContext.storeEventChannelFuture(uniqueNetworkSourceIdentifier, std::move(channelFuture));
-//                break;
-//            } else {
-            (void ) waitTime;
-            (void ) retryTimes;
-                  EventOnlyNetworkChannelPtr channel = nullptr;
-//                auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
-//                                                                                 nesPartition,
-//                                                                                 localBufferManager,
-//                                                                                 waitTime,
-//                                                                                 retryTimes);
-                if (channel == nullptr) {
-                    NES_WARNING("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
-                                nesPartition.toString(),
-                                Runtime::NesThread::getId());
-                    return;// partition was deleted on the other side of the channel... no point in waiting for a channel
-                }
-                //workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
-                workerContext.storeEventOnlyChannel(uniqueNetworkSourceIdentifier, std::move(channel));
-                NES_DEBUG("NetworkSource: reconfigure() stored event-channel {} Thread {}",
-                          nesPartition.toString(),
-                          Runtime::NesThread::getId());
+            //            if (networkManager->getConnectSourceEventChannelsAsync()) {
+            //                auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
+            //                                                                                            nesPartition,
+            //                                                                                            localBufferManager,
+            //                                                                                            waitTime,
+            //                                                                                            retryTimes);
+            //                workerContext.storeEventChannelFuture(uniqueNetworkSourceIdentifier, std::move(channelFuture));
+            //                break;
+            //            } else {
+            (void) waitTime;
+            (void) retryTimes;
+            EventOnlyNetworkChannelPtr channel = nullptr;
+            //                auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
+            //                                                                                 nesPartition,
+            //                                                                                 localBufferManager,
+            //                                                                                 waitTime,
+            //                                                                                 retryTimes);
+            if (channel == nullptr) {
+                NES_WARNING("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
+                            nesPartition.toString(),
+                            Runtime::NesThread::getId());
+                return;// partition was deleted on the other side of the channel... no point in waiting for a channel
+            }
+            //workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
+            workerContext.storeEventOnlyChannel(uniqueNetworkSourceIdentifier, std::move(channel));
+            NES_DEBUG("NetworkSource: reconfigure() stored event-channel {} Thread {}",
+                      nesPartition.toString(),
+                      Runtime::NesThread::getId());
             //}
             break;
         }
@@ -266,10 +268,10 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     if (isTermination) {
         if (!workerContext.doesEventChannelExist(uniqueNetworkSourceIdentifier)) {
             //todo #4490: allow aborting connection here
-//            auto channel = workerContext.waitForAsyncConnectionEventChannel(uniqueNetworkSourceIdentifier);
-//            if (channel) {
-//                channel->close(terminationType);
-//            }
+            //            auto channel = workerContext.waitForAsyncConnectionEventChannel(uniqueNetworkSourceIdentifier);
+            //            if (channel) {
+            //                channel->close(terminationType);
+            //            }
             return;
         }
         //workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
@@ -333,16 +335,16 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
-void NetworkSource::onDrainMessage() {
+void NetworkSource::onDrainMessage(uint64_t version) {
     std::unique_lock lock(versionMutex);
-    receivedDrain = true;
+    receivedDrain = version;
     lock.unlock();
     tryStartingNewVersion();
 }
 
-void NetworkSource::markAsMigrated() {
+void NetworkSource::markAsMigrated(uint64_t version) {
     std::unique_lock lock(versionMutex);
-    migrated = true;
+    migrated = version;
     lock.unlock();
     tryStartingNewVersion();
 }
@@ -350,29 +352,32 @@ void NetworkSource::markAsMigrated() {
 bool NetworkSource::tryStartingNewVersion() {
     NES_DEBUG("Updating version for network source {}", nesPartition);
     std::unique_lock lock(versionMutex);
-//    if (nextSourceDescriptor) {
-//        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
-//        //check if the partition is still registered of if it was removed because no channels were connected
-//        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-//            auto newDescriptor = nextSourceDescriptor.value();
-//            version = newDescriptor.getVersion();
-//            sinkLocation = newDescriptor.getNodeLocation();
-//            nesPartition = newDescriptor.getNesPartition();
-//            nextSourceDescriptor = std::nullopt;
-//            //bind the sink to the new partition
-//            bind();
-//            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
-//                                                                 -1,
-//                                                                 Runtime::ReconfigurationType::UpdateVersion,
-//                                                                 Runtime::Reconfigurable::shared_from_this());
-//            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
-//            return true;
-//        }
-//        return false;
-//    }
-    if (migrated) {
+    //    if (nextSourceDescriptor) {
+    //        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
+    //        //check if the partition is still registered of if it was removed because no channels were connected
+    //        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+    //            auto newDescriptor = nextSourceDescriptor.value();
+    //            version = newDescriptor.getVersion();
+    //            sinkLocation = newDescriptor.getNodeLocation();
+    //            nesPartition = newDescriptor.getNesPartition();
+    //            nextSourceDescriptor = std::nullopt;
+    //            //bind the sink to the new partition
+    //            bind();
+    //            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
+    //                                                                 -1,
+    //                                                                 Runtime::ReconfigurationType::UpdateVersion,
+    //                                                                 Runtime::Reconfigurable::shared_from_this());
+    //            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+    //            return true;
+    //        }
+    //        return false;
+    //    }
+    if (migrated.load().has_value()) {
         //we have to check receive drian here, because otherwise we might migrate the source before the upstream has connected at all
-        if (receivedDrain && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+        //todo: move load() here
+        if (receivedDrain.load().has_value()
+            && (receivedDrain.load().value() == migrated.load().value() || receivedDrain.load().value() == 0)
+            && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
             migrated = false;
             receivedDrain = false;
             lock.unlock();

@@ -82,6 +82,7 @@ message StartQueryRequest {
 
 message MigrateQueryRequest {
   repeated uint64 subPlanIds = 1;
+  uint64 version = 2;
 }
 
 message MigrateQueryReply {

@@ -705,7 +705,7 @@ bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId) {
     return reconfiguredSink;
 }
 
-bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId) {
+bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId, uint64_t version) {
     std::unique_lock lock(engineMutex);
     auto deployedPlanIterator = deployedExecutableQueryPlans.find(decomposedQueryPlanId);
 
@@ -715,11 +715,19 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
     }
 
     auto deployedPlan = deployedPlanIterator->second;
+
+    for (auto& sink : deployedPlan->getSinks()) {
+        auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+        if (networkSink) {
+            networkSink->setDrainVersion(version);
+        }
+
+    }
     // iterate over all network sources and apply the reconfigurations
     for (auto& source : deployedPlan->getSources()) {
         auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
         if (networkSource != nullptr) {
-            networkSource->markAsMigrated();
+            networkSource->markAsMigrated(version);
         } else {
             //Migrating non network sources not supported
             NES_NOT_IMPLEMENTED();
@@ -788,7 +796,9 @@ void NodeEngine::setMetricStore(Monitoring::MetricStorePtr metricStore) {
     NES_ASSERT(metricStore != nullptr, "NodeEngine: MetricStore is null.");
     this->metricStore = metricStore;
 }
+
 WorkerId NodeEngine::getNodeId() const { return nodeId; }
+
 void NodeEngine::setNodeId(const WorkerId NodeId) { nodeId = NodeId; }
 
 void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources) {

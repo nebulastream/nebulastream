@@ -159,6 +159,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     WorkerId getReceiverId();
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
+    void setDrainVersion(uint64_t version);
 
   private:
     /**
@@ -188,6 +189,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext);
 
+
     uint64_t uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
@@ -202,6 +204,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
     std::mutex scheduledVersionMutex;
+    //todo: this should instead by passed via the reconfig
+    uint64_t drainVersion;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

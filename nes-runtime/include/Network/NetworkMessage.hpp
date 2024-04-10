@@ -158,9 +158,9 @@ class EndOfStreamMessage : public ExchangeMessage {
                                 ChannelType channelType,
                                 Runtime::QueryTerminationType terminationType,
                                 uint16_t numSendingThreads,
-                                uint64_t maxMessageSequenceNumber, uint64_t version)
+                                uint64_t maxMessageSequenceNumber, uint64_t version, uint64_t nextVersion = 0)
         : ExchangeMessage(channelId), channelType(channelType), terminationType(terminationType),
-          numSendingThreads(numSendingThreads), maxMessageSequenceNumber(maxMessageSequenceNumber), version(version) {}
+          numSendingThreads(numSendingThreads), maxMessageSequenceNumber(maxMessageSequenceNumber), version(version), nextVersion(nextVersion) {}
 
     [[nodiscard]] Runtime::QueryTerminationType getQueryTerminationType() const { return terminationType; }
 
@@ -174,12 +174,15 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] uint64_t getVersion() const { return version; }
 
+    [[nodiscard]] uint64_t getNextVersion() const { return nextVersion; }
+
   private:
     ChannelType channelType;
     Runtime::QueryTerminationType terminationType;
     uint16_t numSendingThreads;
     uint64_t maxMessageSequenceNumber;
     uint64_t version;
+    uint64_t nextVersion;
 };
 
 /**

@@ -180,7 +180,7 @@ class WorkerRPCClient {
      * @param terminationType termination type of the query
      * @return bool indicating success
      */
-    bool migrateSubplans(const std::string& address, std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds);
+    bool migrateSubplans(const std::string& address, std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds, uint64_t version);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.

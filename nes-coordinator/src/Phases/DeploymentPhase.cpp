@@ -82,7 +82,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
             case QueryState::MARKED_FOR_MIGRATION: {
                 if (requestType == RequestType::AddQuery) {
                     // Update decomposed query plan status
-                    workerRPCClient->migrateSubplans(grpcAddress, {decomposedQueryPlan->getDecomposedQueryPlanId()});
+                    workerRPCClient->migrateSubplans(grpcAddress, {decomposedQueryPlan->getDecomposedQueryPlanId()}, decomposedQueryPlanVersion);
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                                   decomposedQueryPlanId,
                                                                   decomposedQueryPlanVersion,

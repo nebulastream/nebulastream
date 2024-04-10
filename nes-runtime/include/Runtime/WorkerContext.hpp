@@ -198,7 +198,7 @@ class WorkerContext {
     bool releaseNetworkChannel(OperatorId id,
                                Runtime::QueryTerminationType type,
                                uint16_t sendingThreadCount,
-                               uint64_t currentMessageSequenceNumber, uint64_t version);
+                               uint64_t currentMessageSequenceNumber, uint64_t version, uint64_t nextVersion);
 
     /**
      * @brief This stores a network channel for an operator

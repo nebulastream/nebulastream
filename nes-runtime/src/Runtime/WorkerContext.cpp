@@ -185,11 +185,11 @@ bool WorkerContext::releaseNetworkChannel(NES::OperatorId id,
                                           Runtime::QueryTerminationType terminationType,
                                           uint16_t sendingThreadCount,
                                           uint64_t currentMessageSequenceNumber,
-                                          uint64_t version) {
+                                          uint64_t version, uint64_t nextVersion) {
     NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
-            channel->close(terminationType, sendingThreadCount, currentMessageSequenceNumber, version);
+            channel->close(terminationType, sendingThreadCount, currentMessageSequenceNumber, version, nextVersion);
         }
         dataChannels.erase(it);
         return true;
@@ -335,7 +335,7 @@ void WorkerContext::abortConnectionProcess(NES::OperatorId operatorId, uint64_t 
     if (channel) {
         uint16_t numSendingThreads = 0;
         uint16_t currentMessageSequenceNumber = 0;
-        channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber, version);
+        channel->close(QueryTerminationType::Failure, numSendingThreads, currentMessageSequenceNumber, version, 0);
     }
     dataChannelFutures.erase(iteratorOperatorId);
 }

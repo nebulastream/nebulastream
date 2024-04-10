@@ -334,7 +334,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             Network::NesPartition newPartition,
                                             DecomposedQueryPlanVersion version);
     bool bufferOutgoingTuples(WorkerId receivingWorkerId);
-    bool markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId);
+    bool markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlanId, uint64_t version);
 
     /**
      * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting

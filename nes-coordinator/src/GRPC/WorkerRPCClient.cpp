@@ -326,12 +326,13 @@ void WorkerRPCClient::stopQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-bool WorkerRPCClient::migrateSubplans(const std::string& address, std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds) {
+bool WorkerRPCClient::migrateSubplans(const std::string& address, std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds, uint64_t version) {
     NES_DEBUG("WorkerRPCCLient: Migrate query subplans");
     ClientContext context;
     MigrateQueryRequest request;
     MigrateQueryReply reply;
 
+    request.set_version(version);
     for (auto id : decomposedQueryPlanIds) {
         request.add_subplanids(id);
     }

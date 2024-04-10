@@ -63,7 +63,7 @@ class BaseNetworkChannel {
                Runtime::QueryTerminationType terminationType,
                uint64_t version,
                uint16_t numSendingThreads,
-               uint64_t currentMessageSequenceNumber);
+               uint64_t currentMessageSequenceNumber, uint64_t nextVersion = 0);
 
   protected:
     const std::string socketAddr;
