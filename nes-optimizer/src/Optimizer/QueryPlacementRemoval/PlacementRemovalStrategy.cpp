@@ -347,11 +347,13 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
             }
 
             // 12. Mark the plan for migration if the plan is empty else for re-deployment
-            if (querySubPlanToUpdate->getRootOperators().empty()) {
-                querySubPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
-            } else {
-                querySubPlanToUpdate->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
-            }
+            // if (querySubPlanToUpdate->getRootOperators().empty()) {
+            //     querySubPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
+            // } else {
+            //     querySubPlanToUpdate->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
+            // }
+            querySubPlanToUpdate->setState(QueryState::MARKED_FOR_MIGRATION);
+
 
             // 13. Add the updated query sub plan
             updatedDecomposedQueryPlans.emplace_back(querySubPlanToUpdate);

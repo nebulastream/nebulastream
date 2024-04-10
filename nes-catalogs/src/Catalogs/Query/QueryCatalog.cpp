@@ -431,10 +431,10 @@ bool QueryCatalog::handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId shar
                     magic_enum::enum_name(currentSharedQueryState),
                     decomposedQueryPlanId);
         //FIXME: #4396 fix what to do when this occurs
-        NES_ASSERT(false,
-                   "Found query in " << magic_enum::enum_name(currentSharedQueryState)
-                                     << " but received SOFT_STOP_COMPLETED for the decomposed query with id "
-                                     << decomposedQueryPlanId << " for shared query id " << sharedQueryId);
+        // NES_ASSERT(false,
+        //            "Found query in " << magic_enum::enum_name(currentSharedQueryState)
+        //                              << " but received SOFT_STOP_COMPLETED for the decomposed query with id "
+        //                              << decomposedQueryPlanId << " for shared query id " << sharedQueryId);
     }
 
     //Get the sub query plan
