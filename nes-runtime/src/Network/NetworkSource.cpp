@@ -330,7 +330,7 @@ DecomposedQueryPlanVersion NetworkSource::getVersion() const { return version; }
 
 void NetworkSource::onEvent(Runtime::EventPtr event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);
-    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
+    if (event->getEventType() == Runtime::EventType::kStartSourceEvent) {
         auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
         if (!senderChannel) {
             auto senderChannelOptional = workerContext.getAsyncEventChannelConnectionResult(this->operatorId);

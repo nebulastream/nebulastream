@@ -22,6 +22,7 @@ add_source_files(unikernel-export
 add_source_files(nes-execution
         WindowProcessingException.cpp
         SlidingWindowSliceStore.cpp
+        AppendToSliceStoreHandler.cpp
         AppendToSliceStoreAction.cpp
         AbstractSlicePreAggregationHandler.cpp
 )

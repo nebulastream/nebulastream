@@ -137,7 +137,7 @@ void StaticDataSource::onEvent(Runtime::EventPtr event) {
     std::unique_lock lock(startConfigMutex);
 
     NES_DEBUG("StaticDataSource::onEvent(event) called. operatorId: {}", this->operatorId);
-    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
+    if (event->getEventType() == Runtime::EventType::kStartSourceEvent) {
         NES_DEBUG("StaticDataSource: received startSourceEvent. operatorId: {}", this->operatorId);
         if (startCalled) {
             lock.unlock();

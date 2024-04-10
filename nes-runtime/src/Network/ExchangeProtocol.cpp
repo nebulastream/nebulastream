@@ -17,6 +17,9 @@
 #include <Network/PartitionManager.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Common.hpp>
+#ifndef UNIKERNEL_LIB
+#include <Network/NetworkSource.hpp>
+#endif
 
 namespace NES::Network {
 
