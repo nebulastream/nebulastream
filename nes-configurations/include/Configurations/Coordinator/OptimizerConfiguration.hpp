@@ -127,7 +127,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      * @brief Enable incremental placement of running query plans.
      */
     BoolOption enableIncrementalPlacement = {ENABLE_INCREMENTAL_PLACEMENT,
-                                             "false",
+                                             "true",
                                              "Enable reconfiguration of running query plans. (Default: false)", std::make_shared<BooleanValidation>()};
 
     /**

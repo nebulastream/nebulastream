@@ -16,6 +16,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/DeploymentPhase.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -81,6 +82,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
             case QueryState::MARKED_FOR_MIGRATION: {
                 if (requestType == RequestType::AddQuery) {
                     // Update decomposed query plan status
+                    workerRPCClient->migrateSubplans(grpcAddress, {decomposedQueryPlan->getDecomposedQueryPlanId()});
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                                   decomposedQueryPlanId,
                                                                   decomposedQueryPlanVersion,
