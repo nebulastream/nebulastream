@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRowLayout.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -22,19 +23,17 @@ NLJSlice::NLJSlice(uint64_t windowStart,
                    uint64_t windowEnd,
                    uint64_t numberOfWorker,
                    BufferManagerPtr& bufferManager,
-                   SchemaPtr& leftSchema,
+                   size_t leftSchema,
                    uint64_t leftPageSize,
-                   SchemaPtr& rightSchema,
+                   size_t rightSchema,
                    uint64_t rightPageSize)
     : StreamSlice(windowStart, windowEnd) {
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
-        leftTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, leftSchema, leftPageSize));
+        leftTuples.emplace_back(std::make_unique<PagedVectorRowLayout>(bufferManager, leftSchema, leftPageSize));
     }
 
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
-        rightTuples.emplace_back(
-            std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, rightSchema, rightPageSize));
+        rightTuples.emplace_back(std::make_unique<PagedVectorRowLayout>(bufferManager, rightSchema, rightPageSize));
     }
     NES_TRACE("Created NLJWindow {} for {} workerThreads, resulting in {} leftTuples.size() and {} rightTuples.size()",
               NLJSlice::toString(),
@@ -46,7 +45,7 @@ NLJSlice::NLJSlice(uint64_t windowStart,
 uint64_t NLJSlice::getNumberOfTuplesLeft() {
     uint64_t sum = 0;
     for (auto& pagedVec : leftTuples) {
-        sum += pagedVec->getNumberOfEntries();
+        sum += pagedVec->size();
     }
     return sum;
 }
@@ -54,7 +53,7 @@ uint64_t NLJSlice::getNumberOfTuplesLeft() {
 uint64_t NLJSlice::getNumberOfTuplesRight() {
     uint64_t sum = 0;
     for (auto& pagedVec : rightTuples) {
-        sum += pagedVec->getNumberOfEntries();
+        sum += pagedVec->size();
     }
     return sum;
 }
@@ -83,7 +82,7 @@ void NLJSlice::combinePagedVectors() {
     // Appending all PagedVectors for the left join side and removing all items except the first one
     if (leftTuples.size() > 1) {
         for (uint64_t i = 1; i < leftTuples.size(); ++i) {
-            leftTuples[0]->appendAllPages(*leftTuples[i]);
+            leftTuples[0]->takePagesFrom(std::move(*leftTuples[i]));
         }
         leftTuples.erase(leftTuples.begin() + 1, leftTuples.end());
     }
@@ -91,7 +90,7 @@ void NLJSlice::combinePagedVectors() {
     // Appending all PagedVectors for the right join side and removing all items except the first one
     if (rightTuples.size() > 1) {
         for (uint64_t i = 1; i < rightTuples.size(); ++i) {
-            rightTuples[0]->appendAllPages(*rightTuples[i]);
+            rightTuples[0]->takePagesFrom(std::move(*rightTuples[i]));
         }
         rightTuples.erase(rightTuples.begin() + 1, rightTuples.end());
     }

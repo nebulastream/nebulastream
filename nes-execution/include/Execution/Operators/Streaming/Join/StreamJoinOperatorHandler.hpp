@@ -51,8 +51,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
                               const OriginId outputOriginId,
                               const uint64_t windowSize,
                               const uint64_t windowSlide,
-                              const SchemaPtr& leftSchema,
-                              const SchemaPtr& rightSchema);
+                              const size_t sizeOfRecordLeft,
+                              size_t sizeOfRecordRight);
 
     ~StreamJoinOperatorHandler() override = default;
 
@@ -193,8 +193,6 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     // TODO with issue #4517 we can remove the sizes
     size_t sizeOfRecordLeft;
     size_t sizeOfRecordRight;
-    SchemaPtr leftSchema;
-    SchemaPtr rightSchema;
     BufferManagerPtr bufferManager;
 };
 }// namespace NES::Runtime::Execution::Operators

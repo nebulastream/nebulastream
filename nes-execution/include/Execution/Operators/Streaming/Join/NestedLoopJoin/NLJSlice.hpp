@@ -16,6 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_
 
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRowLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <cstdint>
 #include <mutex>
@@ -45,9 +46,9 @@ class NLJSlice : public StreamSlice {
                       uint64_t sliceEnd,
                       uint64_t numWorkerThreads,
                       BufferManagerPtr& bufferManager,
-                      SchemaPtr& leftSchema,
+                      size_t leftSchema,
                       uint64_t leftPageSize,
-                      SchemaPtr& rightSchema,
+                      size_t rightSchema,
                       uint64_t rightPageSize);
 
     ~NLJSlice() override = default;
@@ -91,8 +92,8 @@ class NLJSlice : public StreamSlice {
     std::string toString() override;
 
   private:
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftTuples;
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> rightTuples;
+    std::vector<std::unique_ptr<PagedVectorRowLayout>> leftTuples;
+    std::vector<std::unique_ptr<PagedVectorRowLayout>> rightTuples;
 };
 }// namespace NES::Runtime::Execution
 

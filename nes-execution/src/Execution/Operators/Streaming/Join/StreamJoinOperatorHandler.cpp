@@ -198,12 +198,12 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
                                                      const OriginId outputOriginId,
                                                      const uint64_t windowSize,
                                                      const uint64_t windowSlide,
-                                                     const SchemaPtr& leftSchema,
-                                                     const SchemaPtr& rightSchema)
+                                                     size_t sizeOfRecordLeft,
+                                                     size_t sizeOfRecordRight)
     : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSlide), windowSize(windowSize), windowSlide(windowSlide),
       watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)),
       watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector<OriginId>(1, outputOriginId))),
-      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(leftSchema->getSchemaSizeInBytes()),
-      sizeOfRecordRight(rightSchema->getSchemaSizeInBytes()), leftSchema(leftSchema), rightSchema(rightSchema) {}
+      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(sizeOfRecordLeft),
+      sizeOfRecordRight(sizeOfRecordRight) {}
 
 }// namespace NES::Runtime::Execution::Operators

@@ -36,8 +36,8 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
                               const OriginId outputOriginId,
                               const uint64_t windowSize,
                               const uint64_t windowSlide,
-                              const SchemaPtr& leftSchema,
-                              const SchemaPtr& rightSchema,
+                              size_t leftSchema,
+                              size_t rightSchema,
                               const uint64_t pageSizeLeft,
                               const uint64_t pageSizeRight);
 
@@ -57,8 +57,8 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
                                         const OriginId outputOriginId,
                                         const uint64_t windowSize,
                                         const uint64_t windowSlide,
-                                        const SchemaPtr& leftSchema,
-                                        const SchemaPtr& rightSchema,
+                                        size_t leftSchema,
+                                        size_t rightSchema,
                                         const uint64_t pageSizeLeft,
                                         const uint64_t pageSizeRight);
 

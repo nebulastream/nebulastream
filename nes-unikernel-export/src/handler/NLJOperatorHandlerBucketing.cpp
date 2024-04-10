@@ -19,8 +19,8 @@ NLJOperatorHandlerBucketing::NLJOperatorHandlerBucketing(const std::vector<Origi
                                                          const OriginId outputOriginId,
                                                          const uint64_t windowSize,
                                                          const uint64_t windowSlide,
-                                                         const NES::SchemaPtr& leftSchema,
-                                                         const NES::SchemaPtr& rightSchema,
+                                                         size_t leftSchema,
+                                                         size_t rightSchema,
                                                          const uint64_t pageSizeLeft,
                                                          const uint64_t pageSizeRight)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
@@ -48,8 +48,8 @@ NLJOperatorHandlerPtr NLJOperatorHandlerBucketing::create(const std::vector<Orig
                                                           const OriginId outputOriginId,
                                                           const uint64_t windowSize,
                                                           const uint64_t windowSlide,
-                                                          const NES::SchemaPtr& leftSchema,
-                                                          const NES::SchemaPtr& rightSchema,
+                                                          size_t leftSchema,
+                                                          size_t rightSchema,
                                                           const uint64_t pageSizeLeft,
                                                           const uint64_t pageSizeRight) {
     return std::make_shared<NLJOperatorHandlerBucketing>(inputOrigins,

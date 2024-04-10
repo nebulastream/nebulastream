@@ -57,9 +57,9 @@ StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t 
                                       sliceEnd,
                                       numberOfWorkerThreads,
                                       bufferManager,
-                                      leftSchema,
+                                      sizeOfRecordLeft,
                                       pageSizeLeft,
-                                      rightSchema,
+                                      sizeOfRecordRight,
                                       pageSizeRight);
 }
 
@@ -67,8 +67,8 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
                                        const OriginId outputOriginId,
                                        const uint64_t windowSize,
                                        const uint64_t windowSlide,
-                                       const SchemaPtr& leftSchema,
-                                       const SchemaPtr& rightSchema,
+                                       size_t leftSchema,
+                                       size_t rightSchema,
                                        const uint64_t pageSizeLeft,
                                        const uint64_t pageSizeRight)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
