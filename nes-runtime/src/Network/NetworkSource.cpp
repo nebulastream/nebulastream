@@ -372,11 +372,11 @@ bool NetworkSource::tryStartingNewVersion() {
     //        }
     //        return false;
     //    }
-    if (migrated.load().has_value()) {
+    if (migrated.has_value()) {
         //we have to check receive drian here, because otherwise we might migrate the source before the upstream has connected at all
         //todo: move load() here
-        if (receivedDrain.load().has_value()
-            && (receivedDrain.load().value() == migrated.load().value() || receivedDrain.load().value() == 0)
+        if (receivedDrain.has_value()
+            && (receivedDrain.value() == migrated.value() || receivedDrain.value() == 0)
             && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
             migrated = false;
             receivedDrain = false;
