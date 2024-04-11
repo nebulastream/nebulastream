@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.6.91](https://github.com/nebulastream/nebulastream/tree/v0.6.91) (2024-04-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.90...v0.6.91)
+
+**Implemented enhancements:**
+
+- \[TASK\] E2ETest of Statistics [\#4744](https://github.com/nebulastream/nebulastream/issues/4744)
+- \[TASK\] StatisticCallbackHandler [\#4615](https://github.com/nebulastream/nebulastream/issues/4615)
+- \[TASK\] StatisticManager [\#4614](https://github.com/nebulastream/nebulastream/issues/4614)
+- \[TASK\] StatisticProbeHandler [\#4609](https://github.com/nebulastream/nebulastream/issues/4609)
+
 ## [v0.6.90](https://github.com/nebulastream/nebulastream/tree/v0.6.90) (2024-04-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.89...v0.6.90)
