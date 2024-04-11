@@ -378,8 +378,8 @@ bool NetworkSource::tryStartingNewVersion() {
         if (receivedDrain.has_value()
             && (receivedDrain.value() == migrated.value() || receivedDrain.value() == 0)
             && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-            migrated = false;
-            receivedDrain = false;
+            migrated = std::nullopt;
+            receivedDrain = std::nullopt;
             lock.unlock();
             onEndOfStream(Runtime::QueryTerminationType::Drain);
             return true;
