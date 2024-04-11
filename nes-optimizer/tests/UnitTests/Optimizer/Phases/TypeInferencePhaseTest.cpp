@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/TestSchemas.hpp>
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
@@ -1599,6 +1600,35 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
     NES_DEBUG("expected = {}", actualSinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
     EXPECT_TRUE(sinkOutputSchema->getField("logicalSource1$outputAttribute1"));
+}
+
+/**
+ * @brief We test that the datatype of a event time field is always an integer. We create a query with a window that has
+ * a timestamp field with a wrong datatype and run the type inference phase. We expect an exception to be thrown.
+ */
+TEST_F(TypeInferencePhaseTest, windowDataTypeForTimestamp) {
+    // Creating necessary objects for running the type inference phase
+    Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    auto sourceSchema = TestSchemas::getSchemaTemplate("id_time_u64")
+                            ->addField("wrongDataTypeTimeStamp", BasicType::BOOLEAN)
+                            ->updateSourceName("source");
+    streamCatalog->addLogicalSource("source", sourceSchema);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
+
+    // Creating a query with a "correct" window and a "wrong" window
+    auto queryCorrect = Query::from("source")
+                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                            .apply(Sum(Attribute("id")))
+                            .sink(NullOutputSinkDescriptor::create());
+    auto queryWrong = Query::from("source")
+                          .window(TumblingWindow::of(EventTime(Attribute("wrongDataTypeTimeStamp")), Milliseconds(1000)))
+                          .apply(Sum(Attribute("id")))
+                          .sink(NullOutputSinkDescriptor::create());
+
+
+    // Running the type inference phase
+    ASSERT_NO_THROW(phase->execute(queryCorrect.getQueryPlan()));
+    ASSERT_ANY_THROW(phase->execute(queryWrong.getQueryPlan()));
 }
 
 }// namespace NES
