@@ -18,6 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Common/DataTypes/Integer.hpp>
 
 namespace NES::Windowing {
 
@@ -28,7 +29,10 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
     if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime) {
         auto fieldName = timeCharacteristic->getField()->getName();
         auto existingField = schema->getField(fieldName);
-        if (existingField) {
+        if (!existingField->getDataType()->isInteger()) {
+            NES_ERROR("TimeBasedWindow should use a uint for time field {}", fieldName);
+            throw InvalidFieldException("TimeBasedWindow should use a uint for time field " + fieldName);
+        } else if (existingField) {
             timeCharacteristic->getField()->setName(existingField->getName());
             return true;
         } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {

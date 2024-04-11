@@ -198,8 +198,8 @@ jobs:
             arch: "arm64"
             require_build: "true"
             require_test: "true"
-            build_parallelism: "8"
-            test_parallelism: "4"
+            build_parallelism: "32" # As we have over 200 cores on the arm server, this should be fine.
+            test_parallelism: "8"   # As we have over 200 cores on the arm server, this should be fine.
             runner_group: "default"
     steps:
       - uses: AutoModality/action-clean@v1
