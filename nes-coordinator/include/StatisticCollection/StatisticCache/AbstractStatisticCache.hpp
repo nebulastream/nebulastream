@@ -15,9 +15,9 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_ABSTRACTSTATISTICCACHE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_ABSTRACTSTATISTICCACHE_HPP_
 
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <StatisticCollection/StatisticKey.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
 #include <memory>
 
 namespace NES::Statistic {
@@ -30,7 +30,6 @@ using AbstractStatisticCachePtr = std::shared_ptr<AbstractStatisticCache>;
  */
 class AbstractStatisticCache {
   public:
-
     /**
      * @brief Inserts a statistic into the cache. If a statistic exists for the same timestamp then, it will NOT be overwritten and discarded
      * @param statisticHash
@@ -47,8 +46,8 @@ class AbstractStatisticCache {
      * @return Vector of StatisticValuePtr
      */
     virtual std::vector<StatisticValuePtr> getStatistic(const StatisticHash& statisticHash,
-                                                              const Windowing::TimeMeasure& startTs,
-                                                              const Windowing::TimeMeasure& endTs) = 0;
+                                                        const Windowing::TimeMeasure& startTs,
+                                                        const Windowing::TimeMeasure& endTs) = 0;
 
     /**
      * @brief Deletes the statistics for the given hash and interval [startTs, endTs]

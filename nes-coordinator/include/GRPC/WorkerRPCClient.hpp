@@ -16,10 +16,10 @@
 #define NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
 #include <Identifiers.hpp>
-#include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
-#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>

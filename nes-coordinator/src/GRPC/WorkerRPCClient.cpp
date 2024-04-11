@@ -18,10 +18,10 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/ExpressionSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
 #include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
@@ -481,7 +481,8 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
-std::vector<Statistic::StatisticValue<>> WorkerRPCClient::probeStatistics(const Statistic::StatisticProbeRequestGRPC& probeRequest) {
+std::vector<Statistic::StatisticValue<>>
+WorkerRPCClient::probeStatistics(const Statistic::StatisticProbeRequestGRPC& probeRequest) {
     NES_DEBUG("Requesting statistics from {}", probeRequest.address);
 
     // 1. Building the request
@@ -501,9 +502,12 @@ std::vector<Statistic::StatisticValue<>> WorkerRPCClient::probeStatistics(const 
     if (status.ok()) {
         // Extracting the statistic values from the reply, if the reply is valid
         std::vector<Statistic::StatisticValue<>> statisticValues;
-        std::transform(reply.statistics().begin(), reply.statistics().end(), std::back_inserter(statisticValues),
+        std::transform(reply.statistics().begin(),
+                       reply.statistics().end(),
+                       std::back_inserter(statisticValues),
                        [](const StatisticReply& statisticValue) {
-                           return Statistic::StatisticValue<>(statisticValue.statisticvalue(), statisticValue.startts(),
+                           return Statistic::StatisticValue<>(statisticValue.statisticvalue(),
+                                                              statisticValue.startts(),
                                                               statisticValue.endts());
                        });
         return statisticValues;

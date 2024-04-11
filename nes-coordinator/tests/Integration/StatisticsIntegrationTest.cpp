@@ -12,36 +12,37 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-#include <API/TestSchemas.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/QueryAPI.hpp>
+#include <API/TestSchemas.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Cardinality.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Selectivity.hpp>
+#include <StatisticCollection/StatisticCoordinator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtils.hpp>
+#include <gtest/gtest.h>
 #include <unordered_map>
 
 using namespace std;
 
 namespace NES {
 
-class StatisticsIntegrationTest : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<std::tuple<int, int, int, Statistic::MetricPtr>> {
+class StatisticsIntegrationTest : public Testing::BaseIntegrationTest,
+                                  public ::testing::WithParamInterface<std::tuple<int, int, int, Statistic::MetricPtr>> {
   public:
     Statistic::StatisticCoordinatorPtr statCoordinator;
     std::vector<NesWorkerPtr> allWorkers;
@@ -58,7 +59,6 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest, public ::
     uint64_t numberOfBuffersToProduce;
     uint64_t windowSize;
     Statistic::MetricPtr metric;
-
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StatisticsIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
@@ -122,10 +122,12 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest, public ::
         BaseIntegrationTest::TearDown();
     }
 
-    NesWorkerPtr createWorker(const string& defaultLogicalSourceName, const std::string& physicalSourceName,
-                              const uint64_t coordinatorRPCPort, uint64_t workerId) {
+    NesWorkerPtr createWorker(const string& defaultLogicalSourceName,
+                              const std::string& physicalSourceName,
+                              const uint64_t coordinatorRPCPort,
+                              uint64_t workerId) {
         // Create the generator function that produces data id (rand() % 1000) and timestamp monotonic increasing
-        auto createData = [this] (Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        auto createData = [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             static uint64_t curTimestamp = 0;
             auto dynamicBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, testInputSchema);
             for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
@@ -141,8 +143,12 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest, public ::
         workerConfig->workerId = workerId;
         workerConfig->coordinatorPort = coordinatorRPCPort;
         workerConfig->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-        auto lambdaSourceType = LambdaSourceType::create(defaultLogicalSourceName, physicalSourceName,
-                                                      createData, numberOfBuffersToProduce, gatheringValue, GatheringMode::INTERVAL_MODE);
+        auto lambdaSourceType = LambdaSourceType::create(defaultLogicalSourceName,
+                                                         physicalSourceName,
+                                                         createData,
+                                                         numberOfBuffersToProduce,
+                                                         gatheringValue,
+                                                         GatheringMode::INTERVAL_MODE);
         workerConfig->physicalSourceTypes.add(lambdaSourceType);
 
         // Start the worker
@@ -170,7 +176,6 @@ TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
     auto allStatisticKeys = statCoordinator->trackStatistic(characteristic, window);
     ASSERT_FALSE(allStatisticKeys.empty());
 
-
     // Waiting till all statistic queries are done creating the statistic. This works, as the lambda source is finite
     for (const auto& statisticKey : allStatisticKeys) {
         const auto queryId = statCoordinator->getStatisticQueryId(statisticKey);
@@ -186,7 +191,7 @@ TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
         // Trying to probe the statistics
         auto probeResult = statCoordinator->probeStatistic(statisticKey,
                                                            Seconds(0),
-                                                           Days(1'000), // We just need a large enough timestamp here
+                                                           Days(1'000),// We just need a large enough timestamp here
                                                            Milliseconds(windowSize),
                                                            ProbeExpression(expressionNodePtr),
                                                            false);
@@ -202,21 +207,18 @@ TEST_P(StatisticsIntegrationTest, singleTrackAndProbeDataCharacteristic) {
     EXPECT_EQ(statisticKeysWithProbeResult.size(), allStatisticKeys.size());
 }
 
-
-INSTANTIATE_TEST_CASE_P(testDefaultStatisticStore,
-                        StatisticsIntegrationTest,
-                        ::testing::Combine(::testing::Values(1, 2, 3),     // No. workers
-                                           ::testing::Values(1, 5, 10),    // No. buffers to produce
-                                           ::testing::Values(1, 10, 1000), // Window size
-                                           ::testing::Values(              // Different Metrics
-                                               Statistic::Cardinality::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)),
-                                               Statistic::Selectivity::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)))
-                                           ),
-                        [](const testing::TestParamInfo<StatisticsIntegrationTest::ParamType>& info) {
-                            return std::string(std::to_string(std::get<0>(info.param)) + "Workers_"
-                                               + std::to_string(std::get<1>(info.param)) + "NumberOfBuffers_"
-                                               + std::to_string(std::get<2>(info.param)) + "WindowSize_"
-                                               + std::to_string(info.index) + "Metric"
-                                               );
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testDefaultStatisticStore,
+    StatisticsIntegrationTest,
+    ::testing::Combine(::testing::Values(1, 2, 3),    // No. workers
+                       ::testing::Values(1, 5, 10),   // No. buffers to produce
+                       ::testing::Values(1, 10, 1000),// Window size
+                       ::testing::Values(             // Different Metrics
+                           Statistic::Cardinality::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)),
+                           Statistic::Selectivity::create(Statistic::Over(StatisticsIntegrationTest::fieldNameToTrack)))),
+    [](const testing::TestParamInfo<StatisticsIntegrationTest::ParamType>& info) {
+        return std::string(std::to_string(std::get<0>(info.param)) + "Workers_" + std::to_string(std::get<1>(info.param))
+                           + "NumberOfBuffers_" + std::to_string(std::get<2>(info.param)) + "WindowSize_"
+                           + std::to_string(info.index) + "Metric");
+    });
 }// namespace NES

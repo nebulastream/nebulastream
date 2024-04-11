@@ -33,7 +33,7 @@ namespace NES {
 namespace Statistic {
 class StatisticCoordinator;
 using StatisticCoordinatorPtr = std::shared_ptr<StatisticCoordinator>;
-}
+}// namespace Statistic
 
 namespace Runtime {
 

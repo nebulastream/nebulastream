@@ -39,13 +39,13 @@
 #include <REST/RestServer.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
-#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/RequestHandlerService.hpp>
+#include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
+#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>

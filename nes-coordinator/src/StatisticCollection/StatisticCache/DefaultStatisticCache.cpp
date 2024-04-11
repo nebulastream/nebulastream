@@ -12,14 +12,12 @@
     limitations under the License.
 */
 
-#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Statistic {
 
-AbstractStatisticCachePtr DefaultStatisticCache::create() {
-    return std::make_shared<DefaultStatisticCache>();
-}
+AbstractStatisticCachePtr DefaultStatisticCache::create() { return std::make_shared<DefaultStatisticCache>(); }
 
 bool DefaultStatisticCache::insertStatistic(const StatisticHash& statisticHash, const StatisticValue<>& statisticValue) {
     auto lockedKeyToStatisticMap = keyToStatistics.wlock();
@@ -35,14 +33,14 @@ bool DefaultStatisticCache::insertStatistic(const StatisticHash& statisticHash, 
         }
     }
 
-
-    statisticVec.emplace_back(std::make_shared<StatisticValue<>>(statisticValue.getValue(), statisticValue.getStartTs(), statisticValue.getEndTs()));
+    statisticVec.emplace_back(
+        std::make_shared<StatisticValue<>>(statisticValue.getValue(), statisticValue.getStartTs(), statisticValue.getEndTs()));
     return true;
 }
 
 std::vector<StatisticValuePtr> DefaultStatisticCache::getStatistic(const StatisticHash& statisticHash,
-                                                                      const Windowing::TimeMeasure& startTs,
-                                                                      const Windowing::TimeMeasure& endTs) {
+                                                                   const Windowing::TimeMeasure& startTs,
+                                                                   const Windowing::TimeMeasure& endTs) {
     auto lockedKeyToStatisticMap = keyToStatistics.wlock();
     auto& statisticVec = (*lockedKeyToStatisticMap)[statisticHash];
     std::vector<StatisticValuePtr> returnStatisticsVector;
@@ -72,6 +70,5 @@ bool DefaultStatisticCache::deleteStatistics(const StatisticHash& statisticHash,
     const bool foundAnyStatistic = removeBeginIt != statisticVec.end();
     statisticVec.erase(removeBeginIt, statisticVec.end());
     return foundAnyStatistic;
-
 }
 }// namespace NES::Statistic

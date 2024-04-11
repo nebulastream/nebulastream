@@ -50,8 +50,8 @@ class DefaultStatisticCache : public AbstractStatisticCache {
      * @return Value of StatisticValuePtr
      */
     std::vector<StatisticValuePtr> getStatistic(const StatisticHash& statisticHash,
-                                                   const Windowing::TimeMeasure& startTs,
-                                                   const Windowing::TimeMeasure& endTs) override;
+                                                const Windowing::TimeMeasure& startTs,
+                                                const Windowing::TimeMeasure& endTs) override;
 
     /**
      * @brief Deletes the statistics from the cache

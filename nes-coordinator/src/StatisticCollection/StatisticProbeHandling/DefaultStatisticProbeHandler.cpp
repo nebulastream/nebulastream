@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeHandler.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Statistic {

@@ -15,10 +15,10 @@
 #ifndef NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICREQUESTS_HPP_
 #define NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICREQUESTS_HPP_
 
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Characteristic/Characteristic.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <sstream>
 
 namespace NES::Statistic {
@@ -61,6 +61,6 @@ struct StatisticProbeRequestGRPC : public StatisticProbeRequest {
     const std::string address;
 };
 
-} // namespace NES::Statistic
+}// namespace NES::Statistic
 
 #endif//NES_NES_WORKER_INCLUDE_STATISTICCOLLECTION_STATISTICREQUESTS_HPP_
