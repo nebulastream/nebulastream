@@ -19,12 +19,13 @@ namespace NES::Statistic {
 
 MetricPtr MinVal::create(const FieldAccessExpressionNodePtr& field) { return std::make_shared<MinVal>(MinVal(field)); }
 
-MinVal::MinVal(const FieldAccessExpressionNodePtr& field) : Metric(field) {}
+MinVal::MinVal(const FieldAccessExpressionNodePtr& field) : StatisticMetric(field) {}
 
-bool MinVal::operator==(const Metric& rhs) const {
+bool MinVal::operator==(const StatisticMetric& rhs) const {
     if (rhs.instanceOf<MinVal>()) {
+        // We assume that if the field has the same name, the metric is equal
         auto rhsMinVal = dynamic_cast<const MinVal&>(rhs);
-        return field->equal(rhsMinVal.field);
+        return field->getFieldName() == rhsMinVal.field->getFieldName();
     }
     return false;
 }

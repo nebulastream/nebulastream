@@ -22,7 +22,7 @@ PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       predicate(std::move(predicate)) {}
 
 PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id,

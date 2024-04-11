@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <StatisticIdentifiers.hpp>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Descriptor/HyperLogLogDescriptor.hpp>
+#include <StatisticIdentifiers.hpp>
 #include <cmath>
 namespace NES::Statistic {
 
@@ -22,10 +22,11 @@ WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpression
 }
 
 WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field, double error) {
-    // Calculating 1.04/(error * error) and then rounding up to the next highest power of 2
+    // Calculating 1.04/(error * error), then rounding up to the next highest power of 2, and then taking the log2 of that
     const auto numberOfBits = 1.04/(error * error);
-    const auto nextHigherPowerOf2 = (uint64_t)std::pow(2, std::ceil(log(numberOfBits)/log(2)));
-    return create(std::move(field), nextHigherPowerOf2);
+    const auto nextHigherPowerOf2 = std::pow(2, std::ceil(log(numberOfBits)/log(2)));
+    const auto bitWidth = (uint64_t)std::ceil(log2(nextHigherPowerOf2));
+    return create(std::move(field), bitWidth);
 }
 
 WindowStatisticDescriptorPtr HyperLogLogDescriptor::create(FieldAccessExpressionNodePtr field, uint64_t width) {

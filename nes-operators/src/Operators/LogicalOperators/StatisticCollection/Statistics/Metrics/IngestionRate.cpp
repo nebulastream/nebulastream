@@ -19,12 +19,13 @@ namespace NES::Statistic {
 
 MetricPtr IngestionRate::create() { return std::make_shared<IngestionRate>(IngestionRate()); }
 
-IngestionRate::IngestionRate() : Metric(FieldAccessExpressionNode::create(INGESTION_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
+IngestionRate::IngestionRate() : StatisticMetric(FieldAccessExpressionNode::create(INGESTION_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
 
-bool IngestionRate::operator==(const Metric& rhs) const {
+bool IngestionRate::operator==(const StatisticMetric& rhs) const {
     if (rhs.instanceOf<IngestionRate>()) {
+        // We assume that if the field has the same name, the metric is equal
         auto rhsIngestionRate = dynamic_cast<const IngestionRate&>(rhs);
-        return field == rhsIngestionRate.field;
+        return field->getFieldName() == rhsIngestionRate.field->getFieldName();
     }
     return false;
 }

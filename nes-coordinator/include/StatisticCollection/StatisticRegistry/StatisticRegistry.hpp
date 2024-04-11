@@ -26,7 +26,8 @@
 namespace NES::Statistic {
 
 /**
- * @brief This registry stores StatisticInfo for each StatisticKey
+ * @brief This registry stores StatisticInfo for each StatisticKey. For now, we do not support that a same statistic key
+ * can have different triggerCondition and callbacks, see issue #4776 and issue #4778
  */
 class StatisticRegistry {
   public:
@@ -36,6 +37,13 @@ class StatisticRegistry {
      * @return StatisticInfoWLock
      */
     StatisticInfoWLock getStatisticInfo(const StatisticKey statisticKey);
+
+    /**
+     * @brief Gets the queryId for a StatisticKey
+     * @param statisticKey
+     * @return QueryId
+     */
+    QueryId getQueryId(const StatisticKey statisticKey) const;
 
     /**
      * @brief Gets a StatisticInfo for a StatisticKey and checks if the StatisticInfo has the same granularity

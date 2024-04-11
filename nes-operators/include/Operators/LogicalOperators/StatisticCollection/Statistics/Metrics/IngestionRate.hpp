@@ -14,14 +14,14 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_INGESTIONRATE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_INGESTIONRATE_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 
 namespace NES::Statistic {
 
 /**
  * @brief Collects the ingestion rate on a node
  */
-class IngestionRate : public Metric {
+class IngestionRate : public StatisticMetric {
   public:
     /**
      * @brief Creates a IngestionRate wrapped in a MetricPtr
@@ -34,7 +34,7 @@ class IngestionRate : public Metric {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const Metric& rhs) const override;
+    bool operator==(const StatisticMetric& rhs) const override;
 
     /**
      * @brief Creates a string representation

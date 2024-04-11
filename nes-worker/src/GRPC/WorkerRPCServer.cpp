@@ -23,6 +23,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <nlohmann/json.hpp>
+#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
+
 #include <utility>
 
 namespace NES {
@@ -31,8 +33,9 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                                  Monitoring::MonitoringAgentPtr monitoringAgent,
                                  NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
                                  NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
-    : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)),
-      locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)) {
+    : nodeEngine(std::move(nodeEngine)), statisticManager(this->nodeEngine->getStatisticManager()),
+      monitoringAgent(std::move(monitoringAgent)), locationProvider(std::move(locationProvider)),
+      trajectoryPredictor(std::move(trajectoryPredictor)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
@@ -200,4 +203,26 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     }
     return Status::OK;
 }
+
+Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsRequest* request, ProbeStatisticsReply* reply) {
+
+    // Building a C++ StatisticProbeRequest object
+    auto probeExpression = ExpressionSerializationUtil::deserializeExpression(request->expression());
+    Statistic::StatisticProbeRequest probeRequest(request->statistichash(),
+                                                  Windowing::TimeMeasure(request->startts()),
+                                                  Windowing::TimeMeasure(request->endts()),
+                                                  Statistic::ProbeExpression(probeExpression));
+
+    // Getting all statistics that match the probe request
+    auto allProbedStatisticValues = statisticManager->getStatistics(probeRequest);
+    for (const auto& stat : allProbedStatisticValues) {
+        auto protoStat = reply->add_statistics();
+        protoStat->set_startts(stat.getStartTs().getTime());
+        protoStat->set_endts(stat.getEndTs().getTime());
+        protoStat->set_statisticvalue(stat.getValue());
+    }
+
+    return Status::OK;
+}
+
 }// namespace NES

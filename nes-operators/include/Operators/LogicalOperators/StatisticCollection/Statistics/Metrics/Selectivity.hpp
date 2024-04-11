@@ -14,7 +14,7 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_SELECTIVITY_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_SELECTIVITY_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 
 namespace NES::Statistic {
 
@@ -23,7 +23,7 @@ namespace NES::Statistic {
  * an operator filters out. For example, a selectivity of 75% would mean that 75% of all tuples are not passed on by the
  * operator.
  */
-class Selectivity : public Metric {
+class Selectivity : public StatisticMetric {
   public:
     /**
      * @brief Creates a Selectivity wrapped in a MetricPtr
@@ -37,7 +37,7 @@ class Selectivity : public Metric {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const Metric& rhs) const override;
+    bool operator==(const StatisticMetric& rhs) const override;
 
     /**
      * @brief Creates a string representation

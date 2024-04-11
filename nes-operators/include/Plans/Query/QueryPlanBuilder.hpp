@@ -86,7 +86,7 @@ class QueryPlanBuilder {
      */
     static QueryPlanPtr addStatisticBuildOperator(Windowing::WindowTypePtr window,
                                                   Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                                                  Statistic::MetricHash metricHash,
+                                                  Statistic::StatisticMetricHash metricHash,
                                                   QueryPlanPtr queryPlan);
 
     /**

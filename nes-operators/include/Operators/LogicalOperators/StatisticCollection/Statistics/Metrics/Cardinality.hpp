@@ -14,7 +14,7 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_CARDINALITY_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_CARDINALITY_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 
 namespace NES::Statistic {
 
@@ -22,7 +22,7 @@ namespace NES::Statistic {
  * @brief Collectes the cardinality for the fieldName. In a database context, cardinality refers to the number of unique
  * values in a relational table column relative to the total number of rows in the table.
  */
-class Cardinality : public Metric {
+class Cardinality : public StatisticMetric {
   public:
     /**
      * @brief Creates a Cardinality wrapped in a MetricPtr
@@ -36,7 +36,7 @@ class Cardinality : public Metric {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const Metric& rhs) const override;
+    bool operator==(const StatisticMetric& rhs) const override;
 
     /**
      * @brief Creates a string representation

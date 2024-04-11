@@ -20,15 +20,16 @@ MetricPtr Selectivity::create(const FieldAccessExpressionNodePtr& expressionNode
     return std::make_shared<Selectivity>(Selectivity(expressionNode));
 }
 
-bool Selectivity::operator==(const Metric& rhs) const {
+bool Selectivity::operator==(const StatisticMetric& rhs) const {
     if (rhs.instanceOf<Selectivity>()) {
+        // We assume that if the field has the same name, the metric is equal
         auto rhsSelectivity = dynamic_cast<const Selectivity&>(rhs);
-        return field->equal(rhsSelectivity.field);
+        return field->getFieldName() == rhsSelectivity.field->getFieldName();
     }
     return false;
 }
 
 std::string Selectivity::toString() const { return "Selectivity over " + field->toString(); }
 
-Selectivity::Selectivity(const FieldAccessExpressionNodePtr& expressionNode) : Metric(expressionNode) {}
+Selectivity::Selectivity(const FieldAccessExpressionNodePtr& expressionNode) : StatisticMetric(expressionNode) {}
 }// namespace NES::Statistic

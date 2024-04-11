@@ -19,9 +19,11 @@
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
 #include <StatisticCollection/StatisticInterface.hpp>
 #include <StatisticCollection/StatisticKey.hpp>
+#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
+#include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
-#include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <functional>
 
 namespace NES::Statistic {
@@ -35,13 +37,12 @@ class StatisticCoordinator : public StatisticInterface {
      * @brief Constructs a StatisticCoordinator
      * @param requestHandlerService
      * @param statisticQueryGenerator
-     * @param statisticStore
      * @param queryCatalog
      */
     StatisticCoordinator(const RequestHandlerServicePtr& requestHandlerService,
                          const AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
-                         const AbstractStatisticStorePtr& statisticStore,
-                         const Catalogs::Query::QueryCatalogPtr& queryCatalog);
+                         const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+                         const TopologyPtr& topology);
 
     /**
      * @brief Implements trackStatistic from StatisticInterface
@@ -65,7 +66,7 @@ class StatisticCoordinator : public StatisticInterface {
                                              const SendingPolicyPtr& sendingPolicy);
 
     /**
-     * @brief Implements probeStatistic from StatisticInterface
+     * @brief Implements probeStatistics from StatisticInterface
      */
     ProbeResult<> probeStatistic(const StatisticKey& statisticKey,
                                  const Windowing::TimeMeasure& startTs,
@@ -76,7 +77,7 @@ class StatisticCoordinator : public StatisticInterface {
                                  std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) override;
 
     /**
-     * @brief Calling probeStatistic with an aggregation function that does not change the ProbeResult
+     * @brief Calling probeStatistics with an aggregation function that does not change the ProbeResult
      */
     ProbeResult<> probeStatistic(const StatisticKey& statisticKey,
                                  const Windowing::TimeMeasure& startTs,
@@ -84,6 +85,15 @@ class StatisticCoordinator : public StatisticInterface {
                                  const Windowing::TimeMeasure& granularity,
                                  const ProbeExpression& probeExpression,
                                  const bool& estimationAllowed);
+
+
+    /**
+     * @brief Returns the queryId for a given StatisticKey. THIS SHOULD BE ONLY USED FOR TESTING
+     * @param statisticKey
+     * @return QueryId
+     */
+    QueryId getStatisticQueryId(const StatisticKey& statisticKey) const;
+
 
     /**
      * @brief Virtual destructor
@@ -94,9 +104,12 @@ class StatisticCoordinator : public StatisticInterface {
     RequestHandlerServicePtr requestHandlerService;
     StatisticIdsExtractor statisticIdsExtractor;
     AbstractStatisticQueryGeneratorPtr statisticQueryGenerator;
-    AbstractStatisticStorePtr statisticStore;
     StatisticRegistry statisticRegistry;
+    AbstractStatisticProbeHandlerPtr statisticProbeHandler;
+    AbstractStatisticCachePtr statisticCache;
+    TopologyPtr topology;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
+    WorkerRPCClientPtr workerRpcClient;
 };
 
 }// namespace NES::Statistic

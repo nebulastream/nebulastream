@@ -30,6 +30,11 @@ class Server;
 }
 namespace NES {
 
+namespace Statistic {
+class StatisticCoordinator;
+using StatisticCoordinatorPtr = std::shared_ptr<StatisticCoordinator>;
+}
+
 namespace Runtime {
 
 class QueryStatistics;
@@ -208,6 +213,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     NesWorkerPtr getNesWorker();
 
+    Statistic::StatisticCoordinatorPtr getStatisticCoordinator();
+
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
@@ -239,6 +246,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     bool enableMonitoring;
     LocationServicePtr locationService;
+    Statistic::StatisticCoordinatorPtr statisticCoordinator;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

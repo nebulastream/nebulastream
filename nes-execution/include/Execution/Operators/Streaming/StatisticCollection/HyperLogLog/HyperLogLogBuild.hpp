@@ -17,8 +17,8 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 #include <Util/Common.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -29,7 +29,7 @@ class HyperLogLogBuild : public ExecutableOperator {
   public:
     HyperLogLogBuild(const uint64_t operatorHandlerIndex,
                      const std::string_view fieldToTrackFieldName,
-                     const Statistic::MetricHash metricHash,
+                     const Statistic::StatisticMetricHash metricHash,
                      TimeFunctionPtr timeFunction);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
@@ -39,7 +39,7 @@ class HyperLogLogBuild : public ExecutableOperator {
   private:
     const uint64_t operatorHandlerIndex;
     const std::string fieldToTrackFieldName;
-    const Statistic::MetricHash metricHash;
+    const Statistic::StatisticMetricHash metricHash;
     const TimeFunctionPtr timeFunction;
     const std::unique_ptr<Nautilus::Interface::HashFunction> murmurHash;
 };

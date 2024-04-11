@@ -23,7 +23,7 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(OperatorId id,
                                                        std::string model,
                                                        std::vector<ExpressionNodePtr> inputFields,
                                                        std::vector<ExpressionNodePtr> outputFields)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), model(model), inputFields(inputFields),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), model(model), inputFields(inputFields),
       outputFields(outputFields) {}
 
 PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,

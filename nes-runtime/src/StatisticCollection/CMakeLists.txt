@@ -15,4 +15,5 @@ add_subdirectory(StatisticStorage)
 
 add_source_files(nes-runtime
         StatisticKey.cpp
+        StatisticManager.cpp
 )

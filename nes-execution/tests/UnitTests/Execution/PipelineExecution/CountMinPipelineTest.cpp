@@ -70,7 +70,7 @@ class CountMinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
     Statistic::AbstractStatisticStorePtr testStatisticStore;
     Statistic::SendingPolicyPtr sendingPolicy;
     Statistic::AbstractStatisticFormatPtr statisticFormat;
-    Statistic::MetricHash metricHash;
+    Statistic::StatisticMetricHash metricHash;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CountMinPipelineTest.log", NES::LogLevel::LOG_DEBUG);

@@ -18,8 +18,8 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 #include <Util/Common.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -34,7 +34,7 @@ class CountMinBuild : public ExecutableOperator {
                   const uint64_t numberOfBitsInKey,
                   const uint64_t width,
                   const uint64_t depth,
-                  const Statistic::MetricHash metricHash,
+                  const Statistic::StatisticMetricHash metricHash,
                   TimeFunctionPtr timeFunction,
                   const uint64_t numberOfBitsInHashValue = NUMBER_OF_BITS_IN_HASH_VALUE);
 
@@ -48,7 +48,7 @@ class CountMinBuild : public ExecutableOperator {
     const uint64_t sizeOfOneRowInBytes;
     const uint64_t width;
     const uint64_t depth;
-    const Statistic::MetricHash metricHash;
+    const Statistic::StatisticMetricHash metricHash;
     const TimeFunctionPtr timeFunction;
     const std::unique_ptr<Nautilus::Interface::HashFunction> h3HashFunction;
 };

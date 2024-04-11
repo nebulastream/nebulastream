@@ -18,7 +18,7 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalLimitOperator::PhysicalLimitOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)), limit(limit) {}
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)), limit(limit) {}
 
 PhysicalOperatorPtr
 PhysicalLimitOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit) {

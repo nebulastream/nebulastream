@@ -23,7 +23,7 @@ PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            SinkDescriptorPtr sinkDescriptor)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       sinkDescriptor(std::move(sinkDescriptor)) {}
 
 PhysicalOperatorPtr

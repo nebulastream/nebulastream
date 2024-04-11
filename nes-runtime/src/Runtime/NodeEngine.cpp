@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
+#include <StatisticCollection/StatisticManager.hpp>
 
 #include <QueryCompiler/QueryCompilationRequest.hpp>// request = QueryCompilation::QueryCompilationRequest::create(..)
 #include <QueryCompiler/QueryCompilationResult.hpp> // result = queryCompiler->compileQuery(request);
@@ -60,7 +61,8 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)),
       // TODO for now, we always use the DefaultStatisticStore. A configuration will be done with #4687
-      statisticStore(Statistic::DefaultStatisticStore::create()), openCLManager(std::move(openCLManager)),
+      statisticManager(Statistic::StatisticManager::create(Statistic::DefaultStatisticStore::create())),
+      openCLManager(std::move(openCLManager)),
       nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
@@ -750,5 +752,6 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
 
-const Statistic::AbstractStatisticStorePtr NodeEngine::getStatisticStore() const { return statisticStore; }
+const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
+
 }// namespace NES::Runtime

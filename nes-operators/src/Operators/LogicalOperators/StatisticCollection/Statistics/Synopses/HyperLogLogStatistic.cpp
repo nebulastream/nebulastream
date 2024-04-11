@@ -73,7 +73,7 @@ StatisticValue<> HyperLogLogStatistic::getStatisticValue(const ProbeExpression&)
         NES_THROW_RUNTIME_ERROR("HyperLogLogStatistic has no estimate value. Please call performEstimation() first.");
     }
 #endif
-    return StatisticValue<>(estimate);
+    return StatisticValue<>(estimate, startTs, endTs);
 }
 
 bool HyperLogLogStatistic::equal(const Statistic& other) const {

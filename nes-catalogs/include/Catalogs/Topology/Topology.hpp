@@ -175,7 +175,7 @@ class Topology {
      * @param workerId : the id of the topology node
      * @return Topology node copy if found else nullptr
      */
-    TopologyNodePtr getCopyOfTopologyNodeWithId(WorkerId workerId);
+    TopologyNodePtr getCopyOfTopologyNodeWithId(WorkerId workerId) const;
 
     /**
      * @brief checks if a topology node with workerId exists
@@ -219,7 +219,7 @@ class Topology {
      * @brief Get all registered topology nodes
      * @return vector of topology nodes
      */
-    std::vector<WorkerId> getAllRegisteredNodeIds();
+    std::vector<WorkerId> getAllRegisteredNodeIds() const;
 
     /**
      * @brief This method will return a "duplicate" subgraph containing all the paths between start and destination node.

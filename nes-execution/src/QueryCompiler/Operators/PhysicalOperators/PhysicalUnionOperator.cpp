@@ -34,7 +34,7 @@ PhysicalUnionOperator::PhysicalUnionOperator(OperatorId id,
                                              const SchemaPtr& leftSchema,
                                              const SchemaPtr& rightSchema,
                                              const SchemaPtr& outputSchema)
-    : Operator(id), PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema) {}
+    : Operator(id, statisticId), PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema) {}
 
 std::string PhysicalUnionOperator::toString() const {
     std::stringstream out;

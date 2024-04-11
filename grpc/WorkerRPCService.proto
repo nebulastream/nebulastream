@@ -13,6 +13,7 @@
 */
 
 syntax = "proto3";
+import "SerializableExpression.proto";
 import "SerializableDecomposedQueryPlan.proto";
 import "WorkerLocation.proto";
 
@@ -40,6 +41,8 @@ service WorkerRPCService {
   rpc UploadMlModel(MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelClientStream(stream MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelServerStream(MlModelFileUploadRequest) returns(stream MlModelFileUploadResponse) {}
+
+  rpc ProbeStatistics (ProbeStatisticsRequest) returns(ProbeStatisticsReply) {}
 }
 
 message DeployQueryRequest {
@@ -171,4 +174,21 @@ message MlModelFileUploadRequest {
 message MlModelFileUploadResponse {
   string filename = 1;
   MlModelFileUploadStatus status = 2;
+}
+
+message ProbeStatisticsRequest {
+  uint64 statisticHash = 1;
+  uint64 startTs = 2;
+  uint64 endTs = 3;
+  NES.SerializableExpression expression = 4;
+}
+
+message StatisticReply {
+  double statisticValue = 1;
+  uint64 startTs = 2;
+  uint64 endTs = 3;
+}
+
+message ProbeStatisticsReply {
+  repeated StatisticReply statistics = 1;
 }

@@ -81,7 +81,7 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
 
     Windowing::WindowTypePtr window;
     Statistic::WindowStatisticDescriptorPtr statisticDescriptor;
-    Statistic::MetricHash metricHash;
+    Statistic::StatisticMetricHash metricHash;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
 };
 
@@ -150,6 +150,39 @@ TEST_P(StatisticIdsExtractorTest, noOperators) {
  */
 TEST_P(StatisticIdsExtractorTest, twoOperators) {
     auto query = Query::from("default_logical")
+                     .filter(Attribute("f1") < 10)
+                     .map(Attribute("f1") = Attribute("f1"))
+                     .buildStatistic(window, statisticDescriptor, metricHash)
+                     .sink(FileSinkDescriptor::create(""));
+
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, expandAlsoOperators);
+    auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
+
+    // 1. Running the statisticIdInferencePhase, the logicalSourceExpansionRule, and StatisticIdExtractor
+    auto queryPlan = statisticIdInferencePhase->execute(query.getQueryPlan());
+    queryPlan = logicalSourceExpansionRule->apply(query.getQueryPlan());
+    auto newStatisticIds = Statistic::StatisticIdsExtractor::extractStatisticIdsFromQueryPlan(*queryPlan);
+
+    // 2. Checking if the newStatisticIds contain the statisticId of the map operator
+    auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
+    std::vector<StatisticId> expectedStatisticIds;
+    std::transform(mapOperators.begin(),
+                   mapOperators.end(),
+                   std::back_inserter(expectedStatisticIds),
+                   [](const LogicalMapOperatorPtr& op) {
+                       return op->getStatisticId();
+                   });
+
+    EXPECT_THAT(newStatisticIds, ::testing::UnorderedElementsAreArray(expectedStatisticIds));
+}
+
+/**
+ * @brief Tests if we extract the correct statistic ids for a query containing two operators that already contains a
+ * watermark assignment operator
+ */
+TEST_P(StatisticIdsExtractorTest, twoOperatorsAlreadyContainingWatermark) {
+    auto query = Query::from("default_logical")
+                     .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                      .filter(Attribute("f1") < 10)
                      .map(Attribute("f1") = Attribute("f1"))
                      .buildStatistic(window, statisticDescriptor, metricHash)

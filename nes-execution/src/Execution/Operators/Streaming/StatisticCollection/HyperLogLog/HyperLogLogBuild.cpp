@@ -22,7 +22,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getHLLRefProxy(void* ptrOpHandler, Statistic::MetricHash metricHash, StatisticId statisticId,
+void* getHLLRefProxy(void* ptrOpHandler, Statistic::StatisticMetricHash metricHash, StatisticId statisticId,
                      uint64_t workerId, uint64_t timestamp) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<HyperLogLogOperatorHandler*>(ptrOpHandler);
@@ -44,7 +44,7 @@ void checkHLLSketchesSendingProxy(void* ptrOpHandler,
                                   uint64_t chunkNumber,
                                   bool lastChunk,
                                   OriginId originId,
-                                  Statistic::MetricHash metricHash,
+                                  Statistic::StatisticMetricHash metricHash,
                                   StatisticId statisticId) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
@@ -79,7 +79,7 @@ void HyperLogLogBuild::execute(ExecutionContext& ctx, Record& record) const {
     Nautilus::FunctionCall("updateHLLProxy", updateHLLProxy, hllMemRef, hash);
 }
 
-void HyperLogLogBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
+void HyperLogLogBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // Update the watermark for the HyperLogLog build operator and send the created statistics upward
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("checkHLLSketchesSendingProxy",
@@ -93,11 +93,12 @@ void HyperLogLogBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
                            ctx.getOriginId(),
                            Value<UInt64>(metricHash),
                            ctx.getCurrentStatisticId());
+    Operator::close(ctx, recordBuffer);
 }
 
 HyperLogLogBuild::HyperLogLogBuild(const uint64_t operatorHandlerIndex,
                                    const std::string_view fieldToTrackFieldName,
-                                   const Statistic::MetricHash metricHash,
+                                   const Statistic::StatisticMetricHash metricHash,
                                    TimeFunctionPtr timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), fieldToTrackFieldName(fieldToTrackFieldName),
       metricHash(metricHash), timeFunction(std::move(timeFunction)),

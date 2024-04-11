@@ -86,6 +86,12 @@ class StatisticInfo {
     Windowing::WindowTypePtr getWindow() const;
 
     /**
+     * @brief Gets the Metric
+     * @return MetricPtr
+     */
+    MetricPtr getMetric() const;
+
+    /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if equal otherwise false

@@ -13,6 +13,8 @@
 
 add_subdirectory(QueryGeneration)
 add_subdirectory(StatisticRegistry)
+add_subdirectory(StatisticProbeHandling)
+add_subdirectory(StatisticCache)
 
 add_source_files(nes-coordinator
         StatisticCoordinator.cpp

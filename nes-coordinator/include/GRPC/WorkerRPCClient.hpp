@@ -16,6 +16,8 @@
 #define NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
 #include <Identifiers.hpp>
+#include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -241,13 +243,20 @@ class WorkerRPCClient {
     bool checkHealth(const std::string& address, std::string healthServiceName);
 
     /**
-     * @brief method to check the location of any node. If the node is a mobile node, its current loction will be returned.
+     * @brief method to check the location of any node. If the node is a mobile node, its current location will be returned.
      * If the node is a field node, its fixed location will be returned. If the node does not have a known location, an
      * invalid location will be returned
      * @param address: the ip address of the node
      * @return location representing the nodes location or invalid if no such location exists
      */
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
+
+    /**
+     * @brief method to probe a statistic
+     * @param probeRequest
+     * @return Vector of StatisticValues
+     */
+    std::vector<Statistic::StatisticValue<>> probeStatistics(const Statistic::StatisticProbeRequestGRPC& probeRequest);
 
   private:
     WorkerRPCClient() = default;

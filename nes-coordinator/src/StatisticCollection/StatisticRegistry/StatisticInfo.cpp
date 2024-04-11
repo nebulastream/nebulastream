@@ -28,6 +28,8 @@ StatisticInfo::StatisticInfo(const Windowing::WindowTypePtr window,
 
 Windowing::WindowTypePtr StatisticInfo::getWindow() const { return window; }
 
+MetricPtr StatisticInfo::getMetric() const { return metric; }
+
 const std::function<void(CharacteristicPtr)>& StatisticInfo::getCallBack() const { return callBack; }
 
 QueryId StatisticInfo::getQueryId() const { return queryId; }

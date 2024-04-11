@@ -335,13 +335,13 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
     uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 10;
-    while (running) {
+    while (running && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         uint64_t buffersProcessedCnt = 0;
 
-        //produce buffers until limit for this second or for all perionds is reached or source is topped
+        //produce buffers until limit for this second or for all periods is reached or source is topped
         while (buffersProcessedCnt < buffersToProducePer100Ms && running
                && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0)) {
             auto optBuf = receiveData();
@@ -429,13 +429,12 @@ void DataSource::runningRoutineWithGatheringInterval() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-                NES_TRACE("DataSource produced buffer {} type= {} string={}: Received Data: {} tuples iteration= {} "
+                NES_TRACE("DataSource produced buffer {} type= {} string={}: Received Data: {} "
                           "operatorId={} orgID={}",
-                          operatorId,
+                          numberOfBuffersProduced,
                           magic_enum::enum_name(getType()),
                           toString(),
                           buf.getNumberOfTuples(),
-                          numberOfBuffersProduced,
                           this->operatorId,
                           this->operatorId);
 

@@ -14,11 +14,11 @@
 
 #ifndef NES_NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALHYPERLOGLOGBUILDOPERATOR_HPP_
 #define NES_NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALHYPERLOGLOGBUILDOPERATOR_HPP_
-#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalSynopsisBuildOperator.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalSynopsisBuildOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalHyperLogLogBuildOperator : public PhysicalSynopsisBuildOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
@@ -43,7 +43,7 @@ class PhysicalHyperLogLogBuildOperator : public PhysicalSynopsisBuildOperator, p
                                       const SchemaPtr& outputSchema,
                                       const std::string& nameOfFieldToTrack,
                                       const uint64_t width,
-                                      const Statistic::MetricHash metricHash,
+                                      const Statistic::StatisticMetricHash metricHash,
                                       const Windowing::WindowTypePtr windowType,
                                       const Statistic::SendingPolicyPtr sendingPolicy);
 
@@ -64,7 +64,7 @@ class PhysicalHyperLogLogBuildOperator : public PhysicalSynopsisBuildOperator, p
                                       const SchemaPtr& outputSchema,
                                       const std::string& nameOfFieldToTrack,
                                       const uint64_t width,
-                                      const Statistic::MetricHash metricHash,
+                                      const Statistic::StatisticMetricHash metricHash,
                                       const Windowing::WindowTypePtr windowType,
                                       const Statistic::SendingPolicyPtr sendingPolicy);
 
@@ -78,7 +78,7 @@ class PhysicalHyperLogLogBuildOperator : public PhysicalSynopsisBuildOperator, p
                                      const SchemaPtr& outputSchema,
                                      const std::string& nameOfFieldToTrack,
                                      const uint64_t width,
-                                     const Statistic::MetricHash metricHash,
+                                     const Statistic::StatisticMetricHash metricHash,
                                      const Windowing::WindowTypePtr windowType,
                                      const Statistic::SendingPolicyPtr sendingPolicy);
 

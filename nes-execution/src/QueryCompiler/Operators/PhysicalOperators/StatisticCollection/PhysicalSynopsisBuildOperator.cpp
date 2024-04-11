@@ -20,14 +20,14 @@ const std::string& PhysicalSynopsisBuildOperator::getNameOfFieldToTrack() const 
     return nameOfFieldToTrack;
 }
 
-Statistic::MetricHash PhysicalSynopsisBuildOperator::getMetricHash() const { return metricHash; }
+Statistic::StatisticMetricHash PhysicalSynopsisBuildOperator::getMetricHash() const { return metricHash; }
 
 const Windowing::WindowTypePtr& PhysicalSynopsisBuildOperator::getWindowType() const { return windowType; }
 
 const Statistic::SendingPolicyPtr& PhysicalSynopsisBuildOperator::getSendingPolicy() const { return sendingPolicy; }
 
 PhysicalSynopsisBuildOperator::PhysicalSynopsisBuildOperator(const std::string_view nameOfFieldToTrack,
-                                                             const Statistic::MetricHash metricHash,
+                                                             const Statistic::StatisticMetricHash metricHash,
                                                              const Windowing::WindowTypePtr windowType,
                                                              const Statistic::SendingPolicyPtr sendingPolicy)
     : nameOfFieldToTrack(nameOfFieldToTrack), metricHash(metricHash), windowType(windowType), sendingPolicy(sendingPolicy) {}

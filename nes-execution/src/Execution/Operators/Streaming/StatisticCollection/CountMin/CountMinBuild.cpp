@@ -22,7 +22,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getCountMinRefProxy(void* ptrOpHandler, Statistic::MetricHash metricHash, StatisticId statisticId,
+void* getCountMinRefProxy(void* ptrOpHandler, Statistic::StatisticMetricHash metricHash, StatisticId statisticId,
                           uint64_t workerId, uint64_t timestamp)  {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<CountMinOperatorHandler*>(ptrOpHandler);
@@ -52,7 +52,7 @@ void checkCountMinSketchesSendingProxy(void* ptrOpHandler,
                                        uint64_t chunkNumber,
                                        bool lastChunk,
                                        OriginId originId,
-                                       Statistic::MetricHash metricHash,
+                                       Statistic::StatisticMetricHash metricHash,
                                        StatisticId statisticId) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
@@ -100,7 +100,7 @@ void CountMinBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
 }
 
 
-void CountMinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
+void CountMinBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // Update the watermark for the count min build operator and send the created statistics upward
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("checkCountMinSketchesSendingProxy",
@@ -114,6 +114,7 @@ void CountMinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
                            ctx.getOriginId(),
                            Value<UInt64>(metricHash),
                            ctx.getCurrentStatisticId());
+    Operator::close(ctx, recordBuffer);
 }
 
 CountMinBuild::CountMinBuild(const uint64_t operatorHandlerIndex,
@@ -121,7 +122,7 @@ CountMinBuild::CountMinBuild(const uint64_t operatorHandlerIndex,
                              const uint64_t numberOfBitsInKey,
                              const uint64_t width,
                              const uint64_t depth,
-                             const Statistic::MetricHash metricHash,
+                             const Statistic::StatisticMetricHash metricHash,
                              TimeFunctionPtr timeFunction,
                              const uint64_t numberOfBitsInHashValue)
     : operatorHandlerIndex(operatorHandlerIndex), fieldToTrackFieldName(fieldToTrackFieldName),

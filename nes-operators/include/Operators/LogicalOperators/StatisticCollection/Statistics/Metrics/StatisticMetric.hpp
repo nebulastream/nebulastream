@@ -20,27 +20,27 @@
 #include <utility>
 
 namespace NES::Statistic {
-class Metric;
-using MetricPtr = std::shared_ptr<Metric>;
+class StatisticMetric;
+using MetricPtr = std::shared_ptr<StatisticMetric>;
 
 /**
  * @brief The metric hash is the hash corresponding to a specific metric. We use this in combination with the
- * StatisticId to uniquely identify a statistic in our system. By using the MetricHash, we do not have to send the whole
- * metric down to the physical operator but can rather send the MetricHash. In the physical operator, we receive the
+ * StatisticId to uniquely identify a statistic in our system. By using the StatisticMetricHash, we do not have to send the whole
+ * metric down to the physical operator but can rather send the StatisticMetricHash. In the physical operator, we receive the
  * statistic id as part of the tuple buffer and therefore, we can uniquely identify a statistic
  */
-using MetricHash = uint64_t;
+using StatisticMetricHash = uint64_t;
 
 /**
  * @brief This class acts as an abstract class for all possible statistic types, e.g., Cardinality over field f1
  */
-class Metric : public std::enable_shared_from_this<Metric> {
+class StatisticMetric : public std::enable_shared_from_this<StatisticMetric> {
   public:
     /**
      * @brief Constructor for a Metric object
      * @param field
      */
-    explicit Metric(FieldAccessExpressionNodePtr field);
+    explicit StatisticMetric(FieldAccessExpressionNodePtr field);
 
     /**
      * @brief Gets the field over which the Metric should be collected/built
@@ -50,39 +50,39 @@ class Metric : public std::enable_shared_from_this<Metric> {
 
     /**
      * @brief Calculates a hash of the underlying metric
-     * @return MetricHash
+     * @return StatisticMetricHash
      */
-    MetricHash hash() const;
+    StatisticMetricHash hash() const;
 
     /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if equal otherwise false
      */
-    virtual bool operator==(const Metric& rhs) const = 0;
+    virtual bool operator==(const StatisticMetric& rhs) const = 0;
 
     /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if equal otherwise false
      */
-    virtual bool equal(const Metric&) const;
+    virtual bool equal(const StatisticMetric&) const;
 
     /**
      * @brief Checks for equality
      * @param rhs
      * @return True, if NOT equal otherwise false
      */
-    virtual bool operator!=(const Metric& rhs) const { return !(*this == rhs); }
+    virtual bool operator!=(const StatisticMetric& rhs) const { return !(*this == rhs); }
 
     /**
      * @brief Checks if the current Metric is of type MetricType
-     * @tparam Metric
+     * @tparam StatisticMetricType
      * @return bool true if node is of Metric
      */
-    template<class Metric>
+    template<class StatisticMetricType>
     bool instanceOf() {
-        if (dynamic_cast<Metric*>(this)) {
+        if (dynamic_cast<StatisticMetricType*>(this)) {
             return true;
         }
         return false;
@@ -90,26 +90,26 @@ class Metric : public std::enable_shared_from_this<Metric> {
 
     /**
     * @brief Dynamically casts the node to a MetricType
-    * @tparam MetricType
+    * @tparam StatisticMetricType
     * @return returns a shared pointer of the MetricType
     */
-    template<class MetricType>
-    std::shared_ptr<MetricType> as() {
-        if (instanceOf<MetricType>()) {
-            return std::dynamic_pointer_cast<MetricType>(this->shared_from_this());
+    template<class StatisticMetricType>
+    std::shared_ptr<StatisticMetricType> as() {
+        if (instanceOf<StatisticMetricType>()) {
+            return std::dynamic_pointer_cast<StatisticMetricType>(this->shared_from_this());
         }
         throw std::logic_error("We performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(MetricType).name());
+                               + typeid(StatisticMetricType).name());
     }
 
     /**
      * @brief Checks if the current Metric is of type const MetricType
-     * @tparam Metric
+     * @tparam StatisticMetricType
      * @return bool true if node is of Metric
      */
-    template<class Metric>
+    template<class StatisticMetricType>
     [[nodiscard]] bool instanceOf() const {
-        if (dynamic_cast<const Metric*>(this)) {
+        if (dynamic_cast<const StatisticMetricType*>(this)) {
             return true;
         }
         return false;
@@ -124,7 +124,7 @@ class Metric : public std::enable_shared_from_this<Metric> {
     /**
      * @brief Virtual destructor
      */
-    virtual ~Metric() = default;
+    virtual ~StatisticMetric() = default;
 
   protected:
     const FieldAccessExpressionNodePtr field;

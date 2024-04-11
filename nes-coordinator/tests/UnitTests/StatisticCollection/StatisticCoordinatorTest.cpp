@@ -53,12 +53,11 @@ class StatisticCoordinatorTest : public Testing::BaseIntegrationTest {
         nesCoordinator->startCoordinator(false);
 
         // Creating the statisticCoordinator
-        statisticStore = Statistic::DefaultStatisticStore::create();
         statisticCoordinator =
             std::make_shared<Statistic::StatisticCoordinator>(nesCoordinator->getRequestHandlerService(),
                                                               Statistic::DefaultStatisticQueryGenerator::create(),
-                                                              statisticStore,
-                                                              nesCoordinator->getQueryCatalog());
+                                                              nesCoordinator->getQueryCatalog(),
+                                                              nesCoordinator->getTopology());
     }
 
     Statistic::StatisticCoordinatorPtr statisticCoordinator;
