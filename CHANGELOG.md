@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.93](https://github.com/nebulastream/nebulastream/tree/v0.6.93) (2024-04-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.92...v0.6.93)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove false-postive CLion nullptr checks guarded by `NES_ASSERT` [\#4786](https://github.com/nebulastream/nebulastream/issues/4786)
+
 ## [v0.6.92](https://github.com/nebulastream/nebulastream/tree/v0.6.92) (2024-04-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.91...v0.6.92)
