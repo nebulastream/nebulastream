@@ -15,9 +15,9 @@
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_ABSTRACTSTATISTICPROBEHANDLER_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_ABSTRACTSTATISTICPROBEHANDLER_HPP_
 
+#include <Catalogs/Topology/Topology.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <StatisticCollection/StatisticRequests.hpp>
-#include <Catalogs/Topology/Topology.hpp>
 namespace NES::Statistic {
 
 class AbstractStatisticProbeHandler;
@@ -29,7 +29,6 @@ using AbstractStatisticProbeHandlerPtr = std::shared_ptr<AbstractStatisticProbeH
  */
 class AbstractStatisticProbeHandler {
   public:
-
     /**
      * @brief Creates a vector of StatisticProbeRequestGRPC for a given StatisticProbeRequest.
      * @param registry
@@ -37,9 +36,8 @@ class AbstractStatisticProbeHandler {
      * @param topology
      * @return Vector of StatisticProbeRequestGRPC
      */
-    virtual std::vector<StatisticProbeRequestGRPC> getProbeRequests(const StatisticRegistry& registry,
-                                                                    const StatisticProbeRequest& probeRequest,
-                                                                    const Topology& topology) = 0;
+    virtual std::vector<StatisticProbeRequestGRPC>
+    getProbeRequests(const StatisticRegistry& registry, const StatisticProbeRequest& probeRequest, const Topology& topology) = 0;
 
     virtual ~AbstractStatisticProbeHandler();
 };

@@ -42,8 +42,7 @@ std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryId(C
                 return extractStatisticIdsFromQueryPlan(*queryPlanCopy);
             }
             case QueryState::FAILED: {
-                NES_ERROR("Query failed to start. Expected: Running but found {}",
-                          magic_enum::enum_name(queryState));
+                NES_ERROR("Query failed to start. Expected: Running but found {}", magic_enum::enum_name(queryState));
                 return {};
             }
             default: {
@@ -77,7 +76,8 @@ std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryPlan
         for (const auto& childOp : operatorsToTrack) {
             if (childOp->instanceOf<const WatermarkAssignerLogicalOperator>()) {
                 const auto& childrensChildren = childOp->getChildren();
-                std::transform(childrensChildren.begin(), childrensChildren.end(),
+                std::transform(childrensChildren.begin(),
+                               childrensChildren.end(),
                                std::back_inserter(extractedStatisticIds),
                                [](const auto& op) {
                                    return op->template as<Operator>()->getStatisticId();

@@ -26,7 +26,6 @@ namespace NES::Statistic {
  */
 class DefaultStatisticProbeHandler : public AbstractStatisticProbeHandler {
   public:
-
     /**
      * @brief Creates a new instance of the DefaultStatisticProbeHandler
      * @return AbstractStatisticProbeHandlerPtr

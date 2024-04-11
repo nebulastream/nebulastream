@@ -14,16 +14,16 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTIC_STATISTICCOORDINATOR_HPP_
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Statistics/ProbeExpression.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
+#include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <StatisticCollection/StatisticInterface.hpp>
 #include <StatisticCollection/StatisticKey.hpp>
 #include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
-#include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 #include <functional>
 
 namespace NES::Statistic {
@@ -86,14 +86,12 @@ class StatisticCoordinator : public StatisticInterface {
                                  const ProbeExpression& probeExpression,
                                  const bool& estimationAllowed);
 
-
     /**
      * @brief Returns the queryId for a given StatisticKey. THIS SHOULD BE ONLY USED FOR TESTING
      * @param statisticKey
      * @return QueryId
      */
     QueryId getStatisticQueryId(const StatisticKey& statisticKey) const;
-
 
     /**
      * @brief Virtual destructor

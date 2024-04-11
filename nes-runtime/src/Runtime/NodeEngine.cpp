@@ -26,8 +26,8 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <StatisticCollection/StatisticManager.hpp>
+#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 
 #include <QueryCompiler/QueryCompilationRequest.hpp>// request = QueryCompilation::QueryCompilationRequest::create(..)
 #include <QueryCompiler/QueryCompilationResult.hpp> // result = queryCompiler->compileQuery(request);
@@ -62,8 +62,8 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
       partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)),
       // TODO for now, we always use the DefaultStatisticStore. A configuration will be done with #4687
       statisticManager(Statistic::StatisticManager::create(Statistic::DefaultStatisticStore::create())),
-      openCLManager(std::move(openCLManager)),
-      nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
+      openCLManager(std::move(openCLManager)), nodeEngineId(nodeEngineId),
+      numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
 

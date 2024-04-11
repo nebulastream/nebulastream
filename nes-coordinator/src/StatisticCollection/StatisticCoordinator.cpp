@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyLazy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
-#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeHandler.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 
 namespace NES::Statistic {
 std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
@@ -83,8 +83,8 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
     const auto statisticInfo = statisticRegistry.getStatisticInfoWithGranularity(statisticKey, granularity);
     if (!statisticInfo.has_value()) {
         NES_INFO("Could not find a statistic collection query for StatisticKey={} with granularity={}",
-                  statisticKey.toString(),
-                  granularity.toString());
+                 statisticKey.toString(),
+                 granularity.toString());
         return {};
     }
 
@@ -135,7 +135,7 @@ StatisticCoordinator::StatisticCoordinator(const RequestHandlerServicePtr& reque
                                            const TopologyPtr& topology)
     : requestHandlerService(requestHandlerService), statisticQueryGenerator(statisticQueryGenerator),
       statisticProbeHandler(DefaultStatisticProbeHandler::create()), statisticCache(DefaultStatisticCache::create()),
-      topology(topology),  queryCatalog(queryCatalog), workerRpcClient(WorkerRPCClient::create()) {}
+      topology(topology), queryCatalog(queryCatalog), workerRpcClient(WorkerRPCClient::create()) {}
 
 StatisticCoordinator::~StatisticCoordinator() = default;
 

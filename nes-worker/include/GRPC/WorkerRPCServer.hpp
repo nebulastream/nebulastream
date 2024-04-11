@@ -34,9 +34,9 @@ using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 }// namespace Monitoring
 
 namespace Statistic {
-    class StatisticManager;
-    using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
-} // namespace Statistic
+class StatisticManager;
+using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
+}// namespace Statistic
 
 namespace Spatial::Mobility::Experimental {
 class LocationProvider;
