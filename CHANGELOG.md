@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.92](https://github.com/nebulastream/nebulastream/tree/v0.6.92) (2024-04-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.91...v0.6.92)
+
+**Implemented enhancements:**
+
+- \[TASK\] Adding Lukas Schwerdtfeder to PR reviewers [\#4785](https://github.com/nebulastream/nebulastream/issues/4785)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Improve error for wrong timestamp data type for window in query [\#4352](https://github.com/nebulastream/nebulastream/issues/4352)
+
 ## [v0.6.91](https://github.com/nebulastream/nebulastream/tree/v0.6.91) (2024-04-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.90...v0.6.91)
