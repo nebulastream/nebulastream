@@ -118,7 +118,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
                                     ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("car");
 
-    constexpr auto EXPECTED_WIDTH = 512;
+    constexpr auto EXPECTED_WIDTH = 9;
     const auto dataCharacteristic = DataCharacteristic::create(Cardinality::create(Over("f1")), "car", "car_1");
     const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
     const auto sendingPolicy = SENDING_ASAP;
@@ -370,7 +370,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
                                     ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("car");
 
-    constexpr auto EXPECTED_WIDTH = 512;
+    constexpr auto EXPECTED_WIDTH = 9;
     const auto dataCharacteristic = WorkloadCharacteristic::create(Cardinality::create(Over("f1")), queryId, operatorId);
     const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
     const auto sendingPolicy = SENDING_ASAP;
@@ -442,7 +442,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
                                     ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("cartruck");
 
-    constexpr auto EXPECTED_WIDTH = 512;
+    constexpr auto EXPECTED_WIDTH = 9;
     const auto dataCharacteristic = WorkloadCharacteristic::create(Cardinality::create(Over("f1")), queryId, operatorId);
     const auto window = TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
     const auto sendingPolicy = SENDING_ASAP;

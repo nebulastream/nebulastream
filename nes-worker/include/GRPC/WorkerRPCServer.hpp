@@ -33,6 +33,11 @@ class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 }// namespace Monitoring
 
+namespace Statistic {
+    class StatisticManager;
+    using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
+} // namespace Statistic
+
 namespace Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
@@ -67,8 +72,11 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
+    Status ProbeStatistics(ServerContext*, const ProbeStatisticsRequest* request, ProbeStatisticsReply* reply) override;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
+    Statistic::StatisticManagerPtr statisticManager;
     Monitoring::MonitoringAgentPtr monitoringAgent;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;

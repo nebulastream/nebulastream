@@ -22,7 +22,7 @@ PhysicalProjectOperator::PhysicalProjectOperator(OperatorId id,
                                                  SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema,
                                                  std::vector<ExpressionNodePtr> expressions)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       expressions(std::move(expressions)) {}
 
 PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id,

@@ -14,34 +14,79 @@
 
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticIdsExtractor.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Statistic {
 std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryId(Catalogs::Query::QueryCatalogPtr queryCatalog,
-                                                                               const QueryId& queryId) {
-    // We search for the queryPlan in the queryCatalog and then extract the statisticIds from the queryPlan
-    const auto queryPlanCopy = queryCatalog->getCopyOfExecutedQueryPlan(queryId);
-    return extractStatisticIdsFromQueryPlan(*queryPlanCopy);
+                                                                               const QueryId& queryId,
+                                                                               const std::chrono::milliseconds& timeout) {
+    // Waiting for the query to be in the RUNNING state before extracting the statistic ids
+    const auto endTimestamp = std::chrono::system_clock::now() + timeout;
+    const auto sleepTime = std::chrono::milliseconds(1000);
+    while (std::chrono::system_clock::now() < endTimestamp) {
+        const auto queryState = queryCatalog->getQueryState(queryId);
+        NES_TRACE("Query {} is now in status {}", queryId, magic_enum::enum_name(queryState));
+        switch (queryState) {
+            case QueryState::MARKED_FOR_HARD_STOP:
+            case QueryState::MARKED_FOR_SOFT_STOP:
+            case QueryState::SOFT_STOP_COMPLETED:
+            case QueryState::SOFT_STOP_TRIGGERED:
+            case QueryState::STOPPED:
+            case QueryState::RUNNING: {
+                // We search for the queryPlan in the queryCatalog and then extract the statisticIds from the queryPlan
+                const auto queryPlanCopy = queryCatalog->getCopyOfExecutedQueryPlan(queryId);
+                return extractStatisticIdsFromQueryPlan(*queryPlanCopy);
+            }
+            case QueryState::FAILED: {
+                NES_ERROR("Query failed to start. Expected: Running but found {}",
+                          magic_enum::enum_name(queryState));
+                return {};
+            }
+            default: {
+                NES_WARNING("Expected: Running but found {}", magic_enum::enum_name(queryState));
+                break;
+            }
+        }
+
+        std::this_thread::sleep_for(sleepTime);
+    }
+
+    NES_ERROR("Timeout while waiting for query {} to be in RUNNING state", queryId);
+    return {};
 }
 
 std::vector<StatisticId> StatisticIdsExtractor::extractStatisticIdsFromQueryPlan(const QueryPlan& queryPlan) {
     std::vector<StatisticId> extractedStatisticIds;
     const auto allStatisticBuildOperator = queryPlan.getOperatorByType<LogicalStatisticWindowOperator>();
 
-    // We iterator over all LogicalStatisticWindowOperator in the queryPlan and store the statistic id of
-    // the operator before in extractedStatisticIds
+    /* We iterator over all LogicalStatisticWindowOperator in the queryPlan and store the statistic id of
+     * the operator before in extractedStatisticIds
+     */
     for (const auto& statisticBuildOperator : allStatisticBuildOperator) {
         // Children are the operator before
-        const auto& buildOperatorChildren = statisticBuildOperator->getChildren();
+        auto operatorsToTrack = statisticBuildOperator->getChildren();
 
-        // Iterates over all children and extracts the statistic id for each child and writes the statistic id in extractedStatisticIds
-        std::transform(buildOperatorChildren.begin(),
-                       buildOperatorChildren.end(),
-                       std::back_inserter(extractedStatisticIds),
-                       [](const auto& childOp) {
-                           return childOp->template as<Operator>()->getStatisticId();
-                       });
+        /* We check if the operator before is a WatermarkAssignerLogicalOperator and if so, we have to add the
+         * statistic ids of all of its children. Due to the fact that we might add a watermark assigner to each
+         * logical query plan, if it contains a window operator, i.e., LogicalStatisticWindowOperator
+         */
+        for (const auto& childOp : operatorsToTrack) {
+            if (childOp->instanceOf<const WatermarkAssignerLogicalOperator>()) {
+                const auto& childrensChildren = childOp->getChildren();
+                std::transform(childrensChildren.begin(), childrensChildren.end(),
+                               std::back_inserter(extractedStatisticIds),
+                               [](const auto& op) {
+                                   return op->template as<Operator>()->getStatisticId();
+                               });
+            } else {
+                // If the operator before is not a WatermarkAssignerLogicalOperator, we add the statistic id of the operator
+                extractedStatisticIds.emplace_back(childOp->template as<Operator>()->getStatisticId());
+            }
+        }
     }
 
     return extractedStatisticIds;

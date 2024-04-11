@@ -38,7 +38,7 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
     std::string fieldToBuildCountMinOver = "f1";
     std::string timestampFieldName = "ts";
     Statistic::AbstractStatisticFormatPtr statisticFormat;
-    Statistic::MetricHash metricHash;
+    Statistic::StatisticMetricHash metricHash;
     Statistic::AbstractStatisticStorePtr testStatisticStore;
 
     static void SetUpTestCase() {
@@ -145,7 +145,7 @@ class CountMinBuildExecutionTest : public Testing::BaseUnitTest,
         NES_INFO("Stopping query now!!!");
         EXPECT_TRUE(executionEngine->stopQuery(plan, Runtime::QueryTerminationType::Graceful));
         const auto nodeEngine = executionEngine->getNodeEngine();
-        const auto nodeEngineStatisticStore = nodeEngine->getStatisticStore();
+        const auto nodeEngineStatisticStore = nodeEngine->getStatisticManager()->getStatisticStore();
 
         while (nodeEngineStatisticStore->getAllStatistics().size() != testStatisticStore->getAllStatistics().size()) {
             NES_DEBUG("Waiting till all statistics have been built. Currently {} and expecting {}...",

@@ -24,7 +24,7 @@ PhysicalCountMinBuildOperator::create(const OperatorId operatorId,
                                       const std::string& nameOfFieldToTrack,
                                       const uint64_t width,
                                       const uint64_t depth,
-                                      const Statistic::MetricHash metricHash,
+                                      const Statistic::StatisticMetricHash metricHash,
                                       const Windowing::WindowTypePtr windowType,
                                       const Statistic::SendingPolicyPtr sendingPolicy) {
     return std::make_shared<PhysicalCountMinBuildOperator>(PhysicalCountMinBuildOperator(operatorId, statisticId, inputSchema, outputSchema, nameOfFieldToTrack, width, depth, metricHash, windowType, sendingPolicy));
@@ -37,7 +37,7 @@ PhysicalCountMinBuildOperator::create(const StatisticId statisticId,
                                       const std::string& nameOfFieldToTrack,
                                       const uint64_t width,
                                       const uint64_t depth,
-                                      const Statistic::MetricHash metricHash,
+                                      const Statistic::StatisticMetricHash metricHash,
                                       const Windowing::WindowTypePtr windowType,
                                       const Statistic::SendingPolicyPtr sendingPolicy) {
     return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, nameOfFieldToTrack,
@@ -52,7 +52,7 @@ PhysicalCountMinBuildOperator::PhysicalCountMinBuildOperator(
     const std::string& nameOfFieldToTrack,
     const uint64_t width,
     const uint64_t depth,
-    const Statistic::MetricHash metricHash,
+    const Statistic::StatisticMetricHash metricHash,
     const Windowing::WindowTypePtr windowType,
     const Statistic::SendingPolicyPtr sendingPolicy)
     : Operator(id, statisticId),

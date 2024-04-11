@@ -14,7 +14,7 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_BUFFERRATE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_BUFFERRATE_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 
 namespace NES::Statistic {
 
@@ -22,7 +22,7 @@ namespace NES::Statistic {
  * @brief Collects the rate of buffers are used on a node. A positive number means that there are more buffer being
  * freed than allocated/acquired. A negative number the opposite. The unit is buffers/second
  */
-class BufferRate : public Metric {
+class BufferRate : public StatisticMetric {
   public:
     /**
      * @brief Creates a BufferRate wrapped in a MetricPtr
@@ -35,7 +35,7 @@ class BufferRate : public Metric {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const Metric& rhs) const override;
+    bool operator==(const StatisticMetric& rhs) const override;
 
     /**
      * @brief Creates a string representation

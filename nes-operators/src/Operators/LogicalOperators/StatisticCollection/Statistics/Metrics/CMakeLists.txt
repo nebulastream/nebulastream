@@ -15,7 +15,7 @@ add_source_files(nes-operators
         BufferRate.cpp
         Cardinality.cpp
         IngestionRate.cpp
-        Metric.cpp
+        StatisticMetric.cpp
         MinVal.cpp
         Selectivity.cpp
 )

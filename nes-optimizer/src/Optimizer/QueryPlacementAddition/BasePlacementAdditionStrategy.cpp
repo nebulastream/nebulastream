@@ -353,7 +353,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
         // 2.2. If the pinnedWorkerId has already placed query sub plans then compute an updated list of query sub plans
         if (computedDecomposedQueryPlans.contains(pinnedWorkerId)) {
             // 2.2.1. Prepare an updated list of query sub plans and a new placed query plan for the operator under
-            // considersation
+            // consideration
             std::vector<DecomposedQueryPlanPtr> updatedDecomposedQueryPlans;
             DecomposedQueryPlanPtr newDecomposedQueryPlan;
 
@@ -438,7 +438,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
             if (!newDecomposedQueryPlan) {
                 if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                     // Create a temporary query sub plans for the operator as it might need to be merged with another query
-                    // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
+                    // sub plan that is already placed on the execution node. Thus, we assign it an invalid sub query plan id.
                     newDecomposedQueryPlan = DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                                          sharedQueryId,
                                                                          pinnedWorkerId,
@@ -462,7 +462,7 @@ BasePlacementAdditionStrategy::computeDecomposedQueryPlans(SharedQueryId sharedQ
             DecomposedQueryPlanPtr newDecomposedQueryPlan;
             if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 // Create a temporary query sub plans for the operator as it might need to be merged with another query
-                // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
+                // sub plan that is already placed on the execution node. Thus, we assign it an invalid sub query plan id.
                 newDecomposedQueryPlan = DecomposedQueryPlan::create(INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                                      sharedQueryId,
                                                                      pinnedWorkerId,

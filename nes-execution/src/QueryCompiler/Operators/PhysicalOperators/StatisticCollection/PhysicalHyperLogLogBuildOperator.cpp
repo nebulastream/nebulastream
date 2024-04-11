@@ -22,7 +22,7 @@ PhysicalHyperLogLogBuildOperator::create(const OperatorId operatorId,
                                       const SchemaPtr& outputSchema,
                                       const std::string& nameOfFieldToTrack,
                                       const uint64_t width,
-                                      const Statistic::MetricHash metricHash,
+                                      const Statistic::StatisticMetricHash metricHash,
                                       const Windowing::WindowTypePtr windowType,
                                       const Statistic::SendingPolicyPtr sendingPolicy) {
     return std::make_shared<PhysicalHyperLogLogBuildOperator>(PhysicalHyperLogLogBuildOperator(operatorId, statisticId, inputSchema, outputSchema, nameOfFieldToTrack, width, metricHash, windowType, sendingPolicy));
@@ -34,7 +34,7 @@ PhysicalHyperLogLogBuildOperator::create(const StatisticId statisticId,
                                       const SchemaPtr& outputSchema,
                                       const std::string& nameOfFieldToTrack,
                                       const uint64_t width,
-                                      const Statistic::MetricHash metricHash,
+                                      const Statistic::StatisticMetricHash metricHash,
                                       const Windowing::WindowTypePtr windowType,
                                       const Statistic::SendingPolicyPtr sendingPolicy) {
     return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, nameOfFieldToTrack,
@@ -48,7 +48,7 @@ PhysicalHyperLogLogBuildOperator::PhysicalHyperLogLogBuildOperator(
     const SchemaPtr& outputSchema,
     const std::string& nameOfFieldToTrack,
     const uint64_t width,
-    const Statistic::MetricHash metricHash,
+    const Statistic::StatisticMetricHash metricHash,
     const Windowing::WindowTypePtr windowType,
     const Statistic::SendingPolicyPtr sendingPolicy)
     : Operator(id, statisticId),

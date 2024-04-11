@@ -71,7 +71,7 @@ class StatisticKey {
      * @param statisticId: StatisticId identifying the component over which we want to collect statistics
      * @return StatisticHash
      */
-    static StatisticHash combineStatisticIdWithMetricHash(MetricHash metricHash, StatisticId statisticId);
+    static StatisticHash combineStatisticIdWithMetricHash(StatisticMetricHash metricHash, StatisticId statisticId);
 
     /**
      * @brief Creates a string representation

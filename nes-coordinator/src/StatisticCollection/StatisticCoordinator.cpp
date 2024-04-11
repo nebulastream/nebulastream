@@ -16,6 +16,9 @@
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <StatisticCollection/StatisticCoordinator.hpp>
+#include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
+#include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeHandler.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 
 namespace NES::Statistic {
 std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const CharacteristicPtr& characteristic,
@@ -48,7 +51,7 @@ std::vector<StatisticKey> StatisticCoordinator::trackStatistic(const Characteris
         }
     }
 
-    // We return all statisticKeys that belong to this track request, so that they can be used for probing the statistics
+    // 5. We return all statisticKeys that belong to this track request, so that they can be used for probing the statistics
     return statisticKeysForThisTrackRequest;
 }
 
@@ -79,17 +82,29 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
     // 2. Check if the statistic is tracked with the same granularity as wished
     const auto statisticInfo = statisticRegistry.getStatisticInfoWithGranularity(statisticKey, granularity);
     if (!statisticInfo.has_value()) {
+        NES_INFO("Could not find a statistic collection query for StatisticKey={} with granularity={}",
+                  statisticKey.toString(),
+                  granularity.toString());
         return {};
     }
 
-    // 3. Receiving all statistics for the period [startTs, endTs] and creating the ProbeResult
-    const auto statistics = statisticStore->getStatistics(statisticKey.hash(), startTs, endTs);
+    // 3. Getting all probe requests of nodes that we have to query for the statistic
+    StatisticProbeRequest statisticProbeRequest(statisticKey.hash(), startTs, endTs, probeExpression);
+    const auto allProbeRequests = statisticProbeHandler->getProbeRequests(statisticRegistry, statisticProbeRequest, *topology);
+
+    // 4. Receive all statistics by sending the probe requests to the nodes
     ProbeResult<> probeResult;
-    for (const auto& stat : statistics) {
-        probeResult.addStatisticValue(stat->getStatisticValue(probeExpression));
+    for (const auto& probeRequest : allProbeRequests) {
+        const auto statisticValues = workerRpcClient->probeStatistics(probeRequest);
+        for (const auto& stat : statisticValues) {
+            probeResult.addStatisticValue(stat);
+
+            // Feeding it to the statistic cache for future use
+            statisticCache->insertStatistic(statisticKey.hash(), stat);
+        }
     }
 
-    // 4. Calling the aggregation function and then returning the result
+    // 5. Calling the aggregation function and then returning the result
     return aggFunction(probeResult);
 }
 
@@ -110,12 +125,17 @@ ProbeResult<> StatisticCoordinator::probeStatistic(const StatisticKey& statistic
                           });
 }
 
+QueryId StatisticCoordinator::getStatisticQueryId(const StatisticKey& statisticKey) const {
+    return statisticRegistry.getQueryId(statisticKey);
+}
+
 StatisticCoordinator::StatisticCoordinator(const RequestHandlerServicePtr& requestHandlerService,
                                            const AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
-                                           const AbstractStatisticStorePtr& statisticStore,
-                                           const Catalogs::Query::QueryCatalogPtr& queryCatalog)
+                                           const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+                                           const TopologyPtr& topology)
     : requestHandlerService(requestHandlerService), statisticQueryGenerator(statisticQueryGenerator),
-      statisticStore(statisticStore), queryCatalog(queryCatalog) {}
+      statisticProbeHandler(DefaultStatisticProbeHandler::create()), statisticCache(DefaultStatisticCache::create()),
+      topology(topology),  queryCatalog(queryCatalog), workerRpcClient(WorkerRPCClient::create()) {}
 
 StatisticCoordinator::~StatisticCoordinator() = default;
 

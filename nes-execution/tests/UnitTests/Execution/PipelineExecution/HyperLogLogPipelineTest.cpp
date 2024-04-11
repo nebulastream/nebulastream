@@ -70,7 +70,7 @@ class HyperLogLogPipelineTest : public Testing::BaseUnitTest, public AbstractPip
     Statistic::AbstractStatisticStorePtr testStatisticStore;
     Statistic::SendingPolicyPtr sendingPolicy;
     Statistic::AbstractStatisticFormatPtr statisticFormat;
-    Statistic::MetricHash metricHash;
+    Statistic::StatisticMetricHash metricHash;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HyperLogLogPipelineTest.log", NES::LogLevel::LOG_DEBUG);

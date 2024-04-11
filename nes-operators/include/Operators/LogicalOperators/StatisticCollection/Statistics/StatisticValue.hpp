@@ -14,7 +14,11 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTICVALUE_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_STATISTICVALUE_HPP_
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <vector>
+#include <string>
+#include <memory>
+#include <sstream>
 namespace NES::Statistic {
 
 /**
@@ -28,13 +32,20 @@ class StatisticValue {
      * @brief Constructor
      * @param value
      */
-    explicit StatisticValue(StatType value) : value(value) {}
+    explicit StatisticValue(StatType value) : StatisticValue(value, 0, 0) {}
+    StatisticValue(StatType value, uint64_t startTs, uint64_t endTs)
+        : StatisticValue(value, Windowing::TimeMeasure(startTs), Windowing::TimeMeasure(endTs)) {}
+    explicit StatisticValue(StatType value, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs)
+        : value(value), startTs(startTs), endTs(endTs) {}
 
     /**
      * @brief Getter for the underlying value
      * @return
      */
     virtual StatType getValue() const { return value; }
+
+    Windowing::TimeMeasure getStartTs() const { return startTs; }
+    Windowing::TimeMeasure getEndTs() const { return endTs; }
 
     /**
      * @brief Virtual default destructor
@@ -43,7 +54,10 @@ class StatisticValue {
 
   private:
     StatType value;
+    Windowing::TimeMeasure startTs;
+    Windowing::TimeMeasure endTs;
 };
+using StatisticValuePtr = std::shared_ptr<StatisticValue<>>;
 
 /**
  * @brief This class acts as a container for multiple probe items
@@ -61,6 +75,14 @@ class ProbeResult {
      */
     const std::vector<StatisticValue<StatType>>& getProbeItems() const {
         return probeItems;
+    }
+
+    std::string toString() const {
+        std::stringstream result;
+        for (const auto& probeItem : probeItems) {
+            result << std::to_string(probeItem.getValue()) + ", ";
+        }
+        return result.str();
     }
 
   private:

@@ -19,7 +19,10 @@
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/StatisticValue.hpp>
+#include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -476,6 +479,38 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     }
     //location is invalid
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
+}
+
+std::vector<Statistic::StatisticValue<>> WorkerRPCClient::probeStatistics(const Statistic::StatisticProbeRequestGRPC& probeRequest) {
+    NES_DEBUG("Requesting statistics from {}", probeRequest.address);
+
+    // 1. Building the request
+    ClientContext context;
+    ProbeStatisticsRequest request;
+    request.set_statistichash(probeRequest.statisticHash);
+    request.set_startts(probeRequest.startTs.getTime());
+    request.set_endts(probeRequest.endTs.getTime());
+    auto expressionDetails = request.mutable_expression();
+    ExpressionSerializationUtil::serializeExpression(probeRequest.probeExpression.getProbeExpression(), expressionDetails);
+
+    // 2. Sending the request and building a reply
+    auto chan = grpc::CreateChannel(probeRequest.address, grpc::InsecureChannelCredentials());
+    auto workerStub = WorkerRPCService::NewStub(chan);
+    ProbeStatisticsReply reply;
+    auto status = workerStub->ProbeStatistics(&context, request, &reply);
+    if (status.ok()) {
+        // Extracting the statistic values from the reply, if the reply is valid
+        std::vector<Statistic::StatisticValue<>> statisticValues;
+        std::transform(reply.statistics().begin(), reply.statistics().end(), std::back_inserter(statisticValues),
+                       [](const StatisticReply& statisticValue) {
+                           return Statistic::StatisticValue<>(statisticValue.statisticvalue(), statisticValue.startts(),
+                                                              statisticValue.endts());
+                       });
+        return statisticValues;
+    } else {
+        NES_ERROR("WorkerRPCClient::probeStatistics error={}: {}", status.error_code(), status.error_message());
+        return {};
+    }
 }
 
 }// namespace NES

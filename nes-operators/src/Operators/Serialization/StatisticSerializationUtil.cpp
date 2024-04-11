@@ -55,7 +55,7 @@ void StatisticSerializationUtil::serializeDescriptorDetails(const Statistic::Win
         StatisticWindowDescriptorMessage_CountMinDetails countMinDetails;
         countMinDetails.set_depth(countMinDescriptor->getDepth());
         descriptorMessage.mutable_details()->PackFrom(countMinDetails);
-    } else if (descriptor.instanceOf<const Statistic::CountMinDescriptor>()) {
+    } else if (descriptor.instanceOf<const Statistic::HyperLogLogDescriptor>()) {
         descriptorMessage.mutable_details()->PackFrom(StatisticWindowDescriptorMessage_HyperLogLogDetails());
     } else {
         NES_NOT_IMPLEMENTED();

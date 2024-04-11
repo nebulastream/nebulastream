@@ -23,7 +23,7 @@ PhysicalExternalOperator::PhysicalExternalOperator(OperatorId id,
                                                    SchemaPtr inputSchema,
                                                    SchemaPtr outputSchema,
                                                    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       executablePipelineStage(std::move(executablePipelineStage)) {}
 
 PhysicalOperatorPtr

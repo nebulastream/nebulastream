@@ -21,15 +21,16 @@ MetricPtr Cardinality::create(const FieldAccessExpressionNodePtr& field) {
     return std::make_shared<Cardinality>(Cardinality(field));
 }
 
-bool Cardinality::operator==(const Metric& rhs) const {
+bool Cardinality::operator==(const StatisticMetric& rhs) const {
     if (rhs.instanceOf<Cardinality>()) {
+        // We assume that if the field has the same name, the metric is equal
         auto rhsCardinality = dynamic_cast<const Cardinality&>(rhs);
-        return field->equal(rhsCardinality.field);
+        return field->getFieldName() == rhsCardinality.field->getFieldName();
     }
     return false;
 }
 
 std::string Cardinality::toString() const { return "Cardinality over " + field->toString(); }
 
-Cardinality::Cardinality(const FieldAccessExpressionNodePtr& field) : Metric(field) {}
+Cardinality::Cardinality(const FieldAccessExpressionNodePtr& field) : StatisticMetric(field) {}
 }// namespace NES::Statistic

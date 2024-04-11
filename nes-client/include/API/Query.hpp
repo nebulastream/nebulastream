@@ -17,7 +17,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <memory>
@@ -412,7 +412,7 @@ class Query {
      */
     Query& buildStatistic(Windowing::WindowTypePtr window,
                           Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                          Statistic::MetricHash metricHash);
+                          Statistic::StatisticMetricHash metricHash);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.

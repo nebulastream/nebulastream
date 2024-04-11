@@ -15,9 +15,9 @@
 #ifndef NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_
 #define NES_NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_
 
-#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Statistic {
@@ -27,7 +27,7 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
     LogicalStatisticWindowOperator(OperatorId id,
                                    Windowing::WindowTypePtr windowType,
                                    WindowStatisticDescriptorPtr windowStatisticDescriptor,
-                                   MetricHash metricHash);
+                                   StatisticMetricHash metricHash);
 
     /**
      * @brief Infers the schema for this StatisticWindowOperatorNode
@@ -82,12 +82,12 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
      * @brief Getter for the metric hash
      * @return MetricHash
      */
-    MetricHash getMetricHash() const;
+    StatisticMetricHash getMetricHash() const;
 
   private:
     Windowing::WindowTypePtr windowType;
     WindowStatisticDescriptorPtr windowStatisticDescriptor;
-    MetricHash metricHash;
+    StatisticMetricHash metricHash;
 };
 
 }// namespace NES::Statistic

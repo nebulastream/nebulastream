@@ -74,7 +74,7 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createMapOperator(const FieldAss
 LogicalUnaryOperatorPtr
 LogicalOperatorFactory::createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
                                                      const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
-                                                     const Statistic::MetricHash metricHash,
+                                                     const Statistic::StatisticMetricHash metricHash,
                                                      OperatorId id) {
     return std::make_shared<Statistic::LogicalStatisticWindowOperator>(id, window, statisticDescriptor, metricHash);
 }

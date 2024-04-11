@@ -17,8 +17,8 @@
 
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -109,7 +109,7 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorPtr
     createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
                                  const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
-                                 const Statistic::MetricHash metricHash,
+                                 const Statistic::StatisticMetricHash metricHash,
                                  OperatorId id = getNextOperatorId());
 
     /**

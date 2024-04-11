@@ -29,6 +29,9 @@ add_nes_integration_test(source-catalog-controller-integration-tests "REST/Contr
 ### NES Location Controller Tests ###
 add_nes_integration_test(location-controller-integration-tests "REST/Controller/LocationControllerIntegrationTest.cpp")
 
+### Statistics Integration Test
+add_nes_integration_test(statistics-integration-test "StatisticsIntegrationTest.cpp")
+
 
 ### Filter Push Down Test ###
 #add_nes_integration_test(filter-push-down-test "Optimizer/FilterPushDownTest.cpp")

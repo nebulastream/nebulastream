@@ -228,7 +228,7 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
                                                       queryId,
                                                       querySubPlanId,
                                                       numberOfOrigins,
-                                                      nodeEngine->getStatisticStore(),
+                                                      nodeEngine->getStatisticManager()->getStatisticStore(),
                                                       statisticSinkFormat);
 }
 

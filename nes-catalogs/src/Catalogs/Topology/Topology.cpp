@@ -235,12 +235,12 @@ bool Topology::unregisterWorker(WorkerId topologyNodeId) {
     return true;
 }
 
-TopologyNodePtr Topology::getCopyOfTopologyNodeWithId(WorkerId workerId) {
+TopologyNodePtr Topology::getCopyOfTopologyNodeWithId(WorkerId workerId) const {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     NES_INFO("Finding a physical node with id {}", workerId);
     if (lockedWorkerIdToTopologyNodeMap->contains(workerId)) {
         NES_DEBUG("Found a physical node with id {}", workerId);
-        return (*(*lockedWorkerIdToTopologyNodeMap)[workerId].wlock())->copy();
+        return (*(*lockedWorkerIdToTopologyNodeMap).at(workerId).wlock())->copy();
     }
     NES_WARNING("Unable to find a physical node with id {}", workerId);
     return nullptr;
@@ -364,7 +364,7 @@ TopologyNodeWLock Topology::lockTopologyNode(WorkerId workerId) {
     return nullptr;
 }
 
-std::vector<WorkerId> Topology::getAllRegisteredNodeIds() {
+std::vector<WorkerId> Topology::getAllRegisteredNodeIds() const {
     auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
     //Compute a vector of topology node ids
     std::vector<WorkerId> topologyNodeIds;

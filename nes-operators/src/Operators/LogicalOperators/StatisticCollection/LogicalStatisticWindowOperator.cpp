@@ -23,7 +23,7 @@ namespace NES::Statistic {
 LogicalStatisticWindowOperator::LogicalStatisticWindowOperator(OperatorId id,
                                                                Windowing::WindowTypePtr windowType,
                                                                WindowStatisticDescriptorPtr windowStatisticDescriptor,
-                                                               MetricHash metricHash)
+                                                               StatisticMetricHash metricHash)
     : Operator(id), LogicalUnaryOperator(id), windowType(std::move(windowType)),
       windowStatisticDescriptor(std::move(windowStatisticDescriptor)), metricHash(metricHash) {}
 
@@ -68,16 +68,16 @@ bool LogicalStatisticWindowOperator::isIdentical(const NodePtr& rhs) const {
 
 std::string LogicalStatisticWindowOperator::toString() const {
     std::ostringstream oss;
-    oss << "LogicalStatisticWindowOperator(" << id << ", " << statisticId << "): ";
-    oss << "Windowtype: " << windowType->toString() << std::endl;
-    oss << "Descriptor: " << windowStatisticDescriptor->toString();
+    oss << "LogicalStatisticWindowOperator(" << id << ", " << statisticId << "): " << " ";
+    oss << "Windowtype: " << windowType->toString() << " ";
+    oss << "Descriptor: " << windowStatisticDescriptor->toString() << " ";
     oss << "MetricHash: " << metricHash;
 
     return oss.str();
 }
 
 OperatorPtr LogicalStatisticWindowOperator::copy() {
-    auto copy = LogicalOperatorFactory::createStatisticBuildOperator(windowType, windowStatisticDescriptor, id);
+    auto copy = LogicalOperatorFactory::createStatisticBuildOperator(windowType, windowStatisticDescriptor, metricHash, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -110,6 +110,6 @@ void LogicalStatisticWindowOperator::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-MetricHash LogicalStatisticWindowOperator::getMetricHash() const { return metricHash; }
+StatisticMetricHash LogicalStatisticWindowOperator::getMetricHash() const { return metricHash; }
 
 }// namespace NES::Statistic

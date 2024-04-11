@@ -262,7 +262,7 @@ TEST_P(StatisticSinkTest, testCountMin) {
         EXPECT_TRUE(statisticSink->writeData(buf, wctx));
     }
 
-    auto storedStatistics = nodeEngine->getStatisticStore()->getAllStatistics();
+    auto storedStatistics = nodeEngine->getStatisticManager()->getStatisticStore()->getAllStatistics();
     EXPECT_TRUE(sameStatisticsInVectors(storedStatistics, expectedStatistics));
 }
 
@@ -298,7 +298,7 @@ TEST_P(StatisticSinkTest, testHyperLogLog) {
         EXPECT_TRUE(statisticSink->writeData(buf, wctx));
     }
 
-    auto storedStatistics = nodeEngine->getStatisticStore()->getAllStatistics();
+    auto storedStatistics = nodeEngine->getStatisticManager()->getStatisticStore()->getAllStatistics();
     EXPECT_TRUE(sameStatisticsInVectors(storedStatistics, expectedStatistics));
 }
 

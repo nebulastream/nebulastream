@@ -24,7 +24,7 @@ PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor)) {}
 
 PhysicalOperatorPtr

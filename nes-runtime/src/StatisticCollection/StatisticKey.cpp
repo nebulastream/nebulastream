@@ -29,12 +29,12 @@ bool StatisticKey::operator!=(const StatisticKey& rhs) const { return !(rhs == *
 
 std::string StatisticKey::toString() const {
     std::ostringstream oss;
-    oss << "Metric(" << metric->toString() << ")";
+    oss << "Metric(" << metric->toString() << ") ";
     oss << "StatisticId(" << statisticId << ")";
     return oss.str();
 }
 
-StatisticHash StatisticKey::combineStatisticIdWithMetricHash(MetricHash metricHash, StatisticId statisticId) {
+StatisticHash StatisticKey::combineStatisticIdWithMetricHash(StatisticMetricHash metricHash, StatisticId statisticId) {
     return statisticId ^ (metricHash + goldenRatio);
 }
 

@@ -25,6 +25,11 @@ StatisticInfoWLock StatisticRegistry::getStatisticInfo(const StatisticKey statis
     return std::make_shared<folly::Synchronized<StatisticInfo>::WLockedPtr>(std::move(lockedStatisticInfo));
 }
 
+QueryId StatisticRegistry::getQueryId(const StatisticKey statisticKey) const {
+    auto lockedMap = keyToStatisticInfo.rlock();
+    return (*lockedMap).at(statisticKey)->getQueryId();
+}
+
 std::optional<StatisticInfoWLock> StatisticRegistry::getStatisticInfoWithGranularity(const StatisticKey statisticKey,
                                                                                      const Windowing::TimeMeasure& granularity) {
     // If there exists no StatisticInfo to this StatisticKey, then return no value

@@ -102,13 +102,13 @@ StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& pro
     // Iterating over each row. Calculating the column and then taking the minimum over all rows
     uint64_t minCount = UINT64_MAX;
     for (auto row = 0_u64; row < depth; ++row) {
-        const auto hashValue = StatisticUtil::getHashValue(*basicValue, row, numberOfBitsInKey);
+        const auto hashValue = StatisticUtil::getH3HashValue(*basicValue, row, depth, numberOfBitsInKey);
         const auto column = hashValue % width;
         minCount = std::min(minCount, countMinData[row * width + column]);
     }
 
 
-    return StatisticValue<>(minCount);
+    return StatisticValue<>(minCount, startTs, endTs);
 }
 
 bool CountMinStatistic::equal(const Statistic& other) const {

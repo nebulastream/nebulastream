@@ -39,6 +39,8 @@
 #include <REST/RestServer.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+#include <StatisticCollection/QueryGeneration/DefaultStatisticQueryGenerator.hpp>
+#include <StatisticCollection/StatisticCoordinator.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Services/MonitoringService.hpp>
@@ -107,6 +109,12 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     monitoringService = std::make_shared<MonitoringService>(topology, requestHandlerService, queryCatalog, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
+
+    // For now, we hardcode the usage of the DefaultStatisticQueryGenerator, see issue #4687
+    statisticCoordinator = std::make_shared<Statistic::StatisticCoordinator>(getRequestHandlerService(),
+                                                                             Statistic::DefaultStatisticQueryGenerator::create(),
+                                                                             getQueryCatalog(),
+                                                                             topology);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -117,6 +125,8 @@ NesCoordinator::~NesCoordinator() {
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
+
+Statistic::StatisticCoordinatorPtr NesCoordinator::getStatisticCoordinator() { return statisticCoordinator; }
 
 Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }

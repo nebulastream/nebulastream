@@ -24,7 +24,7 @@ PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                SourceDescriptorPtr sourceDescriptor)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
       sourceDescriptor(std::move(sourceDescriptor)), originId(originId) {}
 
 std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(OperatorId id,

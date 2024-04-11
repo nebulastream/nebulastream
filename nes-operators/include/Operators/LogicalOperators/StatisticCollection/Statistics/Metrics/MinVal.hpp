@@ -14,14 +14,14 @@
 
 #ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_
 #define NES_NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTIC_MINVAL_HPP_
-#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/Metric.hpp>
+#include <Operators/LogicalOperators/StatisticCollection/Statistics/Metrics/StatisticMetric.hpp>
 
 namespace NES::Statistic {
 
 /**
  * @brief Collects the min value for the fieldName
  */
-class MinVal : public Metric {
+class MinVal : public StatisticMetric {
   public:
     /**
      * @brief Creates a MinVal wrapped in a MetricPtr
@@ -35,7 +35,7 @@ class MinVal : public Metric {
      * @param rhs
      * @return True, if equal otherwise false
      */
-    bool operator==(const Metric& rhs) const override;
+    bool operator==(const StatisticMetric& rhs) const override;
 
     /**
      * @brief Creates a string representation
