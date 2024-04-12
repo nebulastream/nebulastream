@@ -262,6 +262,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testCentralReconnects) {
     coordinatorConfig->restPort.setValue(*restPort);
     //coordinatorConfig->enableQueryReconfiguration.setValue(true);
     coordinatorConfig->optimizer.enableIncrementalPlacement.setValue(true);
+    //coordinatorConfig->optimizer.enableIncrementalPlacement.setValue(false);
     auto crdWorkerDataPort = getAvailablePort();
     coordinatorConfig->worker.dataPort = *crdWorkerDataPort;
     coordinatorConfig->worker.connectSourceEventChannelsAsync.setValue(true);

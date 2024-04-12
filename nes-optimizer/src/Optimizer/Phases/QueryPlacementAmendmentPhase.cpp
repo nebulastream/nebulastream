@@ -69,7 +69,6 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
              std::to_string(sharedQueryPlan->getId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
-    bool enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
 
     auto sharedQueryId = sharedQueryPlan->getId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
@@ -82,100 +81,14 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
     // Create container to record all deployment contexts
     std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
 
-    if (enableIncrementalPlacement) {
-        std::vector<Experimental::ChangeLogEntryPtr> failedChangelogEntries;
-        for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
-            try {
-                //1. Fetch all upstream pinned operators
-                auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
-
-                //2. Fetch all downstream pinned operators
-                auto pinnedDownStreamOperators = changeLogEntry.second->downstreamOperators;
-
-                //3. Pin all sink operators
-                pinAllSinkOperators(pinnedDownStreamOperators);
-
-                //4. Check if all operators are pinned
-                if (!containsOnlyPinnedOperators(pinnedDownStreamOperators)
-                    || !containsOnlyPinnedOperators(pinnedUpstreamOperators)) {
-                    throw Exceptions::QueryPlacementAdditionException(
-                        sharedQueryId,
-                        "QueryPlacementAmendmentPhase: Found operators without pinning.");
-                }
-
-                //5. Get next query sub plan versions
-                auto nextDecomposedQueryPlanVersion = getDecomposedQuerySubVersion();
-
-                //6. Call placement removal strategy
-                if (containsOperatorsForRemoval(pinnedDownStreamOperators)) {
-                    auto placementRemovalStrategy = PlacementRemovalStrategy::create(globalExecutionPlan,
-                                                                                     topology,
-                                                                                     typeInferencePhase,
-                                                                                     placementAmendmentMode);
-                    auto placementRemovalDeploymentContexts =
-                        placementRemovalStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                            pinnedUpstreamOperators,
-                                                                            pinnedDownStreamOperators,
-                                                                            nextDecomposedQueryPlanVersion);
-
-                    // Collect all deployment contexts returned by placement removal strategy
-                    for (const auto& [decomposedQueryPlanId, deploymentContext] : placementRemovalDeploymentContexts) {
-                        deploymentContexts[decomposedQueryPlanId] = deploymentContext;
-                    }
-
-                } else {
-                    NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
-                                "TO_BE_REPLACED state.");
-                }
-
-                //7. Call placement addition strategy
-                if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
-                    auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
-                    auto placementAdditionStrategy = getStrategy(placementStrategy);
-                    auto placementAdditionResults =
-                        placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
-                                                                             pinnedUpstreamOperators,
-                                                                             pinnedDownStreamOperators,
-                                                                             nextDecomposedQueryPlanVersion);
-
-                    // Collect all deployment contexts returned by placement removal strategy
-                    for (const auto& [decomposedQueryPlanId, deploymentContext] : placementAdditionResults.deploymentContexts) {
-                        deploymentContexts[decomposedQueryPlanId] = deploymentContext;
-                    }
-
-                    if (!placementAdditionResults.completedSuccessfully) {
-                        throw std::runtime_error("Placement addition phase unsuccessfully completed");
-                    }
-                } else {
-                    NES_WARNING("Skipping placement addition phase as no pinned downstream operator in the state PLACED or "
-                                "TO_BE_PLACED state.");
-                }
-            } catch (std::exception& ex) {
-                NES_ERROR("Failed to process change log. Marking shared query plan as partially processed and recording the "
-                          "failed changelog for further processing. {}",
-                          ex.what());
-                sharedQueryPlan->setStatus(SharedQueryPlanStatus::PARTIALLY_PROCESSED);
-                failedChangelogEntries.emplace_back(changeLogEntry.second);
-            }
-        }
-        if (!failedChangelogEntries.empty()) {
-            sharedQueryPlan->recordFailedChangeLogEntries(failedChangelogEntries);
-        }
-        //Update the change log's till processed timestamp and clear all entries before the timestamp
-        sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
-    } else {
+    std::vector<Experimental::ChangeLogEntryPtr> failedChangelogEntries;
+    for (const auto& changeLogEntry : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
         try {
             //1. Fetch all upstream pinned operators
-            std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
-            for (const auto& leafOperator : queryPlan->getLeafOperators()) {
-                pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
-            };
+            auto pinnedUpstreamOperators = changeLogEntry.second->upstreamOperators;
 
             //2. Fetch all downstream pinned operators
-            std::set<LogicalOperatorPtr> pinnedDownStreamOperators;
-            for (const auto& rootOperator : queryPlan->getRootOperators()) {
-                pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
-            };
+            auto pinnedDownStreamOperators = changeLogEntry.second->downstreamOperators;
 
             //3. Pin all sink operators
             pinAllSinkOperators(pinnedDownStreamOperators);
@@ -188,7 +101,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                     "QueryPlacementAmendmentPhase: Found operators without pinning.");
             }
 
-            //5. Get the next decomposed query plan version
+            //5. Get next query sub plan versions
             auto nextDecomposedQueryPlanVersion = getDecomposedQuerySubVersion();
 
             //6. Call placement removal strategy
@@ -205,6 +118,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                 for (const auto& [decomposedQueryPlanId, deploymentContext] : placementRemovalDeploymentContexts) {
                     deploymentContexts[decomposedQueryPlanId] = deploymentContext;
                 }
+
             } else {
                 NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
                             "TO_BE_REPLACED state.");
@@ -233,10 +147,18 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
                             "TO_BE_PLACED state.");
             }
         } catch (std::exception& ex) {
-            NES_ERROR("Failed to process query delta due to: {}", ex.what());
+            NES_ERROR("Failed to process change log. Marking shared query plan as partially processed and recording the "
+                      "failed changelog for further processing. {}",
+                      ex.what());
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::PARTIALLY_PROCESSED);
+            failedChangelogEntries.emplace_back(changeLogEntry.second);
         }
     }
+    if (!failedChangelogEntries.empty()) {
+        sharedQueryPlan->recordFailedChangeLogEntries(failedChangelogEntries);
+    }
+    //Update the change log's till processed timestamp and clear all entries before the timestamp
+    sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
 
     if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::PARTIALLY_PROCESSED
         && sharedQueryPlan->getStatus() != SharedQueryPlanStatus::STOPPED) {
