@@ -38,7 +38,7 @@ class NESIRDumpHandler {
     * @brief Dump the NESIR of the funcOp into the 'out' stringstream.
     * @param funcOp: FunctionOperation that exists on the top level of a NESIR module.
     */
-    void dump(const std::shared_ptr<Operations::FunctionOperation> funcOp);
+    void dump(const Operations::FunctionOperation& funcOp);
 
   private:
     std::ostream& out;
@@ -51,7 +51,7 @@ class NESIRDumpHandler {
      * @param blockScopeLevel: The scopeLevel of the initial BB that we are searching the next same/higher level BB for.
      * @return IR::BasicBlockPtr: SharedPtr to the next block that resides on the same or on a higher level.
      */
-    IR::BasicBlockPtr getNextLowerOrEqualLevelBasicBlock(IR::BasicBlockPtr basicBlock, int blockScopeLevel);
+    [[nodiscard]] const IR::BasicBlock* getNextLowerOrEqualLevelBasicBlock(const IR::BasicBlock& basicBlock, int blockScopeLevel);
 
     /**
      * @brief Handle dumping terminator operations(LoopOp, BranchOp, IfOp, ReturnOp) to the 'out' stringstream.
@@ -59,16 +59,16 @@ class NESIRDumpHandler {
      * @param terminatorOp: Terminator operation that we append to the 'out' stringstream.
      * @param scopeLevel: scopeLevel of the BasicBlock that is terminated by the terminator operation.
      */
-    void dumpHelper(OperationPtr const& terminatorOp, int32_t scopeLevel);
+    void dumpHelper(Operations::Operation const& terminatorOp, int32_t scopeLevel);
 
     /**
      * @brief Handle dumping BasicBlocks to the 'out' stringstream. Print all operations, then handle the terminatorOp.
      * 
      * @param basicBlock: The basicBlock that is dumped to the 'out' stringstream.
      */
-    void dumpHelper(BasicBlockPtr const& basicBlock);
+    void dumpHelper(BasicBlock const& basicBlock);
 };
 
 }// namespace NES::Nautilus::IR
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_

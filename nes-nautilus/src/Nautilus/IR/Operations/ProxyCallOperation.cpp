@@ -12,50 +12,47 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/Operation.hpp"
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
+#include <utility>
+#include <vector>
 
 namespace NES::Nautilus::IR::Operations {
 ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
                                        OperationIdentifier identifier,
-                                       std::vector<OperationWPtr> inputArguments,
+                                       std::vector<OperationRef> inputArguments,
                                        Types::StampPtr resultType)
-    : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
+    : Operation(Operation::OperationType::ProxyCallOp, std::move(identifier), resultType), proxyCallType(proxyCallType),
       inputArguments(std::move(inputArguments)) {}
 
 ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
                                        std::string functionSymbol,
                                        void* functionPtr,
                                        OperationIdentifier identifier,
-                                       std::vector<OperationWPtr> inputArguments,
+                                       std::vector<OperationRef> inputArguments,
                                        Types::StampPtr resultType)
     : Operation(Operation::OperationType::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
       mangedFunctionSymbol(functionSymbol), functionPtr(functionPtr), inputArguments(std::move(inputArguments)) {}
 
-Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
-std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
-    std::vector<OperationPtr> args;
-    for (auto input : inputArguments) {
-        args.emplace_back(input.lock());
-    }
-    return args;
-}
+Operation::ProxyCallType ProxyCallOperation::getProxyCallType() const { return proxyCallType; }
+const std::vector<OperationRef>& ProxyCallOperation::getInputArguments() const { return inputArguments; }
 
-std::string ProxyCallOperation::toString() {
+std::string ProxyCallOperation::toString() const {
     std::string baseString = "";
     if (!identifier.empty()) {
         baseString = identifier + " = ";
     }
     baseString = baseString + getFunctionSymbol() + "(";
     if (!inputArguments.empty()) {
-        baseString += inputArguments[0].lock()->getIdentifier();
+        baseString += inputArguments[0]->getIdentifier();
         for (int i = 1; i < (int) inputArguments.size(); ++i) {
-            baseString += ", " + inputArguments.at(i).lock()->getIdentifier();
+            baseString += ", " + inputArguments.at(i)->getIdentifier();
         }
     }
     return baseString + ")";
 }
-std::string ProxyCallOperation::getFunctionSymbol() { return mangedFunctionSymbol; }
+std::string ProxyCallOperation::getFunctionSymbol() const { return mangedFunctionSymbol; }
 
-void* ProxyCallOperation::getFunctionPtr() { return functionPtr; }
+void* ProxyCallOperation::getFunctionPtr() const { return functionPtr; }
 
 }// namespace NES::Nautilus::IR::Operations

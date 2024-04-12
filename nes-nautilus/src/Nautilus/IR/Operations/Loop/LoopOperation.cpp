@@ -25,17 +25,21 @@ LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
 void LoopOperation::setLoopType(LoopOperation::LoopType loopType) { this->loopType = loopType; }
 
 BasicBlockInvocation& LoopOperation::getLoopBodyBlock() { return loopBodyBlock; }
+const BasicBlockInvocation& LoopOperation::getLoopBodyBlock() const { return loopBodyBlock; }
 BasicBlockInvocation& LoopOperation::getLoopFalseBlock() { return loopFalseBlock; }
+const BasicBlockInvocation& LoopOperation::getLoopFalseBlock() const { return loopFalseBlock; }
 // void LoopOperation::setLoopBodyBlock(BasicBlockInvocation loopBodyBlock) { this->loopBodyBlock = loopBodyBlock.getBlock(); }
 // void LoopOperation::setLoopFalseBlock(BasicBlockInvocation loopFalseBlock) { this->loopFalseBlock = loopFalseBlock.getBlock(); }
 BasicBlockInvocation& LoopOperation::getLoopHeadBlock() { return loopHeadBlock; }
+const BasicBlockInvocation& LoopOperation::getLoopHeadBlock() const { return loopHeadBlock; }
 BasicBlockInvocation& LoopOperation::getLoopEndBlock() { return loopEndBlock; }
+const BasicBlockInvocation& LoopOperation::getLoopEndBlock() const { return loopEndBlock; }
 
 void LoopOperation::setLoopInfo(std::shared_ptr<LoopInfo> loopInfo) { this->loopInfo = loopInfo; }
 
 std::shared_ptr<LoopInfo> LoopOperation::getLoopInfo() { return loopInfo; }
 
-std::string LoopOperation::toString() {
+std::string LoopOperation::toString() const {
     std::string baseString = "loop " + loopHeadBlock.getBlock()->getIdentifier() + "(";
     auto loopBlockArgs = loopHeadBlock.getArguments();
     if (loopBlockArgs.size() > 0) {

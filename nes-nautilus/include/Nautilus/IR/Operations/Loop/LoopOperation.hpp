@@ -33,15 +33,19 @@ class LoopOperation : public Operation {
     ~LoopOperation() override = default;
 
     LoopType getLoopType();
-    BasicBlockInvocation& getLoopBodyBlock();
+    [[nodiscard]] const BasicBlockInvocation& getLoopBodyBlock() const;
     BasicBlockInvocation& getLoopFalseBlock();
+    [[nodiscard]] const BasicBlockInvocation& getLoopFalseBlock() const;
     BasicBlockInvocation& getLoopHeadBlock();
+    const BasicBlockInvocation& getLoopHeadBlock() const;
     BasicBlockInvocation& getLoopEndBlock();
+    const BasicBlockInvocation& getLoopEndBlock() const;
     void setLoopInfo(std::shared_ptr<LoopInfo> loopInfo);
     std::shared_ptr<LoopInfo> getLoopInfo();
     void setLoopType(LoopOperation::LoopType loopType);
+    BasicBlockInvocation& getLoopBodyBlock();
 
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 
   private:
     LoopType loopType;

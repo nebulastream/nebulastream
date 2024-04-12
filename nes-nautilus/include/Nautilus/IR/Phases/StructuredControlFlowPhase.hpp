@@ -50,7 +50,7 @@ class StructuredControlFlowPhase {
          * @brief Helper struct used to keep track of the currently active branch of an if-operation.
          */
         struct IfOpCandidate {
-            std::shared_ptr<IR::Operations::IfOperation> ifOp;
+            IR::Operations::IfOperation& ifOp;
             bool isTrueBranch;
         };
 
@@ -71,7 +71,7 @@ class StructuredControlFlowPhase {
          * 
          * @param currentBlock: Initially will be the body-block of the root operation.
          */
-        void createIfOperations(IR::BasicBlockPtr currentBlock);
+        void createIfOperations(IR::BasicBlock& currentBlock);
 
         /**
          * @brief Checks if the given currentBlocks is a merge-block with open edges (open: not yet traversed).
@@ -83,11 +83,11 @@ class StructuredControlFlowPhase {
          * @param newVisit: Signals whether we reached the currentBlock via a new edge.
          * @return true, if the currentBlock is a merge-block with open edges, and false if not.
          */
-        bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock,
+        bool inline mergeBlockCheck(IR::BasicBlockPtr currentBlock,
                                     std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
-                                    std::unordered_map<std::string, uint32_t>& candidateEdgeCounter,
+                                    std::unordered_map<std::string, uint32_t>& numMergeBlocksVisits,
                                     bool newVisit,
-                                    const std::unordered_set<IR::BasicBlockPtr>& loopBlockWithVisitedBody);
+                                    const std::unordered_set<IR::BasicBlockPtr> loopBlockWithVisitedBody);
 
       private:
         std::shared_ptr<IR::IRGraph> ir;
@@ -96,4 +96,4 @@ class StructuredControlFlowPhase {
 };
 
 }// namespace NES::Nautilus::IR
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_STRUCTUREDCONTROLFLOWPHASE_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_STRUCTUREDCONTROLFLOWPHASE_HPP_

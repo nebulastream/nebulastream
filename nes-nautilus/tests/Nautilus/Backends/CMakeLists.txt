@@ -18,4 +18,9 @@ add_nes_execution_test(nautilus-backend-tests
         "LoopCompilationTest.cpp"
         "MemoryAccessCompilationTest.cpp"
         "TypeCompilationTest.cpp"
-        "FunctionCompilationTest.cpp")
+        "FunctionCompilationTest.cpp"
+)
+
+add_nes_execution_test(nautilus-backend-leak-test
+        "MemoryLeakTest.cpp"
+)

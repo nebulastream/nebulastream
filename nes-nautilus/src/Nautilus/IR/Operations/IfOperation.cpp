@@ -13,48 +13,36 @@
 */
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+#include <string>
 
 namespace NES::Nautilus::IR::Operations {
-IfOperation::IfOperation(OperationPtr booleanValue)
+IfOperation::IfOperation(const Operation& booleanValue)
     : Operation(Operation::OperationType::IfOp, Types::StampFactory::createVoidStamp()), booleanValue(booleanValue) {}
 
-OperationPtr IfOperation::getValue() { return booleanValue.lock(); }
+const Operation& IfOperation::getValue() const { return booleanValue; }
 
 BasicBlockInvocation& IfOperation::getTrueBlockInvocation() { return trueBlockInvocation; }
+const BasicBlockInvocation& IfOperation::getTrueBlockInvocation() const { return trueBlockInvocation; }
 BasicBlockInvocation& IfOperation::getFalseBlockInvocation() { return falseBlockInvocation; }
+const BasicBlockInvocation& IfOperation::getFalseBlockInvocation() const { return falseBlockInvocation; }
 
-void IfOperation::setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation) {
+void IfOperation::setTrueBlockInvocation(BasicBlock& trueBlockInvocation) {
     this->trueBlockInvocation.setBlock(trueBlockInvocation);
 }
-void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) {
+void IfOperation::setFalseBlockInvocation(BasicBlock& falseBlockInvocation) {
     this->falseBlockInvocation.setBlock(falseBlockInvocation);
 }
 
-BasicBlockPtr IfOperation::getMergeBlock() { return mergeBlock.lock(); }
-OperationPtr IfOperation::getBooleanValue() { return booleanValue.lock(); }
-void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) { this->mergeBlock = mergeBlock; }
+const BasicBlock* IfOperation::getMergeBlock() const { return mergeBlock; }
+const Operation& IfOperation::getBooleanValue() const { return booleanValue; }
+void IfOperation::setMergeBlock(const BasicBlock& mergeBlock) { this->mergeBlock = &mergeBlock; }
 
-std::string IfOperation::toString() {
-    std::string baseString =
-        "if " + getValue()->getIdentifier() + " ? Block_" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
-    if (trueBlockInvocation.getArguments().size() > 0) {
-        baseString += trueBlockInvocation.getArguments()[0]->getIdentifier();
-        for (int i = 1; i < (int) trueBlockInvocation.getArguments().size(); ++i) {
-            baseString += ", " + trueBlockInvocation.getArguments().at(i)->getIdentifier();
-        }
-    }
-    if (falseBlockInvocation.getBlock()) {
-        baseString += ") : Block_" + falseBlockInvocation.getBlock()->getIdentifier() + '(';
-        if (falseBlockInvocation.getArguments().size() > 0) {
-            baseString += falseBlockInvocation.getArguments()[0]->getIdentifier();
-            for (int i = 1; i < (int) falseBlockInvocation.getArguments().size(); ++i) {
-                baseString += ", " + falseBlockInvocation.getArguments().at(i)->getIdentifier();
-            }
-        }
-    }
-    return baseString += ')';
+std::string IfOperation::toString() const {
+    return fmt::format("if {} ? Block_{} : Block_{}", getValue().getIdentifier(), trueBlockInvocation, falseBlockInvocation);
 }
-bool IfOperation::hasFalseCase() { return this->falseBlockInvocation.getBlock() != nullptr; }
+bool IfOperation::hasFalseCase() const { return this->falseBlockInvocation.getBlock() != nullptr; }
 }// namespace NES::Nautilus::IR::Operations

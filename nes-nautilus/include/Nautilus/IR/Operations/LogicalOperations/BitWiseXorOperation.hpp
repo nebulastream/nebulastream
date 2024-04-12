@@ -20,14 +20,14 @@
 namespace NES::Nautilus::IR::Operations {
 
 class BitWiseXorOperation : public Operation {
-  public:
+public:
     /**
-     * @brief Constructor for a BitWiseXorOperation
+     * @brief Constructor for a BitWiseAndOperation
      * @param identifier
      * @param leftInput
      * @param rightInput
      */
-    BitWiseXorOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
+    BitWiseXorOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput);
 
     /**
      * @brief Default deconstructor
@@ -36,21 +36,21 @@ class BitWiseXorOperation : public Operation {
 
     /**
      * @brief Retrieves the left input
-     * @return OperationPtr
+     * @return Operation&
      */
-    OperationPtr getLeftInput();
+    [[nodiscard]] const Operation& getLeftInput() const;
 
     /**
      * @brief Retrieves the left input
-     * @return OperationPtr
+     * @return Operation&
      */
-    OperationPtr getRightInput();
+    [[nodiscard]] const Operation& getRightInput() const;
 
     /**
      * @brief Creates a string representation of this operation
      * @return std::string
      */
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Checks if the operation (Op) is of the same class
@@ -59,9 +59,9 @@ class BitWiseXorOperation : public Operation {
      */
     bool classof(const Operation* Op);
 
-  private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
+private:
+    const Operation& leftInput;
+    const Operation& rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
 #endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISEXOROPERATION_HPP_

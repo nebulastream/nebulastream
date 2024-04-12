@@ -22,16 +22,16 @@ namespace NES::Nautilus::IR::Operations {
 class ReturnOperation : public Operation {
   public:
     ReturnOperation();
-    ReturnOperation(OperationPtr returnValue);
+    ReturnOperation(Operation& returnValue);
     ~ReturnOperation() override = default;
 
-    OperationPtr getReturnValue();
-    bool hasReturnValue();
+    [[nodiscard]] const Operation& getReturnValue() const;
+    [[nodiscard]] bool hasReturnValue() const;
 
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 
   private:
-    OperationWPtr returnValue;
+    const Operation* returnValue = nullptr;
 };
 }// namespace NES::Nautilus::IR::Operations
 #endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_

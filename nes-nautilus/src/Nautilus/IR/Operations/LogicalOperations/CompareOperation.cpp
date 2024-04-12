@@ -16,29 +16,29 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
 CompareOperation::CompareOperation(OperationIdentifier identifier,
-                                   OperationPtr leftInput,
-                                   OperationPtr rightInput,
+                                   Operation& leftInput,
+                                   Operation& rightInput,
                                    Comparator comparator)
     : Operation(Operation::OperationType::CompareOp, identifier, Types::StampFactory::createBooleanStamp()),
       leftInput(std::move(leftInput)), rightInput(std::move(rightInput)), comparator(comparator) {
-    leftInput->addUsage(this);
-    rightInput->addUsage(this);
+    leftInput.addUsage(*this);
+    rightInput.addUsage(*this);
 }
 
-OperationPtr CompareOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr CompareOperation::getRightInput() { return rightInput.lock(); }
-CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
+const Operation& CompareOperation::getLeftInput() const { return leftInput; }
+const Operation& CompareOperation::getRightInput() const { return rightInput; }
+CompareOperation::Comparator CompareOperation::getComparator() const { return comparator; }
 
-bool CompareOperation::isLessThan() { return (comparator == LT); }
-bool CompareOperation::isLessEqual() { return (comparator == LE); }
-bool CompareOperation::isGreaterThan() { return (comparator == GT); }
-bool CompareOperation::isGreaterEqual() { return (comparator == GE); }
-bool CompareOperation::isEquals() { return (comparator == EQ); }
-bool CompareOperation::isLessThanOrGreaterThan() { return isLessThan() || isGreaterThan(); }
-bool CompareOperation::isLess() { return isLessThan() || isLessEqual(); }
-bool CompareOperation::isGreater() { return isGreaterThan() || isGreaterEqual(); }
+bool CompareOperation::isLessThan() const { return (comparator == LT); }
+bool CompareOperation::isLessEqual() const { return (comparator == LE); }
+bool CompareOperation::isGreaterThan() const { return (comparator == GT); }
+bool CompareOperation::isGreaterEqual() const { return (comparator == GE); }
+bool CompareOperation::isEquals() const { return (comparator == EQ); }
+bool CompareOperation::isLessThanOrGreaterThan() const { return isLessThan() || isGreaterThan(); }
+bool CompareOperation::isLess() const { return isLessThan() || isLessEqual(); }
+bool CompareOperation::isGreater() const { return isGreaterThan() || isGreaterEqual(); }
 
-std::string CompareOperation::toString() {
+std::string CompareOperation::toString() const {
     std::string comperator;
     switch (comparator) {
         case EQ: comperator = "=="; break;
@@ -49,7 +49,7 @@ std::string CompareOperation::toString() {
         case GE: comperator = ">="; break;
     }
 
-    return identifier + " = " + getLeftInput()->getIdentifier() + " " + comperator + " " + getRightInput()->getIdentifier();
+    return identifier + " = " + getLeftInput().getIdentifier() + " " + comperator + " " + getRightInput().getIdentifier();
 }
 
 }// namespace NES::Nautilus::IR::Operations

@@ -16,6 +16,7 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <string>
 
 namespace NES::Nautilus::IR::Operations {
 
@@ -23,12 +24,9 @@ class ConstIntOperation : public Operation {
   public:
     explicit ConstIntOperation(OperationIdentifier identifier, int64_t constantValue, Types::StampPtr stamp);
     ~ConstIntOperation() override = default;
-    int64_t getValue();
+    [[nodiscard]] int64_t getValue() const;
 
-    template<class T>
-    T getIntegerViaType();
-
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
     static bool classof(const Operation* Op);
 
   private:
@@ -36,4 +34,4 @@ class ConstIntOperation : public Operation {
 };
 
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTINTOPERATION_HPP_

@@ -12,25 +12,31 @@
     limitations under the License.
 */
 
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <string>
+
 namespace NES::Nautilus::IR::Operations {
 ReturnOperation::ReturnOperation() : Operation(Operation::OperationType::ReturnOp, Types::StampFactory::createVoidStamp()) {}
-ReturnOperation::ReturnOperation(OperationPtr returnValue)
-    : Operation(Operation::OperationType::ReturnOp, returnValue->getStamp()), returnValue(returnValue) {
-    returnValue->addUsage(this);
+ReturnOperation::ReturnOperation(Operation& returnValue)
+    : Operation(Operation::OperationType::ReturnOp, returnValue.getStamp()), returnValue(&returnValue) {
+    returnValue.addUsage(*this);
 }
 
-std::string ReturnOperation::toString() {
+std::string ReturnOperation::toString() const {
     if (hasReturnValue()) {
-        return "return (" + getReturnValue()->getIdentifier() + ")";
+        return "return (" + getReturnValue().getIdentifier() + ")";
     } else {
         return "return";
     }
 }
-OperationPtr ReturnOperation::getReturnValue() { return returnValue.lock(); }
-bool ReturnOperation::hasReturnValue() { return !stamp->isVoid(); }
+const Operation& ReturnOperation::getReturnValue() const {
+    NES_ASSERT(returnValue != nullptr, "Unchecked call for ReturnOperation::getReturnValue()");
+    return *returnValue;
+}
+bool ReturnOperation::hasReturnValue() const { return !stamp->isVoid(); }
 
 }// namespace NES::Nautilus::IR::Operations

@@ -17,34 +17,38 @@
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <memory>
+#include <string>
 
 namespace NES::Nautilus::IR::Operations {
 class IfOperation : public Operation {
   public:
-    IfOperation(OperationPtr booleanValue);
+    explicit IfOperation(const Operation& booleanValue);
     ~IfOperation() override = default;
 
-    OperationPtr getValue();
-
-    BasicBlockPtr getMergeBlock();
-    OperationPtr getBooleanValue();
-    void setMergeBlock(BasicBlockPtr mergeBlock);
+    [[nodiscard]] const Operation& getValue() const;
     BasicBlockInvocation& getTrueBlockInvocation();
-    BasicBlockInvocation& getFalseBlockInvocation();
-    void setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation);
-    void setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation);
-    bool hasFalseCase();
 
-    std::string toString() override;
+    const BasicBlock* getMergeBlock() const;
+    const Operation& getBooleanValue() const;
+    void setMergeBlock(const BasicBlock& mergeBlock);
+    const BasicBlockInvocation& getTrueBlockInvocation() const;
+    BasicBlockInvocation& getFalseBlockInvocation();
+    const BasicBlockInvocation& getFalseBlockInvocation() const;
+    void setTrueBlockInvocation(BasicBlock& trueBlockInvocation);
+    void setFalseBlockInvocation(BasicBlock& falseBlockInvocation);
+    bool hasFalseCase() const;
+
+    [[nodiscard]] [[nodiscard]] std::string toString() const override;
 
   private:
-    OperationWPtr booleanValue;
+    const Operation& booleanValue;
     BasicBlockInvocation trueBlockInvocation;
     BasicBlockInvocation falseBlockInvocation;
-    std::weak_ptr<BasicBlock> mergeBlock;
+    const BasicBlock* mergeBlock = nullptr;
     std::unique_ptr<CountedLoopInfo> countedLoopInfo;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_

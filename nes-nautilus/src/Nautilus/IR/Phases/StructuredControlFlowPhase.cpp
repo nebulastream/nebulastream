@@ -32,7 +32,9 @@
 #include <cstdint>
 #include <memory>
 #include <stack>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 using namespace NES::Nautilus::IR::Operations;
 namespace NES::Nautilus::IR {
@@ -43,16 +45,16 @@ void StructuredControlFlowPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
 };
 
 void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::process() {
-    std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
-    createIfOperations(rootOperation->getFunctionBasicBlock());
+    auto& rootOperation = ir->getRootOperation();
+    createIfOperations(*rootOperation.getFunctionBasicBlock());
 }
 
 bool StructuredControlFlowPhase::StructuredControlFlowPhaseContext::mergeBlockCheck(
-    IR::BasicBlockPtr& currentBlock,
+    IR::BasicBlockPtr currentBlock,
     std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
     std::unordered_map<std::string, uint32_t>& numMergeBlocksVisits,
     bool newVisit,
-    const std::unordered_set<IR::BasicBlockPtr>& loopBlockWithVisitedBody) {
+    const std::unordered_set<IR::BasicBlockPtr> loopBlockWithVisitedBody) {
     uint32_t openEdges = 0;
     uint32_t numPriorVisits = 0;
     bool mergeBlockFound = false;
@@ -78,9 +80,8 @@ bool StructuredControlFlowPhase::StructuredControlFlowPhaseContext::mergeBlockCh
         openEdges = currentBlock->getNumLoopBackEdges() - numPriorVisits;
         if (openEdges < 2) {
             // We exhausted the loop-operations true-branch (body block) and now switch to its false-branch.
-            currentBlock = std::static_pointer_cast<Operations::LoopOperation>(currentBlock->getTerminatorOp())
-                               ->getLoopFalseBlock()
-                               .getBlock();
+            currentBlock =
+                dynamic_cast<Operations::LoopOperation&>(currentBlock->getTerminatorOp()).getLoopFalseBlock().getBlock();
             // Since we switched to a new currentBlock, we need to check whether it is a merge-block with openEdges.
             // If the new currentBlock is a loop-header-block again, we have multiple recursive calls.
             return mergeBlockCheck(currentBlock, ifOperations, numMergeBlocksVisits, true, loopBlockWithVisitedBody);
@@ -97,7 +98,7 @@ bool StructuredControlFlowPhase::StructuredControlFlowPhaseContext::mergeBlockCh
     return mergeBlockFound;
 }
 
-void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOperations(IR::BasicBlockPtr currentBlock) {
+void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOperations(IR::BasicBlock& currentBlock) {
     std::stack<std::unique_ptr<IfOpCandidate>> ifOperations;
     std::stack<IR::BasicBlockPtr> mergeBlocks;
     std::unordered_map<std::string, uint32_t> numMergeBlockVisits;
@@ -116,28 +117,28 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
         // 5 incoming edges, 2 numMergeBlockVisits, and 1 numLoopBackEdges is an open merge-block with still 2 open
         // control-flow-merge-edges. Also, it is a loop-header-block with 1 numLoopBackEdge. (5-2-1 => 2 still open)
         while (!(mergeBlockFound =
-                     mergeBlockCheck(currentBlock, ifOperations, numMergeBlockVisits, newVisit, loopBlockWithVisitedBody))
-               && (currentBlock->getTerminatorOp()->getOperationType() != Operation::OperationType::ReturnOp)) {
-            auto terminatorOp = currentBlock->getTerminatorOp();
-            if (terminatorOp->getOperationType() == Operation::OperationType::BranchOp) {
+                     mergeBlockCheck(&currentBlock, ifOperations, numMergeBlockVisits, newVisit, loopBlockWithVisitedBody))
+               && (currentBlock.getTerminatorOp().getOperationType() != Operation::OperationType::ReturnOp)) {
+            auto& terminatorOp = currentBlock.getTerminatorOp();
+            if (terminatorOp.getOperationType() == Operation::OperationType::BranchOp) {
                 // If the currentBlock is a simple branch-block, we move to the nextBlock.
-                auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-                currentBlock = branchOp->getNextBlockInvocation().getBlock();
+                auto& branchOp = dynamic_cast<IR::Operations::BranchOperation&>(terminatorOp);
+                currentBlock = *branchOp.getNextBlockInvocation().getBlock();
                 newVisit = true;
-            } else if (terminatorOp->getOperationType() == Operation::OperationType::IfOp) {
+            } else if (terminatorOp.getOperationType() == Operation::OperationType::IfOp) {
                 // If the currentBlock is an if-block, we push its if-operation on top of our IfOperation stack.
-                auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
+                auto& ifOp = dynamic_cast<IR::Operations::IfOperation&>(terminatorOp);
                 ifOperations.emplace(std::make_unique<IfOpCandidate>(IfOpCandidate{ifOp, true}));
                 // We now follow the if-operation's true-branch until we find a new if-operation or a merge-block.
-                currentBlock = ifOp->getTrueBlockInvocation().getBlock();
+                currentBlock = *ifOp.getTrueBlockInvocation().getBlock();
                 newVisit = true;
-            } else if (terminatorOp->getOperationType() == Operation::OperationType::LoopOp) {
-                loopBlockWithVisitedBody.emplace(currentBlock);
-                if (numMergeBlockVisits.contains(currentBlock->getIdentifier())) {
-                    numMergeBlockVisits.erase(currentBlock->getIdentifier());
+            } else if (terminatorOp.getOperationType() == Operation::OperationType::LoopOp) {
+                loopBlockWithVisitedBody.emplace(&currentBlock);
+                if (numMergeBlockVisits.contains(currentBlock.getIdentifier())) {
+                    numMergeBlockVisits.erase(currentBlock.getIdentifier());
                 }
-                auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
-                currentBlock = loopOp->getLoopBodyBlock().getBlock();
+                auto& loopOp = dynamic_cast<IR::Operations::LoopOperation&>(terminatorOp);
+                currentBlock = *loopOp.getLoopBodyBlock().getBlock();
                 newVisit = true;
             }
         }
@@ -149,21 +150,22 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
             if (ifOperations.top()->isTrueBranch) {
                 // We explored the current if-operation's true-branch and now switch to its false-branch.
                 ifOperations.top()->isTrueBranch = false;
-                mergeBlocks.emplace(currentBlock);
-                currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
+                mergeBlocks.emplace(&currentBlock);
+                currentBlock = *ifOperations.top()->ifOp.getFalseBlockInvocation().getBlock();
                 newVisit = true;
             } else {
                 // Make sure that we found the current merge-block for the current if-operation.
-                assert(mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier());
+                NES_ASSERT(mergeBlocks.top()->getIdentifier() == currentBlock.getIdentifier(),
+                           "Merge block does not match the current block");
                 // Set currentBlock as merge-block for the current if-operation and all if-operations on the stack that:
                 //  1. Are in their false-branches (their merge-block was pushed to the stack).
                 //  2. Have a corresponding merge-block on the stack that matches the currentBlock.
                 do {
-                    ifOperations.top()->ifOp->setMergeBlock(std::move(mergeBlocks.top()));
+                    ifOperations.top()->ifOp.setMergeBlock(*mergeBlocks.top());
                     mergeBlocks.pop();
                     ifOperations.pop();
                 } while (!ifOperations.empty() && !ifOperations.top()->isTrueBranch && !mergeBlocks.empty()
-                         && mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier());
+                         && mergeBlocks.top()->getIdentifier() == currentBlock.getIdentifier());
                 // In this case, we do not visit a block via a new edge, so newVisit is false.
                 // This is important in case the the current top-most if-operation on the stack is in its true-branch
                 // and the currentBlock is its merge-block.

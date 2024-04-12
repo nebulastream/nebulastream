@@ -21,16 +21,16 @@ namespace NES::Nautilus::IR::Operations {
 
 class AndOperation : public Operation {
   public:
-    AndOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
-    ~AndOperation() override = default;
-    OperationPtr getLeftInput();
-    OperationPtr getRightInput();
-    std::string toString() override;
-    bool classof(const Operation* Op);
+  AndOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput);
+  ~AndOperation() override = default;
+  [[nodiscard]] const Operation& getLeftInput() const;
+  [[nodiscard]] const Operation& getRightInput() const;
+  [[nodiscard]] std::string toString() const override;
+  bool classof(const Operation* Op);
 
-  private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
+private:
+  const Operation& leftInput;
+  const Operation& rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
 #endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_ANDOPERATION_HPP_

@@ -16,22 +16,23 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <string>
 #include <vector>
 
 namespace NES::Nautilus::IR::Operations {
-class StoreOperation : public Operation {
+class StoreOperation final : public Operation {
   public:
-    explicit StoreOperation(OperationPtr value, OperationPtr address);
+    explicit StoreOperation(Operation& value, Operation& address);
     ~StoreOperation() override = default;
 
-    OperationPtr getValue();
-    OperationPtr getAddress();
+    [[nodiscard]] const Operation& getValue() const;
+    [[nodiscard]] const Operation& getAddress() const;
 
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 
   private:
-    OperationWPtr value;
-    OperationWPtr address;
+    const Operation& value;
+    const Operation& address;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_

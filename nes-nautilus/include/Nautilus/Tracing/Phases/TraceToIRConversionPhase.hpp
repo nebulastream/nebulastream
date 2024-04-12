@@ -36,6 +36,7 @@ namespace NES::Nautilus::Tracing {
  */
 class TraceToIRConversionPhase {
   public:
+    void insertBasicBlock(IR::OwningBasicBlockPtr&& basicBlock);
     /**
      * @brief Performs the conversion and returns a IR fragment for the given trace
      * @param trace
@@ -44,7 +45,7 @@ class TraceToIRConversionPhase {
     std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<ExecutionTrace> trace);
 
   private:
-    using ValueFrame = Frame<std::string, IR::Operations::OperationPtr>;
+    using ValueFrame = Frame<std::string, IR::Operations::OperationRef>;
 
     /**
      * @brief Internal context object, which maintains statue during IR creation.
@@ -52,6 +53,7 @@ class TraceToIRConversionPhase {
     class IRConversionContext {
       public:
         IRConversionContext(std::shared_ptr<ExecutionTrace> trace) : trace(trace), ir(std::make_shared<IR::IRGraph>()){};
+        IR::BasicBlockPtr insertBasicBlock(uint32_t blockId, IR::OwningBasicBlockPtr&& basicBlock);
         std::shared_ptr<IR::IRGraph> process();
 
       private:
@@ -59,37 +61,37 @@ class TraceToIRConversionPhase {
         void processOperation(int32_t scope,
                               ValueFrame& frame,
                               Block& currentBlock,
-                              IR::BasicBlockPtr& currentIRBlock,
+                              IR::BasicBlock& currentIRBlock,
                               TraceOperation& operation);
-        void processJMP(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& block, TraceOperation& operation);
+        void processJMP(int32_t scope, ValueFrame& frame, IR::BasicBlock& block, TraceOperation& operation);
         void processCMP(int32_t scope,
                         ValueFrame& frame,
                         Block& currentBlock,
-                        IR::BasicBlockPtr& currentIRBlock,
+                        IR::BasicBlock& currentIRBlock,
                         TraceOperation& operation);
-        void processAdd(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processSub(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processMul(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processDiv(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processMod(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processEquals(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processLessThan(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processGreaterThan(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processNegate(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processAnd(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processOr(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processBitWiseAnd(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processBitWiseOr(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processBitWiseXor(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        void processAdd(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processSub(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processMul(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processDiv(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processMod(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processEquals(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processLessThan(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processGreaterThan(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processNegate(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processAnd(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processOr(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processBitWiseAnd(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processBitWiseOr(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processBitWiseXor(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
         void
-        processBitWiseLeftShift(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        processBitWiseLeftShift(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
         void
-        processBitWiseRightShift(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processLoad(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processStore(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processCall(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processConst(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
-        void processCast(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, TraceOperation& operation);
+        processBitWiseRightShift(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processLoad(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processStore(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processCall(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processConst(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
+        void processCast(int32_t scope, ValueFrame& frame, IR::BasicBlock& currentBlock, TraceOperation& operation);
         bool isBlockInLoop(uint32_t parentBlock, uint32_t currentBlock);
         std::vector<std::string> createBlockArguments(BlockRef val);
         void createBlockArguments(ValueFrame& frame, IR::Operations::BasicBlockInvocation& blockInvocation, BlockRef val);

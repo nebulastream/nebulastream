@@ -16,12 +16,12 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
 
-NegateOperation::NegateOperation(OperationIdentifier identifier, OperationPtr input)
+NegateOperation::NegateOperation(OperationIdentifier identifier, Operation& input)
     : Operation(OperationType::NegateOp, identifier, Types::StampFactory::createBooleanStamp()), input(std::move(input)) {
-    input->addUsage(this);
+    input.addUsage(*this);
 }
 
-std::string NegateOperation::toString() { return identifier + "= not " + getInput()->getIdentifier(); }
+std::string NegateOperation::toString() const { return identifier + "= not " + getInput().getIdentifier(); }
 bool NegateOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
-OperationPtr NegateOperation::getInput() { return input.lock(); }
+const Operation& NegateOperation::getInput() const { return input; }
 }// namespace NES::Nautilus::IR::Operations

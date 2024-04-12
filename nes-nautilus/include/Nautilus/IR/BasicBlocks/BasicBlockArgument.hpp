@@ -17,14 +17,15 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <ostream>
+#include <string>
 namespace NES::Nautilus::IR::Operations {
 
-class BasicBlockArgument : public Operation {
+class BasicBlockArgument final : public Operation {
   public:
-    explicit BasicBlockArgument(const std::string identifier, Types::StampPtr stamp);
+    explicit BasicBlockArgument(std::string identifier, Types::StampPtr stamp);
     ~BasicBlockArgument() override = default;
     friend std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument);
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 };
 
 }// namespace NES::Nautilus::IR::Operations

@@ -15,15 +15,15 @@
 
 namespace NES::Nautilus::IR::Operations {
 
-CastOperation::CastOperation(OperationIdentifier identifier, OperationPtr input, Types::StampPtr targetStamp)
+CastOperation::CastOperation(OperationIdentifier identifier, Operation& input, Types::StampPtr targetStamp)
     : Operation(OperationType::CastOp, identifier, targetStamp), input(input) {
-    input->addUsage(this);
+    input.addUsage(*this);
 }
 
-OperationPtr CastOperation::getInput() { return input.lock(); }
+const Operation& CastOperation::getInput() const { return input; }
 
-std::string CastOperation::toString() {
-    return identifier + " = " + getInput()->getIdentifier() + " cast_to " + getStamp()->toString();
+std::string CastOperation::toString() const {
+    return fmt::format("{} = {} cast_to {}", identifier, getInput().getIdentifier(), getStamp()->toString());
 }
 
 }// namespace NES::Nautilus::IR::Operations

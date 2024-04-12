@@ -28,27 +28,27 @@ class CompareOperation : public Operation {
         GT = 4,
         GE = 5,
     };
-    CompareOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput, Comparator comparator);
+    CompareOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput, Comparator comparator);
     ~CompareOperation() override = default;
 
-    OperationPtr getLeftInput();
-    OperationPtr getRightInput();
-    Comparator getComparator();
-    bool isLessThan();
-    bool isLessEqual();
-    bool isGreaterThan();
-    bool isGreaterEqual();
-    bool isEquals();
-    bool isLessThanOrGreaterThan();
-    bool isLess();
-    bool isGreater();
+    [[nodiscard]] const Operation& getLeftInput() const;
+    [[nodiscard]] const Operation& getRightInput() const;
+    [[nodiscard]] Comparator getComparator() const;
+    [[nodiscard]] bool isLessThan() const;
+    [[nodiscard]] bool isLessEqual() const;
+    [[nodiscard]] bool isGreaterThan() const;
+    [[nodiscard]] bool isGreaterEqual() const;
+    [[nodiscard]] bool isEquals() const;
+    [[nodiscard]] bool isLessThanOrGreaterThan() const;
+    [[nodiscard]] bool isLess() const;
+    [[nodiscard]] bool isGreater() const;
 
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 
   private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
+    const Operation& leftInput;
+    const Operation& rightInput;
     Comparator comparator;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_COMPAREOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_COMPAREOPERATION_HPP_

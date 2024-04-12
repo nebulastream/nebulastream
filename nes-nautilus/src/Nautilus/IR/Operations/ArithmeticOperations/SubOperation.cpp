@@ -15,16 +15,16 @@
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <string>
 namespace NES::Nautilus::IR::Operations {
-SubOperation::SubOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::SubOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
+SubOperation::SubOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput)
+    : Operation(OperationType::SubOp, identifier, leftInput.getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {
-    leftInput->addUsage(this);
-    rightInput->addUsage(this);
+    leftInput.addUsage(*this);
+    rightInput.addUsage(*this);
 }
-std::string SubOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " - " + getRightInput()->getIdentifier();
+std::string SubOperation::toString() const {
+    return getIdentifier() + " = " + getLeftInput().getIdentifier() + " - " + getRightInput().getIdentifier();
 }
 bool SubOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::SubOp; }
-OperationPtr SubOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr SubOperation::getRightInput() { return rightInput.lock(); }
+const Operation& SubOperation::getLeftInput() const  { return leftInput; }
+const Operation& SubOperation::getRightInput() const  { return rightInput; }
 }// namespace NES::Nautilus::IR::Operations

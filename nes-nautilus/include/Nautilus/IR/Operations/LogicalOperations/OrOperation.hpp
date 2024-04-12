@@ -21,18 +21,47 @@ namespace NES::Nautilus::IR::Operations {
 
 class OrOperation : public Operation {
   public:
-    OrOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
+    /**
+     * @brief Constructor for a OrOperation
+     * @param identifier
+     * @param leftInput
+     * @param rightInput
+     */
+    OrOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput);
+
+    /**
+     * @brief Default deconstructor
+     */
     ~OrOperation() override = default;
 
-    OperationPtr getLeftInput();
-    OperationPtr getRightInput();
+    /**
+     * @brief Retrieves the left input
+     * @return Operation&
+     */
+    [[nodiscard]] const Operation& getLeftInput() const;
 
-    std::string toString() override;
+    /**
+     * @brief Retrieves the left input
+     * @return Operation&
+     */
+    [[nodiscard]] const Operation& getRightInput() const;
+
+    /**
+     * @brief Creates a string representation of this operation
+     * @return std::string
+     */
+    [[nodiscard]] std::string toString() const override;
+
+    /**
+     * @brief Checks if the operation (Op) is of the same class
+     * @param Op
+     * @return boolean
+     */
     bool classof(const Operation* Op);
 
   private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
+    const Operation& leftInput;
+    const Operation& rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_OROPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_OROPERATION_HPP_

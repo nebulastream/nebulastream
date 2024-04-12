@@ -32,7 +32,7 @@ uint64_t AddressOperation::getFieldOffsetInBytes() { return fieldOffset; }
 std::string AddressOperation::getRecordIdxName() { return recordIdxName; }
 std::string AddressOperation::getAddressSourceName() { return addressSourceName; }
 
-std::string AddressOperation::toString() {
+std::string AddressOperation::toString() const {
     return "AddressOperation_" + identifier + "(" + std::to_string(recordWidth) + ", " + std::to_string(fieldOffset) + ", "
         + recordIdxName + ", " + addressSourceName + ")";
 }

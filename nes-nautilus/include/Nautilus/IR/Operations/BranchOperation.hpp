@@ -26,14 +26,15 @@ namespace NES::Nautilus::IR::Operations {
 class BranchOperation : public Operation {
   public:
     explicit BranchOperation();
+    BasicBlockInvocation& getNextBlockInvocation();
     ~BranchOperation() override = default;
 
-    BasicBlockInvocation& getNextBlockInvocation();
-    std::string toString() override;
+    [[nodiscard]] const BasicBlockInvocation& getNextBlockInvocation() const;
+    [[nodiscard]] std::string toString() const override;
     static bool classof(const Operation* Op);
 
   private:
     BasicBlockInvocation basicBlock;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_

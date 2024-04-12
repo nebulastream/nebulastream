@@ -24,9 +24,9 @@ ConstBooleanOperation::ConstBooleanOperation(OperationIdentifier identifier, boo
     : Operation(OperationType::ConstBooleanOp, identifier, Types::StampFactory::createBooleanStamp()),
       constantValue(constantValue) {}
 
-bool ConstBooleanOperation::getValue() { return constantValue; }
+bool ConstBooleanOperation::getValue() const { return constantValue; }
 bool ConstBooleanOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstBooleanOp; }
 
-std::string ConstBooleanOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
+std::string ConstBooleanOperation::toString() const { return identifier + " = " + std::to_string(constantValue); }
 
 }// namespace NES::Nautilus::IR::Operations

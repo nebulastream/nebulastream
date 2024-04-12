@@ -17,11 +17,10 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <stack>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace NES::Nautilus::IR {
@@ -62,7 +61,7 @@ class LoopDetectionPhase {
          * 
          * @param currentBlock: Initially will be the body-block of the root operation.
          */
-        void findLoopHeadBlocks(IR::BasicBlockPtr currentBlock);
+        void findLoopHeadBlocks(IR::BasicBlock& currentBlock);
 
         /**
          * @brief Traverses a branch of the IR graph until either an already visited block or the return block 
@@ -76,11 +75,11 @@ class LoopDetectionPhase {
          * @param priorBlock: We keep track of the previous block to assign the loop-end-block, when the currentBlock
          *                    is a loop-header block and we are creating its loop-operation.
          */
-        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock,
+        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr currentBlock,
                                                  std::stack<IR::BasicBlockPtr>& ifBlocks,
                                                  std::unordered_set<std::string>& visitedBlocks,
                                                  std::unordered_set<std::string>& loopHeaderCandidates,
-                                                 IR::BasicBlockPtr& priorBlock);
+                                                 IR::BasicBlockPtr priorBlock);
 
         /**
          * @brief Checks the loop-header-block and block that appears in front of the loop-header-block in the control 
@@ -93,10 +92,10 @@ class LoopDetectionPhase {
          * @return A pair that may contain the values for the loop-induction-variable and the upperBound. 
          *         However, the pair might also contain nullptrs, which we must handle.
          */
-        std::pair<std::shared_ptr<IR::Operations::ConstIntOperation>, std::shared_ptr<IR::Operations::ConstIntOperation>>
-        getCompareOpConstants(const BasicBlockPtr& loopHeaderBlock,
-                              const BasicBlockPtr& loopBeforeBlock,
-                              const std::shared_ptr<Operations::CompareOperation>& compareOp);
+        [[nodiscard]] std::pair<const IR::Operations::ConstIntOperation*, const IR::Operations::ConstIntOperation*>
+        getCompareOpConstants(const BasicBlock& loopHeaderBlock,
+                              const BasicBlock& loopBeforeBlock,
+                              const Operations::CompareOperation& compareOp);
 
         /**
          * @brief Check the loopEndBlock for a constant operation that matches the step size used in countOp.
@@ -105,8 +104,8 @@ class LoopDetectionPhase {
          * @param countOp: The stepSize is used to increment the loop-induction-variable in the countOp.
          * @return std::shared_ptr<IR::Operations::ConstIntOperation>: stepSize
          */
-        std::shared_ptr<IR::Operations::ConstIntOperation> inline getStepSize(const BasicBlockPtr& loopEndBlock,
-                                                                              const Operations::OperationPtr& countOp);
+        [[nodiscard]] const IR::Operations::ConstIntOperation* getStepSize(const BasicBlock& loopEndBlock,
+                                                                           const Operations::Operation& countOp) const;
 
       private:
         std::shared_ptr<IR::IRGraph> ir;

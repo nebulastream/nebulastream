@@ -40,6 +40,7 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
     prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
             const CompilationOptions& options = CompilationOptions(),
             const DumpHelper& dumpHelper = DumpHelper::create("", true, false, ""));
+    std::shared_ptr<IR::IRGraph> prepareIr(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace);
 };
 }// namespace NES::Nautilus
 

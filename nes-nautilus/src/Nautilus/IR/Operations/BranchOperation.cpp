@@ -12,20 +12,24 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+#include <cstddef>
+#include <string>
 namespace NES::Nautilus::IR::Operations {
 
-BranchOperation::BranchOperation() : Operation(OperationType::BranchOp, Types::StampFactory::createVoidStamp()), basicBlock() {}
+BranchOperation::BranchOperation() : Operation(OperationType::BranchOp, Types::StampFactory::createVoidStamp()) {}
 
 BasicBlockInvocation& BranchOperation::getNextBlockInvocation() { return basicBlock; }
+const BasicBlockInvocation& BranchOperation::getNextBlockInvocation() const { return basicBlock; }
 
-std::string BranchOperation::toString() {
+[[nodiscard]] std::string BranchOperation::toString() const {
     std::string baseString = "br Block_" + basicBlock.getBlock()->getIdentifier() + "(";
     if (basicBlock.getBlock()->getArguments().size() > 0) {
         baseString += basicBlock.getArguments().at(0)->getIdentifier();
-        for (int i = 1; i < (int) basicBlock.getArguments().size(); ++i) {
+        for (size_t i = 1; i < basicBlock.getArguments().size(); ++i) {
             baseString += ", " + basicBlock.getArguments().at(i)->getIdentifier();
         }
     }

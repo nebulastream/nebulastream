@@ -27,7 +27,7 @@ class BitWiseAndOperation : public Operation {
      * @param leftInput
      * @param rightInput
      */
-    BitWiseAndOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
+    BitWiseAndOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput);
 
     /**
      * @brief Default deconstructor
@@ -36,21 +36,21 @@ class BitWiseAndOperation : public Operation {
 
     /**
      * @brief Retrieves the left input
-     * @return OperationPtr
+     * @return Operation&
      */
-    OperationPtr getLeftInput();
+    [[nodiscard]] const Operation& getLeftInput() const;
 
     /**
      * @brief Retrieves the left input
-     * @return OperationPtr
+     * @return Operation&
      */
-    OperationPtr getRightInput();
+    [[nodiscard]] const Operation& getRightInput() const;
 
     /**
      * @brief Creates a string representation of this operation
      * @return std::string
      */
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Checks if the operation (Op) is of the same class
@@ -60,8 +60,8 @@ class BitWiseAndOperation : public Operation {
     bool classof(const Operation* Op);
 
   private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
+    const Operation& leftInput;
+    const Operation& rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
 #endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISEANDOPERATION_HPP_

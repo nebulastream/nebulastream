@@ -21,14 +21,14 @@ namespace NES::Nautilus::IR::Operations {
 
 class NegateOperation : public Operation {
   public:
-    NegateOperation(OperationIdentifier identifier, OperationPtr input);
+    NegateOperation(OperationIdentifier identifier, Operation& input);
     ~NegateOperation() override = default;
-    OperationPtr getInput();
-    std::string toString() override;
+    [[nodiscard]] const Operation& getInput() const;
+    [[nodiscard]] std::string toString() const override;
     bool classof(const Operation* Op);
 
   private:
-    OperationWPtr input;
+    const Operation& input;
 };
 }// namespace NES::Nautilus::IR::Operations
 #endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_NEGATEOPERATION_HPP_

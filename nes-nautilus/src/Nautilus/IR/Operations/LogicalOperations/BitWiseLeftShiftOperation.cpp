@@ -16,20 +16,18 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
 
-BitWiseLeftShiftOperation::BitWiseLeftShiftOperation(OperationIdentifier identifier,
-                                                     OperationPtr leftInput,
-                                                     OperationPtr rightInput)
-    : Operation(OperationType::BitWiseLeftShift, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
+BitWiseLeftShiftOperation::BitWiseLeftShiftOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput)
+    : Operation(OperationType::BitWiseLeftShift, identifier, leftInput.getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {
-    leftInput->addUsage(this);
-    rightInput->addUsage(this);
+    leftInput.addUsage(*this);
+    rightInput.addUsage(*this);
 }
 
-std::string BitWiseLeftShiftOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " << " + getRightInput()->getIdentifier();
+std::string BitWiseLeftShiftOperation::toString() const {
+    return getIdentifier() + " = " + getLeftInput().getIdentifier() + " << " + getRightInput().getIdentifier();
 }
 bool BitWiseLeftShiftOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::BitWiseLeftShift; }
 
-OperationPtr BitWiseLeftShiftOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr BitWiseLeftShiftOperation::getRightInput() { return rightInput.lock(); }
+const Operation& BitWiseLeftShiftOperation::getLeftInput() const { return leftInput; }
+const Operation& BitWiseLeftShiftOperation::getRightInput() const { return rightInput; }
 }// namespace NES::Nautilus::IR::Operations

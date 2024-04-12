@@ -13,16 +13,19 @@
 */
 
 #include <Nautilus/IR/Operations/LoadOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <string>
+#include <utility>
 
 namespace NES::Nautilus::IR::Operations {
 
-LoadOperation::LoadOperation(OperationIdentifier identifier, OperationPtr address, Types::StampPtr type)
-    : Operation(OperationType::LoadOp, identifier, type), address(std::move(address)) {
-    address->addUsage(this);
+LoadOperation::LoadOperation(OperationIdentifier identifier, Operation& address, Types::StampPtr stamp)
+    : Operation(OperationType::LoadOp, std::move(identifier), std::move(stamp)), address(address) {
+    address.addUsage(*this);
 }
 
-OperationPtr LoadOperation::getAddress() { return address.lock(); }
+const Operation& LoadOperation::getAddress() const { return address; }
 
-std::string LoadOperation::toString() { return identifier + " = load(" + getAddress()->getIdentifier() + ")"; }
+std::string LoadOperation::toString() const { return identifier + " = load(" + getAddress().getIdentifier() + ")"; }
 
 }// namespace NES::Nautilus::IR::Operations

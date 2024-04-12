@@ -15,9 +15,15 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
 
-#include <Nautilus/IR/Types/BasicTypes.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <absl/base/config.h>
+#include <cstdint>
+#include <fmt/core.h>
+#include <functional>
+#include <gsl/pointers.hpp>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace NES::Nautilus::IR::Types {
@@ -65,23 +71,37 @@ class Operation {
 
     explicit Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp);
     explicit Operation(OperationType opType, Types::StampPtr stamp);
+
+    Operation(const Operation& other) = delete;
+    Operation(Operation&& other) noexcept = delete;
+    Operation& operator=(const Operation& other) = delete;
+    Operation& operator=(Operation&& other) noexcept = delete;
+
     virtual ~Operation() = default;
-    OperationIdentifier getIdentifier();
-    virtual std::string toString() = 0;
-    OperationType getOperationType() const;
-    const Types::StampPtr& getStamp() const;
-    void addUsage(const Operation*);
-    const std::vector<const Operation*>& getUsages();
+    [[nodiscard]] OperationIdentifier getIdentifier() const;
+    [[nodiscard]] virtual std::string toString() const = 0;
+    [[nodiscard]] OperationType getOperationType() const;
+    [[nodiscard]] const Types::StampPtr& getStamp() const;
+    void addUsage(const Operation&);
+    [[nodiscard]] const std::vector<gsl::not_null<const Operation*>>& getUsages() const;
 
   protected:
     OperationType opType;
     OperationIdentifier identifier;
     const Types::StampPtr stamp;
-    std::vector<const Operation*> usages;
+    std::vector<gsl::not_null<const Operation*>> usages;
 };
-using OperationPtr = std::shared_ptr<Operation>;
-using OperationWPtr = std::weak_ptr<Operation>;
-using OperationRawPtr = Operation*;
+using OperationPtr = std::unique_ptr<Operation>;
+using OperationRef = gsl::not_null<Operation*>;
 
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
+
+namespace fmt {
+template<>
+struct formatter<NES::Nautilus::IR::Operations::Operation> : formatter<std::string> {
+    auto format(const NES::Nautilus::IR::Operations::Operation& operation, format_context& ctx) -> decltype(ctx.out()) {
+        return fmt::format_to(ctx.out(), "{}", operation.toString());
+    }
+};
+}// namespace fmt
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_

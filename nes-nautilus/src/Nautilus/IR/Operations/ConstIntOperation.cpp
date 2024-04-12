@@ -23,9 +23,9 @@ namespace NES::Nautilus::IR::Operations {
 ConstIntOperation::ConstIntOperation(OperationIdentifier identifier, int64_t constantValue, Types::StampPtr stamp)
     : Operation(OperationType::ConstIntOp, identifier, stamp), constantValue(constantValue) {}
 
-int64_t ConstIntOperation::getValue() { return constantValue; }
+int64_t ConstIntOperation::getValue() const { return constantValue; }
 bool ConstIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstIntOp; }
 
-std::string ConstIntOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
+std::string ConstIntOperation::toString() const { return identifier + " = " + std::to_string(constantValue); }
 
 }// namespace NES::Nautilus::IR::Operations

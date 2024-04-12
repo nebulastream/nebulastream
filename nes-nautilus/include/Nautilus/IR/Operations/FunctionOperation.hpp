@@ -17,6 +17,9 @@
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Types/BasicTypes.hpp>
+#include <string>
+#include <vector>
 
 namespace NES::Nautilus::IR::Operations {
 class FunctionOperation : public Operation {
@@ -28,21 +31,22 @@ class FunctionOperation : public Operation {
     ~FunctionOperation() override = default;
 
     [[nodiscard]] const std::string& getName() const;
-    BasicBlockPtr addFunctionBasicBlock(BasicBlockPtr functionBasicBlock);
-    BasicBlockPtr getFunctionBasicBlock();
+    const BasicBlock* addFunctionBasicBlock(BasicBlock& functionBasicBlock);
+    [[nodiscard]] const BasicBlock* getFunctionBasicBlock() const;
+    BasicBlock* getFunctionBasicBlock();
     [[nodiscard]] const std::vector<PrimitiveStamp>& getInputArgs() const;
     [[nodiscard]] Types::StampPtr getOutputArg() const;
     [[nodiscard]] const std::vector<std::string>& getInputArgNames() const;
 
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
     static bool classof(const Operation* Op);
 
   private:
     std::string name;
-    BasicBlockPtr functionBasicBlock;
+    BasicBlock* functionBasicBlock = nullptr;
     std::vector<PrimitiveStamp> inputArgs;
     std::vector<std::string> inputArgNames;
 };
 }// namespace NES::Nautilus::IR::Operations
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_

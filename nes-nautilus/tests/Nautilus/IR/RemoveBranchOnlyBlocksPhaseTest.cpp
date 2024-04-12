@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
 #include <BaseIntegrationTest.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -26,6 +27,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+#include <stack>
 #include <unordered_map>
 
 namespace NES::Nautilus {
@@ -82,25 +84,25 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public Abs
      * @param correctBlocks: A HashMap that contains the correct state for all blocks in the IR.
      * @return true, if all blocks were in correct state, and false, if at least one block was in incorrect state.
      */
-    bool checkIRForCorrectness(IR::BasicBlockPtr currentBlock,
+    bool checkIRForCorrectness(IR::BasicBlock& currentBlock,
                                const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
-        std::stack<IR::BasicBlockPtr> blocksToVisit;
+        std::stack<IR::BasicBlock*> blocksToVisit;
         std::unordered_set<std::string> visitedBlocks;
-        blocksToVisit.push(currentBlock);
+        blocksToVisit.push(&currentBlock);
         bool allRequiredBlocksAreVisited;
         bool predecessorsAreCorrect = true;
         bool nextBlocksAreCorrect = true;
         do {
-            visitedBlocks.emplace(currentBlock->getIdentifier());
-            currentBlock = blocksToVisit.top();
+            visitedBlocks.emplace(currentBlock.getIdentifier());
+            currentBlock = *blocksToVisit.top();
             // The remove branch only phase should have removed all branch only blocks leaving only 'correct' blocks.
-            if (correctBlocks.contains(currentBlock->getIdentifier())) {
+            if (correctBlocks.contains(currentBlock.getIdentifier())) {
                 // If the currentBlock has predecessors, check that the number of predecessors matches the correct
                 // number of predecessors and check that all existing predecessors are correct.
-                if (correctBlocks.at(currentBlock->getIdentifier())->correctPredecessors.size()
-                    == currentBlock->getPredecessors().size()) {
-                    for (auto predecessorBlock : currentBlock->getPredecessors()) {
-                        if (!correctBlocks.at(currentBlock->getIdentifier())
+                if (correctBlocks.at(currentBlock.getIdentifier())->correctPredecessors.size()
+                    == currentBlock.getPredecessors().size()) {
+                    for (auto predecessorBlock : currentBlock.getPredecessors()) {
+                        if (!correctBlocks.at(currentBlock.getIdentifier())
                                  ->correctPredecessors.contains(predecessorBlock.lock()->getIdentifier())) {
                             predecessorsAreCorrect = false;
                             break;
@@ -110,22 +112,21 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public Abs
                     predecessorsAreCorrect = false;
                 }
                 // Every Block MUST have a terminator operation. Check whether the terminator operation points to the correct next blocks.
-                if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
-                    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
+                if (currentBlock.getTerminatorOp().getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
+                    auto& branchOp = dynamic_cast<IR::Operations::BranchOperation&>(currentBlock.getTerminatorOp());
                     nextBlocksAreCorrect =
-                        correctBlocks.at(currentBlock->getIdentifier())
-                            ->correctNextBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier());
-                } else if (currentBlock->getTerminatorOp()->getOperationType()
-                           == IR::Operations::Operation::OperationType::IfOp) {
-                    auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+                        correctBlocks.at(currentBlock.getIdentifier())
+                            ->correctNextBlocks.contains(branchOp.getNextBlockInvocation().getBlock()->getIdentifier());
+                } else if (currentBlock.getTerminatorOp().getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
+                    auto& ifOp = dynamic_cast<IR::Operations::IfOperation&>(currentBlock.getTerminatorOp());
                     nextBlocksAreCorrect =
-                        correctBlocks.at(currentBlock->getIdentifier())
-                            ->correctNextBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())
-                        && correctBlocks.at(currentBlock->getIdentifier())
-                               ->correctNextBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier());
-                } else if (currentBlock->getTerminatorOp()->getOperationType()
+                        correctBlocks.at(currentBlock.getIdentifier())
+                            ->correctNextBlocks.contains(ifOp.getTrueBlockInvocation().getBlock()->getIdentifier())
+                        && correctBlocks.at(currentBlock.getIdentifier())
+                               ->correctNextBlocks.contains(ifOp.getFalseBlockInvocation().getBlock()->getIdentifier());
+                } else if (currentBlock.getTerminatorOp().getOperationType()
                            == IR::Operations::Operation::OperationType::ReturnOp) {
-                    nextBlocksAreCorrect = correctBlocks.at(currentBlock->getIdentifier())->correctNextBlocks.empty();
+                    nextBlocksAreCorrect = correctBlocks.at(currentBlock.getIdentifier())->correctNextBlocks.empty();
                 } else {
                     NES_NOT_IMPLEMENTED();
                 }
@@ -133,19 +134,19 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::BaseUnitTest, public Abs
                 allRequiredBlocksAreVisited = false;
             }
             blocksToVisit.pop();
-            auto terminatorOp = currentBlock->getTerminatorOp();
-            if (terminatorOp->getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
-                auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-                if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
-                    blocksToVisit.emplace(branchOp->getNextBlockInvocation().getBlock());
+            auto& terminatorOp = currentBlock.getTerminatorOp();
+            if (terminatorOp.getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
+                auto& branchOp = dynamic_cast<IR::Operations::BranchOperation&>(terminatorOp);
+                if (!visitedBlocks.contains(branchOp.getNextBlockInvocation().getBlock()->getIdentifier())) {
+                    blocksToVisit.emplace(branchOp.getNextBlockInvocation().getBlock());
                 }
-            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
-                auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-                if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
-                    blocksToVisit.emplace(ifOp->getFalseBlockInvocation().getBlock());
+            } else if (terminatorOp.getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
+                auto& ifOp = dynamic_cast<IR::Operations::IfOperation&>(terminatorOp);
+                if (!visitedBlocks.contains(ifOp.getFalseBlockInvocation().getBlock()->getIdentifier())) {
+                    blocksToVisit.emplace(ifOp.getFalseBlockInvocation().getBlock());
                 }
-                if (!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
-                    blocksToVisit.emplace(ifOp->getTrueBlockInvocation().getBlock());
+                if (!visitedBlocks.contains(ifOp.getTrueBlockInvocation().getBlock()->getIdentifier())) {
+                    blocksToVisit.emplace(ifOp.getTrueBlockInvocation().getBlock());
                 }
             }
         } while (predecessorsAreCorrect && nextBlocksAreCorrect && !blocksToVisit.empty());
@@ -171,7 +172,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 0_SimpleIfOperationWithoutFalseBranch) {
     createCorrectBlock(correctBlocks, "1", {"0"}, {"3"});
     createCorrectBlock(correctBlocks, "3", {"0", "1"}, {});
     auto ir = createTraceAndApplyPhases(&simpleIfOperationWithoutFalseBranch_0);
-    EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    EXPECT_EQ(checkIRForCorrectness(*ir->getRootOperation().getFunctionBasicBlock(), correctBlocks), true);
 }
 
 Value<> doubleVerticalDiamondInTrueBranch() {
@@ -206,7 +207,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 2_doubleVerticalDiamondInTrueBranch) {
     createCorrectBlock(correctBlocks, "6", {"8"}, {"9"});
     createCorrectBlock(correctBlocks, "9", {"5", "6", "2"}, {});
     auto ir = createTraceAndApplyPhases(&doubleVerticalDiamondInTrueBranch);
-    EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    EXPECT_EQ(checkIRForCorrectness(*ir->getRootOperation().getFunctionBasicBlock(), correctBlocks), true);
 }
 
 Value<> loopMergeBlockBeforeCorrespondingIfOperation_3() {
@@ -231,7 +232,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 3_loopMergeBlockBeforeCorrespondingIfOpe
     createCorrectBlock(correctBlocks, "4", {"1"}, {"6"});
     createCorrectBlock(correctBlocks, "2", {"6"}, {});
     auto ir = createTraceAndApplyPhases(&loopMergeBlockBeforeCorrespondingIfOperation_3);
-    EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    EXPECT_EQ(checkIRForCorrectness(*ir->getRootOperation().getFunctionBasicBlock(), correctBlocks), true);
 }
 
 Value<> mergeLoopMergeBlockWithLoopFollowUp_4() {
@@ -268,7 +269,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
     createCorrectBlock(correctBlocks, "8", {"10"}, {"10"});
     createCorrectBlock(correctBlocks, "9", {"10"}, {});
     auto ir = createTraceAndApplyPhases(&mergeLoopMergeBlockWithLoopFollowUp_4);
-    EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    EXPECT_EQ(checkIRForCorrectness(*ir->getRootOperation().getFunctionBasicBlock(), correctBlocks), true);
 }
 
 // Tests all registered compilation backends.

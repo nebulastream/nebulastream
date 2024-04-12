@@ -18,17 +18,17 @@
 
 namespace NES::Nautilus::IR::Operations {
 
-StoreOperation::StoreOperation(OperationPtr value, OperationPtr address)
+StoreOperation::StoreOperation(Operation& value, Operation& address)
     : Operation(OperationType::StoreOp, std::make_shared<Types::VoidStamp>()), value(value), address(address) {
-    address->addUsage(this);
-    value->addUsage(this);
+    address.addUsage(*this);
+    value.addUsage(*this);
 }
 
-OperationPtr StoreOperation::getValue() { return value.lock(); }
+const Operation& StoreOperation::getValue() const { return value; }
 
-OperationPtr StoreOperation::getAddress() { return address.lock(); }
+const Operation& StoreOperation::getAddress() const { return address; }
 
-std::string StoreOperation::toString() {
-    return "store(" + getValue()->getIdentifier() + ", " + getAddress()->getIdentifier() + ")";
+std::string StoreOperation::toString() const {
+    return "store(" + getValue().getIdentifier() + ", " + getAddress().getIdentifier() + ")";
 }
 }// namespace NES::Nautilus::IR::Operations

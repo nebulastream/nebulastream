@@ -22,12 +22,12 @@ namespace NES::Nautilus::IR::Operations {
 class BitWiseRightShiftOperation : public Operation {
   public:
     /**
-     * @brief Constructor for a BitWiseRightShiftOperation
+     * @brief Constructor for a BitWiseAndOperation
      * @param identifier
      * @param leftInput
      * @param rightInput
      */
-    BitWiseRightShiftOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
+    BitWiseRightShiftOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput);
 
     /**
      * @brief Default deconstructor
@@ -36,21 +36,21 @@ class BitWiseRightShiftOperation : public Operation {
 
     /**
      * @brief Retrieves the left input
-     * @return OperationPtr
+     * @return Operation&
      */
-    OperationPtr getLeftInput();
+    [[nodiscard]] const Operation& getLeftInput() const;
 
     /**
      * @brief Retrieves the left input
-     * @return OperationPtr
+     * @return Operation&
      */
-    OperationPtr getRightInput();
+    [[nodiscard]] const Operation& getRightInput() const;
 
     /**
      * @brief Creates a string representation of this operation
      * @return std::string
      */
-    std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Checks if the operation (Op) is of the same class
@@ -60,8 +60,8 @@ class BitWiseRightShiftOperation : public Operation {
     bool classof(const Operation* Op);
 
   private:
-    OperationWPtr leftInput;
-    OperationWPtr rightInput;
+    const Operation& leftInput;
+    const Operation& rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISERIGHTSHIFTOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISERIGHTSHIFTOPERATION_HPP_

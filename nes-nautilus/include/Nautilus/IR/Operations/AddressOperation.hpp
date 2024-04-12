@@ -16,6 +16,7 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Types/BasicTypes.hpp>
 #include <vector>
 
 namespace NES::Nautilus::IR::Operations {
@@ -35,7 +36,7 @@ class AddressOperation : public Operation {
     std::string getRecordIdxName();
     std::string getAddressSourceName();
 
-    std::string toString() override;
+    std::string toString() const override;
     static bool classof(const Operation* Op);
 
   private:
@@ -47,4 +48,4 @@ class AddressOperation : public Operation {
 };
 }// namespace NES::Nautilus::IR::Operations
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_

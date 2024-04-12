@@ -44,7 +44,7 @@ class RemoveBrOnlyBlocksPhase {
       public:
         /**
          * @brief Constructor for the context of the remove br-only-blocks phase.
-         * 
+         *
          * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
          */
         RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
@@ -57,27 +57,28 @@ class RemoveBrOnlyBlocksPhase {
       private:
         /**
          * @brief Adds predecessor information for all blocks in the IR.
-         * 
+         *
          * @param currentBlock: Initially will be the body-block of the root operation.
          */
-        void addPredecessors(IR::BasicBlockPtr currentBlock);
+        void addPredecessors(BasicBlockPtr currentBlock);
+
         /**
          * @brief Removes all br-only blocks from the IR without influencing its control- and data flow.
-         * 
+         *
          * @param currentBlock: Initially will be the body-block of the root operation.
          */
-        void removeBrOnlyBlocks(IR::BasicBlockPtr currentBlock);
+        void removeBrOnlyBlocks(BasicBlockPtr currentBlock);
 
         /**
          * @brief Checks if the current block is a br-only-block and check whether subsequent blocks are also br-only-blocks.
          *        When a sequence of size 1-n br-only-blocks was found, updatePredecessorBlocks() is called.
-         * 
+         *
          * @param currentBlock: Current block that might be a br-only-block.
-         * @param candidates: Blocks that still need to be processed.
+         * @param newBlocks
          * @param visitedBlocks: Blocks that have already been processed and can be disregarded.
          */
         void inline processPotentialBrOnlyBlock(IR::BasicBlockPtr currentBlock,
-                                                std::stack<IR::BasicBlockPtr>& candidates,
+                                                std::stack<BasicBlockPtr>& newBlocks,
                                                 std::unordered_set<std::string> visitedBlocks);
 
       private:

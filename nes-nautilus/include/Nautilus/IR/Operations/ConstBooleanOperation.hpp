@@ -16,15 +16,16 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTBOOLEANOPERATION_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <string>
 
 namespace NES::Nautilus::IR::Operations {
 
-class ConstBooleanOperation : public Operation {
+class ConstBooleanOperation final : public Operation {
   public:
     explicit ConstBooleanOperation(OperationIdentifier identifier, bool value);
     ~ConstBooleanOperation() override = default;
-    bool getValue();
-    std::string toString() override;
+    bool getValue() const;
+    [[nodiscard]] std::string toString() const override;
     static bool classof(const Operation* Op);
 
   private:

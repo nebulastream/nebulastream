@@ -27,5 +27,11 @@ AbstractCompilationBackendTest::prepare(std::shared_ptr<Nautilus::Tracing::Execu
     auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
     return compiler->compile(ir, options, dumpHelper);
 }
+std::shared_ptr<IR::IRGraph>
+AbstractCompilationBackendTest::prepareIr(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    NES_DEBUG("{}", executionTrace.get()->toString());
+    return irCreationPhase.apply(executionTrace);
+}
 
 }// namespace NES::Nautilus

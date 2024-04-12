@@ -15,8 +15,11 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
 
+#include "BasicBlocks/BasicBlock.hpp"
+
 #include <memory>
 #include <string>
+#include <vector>
 namespace NES::Nautilus::IR {
 
 namespace Operations {
@@ -51,15 +54,16 @@ class IRGraph {
     };
     IRGraph(Flags flags = Flags());
     ~IRGraph() = default;
-    std::shared_ptr<Operations::FunctionOperation> addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation);
-    std::shared_ptr<Operations::FunctionOperation> getRootOperation();
+    Operations::FunctionOperation& addRootOperation(std::unique_ptr<Operations::FunctionOperation>&& rootOperation);
+    Operations::FunctionOperation& getRootOperation();
     std::string toString();
     const Flags& getFlags() const;
     void setFlags(const Flags& flags);
+    std::vector<OwningBasicBlockPtr> basicBlocks;
 
   private:
     Flags flags;
-    std::shared_ptr<Operations::FunctionOperation> rootOperation;
+    std::unique_ptr<Operations::FunctionOperation> rootOperation;
 };
 
 }// namespace NES::Nautilus::IR

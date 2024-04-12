@@ -22,7 +22,7 @@
 
 namespace NES::Nautilus::IR {
 
-class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
+class BasicBlock {
   public:
     /**
      * @brief BasicBlock used for control flow in NES IR
@@ -32,17 +32,17 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     explicit BasicBlock(std::string identifier,
                         int32_t scopeLevel,
                         std::vector<Operations::OperationPtr> operations,
-                        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments);
+                        std::vector<std::unique_ptr<Operations::BasicBlockArgument>> arguments);
     virtual ~BasicBlock() = default;
-    [[nodiscard]] std::string getIdentifier();
+    [[nodiscard]] std::string getIdentifier() const;
     void setIdentifier(const std::string& identifier);
-    [[nodiscard]] uint32_t getScopeLevel();
+    [[nodiscard]] uint32_t getScopeLevel() const;
     void setScopeLevel(uint32_t scopeLevel);
 
     /**
      * @brief Get the number of edges that lead back from the loop body to the loop header.
      */
-    [[nodiscard]] uint32_t getNumLoopBackEdges();
+    [[nodiscard]] uint32_t getNumLoopBackEdges() const;
 
     /**
      * @brief Increment counter for edges that lead back from the loop body to the loop header.
@@ -52,37 +52,40 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     /**
      * @brief Check if the counter for edges that lead back from the loop body to the loop header is > 0.
      */
-    [[nodiscard]] bool isLoopHeaderBlock();
-    [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
-    [[nodiscard]] Operations::OperationPtr getOperationAt(size_t index);
-    [[nodiscard]] Operations::OperationPtr getTerminatorOp();
-    [[nodiscard]] std::vector<std::shared_ptr<Operations::BasicBlockArgument>> getArguments();
+    [[nodiscard]] bool isLoopHeaderBlock() const;
+    [[nodiscard]] std::vector<Operations::OperationRef> getOperations() const;
+    [[nodiscard]] Operations::Operation& getOperationAt(size_t index) const;
+    [[nodiscard]] Operations::Operation& getTerminatorOp() const;
+    [[nodiscard]] std::vector<Operations::OperationRef> getArguments() const;
 
     // NESIR Assembly
-    std::shared_ptr<BasicBlock> addOperation(Operations::OperationPtr operation);
-    std::shared_ptr<BasicBlock> addLoopHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
-    std::shared_ptr<BasicBlock> addNextBlock(std::shared_ptr<BasicBlock> nextBlock);
-    void addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector<Operations::OperationPtr> inputArguments);
-    std::shared_ptr<BasicBlock> addTrueBlock(std::shared_ptr<BasicBlock> thenBlock);
-    std::shared_ptr<BasicBlock> addFalseBlock(std::shared_ptr<BasicBlock> elseBlock);
-    void removeOperation(Operations::OperationPtr operation);
-    void addOperationBefore(Operations::OperationPtr before, Operations::OperationPtr operation);
-    void addPredecessor(std::shared_ptr<BasicBlock> predecessor);
-    std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();
-    uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
+    BasicBlock& addOperation(Operations::OperationPtr&& operation);
+    BasicBlock& addLoopHeadBlock(BasicBlock& loopHeadBlock);
+    BasicBlock& addNextBlock(BasicBlock& nextBlock);
+    void addNextBlock(BasicBlock& nextBlock, const std::vector<Operations::OperationRef>& ops);
+    BasicBlock& addTrueBlock(BasicBlock& thenBlock);
+    BasicBlock& addFalseBlock(BasicBlock& elseBlock);
+    [[nodiscard]] Operations::OperationPtr removeOperation(Operations::Operation& operation);
+    void addOperationBefore(const Operations::Operation& before, Operations::OperationPtr&& operation);
+    void addPredecessor(BasicBlock& predecessor);
+    const std::vector<gsl::not_null<BasicBlock*>>& getPredecessors() const;
+    std::vector<gsl::not_null<BasicBlock*>>& getPredecessors();
+    [[nodiscard]] ssize_t getIndexOfArgument(const Operations::BasicBlockArgument& arg) const;
     // void popOperation();
     void replaceTerminatorOperation(Operations::OperationPtr newTerminatorOperation);
-    [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> getNextBlocks();
+    [[nodiscard]] std::pair<BasicBlock*, BasicBlock*> getNextBlocks() const;
 
   private:
     std::string identifier;
     uint32_t scopeLevel;
     uint32_t numLoopBackEdges;
     std::vector<Operations::OperationPtr> operations;
-    std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments;
-    std::vector<std::weak_ptr<BasicBlock>> predecessors;
+    std::vector<std::unique_ptr<Operations::BasicBlockArgument>> arguments;
+    std::vector<gsl::not_null<BasicBlock*>> predecessors;
 };
-using BasicBlockPtr = std::shared_ptr<BasicBlock>;
+
+using OwningBasicBlockPtr = std::unique_ptr<BasicBlock>;
+using BasicBlockPtr = gsl::not_null<BasicBlock*>;
 
 }// namespace NES::Nautilus::IR
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_

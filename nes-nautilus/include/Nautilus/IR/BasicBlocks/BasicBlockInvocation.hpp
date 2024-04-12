@@ -16,14 +16,18 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <string>
+#include <vector>
+
 namespace NES::Nautilus::IR::Operations {
 
 class BasicBlockInvocation : public Operation {
   public:
     BasicBlockInvocation();
-    void setBlock(BasicBlockPtr block);
-    BasicBlockPtr getBlock() const;
-    void addArgument(OperationPtr argument);
+    void setBlock(BasicBlock& block);
+    BasicBlock* getBlock();
+    const BasicBlock* getBlock() const;
+    void addArgument(Operation& argument);
     void removeArgument(uint64_t argumentIndex);
 
     /**
@@ -31,20 +35,20 @@ class BasicBlockInvocation : public Operation {
      * 
      * @return int: arg index for provided OperationPtr. Is -1 if no arg that matches OperationPtr was found.
      */
-    int getOperationArgIndex(Operations::OperationPtr);
+    size_t getOperationArgIndex(const Operation&) const;
 
     /**
      * @brief Get all arguments of next block invocation, meaning all args of the branching operation (br, if, loop,..)
      * 
      * @return std::vector<OperationPtr> : vector with all arguments of the next block invocation.
      */
-    std::vector<OperationPtr> getArguments() const;
-    std::string toString() override;
+    [[nodiscard]] std::vector<OperationRef> getArguments() const;
+    [[nodiscard]] std::string toString() const override;
 
   private:
-    BasicBlockPtr basicBlock;
-    std::vector<OperationWPtr> operations;
+    BasicBlock* basicBlock{};
+    std::vector<OperationRef> operations;
 };
 
 }// namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_

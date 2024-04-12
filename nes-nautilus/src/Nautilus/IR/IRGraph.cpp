@@ -22,19 +22,18 @@ namespace NES::Nautilus::IR {
 
 IRGraph::IRGraph(Flags flags) : flags(std::move(flags)) {}
 
-std::shared_ptr<Operations::FunctionOperation>
-IRGraph::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation) {
+Operations::FunctionOperation& IRGraph::addRootOperation(std::unique_ptr<Operations::FunctionOperation>&& rootOperation) {
     this->rootOperation = std::move(rootOperation);
-    return this->rootOperation;
+    return *this->rootOperation;
 }
 
-std::shared_ptr<Operations::FunctionOperation> IRGraph::getRootOperation() { return rootOperation; }
+Operations::FunctionOperation& IRGraph::getRootOperation() { return *rootOperation; }
 
 std::string IRGraph::toString() {
     std::stringstream ss;
     ss << "NESIR {\n";
     auto dumpHandler = Nautilus::IR::NESIRDumpHandler::create(ss);
-    dumpHandler->dump(rootOperation);
+    dumpHandler->dump(*rootOperation);
     ss << "} //NESIR";
     return ss.str();
 }

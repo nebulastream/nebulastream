@@ -16,18 +16,18 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 namespace NES::Nautilus::IR::Operations {
 
-AndOperation::AndOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
+AndOperation::AndOperation(OperationIdentifier identifier, Operation& leftInput, Operation& rightInput)
     : Operation(OperationType::AndOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {
-    leftInput->addUsage(this);
-    rightInput->addUsage(this);
+    leftInput.addUsage(*this);
+    rightInput.addUsage(*this);
 }
 
-std::string AndOperation::toString() {
-    return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " and " + getRightInput()->getIdentifier();
+std::string AndOperation::toString() const {
+    return getIdentifier() + " = " + getLeftInput().getIdentifier() + " and " + getRightInput().getIdentifier();
 }
 bool AndOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
-OperationPtr AndOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr AndOperation::getRightInput() { return rightInput.lock(); }
+const Operation& AndOperation::getLeftInput() const { return leftInput; }
+const Operation& AndOperation::getRightInput() const { return rightInput; }
 }// namespace NES::Nautilus::IR::Operations
