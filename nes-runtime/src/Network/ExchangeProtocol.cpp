@@ -227,7 +227,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
             if (endOfStreamMessage.getQueryTerminationType() == Runtime::QueryTerminationType::Drain) {
                 auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);
                 NES_ASSERT(networkSource, "Received drain message but the data emitter is not a network source");
-                networkSource->onDrainMessage(endOfStreamMessage.getNextVersion());
+                networkSource->onDrainMessage();
             } else {
                 dataEmitter->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
                 protocolListener->onEndOfStream(endOfStreamMessage);

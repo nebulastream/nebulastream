@@ -143,13 +143,13 @@ class NetworkSource : public DataSource {
      * @brief handle incoming drain message: if a new version is present, start it. If a the source is marked as
      * migrated, stop it. Otherwise do nothing until a reconfiguration message is received from the coordinator
      */
-    void onDrainMessage(uint64_t version);
+    void onDrainMessage();
 
     /**
      * @brief mark this source as migrated. If not incoming channels are connected to this source, stop the source.
      * Otherwise wait for all remaining channels to disconnect and stop the source afterwards.
      */
-    void markAsMigrated(uint64_t version);
+    void markAsMigrated();
 
     /**
      * @brief Reconfigures this source with ReconfigurationType::UpdateVersion causing it to close event channels to the old
@@ -191,8 +191,8 @@ class NetworkSource : public DataSource {
     [[maybe_unused]] DecomposedQueryPlanVersion version;
     const uint64_t uniqueNetworkSourceIdentifier;
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
-    std::optional<uint64_t> migrated;
-    std::optional<uint64_t> receivedDrain;
+    std::atomic<bool> migrated = false;
+    std::atomic<bool> receivedDrain = false;
     std::recursive_mutex versionMutex;
 };
 

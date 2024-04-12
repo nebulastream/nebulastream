@@ -335,16 +335,16 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
-void NetworkSource::onDrainMessage(uint64_t version) {
+void NetworkSource::onDrainMessage() {
     std::unique_lock lock(versionMutex);
-    receivedDrain = version;
+    receivedDrain = true;
     lock.unlock();
     tryStartingNewVersion();
 }
 
-void NetworkSource::markAsMigrated(uint64_t version) {
+void NetworkSource::markAsMigrated() {
     std::unique_lock lock(versionMutex);
-    migrated = version;
+    migrated = true;
     lock.unlock();
     tryStartingNewVersion();
 }
@@ -352,34 +352,31 @@ void NetworkSource::markAsMigrated(uint64_t version) {
 bool NetworkSource::tryStartingNewVersion() {
     NES_DEBUG("Updating version for network source {}", nesPartition);
     std::unique_lock lock(versionMutex);
-    //    if (nextSourceDescriptor) {
-    //        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
-    //        //check if the partition is still registered of if it was removed because no channels were connected
-    //        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-    //            auto newDescriptor = nextSourceDescriptor.value();
-    //            version = newDescriptor.getVersion();
-    //            sinkLocation = newDescriptor.getNodeLocation();
-    //            nesPartition = newDescriptor.getNesPartition();
-    //            nextSourceDescriptor = std::nullopt;
-    //            //bind the sink to the new partition
-    //            bind();
-    //            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
-    //                                                                 -1,
-    //                                                                 Runtime::ReconfigurationType::UpdateVersion,
-    //                                                                 Runtime::Reconfigurable::shared_from_this());
-    //            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
-    //            return true;
-    //        }
-    //        return false;
-    //    }
-    if (migrated.has_value()) {
+//    if (nextSourceDescriptor) {
+//        NES_ASSERT(!migrated, "Network source has a new version but was also marked as migrated");
+//        //check if the partition is still registered of if it was removed because no channels were connected
+//        if (networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+//            auto newDescriptor = nextSourceDescriptor.value();
+//            version = newDescriptor.getVersion();
+//            sinkLocation = newDescriptor.getNodeLocation();
+//            nesPartition = newDescriptor.getNesPartition();
+//            nextSourceDescriptor = std::nullopt;
+//            //bind the sink to the new partition
+//            bind();
+//            auto reconfMessage = Runtime::ReconfigurationMessage(-1,
+//                                                                 -1,
+//                                                                 Runtime::ReconfigurationType::UpdateVersion,
+//                                                                 Runtime::Reconfigurable::shared_from_this());
+//            queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
+//            return true;
+//        }
+//        return false;
+//    }
+    if (migrated) {
         //we have to check receive drian here, because otherwise we might migrate the source before the upstream has connected at all
-        //todo: move load() here
-        if (receivedDrain.has_value()
-            && (receivedDrain.value() == migrated.value() || receivedDrain.value() == 0)
-            && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
-            migrated = std::nullopt;
-            receivedDrain = std::nullopt;
+        if (receivedDrain && networkManager->unregisterSubpartitionConsumerIfNotConnected(nesPartition)) {
+            migrated = false;
+            receivedDrain = false;
             lock.unlock();
             onEndOfStream(Runtime::QueryTerminationType::Drain);
             return true;

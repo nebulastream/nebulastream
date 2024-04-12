@@ -727,7 +727,7 @@ bool NodeEngine::markSubPlanAsMigrated(DecomposedQueryPlanId decomposedQueryPlan
     for (auto& source : deployedPlan->getSources()) {
         auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
         if (networkSource != nullptr) {
-            networkSource->markAsMigrated(version);
+            networkSource->markAsMigrated();
         } else {
             //Migrating non network sources not supported
             NES_NOT_IMPLEMENTED();
