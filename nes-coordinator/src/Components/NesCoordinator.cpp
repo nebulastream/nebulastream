@@ -125,7 +125,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 
     if (coordinatorConfiguration->enableProactiveDeployment.getValue()) {
-        NES_ASSERT(coordinatorConfiguration->enableQueryReconfiguration.getValue(), "Cannot use proactive deployment without query reconfiguration");
+        NES_ASSERT(coordinatorConfiguration->optimizer.enableIncrementalPlacement.getValue(), "Cannot use proactive deployment without query reconfiguration");
     }
 
     auto expected = false;

@@ -260,7 +260,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testCentralReconnects) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
-    coordinatorConfig->enableQueryReconfiguration.setValue(true);
+    //coordinatorConfig->enableQueryReconfiguration.setValue(true);
+    coordinatorConfig->optimizer.enableIncrementalPlacement.setValue(true);
     auto crdWorkerDataPort = getAvailablePort();
     coordinatorConfig->worker.dataPort = *crdWorkerDataPort;
     coordinatorConfig->worker.connectSourceEventChannelsAsync.setValue(true);
@@ -667,7 +668,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
-    coordinatorConfig->enableQueryReconfiguration.setValue(true);
+    //coordinatorConfig->enableQueryReconfiguration.setValue(true);
+    coordinatorConfig->optimizer.enableIncrementalPlacement.setValue(true);
     auto crdWorkerDataPort = getAvailablePort();
     coordinatorConfig->worker.dataPort = *crdWorkerDataPort;
     coordinatorConfig->worker.connectSourceEventChannelsAsync.setValue(true);
@@ -1046,7 +1048,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnects) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
-    coordinatorConfig->enableQueryReconfiguration.setValue(true);
+    //coordinatorConfig->enableQueryReconfiguration.setValue(true);
+    coordinatorConfig->optimizer.enableIncrementalPlacement.setValue(true);
     auto crdWorkerDataPort = getAvailablePort();
     coordinatorConfig->worker.dataPort = *crdWorkerDataPort;
     coordinatorConfig->worker.connectSourceEventChannelsAsync.setValue(true);
@@ -1427,7 +1430,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultipleUnplannedReconnectsProactiv
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
-    coordinatorConfig->enableQueryReconfiguration.setValue(true);
+    //coordinatorConfig->enableQueryReconfiguration.setValue(true);
+    coordinatorConfig->optimizer.enableIncrementalPlacement.setValue(true);
     coordinatorConfig->enableProactiveDeployment.setValue(true);
     auto crdWorkerDataPort = getAvailablePort();
     coordinatorConfig->worker.dataPort = *crdWorkerDataPort;
