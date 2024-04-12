@@ -218,7 +218,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             NES_WARNING("Attempting to start worker mobility handler for worker with multiple parents. This is"
                         "currently not supported, mobility handler will not be started");
         } else {
-            workerMobilityHandler->start(parentIds);
+            //todo: do not use mobility handler on this branch
+            //workerMobilityHandler->start(parentIds);
         }
     }
 
