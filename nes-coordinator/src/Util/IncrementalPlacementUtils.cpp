@@ -135,7 +135,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     auto downstreamWorkerId = lockedDownstreamNode->operator*()->getId();
     for (const auto& subPlan : upstreamSubPlans) {
         //todo: remove this once proper cleanup wokrs
-        NES_INFO("Checking plan for network operators {}");
+        NES_INFO("Checking plan for network operators");
         if (subPlan->getState() == QueryState::MIGRATION_COMPLETED || subPlan->getState() == QueryState::STOPPED) {
             NES_INFO("Skipping plan because it has migrated")
             continue;
