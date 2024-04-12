@@ -282,6 +282,9 @@ void PlacementRemovalStrategy::updateQuerySubPlans(SharedQueryId sharedQueryId) 
             // 3. Fetch the copy of Decomposed query plan to modify
             auto querySubPlanToUpdate =
                 globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryPlanId);
+            if (!querySubPlanToUpdate) {
+                continue;
+            }
 
             // 4. Check if plan is a sys generated query sub plan.
             // A Sys generated plan will contain only network source and sink operators.
