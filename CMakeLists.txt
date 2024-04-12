@@ -615,6 +615,9 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
+add_compile_options(-fsanitize=address)
+add_link_options(-fsanitize=address)
+
 add_custom_target(build_all_plugins)
 
 # Add target for common lib, which contains a minimal set

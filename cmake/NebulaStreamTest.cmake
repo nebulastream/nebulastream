@@ -51,7 +51,10 @@ function(add_nes_integration_test)
         target_precompile_headers(${TARGET_NAME} REUSE_FROM nes-common)
     endif ()
     target_link_libraries(${TARGET_NAME} nes-coordinator-test-util)
-    gtest_discover_tests(${TARGET_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR}  DISCOVERY_MODE PRE_TEST DISCOVERY_TIMEOUT 30)
+    target_compile_options(${TARGET_NAME} PRIVATE -fsanitize=address)
+    target_link_options(${TARGET_NAME} PRIVATE -fsanitize=address)
+
+    gtest_discover_tests(${TARGET_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR} DISCOVERY_MODE PRE_TEST DISCOVERY_TIMEOUT 30)
     message(STATUS "Added it test ${TARGET_NAME}")
 endfunction()
 
