@@ -3,11 +3,12 @@
 #QuerySetLocation: '/home/ankit/dima/nes-2/nes-benchmark/src/MicroBenchmarks/ISQPBenchmark/QuerySet/'
 QuerySetLocation: '/data-ssd/ankit/ISQP-Exp/tmp/tmp.tqJypTtBkM/nes-benchmark/src/MicroBenchmarks/ISQPBenchmark/QuerySet/'
 # LOG level
-LogLevel: LOG_NONE
+LogLevel: LOG_ERROR
 # Sleep interval between each run
 StartupSleepIntervalInSeconds: 3
 # Number of times experiment is to be repeated
 NumOfRuns: 7
+
 
 RunConfig:
   - QueryPlacementStrategy: BottomUp

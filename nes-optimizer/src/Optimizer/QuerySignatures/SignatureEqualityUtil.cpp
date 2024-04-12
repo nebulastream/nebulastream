@@ -69,9 +69,11 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         //If column from one signature doesn't exist in other signature then they are not equal.
         for (auto schemaFieldToExprMap : schemaFieldToExprMaps) {
             bool schemaMatched = false;
+
             for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin();
                  otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
                  otherSchemaMapItr++) {
+
                 z3::expr_vector colChecks(*context);
                 for (uint64_t index = 0; index < columns.size(); index++) {
                     auto colExpr = schemaFieldToExprMap[columns[index]];
@@ -79,16 +81,14 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                     auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
                     colChecks.push_back(equivalenceCheck);
                 }
-
                 solver->push();
-                solver->add(!z3::mk_and(colChecks).simplify());
+                solver->add(!z3::mk_and(colChecks));
                 schemaMatched = solver->check() == z3::unsat;
                 solver->pop();
                 counter++;
                 if (counter >= RESET_SOLVER_THRESHOLD) {
                     resetSolver();
                 }
-
                 //If schema is matched then remove the other schema from the list to avoid duplicate matching
                 if (schemaMatched) {
                     otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);
@@ -137,6 +137,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         if (counter >= RESET_SOLVER_THRESHOLD) {
             resetSolver();
         }
+
         return equal;
     } catch (...) {
         auto eptr = std::current_exception();

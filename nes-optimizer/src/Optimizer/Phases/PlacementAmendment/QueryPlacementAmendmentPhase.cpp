@@ -188,8 +188,6 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
         if (!failedChangelogEntries.empty()) {
             sharedQueryPlan->recordFailedChangeLogEntries(failedChangelogEntries);
         }
-        //Update the change log's till processed timestamp and clear all entries before the timestamp
-        sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
     } else {
         try {
             //1. Mark all PLACED operators as TO-BE-REPLACED
@@ -293,6 +291,8 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
         }
     }
 
+    //Update the change log's till processed timestamp and clear all entries before the timestamp
+    sharedQueryPlan->updateProcessedChangeLogTimestamp(nowInMicroSec);
     sharedQueryPlan->removeQueryMarkedForRemoval();
 
     if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::PARTIALLY_PROCESSED

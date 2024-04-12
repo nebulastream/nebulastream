@@ -494,7 +494,7 @@ int main(int argc, const char* argv[]) {
             coordinatorConfiguration->logLevel = magic_enum::enum_cast<LogLevel>(logLevel).value();
             //Set optimizer configuration
             OptimizerConfiguration optimizerConfiguration;
-            optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
+            optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule;
             optimizerConfiguration.enableIncrementalPlacement = incrementalPlacement;
             optimizerConfiguration.placementAmendmentThreadCount = placementAmendmentThreadCount;
             optimizerConfiguration.placementAmendmentMode =

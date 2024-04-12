@@ -179,7 +179,7 @@ std::vector<DecomposedQueryPlanPtr> GlobalExecutionPlan::getCopyOfAllDecomposedQ
 }
 
 ExecutionNodeWLock GlobalExecutionPlan::getLockedExecutionNode(ExecutionNodeId executionNodeId) {
-    NES_ERROR("Lock the execution node with id  {}", executionNodeId);
+    NES_DEBUG("Lock the execution node with id  {}", executionNodeId);
     if (idToExecutionNodeMap.contains(executionNodeId)) {
         auto lockedExecutionNode = idToExecutionNodeMap.at(executionNodeId).tryWLock();
         //Try to acquire a write lock on the topology node
@@ -190,7 +190,7 @@ ExecutionNodeWLock GlobalExecutionPlan::getLockedExecutionNode(ExecutionNodeId e
         NES_ERROR("Unable to lock execution node {}", executionNodeId);
         return nullptr;
     }
-    NES_ERROR("Execution node doesn't exists with the id {}", executionNodeId);
+    NES_WARNING("Execution node doesn't exists with the id {}", executionNodeId);
     return nullptr;
 }
 
