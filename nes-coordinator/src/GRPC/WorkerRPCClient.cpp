@@ -496,4 +496,22 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
+void WorkerRPCClient::startBufferingAsync(std::string address, const CompletionQueuePtr& cq) {
+    StartBufferingRequest request;
+    StartQueryReply reply;
+    ClientContext context;
+
+    std::shared_ptr<Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<StartBufferingReply>;
+
+    call->responseReader = workerStub->PrepareAsyncStartBufferingOnAllSinks(&call->context, request, cq.get());
+
+    call->responseReader->StartCall();
+
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+}
+
 }// namespace NES

@@ -33,6 +33,7 @@ service WorkerRPCService {
   rpc InjectEpochBarrier (EpochBarrierNotification) returns (EpochBarrierReply) {}
 
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
+  rpc StartBufferingOnAllSinks(StartBufferingRequest) returns (StartBufferingReply) {}
 
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
 
@@ -181,4 +182,10 @@ message MlModelFileUploadRequest {
 message MlModelFileUploadResponse {
   string filename = 1;
   MlModelFileUploadStatus status = 2;
+}
+
+message StartBufferingRequest {}
+
+message StartBufferingReply {
+  bool success = 1;
 }

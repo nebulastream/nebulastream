@@ -27,6 +27,11 @@
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Exceptions/RpcException.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
+
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -48,9 +53,10 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     TopologyController(const std::shared_ptr<ObjectMapper>& objectMapper,
                        const TopologyPtr& topology,
                        const oatpp::String& completeRouterPrefix,
-                       const ErrorHandlerPtr& errorHandler)
+                       const ErrorHandlerPtr& errorHandler,
+                       const RequestHandlerServicePtr requestHandlerService)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(topology),
-          errorHandler(errorHandler) {}
+          errorHandler(errorHandler), requestHandlerService(requestHandlerService), workerRPCClient(WorkerRPCClient::create()) {}
 
     /**
      * Create a shared object of the API controller
@@ -62,9 +68,10 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     static std::shared_ptr<TopologyController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                       const TopologyPtr& topology,
                                                       const std::string& routerPrefixAddition,
-                                                      const ErrorHandlerPtr& errorHandler) {
+                                                      const ErrorHandlerPtr& errorHandler,
+                                                      const RequestHandlerServicePtr requestHandlerService) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<TopologyController>(objectMapper, std::move(topology), completeRouterPrefix, errorHandler);
+        return std::make_shared<TopologyController>(objectMapper, std::move(topology), completeRouterPrefix, errorHandler, requestHandlerService);
     }
 
     ENDPOINT("GET", "", getTopology) {
@@ -142,6 +149,36 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
     }
 
+    ENDPOINT("POST", "/update", update, BODY_STRING(String, request)) {
+        try {
+            std::string req = request.getValue("{}");
+            //check if json is valid
+            if (!nlohmann::json::accept(req)) {
+                return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
+            };
+            nlohmann::json reqJson = nlohmann::json::parse(req);
+            auto completionQueue = std::make_shared<CompletionQueue>();
+            startBufferingOnAllSources(reqJson, completionQueue);
+            auto events = createEvents(reqJson);
+            bool success = requestHandlerService->queueISQPRequest(events);
+            //todo: do we have to collect the response of the async events?
+            if (success) {
+                NES_DEBUG("TopologyController::handlePost:addParent: updated topology successfully");
+            } else {
+                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
+            }
+            //Prepare the response
+            nlohmann::json response;
+            response["success"] = success;
+            return createResponse(Status::CODE_200, response.dump());
+        } catch (nlohmann::json::exception e) {
+            return errorHandler->handleError(Status::CODE_500, e.what());
+        } catch (...) {
+            return errorHandler->handleError(Status::CODE_500, "Internal Server Error");
+        }
+    }
+
     ENDPOINT("DELETE", "/removeAsChild", removeParent, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");
@@ -175,6 +212,47 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     }
 
   private:
+    // create a vector of isqp events from a json array
+    std::vector<RequestProcessor::ISQPEventPtr> createEvents(const nlohmann::json& reqJson) {
+        std::vector<RequestProcessor::ISQPEventPtr> events;
+        for (const auto& event : reqJson) {
+            events.push_back(createEvent(event));
+        }
+        return events;
+    }
+
+    //start buffering at all child nodes from the json
+    void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
+        for (const auto& worker : reqJson) {
+            std::string action = worker["action"].get<std::string>();
+            if (action == "add") {
+                uint64_t childId = worker["childId"].get<uint64_t>();
+                auto node = topology->lockTopologyNode(childId);
+                //get the adress of the node
+                auto ipAddress = node->operator*()->getIpAddress();
+                //get the grpc port
+                auto grpcPort = node->operator*()->getGrpcPort();
+                //construct the adress
+                std::string address = ipAddress + ":" + std::to_string(grpcPort);
+                workerRPCClient->startBufferingAsync(address, completionQueue);
+            }
+        }
+    }
+
+    //create an add or remove event
+    RequestProcessor::ISQPEventPtr createEvent(const nlohmann::json& reqJson) {
+        uint64_t parentId = reqJson["parentId"].get<uint64_t>();
+        uint64_t childId = reqJson["childId"].get<uint64_t>();
+        std::string action = reqJson["action"].get<std::string>();
+        if (action == "add") {
+            return RequestProcessor::ISQPAddLinkEvent::create(parentId, childId);
+        }
+        if (action == "remove") {
+            return RequestProcessor::ISQPRemoveLinkEvent::create(parentId, childId);
+        }
+        throw std::logic_error("Invalid action type");
+    }
+
     std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>> validateRequest(nlohmann::json reqJson) {
         if (reqJson.empty()) {
             return errorHandler->handleError(Status::CODE_400, "empty body");
@@ -209,6 +287,8 @@ class TopologyController : public oatpp::web::server::api::ApiController {
 
     TopologyPtr topology;
     ErrorHandlerPtr errorHandler;
+    RequestHandlerServicePtr requestHandlerService;
+    WorkerRPCClientPtr workerRPCClient;
 };
 }// namespace REST::Controller
 }// namespace NES

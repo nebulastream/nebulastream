@@ -24,6 +24,7 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -158,6 +159,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
     auto endTime =
         std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     responsePromise.set_value(std::make_shared<ISQPRequestResponse>(startTime, endTime, true));
+
     return {};
 }
 
@@ -482,6 +484,9 @@ bool PlacementAmemderInstance::execute() {
     } else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::STOPPED) {
         queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::STOPPED, "");
     }
+    //deployment phase
+    auto deploymentPhase = DeploymentPhase::create(queryCatalog);
+    deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
     return true;
 }
 }// namespace NES::RequestProcessor

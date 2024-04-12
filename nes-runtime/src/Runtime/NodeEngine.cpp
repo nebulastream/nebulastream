@@ -695,7 +695,7 @@ bool NodeEngine::bufferOutgoingTuples(WorkerId receivingWorkerId) {
         for (auto& sink : executableQueryPlan.second->getSinks()) {
             auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
             if (networkSink != nullptr) {
-                if (networkSink->getReceiverId() == receivingWorkerId) {
+                if (receivingWorkerId == INVALID_WORKER_NODE_ID || networkSink->getReceiverId() == receivingWorkerId) {
                     networkSink->startBuffering();
                     reconfiguredSink = true;
                 }
