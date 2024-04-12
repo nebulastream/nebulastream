@@ -37,6 +37,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     //find the pairs of source and sink operators that were using the removed link
     auto upstreamDownstreamOperatorPairs =
         findNetworkOperatorsForLink(sharedQueryPlanId, lockedUpstreamNode, lockedDownstreamNode);
+    NES_INFO("Found {} upstream downstream operator pairs", upstreamDownstreamOperatorPairs.size());
     for (auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         //replace the system generated operators with their non system up- or downstream operators
         auto upstreamLogicalOperatorId =
@@ -47,6 +48,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
         downstreamOperator =
             queryPlanForSharedQuery->getOperatorWithOperatorId(downstreamLogicalOperatorId)->as<LogicalOperator>();
     }
+    NES_INFO("Found upstream and downstream logical operators");
 
     std::set<OperatorId> upstreamPinned;
     std::set<OperatorId> downstreamPinned;
@@ -70,6 +72,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
         std::set<WorkerId> reachable;
         //todo :
         topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
+        NES_INFO("Found reachable nodes");
 
         //check if the old downstream was found, then only forward operators need to be inserted between the old up and downstream
         if (reachable.contains(downstreamWorkerId)) {
@@ -132,7 +135,8 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     auto downstreamWorkerId = lockedDownstreamNode->operator*()->getId();
     for (const auto& subPlan : upstreamSubPlans) {
         //todo: remove this once proper cleanup wokrs
-        if (subPlan->getState() == QueryState::MIGRATION_COMPLETED) {
+        NES_INFO("Checking plan for network operators {}");
+        if (subPlan->getState() == QueryState::MIGRATION_COMPLETED || subPlan->getState() == QueryState::STOPPED) {
             NES_INFO("Skipping plan because it has migrated")
             continue;
         }
@@ -145,12 +149,13 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
             }
         }
     }
+    NES_INFO("Checked all upstream plans");
 
     const auto& downstreamSubPlans = lockedDownstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
     auto upstreamWorkerId = lockedUpstreamNode->operator*()->getId();
     std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>> pairs;
     for (const auto& subPlan : downstreamSubPlans) {
-        if (subPlan->getState() == QueryState::MIGRATION_COMPLETED) {
+        if (subPlan->getState() == QueryState::MIGRATION_COMPLETED || subPlan->getState() == QueryState::STOPPED) {
             NES_INFO("Skipping plan because it has migrated")
             continue;
         }
@@ -163,6 +168,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
             }
         }
     }
+    NES_INFO("Checked all downstream plans");
     return pairs;
 }
 }// namespace NES::Experimental
