@@ -225,8 +225,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     void startBufferingOnAllSources(const nlohmann::json& reqJson, const CompletionQueuePtr& completionQueue) {
         for (const auto& worker : reqJson) {
             std::string action = worker["action"].get<std::string>();
-            if (action == "remove") {
+            if (action == "add") {
                 uint64_t childId = worker["childId"].get<uint64_t>();
+                uint64_t parentId = worker["parentId"].get<uint64_t>();
                 auto node = topology->lockTopologyNode(childId);
                 //get the adress of the node
                 auto ipAddress = node->operator*()->getIpAddress();
@@ -234,7 +235,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 auto grpcPort = node->operator*()->getGrpcPort();
                 //construct the adress
                 std::string address = ipAddress + ":" + std::to_string(grpcPort);
-                workerRPCClient->startBufferingAsync(address, completionQueue);
+                workerRPCClient->startBufferingAsync(address, completionQueue, parentId);
             }
         }
     }

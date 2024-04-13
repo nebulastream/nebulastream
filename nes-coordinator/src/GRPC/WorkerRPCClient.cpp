@@ -496,8 +496,9 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
-void WorkerRPCClient::startBufferingAsync(std::string address, const CompletionQueuePtr& cq) {
+void WorkerRPCClient::startBufferingAsync(std::string address, const CompletionQueuePtr& cq, WorkerId newParent) {
     StartBufferingRequest request;
+    request.set_parent(newParent);
     StartQueryReply reply;
     ClientContext context;
 

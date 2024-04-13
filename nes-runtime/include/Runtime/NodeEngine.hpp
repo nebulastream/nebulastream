@@ -313,6 +313,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     const OpenCLManagerPtr getOpenCLManager() const;
 
     const Statistic::AbstractStatisticStorePtr getStatisticStore() const;
+    WorkerId getParentId() const;
+    void setParentId(WorkerId newParent);
+    void initializeParentId(WorkerId newParent);
 
     /**
      * @brief This function is only to be used for experiments. Do not call from other classes. reconfigure the network sink to point to a new source. Buffer all tuples that are received while the new connection
@@ -399,6 +402,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool sourceSharing;
     bool timestampOutPutSources;
     std::map<std::string, int> tcpDescriptor;
+    std::atomic<WorkerId> parentId;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

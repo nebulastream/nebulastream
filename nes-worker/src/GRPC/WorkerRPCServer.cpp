@@ -184,9 +184,11 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
     }
 }
 Status WorkerRPCServer::StartBufferingOnAllSinks(ServerContext* ,
-                                                 const StartBufferingRequest*,
+                                                 const StartBufferingRequest* request,
                                                  StartBufferingReply* reply) {
-    auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
+    //auto success = nodeEngine->bufferOutgoingTuples(INVALID_WORKER_NODE_ID);
+    nodeEngine->setParentId(request->parent());
+    auto success = true;
     if (success) {
         NES_DEBUG("WorkerRPCServer::StartBufferingOnAllSinks: success");
         reply->set_success(true);

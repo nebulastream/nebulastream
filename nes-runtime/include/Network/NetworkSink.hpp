@@ -110,6 +110,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @return type of medium
     */
     SinkMediumTypes getSinkMediumType() override;
+    bool writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext);
 
     /**
      * @brief method to return the network sinks descriptor id

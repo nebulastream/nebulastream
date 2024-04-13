@@ -65,6 +65,8 @@ class BaseNetworkChannel {
                uint16_t numSendingThreads,
                uint64_t currentMessageSequenceNumber, uint64_t nextVersion = 0);
 
+    NesPartition getPartition();
+
   protected:
     const std::string socketAddr;
     zmq::socket_t zmqSocket;
