@@ -86,7 +86,8 @@ FileSink::FileSink(SinkFormatPtr format,
         //    }
 
         NES_INFO("Connecting to tcp socket")
-        if (!this->nodeEngine->getTcpDescriptor().has_value()) {
+        //todo: this will not work for multiple sinks
+        if (!this->nodeEngine->getTcpDescriptor(filePath).has_value()) {
             NES_INFO("No existing tcp descriptor, opening one now")
 
             auto port = std::stoi(filePath);
@@ -111,10 +112,10 @@ FileSink::FileSink(SinkFormatPtr format,
                 close(sockfd);
                 return;
             }
-            this->nodeEngine->setTcpDescriptor(sockfd);
+            this->nodeEngine->setTcpDescriptor(filePath, sockfd);
         } else {
             NES_INFO("Found existing tcp descriptor")
-            sockfd = this->nodeEngine->getTcpDescriptor().value();
+            sockfd = this->nodeEngine->getTcpDescriptor(filePath).value();
         }
     }
     NES_INFO("Successfully connected")

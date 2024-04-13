@@ -184,7 +184,9 @@ message MlModelFileUploadResponse {
   MlModelFileUploadStatus status = 2;
 }
 
-message StartBufferingRequest {}
+message StartBufferingRequest {
+  uint64 parent = 1;
+}
 
 message StartBufferingReply {
   bool success = 1;

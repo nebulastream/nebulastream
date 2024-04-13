@@ -372,8 +372,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief get the opened tcp descriptor if there is one
      */
-    std::optional<int> getTcpDescriptor() const;
-    void setTcpDescriptor(int tcpDescriptor);
+    std::optional<int> getTcpDescriptor(std::string sourceName) const;
+    void setTcpDescriptor(std::string sourceName, int tcpDescriptor);
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
@@ -398,7 +398,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     bool timestampOutPutSources;
-    std::optional<int> tcpDescriptor;
+    std::map<std::string, int> tcpDescriptor;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

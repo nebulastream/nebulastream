@@ -393,9 +393,12 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     for (auto&& bufferManager : bufferManagers) {
         bufferManager->destroy();
     }
-    if (tcpDescriptor.has_value()) {
-        close(tcpDescriptor.value());
+    for (auto [name, descriptor] : tcpDescriptor) {
+        close(descriptor);
     }
+    // if (tcpDescriptor.has_value()) {
+    //     close(tcpDescriptor.value());
+    // }
     nesWorker.reset();// break cycle
     return !withError;
 }
@@ -809,13 +812,18 @@ const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManag
 
 bool NodeEngine::getTimesStampOutputSources() { return timestampOutPutSources; }
 
-std::optional<int> NodeEngine::getTcpDescriptor() const { return tcpDescriptor; }
+std::optional<int> NodeEngine::getTcpDescriptor(std::string sourceName) const {
+    if (tcpDescriptor.contains(sourceName)) {
+        return tcpDescriptor.at(sourceName);
+    }
+    return std::nullopt;
+}
 
-void NodeEngine::setTcpDescriptor(int tcpDescriptor) {
-    if (this->tcpDescriptor.has_value()) {
+void NodeEngine::setTcpDescriptor(std::string sourceName, int tcpDescriptor) {
+    if (this->tcpDescriptor.contains(sourceName)) {
         NES_ERROR("NodeEngine: TCP descriptor already set");
     }
-    this->tcpDescriptor = tcpDescriptor;
+    this->tcpDescriptor.insert({sourceName, tcpDescriptor});
 }
 
 const Statistic::AbstractStatisticStorePtr NodeEngine::getStatisticStore() const { return statisticStore; }
