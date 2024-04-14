@@ -90,7 +90,12 @@ FileSink::FileSink(SinkFormatPtr format,
         if (!this->nodeEngine->getTcpDescriptor(filePath).has_value()) {
             NES_INFO("No existing tcp descriptor, opening one now")
 
-            auto port = std::stoi(filePath);
+            std::stringstream ss(filePath);
+            std::string portString;
+            while(std::getline(ss, portString, ':')) {
+                NES_INFO("Port string {}", portString)
+            }
+            auto port = std::stoi(portString);
 
             // Create a TCP socket
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
