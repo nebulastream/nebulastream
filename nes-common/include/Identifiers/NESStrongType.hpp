@@ -36,6 +36,7 @@ class NESStrongType {
   public:
     explicit constexpr NESStrongType(T v) : v(v) {}
     using Underlying = T;
+    using TypeTag = Tag;
     constexpr static T INITIAL = initial;
     constexpr static T INVALID = invalid;
 
@@ -67,15 +68,17 @@ class NESStrongType {
 
 template<typename T>
 concept NESIdentifier = requires(T t) {
+    requires(std::same_as<T, NESStrongType<typename T::Underlying, typename T::TypeTag, T::INVALID, T::INITIAL>>);
+    requires(!std::is_default_constructible_v<T>);
+    requires(std::is_trivially_copyable_v<T>);
+    requires(sizeof(t) == sizeof(typename T::Underlying));
+    requires(!std::is_convertible_v<T, typename T::Underlying>);
+    requires(std::is_trivially_destructible_v<T>);
     { t < t };
     { t > t };
     { t == t };
     { t != t };
     { std::hash<T>()(t) };
-    requires(!std::is_default_constructible_v<T>);
-    requires(std::is_trivially_copyable_v<T>);
-    requires(sizeof(t) == sizeof(typename T::Underlying));
-    requires(!std::is_convertible_v<T, typename T::Underlying>);
 };
 
 template<NESIdentifier Ident>
