@@ -184,7 +184,7 @@ ExecutionNodeWLock GlobalExecutionPlan::getLockedExecutionNode(ExecutionNodeId e
         auto lockedExecutionNode = idToExecutionNodeMap.at(executionNodeId).tryWLock();
         //Try to acquire a write lock on the topology node
         if (lockedExecutionNode) {
-            NES_ERROR("Locked execution node with id  {}", executionNodeId);
+            NES_DEBUG("Locked execution node with id  {}", executionNodeId);
             return std::make_shared<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>(std::move(lockedExecutionNode));
         }
         NES_ERROR("Unable to lock execution node {}", executionNodeId);

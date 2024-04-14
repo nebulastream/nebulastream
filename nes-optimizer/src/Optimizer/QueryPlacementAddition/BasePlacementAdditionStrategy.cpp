@@ -736,8 +736,10 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                     return PlacementAdditionResult(false, deploymentContexts);
                 }
                 //Create execution node if doe not exists
-//                auto lockedTopologyNode = topology->lockTopologyNode(workerNodeId);
-//                globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+                TopologyNodeWLock lockedTopologyNode;
+                while (!(lockedTopologyNode = topology->lockTopologyNode(workerNodeId))) {
+                };
+                globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
             } else {
                 auto lockedTopologyNode = lockedTopologyNodeMap[workerNodeId];
                 if (!lockedTopologyNode->operator*()->occupySlots(consumedResources)) {
@@ -746,7 +748,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                     return PlacementAdditionResult(false, deploymentContexts);
                 }
                 //Create execution node if doe not exists
-//                globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+                globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
             }
 
             // 1.8. Release lock on the topology node

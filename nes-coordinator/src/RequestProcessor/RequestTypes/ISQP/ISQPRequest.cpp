@@ -160,6 +160,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 numOfFailedPlacements++;
             }
         }
+        NES_INFO("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
         auto processingEndTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         auto numOfSQPAffected = sharedQueryPlans.size();
@@ -308,9 +309,9 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     auto queryPlacementStrategy = addQueryEvent->getPlacementStrategy();
 
     // Set unique identifier and additional properties to the query
-    //    auto queryId = PlanIdGenerator::getNextQueryId();
-    //    queryPlan->setQueryId(queryId);
-    auto queryId = queryPlan->getQueryId();
+    auto queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+    //    auto queryId = queryPlan->getQueryId();
     queryPlan->setPlacementStrategy(queryPlacementStrategy);
 
     // Create a new entry in the query catalog
