@@ -36,6 +36,25 @@ class IfCompilationTest : public Testing::BaseUnitTest, public AbstractCompilati
     static void TearDownTestCase() { NES_INFO("Tear down IfCompilationTest test class."); }
 };
 
+Value<Int64> nesIdentifierTest(Value<UInt64> origin) {
+    using namespace std::literals;
+    if (origin == 2_u64) {
+        return Value<Int64>(1_s64);
+    } else {
+        return Value<Int64>(3_s64);
+    }
+}
+
+TEST_P(IfCompilationTest, directReturnBasedOnArgument) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
+        return nesIdentifierTest(Value<UInt64>(1_u64));
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<WorkerId, OriginId>("execute");
+    ASSERT_EQ(function(OriginId(1)), WorkerId(3));
+    ASSERT_EQ(function(OriginId(2)), WorkerId(1));
+}
+
 Value<> ifThenCondition() {
     Value value = 1;
     Value iw = 1;
