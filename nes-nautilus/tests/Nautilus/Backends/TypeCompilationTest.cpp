@@ -13,6 +13,7 @@
 */
 
 #include <BaseIntegrationTest.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -139,6 +140,24 @@ TEST_P(TypeCompilationTest, DISABLED_mixBoolAndIntTest) {
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 5);
+}
+
+ValueId<WorkerId> nesIdentifierTest(ValueId<OriginId> origin) {
+    if (origin == OriginId(2)) {
+        return WorkerId(2);
+    } else {
+        return WorkerId(3);
+    }
+}
+
+TEST_P(TypeCompilationTest, NESIdentifierTest) {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
+        return nesIdentifierTest(OriginId(1));
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<WorkerId, OriginId>("execute");
+    ASSERT_EQ(function(OriginId(1)), WorkerId(3));
+    ASSERT_EQ(function(OriginId(2)), WorkerId(2));
 }
 
 class CustomType : public Any {
