@@ -46,7 +46,7 @@ class TypeIdentifier {
      * @brief Returns the runtime type info
      * @return std::type_info&
      */
-    const std::type_info& getTypeInfo();
+    const std::type_info& getTypeInfo() const;
 
   private:
     TypeIdentifier(const std::type_info& typeInfo);
