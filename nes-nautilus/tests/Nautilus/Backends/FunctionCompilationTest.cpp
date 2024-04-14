@@ -107,6 +107,31 @@ TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
     ASSERT_EQ(function(42), 420);
 }
 
+WorkerId getWorkerId(WorkerId x) {
+    if (x == WorkerId(2)) {
+        return INVALID_WORKER_NODE_ID;
+    } else {
+        return x;
+    }
+};
+
+ValueId<WorkerId> testIdentifierTypes(ValueId<WorkerId> x) {
+    ValueId<WorkerId> res = FunctionCall<>("getWorkerId", getWorkerId, x);
+    return res;
+}
+
+TEST_P(FunctionCompilationTest, identifierTypesInProxyFunction) {
+    ValueId<WorkerId> tempPara = WorkerId(3);
+    tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&tempPara]() {
+        return testIdentifierTypes(tempPara);
+    });
+    auto result = prepare(executionTrace);
+    auto function = result->getInvocableMember<WorkerId, WorkerId>("execute");
+    ASSERT_EQ(function(WorkerId(2)), WorkerId(0));
+    ASSERT_EQ(function(WorkerId(3)), WorkerId(3));
+}
+
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 INSTANTIATE_TEST_CASE_P(testFunctionCalls,

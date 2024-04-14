@@ -98,6 +98,62 @@ TEST_F(DataTypeTest, AssignmentValueTest) {
     }
 }
 
+using TestIdentifier = NESStrongType<int32_t, struct TestIdentifier_, 0, 1>;
+using TestIdentifierOther = NESStrongType<int32_t, struct TestIdentifierOther_, 0, 1>;
+
+TEST_F(DataTypeTest, IsIdentifierTest) {
+    auto f1 = Value<Int8>(42_s8);
+    auto f2 = ValueId<TestIdentifier>(TestIdentifier(42));
+    auto f3 = ValueId<TestIdentifierOther>(TestIdentifierOther(41));
+
+    ASSERT_FALSE(Identifier::isIdentifier(f1.getValue()));
+    ASSERT_TRUE(Identifier::isIdentifier(f2.getValue()));
+    ASSERT_TRUE(Identifier::isIdentifier(f3.getValue()));
+}
+
+TEST_F(DataTypeTest, IdentifierTest) {
+    auto f1 = ValueId<TestIdentifier>(TestIdentifier(42));
+    ASSERT_EQ(f1.value->getValue(), TestIdentifier(42));
+    auto stamp = f1.value->getType();
+    ASSERT_EQ(cast<IR::Types::IntegerStamp>(stamp)->getNumberOfBits(), 32);
+    ASSERT_EQ(cast<IR::Types::IntegerStamp>(stamp)->getSignedness(), IR::Types::IntegerStamp::SignednessSemantics::Signed);
+
+    auto f2 = ValueId<TestIdentifier>(TestIdentifier(41));
+    ASSERT_EQ(f2.value->getValue(), TestIdentifier(41));
+    auto f3 = f1 == f2;
+    auto f4 = f1 != f2;
+    auto f5 = f1 > f2;
+    auto f6 = f1 < f2;
+
+    ASSERT_EQ(f3.as<Boolean>().value->getValue(), false);
+    ASSERT_EQ(f4.as<Boolean>().value->getValue(), true);
+    ASSERT_EQ(f5.as<Boolean>().value->getValue(), true);
+    ASSERT_EQ(f6.as<Boolean>().value->getValue(), false);
+}
+
+TEST_F(DataTypeTest, PreventArithmeticOperationsOnIdentifiers) {
+    auto f1 = ValueId<TestIdentifier>(TestIdentifier(42));
+    auto f2 = ValueId<TestIdentifier>(TestIdentifier(41));
+
+    ASSERT_ANY_THROW(f1 + f2);
+    ASSERT_ANY_THROW(f1 - f2);
+    ASSERT_ANY_THROW(f1 * f2);
+    ASSERT_ANY_THROW(f1 / f2);
+    ASSERT_ANY_THROW(f1 % f2);
+}
+
+TEST_F(DataTypeTest, PreventOperationsOnDifferentIdentifiers) {
+    auto f1 = ValueId<TestIdentifier>(TestIdentifier(42));
+    auto f2 = ValueId<TestIdentifierOther>(TestIdentifierOther(41));
+    auto f3 = Value<Int32>(41);
+    ASSERT_ANY_THROW(auto _ = f1 == f2);
+    ASSERT_ANY_THROW(auto _ = f1 > f2);
+    ASSERT_ANY_THROW(auto _ = f1 < f2);
+    ASSERT_ANY_THROW(auto _ = f1 == f3);
+    ASSERT_ANY_THROW(auto _ = f1 > f3);
+    ASSERT_ANY_THROW(auto _ = f1 < f3);
+}
+
 TEST_F(DataTypeTest, Int8Test) {
     auto f1 = Value<Int8>(42_s8);
     ASSERT_EQ(f1.value->getValue(), 42_s8);
