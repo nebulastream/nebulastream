@@ -13,12 +13,14 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Identifier.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
@@ -119,7 +121,7 @@ class Value : BaseValue {
     using element_type = ValueType;
 
     /*
-     * Creates a Value<Int8> object from an std::int8_t.
+     * Creates a Value<Int8> object from a std::int8_t.
      */
     Value(int8_t value) : Value(std::make_shared<Int8>(value)) {
         Tracing::TraceUtil::traceConstOperation(this->value, this->ref);
@@ -195,7 +197,7 @@ class Value : BaseValue {
     };
 
     /*
-     * Creates a Value<MemRef> object from an std::int8_t*.
+     * Creates a Value<MemRef> object from a std::int8_t*.
      */
     template<typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
     Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) {
@@ -253,6 +255,12 @@ class Value : BaseValue {
     }
 
     operator const Value<>() const { return Value<>(value, ref); };
+
+    /*Implicit constructor from NESIdentifier Type*/
+    template<NESIdentifier T>
+    Value(T value) : Value(std::make_shared<IdentifierImpl<T>>(value)) {
+        Tracing::TraceUtil::traceConstOperation(this->value, this->ref);
+    }
 
     /**
      * @brief Special case flor loads on memref values.
@@ -325,6 +333,10 @@ class Value : BaseValue {
     mutable ValueTypePtr value;
     mutable Nautilus::Tracing::ValueRef ref;
 };
+
+// Alias for Identifier Values. Otherwise, user need to type Value<Identifier<WorkerId>>
+template<NESIdentifier IdentifierType>
+using ValueId = Value<IdentifierImpl<IdentifierType>>;
 
 Value<> AddOp(const Value<>& leftExp, const Value<>& rightExp);
 Value<> SubOp(const Value<>& leftExp, const Value<>& rightExp);
@@ -706,4 +718,4 @@ typename Value<ValueType>::ValueIndexReference Value<ValueType>::operator[](uint
 
 }// namespace NES::Nautilus
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_

@@ -19,6 +19,8 @@ add_source_files(nes-nautilus
         BooleanInvocationPlugin.cpp
         MemRefInvocationPlugin.cpp
         MemRefUtils.cpp
+        Identifier.cpp
+        IdentifierInvocationPlugin.cpp
         )
 
 add_subdirectory(Text)

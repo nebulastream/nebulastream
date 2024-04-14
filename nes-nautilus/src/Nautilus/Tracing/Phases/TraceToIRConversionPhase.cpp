@@ -35,6 +35,7 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Identifier.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -596,6 +597,11 @@ void TraceToIRConversionPhase::IRConversionContext::processConst(int32_t,
     } else if (auto* boolean = cast_if<Boolean>(valueRef.value.get())) {
         constOperation =
             std::make_shared<NES::Nautilus::IR::Operations::ConstBooleanOperation>(resultIdentifier, boolean->getValue());
+    } else if (Identifier::isIdentifier(*valueRef.value)) {
+        auto identifier = std::dynamic_pointer_cast<Identifier>(valueRef.value);
+        constOperation = std::make_shared<IR::Operations::ConstIntOperation>(resultIdentifier,
+                                                                             identifier->getUnderlyingRawValue(),
+                                                                             identifier->getType());
     } else {
         NES_THROW_RUNTIME_ERROR("Can't create const for value");
     }
