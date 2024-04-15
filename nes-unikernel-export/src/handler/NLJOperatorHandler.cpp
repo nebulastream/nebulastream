@@ -31,12 +31,9 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
                                        const OriginId outputOriginId,
                                        const uint64_t windowSize,
                                        const uint64_t windowSlide,
-                                       const NES::SchemaPtr& leftSchema,
-                                       const NES::SchemaPtr& rightSchema,
-                                       const uint64_t pageSizeLeft,
-                                       const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
-      pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
+                                       PagedVectorSize left,
+                                       PagedVectorSize right)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide), left(left), right(right) {}
 
 void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");

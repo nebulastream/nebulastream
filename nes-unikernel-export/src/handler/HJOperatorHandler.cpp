@@ -23,10 +23,10 @@ StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t s
     return std::make_shared<HJSlice>(numberOfWorkerThreads,
                                      sliceStart,
                                      sliceEnd,
-                                     sizeOfRecordLeft,
-                                     sizeOfRecordRight,
+                                     left.schemaSize(),
+                                     right.schemaSize(),
                                      totalSizeForDataStructures,
-                                     pageSize,
+                                     left.pageSize(),
                                      preAllocPageSizeCnt,
                                      numPartitions,
                                      joinStrategy);
@@ -41,7 +41,7 @@ void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
 
 uint64_t HJOperatorHandler::getPreAllocPageSizeCnt() const { return preAllocPageSizeCnt; }
 
-uint64_t HJOperatorHandler::getPageSize() const { return pageSize; }
+uint64_t HJOperatorHandler::getPageSize() const { return left.pageSize(); }
 
 uint64_t HJOperatorHandler::getNumPartitions() const { return numPartitions; }
 
@@ -51,28 +51,26 @@ HJOperatorHandler::HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                      const OriginId outputOriginId,
                                      const uint64_t windowSize,
                                      const uint64_t windowSlide,
-                                     size_t leftSchema,
-                                     size_t rightSchema,
+                                     PagedVectorSize leftSchema,
+                                     PagedVectorSize rightSchema,
                                      const QueryCompilation::StreamJoinStrategy joinStrategy,
                                      uint64_t totalSizeForDataStructures,
                                      uint64_t preAllocPageSizeCnt,
-                                     uint64_t pageSize,
                                      uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
-      joinStrategy(joinStrategy), totalSizeForDataStructures(totalSizeForDataStructures),
-      preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize), numPartitions(numPartitions) {
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide), joinStrategy(joinStrategy),
+      totalSizeForDataStructures(totalSizeForDataStructures), preAllocPageSizeCnt(preAllocPageSizeCnt),
+      numPartitions(numPartitions), left(leftSchema), right(rightSchema) {
     TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::HJOperatorHandler",
                            "Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp",
                            inputOrigins,
                            outputOriginId,
                            windowSize,
                            windowSlide,
-                           sizeOfRecordLeft,
-                           sizeOfRecordRight,
+                           leftSchema,
+                           leftSchema,
                            joinStrategy,
                            totalSizeForDataStructures,
-                           preAllocPageSizeCnt,
-                           pageSize);
+                           preAllocPageSizeCnt);
 }
 
 void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) { NES_THROW_RUNTIME_ERROR("Not Implemented!"); }

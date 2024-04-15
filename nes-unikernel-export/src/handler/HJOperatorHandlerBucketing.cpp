@@ -17,17 +17,16 @@
 namespace NES::Runtime::Execution::Operators {
 
 HJOperatorHandlerBucketing::HJOperatorHandlerBucketing(const std::vector<OriginId>& inputOrigins,
-                                                       const OriginId outputOriginId,
-                                                       const uint64_t windowSize,
-                                                       const uint64_t windowSlide,
-                                                       const NES::SchemaPtr& leftSchema,
-                                                       const NES::SchemaPtr& rightSchema,
+                                                       OriginId outputOriginId,
+                                                       uint64_t windowSize,
+                                                       uint64_t windowSlide,
+                                                       PagedVectorSize leftSchema,
+                                                       PagedVectorSize rightSchema,
                                                        const QueryCompilation::StreamJoinStrategy joinStrategy,
                                                        uint64_t totalSizeForDataStructures,
                                                        uint64_t preAllocPageSizeCnt,
-                                                       uint64_t pageSize,
                                                        uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide),
       HJOperatorHandler(inputOrigins,
                         outputOriginId,
                         windowSize,
@@ -37,7 +36,6 @@ HJOperatorHandlerBucketing::HJOperatorHandlerBucketing(const std::vector<OriginI
                         joinStrategy,
                         totalSizeForDataStructures,
                         preAllocPageSizeCnt,
-                        pageSize,
                         numPartitions) {
     TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::HJOperatorHandlerBucketing",
                            "Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp",
@@ -50,7 +48,6 @@ HJOperatorHandlerBucketing::HJOperatorHandlerBucketing(const std::vector<OriginI
                            joinStrategy,
                            totalSizeForDataStructures,
                            preAllocPageSizeCnt,
-                           pageSize,
                            numPartitions);
 }
 
@@ -58,12 +55,11 @@ HJOperatorHandlerPtr HJOperatorHandlerBucketing::create(const std::vector<Origin
                                                         const OriginId outputOriginId,
                                                         const uint64_t windowSize,
                                                         const uint64_t windowSlide,
-                                                        const NES::SchemaPtr& leftSchema,
-                                                        const NES::SchemaPtr& rightSchema,
+                                                        PagedVectorSize leftSchema,
+                                                        PagedVectorSize rightSchema,
                                                         const QueryCompilation::StreamJoinStrategy joinStrategy,
                                                         uint64_t totalSizeForDataStructures,
                                                         uint64_t preAllocPageSizeCnt,
-                                                        uint64_t pageSize,
                                                         uint64_t numPartitions) {
     return std::make_shared<HJOperatorHandlerBucketing>(inputOrigins,
                                                         outputOriginId,
@@ -74,7 +70,6 @@ HJOperatorHandlerPtr HJOperatorHandlerBucketing::create(const std::vector<Origin
                                                         joinStrategy,
                                                         totalSizeForDataStructures,
                                                         preAllocPageSizeCnt,
-                                                        pageSize,
                                                         numPartitions);
 }
 

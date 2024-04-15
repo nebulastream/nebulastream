@@ -20,14 +20,13 @@ HJOperatorHandlerSlicing::HJOperatorHandlerSlicing(const std::vector<OriginId>& 
                                                    const OriginId outputOriginId,
                                                    const uint64_t windowSize,
                                                    const uint64_t windowSlide,
-                                                   const NES::SchemaPtr& leftSchema,
-                                                   const NES::SchemaPtr& rightSchema,
+                                                   PagedVectorSize leftSchema,
+                                                   PagedVectorSize rightSchema,
                                                    const QueryCompilation::StreamJoinStrategy joinStrategy,
                                                    const uint64_t totalSizeForDataStructures,
                                                    const uint64_t preAllocPageSizeCnt,
-                                                   const uint64_t pageSize,
                                                    const uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide),
       HJOperatorHandler(inputOrigins,
                         outputOriginId,
                         windowSize,
@@ -37,7 +36,6 @@ HJOperatorHandlerSlicing::HJOperatorHandlerSlicing(const std::vector<OriginId>& 
                         joinStrategy,
                         totalSizeForDataStructures,
                         preAllocPageSizeCnt,
-                        pageSize,
                         numPartitions),
       StreamJoinOperatorHandlerSlicing() {
     TRACE_OPERATOR_HANDLER("NES::Runtime::Execution::Operators::HJOperatorHandlerSlicing",
@@ -51,7 +49,6 @@ HJOperatorHandlerSlicing::HJOperatorHandlerSlicing(const std::vector<OriginId>& 
                            joinStrategy,
                            totalSizeForDataStructures,
                            preAllocPageSizeCnt,
-                           pageSize,
                            numPartitions);
 }
 
@@ -59,12 +56,11 @@ HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(const std::vector<OriginId
                                                       const OriginId outputOriginId,
                                                       const uint64_t windowSize,
                                                       const uint64_t windowSlide,
-                                                      const NES::SchemaPtr& leftSchema,
-                                                      const NES::SchemaPtr& rightSchema,
+                                                      PagedVectorSize leftSchema,
+                                                      PagedVectorSize rightSchema,
                                                       const QueryCompilation::StreamJoinStrategy joinStrategy,
                                                       const uint64_t totalSizeForDataStructures,
                                                       const uint64_t preAllocPageSizeCnt,
-                                                      const uint64_t pageSize,
                                                       const uint64_t numPartitions) {
     return std::make_shared<HJOperatorHandlerSlicing>(inputOrigins,
                                                       outputOriginId,
@@ -75,7 +71,6 @@ HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(const std::vector<OriginId
                                                       joinStrategy,
                                                       totalSizeForDataStructures,
                                                       preAllocPageSizeCnt,
-                                                      pageSize,
                                                       numPartitions);
 }
 

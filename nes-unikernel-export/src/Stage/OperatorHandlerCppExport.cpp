@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include "../../../nes-execution/tests/Util/include/TestUtils/AbstractCompilationBackendTest.hpp"
 #include "Common/DataTypes/Float.hpp"
 #include "Common/DataTypes/Integer.hpp"
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorSize.hpp>
 #include <OperatorHandlerTracer.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
@@ -46,7 +48,7 @@ OperatorHandlerCppExporter::HandlerExport::typeName(const Runtime::Unikernel::Op
         case Runtime::Unikernel::OperatorHandlerParameterType::SHARED_PTR:
             return "std::shared_ptr<" + typeName(std::any_cast<Runtime::Unikernel::OperatorHandlerParameterDescriptor>(value))
                 + ">";
-        case Runtime::Unikernel::OperatorHandlerParameterType::SCHEMA: return "NES::SchemaPtr";
+        case Runtime::Unikernel::OperatorHandlerParameterType::PAGED_VECTOR: return "NES::Nautilus::Interfaces::PagedVectorSize";
         case Runtime::Unikernel::OperatorHandlerParameterType::BATCH_JOIN_DEFINITION:
             return "NES::Join::Experimental::LogicalBatchJoinDefinition";
         default: NES_THROW_RUNTIME_ERROR("Not implemented");
@@ -114,16 +116,9 @@ void OperatorHandlerCppExporter::HandlerExport::generateParameter(
         case OperatorHandlerParameterType::ENUM_CONSTANT:
             ss << typeName(parameter) + "(" + std::to_string(std::any_cast<int8_t>(value)) + ")";
             break;
-        case OperatorHandlerParameterType::SCHEMA: {
-            auto schema = any_cast<NES::SchemaPtr>(value);
-            ss << "NES::Schema::create()";
-            for (size_t i = 0; i < schema->getSize(); ++i) {
-                ss << "->addField(";
-                ss << "\"" << schema->get(i)->getName() << "\"";
-                ss << ", ";
-                ss << generateDataType(schema->get(i)->getDataType());
-                ss << ")";
-            }
+        case OperatorHandlerParameterType::PAGED_VECTOR: {
+            auto size = any_cast<NES::Nautilus::Interfaces::PagedVectorSize>(value);
+            ss << fmt::format("{}({},{},{})", typeName(parameter), size.pageSize(), size.size(), size.schemaSize());
             break;
         }
         case OperatorHandlerParameterType::BATCH_JOIN_DEFINITION: {

@@ -82,13 +82,10 @@ uint64_t StreamJoinOperatorHandler::getWindowSize() const { return windowSize; }
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                                      const OriginId outputOriginId,
                                                      const uint64_t windowSize,
-                                                     const uint64_t windowSlide,
-                                                     const NES::SchemaPtr& leftSchema,
-                                                     const NES::SchemaPtr& rightSchema)
+                                                     const uint64_t windowSlide)
     : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSlide), windowSize(windowSize), windowSlide(windowSlide),
       watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)),
       watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector<OriginId>(1, outputOriginId))),
-      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(leftSchema->getSchemaSizeInBytes()),
-      sizeOfRecordRight(rightSchema->getSchemaSizeInBytes()) {}
+      outputOriginId(outputOriginId), sequenceNumber(1) {}
 
 }// namespace NES::Runtime::Execution::Operators

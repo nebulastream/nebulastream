@@ -49,8 +49,8 @@ enum OperatorHandlerParameterType {
     FLOAT64,
     ENUM_CONSTANT,
     SHARED_PTR,
-    SCHEMA,
-    BATCH_JOIN_DEFINITION
+    BATCH_JOIN_DEFINITION,
+    PAGED_VECTOR
 };
 
 struct OperatorHandlerParameterDescriptor {

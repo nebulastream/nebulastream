@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include "../../nes-execution/tests/Util/include/TestUtils/AbstractCompilationBackendTest.hpp"
 #include "API/AttributeField.hpp"
 #include "Util/Logger/Logger.hpp"
 #include <Identifiers.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorSize.hpp>
 #include <OperatorHandlerTracer.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Util/Common.hpp>
@@ -28,11 +31,6 @@ class LogicalBatchJoinDefinition;
 }// namespace NES::Join::Experimental
 namespace NES::Runtime::Unikernel {
 static thread_local OperatorHandlerTracer* traceContext = nullptr;
-
-template<>
-OperatorHandlerParameterDescriptor OperatorHandlerParameterDescriptor::of(std::shared_ptr<NES::Schema> const& value) {
-    return {OperatorHandlerParameterType::SCHEMA, value};
-}
 
 template<>
 OperatorHandlerParameterDescriptor
@@ -50,6 +48,12 @@ OperatorHandlerParameterDescriptor
 OperatorHandlerParameterDescriptor::of(const NES::QueryCompilation::StreamJoinStrategy& value) {
     return {OperatorHandlerParameterType::ENUM_CONSTANT, static_cast<int8_t>(value)};
 }
+
+template<>
+OperatorHandlerParameterDescriptor OperatorHandlerParameterDescriptor::of(const Nautilus::Interfaces::PagedVectorSize& value) {
+    return {OperatorHandlerParameterType::PAGED_VECTOR, value};
+}
+
 template<>
 OperatorHandlerParameterDescriptor OperatorHandlerParameterDescriptor::of(const unsigned long& value) {
     return {OperatorHandlerParameterType::UINT64, value};
